@@ -1,6 +1,13 @@
 # Backend - Colecao Biblica
 
-API Spring Boot com autenticação JWT, refresh token, controle de acesso por role e CRUD de usuários com auditoria.
+Backend da aplicacao gamificada de estudo biblico com:
+- autenticacao JWT
+- quiz geral e quiz por personagem
+- sessao de quiz pergunta a pergunta
+- recompensas e economia
+- colecao de figurinhas
+- comentarios privados
+- ranking
 
 ## Stack
 
@@ -10,247 +17,139 @@ API Spring Boot com autenticação JWT, refresh token, controle de acesso por ro
 - Spring Data JPA
 - PostgreSQL
 - JWT
+- Maven
 
-## Regras de acesso
+## Estrutura por modulo
 
-- `POST /users` é público para permitir cadastro.
-- `GET /users` e `GET /users/{id}` exigem `ADMIN`.
-- `PUT /users/{id}` e `DELETE /users/{id}` exigem que o usuário logado seja o dono da conta ou `ADMIN`.
-- Em novas entidades, a regra padrão deve ser `ADMIN`, exceto quando houver exceção explícita de dono da conta.
+- Auth e Users
+- Characters (figurinhas)
+- Questions
+- Rewards
+- Shop
+- Quiz (submit direto + sessao)
+- Collection
+- Comments
+- Ranking
+- Settings
 
-## Autenticação
+Pacotes principais:
+- `src/main/java/backend/controller`
+- `src/main/java/backend/service`
+- `src/main/java/backend/repository`
+- `src/main/java/backend/model`
+- `src/main/java/backend/dto`
 
-### Login
+## Executando localmente
 
-`POST /auth/login`
+## 1) Configurar variaveis
 
-Exemplo de payload:
+No root do workspace, copie `.env.example` para `.env` e ajuste se necessario.
 
-```json
-{
-  "email": "admin@email.com",
-  "password": "123456"
-}
+Variaveis usadas:
+- `JWT_SECRET`
+- `POSTGRES_DB`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `PGADMIN_DEFAULT_EMAIL`
+- `PGADMIN_DEFAULT_PASSWORD`
+
+## 2) Subir banco e pgAdmin
+
+No root do projeto:
+
+```bash
+docker compose up -d
 ```
 
-Resposta:
+## 3) Subir backend
 
-```json
-{
-  "accessToken": "...",
-  "refreshToken": "..."
-}
+Dentro de `backend`:
+
+```bash
+./mvnw spring-boot:run
 ```
 
-### Refresh token
+No Windows PowerShell:
 
-`POST /auth/refresh`
-
-Exemplo de payload:
-
-```json
-{
-  "refreshToken": "..."
-}
+```powershell
+.\mvnw.cmd spring-boot:run
 ```
 
-A resposta devolve um novo par de tokens.
+## 4) Testes
 
-### Usando o token
+```bash
+./mvnw test
+```
 
-Para acessar rotas protegidas, envie o header:
+## Banco e migrations
+
+- O projeto usa `spring.jpa.hibernate.ddl-auto=update`.
+- O schema evolui automaticamente conforme as entidades.
+- Existe seed inicial em `SeedDataConfig` (exceto profile `test`) com:
+  - configuracoes padrao
+  - personagens iniciais
+  - perguntas iniciais
+  - recompensas iniciais
+  - itens iniciais de loja
+
+## Seguranca e acesso
+
+Regras centrais (resumo):
+- `POST /users` e `/auth/**`: publico
+- rotas `/admin` de dominio: ADMIN
+- atualizacao/exclusao de usuario: dono ou ADMIN (validado no service)
+- demais rotas de jogo: autenticadas
+
+Token JWT no header:
 
 ```http
-Authorization: Bearer SEU_ACCESS_TOKEN
+Authorization: Bearer <accessToken>
 ```
 
-## CRUD de usuários
+## Quiz: dois modos suportados
 
-### Criar usuário
+## 1) Submit direto
 
-`POST /users`
+Cliente calcula/manda estatisticas finais e chama:
+- `POST /quiz/matches/submit`
 
-Exemplo:
+## 2) Sessao pergunta a pergunta
 
-```json
-{
-  "name": "João",
-  "email": "joao@email.com",
-  "password": "123456",
-  "role": "USER"
-}
-```
+Fluxo recomendado:
+1. `POST /quiz/sessions/start`
+2. `GET /quiz/sessions/active` (ou `GET /quiz/sessions/{sessionId}`)
+3. `POST /quiz/sessions/{sessionId}/answer` para cada pergunta
+4. sessao finaliza automaticamente ao acabar perguntas ou vidas
+5. opcional: `POST /quiz/sessions/{sessionId}/abandon`
+6. historico: `GET /quiz/history`
 
-Se `role` não for enviado, o sistema usa `USER`.
+## Validacao e erros
 
-### Listar usuários com paginação e filtro
+- DTOs de entrada usam Bean Validation (`@Valid`).
+- Erros de validacao retornam `400` com campo `fields` detalhando os campos invalidos.
+- Erros de negocio usam excecoes customizadas com respostas JSON padronizadas.
 
-`GET /users?page=0&size=10&name=joao&email=@email.com&role=ADMIN`
+## Documentacao de endpoints
 
-Parâmetros:
+Todos os endpoints, acessos e exemplos estao em:
 
-- `page`: página atual, começando em 0
-- `size`: tamanho da página
-- `name`: filtro parcial por nome
-- `email`: filtro parcial por email
-- `role`: filtro por role (`ADMIN` ou `USER`)
+- `docs/endpoints.md`
 
-A resposta vem no formato paginado do Spring.
+## Estado atual do backend
 
-### Buscar usuário por id
+Implementado:
+- autenticacao e usuarios
+- CRUD administrativo de personagens, perguntas, recompensas e loja
+- configuracoes de jogo com update administrativo
+- quiz com recompensas diarias
+- sessao de quiz em andamento (start, status, active, answer, abandon, history)
+- colecao do usuario
+- comentarios privados
+- ranking top 50
 
-`GET /users/{id}`
+## Sugestoes para proxima fase
 
-### Atualizar usuário
-
-`PUT /users/{id}`
-
-Exemplo:
-
-```json
-{
-  "name": "João Silva",
-  "password": "novaSenha"
-}
-```
-
-### Excluir usuário
-
-`DELETE /users/{id}`
-
-A exclusão é lógica. O registro não é apagado do banco; ele é marcado como removido.
-
-## Auditoria
-
-O usuário guarda:
-
-- `createdAt`
-- `updatedAt`
-- `createdBy`
-- `updatedBy`
-- `deleted`
-- `deletedAt`
-- `deletedBy`
-
-## Como criar uma nova entidade
-
-### 1. Criar a entity
-
-Crie a classe em `src/main/java/backend/model`.
-
-Recomendações:
-
-- use `@Entity`
-- adicione campos de auditoria se fizer sentido
-- se a entidade também precisar de segurança por login, siga o mesmo padrão do `User`
-
-### 2. Criar o repository
-
-Crie a interface em `src/main/java/backend/repository`.
-
-Se quiser paginação com filtro flexível, faça o repositório estender:
-
-- `JpaRepository`
-- `JpaSpecificationExecutor`
-
-### 3. Criar DTOs
-
-Crie DTOs de entrada e saída em `src/main/java/backend/dto`.
-
-Boas práticas:
-
-- não exponha a entity direto no controller
-- nunca retorne senha ou dados sensíveis
-- use DTO diferente para create e update quando necessário
-
-### 4. Criar o service
-
-Coloque a regra de negócio em `src/main/java/backend/service`.
-
-No service, centralize:
-
-- validação de negócio
-- checagem de duplicidade
-- conversão entity -> response
-- regra de proprietário ou admin, quando a entidade tiver dono
-
-### 5. Criar o controller
-
-No controller, deixe apenas a camada HTTP:
-
-- receber request
-- chamar service
-- retornar response
-
-Exemplo de padrão para rotas:
-
-- `POST /nova-entidade` para criação pública, se necessário
-- `GET /nova-entidade` para listagem paginada
-- `GET /nova-entidade/{id}` para busca por id
-- `PUT /nova-entidade/{id}` para atualização
-- `DELETE /nova-entidade/{id}` para exclusão
-
-### 6. Definir permissão
-
-Regra sugerida:
-
-- criação pública: liberar apenas `POST`
-- leitura/listagem: liberar para `ADMIN`
-- alteração/exclusão: `ADMIN` ou dono do registro, se a entidade tiver dono
-- demais operações administrativas: `ADMIN`
-
-No `SecurityConfig`, adicione os `requestMatchers` da nova rota.
-
-Se a regra for por dono da conta, implemente a validação no service, comparando o usuário autenticado com o dono do registro.
-
-### 7. Se a entidade precisar de paginação e filtro
-
-Use:
-
-- `Pageable` no controller/service
-- `Specification` no repository/service
-
-Exemplo de abordagem:
-
-- parâmetros opcionais na query string
-- filtro parcial para texto
-- retorno em `Page<T>`
-
-### 8. Se a entidade precisar de auditoria
-
-Use o mesmo padrão do `User`:
-
-- `@CreatedDate`
-- `@LastModifiedDate`
-- `@CreatedBy`
-- `@LastModifiedBy`
-- soft delete quando precisar preservar histórico
-
-### 9. Se a entidade tiver relacionamento com usuário
-
-Salve quem criou ou alterou usando o usuário autenticado vindo do `SecurityContextHolder`.
-
-## Fluxo recomendado para uma nova entidade
-
-1. Criar entity e repository.
-2. Criar DTOs.
-3. Criar service com regras de negócio.
-4. Criar controller.
-5. Definir permissões no `SecurityConfig`.
-6. Adicionar auditoria e soft delete se precisar de histórico.
-7. Testar com token JWT.
-
-## Exemplo de regra por dono/admin
-
-Se a entidade pertencer a um usuário, a regra padrão é:
-
-- o dono pode editar e excluir o próprio registro
-- `ADMIN` pode fazer qualquer operação
-- outros usuários não podem alterar
-
-A validação deve ficar no service para evitar bypass por controller.
-
-## Próximo passo sugerido
-
-- criar testes para autenticação, CRUD de usuários, paginação e regras de permissão
-- criar a primeira entidade de domínio seguindo esse padrão
+1. Adicionar documentacao OpenAPI/Swagger.
+2. Criar suite de testes de integracao para controllers de quiz.
+3. Considerar versionamento de API (`/api/v1`).
+4. Avaliar migracao de `ddl-auto=update` para migrations versionadas (Flyway/Liquibase).

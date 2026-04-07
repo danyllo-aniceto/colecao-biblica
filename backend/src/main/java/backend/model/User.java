@@ -54,8 +54,29 @@ public class User implements UserDetails {
     @LastModifiedBy
     private String updatedBy;
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean deleted = false;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private int xp = 0;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private int level = 1;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private int coins = 0;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private int totalScore = 0;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private int rewardTickets = 0;
 
     private Instant deletedAt;
 
