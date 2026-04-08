@@ -19,8 +19,10 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
@@ -111,22 +113,58 @@ public class RewardService {
         return Optional.of(rewards.getLast());
     }
 
-    public void applyRewardToUser(User user, RewardDefinition reward) {
+    public record RewardApplicationResult(
+            RewardType rewardType,
+            String rewardName,
+            Long characterId,
+            String characterName,
+            StickerRarity characterRarity,
+            boolean characterUnlocked
+    ) {
+    }
+
+    public RewardApplicationResult applyRewardToUser(User user, RewardDefinition reward) {
+        RewardApplicationResult result;
+
         switch (reward.getRewardType()) {
-            case COINS -> user.setCoins(user.getCoins() + defaultZero(reward.getCoinAmount()));
-            case STICKER -> applyStickerReward(user, reward);
-            case EXTRA_LIFE -> user.setExtraLifeBoosts(
-                Math.min(user.getExtraLifeBoosts() + Math.max(defaultZero(reward.getExtraLives()), 1), gameSettingService.getMaxExtraLifeBoosts())
-            );
-            case EXTRA_TIME -> user.setExtraTimeBoosts(
-                Math.min(user.getExtraTimeBoosts() + Math.max(defaultZero(reward.getExtraTimeSeconds()), 1), gameSettingService.getMaxExtraTimeBoosts())
-            );
-            case XP_MULTIPLIER -> user.setDoubleXpBoosts(
-                Math.min(user.getDoubleXpBoosts() + 1, gameSettingService.getMaxDoubleXpBoosts())
-            );
+            case COINS -> {
+                user.setCoins(user.getCoins() + defaultZero(reward.getCoinAmount()));
+                result = new RewardApplicationResult(RewardType.COINS, reward.getName(), null, null, null, false);
+            }
+            case STICKER -> {
+                StickerRewardResult stickerResult = applyStickerReward(user, reward);
+                result = new RewardApplicationResult(
+                        RewardType.STICKER,
+                        reward.getName(),
+                        stickerResult.character().getId(),
+                        stickerResult.character().getName(),
+                        stickerResult.character().getRarity(),
+                        stickerResult.unlocked()
+                );
+            }
+            case EXTRA_LIFE -> {
+                user.setExtraLifeBoosts(
+                    Math.min(user.getExtraLifeBoosts() + Math.max(defaultZero(reward.getExtraLives()), 1), gameSettingService.getMaxExtraLifeBoosts())
+                );
+                result = new RewardApplicationResult(RewardType.EXTRA_LIFE, reward.getName(), null, null, null, false);
+            }
+            case EXTRA_TIME -> {
+                user.setExtraTimeBoosts(
+                    Math.min(user.getExtraTimeBoosts() + Math.max(defaultZero(reward.getExtraTimeSeconds()), 1), gameSettingService.getMaxExtraTimeBoosts())
+                );
+                result = new RewardApplicationResult(RewardType.EXTRA_TIME, reward.getName(), null, null, null, false);
+            }
+            case XP_MULTIPLIER -> {
+                user.setDoubleXpBoosts(
+                    Math.min(user.getDoubleXpBoosts() + 1, gameSettingService.getMaxDoubleXpBoosts())
+                );
+                result = new RewardApplicationResult(RewardType.XP_MULTIPLIER, reward.getName(), null, null, null, false);
+            }
+            default -> result = new RewardApplicationResult(reward.getRewardType(), reward.getName(), null, null, null, false);
         }
 
         userRepository.save(user);
+        return result;
     }
 
     public RewardDefinitionResponse toResponse(RewardDefinition reward) {
@@ -146,14 +184,25 @@ public class RewardService {
         );
     }
 
-    private void applyStickerReward(User user, RewardDefinition reward) {
+    private record StickerRewardResult(BiblicalCharacter character, boolean unlocked) {
+    }
+
+    private StickerRewardResult applyStickerReward(User user, RewardDefinition reward) {
         BiblicalCharacter character = reward.getStickerCharacter();
 
         if (character == null && reward.getStickerRarity() != null) {
             List<BiblicalCharacter> byRarity = new ArrayList<>(characterRepository.findByRarity(reward.getStickerRarity()));
             byRarity.sort(Comparator.comparing(BiblicalCharacter::getId));
             if (!byRarity.isEmpty()) {
-                character = byRarity.get(ThreadLocalRandom.current().nextInt(byRarity.size()));
+                Set<Long> ownedCharacterIds = new HashSet<>(userStickerRepository.findByUserId(user.getId()).stream()
+                        .map(sticker -> sticker.getCharacter().getId())
+                        .toList());
+                List<BiblicalCharacter> missingCharacters = byRarity.stream()
+                        .filter(item -> !ownedCharacterIds.contains(item.getId()))
+                        .toList();
+
+                List<BiblicalCharacter> pool = missingCharacters.isEmpty() ? byRarity : missingCharacters;
+                character = pool.get(ThreadLocalRandom.current().nextInt(pool.size()));
             }
         }
 
@@ -162,6 +211,7 @@ public class RewardService {
         }
 
         final BiblicalCharacter selectedCharacter = character;
+        boolean alreadyOwned = userStickerRepository.findByUserIdAndCharacterId(user.getId(), selectedCharacter.getId()).isPresent();
 
         userStickerRepository.findByUserIdAndCharacterId(user.getId(), selectedCharacter.getId()).orElseGet(() ->
                 userStickerRepository.save(UserSticker.builder()
@@ -170,6 +220,8 @@ public class RewardService {
                         .acquiredAt(Instant.now())
                         .build())
         );
+
+        return new StickerRewardResult(selectedCharacter, !alreadyOwned);
     }
 
     private void validateDropChance(Double dropChance) {

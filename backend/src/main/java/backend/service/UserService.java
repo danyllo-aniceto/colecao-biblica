@@ -114,6 +114,13 @@ public class UserService {
     public UserResponse toResponse(User user) {
         return new UserResponse(
                 user.getId(),
+                user.getXp(),
+                user.getLevel(),
+                user.getCoins(),
+                user.getTotalScore(),
+                user.getExtraLifeBoosts(),
+                user.getExtraTimeBoosts(),
+                user.getDoubleXpBoosts(),
                 user.getName(),
                 user.getEmail(),
                 user.getRole(),

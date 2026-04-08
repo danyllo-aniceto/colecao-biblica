@@ -17,6 +17,13 @@ export type AuthResponse = {
 
 export type UserProfile = {
   id: number;
+  xp?: number;
+  level?: number;
+  coins?: number;
+  totalScore?: number;
+  extraLifeBoosts?: number;
+  extraTimeBoosts?: number;
+  doubleXpBoosts?: number;
   name: string;
   email: string;
   role: 'ADMIN' | 'USER';

@@ -5,6 +5,13 @@ import backend.model.Role;
 import java.time.Instant;
 
 public record UserResponse(Long id,
+				   int xp,
+				   int level,
+				   int coins,
+				   int totalScore,
+				   int extraLifeBoosts,
+				   int extraTimeBoosts,
+				   int doubleXpBoosts,
 						   String name,
 						   String email,
 						   Role role,
