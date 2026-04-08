@@ -76,7 +76,15 @@ public class User implements UserDetails {
 
     @Builder.Default
     @Column(nullable = false)
-    private int rewardTickets = 0;
+    private int extraLifeBoosts = 0;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private int extraTimeBoosts = 0;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private int doubleXpBoosts = 0;
 
     private Instant deletedAt;
 

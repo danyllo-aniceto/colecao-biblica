@@ -72,8 +72,17 @@ public class QuizSession {
     @Column(nullable = false)
     private double xpMultiplier = 1.0;
 
+    @Builder.Default
     @Column(nullable = false)
-    private int rewardTicketsSpent;
+    private boolean extraTimeUsed = false;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean extraLifeUsed = false;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean xpMultiplierUsed = false;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String questionIdsCsv;

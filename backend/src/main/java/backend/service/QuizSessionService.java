@@ -104,7 +104,6 @@ public class QuizSessionService {
                 .correctAnswers(0)
                 .wrongAnswers(0)
                 .xpMultiplier(1.0)
-                .rewardTicketsSpent(0)
                 .questionIdsCsv(questionIdsCsv)
                 .build());
 
@@ -236,34 +235,54 @@ public class QuizSessionService {
     }
 
     private boolean applyConsumables(User user, QuizSession session, AnswerQuizQuestionRequest request, boolean answerCorrect) {
-        int requiredTickets = 0;
         boolean extraLifeApplied = false;
+        boolean hasChanges = false;
 
         if (Boolean.TRUE.equals(request.useExtraTime())) {
-            requiredTickets++;
-        }
-        if (!answerCorrect && Boolean.TRUE.equals(request.useExtraLife())) {
-            requiredTickets++;
-            extraLifeApplied = true;
-        }
-        if (Boolean.TRUE.equals(request.useXpMultiplier()) && session.getXpMultiplier() <= 1.0) {
-            requiredTickets++;
+            if (session.isExtraTimeUsed()) {
+                throw new BadRequestException("Bônus de tempo extra já foi usado nesta partida");
+            }
+            if (user.getExtraTimeBoosts() <= 0) {
+                throw new BadRequestException("Você não possui bônus de tempo extra");
+            }
+
+            user.setExtraTimeBoosts(user.getExtraTimeBoosts() - 1);
+            session.setExtraTimeUsed(true);
+            hasChanges = true;
         }
 
-        if (requiredTickets == 0) {
+        if (!answerCorrect && Boolean.TRUE.equals(request.useExtraLife())) {
+            if (session.isExtraLifeUsed()) {
+                throw new BadRequestException("Bônus de vida extra já foi usado nesta partida");
+            }
+            if (user.getExtraLifeBoosts() <= 0) {
+                throw new BadRequestException("Você não possui bônus de vida extra");
+            }
+
+            user.setExtraLifeBoosts(user.getExtraLifeBoosts() - 1);
+            session.setExtraLifeUsed(true);
+            extraLifeApplied = true;
+            hasChanges = true;
+        }
+
+        if (Boolean.TRUE.equals(request.useXpMultiplier())) {
+            if (session.isXpMultiplierUsed()) {
+                throw new BadRequestException("Bônus de XP em dobro já foi usado nesta partida");
+            }
+            if (user.getDoubleXpBoosts() <= 0) {
+                throw new BadRequestException("Você não possui bônus de XP em dobro");
+            }
+
+            user.setDoubleXpBoosts(user.getDoubleXpBoosts() - 1);
+            session.setXpMultiplier(gameSettingService.getDoubleXpMultiplier());
+            session.setXpMultiplierUsed(true);
+            hasChanges = true;
+        }
+
+        if (!hasChanges) {
             return false;
         }
 
-        if (user.getRewardTickets() < requiredTickets) {
-            throw new BadRequestException("Tickets de recompensa insuficientes para usar os bônus selecionados");
-        }
-
-        if (Boolean.TRUE.equals(request.useXpMultiplier()) && session.getXpMultiplier() <= 1.0) {
-            session.setXpMultiplier(1.5);
-        }
-
-        user.setRewardTickets(user.getRewardTickets() - requiredTickets);
-        session.setRewardTicketsSpent(session.getRewardTicketsSpent() + requiredTickets);
         userRepository.save(user);
 
         return extraLifeApplied;

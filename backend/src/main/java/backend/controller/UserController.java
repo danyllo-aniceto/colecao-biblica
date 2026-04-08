@@ -4,6 +4,7 @@ import backend.dto.CreateUserRequest;
 import backend.dto.UpdateUserRequest;
 import backend.dto.UserResponse;
 import backend.service.UserService;
+import backend.service.CurrentUserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,9 +15,11 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService service;
+    private final CurrentUserService currentUserService;
 
-    public UserController(UserService service) {
+    public UserController(UserService service, CurrentUserService currentUserService) {
         this.service = service;
+        this.currentUserService = currentUserService;
     }
 
     @PostMapping
@@ -37,6 +40,11 @@ public class UserController {
     @GetMapping("/{id}")
     public UserResponse getUserById(@PathVariable Long id) {
         return service.findById(id);
+    }
+
+    @GetMapping("/me")
+    public UserResponse getCurrentUser() {
+        return service.toResponse(currentUserService.getCurrentUser());
     }
 
     @PutMapping("/{id}")

@@ -52,8 +52,6 @@ public class RewardDefinition {
 
     private Double xpMultiplier;
 
-    private Integer ticketAmount;
-
     @Column(nullable = false)
     private Double dropChance;
 

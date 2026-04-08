@@ -14,7 +14,6 @@ public record RewardDefinitionResponse(
         Integer extraLives,
         Integer extraTimeSeconds,
         Double xpMultiplier,
-        Integer ticketAmount,
         Double dropChance,
         boolean active
 ) {

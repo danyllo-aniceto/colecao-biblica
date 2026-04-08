@@ -15,7 +15,6 @@ public record CreateRewardDefinitionRequest(
         Integer extraLives,
         Integer extraTimeSeconds,
         Double xpMultiplier,
-        Integer ticketAmount,
         @NotNull @DecimalMin(value = "0.0001") Double dropChance,
         Boolean active
 ) {

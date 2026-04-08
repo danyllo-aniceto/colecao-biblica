@@ -75,7 +75,6 @@ class QuizSessionServiceTest {
                 .email("player@email.com")
                 .password("secret")
                 .role(Role.USER)
-                .rewardTickets(0)
                 .build();
 
         Question question = Question.builder()
@@ -117,7 +116,6 @@ class QuizSessionServiceTest {
                 .correctAnswers(0)
                 .wrongAnswers(0)
                 .xpMultiplier(1.0)
-                .rewardTicketsSpent(0)
                 .questionIdsCsv("101")
                 .build();
 
@@ -164,7 +162,6 @@ class QuizSessionServiceTest {
                 .correctAnswers(1)
                 .wrongAnswers(0)
                 .xpMultiplier(1.0)
-                .rewardTicketsSpent(0)
                 .questionIdsCsv("10,11,12,13,14")
                 .build();
 
@@ -213,7 +210,6 @@ class QuizSessionServiceTest {
                 .correctAnswers(0)
                 .wrongAnswers(0)
                 .xpMultiplier(1.0)
-                .rewardTicketsSpent(0)
                 .questionIdsCsv("500")
                 .build();
 
@@ -237,7 +233,6 @@ class QuizSessionServiceTest {
                 .email("tickets@email.com")
                 .password("secret")
                 .role(Role.USER)
-                .rewardTickets(2)
                 .build();
 
         Question question = Question.builder()
@@ -265,7 +260,6 @@ class QuizSessionServiceTest {
                 .correctAnswers(0)
                 .wrongAnswers(0)
                 .xpMultiplier(1.0)
-                .rewardTicketsSpent(0)
                 .questionIdsCsv("700,701")
                 .build();
 
@@ -294,7 +288,6 @@ class QuizSessionServiceTest {
         );
 
         assertTrue(response.correct());
-        assertEquals(2, user.getRewardTickets());
         verify(userRepository, never()).save(any(User.class));
     }
 }

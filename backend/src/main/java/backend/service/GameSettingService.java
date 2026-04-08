@@ -13,6 +13,10 @@ public class GameSettingService {
     public static final String KEY_STARTING_LIVES = "quiz.general.startingLives";
     public static final String KEY_REWARD_MATCH_LIMIT_PER_DAY = "quiz.general.rewardLimitPerDay";
     public static final String KEY_XP_CHARACTER_STUDY_PERCENT = "quiz.characterStudy.xpPercent";
+    public static final String KEY_MAX_EXTRA_LIFE_BOOSTS = "reward.boost.maxExtraLife";
+    public static final String KEY_MAX_EXTRA_TIME_BOOSTS = "reward.boost.maxExtraTime";
+    public static final String KEY_MAX_DOUBLE_XP_BOOSTS = "reward.boost.maxDoubleXp";
+    public static final String KEY_DOUBLE_XP_MULTIPLIER = "reward.boost.doubleXpMultiplier";
 
     private final GameSettingRepository repository;
 
@@ -36,12 +40,41 @@ public class GameSettingService {
         return getInt(KEY_XP_CHARACTER_STUDY_PERCENT, 35);
     }
 
+    public int getMaxExtraLifeBoosts() {
+        return getInt(KEY_MAX_EXTRA_LIFE_BOOSTS, 5);
+    }
+
+    public int getMaxExtraTimeBoosts() {
+        return getInt(KEY_MAX_EXTRA_TIME_BOOSTS, 5);
+    }
+
+    public int getMaxDoubleXpBoosts() {
+        return getInt(KEY_MAX_DOUBLE_XP_BOOSTS, 5);
+    }
+
+    public double getDoubleXpMultiplier() {
+        return getDouble(KEY_DOUBLE_XP_MULTIPLIER, 2.0);
+    }
+
     public int getInt(String key, int defaultValue) {
         return repository.findBySettingKey(key)
                 .map(GameSetting::getSettingValue)
                 .map(value -> {
                     try {
                         return Integer.parseInt(value);
+                    } catch (NumberFormatException ignored) {
+                        return defaultValue;
+                    }
+                })
+                .orElse(defaultValue);
+    }
+
+    public double getDouble(String key, double defaultValue) {
+        return repository.findBySettingKey(key)
+                .map(GameSetting::getSettingValue)
+                .map(value -> {
+                    try {
+                        return Double.parseDouble(value);
                     } catch (NumberFormatException ignored) {
                         return defaultValue;
                     }
@@ -62,7 +95,11 @@ public class GameSettingService {
                 getMaxQuestionsPerMatch(),
                 getStartingLives(),
                 getRewardMatchLimitPerDay(),
-                getCharacterStudyXpPercent()
+                getCharacterStudyXpPercent(),
+                getMaxExtraLifeBoosts(),
+                getMaxExtraTimeBoosts(),
+                getMaxDoubleXpBoosts(),
+                getDoubleXpMultiplier()
         );
     }
 
@@ -78,6 +115,18 @@ public class GameSettingService {
         }
         if (request.characterStudyXpPercent() != null) {
             upsert(KEY_XP_CHARACTER_STUDY_PERCENT, request.characterStudyXpPercent().toString(), "Percentual de XP em quiz de personagem");
+        }
+        if (request.maxExtraLifeBoosts() != null) {
+            upsert(KEY_MAX_EXTRA_LIFE_BOOSTS, request.maxExtraLifeBoosts().toString(), "Máximo de bônus de vida extra acumulados por usuário");
+        }
+        if (request.maxExtraTimeBoosts() != null) {
+            upsert(KEY_MAX_EXTRA_TIME_BOOSTS, request.maxExtraTimeBoosts().toString(), "Máximo de bônus de tempo extra acumulados por usuário");
+        }
+        if (request.maxDoubleXpBoosts() != null) {
+            upsert(KEY_MAX_DOUBLE_XP_BOOSTS, request.maxDoubleXpBoosts().toString(), "Máximo de bônus de XP em dobro acumulados por usuário");
+        }
+        if (request.doubleXpMultiplier() != null) {
+            upsert(KEY_DOUBLE_XP_MULTIPLIER, request.doubleXpMultiplier().toString(), "Multiplicador aplicado ao usar XP em dobro");
         }
 
         return getSettings();

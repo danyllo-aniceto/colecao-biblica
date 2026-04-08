@@ -3,20 +3,23 @@ package backend.config;
 import backend.model.BiblicalCharacter;
 import backend.model.Question;
 import backend.model.QuestionDifficulty;
-import backend.model.RewardDefinition;
 import backend.model.RewardType;
-import backend.model.ShopItem;
-import backend.model.ShopItemType;
+import backend.model.Role;
 import backend.model.StickerRarity;
+import backend.model.User;
 import backend.repository.BiblicalCharacterRepository;
 import backend.repository.QuestionRepository;
-import backend.repository.RewardDefinitionRepository;
-import backend.repository.ShopItemRepository;
+import backend.repository.UserRepository;
 import backend.service.GameSettingService;
+import backend.service.RewardService;
+import backend.service.ShopService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.List;
 
 @Configuration
 @Profile("!test")
@@ -25,14 +28,26 @@ public class SeedDataConfig {
     @Bean
     CommandLineRunner seedData(BiblicalCharacterRepository characterRepository,
                                QuestionRepository questionRepository,
-                               RewardDefinitionRepository rewardRepository,
-                               ShopItemRepository shopItemRepository,
-                               GameSettingService gameSettingService) {
+                               UserRepository userRepository,
+                               PasswordEncoder passwordEncoder,
+                               GameSettingService gameSettingService,
+                               RewardService rewardService,
+                               ShopService shopService) {
         return args -> {
+            // Legacy REWARD_TICKET records will not be loaded due to enum removal
+            // No cleanup needed as the enum is completely removed from the system
+            
             gameSettingService.upsert(GameSettingService.KEY_MAX_QUESTIONS_PER_MATCH, "100", "Máximo de perguntas por partida geral");
             gameSettingService.upsert(GameSettingService.KEY_STARTING_LIVES, "3", "Vidas iniciais por partida geral");
             gameSettingService.upsert(GameSettingService.KEY_REWARD_MATCH_LIMIT_PER_DAY, "4", "Limite diário de partidas com recompensa");
             gameSettingService.upsert(GameSettingService.KEY_XP_CHARACTER_STUDY_PERCENT, "35", "Percentual de XP em quiz de personagem");
+                        gameSettingService.upsert(GameSettingService.KEY_MAX_EXTRA_LIFE_BOOSTS, "5", "Máximo de bônus de vida extra acumulados por usuário");
+                        gameSettingService.upsert(GameSettingService.KEY_MAX_EXTRA_TIME_BOOSTS, "5", "Máximo de bônus de tempo extra acumulados por usuário");
+                        gameSettingService.upsert(GameSettingService.KEY_MAX_DOUBLE_XP_BOOSTS, "5", "Máximo de bônus de XP em dobro acumulados por usuário");
+                        gameSettingService.upsert(GameSettingService.KEY_DOUBLE_XP_MULTIPLIER, "2.0", "Multiplicador aplicado ao usar XP em dobro");
+
+            ensureUser(userRepository, passwordEncoder, "Admin Teste", "admin2@email.com", "123456", Role.ADMIN);
+            ensureUser(userRepository, passwordEncoder, "Usuário Teste", "user@email.com", "123456", Role.USER);
 
             if (characterRepository.count() == 0) {
                 BiblicalCharacter david = characterRepository.save(BiblicalCharacter.builder()
@@ -122,60 +137,24 @@ public class SeedDataConfig {
                 }
             }
 
-            if (rewardRepository.count() == 0) {
-                RewardDefinition commonCoins = rewardRepository.save(RewardDefinition.builder()
-                        .name("Moedas Comuns")
-                        .rewardType(RewardType.COINS)
-                        .coinAmount(25)
-                        .dropChance(40.0)
-                        .active(true)
-                        .build());
-
-                RewardDefinition rareCoins = rewardRepository.save(RewardDefinition.builder()
-                        .name("Moedas Raras")
-                        .rewardType(RewardType.COINS)
-                        .coinAmount(75)
-                        .dropChance(25.0)
-                        .active(true)
-                        .build());
-
-                RewardDefinition ticket = rewardRepository.save(RewardDefinition.builder()
-                        .name("Ticket de Recompensa")
-                        .rewardType(RewardType.REWARD_TICKET)
-                        .ticketAmount(1)
-                        .dropChance(10.0)
-                        .active(true)
-                        .build());
-
-                if (shopItemRepository.count() == 0) {
-                    shopItemRepository.save(ShopItem.builder()
-                            .name("Pacote de Moedas")
-                            .description("Concede moedas para compras na loja")
-                            .itemType(ShopItemType.ECONOMY)
-                            .priceCoins(100)
-                            .rewardDefinition(commonCoins)
-                            .active(true)
-                            .build());
-
-                    shopItemRepository.save(ShopItem.builder()
-                            .name("Pacote Raro")
-                            .description("Chance de progresso acelerado")
-                            .itemType(ShopItemType.GAME_BONUS)
-                            .priceCoins(250)
-                            .rewardDefinition(rareCoins)
-                            .active(true)
-                            .build());
-
-                    shopItemRepository.save(ShopItem.builder()
-                            .name("Ticket Extra")
-                            .description("Receba um ticket para recompensas")
-                            .itemType(ShopItemType.ECONOMY)
-                            .priceCoins(180)
-                            .rewardDefinition(ticket)
-                            .active(true)
-                            .build());
-                }
-            }
+            rewardService.ensureFixedRewards();
+            shopService.ensureFixedShopItems();
         };
+    }
+
+    private void ensureUser(UserRepository userRepository,
+                            PasswordEncoder passwordEncoder,
+                            String name,
+                            String email,
+                            String password,
+                            Role role) {
+        userRepository.findByEmailAndDeletedFalse(email).orElseGet(() -> userRepository.save(User.builder()
+                .name(name)
+                .email(email)
+                .password(passwordEncoder.encode(password))
+                .role(role)
+                .createdBy(email)
+                .updatedBy(email)
+                .build()));
     }
 }
