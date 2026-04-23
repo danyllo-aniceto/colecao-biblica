@@ -33,8 +33,25 @@ function extractMermaidErrorMessage(error: unknown) {
   return 'Sintaxe Mermaid inválida.';
 }
 
-export async function validateMermaidSyntax(code: string) {
+export function sanitizeMermaidCode(code: string) {
   const source = code.trim();
+  if (!source) {
+    return '';
+  }
+
+  if (!/^timeline\b/i.test(source)) {
+    return source;
+  }
+
+  return source
+    .split(/\r?\n/)
+    .filter((line) => !/^\s*(classDef|class)\b/i.test(line.trim()))
+    .join('\n')
+    .trim();
+}
+
+export async function validateMermaidSyntax(code: string) {
+  const source = sanitizeMermaidCode(code);
   if (!source) {
     return { valid: true as const, error: null as string | null };
   }
@@ -56,11 +73,15 @@ export function MermaidDiagram({ code, className, initialTheme = 'neutral' }: Me
   const [theme, setTheme] = useState<'default' | 'neutral' | 'forest' | 'dark'>(initialTheme);
   const svgHostRef = useRef<HTMLDivElement | null>(null);
 
+  function changeZoomBy(delta: number) {
+    setZoom((currentZoom) => Math.max(0.5, Math.min(2.5, currentZoom + delta)));
+  }
+
   useEffect(() => {
     let isMounted = true;
 
     async function renderDiagram() {
-      const source = code.trim();
+      const source = sanitizeMermaidCode(code);
       if (!source) {
         setSvg('');
         setError(null);
@@ -117,11 +138,6 @@ export function MermaidDiagram({ code, className, initialTheme = 'neutral' }: Me
     svgElement.style.display = 'block';
   }, [svg, zoom]);
 
-  function changeZoom(nextZoom: number) {
-    const clamped = Math.max(0.5, Math.min(2.5, nextZoom));
-    setZoom(clamped);
-  }
-
   if (error) {
     return <p className="text-sm text-red-700">{error}</p>;
   }
@@ -146,18 +162,29 @@ export function MermaidDiagram({ code, className, initialTheme = 'neutral' }: Me
             <option value="dark">Escuro</option>
           </select>
         </label>
-        <button type="button" className="h-8 rounded-lg border border-[var(--border)] px-2 text-xs" onClick={() => changeZoom(zoom - 0.15)}>
+        <button type="button" className="h-8 rounded-lg border border-[var(--border)] px-2 text-xs" onClick={() => changeZoomBy(-0.15)}>
           - Zoom
         </button>
-        <button type="button" className="h-8 rounded-lg border border-[var(--border)] px-2 text-xs" onClick={() => changeZoom(1)}>
+        <button type="button" className="h-8 rounded-lg border border-[var(--border)] px-2 text-xs" onClick={() => setZoom(1)}>
           Reset
         </button>
-        <button type="button" className="h-8 rounded-lg border border-[var(--border)] px-2 text-xs" onClick={() => changeZoom(zoom + 0.15)}>
+        <button type="button" className="h-8 rounded-lg border border-[var(--border)] px-2 text-xs" onClick={() => changeZoomBy(0.15)}>
           + Zoom
         </button>
         <span className="text-xs text-[var(--text-secondary)]">{Math.round(zoom * 100)}%</span>
+        <span className="text-xs text-[var(--text-secondary)]">Ctrl + scroll para zoom</span>
       </div>
-      <div className="max-h-[26rem] overflow-auto rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-2">
+      <div
+        className="max-h-[26rem] overflow-auto rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-2"
+        onWheel={(event) => {
+          if (!event.ctrlKey && !event.metaKey) {
+            return;
+          }
+
+          event.preventDefault();
+          changeZoomBy(event.deltaY > 0 ? -0.08 : 0.08);
+        }}
+      >
         <div
           ref={svgHostRef}
           className={className}

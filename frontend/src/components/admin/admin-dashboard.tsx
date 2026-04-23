@@ -16,7 +16,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { MermaidDiagram, validateMermaidSyntax } from '@/components/ui/mermaid-diagram';
+import { MermaidDiagram, sanitizeMermaidCode, validateMermaidSyntax } from '@/components/ui/mermaid-diagram';
 import { RichContent } from '@/components/ui/rich-content';
 import { clearRichTextEditorDrafts, RichTextEditor } from '@/components/ui/rich-text-editor';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -325,14 +325,84 @@ function OptionalNumberText(value: string) {
   return parsed === null ? undefined : parsed;
 }
 
+function appendMermaidSnippet(currentValue: string, snippet: string) {
+  const trimmed = currentValue.trimEnd();
+  return trimmed ? `${trimmed}\n\n${snippet}` : snippet;
+}
+
+function extractMermaidNodeIds(source: string) {
+  const ids = new Set<string>();
+
+  for (const line of source.split(/\r?\n/)) {
+    const matches = line.matchAll(/\b([A-Za-z0-9_]+)\s*(?=\[|\(|\{)/g);
+    for (const match of matches) {
+      ids.add(match[1]);
+    }
+  }
+
+  return [...ids];
+}
+
 function appendMermaidColorTemplate(currentValue: string) {
-  const template = `
+  const trimmed = currentValue.trimEnd();
+  if (trimmed.includes('classDef principal') && trimmed.includes('classDef secundario')) {
+    return trimmed;
+  }
+
+  if (/^timeline\b/i.test(trimmed)) {
+    return trimmed;
+  }
+
+  const nodeIds = extractMermaidNodeIds(trimmed);
+  const classAssignments = nodeIds.length
+    ? nodeIds.map((id, index) => `class ${id} ${index % 2 === 0 ? 'principal' : 'secundario'};`).join('\n')
+    : '%% Exemplo: class Abraao principal;';
+
+  const template = `classDef principal fill:#FDE68A,stroke:#B45309,color:#111827;
+classDef secundario fill:#BFDBFE,stroke:#1D4ED8,color:#111827;
+
+${classAssignments}`;
+
+  return trimmed ? `${trimmed}\n\n${template}` : `graph TD
+  Abraao[Abraão] --> Isaque[Isaque]
+  Abraao --> Ismael[Ismael]
+
+${template}`;
+}
+
+function appendTimelineHint(currentValue: string) {
+  const trimmed = currentValue.trimEnd();
+  const hint = `%% Mermaid timeline não suporta classDef.
+%% Para destacar eventos, use títulos curtos por section/linha.`;
+
+  return trimmed ? `${trimmed}\n\n${hint}` : `timeline
+  title Eventos importantes
+  1 Samuel 16 : Davi é ungido rei
+  1 Samuel 17 : Davi enfrenta Golias
+  2 Samuel 5 : Davi assume o trono`;
+}
+
+function buildTimelineTemplate(currentValue: string) {
+  return `timeline
+  title Eventos importantes
+  1 Samuel 16 : Davi é ungido rei
+  1 Samuel 17 : Davi enfrenta Golias
+  2 Samuel 5 : Davi assume o trono`;
+}
+
+function buildGenealogyTemplate(currentValue: string) {
+  return `graph TD
+  Abraao[Abraão] --> Isaque[Isaque]
+  Abraao --> Ismael[Ismael]
+  Isaque --> Jacó[Jacó]
+
 classDef principal fill:#FDE68A,stroke:#B45309,color:#111827;
 classDef secundario fill:#BFDBFE,stroke:#1D4ED8,color:#111827;
-`;
 
-  const trimmed = currentValue.trimEnd();
-  return trimmed ? `${trimmed}\n${template}` : template.trim();
+class Abraao principal;
+class Isaque principal;
+class Ismael secundario;
+class Jacó principal;`;
 }
 
 function fileToDataUrl(file: File) {
@@ -1025,9 +1095,12 @@ export function AdminDashboard() {
     setCharacterSubmitError(null);
 
     try {
+      const sanitizedGenealogy = sanitizeMermaidCode(characterForm.genealogy);
+      const sanitizedImportantEvents = sanitizeMermaidCode(characterForm.importantEvents);
+
       const [genealogyValidation, eventsValidation] = await Promise.all([
-        validateMermaidSyntax(characterForm.genealogy),
-        validateMermaidSyntax(characterForm.importantEvents),
+        validateMermaidSyntax(sanitizedGenealogy),
+        validateMermaidSyntax(sanitizedImportantEvents),
       ]);
 
       if (!genealogyValidation.valid) {
@@ -1054,6 +1127,9 @@ export function AdminDashboard() {
         keyVerses: optionalText(characterForm.keyVerses),
         keywords: optionalText(characterForm.keywords),
       };
+
+      payload.genealogy = optionalText(sanitizedGenealogy);
+      payload.importantEvents = optionalText(sanitizedImportantEvents);
 
       if (editingCharacterId === null) {
         await createCharacter(currentToken, payload);
@@ -2014,7 +2090,15 @@ export function AdminDashboard() {
                           variant="secondary"
                           onClick={() => setCharacterForm((current) => ({ ...current, genealogy: appendMermaidColorTemplate(current.genealogy) }))}
                         >
-                          Inserir cores no gráfico
+                          Aplicar cores no gráfico
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => setCharacterForm((current) => ({ ...current, genealogy: buildGenealogyTemplate(current.genealogy) }))}
+                        >
+                          Modelo pronto
                         </Button>
                       </div>
                       <textarea
@@ -2023,22 +2107,25 @@ export function AdminDashboard() {
                         onChange={(event) => setCharacterForm((current) => ({ ...current, genealogy: event.target.value }))}
                         placeholder="graph TD\nAbraao[Abraão] --> Isaque[Isaque]"
                       />
+                      <p className="text-xs text-[var(--text-secondary)]">
+                        Dica: use ids estáveis como <span className="font-mono">Abraao[Abraão]</span> e aplique classes com <span className="font-mono">class Abraao principal;</span>.
+                      </p>
                       <div className={markdownPreviewClassName}>
                         <MermaidDiagram code={characterForm.genealogy} className="[&_svg]:h-auto [&_svg]:w-full" />
                       </div>
                     </div>
                   </Field>
 
-                  <Field label="Eventos importantes" hint="Use Mermaid timeline. Você pode inserir bloco de cores também.">
+                  <Field label="Eventos importantes" hint="Use Mermaid timeline. O preview atualiza em tempo real e ajuda a detectar erros antes de salvar.">
                     <div className="space-y-3">
                       <div className="flex flex-wrap gap-2">
                         <Button
                           type="button"
                           size="sm"
                           variant="secondary"
-                          onClick={() => setCharacterForm((current) => ({ ...current, importantEvents: appendMermaidColorTemplate(current.importantEvents) }))}
+                          onClick={() => setCharacterForm((current) => ({ ...current, importantEvents: buildTimelineTemplate(current.importantEvents) }))}
                         >
-                          Inserir cores na timeline
+                          Inserir modelo de timeline
                         </Button>
                       </div>
                       <textarea
@@ -2047,6 +2134,9 @@ export function AdminDashboard() {
                         onChange={(event) => setCharacterForm((current) => ({ ...current, importantEvents: event.target.value }))}
                         placeholder="timeline\n  title Eventos importantes\n  1 Samuel 16 : Ungido rei"
                       />
+                      <p className="text-xs text-[var(--text-secondary)]">
+                        A timeline aceita melhor eventos em linhas curtas. O preview abaixo atualiza em tempo real e mostra erros de sintaxe.
+                      </p>
                       <div className={markdownPreviewClassName}>
                         <MermaidDiagram code={characterForm.importantEvents} className="[&_svg]:h-auto [&_svg]:w-full" />
                       </div>
