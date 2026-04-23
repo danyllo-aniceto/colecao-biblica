@@ -9,7 +9,7 @@ public record CreateCharacterRequest(
         @NotBlank @Size(max = 150) String name,
         String imageUrl,
         @NotNull StickerRarity rarity,
-        @NotBlank @Size(max = 300) String shortSummary,
+        @NotBlank @Size(max = 5000000) String shortSummary,
         @NotBlank String fullDescription,
         String bibleBooks,
         String bibleReferences,

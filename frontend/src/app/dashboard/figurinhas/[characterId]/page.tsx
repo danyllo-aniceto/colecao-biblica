@@ -5,13 +5,22 @@ import { useParams, useRouter } from 'next/navigation';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
-import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { RequireAuth } from '@/components/auth/require-auth';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { createComment, getCollection, getMyComments, listCharacters, updateComment, type CharacterEntry, type CommentEntry } from '@/lib/user-api';
+import { MermaidDiagram } from '@/components/ui/mermaid-diagram';
+import { RichContent } from '@/components/ui/rich-content';
+import {
+  createComment,
+  getCollection,
+  getMyComments,
+  listCharacters,
+  updateComment,
+  type CharacterEntry,
+  type CommentEntry,
+} from '@/lib/user-api';
 import { rarityConfig } from '@/lib/rarity-theme';
 
 function formatDate(value?: string | null) {
@@ -23,6 +32,17 @@ function formatDate(value?: string | null) {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(value));
+}
+
+function toChipList(value?: string | null) {
+  if (!value) {
+    return [];
+  }
+
+  return value
+    .split(/[\n,;]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 export default function StickerDetailsPage() {
@@ -77,9 +97,11 @@ export default function StickerDetailsPage() {
         }
 
         const owned = collection.some((item) => item.characterId === parsedCharacterId);
-        const characterComments = myComments.filter((comment) => comment.characterId === parsedCharacterId).sort((left, right) => {
-          return new Date(right.updatedAt ?? right.createdAt).getTime() - new Date(left.updatedAt ?? left.createdAt).getTime();
-        });
+        const characterComments = myComments
+          .filter((comment) => comment.characterId === parsedCharacterId)
+          .sort((left, right) => {
+            return new Date(right.updatedAt ?? right.createdAt).getTime() - new Date(left.updatedAt ?? left.createdAt).getTime();
+          });
 
         setCharacter(selectedCharacter);
         setIsOwned(owned);
@@ -107,6 +129,9 @@ export default function StickerDetailsPage() {
 
     return rarityConfig[character.rarity].badge;
   }, [character]);
+
+  const keywordChips = useMemo(() => toChipList(character?.keywords), [character?.keywords]);
+  const keyVersesChips = useMemo(() => toChipList(character?.keyVerses), [character?.keyVerses]);
 
   async function handleSaveComment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -163,13 +188,21 @@ export default function StickerDetailsPage() {
           ) : null}
 
           {!loading && !error && character ? (
-            <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+            <>
               <Card className="border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-secondary)_74%,white)]">
                 <CardHeader>
                   <CardTitle>{character.name}</CardTitle>
-                  <CardDescription>{isOwned ? character.shortSummary : 'Desbloqueie esta figurinha para visualizar os detalhes completos.'}</CardDescription>
+                  <CardDescription>
+                    {isOwned ? 'Resumo da figurinha' : 'Desbloqueie esta figurinha para visualizar os detalhes completos.'}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {isOwned ? (
+                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 text-sm leading-6 text-[var(--text-secondary)]">
+                      <RichContent value={character.shortSummary} />
+                    </div>
+                  ) : null}
+
                   <div className="overflow-hidden rounded-3xl border border-[var(--border)]">
                     {character.imageUrl ? (
                       <img src={character.imageUrl} alt={character.name} className={isOwned ? '' : 'blur-[3px] grayscale'} />
@@ -187,14 +220,63 @@ export default function StickerDetailsPage() {
 
                   {isOwned ? (
                     <>
-                      <p className="text-sm leading-6 text-[var(--text-secondary)]">{character.fullDescription}</p>
-
-                      <div className="grid gap-3 text-sm text-[var(--text-secondary)] sm:grid-cols-2">
-                        <DetailLine label="Referências" value={character.bibleReferences ?? '-'} />
-                        <DetailLine label="Livro(s)" value={character.bibleBooks ?? '-'} />
-                        <DetailLine label="Período" value={character.historicalPeriod ?? '-'} />
-                        <DetailLine label="Função" value={character.narrativeRole ?? '-'} />
+                      <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 text-sm leading-6 text-[var(--text-secondary)]">
+                        <RichContent value={character.fullDescription} />
                       </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <DetailBlock title="Livros bíblicos">
+                          <p>{character.bibleBooks ?? '-'}</p>
+                        </DetailBlock>
+                        <DetailBlock title="Papel narrativo">
+                          <RichContent value={character.narrativeRole} />
+                        </DetailBlock>
+                        <DetailBlock title="Período histórico">
+                          <RichContent value={character.historicalPeriod} />
+                        </DetailBlock>
+                        <DetailBlock title="Curiosidades">
+                          <RichContent value={character.curiosities} />
+                        </DetailBlock>
+                        <DetailBlock title="Referências bíblicas">
+                          <RichContent value={character.bibleReferences} />
+                        </DetailBlock>
+                      </div>
+
+                      {character.genealogy?.trim() ? (
+                        <DetailBlock title="Genealogia">
+                          <MermaidDiagram code={character.genealogy} className="[&_svg]:h-auto [&_svg]:w-full" />
+                        </DetailBlock>
+                      ) : null}
+
+                      {character.importantEvents?.trim() ? (
+                        <DetailBlock title="Eventos importantes">
+                          <MermaidDiagram code={character.importantEvents} className="[&_svg]:h-auto [&_svg]:w-full" />
+                        </DetailBlock>
+                      ) : null}
+
+                      {keyVersesChips.length > 0 ? (
+                        <DetailBlock title="Versículos-chave">
+                          <div className="flex flex-wrap gap-2">
+                            {keyVersesChips.map((chip) => (
+                              <Badge key={chip} className="bg-[color-mix(in_srgb,var(--gold)_18%,transparent)] text-[var(--text-primary)]">
+                                {chip}
+                              </Badge>
+                            ))}
+                          </div>
+                        </DetailBlock>
+                      ) : null}
+
+                      {keywordChips.length > 0 ? (
+                        <DetailBlock title="Palavras-chave">
+                          <div className="flex flex-wrap gap-2">
+                            {keywordChips.map((chip) => (
+                              <Badge key={chip} className="bg-[color-mix(in_srgb,var(--accent)_16%,transparent)] text-[var(--text-primary)]">
+                                {chip}
+                              </Badge>
+                            ))}
+                          </div>
+                        </DetailBlock>
+                      ) : null}
                     </>
                   ) : (
                     <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 text-sm text-[var(--text-secondary)]">
@@ -211,7 +293,7 @@ export default function StickerDetailsPage() {
               <Card className="border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-secondary)_74%,white)]">
                 <CardHeader>
                   <CardTitle>Meus comentários</CardTitle>
-                  <CardDescription>Escreva uma anotação pessoal sobre esta figurinha.</CardDescription>
+                  <CardDescription>Comentários ficam abaixo do conteúdo da figurinha para facilitar o estudo.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {isOwned ? (
@@ -252,7 +334,7 @@ export default function StickerDetailsPage() {
                   )}
                 </CardContent>
               </Card>
-            </div>
+            </>
           ) : null}
         </div>
       </main>
@@ -260,11 +342,11 @@ export default function StickerDetailsPage() {
   );
 }
 
-function DetailLine({ label, value }: { label: string; value: string }) {
+function DetailBlock({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-3">
-      <div className="text-xs uppercase tracking-[0.18em] text-[var(--text-secondary)]">{label}</div>
-      <div className="mt-1 text-sm text-[var(--text-primary)]">{value}</div>
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-4">
+      <p className="mb-3 text-xs uppercase tracking-[0.18em] text-[var(--text-secondary)]">{title}</p>
+      <div className="text-sm text-[var(--text-secondary)]">{children}</div>
     </div>
   );
 }

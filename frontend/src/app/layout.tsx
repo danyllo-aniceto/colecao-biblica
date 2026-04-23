@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${bodyFont.variable} ${headingFont.variable}`}>
+      <body suppressHydrationWarning className={`${bodyFont.variable} ${headingFont.variable}`}>
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

@@ -5,9 +5,9 @@ import jakarta.validation.constraints.Size;
 
 public record UpdateCharacterRequest(
         @Size(min = 1, max = 150) String name,
-        @Size(min = 1, max = 2048) String imageUrl,
+        @Size(min = 1, max = 5000000) String imageUrl,
         StickerRarity rarity,
-        @Size(min = 1, max = 300) String shortSummary,
+        @Size(min = 1, max = 5000000) String shortSummary,
         @Size(min = 1) String fullDescription,
         String bibleBooks,
         String bibleReferences,

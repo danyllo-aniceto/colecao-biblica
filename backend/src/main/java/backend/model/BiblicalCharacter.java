@@ -38,13 +38,14 @@ public class BiblicalCharacter {
     @Column(nullable = false, unique = true)
     private String name;
 
+    @Column(columnDefinition = "TEXT")
     private String imageUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StickerRarity rarity;
 
-    @Column(nullable = false, length = 300)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String shortSummary;
 
     @Column(nullable = false, columnDefinition = "TEXT")
@@ -56,8 +57,10 @@ public class BiblicalCharacter {
     @Column(columnDefinition = "TEXT")
     private String bibleReferences;
 
+    @Column(columnDefinition = "TEXT")
     private String historicalPeriod;
 
+    @Column(columnDefinition = "TEXT")
     private String narrativeRole;
 
     @Column(columnDefinition = "TEXT")

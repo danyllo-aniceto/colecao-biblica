@@ -11,12 +11,17 @@ import ExtensionRoundedIcon from '@mui/icons-material/ExtensionRounded';
 import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { MermaidDiagram, validateMermaidSyntax } from '@/components/ui/mermaid-diagram';
+import { RichContent } from '@/components/ui/rich-content';
+import { clearRichTextEditorDrafts, RichTextEditor } from '@/components/ui/rich-text-editor';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { BIBLE_BOOKS_PT } from '@/lib/bible-books';
 import {
   createCharacter,
   createQuestion,
@@ -51,6 +56,7 @@ import {
   type ShopItemType,
   type StickerRarity,
 } from '@/lib/admin-api';
+import { getRarityLabel } from '@/lib/rarity-theme';
 import type { UserProfile } from '@/types/auth';
 
 type UserFormState = {
@@ -66,7 +72,7 @@ type CharacterFormState = {
   rarity: StickerRarity;
   shortSummary: string;
   fullDescription: string;
-  bibleBooks: string;
+  bibleBooks: string[];
   bibleReferences: string;
   historicalPeriod: string;
   narrativeRole: string;
@@ -162,7 +168,7 @@ const emptyCharacterForm: CharacterFormState = {
   rarity: 'COMMON',
   shortSummary: '',
   fullDescription: '',
-  bibleBooks: '',
+  bibleBooks: [],
   bibleReferences: '',
   historicalPeriod: '',
   narrativeRole: '',
@@ -226,6 +232,9 @@ const controlClassName =
 const textareaClassName =
   'min-h-28 w-full rounded-2xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_86%,white)] px-4 py-3 text-sm text-[var(--text-primary)] shadow-sm transition-colors placeholder:text-[var(--text-secondary)]/70 focus-visible:border-[var(--gold)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--gold)_35%,transparent)] disabled:cursor-not-allowed disabled:opacity-60';
 
+const markdownPreviewClassName =
+  'rounded-2xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_90%,white)] p-4 text-sm leading-7 text-[var(--text-primary)]';
+
 const selectClassName = `${controlClassName} pr-10`;
 
 const emptyUsersPageData: UsersPageData = {
@@ -269,11 +278,11 @@ const adminScreens: Array<{
 
 function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
   return (
-    <label className="flex flex-col gap-2 text-sm font-medium text-[var(--text-secondary)]">
+    <div className="flex flex-col gap-2 text-sm font-medium text-[var(--text-secondary)]">
       <span>{label}</span>
       {children}
       {hint ? <span className="text-xs font-normal text-[var(--text-secondary)]/80">{hint}</span> : null}
-    </label>
+    </div>
   );
 }
 
@@ -316,6 +325,16 @@ function OptionalNumberText(value: string) {
   return parsed === null ? undefined : parsed;
 }
 
+function appendMermaidColorTemplate(currentValue: string) {
+  const template = `
+classDef principal fill:#FDE68A,stroke:#B45309,color:#111827;
+classDef secundario fill:#BFDBFE,stroke:#1D4ED8,color:#111827;
+`;
+
+  const trimmed = currentValue.trimEnd();
+  return trimmed ? `${trimmed}\n${template}` : template.trim();
+}
+
 function fileToDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -330,6 +349,230 @@ function fileToDataUrl(file: File) {
     reader.onerror = () => reject(new Error('Não foi possível ler a imagem selecionada.'));
     reader.readAsDataURL(file);
   });
+}
+
+function appendMarkdownSnippet(currentValue: string, snippet: string) {
+  const value = currentValue.trimEnd();
+  return value.length > 0 ? `${value}\n\n${snippet}` : snippet;
+}
+
+function stripHtmlToPlainText(value: string) {
+  if (!value) {
+    return '';
+  }
+
+  return value
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function renderInlineMarkdown(text: string, keyPrefix: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
+
+  return parts.map((part, index) => {
+    const key = `${keyPrefix}-${index}`;
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={key}>{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith('*') && part.endsWith('*')) {
+      return <em key={key}>{part.slice(1, -1)}</em>;
+    }
+    if (part.startsWith('`') && part.endsWith('`')) {
+      return (
+        <code key={key} className="rounded bg-black/10 px-1 py-0.5 text-[0.9em]">
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    return <span key={key}>{part}</span>;
+  });
+}
+
+function MarkdownPreview({ value }: { value: string }) {
+  const lines = value.split(/\r?\n/);
+  const elements: ReactNode[] = [];
+  let index = 0;
+
+  while (index < lines.length) {
+    const line = lines[index].trim();
+
+    if (!line) {
+      index += 1;
+      continue;
+    }
+
+    if (line.startsWith('- ')) {
+      const items: string[] = [];
+      while (index < lines.length && lines[index].trim().startsWith('- ')) {
+        items.push(lines[index].trim().slice(2).trim());
+        index += 1;
+      }
+
+      elements.push(
+        <ul key={`ul-${index}`} className="list-disc space-y-1 pl-5">
+          {items.map((item, itemIndex) => (
+            <li key={`ul-item-${index}-${itemIndex}`}>{renderInlineMarkdown(item, `ul-${index}-${itemIndex}`)}</li>
+          ))}
+        </ul>,
+      );
+      continue;
+    }
+
+    const orderedMatch = line.match(/^\d+\.\s+/);
+    if (orderedMatch) {
+      const items: string[] = [];
+      while (index < lines.length && /^\d+\.\s+/.test(lines[index].trim())) {
+        items.push(lines[index].trim().replace(/^\d+\.\s+/, '').trim());
+        index += 1;
+      }
+
+      elements.push(
+        <ol key={`ol-${index}`} className="list-decimal space-y-1 pl-5">
+          {items.map((item, itemIndex) => (
+            <li key={`ol-item-${index}-${itemIndex}`}>{renderInlineMarkdown(item, `ol-${index}-${itemIndex}`)}</li>
+          ))}
+        </ol>,
+      );
+      continue;
+    }
+
+    if (line.startsWith('### ')) {
+      elements.push(
+        <h4 key={`h3-${index}`} className="text-base font-semibold text-[var(--text-primary)]">
+          {renderInlineMarkdown(line.slice(4), `h3-${index}`)}
+        </h4>,
+      );
+      index += 1;
+      continue;
+    }
+
+    if (line.startsWith('## ')) {
+      elements.push(
+        <h3 key={`h2-${index}`} className="text-lg font-semibold text-[var(--text-primary)]">
+          {renderInlineMarkdown(line.slice(3), `h2-${index}`)}
+        </h3>,
+      );
+      index += 1;
+      continue;
+    }
+
+    if (line.startsWith('# ')) {
+      elements.push(
+        <h2 key={`h1-${index}`} className="text-xl font-semibold text-[var(--text-primary)]">
+          {renderInlineMarkdown(line.slice(2), `h1-${index}`)}
+        </h2>,
+      );
+      index += 1;
+      continue;
+    }
+
+    if (line.startsWith('> ')) {
+      elements.push(
+        <blockquote key={`quote-${index}`} className="border-l-4 border-[var(--gold)]/70 pl-3 italic text-[var(--text-secondary)]">
+          {renderInlineMarkdown(line.slice(2), `quote-${index}`)}
+        </blockquote>,
+      );
+      index += 1;
+      continue;
+    }
+
+    elements.push(
+      <p key={`p-${index}`} className="whitespace-pre-wrap">
+        {renderInlineMarkdown(line, `p-${index}`)}
+      </p>,
+    );
+    index += 1;
+  }
+
+  if (elements.length === 0) {
+    return <p className="text-[var(--text-secondary)]">Pré-visualização aparecerá aqui.</p>;
+  }
+
+  return <div className="space-y-3">{elements}</div>;
+}
+
+type TimelineEvent = {
+  marker: string;
+  description: string;
+};
+
+function parseTimelineEvents(value: string): TimelineEvent[] {
+  const lines = value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const events: TimelineEvent[] = [];
+
+  for (const rawLine of lines) {
+    const line = rawLine.replace(/^[-*]\s+/, '');
+    if (!line || /^mermaid$/i.test(line) || /^timeline$/i.test(line) || /^title\s+/i.test(line)) {
+      continue;
+    }
+
+    if (/^exibir diagrama$/i.test(line) || /^copiar$/i.test(line)) {
+      continue;
+    }
+
+    const separatorIndex = line.indexOf(':');
+    if (separatorIndex <= 0) {
+      continue;
+    }
+
+    const marker = line.slice(0, separatorIndex).trim();
+    const description = line.slice(separatorIndex + 1).trim();
+
+    if (!marker || !description) {
+      continue;
+    }
+
+    events.push({ marker, description });
+  }
+
+  return events;
+}
+
+function ImportantEventsPreview({ value }: { value: string }) {
+  const events = parseTimelineEvents(value);
+  if (events.length === 0) {
+    return <MarkdownPreview value={value} />;
+  }
+
+  return (
+    <div className="space-y-4">
+      {events.map((event, index) => (
+        <div key={`${event.marker}-${index}`} className="grid grid-cols-[110px_1fr] gap-3">
+          <div className="rounded-xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--gold)_12%,white)] px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.08em] text-[var(--accent)]">
+            {event.marker}
+          </div>
+          <div className="relative rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-3 text-sm text-[var(--text-primary)]">
+            {event.description}
+            {index < events.length - 1 ? <span className="pointer-events-none absolute -bottom-4 left-4 h-4 w-px bg-[var(--border)]" /> : null}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MarkdownToolbar({ onInsert }: { onInsert: (snippet: string) => void }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Button type="button" size="sm" variant="secondary" onClick={() => onInsert('**texto em destaque**')}>
+        Negrito
+      </Button>
+      <Button type="button" size="sm" variant="secondary" onClick={() => onInsert('*texto em ênfase*')}>
+        Itálico
+      </Button>
+      <Button type="button" size="sm" variant="secondary" onClick={() => onInsert('### Subtítulo')}>
+        Subtítulo
+      </Button>
+      <Button type="button" size="sm" variant="secondary" onClick={() => onInsert('- Item 1\n- Item 2\n- Item 3')}>
+        Lista
+      </Button>
+      <Button type="button" size="sm" variant="secondary" onClick={() => onInsert('> Citação importante')}>
+        Citação
+      </Button>
+    </div>
+  );
 }
 
 export function AdminDashboard() {
@@ -360,7 +603,7 @@ export function AdminDashboard() {
   const [characterForm, setCharacterForm] = useState<CharacterFormState>(emptyCharacterForm);
   const [characterSubmitError, setCharacterSubmitError] = useState<string | null>(null);
   const [characterSubmitting, setCharacterSubmitting] = useState(false);
-  const [isCharacterModalOpen, setIsCharacterModalOpen] = useState(false);
+  const [isCharacterEditorOpen, setIsCharacterEditorOpen] = useState(false);
   const [characterImageMode, setCharacterImageMode] = useState<ImageInputMode>('url');
   const [characterNameFilter, setCharacterNameFilter] = useState('');
   const [characterNameDraft, setCharacterNameDraft] = useState('');
@@ -782,13 +1025,26 @@ export function AdminDashboard() {
     setCharacterSubmitError(null);
 
     try {
+      const [genealogyValidation, eventsValidation] = await Promise.all([
+        validateMermaidSyntax(characterForm.genealogy),
+        validateMermaidSyntax(characterForm.importantEvents),
+      ]);
+
+      if (!genealogyValidation.valid) {
+        throw new Error(`Genealogia inválida no Mermaid: ${genealogyValidation.error}`);
+      }
+
+      if (!eventsValidation.valid) {
+        throw new Error(`Eventos importantes inválidos no Mermaid: ${eventsValidation.error}`);
+      }
+
       const payload: CreateCharacterPayload = {
         name: characterForm.name.trim(),
         imageUrl: optionalText(characterForm.imageUrl),
         rarity: characterForm.rarity,
         shortSummary: characterForm.shortSummary.trim(),
         fullDescription: characterForm.fullDescription.trim(),
-        bibleBooks: optionalText(characterForm.bibleBooks),
+        bibleBooks: optionalText(characterForm.bibleBooks.join(', ')),
         bibleReferences: optionalText(characterForm.bibleReferences),
         historicalPeriod: optionalText(characterForm.historicalPeriod),
         narrativeRole: optionalText(characterForm.narrativeRole),
@@ -807,7 +1063,7 @@ export function AdminDashboard() {
 
       setCharacterForm(emptyCharacterForm);
       setEditingCharacterId(null);
-      setIsCharacterModalOpen(false);
+  setIsCharacterEditorOpen(false);
       setCharacterImageMode('url');
       await loadCharacters();
       await loadQuestions();
@@ -827,7 +1083,7 @@ export function AdminDashboard() {
       rarity: character.rarity,
       shortSummary: character.shortSummary,
       fullDescription: character.fullDescription,
-      bibleBooks: character.bibleBooks ?? '',
+      bibleBooks: (character.bibleBooks ?? '').split(',').map((book) => book.trim()).filter(Boolean),
       bibleReferences: character.bibleReferences ?? '',
       historicalPeriod: character.historicalPeriod ?? '',
       narrativeRole: character.narrativeRole ?? '',
@@ -839,7 +1095,7 @@ export function AdminDashboard() {
     });
     setCharacterSubmitError(null);
     setCharacterImageMode((character.imageUrl ?? '').startsWith('data:image/') ? 'upload' : 'url');
-    setIsCharacterModalOpen(true);
+    setIsCharacterEditorOpen(true);
   }
 
   async function handleDeleteCharacter(characterId: number) {
@@ -851,20 +1107,22 @@ export function AdminDashboard() {
     });
   }
 
-  function openCreateCharacterModal() {
+  function openCreateCharacterEditor() {
+    clearRichTextEditorDrafts('new:');
     setEditingCharacterId(null);
     setCharacterForm(emptyCharacterForm);
     setCharacterSubmitError(null);
     setCharacterImageMode('url');
-    setIsCharacterModalOpen(true);
+    setIsCharacterEditorOpen(true);
   }
 
-  function closeCharacterModal() {
+  function closeCharacterEditor() {
     if (characterSubmitting) {
       return;
     }
 
-    setIsCharacterModalOpen(false);
+    clearRichTextEditorDrafts('new:');
+    setIsCharacterEditorOpen(false);
     setEditingCharacterId(null);
     setCharacterForm(emptyCharacterForm);
     setCharacterSubmitError(null);
@@ -1494,7 +1752,7 @@ export function AdminDashboard() {
               {charactersState.loading ? <AutorenewRoundedIcon className="animate-spin" fontSize="small" /> : null}
               Buscar
             </Button>
-            <Button type="button" onClick={openCreateCharacterModal}>Novo personagem</Button>
+            <Button type="button" onClick={openCreateCharacterEditor}>Novo personagem</Button>
           </form>
 
           {charactersState.loading ? <LoadingInline label="Carregando personagens..." /> : null}
@@ -1526,8 +1784,8 @@ export function AdminDashboard() {
                   {pagedCharacters.map((character) => (
                     <TableRow key={character.id}>
                       <TableCell>{character.name}</TableCell>
-                      <TableCell>{character.rarity}</TableCell>
-                      <TableCell className="max-w-xl truncate">{character.shortSummary}</TableCell>
+                      <TableCell>{getRarityLabel(character.rarity)}</TableCell>
+                      <TableCell className="max-w-xl truncate">{stripHtmlToPlainText(character.shortSummary)}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-2">
                           <Button size="sm" variant="secondary" onClick={() => startEditingCharacter(character)}>
@@ -1593,129 +1851,247 @@ export function AdminDashboard() {
             </div>
           ) : null}
 
-          <ModalShell
-            isOpen={isCharacterModalOpen}
-            title={editingCharacterId === null ? 'Novo personagem' : 'Editar personagem'}
-            description="Preencha as informações do personagem."
-            onClose={closeCharacterModal}
-          >
-            <form className="grid gap-4 lg:grid-cols-2" onSubmit={handleCharacterSubmit}>
-              <Field label="Nome">
-                <Input value={characterForm.name} onChange={(event) => setCharacterForm((current) => ({ ...current, name: event.target.value }))} required />
-              </Field>
+          {isCharacterEditorOpen ? (
+            <Card className="border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-secondary)_74%,white)]">
+              <CardHeader>
+                <CardTitle>{editingCharacterId === null ? 'Nova figurinha' : 'Editar figurinha'}</CardTitle>
+                <CardDescription>Editor completo para cadastro de conteúdo visual e textual.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form className="grid gap-5 lg:grid-cols-2" onSubmit={handleCharacterSubmit}>
+                  <Field label="Nome">
+                    <Input value={characterForm.name} onChange={(event) => setCharacterForm((current) => ({ ...current, name: event.target.value }))} required />
+                  </Field>
+                  <Field label="Raridade">
+                    <select className={selectClassName} value={characterForm.rarity} onChange={(event) => setCharacterForm((current) => ({ ...current, rarity: event.target.value as StickerRarity }))}>
+                      <option value="COMMON">Comum</option>
+                      <option value="RARE">Rara</option>
+                      <option value="EPIC">Épica</option>
+                      <option value="LEGENDARY">Lendária</option>
+                    </select>
+                  </Field>
 
-              <div className="space-y-3 lg:col-span-2">
-                <div className="inline-flex w-full rounded-full border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_75%,white)] p-1">
-                  <button
-                    type="button"
-                    onClick={() => setCharacterImageMode('url')}
-                    className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                      characterImageMode === 'url'
-                        ? 'bg-[linear-gradient(135deg,var(--gold),var(--gold-light))] text-[#2c1b10] shadow-sm'
-                        : 'text-[var(--text-secondary)]'
-                    }`}
-                  >
-                    Link da imagem
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCharacterImageMode('upload')}
-                    className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                      characterImageMode === 'upload'
-                        ? 'bg-[linear-gradient(135deg,var(--gold),var(--gold-light))] text-[#2c1b10] shadow-sm'
-                        : 'text-[var(--text-secondary)]'
-                    }`}
-                  >
-                    Upload
-                  </button>
-                </div>
+                  <div className="space-y-3 lg:col-span-2">
+                    <div className="inline-flex w-full rounded-full border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_75%,white)] p-1">
+                      <button
+                        type="button"
+                        onClick={() => setCharacterImageMode('url')}
+                        className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                          characterImageMode === 'url'
+                            ? 'bg-[linear-gradient(135deg,var(--gold),var(--gold-light))] text-[#2c1b10] shadow-sm'
+                            : 'text-[var(--text-secondary)]'
+                        }`}
+                      >
+                        Link da imagem
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCharacterImageMode('upload')}
+                        className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                          characterImageMode === 'upload'
+                            ? 'bg-[linear-gradient(135deg,var(--gold),var(--gold-light))] text-[#2c1b10] shadow-sm'
+                            : 'text-[var(--text-secondary)]'
+                        }`}
+                      >
+                        Upload
+                      </button>
+                    </div>
 
-                {characterImageMode === 'url' ? (
-                  <Field label="Imagem URL">
-                    <Input
-                      value={characterForm.imageUrl}
-                      onChange={(event) => setCharacterForm((current) => ({ ...current, imageUrl: event.target.value }))}
-                      placeholder="https://..."
+                    {characterImageMode === 'url' ? (
+                      <Field label="Imagem URL">
+                        <Input
+                          value={characterForm.imageUrl}
+                          onChange={(event) => setCharacterForm((current) => ({ ...current, imageUrl: event.target.value }))}
+                          placeholder="https://..."
+                        />
+                      </Field>
+                    ) : (
+                      <Field label="Upload da imagem" hint="A imagem é convertida para URL base64.">
+                        <input className={controlClassName} type="file" accept="image/*" onChange={handleCharacterFileUpload} />
+                      </Field>
+                    )}
+
+                    {characterForm.imageUrl ? (
+                      <div className="relative rounded-2xl border border-[var(--border)] p-3">
+                        <button
+                          type="button"
+                          aria-label="Remover imagem"
+                          className="absolute right-5 top-5 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-black/70 text-sm font-bold text-white shadow transition-colors hover:bg-black/80"
+                          onClick={() => setCharacterForm((current) => ({ ...current, imageUrl: '' }))}
+                        >
+                          X
+                        </button>
+                        <img src={characterForm.imageUrl} alt="Pré-visualização" className="h-56 w-full rounded-xl object-cover" />
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <Field label="Resumo curto" hint="Editor de texto com formatação.">
+                    <RichTextEditor
+                      syncKey={`${editingCharacterId ?? 'new'}:shortSummary`}
+                      value={characterForm.shortSummary}
+                      onChange={(nextValue) => setCharacterForm((current) => ({ ...current, shortSummary: nextValue }))}
                     />
                   </Field>
-                ) : (
-                  <Field label="Upload da imagem" hint="A imagem é convertida para URL base64.">
-                    <input className={controlClassName} type="file" accept="image/*" onChange={handleCharacterFileUpload} />
-                  </Field>
-                )}
 
-                {characterForm.imageUrl ? (
-                  <div className="rounded-2xl border border-[var(--border)] p-3">
-                    <img src={characterForm.imageUrl} alt="Pré-visualização" className="h-40 w-full rounded-xl object-cover" />
-                    <div className="mt-2 flex justify-end">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setCharacterForm((current) => ({ ...current, imageUrl: '' }))}
-                      >
-                        Remover imagem
-                      </Button>
+                  <Field label="Descrição completa" hint="Pode incluir imagens e texto formatado.">
+                    <RichTextEditor
+                      syncKey={`${editingCharacterId ?? 'new'}:fullDescription`}
+                      value={characterForm.fullDescription}
+                      onChange={(nextValue) => setCharacterForm((current) => ({ ...current, fullDescription: nextValue }))}
+                      allowImages
+                    />
+                  </Field>
+
+                  <Field label="Papel narrativo" hint="Pode incluir imagens e texto formatado.">
+                    <RichTextEditor
+                      syncKey={`${editingCharacterId ?? 'new'}:narrativeRole`}
+                      value={characterForm.narrativeRole}
+                      onChange={(nextValue) => setCharacterForm((current) => ({ ...current, narrativeRole: nextValue }))}
+                      allowImages
+                    />
+                  </Field>
+
+                  <Field label="Período histórico" hint="Pode incluir imagens e texto formatado.">
+                    <RichTextEditor
+                      syncKey={`${editingCharacterId ?? 'new'}:historicalPeriod`}
+                      value={characterForm.historicalPeriod}
+                      onChange={(nextValue) => setCharacterForm((current) => ({ ...current, historicalPeriod: nextValue }))}
+                      allowImages
+                    />
+                  </Field>
+
+                  <Field label="Curiosidades" hint="Pode incluir imagens e texto formatado.">
+                    <RichTextEditor
+                      syncKey={`${editingCharacterId ?? 'new'}:curiosities`}
+                      value={characterForm.curiosities}
+                      onChange={(nextValue) => setCharacterForm((current) => ({ ...current, curiosities: nextValue }))}
+                      allowImages
+                    />
+                  </Field>
+
+                  <Field label="Referências bíblicas" hint="Pode incluir imagens e texto formatado.">
+                    <RichTextEditor
+                      syncKey={`${editingCharacterId ?? 'new'}:bibleReferences`}
+                      value={characterForm.bibleReferences}
+                      onChange={(nextValue) => setCharacterForm((current) => ({ ...current, bibleReferences: nextValue }))}
+                      allowImages
+                    />
+                  </Field>
+
+                  <Field label="Livros bíblicos" hint="Selecione todos os livros onde o personagem aparece.">
+                    <div className="max-h-72 space-y-2 overflow-y-auto rounded-2xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_86%,white)] p-3">
+                      {BIBLE_BOOKS_PT.map((book) => {
+                        const checked = characterForm.bibleBooks.includes(book);
+                        return (
+                          <label key={book} className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:bg-[color-mix(in_srgb,var(--gold)_10%,transparent)]">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(event) => {
+                                const isChecked = event.currentTarget.checked;
+                                setCharacterForm((current) => ({
+                                  ...current,
+                                  bibleBooks: isChecked
+                                    ? [...current.bibleBooks, book]
+                                    : current.bibleBooks.filter((entry) => entry !== book),
+                                }));
+                              }}
+                            />
+                            <span className="text-sm text-[var(--text-primary)]">{book}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </Field>
+
+                  <Field label="Genealogia" hint="Use Mermaid (graph TD). Dá para aplicar bloco de cores para melhorar visualização.">
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => setCharacterForm((current) => ({ ...current, genealogy: appendMermaidColorTemplate(current.genealogy) }))}
+                        >
+                          Inserir cores no gráfico
+                        </Button>
+                      </div>
+                      <textarea
+                        className={textareaClassName}
+                        value={characterForm.genealogy}
+                        onChange={(event) => setCharacterForm((current) => ({ ...current, genealogy: event.target.value }))}
+                        placeholder="graph TD\nAbraao[Abraão] --> Isaque[Isaque]"
+                      />
+                      <div className={markdownPreviewClassName}>
+                        <MermaidDiagram code={characterForm.genealogy} className="[&_svg]:h-auto [&_svg]:w-full" />
+                      </div>
+                    </div>
+                  </Field>
+
+                  <Field label="Eventos importantes" hint="Use Mermaid timeline. Você pode inserir bloco de cores também.">
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => setCharacterForm((current) => ({ ...current, importantEvents: appendMermaidColorTemplate(current.importantEvents) }))}
+                        >
+                          Inserir cores na timeline
+                        </Button>
+                      </div>
+                      <textarea
+                        className={textareaClassName}
+                        value={characterForm.importantEvents}
+                        onChange={(event) => setCharacterForm((current) => ({ ...current, importantEvents: event.target.value }))}
+                        placeholder="timeline\n  title Eventos importantes\n  1 Samuel 16 : Ungido rei"
+                      />
+                      <div className={markdownPreviewClassName}>
+                        <MermaidDiagram code={characterForm.importantEvents} className="[&_svg]:h-auto [&_svg]:w-full" />
+                      </div>
+                    </div>
+                  </Field>
+
+                  <Field label="Versículos-chave" hint="Separe por vírgula para gerar chips visuais no front do usuário.">
+                    <Input
+                      value={characterForm.keyVerses}
+                      onChange={(event) => setCharacterForm((current) => ({ ...current, keyVerses: event.target.value }))}
+                      placeholder="João 3:16, Salmos 23:1"
+                    />
+                  </Field>
+
+                  <Field label="Palavras-chave" hint="Separe por vírgula para gerar chips visuais no front do usuário.">
+                    <Input
+                      value={characterForm.keywords}
+                      onChange={(event) => setCharacterForm((current) => ({ ...current, keywords: event.target.value }))}
+                      placeholder="rei, pastor, aliança"
+                    />
+                  </Field>
+
+                  <div className="space-y-2 lg:col-span-2">
+                    <p className="text-sm font-medium text-[var(--text-secondary)]">Prévia rápida do resumo</p>
+                    <div className={markdownPreviewClassName}>
+                      <RichContent value={characterForm.shortSummary} />
                     </div>
                   </div>
-                ) : null}
-              </div>
 
-              <Field label="Raridade">
-                <select className={selectClassName} value={characterForm.rarity} onChange={(event) => setCharacterForm((current) => ({ ...current, rarity: event.target.value as StickerRarity }))}>
-                  <option value="COMMON">COMMON</option>
-                  <option value="RARE">RARE</option>
-                  <option value="EPIC">EPIC</option>
-                  <option value="LEGENDARY">LEGENDARY</option>
-                </select>
-              </Field>
-              <Field label="Resumo curto">
-                <Input value={characterForm.shortSummary} onChange={(event) => setCharacterForm((current) => ({ ...current, shortSummary: event.target.value }))} required />
-              </Field>
-              <Field label="Descrição completa" hint="Aceita texto longo." >
-                <textarea className={textareaClassName} value={characterForm.fullDescription} onChange={(event) => setCharacterForm((current) => ({ ...current, fullDescription: event.target.value }))} required />
-              </Field>
-              <Field label="Livros bíblicos">
-                <Input value={characterForm.bibleBooks} onChange={(event) => setCharacterForm((current) => ({ ...current, bibleBooks: event.target.value }))} />
-              </Field>
-              <Field label="Referências bíblicas">
-                <Input value={characterForm.bibleReferences} onChange={(event) => setCharacterForm((current) => ({ ...current, bibleReferences: event.target.value }))} />
-              </Field>
-              <Field label="Período histórico">
-                <Input value={characterForm.historicalPeriod} onChange={(event) => setCharacterForm((current) => ({ ...current, historicalPeriod: event.target.value }))} />
-              </Field>
-              <Field label="Papel narrativo">
-                <Input value={characterForm.narrativeRole} onChange={(event) => setCharacterForm((current) => ({ ...current, narrativeRole: event.target.value }))} />
-              </Field>
-              <Field label="Genealogia">
-                <Input value={characterForm.genealogy} onChange={(event) => setCharacterForm((current) => ({ ...current, genealogy: event.target.value }))} />
-              </Field>
-              <Field label="Curiosidades">
-                <Input value={characterForm.curiosities} onChange={(event) => setCharacterForm((current) => ({ ...current, curiosities: event.target.value }))} />
-              </Field>
-              <Field label="Eventos importantes">
-                <Input value={characterForm.importantEvents} onChange={(event) => setCharacterForm((current) => ({ ...current, importantEvents: event.target.value }))} />
-              </Field>
-              <Field label="Versículos-chave">
-                <Input value={characterForm.keyVerses} onChange={(event) => setCharacterForm((current) => ({ ...current, keyVerses: event.target.value }))} />
-              </Field>
-              <Field label="Palavras-chave" hint="Separe por vírgulas.">
-                <Input value={characterForm.keywords} onChange={(event) => setCharacterForm((current) => ({ ...current, keywords: event.target.value }))} />
-              </Field>
+                  {characterSubmitError ? <p className="lg:col-span-2 text-sm text-red-700">{characterSubmitError}</p> : null}
 
-              {characterSubmitError ? <p className="lg:col-span-2 text-sm text-red-700">{characterSubmitError}</p> : null}
-
-              <div className="flex flex-wrap justify-end gap-2 lg:col-span-2">
-                <Button type="button" variant="secondary" onClick={closeCharacterModal} disabled={characterSubmitting}>
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={characterSubmitting} className="inline-flex items-center gap-2">
-                  {characterSubmitting ? <AutorenewRoundedIcon className="animate-spin" fontSize="small" /> : null}
-                  {characterSubmitting ? 'Salvando...' : editingCharacterId === null ? 'Criar personagem' : 'Atualizar personagem'}
-                </Button>
-              </div>
-            </form>
-          </ModalShell>
+                  <div className="flex flex-wrap justify-end gap-2 lg:col-span-2">
+                    <Button type="button" variant="secondary" onClick={closeCharacterEditor} disabled={characterSubmitting}>
+                      <ArrowBackRoundedIcon fontSize="small" />
+                      Voltar para listagem
+                    </Button>
+                    <Button type="submit" disabled={characterSubmitting} className="inline-flex items-center gap-2">
+                      {characterSubmitting ? <AutorenewRoundedIcon className="animate-spin" fontSize="small" /> : null}
+                      {characterSubmitting ? 'Salvando...' : editingCharacterId === null ? 'Criar personagem' : 'Atualizar personagem'}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          ) : null}
           </SectionCard>
         ) : null}
 
