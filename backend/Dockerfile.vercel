@@ -16,10 +16,10 @@ RUN mvn -B -q -Dmaven.test.skip=true package && cp target/*.jar app.jar
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 
-RUN useradd --system --uid 1001 app
 COPY --from=build /workspace/app.jar app.jar
-USER app
 
+# A Vercel encaminha o tráfego para a porta 80 (ou para $PORT, se definida no projeto).
+# Roda como root porque portas abaixo de 1024 exigem privilégio; o container já é isolado pela Vercel.
 ENV PORT=80
 # Menos tempo de inicialização (instâncias sobem sob demanda) e memória proporcional ao container.
 ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss512k"
