@@ -13,7 +13,7 @@ export default defineConfig({
     env: {
       JWT_SECRET: "segredo-de-teste-com-mais-de-32-caracteres",
       APP_TIMEZONE: "America/Sao_Paulo",
-      ...(testDatabaseUrl ? { DATABASE_URL: testDatabaseUrl, DIRECT_URL: testDatabaseUrl } : {}),
+      ...(testDatabaseUrl ? { DATABASE_URL: testDatabaseUrl, DATABASE_URL_UNPOOLED: testDatabaseUrl } : {}),
     },
   },
 });

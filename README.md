@@ -43,45 +43,47 @@ Outros comandos:
 
 ## Deploy na Vercel (front + back juntos)
 
-### 1. Banco no Neon
-
-1. Crie um projeto em [neon.tech](https://neon.tech) (região São Paulo, se disponível).
-2. Em **Connect**, copie duas strings de conexão:
-   - com **Connection pooling ligado** (host com `-pooler`) → `DATABASE_URL`
-   - com **Connection pooling desligado** → `DIRECT_URL` (usada só nas migrações)
-
-### 2. Projeto na Vercel
+### 1. Criar o projeto na Vercel
 
 1. **Add New → Project** e importe este repositório.
-2. **Root Directory**: deixe a raiz do repositório (não escolha `frontend` nem `backend`).
+2. **Root Directory**: a raiz do repositório (não escolha `frontend` nem `backend`).
 3. Framework Preset: **Other**. Build, output e rotas já vêm do `vercel.json`.
-4. Em **Settings → Environment Variables**, cadastre:
+4. Em **Environment Variables**, cadastre à mão:
 
-| Variável | Obrigatória | Valor / onde conseguir |
+| Variável | Obrigatória | Valor |
 | --- | --- | --- |
-| `DATABASE_URL` | sim | Neon, string **com pooling** |
-| `DIRECT_URL` | sim | Neon, string **sem pooling** |
 | `JWT_SECRET` | sim | Texto aleatório com 32+ caracteres: `openssl rand -base64 48` |
 | `ADMIN_EMAIL` | recomendado | Seu e-mail; o deploy cria esse admin se ainda não existir |
 | `ADMIN_PASSWORD` | recomendado | Senha do admin (mínimo 8 caracteres) |
 | `ADMIN_NAME` | não | Nome exibido do admin (padrão: `Administrador`) |
-| `BLOB_READ_WRITE_TOKEN` | recomendado | Criado sozinho ao conectar um Blob store (passo 3) |
+| `BLOB_READ_WRITE_TOKEN` | recomendado | Token do Blob store (passo 3) |
 | `APP_TIMEZONE` | não | Fuso do limite diário de prêmios (padrão `America/Sao_Paulo`) |
-| `SEED_DEMO_DATA` | não | Deixe vazio em produção (só `true` cria as contas de teste) |
+| `SEED_DEMO_DATA` | não | Não cadastre em produção (só `true` cria as contas de teste) |
 
-5. **Deploy**.
+5. **Deploy**. Este primeiro deploy falha na etapa do banco, porque o banco ainda não existe (passo 2).
+
+### 2. Banco: integração Neon da Vercel
+
+1. No projeto: **Storage → Create Database → Neon** (região São Paulo, se houver) e conecte ao
+   projeto, marcando Production e Preview.
+2. A integração cria sozinha as variáveis que o app usa:
+   - `DATABASE_URL` — conexão com pooler (usada pelo app);
+   - `DATABASE_URL_UNPOOLED` — conexão direta (usada só pelas migrações).
+   Ela cria outras (`PGHOST`, `POSTGRES_URL`...) que o app ignora.
+3. **Deployments → ⋯ → Redeploy**.
 
 ### 3. Imagens (Vercel Blob)
 
-No projeto: **Storage → Create Database → Blob → Connect**. A Vercel cria o
-`BLOB_READ_WRITE_TOKEN` sozinha. Faça um **Redeploy** depois de conectar: o build detecta
-o token e o painel admin passa a enviar as imagens para o Blob.
+**Storage → Create Database → Blob**. Para cadastrar o token à mão, copie o
+`BLOB_READ_WRITE_TOKEN` (começa com `vercel_blob_rw_`) na página do store e salve como
+variável do projeto; ou clique em **Connect** e a Vercel cadastra sozinha. Depois,
+**Redeploy**: o build detecta o token e o painel admin passa a enviar as imagens para o Blob.
 
 ### O que acontece em cada deploy
 
 `npm run vercel-build`:
 
-1. `prisma migrate deploy` — aplica migrações novas no Neon (usa `DIRECT_URL`);
+1. `prisma migrate deploy` — aplica migrações novas no Neon (usa `DATABASE_URL_UNPOOLED`);
 2. `prisma generate`;
 3. `npm run seed` — garante configurações, recompensas, itens da loja e o admin de
    `ADMIN_EMAIL` (não duplica nada nem desfaz ajustes feitos no painel);
