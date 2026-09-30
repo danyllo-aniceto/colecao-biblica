@@ -15,19 +15,22 @@ import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
-import ClearRoundedIcon from '@mui/icons-material/ClearRounded';
+import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { QuizAnswerScreen, type QuizAnswerPayload } from '@/components/user/quiz-answer-screen';
+import { QuizAnswerScreen, type QuizAnswerFeedback, type QuizAnswerPayload } from '@/components/user/quiz-answer-screen';
 import { getRarityLabel, rarityConfig } from '@/lib/rarity-theme';
 import {
   answerQuizQuestion,
   abandonQuizSession,
+  buyShopItem,
   deleteCurrentUser,
+  getGameRules,
   getActiveQuizSession,
   getCollection,
   getCollectionProgress,
@@ -36,11 +39,15 @@ import {
   getQuizHistory,
   listCharacters,
   listRanking,
+  listShopItems,
+  requestQuizExtraTime,
   startQuizSession,
   updateCurrentUser,
   type QuizMatchResult,
   type CharacterEntry,
   type CollectionProgress,
+  type GameRules,
+  type ShopItem,
   type CommentEntry,
   type QuizHistory,
   type QuizSessionStatus,
@@ -50,7 +57,7 @@ import {
 } from '@/lib/user-api';
 import type { UserProfile } from '@/types/auth';
 
-type SectionId = 'home' | 'stickers' | 'quiz' | 'ranking' | 'settings';
+type SectionId = 'home' | 'stickers' | 'quiz' | 'shop' | 'ranking' | 'settings';
 
 type DeleteAccountState = {
   open: boolean;
@@ -79,6 +86,7 @@ const sections: Array<{ id: SectionId; label: string; icon: ReactNode }> = [
   { id: 'home', label: 'Home', icon: <HomeRoundedIcon fontSize="inherit" /> },
   { id: 'stickers', label: 'Figurinhas', icon: <CollectionsBookmarkRoundedIcon fontSize="inherit" /> },
   { id: 'quiz', label: 'Quiz', icon: <QuizRoundedIcon fontSize="inherit" /> },
+  { id: 'shop', label: 'Loja', icon: <StorefrontRoundedIcon fontSize="inherit" /> },
   { id: 'ranking', label: 'Ranking', icon: <EmojiEventsRoundedIcon fontSize="inherit" /> },
   { id: 'settings', label: 'Configurações', icon: <SettingsRoundedIcon fontSize="inherit" /> },
 ];
@@ -182,6 +190,13 @@ export function UserDashboard() {
   const [quizSession, setQuizSession] = useState<QuizSessionStatus | null>(null);
   const [showQuizAnswer, setShowQuizAnswer] = useState(false);
   const [rewardModalData, setRewardModalData] = useState<QuizMatchResult | null>(null);
+  const [lastAnswerFeedback, setLastAnswerFeedback] = useState<QuizAnswerFeedback | null>(null);
+  const [quizAnswerError, setQuizAnswerError] = useState<string | null>(null);
+  const [gameRules, setGameRules] = useState<GameRules | null>(null);
+  const [shopItems, setShopItems] = useState<ShopItem[]>([]);
+  const [shopError, setShopError] = useState<string | null>(null);
+  const [shopFeedback, setShopFeedback] = useState<string | null>(null);
+  const [buyingItemId, setBuyingItemId] = useState<number | null>(null);
   const [accountForm, setAccountForm] = useState({ name: user?.name ?? '', email: user?.email ?? '', password: '' });
   const [accountError, setAccountError] = useState<string | null>(null);
   const [accountFeedback, setAccountFeedback] = useState<FeedbackMessage | null>(null);
@@ -209,24 +224,24 @@ export function UserDashboard() {
     async function loadDashboard() {
       setLoading(true);
       setProfileError(null);
-
-      const token = accessToken as string;
       const results = await Promise.allSettled([
-        getCurrentUser(token),
-        listCharacters(token),
-        getCollection(token),
-        getCollectionProgress(token),
-        listRanking(token),
-        getMyComments(token),
-        getQuizHistory(token, 5),
-        getActiveQuizSession(token),
+        getCurrentUser(),
+        listCharacters(),
+        getCollection(),
+        getCollectionProgress(),
+        listRanking(),
+        getMyComments(),
+        getQuizHistory(5),
+        getActiveQuizSession(),
+        getGameRules(),
+        listShopItems(),
       ]);
 
       if (ignore) {
         return;
       }
 
-      const [profileResult, charactersResult, collectionResult, progressResult, rankingResult, commentsResult, historyResult, activeResult] = results;
+      const [profileResult, charactersResult, collectionResult, progressResult, rankingResult, commentsResult, historyResult, activeResult, rulesResult, shopResult] = results;
 
       if (profileResult.status === 'fulfilled') {
         setProfile(profileResult.value);
@@ -262,6 +277,16 @@ export function UserDashboard() {
       if (activeResult.status === 'fulfilled') {
         setActiveSession(activeResult.value);
         setQuizSession(activeResult.value);
+      }
+
+      if (rulesResult.status === 'fulfilled') {
+        setGameRules(rulesResult.value);
+      }
+
+      if (shopResult.status === 'fulfilled') {
+        setShopItems(shopResult.value);
+      } else {
+        setShopError('Não foi possível carregar a loja.');
       }
 
       setLoading(false);
@@ -351,14 +376,15 @@ export function UserDashboard() {
     setQuizFeedback(null);
 
     try {
-      const token = accessToken as string;
       const payload: StartQuizSessionPayload = {
         quizType: quizForm.quizType,
         characterId: quizForm.quizType === 'CHARACTER_STUDY' ? Number(quizForm.characterId) : null,
         questionLimit: Number(quizForm.questionLimit),
       };
 
-      const session = await startQuizSession(token, payload);
+      const session = await startQuizSession(payload);
+      setLastAnswerFeedback(null);
+      setQuizAnswerError(null);
       setQuizSession(session);
       setActiveSession(session);
       setShowQuizAnswer(true);
@@ -369,29 +395,48 @@ export function UserDashboard() {
     }
   }
 
+  function consumeBoosts(previous: QuizSessionStatus, next: { extraTimeUsed: boolean; extraLifeUsed: boolean; xpMultiplierUsed: boolean }) {
+    setProfile((current) => {
+      if (!current) {
+        return current;
+      }
+
+      return {
+        ...current,
+        extraTimeBoosts: (current.extraTimeBoosts ?? 0) - (next.extraTimeUsed && !previous.extraTimeUsed ? 1 : 0),
+        extraLifeBoosts: (current.extraLifeBoosts ?? 0) - (next.extraLifeUsed && !previous.extraLifeUsed ? 1 : 0),
+        doubleXpBoosts: (current.doubleXpBoosts ?? 0) - (next.xpMultiplierUsed && !previous.xpMultiplierUsed ? 1 : 0),
+      };
+    });
+  }
+
   async function handleAnswerQuiz(payload: QuizAnswerPayload) {
-    if (!accessToken) return;
+    if (!accessToken || !quizSession) return;
+
+    setQuizAnswerError(null);
 
     try {
-      const token = accessToken as string;
-      const result = await answerQuizQuestion(token, payload.sessionId, {
+      const result = await answerQuizQuestion(payload.sessionId, {
         questionId: payload.questionId,
         selectedOption: payload.selectedOption,
         useExtraLife: payload.useExtraLife,
-        useExtraTime: payload.useExtraTime,
         useXpMultiplier: payload.useXpMultiplier,
       });
+
+      consumeBoosts(quizSession, result);
+      setLastAnswerFeedback(result.timedOut ? 'timeout' : result.correct ? 'correct' : 'wrong');
 
       if (result.finished) {
         setQuizSession(null);
         setActiveSession(null);
         setShowQuizAnswer(false);
+        setLastAnswerFeedback(null);
 
         const [historyResult, profileResult, collectionResult, progressResult] = await Promise.allSettled([
-          getQuizHistory(token, 5),
-          getCurrentUser(token),
-          getCollection(token),
-          getCollectionProgress(token),
+          getQuizHistory(5),
+          getCurrentUser(),
+          getCollection(),
+          getCollectionProgress(),
         ]);
         if (historyResult.status === 'fulfilled') {
           setHistory(historyResult.value);
@@ -424,24 +469,97 @@ export function UserDashboard() {
         return;
       }
 
-      setQuizSession((current) => {
-        if (!current) {
-          return current;
-        }
-
-        return {
-          ...current,
-          livesRemaining: result.livesRemaining,
-          correctAnswers: result.correctAnswers,
-          wrongAnswers: result.wrongAnswers,
-          currentQuestionIndex: current.currentQuestionIndex + 1,
-          currentQuestion: result.nextQuestion ?? null,
-        };
-      });
-
-      setQuizFeedback(result.correct ? 'Resposta correta!' : 'Resposta incorreta.');
+      const nextSession: QuizSessionStatus = {
+        ...quizSession,
+        livesRemaining: result.livesRemaining,
+        correctAnswers: result.correctAnswers,
+        wrongAnswers: result.wrongAnswers,
+        extraTimeUsed: result.extraTimeUsed,
+        extraLifeUsed: result.extraLifeUsed,
+        xpMultiplierUsed: result.xpMultiplierUsed,
+        currentQuestionIndex: quizSession.currentQuestionIndex + 1,
+        currentQuestion: result.nextQuestion ?? null,
+      };
+      setQuizSession(nextSession);
+      setActiveSession(nextSession);
     } catch (error) {
-      setQuizError(error instanceof Error ? error.message : 'Não foi possível responder a questão.');
+      setQuizAnswerError(error instanceof Error ? error.message : 'Não foi possível responder a questão.');
+    }
+  }
+
+  // Recarrega a sessão ao voltar para o quiz: o cronômetro continuou correndo no servidor.
+  async function handleResumeQuiz() {
+    setQuizSubmitting(true);
+    setQuizError(null);
+
+    try {
+      const current = await getActiveQuizSession();
+      setQuizSession(current);
+      setActiveSession(current);
+      setShowQuizAnswer(true);
+    } catch (error) {
+      setQuizSession(null);
+      setActiveSession(null);
+      setQuizError(error instanceof Error ? error.message : 'Não foi possível retomar a sessão.');
+    } finally {
+      setQuizSubmitting(false);
+    }
+  }
+
+  async function handleUseExtraTime(): Promise<QuizSessionStatus | null> {
+    if (!quizSession) {
+      return null;
+    }
+
+    setQuizAnswerError(null);
+
+    try {
+      const updated = await requestQuizExtraTime(quizSession.sessionId);
+      consumeBoosts(quizSession, updated);
+      setQuizSession(updated);
+      setActiveSession(updated);
+      return updated;
+    } catch (error) {
+      setQuizAnswerError(error instanceof Error ? error.message : 'Não foi possível usar o tempo extra.');
+      return null;
+    }
+  }
+
+  async function handleBuyItem(item: ShopItem) {
+    setBuyingItemId(item.id);
+    setShopError(null);
+    setShopFeedback(null);
+
+    try {
+      const purchase = await buyShopItem(item.id);
+      setProfile((current) =>
+        current
+          ? {
+              ...current,
+              coins: purchase.userCoins,
+              extraLifeBoosts: purchase.extraLifeBoosts,
+              extraTimeBoosts: purchase.extraTimeBoosts,
+              doubleXpBoosts: purchase.doubleXpBoosts,
+            }
+          : current,
+      );
+
+      if (purchase.rewardType === 'STICKER' && purchase.characterName) {
+        setShopFeedback(`Você ganhou a figurinha ${purchase.characterRarity ? getRarityLabel(purchase.characterRarity) + ' ' : ''}${purchase.characterName}!`);
+        const [collectionResult, progressResult] = await Promise.allSettled([getCollection(), getCollectionProgress()]);
+        if (collectionResult.status === 'fulfilled') {
+          setCollection(collectionResult.value);
+        }
+        if (progressResult.status === 'fulfilled') {
+          setCollectionProgress(progressResult.value);
+        }
+      } else {
+        setShopFeedback(`${item.name} adicionado à sua conta.`);
+      }
+    } catch (error) {
+      setShopError(error instanceof Error ? error.message : 'Não foi possível concluir a compra.');
+    } finally {
+      setBuyingItemId(null);
     }
   }
 
@@ -452,8 +570,9 @@ export function UserDashboard() {
 
     try {
       setQuizSubmitting(true);
-      const token = accessToken as string;
-      await abandonQuizSession(token, quizSession.sessionId);
+      await abandonQuizSession(quizSession.sessionId);
+      setLastAnswerFeedback(null);
+      setQuizAnswerError(null);
       setQuizSession(null);
       setActiveSession(null);
       setShowQuizAnswer(false);
@@ -477,8 +596,7 @@ export function UserDashboard() {
     setAccountFeedback(null);
 
     try {
-      const token = accessToken as string;
-      const updated = await updateCurrentUser(token, profile.id, {
+      const updated = await updateCurrentUser(profile.id, {
         name: accountForm.name.trim(),
         email: accountForm.email.trim(),
         password: accountForm.password.trim() || undefined,
@@ -505,8 +623,7 @@ export function UserDashboard() {
     setDeleteSubmitting(true);
 
     try {
-      const token = accessToken as string;
-      await deleteCurrentUser(token, profile.id);
+      await deleteCurrentUser(profile.id);
       signOut();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Não foi possível excluir a conta.';
@@ -531,6 +648,7 @@ export function UserDashboard() {
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
+              <ThemeToggle />
               <Button variant="secondary" onClick={signOut}>
                 Sair
               </Button>
@@ -563,6 +681,7 @@ export function UserDashboard() {
               <div className="grid gap-4 md:grid-cols-2">
                 <QuickActionCard icon={<CollectionsBookmarkRoundedIcon />} title="Figurinhas" description="Veja o que já desbloqueou e o que falta conquistar." onClick={() => setSection('stickers')} />
                 <QuickActionCard icon={<QuizRoundedIcon />} title="Quiz" description="Inicie uma partida aleatória ou de estudo por personagem." onClick={() => setSection('quiz')} />
+                <QuickActionCard icon={<StorefrontRoundedIcon />} title="Loja" description="Troque suas moedas por figurinhas e bônus." onClick={() => setSection('shop')} />
                 <QuickActionCard icon={<EmojiEventsRoundedIcon />} title="Ranking" description="Compare sua posição com os outros usuários." onClick={() => setSection('ranking')} />
                 <QuickActionCard icon={<SettingsRoundedIcon />} title="Configurações" description="Atualize seus dados e gerencie sua conta." onClick={() => setSection('settings')} />
               </div>
@@ -695,6 +814,14 @@ export function UserDashboard() {
                     </label>
                   </div>
 
+                  {gameRules ? (
+                    <p className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-3 text-xs leading-5 text-[var(--text-secondary)]">
+                      {quizForm.quizType === 'GENERAL'
+                        ? `Acerte pelo menos ${gameRules.rewardMinCorrectAnswers} pergunta(s) para concorrer a uma recompensa (até ${gameRules.rewardMatchLimitPerDay} por dia).`
+                        : `Acerte pelo menos ${gameRules.characterStickerMinAccuracyPercent}% das perguntas para ganhar a figurinha do personagem. O XP deste modo é ${gameRules.characterStudyXpPercent}% do normal.`}
+                    </p>
+                  ) : null}
+
                   {quizError ? <p className="text-sm text-red-700">{quizError}</p> : null}
                   {quizFeedback ? <p className="text-sm text-emerald-700">{quizFeedback}</p> : null}
                   <Button type="submit" disabled={quizSubmitting}>
@@ -705,9 +832,9 @@ export function UserDashboard() {
                 <div className="space-y-4">
                   <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-4">
                     <p className="text-sm font-semibold text-[var(--text-primary)]">Sessão em progresso</p>
-                    <p className="mt-2 text-sm text-[var(--text-secondary)]">Você já iniciou uma sessão. Continue respondendo ou clique em "Abandonar" na tela de resposta.</p>
+                    <p className="mt-2 text-sm text-[var(--text-secondary)]">Você já iniciou uma sessão. Continue respondendo ou clique em &quot;Abandonar sessão&quot; na tela de resposta. O tempo da pergunta continua correndo.</p>
                   </div>
-                  <Button type="button" variant="secondary" onClick={() => setShowQuizAnswer(true)}>
+                  <Button type="button" variant="secondary" onClick={handleResumeQuiz} disabled={quizSubmitting}>
                     Continuar respondendo...
                   </Button>
                 </div>
@@ -759,6 +886,46 @@ export function UserDashboard() {
               </SectionFrame>
             </div>
           </div>
+        ) : null}
+
+        {section === 'shop' ? (
+          <SectionFrame title="Loja" description="Troque suas moedas por figurinhas aleatórias e bônus para as partidas.">
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <Badge>Saldo: {profile?.coins ?? 0} moedas</Badge>
+                <Badge>Vida {profile?.extraLifeBoosts ?? 0} | Tempo {profile?.extraTimeBoosts ?? 0} | XP {profile?.doubleXpBoosts ?? 0}</Badge>
+              </div>
+
+              {shopFeedback ? <p className="text-sm text-emerald-700 dark:text-emerald-400" role="status">{shopFeedback}</p> : null}
+              {shopError ? <p className="text-sm text-red-700 dark:text-red-400" role="alert">{shopError}</p> : null}
+
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {shopItems.map((item) => {
+                  const canAfford = (profile?.coins ?? 0) >= item.priceCoins;
+
+                  return (
+                    <div key={item.id} className="flex flex-col justify-between gap-4 rounded-3xl border border-[var(--border)] bg-[var(--bg-primary)] p-5">
+                      <div>
+                        <div className="flex items-center justify-between gap-2">
+                          <h3 className="font-[family-name:var(--font-heading)] text-xl font-semibold text-[var(--text-primary)]">{item.name}</h3>
+                          <Badge>{item.itemType === 'STICKER' ? 'Figurinha' : 'Bônus'}</Badge>
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{item.description}</p>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-sm font-semibold text-[var(--text-primary)]">{item.priceCoins} moedas</span>
+                        <Button type="button" onClick={() => handleBuyItem(item)} disabled={!canAfford || buyingItemId !== null}>
+                          {buyingItemId === item.id ? 'Comprando...' : canAfford ? 'Comprar' : 'Moedas insuficientes'}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {shopItems.length === 0 && !shopError ? <p className="text-sm text-[var(--text-secondary)]">Nenhum item disponível no momento.</p> : null}
+            </div>
+          </SectionFrame>
         ) : null}
 
         {section === 'ranking' ? (
@@ -862,11 +1029,16 @@ export function UserDashboard() {
 
       {quizSession && showQuizAnswer && (
         <QuizAnswerScreen
+          key={`${quizSession.sessionId}-${quizSession.currentQuestion?.id ?? 'none'}-${quizSession.currentQuestionIndex}`}
           session={quizSession}
           onAnswer={handleAnswerQuiz}
+          onUseExtraTime={handleUseExtraTime}
           onClose={() => setShowQuizAnswer(false)}
           onAbandon={handleAbandonQuiz}
           isLoading={quizSubmitting}
+          lastFeedback={lastAnswerFeedback}
+          errorMessage={quizAnswerError}
+          extraTimeSeconds={gameRules?.extraTimeSeconds ?? 15}
           boosts={{
             extraLife: profile?.extraLifeBoosts ?? 0,
             extraTime: profile?.extraTimeBoosts ?? 0,
@@ -877,6 +1049,7 @@ export function UserDashboard() {
 
       <QuizRewardModal
         data={rewardModalData}
+        minCorrectForReward={gameRules?.rewardMinCorrectAnswers ?? null}
         onContinue={() => {
           setRewardModalData(null);
           setQuizFeedback('Partida concluída!');
@@ -1028,7 +1201,15 @@ function StickerFiltersModal({
   );
 }
 
-function QuizRewardModal({ data, onContinue }: { data: QuizMatchResult | null; onContinue: () => void }) {
+function QuizRewardModal({
+  data,
+  minCorrectForReward,
+  onContinue,
+}: {
+  data: QuizMatchResult | null;
+  minCorrectForReward: number | null;
+  onContinue: () => void;
+}) {
   if (!data) {
     return null;
   }
@@ -1070,6 +1251,11 @@ function QuizRewardModal({ data, onContinue }: { data: QuizMatchResult | null; o
                 <p className="mt-2 text-sm text-[var(--text-secondary)]">Recompensa aplicada com sucesso à sua conta.</p>
               )}
             </>
+          ) : wonSticker ? (
+            <>
+              <p className="text-sm font-semibold text-[var(--text-primary)]">Figurinha do personagem: {data.rewardCharacterName}</p>
+              <p className="mt-2 text-sm text-[var(--text-secondary)]">{unlockedText}</p>
+            </>
           ) : dailyLimitReached ? (
             <>
               <p className="text-sm font-semibold text-[var(--text-primary)]">Você atingiu o limite diário de recompensas.</p>
@@ -1078,7 +1264,10 @@ function QuizRewardModal({ data, onContinue }: { data: QuizMatchResult | null; o
               </p>
             </>
           ) : (
-            <p className="text-sm text-[var(--text-secondary)]">Nesta partida você não recebeu recompensa, mas o XP e score já foram contabilizados.</p>
+            <p className="text-sm text-[var(--text-secondary)]">
+              Nesta partida você não recebeu recompensa, mas o XP e score já foram contabilizados.
+              {minCorrectForReward ? ` No quiz geral, acerte pelo menos ${minCorrectForReward} pergunta(s) para concorrer a uma recompensa.` : ''}
+            </p>
           )}
         </div>
 

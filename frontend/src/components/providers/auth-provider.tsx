@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   getAccessToken,
@@ -12,6 +12,7 @@ import {
   clearAuthProfile,
 } from '@/lib/auth-storage';
 import { getCurrentUser, login, register } from '@/lib/auth-client';
+import { SESSION_EXPIRED_EVENT } from '@/lib/http';
 import type { AuthResponse, LoginRequest, RegisterRequest, UserProfile } from '@/types/auth';
 
 type AuthState = {
@@ -35,6 +36,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
 
+  const signOut = useCallback(() => {
+    clearAuthTokens();
+    clearAuthProfile();
+    setAccessToken(null);
+    setRefreshToken(null);
+    setUser(null);
+    router.replace('/');
+  }, [router]);
+
+  // Sincroniza uma única vez com o localStorage após a hidratação (o servidor não tem acesso a ele).
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const storedAccessToken = getAccessToken();
     const storedRefreshToken = getRefreshToken();
@@ -46,53 +58,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsHydrated(true);
 
     if (storedAccessToken && storedRefreshToken && !storedProfile) {
-      getCurrentUser(storedAccessToken)
+      getCurrentUser()
         .then((profile) => {
           setUser(profile);
           storeAuthProfile(profile);
         })
         .catch(() => {
-          clearAuthTokens();
-          clearAuthProfile();
-          setAccessToken(null);
-          setRefreshToken(null);
-          setUser(null);
-          router.replace('/');
+          signOut();
         });
     }
-  }, [router]);
+  }, [signOut]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
-  async function signIn(payload: LoginRequest) {
-    const tokens = await login(payload);
+  // A camada HTTP avisa quando o refresh token também expirou.
+  useEffect(() => {
+    window.addEventListener(SESSION_EXPIRED_EVENT, signOut);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, signOut);
+  }, [signOut]);
+
+  const startSession = useCallback(async (tokens: AuthResponse) => {
     storeAuthTokens(tokens);
     setAccessToken(tokens.accessToken);
     setRefreshToken(tokens.refreshToken);
-    const profile = await getCurrentUser(tokens.accessToken);
+    const profile = await getCurrentUser();
     storeAuthProfile(profile);
     setUser(profile);
     return tokens;
-  }
+  }, []);
 
-  async function signUp(payload: RegisterRequest) {
+  const signIn = useCallback(async (payload: LoginRequest) => {
+    return startSession(await login(payload));
+  }, [startSession]);
+
+  const signUp = useCallback(async (payload: RegisterRequest) => {
     await register(payload);
-    const tokens = await login({ email: payload.email, password: payload.password });
-    storeAuthTokens(tokens);
-    setAccessToken(tokens.accessToken);
-    setRefreshToken(tokens.refreshToken);
-    const profile = await getCurrentUser(tokens.accessToken);
-    storeAuthProfile(profile);
-    setUser(profile);
-    return tokens;
-  }
-
-  function signOut() {
-    clearAuthTokens();
-    clearAuthProfile();
-    setAccessToken(null);
-    setRefreshToken(null);
-    setUser(null);
-    router.replace('/');
-  }
+    return startSession(await login({ email: payload.email, password: payload.password }));
+  }, [startSession]);
 
   const value = useMemo<AuthState>(() => {
     return {
@@ -106,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signUp,
       signOut,
     };
-  }, [accessToken, refreshToken, isHydrated, user]);
+  }, [accessToken, refreshToken, isHydrated, user, signIn, signUp, signOut]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

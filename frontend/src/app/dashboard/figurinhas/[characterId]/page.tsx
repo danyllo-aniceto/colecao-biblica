@@ -76,11 +76,10 @@ export default function StickerDetailsPage() {
       setError(null);
 
       try {
-        const token = accessToken as string;
         const [characters, collection, myComments] = await Promise.all([
-          listCharacters(token),
-          getCollection(token),
-          getMyComments(token),
+          listCharacters(),
+          getCollection(),
+          getMyComments(),
         ]);
 
         if (ignore) {
@@ -144,9 +143,8 @@ export default function StickerDetailsPage() {
     setCommentError(null);
 
     try {
-      const token = accessToken as string;
       if (commentEditingId === null) {
-        const created = await createComment(token, {
+        const created = await createComment({
           characterId: character.id,
           text: commentDraft.trim(),
         });
@@ -154,7 +152,7 @@ export default function StickerDetailsPage() {
         setComments((current) => [created, ...current]);
         setCommentEditingId(created.id);
       } else {
-        const updated = await updateComment(token, commentEditingId, { text: commentDraft.trim() });
+        const updated = await updateComment(commentEditingId, { text: commentDraft.trim() });
         setComments((current) => current.map((item) => (item.id === updated.id ? updated : item)));
       }
     } catch (saveError) {

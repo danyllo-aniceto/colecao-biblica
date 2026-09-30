@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* `dark:` segue o tema escolhido no app (data-theme), não apenas o do sistema. */
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
 :root {
   --bg-primary: #f5e9d7;
   --bg-secondary: #ead7b7;

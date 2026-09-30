@@ -20,7 +20,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 
   if (!isHydrated) {
     return (
-      <div className="rounded-3xl border border-stone-200 bg-white/80 p-6 text-sm text-stone-600">
+      <div className="m-4 rounded-3xl border border-[var(--border)] bg-[var(--bg-secondary)] p-6 text-sm text-[var(--text-secondary)]">
         Carregando sessão...
       </div>
     );

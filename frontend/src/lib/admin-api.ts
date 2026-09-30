@@ -1,5 +1,5 @@
-import { buildApiUrl } from '@/lib/api';
-import type { ApiErrorResponse, UserProfile } from '@/types/auth';
+import { apiRequest, apiRequestVoid } from '@/lib/http';
+import type { UserProfile } from '@/types/auth';
 
 export type Role = 'ADMIN' | 'USER';
 export type StickerRarity = 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY';
@@ -87,6 +87,9 @@ export type GameSettings = {
   maxExtraTimeBoosts: number;
   maxDoubleXpBoosts: number;
   doubleXpMultiplier: number;
+  extraTimeSeconds: number;
+  rewardMinCorrectAnswers: number;
+  characterStickerMinAccuracyPercent: number;
 };
 
 export type CreateCharacterPayload = {
@@ -160,54 +163,7 @@ export type ListUsersParams = {
   email?: string;
 };
 
-async function safeParseJson<T>(response: Response): Promise<T | null> {
-  try {
-    return (await response.json()) as T;
-  } catch {
-    return null;
-  }
-}
-
-function extractErrorMessage(payload: ApiErrorResponse | null, fallback: string) {
-  return payload?.message ?? fallback;
-}
-
-async function requestJson<T>(token: string, path: string, init: RequestInit, fallbackError: string): Promise<T> {
-  const response = await fetch(buildApiUrl(path), {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      ...(init.headers ?? {}),
-    },
-  });
-
-  const body = await safeParseJson<T & ApiErrorResponse>(response);
-
-  if (!response.ok) {
-    throw new Error(extractErrorMessage(body, fallbackError));
-  }
-
-  return body as T;
-}
-
-async function requestVoid(token: string, path: string, init: RequestInit, fallbackError: string): Promise<void> {
-  const response = await fetch(buildApiUrl(path), {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      ...(init.headers ?? {}),
-    },
-  });
-
-  if (!response.ok) {
-    const body = await safeParseJson<ApiErrorResponse>(response);
-    throw new Error(extractErrorMessage(body, fallbackError));
-  }
-}
-
-export async function listUsers(token: string, params: ListUsersParams = {}): Promise<PaginatedResponse<UserProfile>> {
+export async function listUsers(params: ListUsersParams = {}): Promise<PaginatedResponse<UserProfile>> {
   const query = new URLSearchParams();
   query.set('page', String(params.page ?? 0));
   query.set('size', String(params.size ?? 10));
@@ -220,121 +176,121 @@ export async function listUsers(token: string, params: ListUsersParams = {}): Pr
     query.set('email', params.email.trim());
   }
 
-  return requestJson<PaginatedResponse<UserProfile>>(token, `/users?${query.toString()}`, { method: 'GET' }, 'Não foi possível carregar os usuários.');
+  return apiRequest<PaginatedResponse<UserProfile>>(`/users?${query.toString()}`, { method: 'GET' }, 'Não foi possível carregar os usuários.');
 }
 
-export async function createUser(token: string, payload: CreateUserPayload): Promise<UserProfile> {
-  return requestJson<UserProfile>(token, '/users', {
+export async function createUser(payload: CreateUserPayload): Promise<UserProfile> {
+  return apiRequest<UserProfile>('/users', {
     method: 'POST',
     body: JSON.stringify(payload),
   }, 'Não foi possível criar o usuário.');
 }
 
-export async function updateUser(token: string, id: number, payload: UpdateUserPayload): Promise<UserProfile> {
-  return requestJson<UserProfile>(token, `/users/${id}`, {
+export async function updateUser(id: number, payload: UpdateUserPayload): Promise<UserProfile> {
+  return apiRequest<UserProfile>(`/users/${id}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   }, 'Não foi possível atualizar o usuário.');
 }
 
-export async function deleteUser(token: string, id: number): Promise<void> {
-  return requestVoid(token, `/users/${id}`, { method: 'DELETE' }, 'Não foi possível excluir o usuário.');
+export async function deleteUser(id: number): Promise<void> {
+  return apiRequestVoid(`/users/${id}`, { method: 'DELETE' }, 'Não foi possível excluir o usuário.');
 }
 
-export async function listCharacters(token: string): Promise<AdminCharacter[]> {
-  return requestJson<AdminCharacter[]>(token, '/characters', { method: 'GET' }, 'Não foi possível carregar os personagens.');
+export async function listCharacters(): Promise<AdminCharacter[]> {
+  return apiRequest<AdminCharacter[]>('/characters', { method: 'GET' }, 'Não foi possível carregar os personagens.');
 }
 
-export async function createCharacter(token: string, payload: CreateCharacterPayload): Promise<AdminCharacter> {
-  return requestJson<AdminCharacter>(token, '/characters/admin', {
+export async function createCharacter(payload: CreateCharacterPayload): Promise<AdminCharacter> {
+  return apiRequest<AdminCharacter>('/characters/admin', {
     method: 'POST',
     body: JSON.stringify(payload),
   }, 'Não foi possível criar o personagem.');
 }
 
-export async function updateCharacter(token: string, id: number, payload: Partial<CreateCharacterPayload>): Promise<AdminCharacter> {
-  return requestJson<AdminCharacter>(token, `/characters/admin/${id}`, {
+export async function updateCharacter(id: number, payload: Partial<CreateCharacterPayload>): Promise<AdminCharacter> {
+  return apiRequest<AdminCharacter>(`/characters/admin/${id}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   }, 'Não foi possível atualizar o personagem.');
 }
 
-export async function deleteCharacter(token: string, id: number): Promise<void> {
-  return requestVoid(token, `/characters/admin/${id}`, { method: 'DELETE' }, 'Não foi possível excluir o personagem.');
+export async function deleteCharacter(id: number): Promise<void> {
+  return apiRequestVoid(`/characters/admin/${id}`, { method: 'DELETE' }, 'Não foi possível excluir o personagem.');
 }
 
-export async function listQuestions(token: string): Promise<AdminQuestion[]> {
-  return requestJson<AdminQuestion[]>(token, '/questions', { method: 'GET' }, 'Não foi possível carregar as perguntas.');
+export async function listQuestions(): Promise<AdminQuestion[]> {
+  return apiRequest<AdminQuestion[]>('/questions', { method: 'GET' }, 'Não foi possível carregar as perguntas.');
 }
 
-export async function createQuestion(token: string, payload: CreateQuestionPayload): Promise<AdminQuestion> {
-  return requestJson<AdminQuestion>(token, '/questions/admin', {
+export async function createQuestion(payload: CreateQuestionPayload): Promise<AdminQuestion> {
+  return apiRequest<AdminQuestion>('/questions/admin', {
     method: 'POST',
     body: JSON.stringify(payload),
   }, 'Não foi possível criar a pergunta.');
 }
 
-export async function updateQuestion(token: string, id: number, payload: Partial<CreateQuestionPayload>): Promise<AdminQuestion> {
-  return requestJson<AdminQuestion>(token, `/questions/admin/${id}`, {
+export async function updateQuestion(id: number, payload: Partial<CreateQuestionPayload>): Promise<AdminQuestion> {
+  return apiRequest<AdminQuestion>(`/questions/admin/${id}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   }, 'Não foi possível atualizar a pergunta.');
 }
 
-export async function deleteQuestion(token: string, id: number): Promise<void> {
-  return requestVoid(token, `/questions/admin/${id}`, { method: 'DELETE' }, 'Não foi possível excluir a pergunta.');
+export async function deleteQuestion(id: number): Promise<void> {
+  return apiRequestVoid(`/questions/admin/${id}`, { method: 'DELETE' }, 'Não foi possível excluir a pergunta.');
 }
 
-export async function listRewards(token: string): Promise<AdminReward[]> {
-  return requestJson<AdminReward[]>(token, '/rewards', { method: 'GET' }, 'Não foi possível carregar as recompensas.');
+export async function listRewards(): Promise<AdminReward[]> {
+  return apiRequest<AdminReward[]>('/rewards', { method: 'GET' }, 'Não foi possível carregar as recompensas.');
 }
 
-export async function createReward(token: string, payload: CreateRewardPayload): Promise<AdminReward> {
-  return requestJson<AdminReward>(token, '/rewards/admin', {
+export async function createReward(payload: CreateRewardPayload): Promise<AdminReward> {
+  return apiRequest<AdminReward>('/rewards/admin', {
     method: 'POST',
     body: JSON.stringify(payload),
   }, 'Não foi possível criar a recompensa.');
 }
 
-export async function updateReward(token: string, id: number, payload: Partial<CreateRewardPayload>): Promise<AdminReward> {
-  return requestJson<AdminReward>(token, `/rewards/admin/${id}`, {
+export async function updateReward(id: number, payload: Partial<CreateRewardPayload>): Promise<AdminReward> {
+  return apiRequest<AdminReward>(`/rewards/admin/${id}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   }, 'Não foi possível atualizar a recompensa.');
 }
 
-export async function deleteReward(token: string, id: number): Promise<void> {
-  return requestVoid(token, `/rewards/admin/${id}`, { method: 'DELETE' }, 'Não foi possível excluir a recompensa.');
+export async function deleteReward(id: number): Promise<void> {
+  return apiRequestVoid(`/rewards/admin/${id}`, { method: 'DELETE' }, 'Não foi possível excluir a recompensa.');
 }
 
-export async function listShopItems(token: string): Promise<AdminShopItem[]> {
-  return requestJson<AdminShopItem[]>(token, '/shop', { method: 'GET' }, 'Não foi possível carregar a loja.');
+export async function listShopItems(): Promise<AdminShopItem[]> {
+  return apiRequest<AdminShopItem[]>('/shop', { method: 'GET' }, 'Não foi possível carregar a loja.');
 }
 
-export async function createShopItem(token: string, payload: CreateShopItemPayload): Promise<AdminShopItem> {
-  return requestJson<AdminShopItem>(token, '/shop/admin', {
+export async function createShopItem(payload: CreateShopItemPayload): Promise<AdminShopItem> {
+  return apiRequest<AdminShopItem>('/shop/admin', {
     method: 'POST',
     body: JSON.stringify(payload),
   }, 'Não foi possível criar o item da loja.');
 }
 
-export async function updateShopItem(token: string, id: number, payload: Partial<CreateShopItemPayload>): Promise<AdminShopItem> {
-  return requestJson<AdminShopItem>(token, `/shop/admin/${id}`, {
+export async function updateShopItem(id: number, payload: Partial<CreateShopItemPayload>): Promise<AdminShopItem> {
+  return apiRequest<AdminShopItem>(`/shop/admin/${id}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   }, 'Não foi possível atualizar o item da loja.');
 }
 
-export async function deleteShopItem(token: string, id: number): Promise<void> {
-  return requestVoid(token, `/shop/admin/${id}`, { method: 'DELETE' }, 'Não foi possível excluir o item da loja.');
+export async function deleteShopItem(id: number): Promise<void> {
+  return apiRequestVoid(`/shop/admin/${id}`, { method: 'DELETE' }, 'Não foi possível excluir o item da loja.');
 }
 
-export async function getSettings(token: string): Promise<GameSettings> {
-  return requestJson<GameSettings>(token, '/settings', { method: 'GET' }, 'Não foi possível carregar as configurações.');
+export async function getSettings(): Promise<GameSettings> {
+  return apiRequest<GameSettings>('/settings', { method: 'GET' }, 'Não foi possível carregar as configurações.');
 }
 
-export async function updateSettings(token: string, payload: UpdateSettingsPayload): Promise<GameSettings> {
-  return requestJson<GameSettings>(token, '/settings/admin', {
+export async function updateSettings(payload: UpdateSettingsPayload): Promise<GameSettings> {
+  return apiRequest<GameSettings>('/settings/admin', {
     method: 'PUT',
     body: JSON.stringify(payload),
   }, 'Não foi possível atualizar as configurações.');

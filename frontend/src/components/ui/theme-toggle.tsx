@@ -1,40 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
+import { applyTheme, readTheme, subscribeTheme, type Theme } from '@/lib/theme';
 
-type Theme = 'light' | 'dark';
-
-const STORAGE_KEY = 'colecao-biblica:theme';
-
-function applyTheme(theme: Theme) {
-  document.documentElement.setAttribute('data-theme', theme);
+function getServerTheme(): Theme {
+  return 'light';
 }
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>('light');
-
-  useEffect(() => {
-    const persisted = window.localStorage.getItem(STORAGE_KEY) as Theme | null;
-    if (persisted === 'dark' || persisted === 'light') {
-      setTheme(persisted);
-      applyTheme(persisted);
-      return;
-    }
-
-    const systemTheme: Theme = window.matchMedia('(prefers-color-scheme: dark)').matches
-      ? 'dark'
-      : 'light';
-    setTheme(systemTheme);
-    applyTheme(systemTheme);
-  }, []);
+  // O tema é aplicado no <html> pelo script inline do layout; aqui só refletimos e alternamos.
+  const theme = useSyncExternalStore(subscribeTheme, readTheme, getServerTheme);
 
   function handleToggle() {
-    const nextTheme: Theme = theme === 'light' ? 'dark' : 'light';
-    setTheme(nextTheme);
-    applyTheme(nextTheme);
-    window.localStorage.setItem(STORAGE_KEY, nextTheme);
+    applyTheme(theme === 'light' ? 'dark' : 'light');
   }
 
   return (

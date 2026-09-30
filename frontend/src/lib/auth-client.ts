@@ -1,20 +1,8 @@
-import { buildApiUrl } from '@/lib/api';
+import { apiRequest, extractErrorMessage, fetchApi, safeParseJson } from '@/lib/http';
 import type { ApiErrorResponse, AuthResponse, LoginRequest, RegisterRequest, UserProfile } from '@/types/auth';
 
-async function safeParseJson<T>(response: Response): Promise<T | null> {
-  try {
-    return (await response.json()) as T;
-  } catch {
-    return null;
-  }
-}
-
-function extractErrorMessage(payload: ApiErrorResponse | null, fallback: string) {
-  return payload?.message ?? fallback;
-}
-
 export async function login(payload: LoginRequest): Promise<AuthResponse> {
-  const response = await fetch(buildApiUrl('/auth/login'), {
+  const response = await fetchApi('/auth/login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -35,7 +23,7 @@ export async function login(payload: LoginRequest): Promise<AuthResponse> {
 }
 
 export async function register(payload: RegisterRequest): Promise<void> {
-  const response = await fetch(buildApiUrl('/users'), {
+  const response = await fetchApi('/users', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -51,34 +39,12 @@ export async function register(payload: RegisterRequest): Promise<void> {
   throw new Error(extractErrorMessage(body, 'Não foi possível criar o usuário.'));
 }
 
-export async function getCurrentUser(accessToken: string): Promise<UserProfile> {
-  const response = await fetch(buildApiUrl('/users/me'), {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+export async function getCurrentUser(): Promise<UserProfile> {
+  const body = await apiRequest<UserProfile>('/users/me', { method: 'GET' }, 'Não foi possível carregar o usuário atual.');
 
-  const body = await safeParseJson<UserProfile & ApiErrorResponse>(response);
-
-  if (!response.ok || !body?.id || !body?.role) {
-    throw new Error(extractErrorMessage(body, 'Não foi possível carregar o usuário atual.'));
+  if (!body?.id || !body?.role) {
+    throw new Error('Não foi possível carregar o usuário atual.');
   }
 
   return body;
-}
-
-export async function listUsers(accessToken: string): Promise<UserProfile[]> {
-  const response = await fetch(buildApiUrl('/users?page=0&size=100'), {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  const body = await safeParseJson<{ content?: UserProfile[] } & ApiErrorResponse>(response);
-
-  if (!response.ok) {
-    throw new Error(extractErrorMessage(body, 'Não foi possível listar os usuários.'));
-  }
-
-  return body?.content ?? [];
 }

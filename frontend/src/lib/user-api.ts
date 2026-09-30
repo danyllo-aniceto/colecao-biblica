@@ -1,53 +1,6 @@
-import { buildApiUrl } from '@/lib/api';
-import type { ApiErrorResponse, UserProfile } from '@/types/auth';
+import { apiRequest, apiRequestVoid } from '@/lib/http';
+import type { UserProfile } from '@/types/auth';
 import type { StickerRarity } from '@/lib/admin-api';
-
-async function safeParseJson<T>(response: Response): Promise<T | null> {
-  try {
-    return (await response.json()) as T;
-  } catch {
-    return null;
-  }
-}
-
-function extractErrorMessage(payload: ApiErrorResponse | null, fallback: string) {
-  return payload?.message ?? fallback;
-}
-
-async function requestJson<T>(token: string, path: string, init: RequestInit, fallbackError: string): Promise<T> {
-  const response = await fetch(buildApiUrl(path), {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      ...(init.headers ?? {}),
-    },
-  });
-
-  const body = await safeParseJson<T & ApiErrorResponse>(response);
-
-  if (!response.ok) {
-    throw new Error(extractErrorMessage(body, fallbackError));
-  }
-
-  return body as T;
-}
-
-async function requestVoid(token: string, path: string, init: RequestInit, fallbackError: string): Promise<void> {
-  const response = await fetch(buildApiUrl(path), {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      ...(init.headers ?? {}),
-    },
-  });
-
-  if (!response.ok) {
-    const body = await safeParseJson<ApiErrorResponse>(response);
-    throw new Error(extractErrorMessage(body, fallbackError));
-  }
-}
 
 export type UserSticker = {
   characterId: number;
@@ -111,6 +64,8 @@ export type QuizQuestionView = {
   text: string;
   difficulty?: string;
   timeLimitSeconds: number;
+  /** Segundos restantes segundo o servidor (considera tempo extra e recarregamentos). */
+  remainingSeconds: number;
   optionA: string;
   optionB: string;
   optionC: string;
@@ -127,13 +82,16 @@ export type QuizSessionStatus = {
   correctAnswers: number;
   wrongAnswers: number;
   xpMultiplier: number;
+  extraTimeUsed: boolean;
+  extraLifeUsed: boolean;
+  xpMultiplierUsed: boolean;
   currentQuestion?: QuizQuestionView | null;
 };
 
 export type AnswerQuizQuestionPayload = {
   questionId: number;
-  selectedOption: 'A' | 'B' | 'C' | 'D';
-  useExtraTime?: boolean;
+  /** null quando o tempo acabou sem resposta. */
+  selectedOption: 'A' | 'B' | 'C' | 'D' | null;
   useExtraLife?: boolean;
   useXpMultiplier?: boolean;
 };
@@ -158,10 +116,14 @@ export type QuizMatchResult = {
 
 export type AnswerQuizQuestionResult = {
   correct: boolean;
+  timedOut: boolean;
   livesRemaining: number;
   correctAnswers: number;
   wrongAnswers: number;
   finished: boolean;
+  extraTimeUsed: boolean;
+  extraLifeUsed: boolean;
+  xpMultiplierUsed: boolean;
   nextQuestion?: QuizQuestionView | null;
   matchResult?: QuizMatchResult | null;
 };
@@ -193,79 +155,131 @@ export type QuizHistory = {
   }>;
 };
 
-export async function getCollection(token: string): Promise<UserSticker[]> {
-  return requestJson<UserSticker[]>(token, '/collection/my', { method: 'GET' }, 'Não foi possível carregar suas figurinhas.');
+export type GameRules = {
+  maxQuestionsPerMatch: number;
+  startingLives: number;
+  rewardMatchLimitPerDay: number;
+  characterStudyXpPercent: number;
+  extraTimeSeconds: number;
+  rewardMinCorrectAnswers: number;
+  characterStickerMinAccuracyPercent: number;
+};
+
+export type ShopItem = {
+  id: number;
+  name: string;
+  description: string;
+  itemType: 'STICKER' | 'GAME_BONUS';
+  priceCoins: number;
+  rewardDefinitionId?: number | null;
+  rewardName?: string | null;
+  active: boolean;
+};
+
+export type ShopPurchaseResult = {
+  item: ShopItem;
+  rewardType?: string | null;
+  characterId?: number | null;
+  characterName?: string | null;
+  characterRarity?: StickerRarity | null;
+  characterUnlocked: boolean;
+  userCoins: number;
+  extraLifeBoosts: number;
+  extraTimeBoosts: number;
+  doubleXpBoosts: number;
+};
+
+export async function getGameRules(): Promise<GameRules> {
+  return apiRequest<GameRules>('/settings', { method: 'GET' }, 'Não foi possível carregar as regras do jogo.');
 }
 
-export async function getCollectionProgress(token: string): Promise<CollectionProgress> {
-  return requestJson<CollectionProgress>(token, '/collection/my/progress', { method: 'GET' }, 'Não foi possível carregar o progresso da coleção.');
+export async function listShopItems(): Promise<ShopItem[]> {
+  return apiRequest<ShopItem[]>('/shop', { method: 'GET' }, 'Não foi possível carregar a loja.');
 }
 
-export async function listRanking(token: string): Promise<RankingEntry[]> {
-  return requestJson<RankingEntry[]>(token, '/ranking', { method: 'GET' }, 'Não foi possível carregar o ranking.');
+export async function buyShopItem(id: number): Promise<ShopPurchaseResult> {
+  return apiRequest<ShopPurchaseResult>(`/shop/buy/${id}`, { method: 'POST' }, 'Não foi possível concluir a compra.');
 }
 
-export async function getMyComments(token: string): Promise<CommentEntry[]> {
-  return requestJson<CommentEntry[]>(token, '/comments/my', { method: 'GET' }, 'Não foi possível carregar os comentários.');
+export async function getCollection(): Promise<UserSticker[]> {
+  return apiRequest<UserSticker[]>('/collection/my', { method: 'GET' }, 'Não foi possível carregar suas figurinhas.');
 }
 
-export async function createComment(token: string, payload: { characterId: number; text: string }): Promise<CommentEntry> {
-  return requestJson<CommentEntry>(token, '/comments', {
+export async function getCollectionProgress(): Promise<CollectionProgress> {
+  return apiRequest<CollectionProgress>('/collection/my/progress', { method: 'GET' }, 'Não foi possível carregar o progresso da coleção.');
+}
+
+export async function listRanking(): Promise<RankingEntry[]> {
+  return apiRequest<RankingEntry[]>('/ranking', { method: 'GET' }, 'Não foi possível carregar o ranking.');
+}
+
+export async function getMyComments(): Promise<CommentEntry[]> {
+  return apiRequest<CommentEntry[]>('/comments/my', { method: 'GET' }, 'Não foi possível carregar os comentários.');
+}
+
+export async function createComment(payload: { characterId: number; text: string }): Promise<CommentEntry> {
+  return apiRequest<CommentEntry>('/comments', {
     method: 'POST',
     body: JSON.stringify(payload),
   }, 'Não foi possível salvar o comentário.');
 }
 
-export async function updateComment(token: string, id: number, payload: { text: string }): Promise<CommentEntry> {
-  return requestJson<CommentEntry>(token, `/comments/${id}`, {
+export async function updateComment(id: number, payload: { text: string }): Promise<CommentEntry> {
+  return apiRequest<CommentEntry>(`/comments/${id}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   }, 'Não foi possível atualizar o comentário.');
 }
 
-export async function listCharacters(token: string): Promise<CharacterEntry[]> {
-  return requestJson<CharacterEntry[]>(token, '/characters', { method: 'GET' }, 'Não foi possível carregar os personagens.');
+export async function listCharacters(): Promise<CharacterEntry[]> {
+  return apiRequest<CharacterEntry[]>('/characters', { method: 'GET' }, 'Não foi possível carregar os personagens.');
 }
 
-export async function getCurrentUser(token: string): Promise<UserProfile> {
-  return requestJson<UserProfile>(token, '/users/me', { method: 'GET' }, 'Não foi possível carregar seu perfil.');
+export async function getCurrentUser(): Promise<UserProfile> {
+  return apiRequest<UserProfile>('/users/me', { method: 'GET' }, 'Não foi possível carregar seu perfil.');
 }
 
-export async function updateCurrentUser(token: string, id: number, payload: { name?: string; email?: string; password?: string }): Promise<UserProfile> {
-  return requestJson<UserProfile>(token, `/users/${id}`, {
+export async function updateCurrentUser(id: number, payload: { name?: string; email?: string; password?: string }): Promise<UserProfile> {
+  return apiRequest<UserProfile>(`/users/${id}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   }, 'Não foi possível atualizar sua conta.');
 }
 
-export async function deleteCurrentUser(token: string, id: number): Promise<void> {
-  return requestVoid(token, `/users/${id}`, { method: 'DELETE' }, 'Não foi possível excluir sua conta.');
+export async function deleteCurrentUser(id: number): Promise<void> {
+  return apiRequestVoid(`/users/${id}`, { method: 'DELETE' }, 'Não foi possível excluir sua conta.');
 }
 
-export async function startQuizSession(token: string, payload: StartQuizSessionPayload): Promise<QuizSessionStatus> {
-  return requestJson<QuizSessionStatus>(token, '/quiz/sessions/start', {
+export async function startQuizSession(payload: StartQuizSessionPayload): Promise<QuizSessionStatus> {
+  return apiRequest<QuizSessionStatus>('/quiz/sessions/start', {
     method: 'POST',
     body: JSON.stringify(payload),
   }, 'Não foi possível iniciar o quiz.');
 }
 
-export async function getActiveQuizSession(token: string): Promise<QuizSessionStatus> {
-  return requestJson<QuizSessionStatus>(token, '/quiz/sessions/active', { method: 'GET' }, 'Não foi possível carregar a sessão ativa.');
+export async function getActiveQuizSession(): Promise<QuizSessionStatus> {
+  return apiRequest<QuizSessionStatus>('/quiz/sessions/active', { method: 'GET' }, 'Não foi possível carregar a sessão ativa.');
 }
 
-export async function answerQuizQuestion(token: string, sessionId: number, payload: AnswerQuizQuestionPayload): Promise<AnswerQuizQuestionResult> {
-  return requestJson<AnswerQuizQuestionResult>(token, `/quiz/sessions/${sessionId}/answer`, {
+export async function answerQuizQuestion(sessionId: number, payload: AnswerQuizQuestionPayload): Promise<AnswerQuizQuestionResult> {
+  return apiRequest<AnswerQuizQuestionResult>(`/quiz/sessions/${sessionId}/answer`, {
     method: 'POST',
     body: JSON.stringify(payload),
   }, 'Não foi possível responder a pergunta.');
 }
 
-export async function abandonQuizSession(token: string, sessionId: number): Promise<QuizSessionStatus> {
-  return requestJson<QuizSessionStatus>(token, `/quiz/sessions/${sessionId}/abandon`, {
+export async function requestQuizExtraTime(sessionId: number): Promise<QuizSessionStatus> {
+  return apiRequest<QuizSessionStatus>(`/quiz/sessions/${sessionId}/extra-time`, {
+    method: 'POST',
+  }, 'Não foi possível usar o tempo extra.');
+}
+
+export async function abandonQuizSession(sessionId: number): Promise<QuizSessionStatus> {
+  return apiRequest<QuizSessionStatus>(`/quiz/sessions/${sessionId}/abandon`, {
     method: 'POST',
   }, 'Não foi possível abandonar a sessão.');
 }
 
-export async function getQuizHistory(token: string, limit = 5): Promise<QuizHistory> {
-  return requestJson<QuizHistory>(token, `/quiz/history?limit=${limit}`, { method: 'GET' }, 'Não foi possível carregar o histórico do quiz.');
+export async function getQuizHistory(limit = 5): Promise<QuizHistory> {
+  return apiRequest<QuizHistory>(`/quiz/history?limit=${limit}`, { method: 'GET' }, 'Não foi possível carregar o histórico do quiz.');
 }

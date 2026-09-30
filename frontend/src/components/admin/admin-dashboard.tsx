@@ -128,6 +128,9 @@ type SettingsFormState = {
   maxExtraTimeBoosts: string;
   maxDoubleXpBoosts: string;
   doubleXpMultiplier: string;
+  extraTimeSeconds: string;
+  rewardMinCorrectAnswers: string;
+  characterStickerMinAccuracyPercent: string;
 };
 
 type LoadState<T> = {
@@ -224,6 +227,9 @@ const emptySettingsForm: SettingsFormState = {
   maxExtraTimeBoosts: '5',
   maxDoubleXpBoosts: '5',
   doubleXpMultiplier: '2.0',
+  extraTimeSeconds: '15',
+  rewardMinCorrectAnswers: '7',
+  characterStickerMinAccuracyPercent: '70',
 };
 
 const controlClassName =
@@ -856,7 +862,7 @@ export function AdminDashboard() {
     setUsersState((state) => ({ ...state, loading: true, error: null }));
 
     try {
-      const response = await listUsers(currentToken, {
+      const response = await listUsers({
         page,
         size,
         name,
@@ -889,7 +895,7 @@ export function AdminDashboard() {
     setCharactersState((state) => ({ ...state, loading: true, error: null }));
 
     try {
-      const response = await listCharacters(currentToken);
+      const response = await listCharacters();
       setCharactersState({ data: response, loading: false, error: null });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Não foi possível carregar os personagens.';
@@ -905,7 +911,7 @@ export function AdminDashboard() {
     setQuestionsState((state) => ({ ...state, loading: true, error: null }));
 
     try {
-      const response = await listQuestions(currentToken);
+      const response = await listQuestions();
       setQuestionsState({ data: response, loading: false, error: null });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Não foi possível carregar as perguntas.';
@@ -921,7 +927,7 @@ export function AdminDashboard() {
     setRewardsState((state) => ({ ...state, loading: true, error: null }));
 
     try {
-      const response = await listRewards(currentToken);
+      const response = await listRewards();
       setRewardsState({ data: response, loading: false, error: null });
       if (response.length > 0 && editingRewardId === null) {
         startEditingReward(response[0]);
@@ -940,7 +946,7 @@ export function AdminDashboard() {
     setShopState((state) => ({ ...state, loading: true, error: null }));
 
     try {
-      const response = await listShopItems(currentToken);
+      const response = await listShopItems();
       setShopState({ data: response, loading: false, error: null });
       if (response.length > 0 && editingShopId === null) {
         startEditingShopItem(response[0]);
@@ -959,7 +965,7 @@ export function AdminDashboard() {
     setSettingsState((state) => ({ ...state, loading: true, error: null }));
 
     try {
-      const response = await getSettings(currentToken);
+      const response = await getSettings();
       setSettingsState({ data: response, loading: false, error: null });
       setSettingsForm({
         maxQuestionsPerMatch: String(response.maxQuestionsPerMatch),
@@ -970,6 +976,9 @@ export function AdminDashboard() {
         maxExtraTimeBoosts: String(response.maxExtraTimeBoosts),
         maxDoubleXpBoosts: String(response.maxDoubleXpBoosts),
         doubleXpMultiplier: String(response.doubleXpMultiplier),
+        extraTimeSeconds: String(response.extraTimeSeconds),
+        rewardMinCorrectAnswers: String(response.rewardMinCorrectAnswers),
+        characterStickerMinAccuracyPercent: String(response.characterStickerMinAccuracyPercent),
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Não foi possível carregar as configurações.';
@@ -996,9 +1005,9 @@ export function AdminDashboard() {
       };
 
       if (editingUserId === null) {
-        await createUser(currentToken, payload);
+        await createUser(payload);
       } else {
-        await updateUser(currentToken, editingUserId, payload);
+        await updateUser(editingUserId, payload);
       }
 
       setUserForm(emptyUserForm);
@@ -1132,9 +1141,9 @@ export function AdminDashboard() {
       payload.importantEvents = optionalText(sanitizedImportantEvents);
 
       if (editingCharacterId === null) {
-        await createCharacter(currentToken, payload);
+        await createCharacter(payload);
       } else {
-        await updateCharacter(currentToken, editingCharacterId, payload);
+        await updateCharacter(editingCharacterId, payload);
       }
 
       setCharacterForm(emptyCharacterForm);
@@ -1266,9 +1275,9 @@ export function AdminDashboard() {
       };
 
       if (editingQuestionId === null) {
-        await createQuestion(currentToken, payload);
+        await createQuestion(payload);
       } else {
-        await updateQuestion(currentToken, editingQuestionId, payload);
+        await updateQuestion(editingQuestionId, payload);
       }
 
       setQuestionForm(emptyQuestionForm);
@@ -1319,14 +1328,14 @@ export function AdminDashboard() {
 
     try {
       if (deleteTarget.kind === 'user') {
-        await deleteUser(currentToken, deleteTarget.id);
+        await deleteUser(deleteTarget.id);
         setUsersReloadKey((value) => value + 1);
       } else if (deleteTarget.kind === 'character') {
-        await deleteCharacter(currentToken, deleteTarget.id);
+        await deleteCharacter(deleteTarget.id);
         await loadCharacters();
         await loadQuestions();
       } else {
-        await deleteQuestion(currentToken, deleteTarget.id);
+        await deleteQuestion(deleteTarget.id);
         await loadQuestions();
       }
 
@@ -1425,7 +1434,7 @@ export function AdminDashboard() {
         active: rewardForm.active,
       };
 
-      await updateReward(currentToken, editingRewardId, payload);
+      await updateReward(editingRewardId, payload);
       await loadRewards();
       await loadShopItems();
     } catch (error) {
@@ -1478,7 +1487,7 @@ export function AdminDashboard() {
         active: shopForm.active,
       };
 
-      await updateShopItem(currentToken, editingShopId, payload);
+      await updateShopItem(editingShopId, payload);
       await loadShopItems();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Não foi possível salvar o item da loja.';
@@ -1512,7 +1521,7 @@ export function AdminDashboard() {
     setSettingsSubmitError(null);
 
     try {
-      await updateSettings(currentToken, {
+      await updateSettings({
         maxQuestionsPerMatch: Number(settingsForm.maxQuestionsPerMatch),
         startingLives: Number(settingsForm.startingLives),
         rewardMatchLimitPerDay: Number(settingsForm.rewardMatchLimitPerDay),
@@ -1521,6 +1530,9 @@ export function AdminDashboard() {
         maxExtraTimeBoosts: Number(settingsForm.maxExtraTimeBoosts),
         maxDoubleXpBoosts: Number(settingsForm.maxDoubleXpBoosts),
         doubleXpMultiplier: Number(settingsForm.doubleXpMultiplier),
+        extraTimeSeconds: Number(settingsForm.extraTimeSeconds),
+        rewardMinCorrectAnswers: Number(settingsForm.rewardMinCorrectAnswers),
+        characterStickerMinAccuracyPercent: Number(settingsForm.characterStickerMinAccuracyPercent),
       });
       await loadSettings();
     } catch (error) {
@@ -2632,6 +2644,15 @@ export function AdminDashboard() {
             </Field>
             <Field label="Multiplicador de XP em dobro">
               <Input type="number" min={1} max={10} step="0.1" value={settingsForm.doubleXpMultiplier} onChange={(event) => setSettingsForm((current) => ({ ...current, doubleXpMultiplier: event.target.value }))} required />
+            </Field>
+            <Field label="Segundos do tempo extra">
+              <Input type="number" min={1} max={120} value={settingsForm.extraTimeSeconds} onChange={(event) => setSettingsForm((current) => ({ ...current, extraTimeSeconds: event.target.value }))} required />
+            </Field>
+            <Field label="Acertos mínimos para recompensa (quiz geral)" hint="Limitado automaticamente ao total de perguntas ativas.">
+              <Input type="number" min={1} max={100} value={settingsForm.rewardMinCorrectAnswers} onChange={(event) => setSettingsForm((current) => ({ ...current, rewardMinCorrectAnswers: event.target.value }))} required />
+            </Field>
+            <Field label="Aproveitamento mínimo para figurinha no estudo de personagem (%)">
+              <Input type="number" min={0} max={100} value={settingsForm.characterStickerMinAccuracyPercent} onChange={(event) => setSettingsForm((current) => ({ ...current, characterStickerMinAccuracyPercent: event.target.value }))} required />
             </Field>
             {settingsSubmitError ? <p className="lg:col-span-2 text-sm text-red-700">{settingsSubmitError}</p> : null}
             {settingsState.error ? <p className="lg:col-span-2 text-sm text-red-700">{settingsState.error}</p> : null}

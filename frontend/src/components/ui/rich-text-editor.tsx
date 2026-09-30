@@ -31,7 +31,6 @@ import Link from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import Image from '@tiptap/extension-image';
-import { Button } from '@/components/ui/button';
 
 const toolbarButtonClass =
   'inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--border)] text-[var(--text-primary)] transition-colors hover:bg-[color-mix(in_srgb,var(--gold)_16%,transparent)] disabled:opacity-50';

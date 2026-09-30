@@ -14,9 +14,22 @@ Aplicação Next.js para a Coleção Bíblica.
 ## Funcionalidades atuais
 
 - Tela inicial com Login e Cadastro na mesma interface.
-- Cadastro via `POST /users` seguido de autenticação automática.
-- Login via `POST /auth/login` com persistência local de tokens.
-- Rota protegida em `/dashboard` com controle de sessão e logout.
+- Painel do usuário: figurinhas, quiz, loja, ranking e configurações da conta.
+- Painel do admin: usuários, personagens, perguntas, recompensas, loja e configurações do jogo.
+- Sessão com renovação automática: `src/lib/http.ts` renova o access token via
+  `POST /auth/refresh` ao receber `401` e repete a requisição. Só desloga se o
+  refresh for recusado (falha de rede não derruba a sessão).
+- Quiz com cronômetro sincronizado com o servidor, envio automático ao fim do
+  tempo e bônus (tempo extra, vida extra, XP em dobro).
+- Tema claro/escuro aplicado antes da primeira pintura (sem "piscar"); a variante
+  `dark:` do Tailwind segue o tema escolhido no app.
+
+## Scripts
+
+- `npm run dev`: ambiente de desenvolvimento
+- `npm run build`: build de produção
+- `npm run lint`: ESLint (config flat do Next)
+- `npx tsc --noEmit`: checagem de tipos
 
 ## Componentes reutilizáveis
 
@@ -29,6 +42,4 @@ Aplicação Next.js para a Coleção Bíblica.
 
 ## Próximos passos
 
-- Criar cliente HTTP autenticado para endpoints protegidos.
-- Implementar refresh de token automático.
-- Montar primeiras telas de listagem com tabelas reutilizáveis.
+- Transformar em PWA (manifest, service worker, página offline, instalação).

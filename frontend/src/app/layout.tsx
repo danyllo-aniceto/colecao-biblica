@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Cinzel, Inter } from 'next/font/google';
 import { AuthProvider } from '@/components/providers/auth-provider';
+import { themeInitScript } from '@/lib/theme';
 import './globals.css';
 
 const bodyFont = Inter({
@@ -25,7 +26,10 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body suppressHydrationWarning className={`${bodyFont.variable} ${headingFont.variable}`}>
         <AuthProvider>{children}</AuthProvider>
       </body>
