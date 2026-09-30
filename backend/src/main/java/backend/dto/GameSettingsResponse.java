@@ -8,6 +8,9 @@ public record GameSettingsResponse(
         int maxExtraLifeBoosts,
         int maxExtraTimeBoosts,
         int maxDoubleXpBoosts,
-        double doubleXpMultiplier
+        double doubleXpMultiplier,
+        int extraTimeSeconds,
+        int rewardMinCorrectAnswers,
+        int characterStickerMinAccuracyPercent
 ) {
 }

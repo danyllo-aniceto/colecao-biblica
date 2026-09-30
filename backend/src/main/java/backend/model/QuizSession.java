@@ -86,4 +86,12 @@ public class QuizSession {
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String questionIdsCsv;
+
+    /** Momento em que a pergunta atual foi exibida; base para validar o tempo limite. */
+    private Instant currentQuestionStartedAt;
+
+    /** Segundos extras concedidos à pergunta atual pelo bônus de tempo extra. */
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "integer default 0")
+    private int currentQuestionExtraSeconds = 0;
 }

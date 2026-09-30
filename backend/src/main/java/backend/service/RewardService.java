@@ -19,11 +19,11 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 @Service
 public class RewardService {
@@ -167,6 +167,54 @@ public class RewardService {
         return result;
     }
 
+    /**
+     * Garante que aplicar a recompensa realmente trará algo ao usuário.
+     * Usado na loja para não cobrar moedas por um item sem efeito.
+     */
+    public void ensureRewardIsUseful(User user, RewardDefinition reward) {
+        switch (reward.getRewardType()) {
+            case EXTRA_LIFE -> {
+                if (user.getExtraLifeBoosts() >= gameSettingService.getMaxExtraLifeBoosts()) {
+                    throw new BadRequestException("Você já atingiu o limite de vidas extras");
+                }
+            }
+            case EXTRA_TIME -> {
+                if (user.getExtraTimeBoosts() >= gameSettingService.getMaxExtraTimeBoosts()) {
+                    throw new BadRequestException("Você já atingiu o limite de bônus de tempo extra");
+                }
+            }
+            case XP_MULTIPLIER -> {
+                if (user.getDoubleXpBoosts() >= gameSettingService.getMaxDoubleXpBoosts()) {
+                    throw new BadRequestException("Você já atingiu o limite de bônus de XP em dobro");
+                }
+            }
+            case STICKER -> {
+                if (reward.getStickerCharacter() != null) {
+                    if (userStickerRepository.findByUserIdAndCharacterId(user.getId(), reward.getStickerCharacter().getId()).isPresent()) {
+                        throw new BadRequestException("Você já possui esta figurinha");
+                    }
+                } else if (reward.getStickerRarity() != null) {
+                    List<BiblicalCharacter> byRarity = characterRepository.findByRarity(reward.getStickerRarity());
+                    if (byRarity.isEmpty()) {
+                        throw new BadRequestException("Ainda não há figurinhas desta raridade");
+                    }
+                    Set<Long> owned = ownedCharacterIds(user);
+                    if (byRarity.stream().allMatch(character -> owned.contains(character.getId()))) {
+                        throw new BadRequestException("Você já possui todas as figurinhas desta raridade");
+                    }
+                }
+            }
+            default -> {
+            }
+        }
+    }
+
+    private Set<Long> ownedCharacterIds(User user) {
+        return userStickerRepository.findByUserId(user.getId()).stream()
+                .map(sticker -> sticker.getCharacter().getId())
+                .collect(Collectors.toSet());
+    }
+
     public RewardDefinitionResponse toResponse(RewardDefinition reward) {
         return new RewardDefinitionResponse(
                 reward.getId(),
@@ -194,9 +242,7 @@ public class RewardService {
             List<BiblicalCharacter> byRarity = new ArrayList<>(characterRepository.findByRarity(reward.getStickerRarity()));
             byRarity.sort(Comparator.comparing(BiblicalCharacter::getId));
             if (!byRarity.isEmpty()) {
-                Set<Long> ownedCharacterIds = new HashSet<>(userStickerRepository.findByUserId(user.getId()).stream()
-                        .map(sticker -> sticker.getCharacter().getId())
-                        .toList());
+                Set<Long> ownedCharacterIds = ownedCharacterIds(user);
                 List<BiblicalCharacter> missingCharacters = byRarity.stream()
                         .filter(item -> !ownedCharacterIds.contains(item.getId()))
                         .toList();
@@ -255,20 +301,26 @@ public class RewardService {
                                    double xpMultiplier,
                                    double dropChance,
                                    boolean active) {
-        RewardDefinition reward = repository.findAll().stream()
+        Optional<RewardDefinition> existing = repository.findAll().stream()
                 .filter(item -> item.getName().equalsIgnoreCase(name))
-                .findFirst()
-                .orElse(RewardDefinition.builder().name(name).build());
+                .findFirst();
 
+        RewardDefinition reward = existing.orElse(RewardDefinition.builder().name(name).build());
+
+        // Identidade da recompensa é sempre fixa.
         reward.setRewardType(type);
         reward.setStickerRarity(rarity);
         reward.setStickerCharacter(character);
-        reward.setCoinAmount(coinAmount);
-        reward.setExtraLives(extraLives);
-        reward.setExtraTimeSeconds(extraTimeSeconds);
-        reward.setXpMultiplier(xpMultiplier);
-        reward.setDropChance(dropChance);
-        reward.setActive(active);
+
+        // Valores ajustáveis pelo admin só recebem o padrão na criação.
+        if (existing.isEmpty()) {
+            reward.setCoinAmount(coinAmount);
+            reward.setExtraLives(extraLives);
+            reward.setExtraTimeSeconds(extraTimeSeconds);
+            reward.setXpMultiplier(xpMultiplier);
+            reward.setDropChance(dropChance);
+            reward.setActive(active);
+        }
 
         repository.save(reward);
     }

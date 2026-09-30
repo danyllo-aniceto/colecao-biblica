@@ -33,13 +33,22 @@ public class CollectionService {
                 .toList();
     }
 
-    public void grantStickerIfMissing(User user, BiblicalCharacter character) {
-        userStickerRepository.findByUserIdAndCharacterId(user.getId(), character.getId())
-                .orElseGet(() -> userStickerRepository.save(UserSticker.builder()
-                        .user(user)
-                        .character(character)
-                        .acquiredAt(Instant.now())
-                        .build()));
+    /**
+     * Concede a figurinha caso o usuário ainda não a tenha.
+     *
+     * @return true se a figurinha foi desbloqueada agora
+     */
+    public boolean grantStickerIfMissing(User user, BiblicalCharacter character) {
+        if (userStickerRepository.findByUserIdAndCharacterId(user.getId(), character.getId()).isPresent()) {
+            return false;
+        }
+
+        userStickerRepository.save(UserSticker.builder()
+                .user(user)
+                .character(character)
+                .acquiredAt(Instant.now())
+                .build());
+        return true;
     }
 
     public long totalCharacterCount() {

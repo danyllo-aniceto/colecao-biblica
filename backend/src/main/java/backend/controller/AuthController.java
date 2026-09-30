@@ -3,11 +3,11 @@ package backend.controller;
 import backend.dto.AuthResponse;
 import backend.dto.LoginRequest;
 import backend.dto.RefreshRequest;
-import backend.exception.NotFoundException;
 import backend.exception.UnauthorizedException;
 import backend.model.User;
 import backend.repository.UserRepository;
 import backend.security.JwtUtil;
+import jakarta.validation.Valid;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,25 +26,23 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@RequestBody LoginRequest request) {
+    public AuthResponse login(@Valid @RequestBody LoginRequest request) {
 
+        // Mesma mensagem para e-mail inexistente e senha errada, para não revelar quais e-mails têm conta.
         User dbUser = repository.findByEmailAndDeletedFalse(request.email())
-                .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
-
-        if (!encoder.matches(request.password(), dbUser.getPassword())) {
-            throw new UnauthorizedException("Senha inválida");
-        }
+                .filter(user -> encoder.matches(request.password(), user.getPassword()))
+                .orElseThrow(() -> new UnauthorizedException("E-mail ou senha inválidos"));
 
         return buildAuthResponse(dbUser.getEmail());
     }
 
     @PostMapping("/refresh")
-    public AuthResponse refresh(@RequestBody RefreshRequest request) {
+    public AuthResponse refresh(@Valid @RequestBody RefreshRequest request) {
         String refreshToken = request.refreshToken();
         String email = jwtUtil.extractEmail(refreshToken);
 
         User dbUser = repository.findByEmailAndDeletedFalse(email)
-                .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
+                .orElseThrow(() -> new UnauthorizedException("Token de refresh inválido ou expirado"));
 
         if (!jwtUtil.isValidRefreshToken(refreshToken, dbUser.getEmail())) {
             throw new UnauthorizedException("Token de refresh inválido ou expirado");

@@ -1,18 +1,20 @@
 package backend.service;
 
 import backend.dto.QuizMatchResultResponse;
-import backend.dto.SubmitQuizMatchRequest;
 import backend.exception.BadRequestException;
 import backend.model.BiblicalCharacter;
 import backend.model.QuestionDifficulty;
 import backend.model.QuizMatch;
 import backend.model.QuizType;
+import backend.model.RewardType;
 import backend.model.RewardDefinition;
 import backend.model.User;
 import backend.repository.QuizMatchRepository;
 import backend.repository.QuestionRepository;
 import backend.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -30,6 +32,7 @@ public class QuizService {
     private final CharacterService characterService;
     private final CollectionService collectionService;
     private final QuestionRepository questionRepository;
+    private final ZoneId zoneId;
 
     public QuizService(QuizMatchRepository quizMatchRepository,
                        UserRepository userRepository,
@@ -38,7 +41,8 @@ public class QuizService {
                        GameSettingService gameSettingService,
                        CharacterService characterService,
                        CollectionService collectionService,
-                       QuestionRepository questionRepository) {
+                       QuestionRepository questionRepository,
+                       @Value("${app.timezone:America/Sao_Paulo}") String timezone) {
         this.quizMatchRepository = quizMatchRepository;
         this.userRepository = userRepository;
         this.currentUserService = currentUserService;
@@ -47,24 +51,10 @@ public class QuizService {
         this.characterService = characterService;
         this.collectionService = collectionService;
         this.questionRepository = questionRepository;
+        this.zoneId = ZoneId.of(timezone);
     }
 
-    public QuizMatchResultResponse submitMatchResult(SubmitQuizMatchRequest request) {
-        validateMatchRequest(request);
-
-        User user = currentUserService.getCurrentUser();
-        return finalizeMatch(
-                user,
-                request.quizType(),
-                request.questionsAnswered(),
-                request.correctAnswers(),
-                request.wrongAnswers(),
-                request.characterId(),
-                1.0,
-                null
-        );
-    }
-
+    @Transactional
     public QuizMatchResultResponse finalizeMatch(User user,
                                                  QuizType quizType,
                                                  int questionsAnswered,
@@ -78,20 +68,6 @@ public class QuizService {
         int xp = calculateXp(correctAnswers, questionsAnswered, xpMultiplier);
         int score = calculateScore(correctAnswers, wrongAnswers);
 
-        if (quizType == QuizType.CHARACTER_STUDY) {
-            int percent = gameSettingService.getCharacterStudyXpPercent();
-            xp = (xp * percent) / 100;
-
-            if (characterId != null) {
-                BiblicalCharacter character = characterService.getById(characterId);
-                collectionService.grantStickerIfMissing(user, character);
-            }
-        }
-
-        user.setXp(user.getXp() + xp);
-        user.setTotalScore(user.getTotalScore() + score);
-        user.setLevel(calculateLevel(user.getXp()));
-
         boolean rewardGranted = false;
         String rewardName = null;
         String rewardType = null;
@@ -99,62 +75,42 @@ public class QuizService {
         String rewardCharacterName = null;
         String rewardCharacterRarity = null;
         boolean rewardCharacterUnlocked = false;
-        int usedToday;
+
+        if (quizType == QuizType.CHARACTER_STUDY) {
+            int percent = gameSettingService.getCharacterStudyXpPercent();
+            xp = (xp * percent) / 100;
+
+            // A figurinha do personagem só é liberada com aproveitamento mínimo.
+            if (characterId != null && reachedStickerAccuracy(correctAnswers, questionsAnswered)) {
+                BiblicalCharacter character = characterService.getById(characterId);
+                boolean unlocked = collectionService.grantStickerIfMissing(user, character);
+                rewardType = RewardType.STICKER.name();
+                rewardCharacterId = character.getId();
+                rewardCharacterName = character.getName();
+                rewardCharacterRarity = character.getRarity().name();
+                rewardCharacterUnlocked = unlocked;
+            }
+        }
+
+        user.setXp(user.getXp() + xp);
+        user.setTotalScore(user.getTotalScore() + score);
+        user.setLevel(calculateLevel(user.getXp()));
 
         int dailyLimit = gameSettingService.getRewardMatchLimitPerDay();
-        if (quizType == QuizType.GENERAL) {
-            int minimumCorrectForReward = requiredCorrectAnswersForReward(quizType, characterId);
-            if (correctAnswers < minimumCorrectForReward) {
-                userRepository.save(user);
 
-                QuizMatch match = quizMatchRepository.save(QuizMatch.builder()
-                        .user(user)
-                        .quizType(quizType)
-                        .startedAt(startedAt)
-                        .finishedAt(Instant.now())
-                        .questionsAnswered(questionsAnswered)
-                        .correctAnswers(correctAnswers)
-                        .wrongAnswers(wrongAnswers)
-                        .xpGained(xp)
-                        .scoreGained(score)
-                        .rewardGranted(false)
-                        .rewardGrantedName(null)
-                        .build());
-
-                usedToday = (int) matchesWithRewardToday(user.getId());
-
-                return new QuizMatchResultResponse(
-                        match.getId(),
-                        xp,
-                        score,
-                        false,
-                        null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    false,
-                        user.getXp(),
-                        user.getLevel(),
-                        user.getCoins(),
-                        usedToday,
-                        dailyLimit
-                );
-            }
-
-            usedToday = (int) matchesWithRewardToday(user.getId());
-            if (usedToday < dailyLimit) {
-                Optional<RewardDefinition> drawnReward = rewardService.drawRandomActiveReward();
-                if (drawnReward.isPresent()) {
-                    rewardGranted = true;
-                    rewardName = drawnReward.get().getName();
-                    RewardService.RewardApplicationResult rewardResult = rewardService.applyRewardToUser(user, drawnReward.get());
-                    rewardType = rewardResult.rewardType() != null ? rewardResult.rewardType().name() : null;
-                    rewardCharacterId = rewardResult.characterId();
-                    rewardCharacterName = rewardResult.characterName();
-                    rewardCharacterRarity = rewardResult.characterRarity() != null ? rewardResult.characterRarity().name() : null;
-                    rewardCharacterUnlocked = rewardResult.characterUnlocked();
-                }
+        if (quizType == QuizType.GENERAL
+                && correctAnswers >= requiredCorrectAnswersForReward()
+                && matchesWithRewardToday(user.getId()) < dailyLimit) {
+            Optional<RewardDefinition> drawnReward = rewardService.drawRandomActiveReward();
+            if (drawnReward.isPresent()) {
+                rewardGranted = true;
+                rewardName = drawnReward.get().getName();
+                RewardService.RewardApplicationResult rewardResult = rewardService.applyRewardToUser(user, drawnReward.get());
+                rewardType = rewardResult.rewardType() != null ? rewardResult.rewardType().name() : null;
+                rewardCharacterId = rewardResult.characterId();
+                rewardCharacterName = rewardResult.characterName();
+                rewardCharacterRarity = rewardResult.characterRarity() != null ? rewardResult.characterRarity().name() : null;
+                rewardCharacterUnlocked = rewardResult.characterUnlocked();
             }
         }
 
@@ -162,19 +118,17 @@ public class QuizService {
 
         QuizMatch match = quizMatchRepository.save(QuizMatch.builder()
                 .user(user)
-            .quizType(quizType)
-            .startedAt(startedAt)
+                .quizType(quizType)
+                .startedAt(startedAt)
                 .finishedAt(Instant.now())
-            .questionsAnswered(questionsAnswered)
-            .correctAnswers(correctAnswers)
-            .wrongAnswers(wrongAnswers)
+                .questionsAnswered(questionsAnswered)
+                .correctAnswers(correctAnswers)
+                .wrongAnswers(wrongAnswers)
                 .xpGained(xp)
                 .scoreGained(score)
                 .rewardGranted(rewardGranted)
                 .rewardGrantedName(rewardName)
                 .build());
-
-        usedToday = (int) matchesWithRewardToday(user.getId());
 
         return new QuizMatchResultResponse(
                 match.getId(),
@@ -182,21 +136,20 @@ public class QuizService {
                 score,
                 rewardGranted,
                 rewardName,
-            rewardType,
-            rewardCharacterId,
-            rewardCharacterName,
-            rewardCharacterRarity,
-            rewardCharacterUnlocked,
+                rewardType,
+                rewardCharacterId,
+                rewardCharacterName,
+                rewardCharacterRarity,
+                rewardCharacterUnlocked,
                 user.getXp(),
                 user.getLevel(),
                 user.getCoins(),
-                usedToday,
+                (int) matchesWithRewardToday(user.getId()),
                 dailyLimit
         );
     }
 
     private long matchesWithRewardToday(Long userId) {
-        ZoneId zoneId = ZoneId.systemDefault();
         LocalDate now = LocalDate.now(zoneId);
         Instant startOfDay = now.atStartOfDay(zoneId).toInstant();
         Instant endOfDay = now.plusDays(1).atStartOfDay(zoneId).toInstant();
@@ -209,20 +162,25 @@ public class QuizService {
         );
     }
 
-    private int requiredCorrectAnswersForReward(QuizType quizType, Long characterId) {
-        int availableQuestions;
-
-        if (quizType == QuizType.CHARACTER_STUDY && characterId != null) {
-            availableQuestions = questionRepository.findByActiveTrueAndRelatedCharacterId(characterId).size();
-        } else {
-            availableQuestions = questionRepository.findByActiveTrue().size();
-        }
-
+    /**
+     * Acertos mínimos para concorrer a recompensa no quiz geral.
+     * Limitado ao total de perguntas ativas para bancos pequenos continuarem premiando.
+     */
+    public int requiredCorrectAnswersForReward() {
+        int configured = Math.max(1, gameSettingService.getRewardMinCorrectAnswers());
+        long availableQuestions = questionRepository.countByActiveTrue();
         if (availableQuestions <= 0) {
-            return 20;
+            return configured;
         }
+        return (int) Math.min(configured, availableQuestions);
+    }
 
-        return Math.min(20, availableQuestions);
+    private boolean reachedStickerAccuracy(int correctAnswers, int questionsAnswered) {
+        if (questionsAnswered <= 0 || correctAnswers <= 0) {
+            return false;
+        }
+        int minPercent = gameSettingService.getCharacterStickerMinAccuracyPercent();
+        return correctAnswers * 100 >= minPercent * questionsAnswered;
     }
 
     private int calculateXp(int correctAnswers, int questionsAnswered, double xpMultiplier) {
@@ -262,10 +220,6 @@ public class QuizService {
 
     private int calculateLevel(int xp) {
         return (xp / 200) + 1;
-    }
-
-    private void validateMatchRequest(SubmitQuizMatchRequest request) {
-        validateMatchStats(request.quizType(), request.questionsAnswered(), request.correctAnswers(), request.wrongAnswers());
     }
 
     private void validateMatchStats(QuizType quizType, int questionsAnswered, int correctAnswers, int wrongAnswers) {

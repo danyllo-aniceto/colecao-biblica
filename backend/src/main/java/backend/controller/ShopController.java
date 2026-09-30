@@ -2,6 +2,7 @@ package backend.controller;
 
 import backend.dto.CreateShopItemRequest;
 import backend.dto.ShopItemResponse;
+import backend.dto.ShopPurchaseResponse;
 import backend.dto.UpdateShopItemRequest;
 import backend.service.ShopService;
 import jakarta.validation.Valid;
@@ -47,7 +48,7 @@ public class ShopController {
     }
 
     @PostMapping("/buy/{shopItemId}")
-    public ShopItemResponse buy(@PathVariable Long shopItemId) {
+    public ShopPurchaseResponse buy(@PathVariable Long shopItemId) {
         return service.buy(shopItemId);
     }
 }

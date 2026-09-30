@@ -4,6 +4,10 @@ Base URL local: `http://localhost:8080`
 
 Autenticacao: JWT Bearer no header `Authorization: Bearer <accessToken>`.
 
+Token ausente, invalido ou expirado em rota protegida retorna `401`. O cliente deve
+chamar `POST /auth/refresh` e repetir a requisicao; se o refresh tambem retornar `401`,
+a sessao acabou e o usuario precisa logar de novo.
+
 ## Legenda de acesso
 
 - PUBLIC: sem token
@@ -21,7 +25,8 @@ Autenticacao: JWT Bearer no header `Authorization: Bearer <accessToken>`.
   "password": "123456"
 }
 ```
-- Resposta: `AuthResponse` com `accessToken` e `refreshToken`
+- Resposta: `AuthResponse` com `accessToken` (1h) e `refreshToken` (7 dias)
+- E-mail inexistente ou senha errada: `401` com a mesma mensagem ("E-mail ou senha invalidos")
 
 ### POST /auth/refresh
 - Acesso: PUBLIC
@@ -115,6 +120,24 @@ Autenticacao: JWT Bearer no header `Authorization: Bearer <accessToken>`.
 
 ### POST /shop/buy/{shopItemId}
 - Acesso: AUTH
+- Operacao transacional: debita moedas e aplica a recompensa juntos
+- Retorna `400` sem cobrar quando a compra nao teria efeito (bonus no limite
+  de acumulo ou todas as figurinhas daquela raridade ja obtidas)
+- Resposta (`ShopPurchaseResponse`):
+```json
+{
+  "item": { "id": 3, "name": "Figurinha Épica", "priceCoins": 450 },
+  "rewardType": "STICKER",
+  "characterId": 2,
+  "characterName": "Ester",
+  "characterRarity": "EPIC",
+  "characterUnlocked": true,
+  "userCoins": 1400,
+  "extraLifeBoosts": 0,
+  "extraTimeBoosts": 1,
+  "doubleXpBoosts": 0
+}
+```
 
 ### POST /shop/admin
 - Acesso: ADMIN
@@ -134,6 +157,13 @@ Autenticacao: JWT Bearer no header `Authorization: Bearer <accessToken>`.
   - `startingLives`
   - `rewardMatchLimitPerDay`
   - `characterStudyXpPercent`
+  - `maxExtraLifeBoosts`, `maxExtraTimeBoosts`, `maxDoubleXpBoosts`
+  - `doubleXpMultiplier`
+  - `extraTimeSeconds` (segundos somados pelo bonus de tempo extra)
+  - `rewardMinCorrectAnswers` (acertos minimos no quiz geral para concorrer a recompensa;
+    limitado automaticamente ao total de perguntas ativas)
+  - `characterStickerMinAccuracyPercent` (aproveitamento minimo no estudo de personagem
+    para ganhar a figurinha)
 
 ### PUT /settings/admin
 - Acesso: ADMIN
@@ -143,26 +173,16 @@ Autenticacao: JWT Bearer no header `Authorization: Bearer <accessToken>`.
   "maxQuestionsPerMatch": 100,
   "startingLives": 3,
   "rewardMatchLimitPerDay": 4,
-  "characterStudyXpPercent": 35
+  "characterStudyXpPercent": 35,
+  "extraTimeSeconds": 15,
+  "rewardMinCorrectAnswers": 7,
+  "characterStickerMinAccuracyPercent": 70
 }
 ```
 
-## Quiz (modelo direto)
-
-### POST /quiz/matches/submit
-- Acesso: AUTH
-- Registra resultado de partida enviada pelo cliente
-
-Body:
-```json
-{
-  "quizType": "GENERAL",
-  "questionsAnswered": 10,
-  "correctAnswers": 8,
-  "wrongAnswers": 2,
-  "characterId": null
-}
-```
+Os valores padrao so sao criados quando ainda nao existem; alteracoes do admin
+sobrevivem a reinicializacoes (o mesmo vale para chance de drop das recompensas
+e preco/descricao/status dos itens da loja).
 
 ## Quiz por sessao (pergunta a pergunta)
 
@@ -198,17 +218,37 @@ Body exemplo (personagem):
 ### POST /quiz/sessions/{sessionId}/answer
 - Acesso: AUTH
 - Responde pergunta atual e avanca sessao
+- O tempo e validado no servidor: resposta enviada depois do prazo da pergunta
+  (limite + tempo extra + 3s de tolerancia) conta como erro, com `timedOut: true`
+- `selectedOption` pode ser omitido/nulo quando o tempo acabou sem resposta
+- `useExtraLife`: se a resposta estiver errada, consome uma vida extra no lugar de uma vida
+- `useXpMultiplier`: ativa o XP em dobro para toda a partida
 
 Body:
 ```json
 {
   "questionId": 101,
   "selectedOption": "A",
-  "useExtraTime": false,
   "useExtraLife": false,
   "useXpMultiplier": false
 }
 ```
+
+Resposta: `correct`, `timedOut`, `livesRemaining`, `correctAnswers`, `wrongAnswers`,
+`finished`, `extraTimeUsed`, `extraLifeUsed`, `xpMultiplierUsed`, `nextQuestion`
+(com `timeLimitSeconds` e `remainingSeconds`) e `matchResult` quando `finished`.
+
+### POST /quiz/sessions/{sessionId}/extra-time
+- Acesso: AUTH
+- Consome um bonus de tempo extra e soma `extraTimeSeconds` ao prazo da pergunta atual
+- Uma vez por partida; `400` se o tempo da pergunta ja acabou ou se nao houver bonus
+- Resposta: status da sessao com `currentQuestion.remainingSeconds` atualizado
+
+### Regras de recompensa ao finalizar
+- Quiz geral: sorteia uma recompensa se `correctAnswers >= rewardMinCorrectAnswers`
+  e o usuario ainda nao atingiu `rewardMatchLimitPerDay` (dia no fuso `APP_TIMEZONE`)
+- Estudo de personagem: XP reduzido a `characterStudyXpPercent`; a figurinha do
+  personagem e concedida com aproveitamento >= `characterStickerMinAccuracyPercent`
 
 ### POST /quiz/sessions/{sessionId}/abandon
 - Acesso: AUTH

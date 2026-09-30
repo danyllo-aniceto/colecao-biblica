@@ -8,6 +8,7 @@ import java.util.List;
 
 public interface QuestionRepository extends JpaRepository<Question, Long> {
     List<Question> findByActiveTrue();
+    long countByActiveTrue();
     List<Question> findByActiveTrueAndDifficulty(QuestionDifficulty difficulty);
     List<Question> findByActiveTrueAndRelatedCharacterId(Long relatedCharacterId);
 }

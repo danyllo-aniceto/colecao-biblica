@@ -47,6 +47,8 @@ No root do workspace, copie `.env.example` para `.env` e ajuste se necessario.
 
 Variaveis usadas:
 - `JWT_SECRET`
+- `CORS_ALLOWED_ORIGINS` (origens do frontend separadas por virgula; padrao `http://localhost:3000,http://127.0.0.1:3000`)
+- `APP_TIMEZONE` (fuso do limite diario de recompensas; padrao `America/Sao_Paulo`)
 - `POSTGRES_DB`
 - `POSTGRES_USER`
 - `POSTGRES_PASSWORD`
@@ -81,11 +83,14 @@ No Windows PowerShell:
 ./mvnw test
 ```
 
+Os testes usam H2 em memoria (modo PostgreSQL), entao nao precisam do Docker.
+
 ## Banco e migrations
 
 - O projeto usa `spring.jpa.hibernate.ddl-auto=update`.
+- Colunas novas com `NOT NULL` tambem sao adicionadas em `schema.sql` com `DEFAULT`, para bancos que ja tem dados.
 - O schema evolui automaticamente conforme as entidades.
-- Existe seed inicial em `SeedDataConfig` (exceto profile `test`) com:
+- Existe seed inicial em `SeedDataConfig` (exceto profile `test`). Ele so cria o que falta, sem sobrescrever ajustes do admin:
   - configuracoes padrao
   - personagens iniciais
   - perguntas iniciais
@@ -106,22 +111,17 @@ Token JWT no header:
 Authorization: Bearer <accessToken>
 ```
 
-## Quiz: dois modos suportados
+## Quiz por sessao
 
-## 1) Submit direto
-
-Cliente calcula/manda estatisticas finais e chama:
-- `POST /quiz/matches/submit`
-
-## 2) Sessao pergunta a pergunta
-
-Fluxo recomendado:
+Toda partida acontece no servidor, pergunta a pergunta (o cliente nao envia
+estatisticas prontas, o que impede trapaça):
 1. `POST /quiz/sessions/start`
 2. `GET /quiz/sessions/active` (ou `GET /quiz/sessions/{sessionId}`)
-3. `POST /quiz/sessions/{sessionId}/answer` para cada pergunta
-4. sessao finaliza automaticamente ao acabar perguntas ou vidas
-5. opcional: `POST /quiz/sessions/{sessionId}/abandon`
-6. historico: `GET /quiz/history`
+3. `POST /quiz/sessions/{sessionId}/answer` para cada pergunta (tempo validado no servidor)
+4. opcional: `POST /quiz/sessions/{sessionId}/extra-time` durante a pergunta
+5. sessao finaliza automaticamente ao acabar perguntas ou vidas
+6. opcional: `POST /quiz/sessions/{sessionId}/abandon`
+7. historico: `GET /quiz/history`
 
 ## Validacao e erros
 

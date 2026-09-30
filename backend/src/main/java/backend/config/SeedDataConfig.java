@@ -34,17 +34,17 @@ public class SeedDataConfig {
                                RewardService rewardService,
                                ShopService shopService) {
         return args -> {
-            // Legacy REWARD_TICKET records will not be loaded due to enum removal
-            // No cleanup needed as the enum is completely removed from the system
-            
-            gameSettingService.upsert(GameSettingService.KEY_MAX_QUESTIONS_PER_MATCH, "100", "Máximo de perguntas por partida geral");
-            gameSettingService.upsert(GameSettingService.KEY_STARTING_LIVES, "3", "Vidas iniciais por partida geral");
-            gameSettingService.upsert(GameSettingService.KEY_REWARD_MATCH_LIMIT_PER_DAY, "4", "Limite diário de partidas com recompensa");
-            gameSettingService.upsert(GameSettingService.KEY_XP_CHARACTER_STUDY_PERCENT, "35", "Percentual de XP em quiz de personagem");
-                        gameSettingService.upsert(GameSettingService.KEY_MAX_EXTRA_LIFE_BOOSTS, "5", "Máximo de bônus de vida extra acumulados por usuário");
-                        gameSettingService.upsert(GameSettingService.KEY_MAX_EXTRA_TIME_BOOSTS, "5", "Máximo de bônus de tempo extra acumulados por usuário");
-                        gameSettingService.upsert(GameSettingService.KEY_MAX_DOUBLE_XP_BOOSTS, "5", "Máximo de bônus de XP em dobro acumulados por usuário");
-                        gameSettingService.upsert(GameSettingService.KEY_DOUBLE_XP_MULTIPLIER, "2.0", "Multiplicador aplicado ao usar XP em dobro");
+            gameSettingService.ensureDefault(GameSettingService.KEY_MAX_QUESTIONS_PER_MATCH, "100", "Máximo de perguntas por partida geral");
+            gameSettingService.ensureDefault(GameSettingService.KEY_STARTING_LIVES, "3", "Vidas iniciais por partida geral");
+            gameSettingService.ensureDefault(GameSettingService.KEY_REWARD_MATCH_LIMIT_PER_DAY, "4", "Limite diário de partidas com recompensa");
+            gameSettingService.ensureDefault(GameSettingService.KEY_XP_CHARACTER_STUDY_PERCENT, "35", "Percentual de XP em quiz de personagem");
+            gameSettingService.ensureDefault(GameSettingService.KEY_MAX_EXTRA_LIFE_BOOSTS, "5", "Máximo de bônus de vida extra acumulados por usuário");
+            gameSettingService.ensureDefault(GameSettingService.KEY_MAX_EXTRA_TIME_BOOSTS, "5", "Máximo de bônus de tempo extra acumulados por usuário");
+            gameSettingService.ensureDefault(GameSettingService.KEY_MAX_DOUBLE_XP_BOOSTS, "5", "Máximo de bônus de XP em dobro acumulados por usuário");
+            gameSettingService.ensureDefault(GameSettingService.KEY_DOUBLE_XP_MULTIPLIER, "2.0", "Multiplicador aplicado ao usar XP em dobro");
+            gameSettingService.ensureDefault(GameSettingService.KEY_EXTRA_TIME_SECONDS, "15", "Segundos adicionados ao usar tempo extra");
+            gameSettingService.ensureDefault(GameSettingService.KEY_REWARD_MIN_CORRECT_ANSWERS, "7", "Acertos mínimos no quiz geral para concorrer a recompensa");
+            gameSettingService.ensureDefault(GameSettingService.KEY_CHARACTER_STICKER_MIN_ACCURACY, "70", "Aproveitamento mínimo (%) no quiz de personagem para ganhar a figurinha");
 
             ensureUser(userRepository, passwordEncoder, "Admin Teste", "admin2@email.com", "123456", Role.ADMIN);
             ensureUser(userRepository, passwordEncoder, "Usuário Teste", "user@email.com", "123456", Role.USER);

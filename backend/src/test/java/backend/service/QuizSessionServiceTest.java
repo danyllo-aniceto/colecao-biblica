@@ -5,6 +5,7 @@ import backend.dto.AnswerQuizQuestionResponse;
 import backend.dto.QuizMatchResultResponse;
 import backend.dto.QuizSessionStatusResponse;
 import backend.dto.StartQuizSessionRequest;
+import backend.exception.BadRequestException;
 import backend.model.Question;
 import backend.model.QuestionDifficulty;
 import backend.model.QuizSession;
@@ -27,7 +28,9 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
@@ -123,13 +126,13 @@ class QuizSessionServiceTest {
         when(questionRepository.findById(101L)).thenReturn(Optional.of(question));
 
         when(quizService.finalizeMatch(any(User.class), any(QuizType.class), anyInt(), anyInt(), anyInt(), any(), anyDouble(), any()))
-                .thenReturn(new QuizMatchResultResponse(900L, 20, 100, false, null, 120, 1, 0, 0, 4));
+                .thenReturn(new QuizMatchResultResponse(900L, 20, 100, false, null, null, null, null, null, false, 120, 1, 0, 0, 4));
 
         QuizSessionStatusResponse start = service.startSession(new StartQuizSessionRequest(QuizType.GENERAL, null, 1));
 
         AnswerQuizQuestionResponse answer = service.answerQuestion(
                 start.sessionId(),
-                new AnswerQuizQuestionRequest(101L, "A", false, false, false)
+                new AnswerQuizQuestionRequest(101L, "A", false, false)
         );
 
         assertTrue(answer.correct());
@@ -284,10 +287,126 @@ class QuizSessionServiceTest {
 
         AnswerQuizQuestionResponse response = service.answerQuestion(
                 70L,
-                new AnswerQuizQuestionRequest(700L, "A", false, true, false)
+                new AnswerQuizQuestionRequest(700L, "A", true, false)
         );
 
         assertTrue(response.correct());
         verify(userRepository, never()).save(any(User.class));
+    }
+
+    private static User player(long id, int extraTimeBoosts) {
+        return User.builder()
+                .id(id)
+                .name("Player")
+                .email("player" + id + "@email.com")
+                .password("secret")
+                .role(Role.USER)
+                .extraTimeBoosts(extraTimeBoosts)
+                .build();
+    }
+
+    private static Question question(long id) {
+        return Question.builder()
+                .id(id)
+                .text("Pergunta " + id)
+                .difficulty(QuestionDifficulty.EASY)
+                .timeLimitSeconds(30)
+                .optionA("A")
+                .optionB("B")
+                .optionC("C")
+                .optionD("D")
+                .correctOption("A")
+                .active(true)
+                .build();
+    }
+
+    private static QuizSession session(long id, User user, Instant questionStartedAt) {
+        return QuizSession.builder()
+                .id(id)
+                .user(user)
+                .quizType(QuizType.GENERAL)
+                .status(QuizSessionStatus.IN_PROGRESS)
+                .startedAt(Instant.now())
+                .totalQuestions(2)
+                .currentQuestionIndex(0)
+                .livesRemaining(3)
+                .correctAnswers(0)
+                .wrongAnswers(0)
+                .xpMultiplier(1.0)
+                .questionIdsCsv(id + "01," + id + "02")
+                .currentQuestionStartedAt(questionStartedAt)
+                .build();
+    }
+
+    @Test
+    void answerAfterDeadlineShouldCountAsWrongEvenIfCorrect() {
+        User user = player(80L, 0);
+        QuizSession inProgress = session(80L, user, Instant.now().minusSeconds(120));
+
+        when(currentUserService.getCurrentUser()).thenReturn(user);
+        when(quizSessionRepository.findByIdAndUserId(80L, 80L)).thenReturn(Optional.of(inProgress));
+        when(questionRepository.findById(8001L)).thenReturn(Optional.of(question(8001L)));
+        when(questionRepository.findById(8002L)).thenReturn(Optional.of(question(8002L)));
+        when(quizSessionRepository.save(any(QuizSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        AnswerQuizQuestionResponse response = service.answerQuestion(80L, new AnswerQuizQuestionRequest(8001L, "A", false, false));
+
+        assertFalse(response.correct());
+        assertTrue(response.timedOut());
+        assertEquals(2, response.livesRemaining());
+        assertEquals(30, response.nextQuestion().remainingSeconds());
+    }
+
+    @Test
+    void missingOptionShouldBeTreatedAsTimeout() {
+        User user = player(81L, 0);
+        QuizSession inProgress = session(81L, user, Instant.now());
+
+        when(currentUserService.getCurrentUser()).thenReturn(user);
+        when(quizSessionRepository.findByIdAndUserId(81L, 81L)).thenReturn(Optional.of(inProgress));
+        when(questionRepository.findById(8101L)).thenReturn(Optional.of(question(8101L)));
+        when(questionRepository.findById(8102L)).thenReturn(Optional.of(question(8102L)));
+        when(quizSessionRepository.save(any(QuizSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        AnswerQuizQuestionResponse response = service.answerQuestion(81L, new AnswerQuizQuestionRequest(8101L, null, false, false));
+
+        assertFalse(response.correct());
+        assertTrue(response.timedOut());
+        assertEquals(1, response.wrongAnswers());
+    }
+
+    @Test
+    void extraTimeShouldExtendCurrentQuestionAndConsumeBoost() {
+        User user = player(82L, 2);
+        QuizSession inProgress = session(82L, user, Instant.now().minusSeconds(25));
+
+        when(currentUserService.getCurrentUser()).thenReturn(user);
+        when(quizSessionRepository.findByIdAndUserId(82L, 82L)).thenReturn(Optional.of(inProgress));
+        when(questionRepository.findById(8201L)).thenReturn(Optional.of(question(8201L)));
+        when(gameSettingService.getExtraTimeSeconds()).thenReturn(15);
+        when(quizSessionRepository.save(any(QuizSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        QuizSessionStatusResponse response = service.useExtraTime(82L);
+
+        assertEquals(1, user.getExtraTimeBoosts());
+        assertTrue(response.extraTimeUsed());
+        assertEquals(45, response.currentQuestion().timeLimitSeconds());
+        assertTrue(response.currentQuestion().remainingSeconds() >= 19);
+        verify(userRepository).save(user);
+
+        assertThrows(BadRequestException.class, () -> service.useExtraTime(82L));
+    }
+
+    @Test
+    void extraTimeShouldBeRejectedAfterDeadline() {
+        User user = player(83L, 1);
+        QuizSession inProgress = session(83L, user, Instant.now().minusSeconds(120));
+
+        when(currentUserService.getCurrentUser()).thenReturn(user);
+        when(quizSessionRepository.findByIdAndUserId(83L, 83L)).thenReturn(Optional.of(inProgress));
+        when(questionRepository.findById(8301L)).thenReturn(Optional.of(question(8301L)));
+
+        assertThrows(BadRequestException.class, () -> service.useExtraTime(83L));
+        assertEquals(1, user.getExtraTimeBoosts());
     }
 }

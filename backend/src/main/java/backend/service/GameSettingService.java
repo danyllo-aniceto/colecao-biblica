@@ -17,6 +17,9 @@ public class GameSettingService {
     public static final String KEY_MAX_EXTRA_TIME_BOOSTS = "reward.boost.maxExtraTime";
     public static final String KEY_MAX_DOUBLE_XP_BOOSTS = "reward.boost.maxDoubleXp";
     public static final String KEY_DOUBLE_XP_MULTIPLIER = "reward.boost.doubleXpMultiplier";
+    public static final String KEY_EXTRA_TIME_SECONDS = "reward.boost.extraTimeSeconds";
+    public static final String KEY_REWARD_MIN_CORRECT_ANSWERS = "quiz.general.rewardMinCorrectAnswers";
+    public static final String KEY_CHARACTER_STICKER_MIN_ACCURACY = "quiz.characterStudy.stickerMinAccuracyPercent";
 
     private final GameSettingRepository repository;
 
@@ -56,6 +59,18 @@ public class GameSettingService {
         return getDouble(KEY_DOUBLE_XP_MULTIPLIER, 2.0);
     }
 
+    public int getExtraTimeSeconds() {
+        return getInt(KEY_EXTRA_TIME_SECONDS, 15);
+    }
+
+    public int getRewardMinCorrectAnswers() {
+        return getInt(KEY_REWARD_MIN_CORRECT_ANSWERS, 7);
+    }
+
+    public int getCharacterStickerMinAccuracyPercent() {
+        return getInt(KEY_CHARACTER_STICKER_MIN_ACCURACY, 70);
+    }
+
     public int getInt(String key, int defaultValue) {
         return repository.findBySettingKey(key)
                 .map(GameSetting::getSettingValue)
@@ -82,6 +97,16 @@ public class GameSettingService {
                 .orElse(defaultValue);
     }
 
+    /**
+     * Cria a configuração com o valor padrão apenas se ela ainda não existir,
+     * preservando valores alterados pelo admin entre reinicializações.
+     */
+    public void ensureDefault(String key, String value, String description) {
+        if (repository.findBySettingKey(key).isEmpty()) {
+            upsert(key, value, description);
+        }
+    }
+
     public GameSetting upsert(String key, String value, String description) {
         GameSetting setting = repository.findBySettingKey(key)
                 .orElse(GameSetting.builder().settingKey(key).build());
@@ -99,7 +124,10 @@ public class GameSettingService {
                 getMaxExtraLifeBoosts(),
                 getMaxExtraTimeBoosts(),
                 getMaxDoubleXpBoosts(),
-                getDoubleXpMultiplier()
+                getDoubleXpMultiplier(),
+                getExtraTimeSeconds(),
+                getRewardMinCorrectAnswers(),
+                getCharacterStickerMinAccuracyPercent()
         );
     }
 
@@ -127,6 +155,15 @@ public class GameSettingService {
         }
         if (request.doubleXpMultiplier() != null) {
             upsert(KEY_DOUBLE_XP_MULTIPLIER, request.doubleXpMultiplier().toString(), "Multiplicador aplicado ao usar XP em dobro");
+        }
+        if (request.extraTimeSeconds() != null) {
+            upsert(KEY_EXTRA_TIME_SECONDS, request.extraTimeSeconds().toString(), "Segundos adicionados ao usar tempo extra");
+        }
+        if (request.rewardMinCorrectAnswers() != null) {
+            upsert(KEY_REWARD_MIN_CORRECT_ANSWERS, request.rewardMinCorrectAnswers().toString(), "Acertos mínimos no quiz geral para concorrer a recompensa");
+        }
+        if (request.characterStickerMinAccuracyPercent() != null) {
+            upsert(KEY_CHARACTER_STICKER_MIN_ACCURACY, request.characterStickerMinAccuracyPercent().toString(), "Aproveitamento mínimo (%) no quiz de personagem para ganhar a figurinha");
         }
 
         return getSettings();

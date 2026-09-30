@@ -34,7 +34,7 @@ class UserControllerPaginationTest {
     @Test
     void listUsersShouldForwardPaginationAndFilters() {
         Page<UserResponse> expectedPage = new PageImpl<>(List.of(
-                new UserResponse(1L, "Admin", "admin@email.com", Role.ADMIN,
+                new UserResponse(1L, 0, 1, 0, 0, 0, 0, 0, "Admin", "admin@email.com", Role.ADMIN,
                         Instant.now(), Instant.now(), "SYSTEM", "SYSTEM", false, null, null)
         ));
 

@@ -13,6 +13,9 @@ public record QuizSessionStatusResponse(
         int correctAnswers,
         int wrongAnswers,
         double xpMultiplier,
+        boolean extraTimeUsed,
+        boolean extraLifeUsed,
+        boolean xpMultiplierUsed,
         QuizQuestionViewResponse currentQuestion
 ) {
 }

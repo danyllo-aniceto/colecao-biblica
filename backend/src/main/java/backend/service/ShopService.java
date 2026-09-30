@@ -2,6 +2,7 @@ package backend.service;
 
 import backend.dto.CreateShopItemRequest;
 import backend.dto.ShopItemResponse;
+import backend.dto.ShopPurchaseResponse;
 import backend.dto.UpdateShopItemRequest;
 import backend.exception.BadRequestException;
 import backend.exception.NotFoundException;
@@ -13,14 +14,15 @@ import backend.model.StickerRarity;
 import backend.model.User;
 import backend.repository.RewardDefinitionRepository;
 import backend.repository.ShopItemRepository;
-import backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -32,18 +34,15 @@ public class ShopService {
     private final RewardDefinitionRepository rewardDefinitionRepository;
     private final CurrentUserService currentUserService;
     private final RewardService rewardService;
-    private final UserRepository userRepository;
 
     public ShopService(ShopItemRepository repository,
                        RewardDefinitionRepository rewardDefinitionRepository,
                        CurrentUserService currentUserService,
-                       RewardService rewardService,
-                       UserRepository userRepository) {
+                       RewardService rewardService) {
         this.repository = repository;
         this.rewardDefinitionRepository = rewardDefinitionRepository;
         this.currentUserService = currentUserService;
         this.rewardService = rewardService;
-        this.userRepository = userRepository;
     }
 
     public ShopItemResponse create(CreateShopItemRequest request) {
@@ -86,7 +85,8 @@ public class ShopService {
         throw new BadRequestException("Os itens da loja são fixos do sistema e não podem ser removidos");
     }
 
-    public ShopItemResponse buy(Long shopItemId) {
+    @Transactional
+    public ShopPurchaseResponse buy(Long shopItemId) {
         User user = currentUserService.getCurrentUser();
         ShopItem item = repository.findById(shopItemId).orElseThrow(() -> new NotFoundException("Item da loja não encontrado"));
 
@@ -94,19 +94,33 @@ public class ShopService {
             throw new BadRequestException("Item da loja inativo");
         }
 
+        RewardDefinition reward = item.getRewardDefinition();
+        if (reward == null) {
+            throw new BadRequestException("Item da loja sem recompensa configurada");
+        }
+        validateShopReward(reward);
+
         if (user.getCoins() < item.getPriceCoins()) {
             throw new BadRequestException("Moedas insuficientes");
         }
 
+        rewardService.ensureRewardIsUseful(user, reward);
+
         user.setCoins(user.getCoins() - item.getPriceCoins());
-        userRepository.save(user);
+        RewardService.RewardApplicationResult result = rewardService.applyRewardToUser(user, reward);
 
-        if (item.getRewardDefinition() != null) {
-            validateShopReward(item.getRewardDefinition());
-            rewardService.applyRewardToUser(user, item.getRewardDefinition());
-        }
-
-        return toResponse(item);
+        return new ShopPurchaseResponse(
+                toResponse(item),
+                result.rewardType() != null ? result.rewardType().name() : null,
+                result.characterId(),
+                result.characterName(),
+                result.characterRarity() != null ? result.characterRarity().name() : null,
+                result.characterUnlocked(),
+                user.getCoins(),
+                user.getExtraLifeBoosts(),
+                user.getExtraTimeBoosts(),
+                user.getDoubleXpBoosts()
+        );
     }
 
     public ShopItemResponse toResponse(ShopItem item) {
@@ -156,20 +170,25 @@ public class ShopService {
                                      int priceCoins,
                                      RewardDefinition reward,
                                      boolean active) {
-        ShopItem item = repository.findAll().stream()
+        Optional<ShopItem> existing = repository.findAll().stream()
                 .filter(current -> current.getName().equalsIgnoreCase(name))
-                .findFirst()
-                .orElse(ShopItem.builder().name(name).build());
+                .findFirst();
+
+        ShopItem item = existing.orElse(ShopItem.builder().name(name).build());
 
         if (reward != null) {
             validateShopReward(reward);
         }
 
-        item.setDescription(description);
         item.setItemType(itemType);
-        item.setPriceCoins(priceCoins);
         item.setRewardDefinition(reward);
-        item.setActive(active);
+
+        // Descrição, preço e status são ajustáveis pelo admin: só recebem o padrão na criação.
+        if (existing.isEmpty()) {
+            item.setDescription(description);
+            item.setPriceCoins(priceCoins);
+            item.setActive(active);
+        }
 
         repository.save(item);
     }

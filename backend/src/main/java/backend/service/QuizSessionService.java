@@ -23,7 +23,9 @@ import backend.repository.QuizMatchRepository;
 import backend.repository.QuizSessionRepository;
 import backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
@@ -60,6 +62,7 @@ public class QuizSessionService {
         this.userRepository = userRepository;
     }
 
+    @Transactional
     public QuizSessionStatusResponse startSession(StartQuizSessionRequest request) {
         User user = currentUserService.getCurrentUser();
 
@@ -105,6 +108,8 @@ public class QuizSessionService {
                 .wrongAnswers(0)
                 .xpMultiplier(1.0)
                 .questionIdsCsv(questionIdsCsv)
+                .currentQuestionStartedAt(Instant.now())
+                .currentQuestionExtraSeconds(0)
                 .build());
 
         return toStatusResponse(session, selected.getFirst());
@@ -131,6 +136,7 @@ public class QuizSessionService {
         return toStatusResponse(session, currentQuestion);
     }
 
+    @Transactional
     public AnswerQuizQuestionResponse answerQuestion(Long sessionId, AnswerQuizQuestionRequest request) {
         User user = currentUserService.getCurrentUser();
         QuizSession session = getOwnedSession(sessionId, user.getId());
@@ -144,7 +150,9 @@ public class QuizSessionService {
             throw new BadRequestException("A pergunta informada não corresponde à pergunta atual da sessão");
         }
 
-        boolean correct = currentQuestion.getCorrectOption().equalsIgnoreCase(request.selectedOption());
+        // Sem alternativa ou fora do prazo conta como erro, independente do que o cliente enviou.
+        boolean timedOut = request.selectedOption() == null || isTimeExpired(session, currentQuestion);
+        boolean correct = !timedOut && currentQuestion.getCorrectOption().equalsIgnoreCase(request.selectedOption());
         boolean extraLifeApplied = applyConsumables(user, session, request, correct);
 
         if (correct) {
@@ -157,6 +165,8 @@ public class QuizSessionService {
         }
 
         session.setCurrentQuestionIndex(session.getCurrentQuestionIndex() + 1);
+        session.setCurrentQuestionStartedAt(Instant.now());
+        session.setCurrentQuestionExtraSeconds(0);
 
         boolean finished = session.getLivesRemaining() <= 0 || session.getCurrentQuestionIndex() >= session.getTotalQuestions();
         if (finished) {
@@ -175,31 +185,49 @@ public class QuizSessionService {
                     session.getStartedAt()
             );
 
-            return new AnswerQuizQuestionResponse(
-                    correct,
-                    Math.max(session.getLivesRemaining(), 0),
-                    session.getCorrectAnswers(),
-                    session.getWrongAnswers(),
-                    true,
-                    null,
-                    result
-            );
+            return toAnswerResponse(session, correct, timedOut, true, null, result);
         }
 
         quizSessionRepository.save(session);
         Question nextQuestion = getCurrentQuestion(session);
 
-        return new AnswerQuizQuestionResponse(
-                correct,
-                session.getLivesRemaining(),
-                session.getCorrectAnswers(),
-                session.getWrongAnswers(),
-                false,
-                toQuestionView(nextQuestion),
-                null
-        );
+        return toAnswerResponse(session, correct, timedOut, false, toQuestionView(session, nextQuestion), null);
     }
 
+    /**
+     * Consome um bônus de tempo extra e estende o prazo da pergunta atual.
+     */
+    @Transactional
+    public QuizSessionStatusResponse useExtraTime(Long sessionId) {
+        User user = currentUserService.getCurrentUser();
+        QuizSession session = getOwnedSession(sessionId, user.getId());
+
+        if (session.getStatus() != QuizSessionStatus.IN_PROGRESS) {
+            throw new BadRequestException("Sessão de quiz já finalizada");
+        }
+        if (session.isExtraTimeUsed()) {
+            throw new BadRequestException("Bônus de tempo extra já foi usado nesta partida");
+        }
+        if (user.getExtraTimeBoosts() <= 0) {
+            throw new BadRequestException("Você não possui bônus de tempo extra");
+        }
+
+        Question currentQuestion = getCurrentQuestion(session);
+        if (isTimeExpired(session, currentQuestion)) {
+            throw new BadRequestException("O tempo desta pergunta já acabou");
+        }
+
+        user.setExtraTimeBoosts(user.getExtraTimeBoosts() - 1);
+        userRepository.save(user);
+
+        session.setExtraTimeUsed(true);
+        session.setCurrentQuestionExtraSeconds(session.getCurrentQuestionExtraSeconds() + gameSettingService.getExtraTimeSeconds());
+        quizSessionRepository.save(session);
+
+        return toStatusResponse(session, currentQuestion);
+    }
+
+    @Transactional
     public QuizSessionStatusResponse abandonSession(Long sessionId) {
         User user = currentUserService.getCurrentUser();
         QuizSession session = getOwnedSession(sessionId, user.getId());
@@ -237,19 +265,6 @@ public class QuizSessionService {
     private boolean applyConsumables(User user, QuizSession session, AnswerQuizQuestionRequest request, boolean answerCorrect) {
         boolean extraLifeApplied = false;
         boolean hasChanges = false;
-
-        if (Boolean.TRUE.equals(request.useExtraTime())) {
-            if (session.isExtraTimeUsed()) {
-                throw new BadRequestException("Bônus de tempo extra já foi usado nesta partida");
-            }
-            if (user.getExtraTimeBoosts() <= 0) {
-                throw new BadRequestException("Você não possui bônus de tempo extra");
-            }
-
-            user.setExtraTimeBoosts(user.getExtraTimeBoosts() - 1);
-            session.setExtraTimeUsed(true);
-            hasChanges = true;
-        }
 
         if (!answerCorrect && Boolean.TRUE.equals(request.useExtraLife())) {
             if (session.isExtraLifeUsed()) {
@@ -316,6 +331,51 @@ public class QuizSessionService {
                 .toList();
     }
 
+    /** Tolerância para latência de rede entre o fim do cronômetro e a chegada da resposta. */
+    private static final int ANSWER_GRACE_SECONDS = 3;
+
+    private boolean isTimeExpired(QuizSession session, Question question) {
+        if (session.getCurrentQuestionStartedAt() == null) {
+            return false;
+        }
+        long elapsed = Duration.between(session.getCurrentQuestionStartedAt(), Instant.now()).getSeconds();
+        return elapsed > availableSeconds(session, question) + ANSWER_GRACE_SECONDS;
+    }
+
+    private int availableSeconds(QuizSession session, Question question) {
+        return question.getTimeLimitSeconds() + session.getCurrentQuestionExtraSeconds();
+    }
+
+    private int remainingSeconds(QuizSession session, Question question) {
+        int available = availableSeconds(session, question);
+        if (session.getCurrentQuestionStartedAt() == null) {
+            return available;
+        }
+        long elapsed = Duration.between(session.getCurrentQuestionStartedAt(), Instant.now()).getSeconds();
+        return (int) Math.max(0, available - elapsed);
+    }
+
+    private AnswerQuizQuestionResponse toAnswerResponse(QuizSession session,
+                                                        boolean correct,
+                                                        boolean timedOut,
+                                                        boolean finished,
+                                                        QuizQuestionViewResponse nextQuestion,
+                                                        QuizMatchResultResponse matchResult) {
+        return new AnswerQuizQuestionResponse(
+                correct,
+                timedOut,
+                Math.max(session.getLivesRemaining(), 0),
+                session.getCorrectAnswers(),
+                session.getWrongAnswers(),
+                finished,
+                session.isExtraTimeUsed(),
+                session.isExtraLifeUsed(),
+                session.isXpMultiplierUsed(),
+                nextQuestion,
+                matchResult
+        );
+    }
+
     private QuizSessionStatusResponse toStatusResponse(QuizSession session, Question currentQuestion) {
         return new QuizSessionStatusResponse(
                 session.getId(),
@@ -327,17 +387,20 @@ public class QuizSessionService {
                 session.getCorrectAnswers(),
                 session.getWrongAnswers(),
                 session.getXpMultiplier(),
-                currentQuestion != null ? toQuestionView(currentQuestion) : null
+                session.isExtraTimeUsed(),
+                session.isExtraLifeUsed(),
+                session.isXpMultiplierUsed(),
+                currentQuestion != null ? toQuestionView(session, currentQuestion) : null
         );
     }
 
-    private QuizQuestionViewResponse toQuestionView(Question question) {
-        int timeLimit = question.getTimeLimitSeconds();
+    private QuizQuestionViewResponse toQuestionView(QuizSession session, Question question) {
         return new QuizQuestionViewResponse(
                 question.getId(),
                 question.getText(),
                 question.getDifficulty(),
-                timeLimit,
+                availableSeconds(session, question),
+                remainingSeconds(session, question),
                 question.getOptionA(),
                 question.getOptionB(),
                 question.getOptionC(),

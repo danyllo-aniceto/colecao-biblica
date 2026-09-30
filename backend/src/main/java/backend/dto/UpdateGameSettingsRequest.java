@@ -13,6 +13,9 @@ public record UpdateGameSettingsRequest(
         @Min(1) @Max(20) Integer maxExtraLifeBoosts,
         @Min(1) @Max(20) Integer maxExtraTimeBoosts,
         @Min(1) @Max(20) Integer maxDoubleXpBoosts,
-        @DecimalMin("1.0") @DecimalMax("10.0") Double doubleXpMultiplier
+        @DecimalMin("1.0") @DecimalMax("10.0") Double doubleXpMultiplier,
+        @Min(1) @Max(120) Integer extraTimeSeconds,
+        @Min(1) @Max(100) Integer rewardMinCorrectAnswers,
+        @Min(0) @Max(100) Integer characterStickerMinAccuracyPercent
 ) {
 }

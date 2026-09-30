@@ -31,7 +31,7 @@ class GameSettingControllerWebTest {
 
     @Test
     void shouldReturnSettings() throws Exception {
-      when(gameSettingService.getSettings()).thenReturn(new GameSettingsResponse(100, 3, 4, 35, 5, 5, 5, 2.0));
+      when(gameSettingService.getSettings()).thenReturn(new GameSettingsResponse(100, 3, 4, 35, 5, 5, 5, 2.0, 15, 7, 70));
 
     GameSettingsResponse response = controller.getSettings();
 
@@ -43,7 +43,7 @@ class GameSettingControllerWebTest {
 
     @Test
     void shouldValidateSettingsUpdatePayload() throws Exception {
-    UpdateGameSettingsRequest request = new UpdateGameSettingsRequest(0, null, null, null, null, null, null, null);
+    UpdateGameSettingsRequest request = new UpdateGameSettingsRequest(0, null, null, null, null, null, null, null, null, null, null);
 
     Set<ConstraintViolation<UpdateGameSettingsRequest>> violations = validator.validate(request);
     assertFalse(violations.isEmpty());

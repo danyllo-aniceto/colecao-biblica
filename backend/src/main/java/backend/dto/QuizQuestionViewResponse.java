@@ -7,6 +7,7 @@ public record QuizQuestionViewResponse(
         String text,
         QuestionDifficulty difficulty,
         int timeLimitSeconds,
+        int remainingSeconds,
         String optionA,
         String optionB,
         String optionC,
