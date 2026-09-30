@@ -9,6 +9,7 @@ import {
 import Image from 'next/image';
 import { LoginForm } from '@/components/auth/login-form';
 import { Card, CardContent } from '@/components/ui/card';
+import { InstallAppButton } from '@/components/pwa/install-app-button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import logo from '@/assets/logo.png';
 
@@ -57,7 +58,8 @@ export default function HomePage() {
   return (
     <main className="auth-shell px-4 py-8 sm:px-6 lg:px-10">
       <div className="w-full max-w-7xl space-y-8">
-        <div className="mb-5 flex justify-end">
+        <div className="mb-5 flex flex-wrap justify-end gap-3">
+          <InstallAppButton />
           <ThemeToggle />
         </div>
 

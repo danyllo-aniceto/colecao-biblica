@@ -40,10 +40,17 @@
 
 html {
   scroll-behavior: smooth;
+  /* Mesma cor do tema: evita faixa branca no "overscroll" e na abertura do app instalado. */
+  background-color: var(--bg-primary);
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
+  min-height: 100dvh;
+  /* Com viewport-fit=cover o conteúdo pode ir sob o notch e as barras do sistema. */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-tap-highlight-color: transparent;
   color: var(--text-primary);
   background:
     radial-gradient(circle at top, color-mix(in srgb, var(--gold) 18%, transparent), transparent 36%),
@@ -81,7 +88,7 @@ a {
 }
 
 .auth-shell {
-  min-height: 100vh;
+  min-height: 100dvh;
   padding: 1.25rem;
   display: grid;
   place-items: center;
@@ -117,4 +124,13 @@ a {
 
 .animate-fade-up {
   animation: fade-up 520ms ease-out both;
+}
+
+/* App instalado (janela própria, sem barra do navegador). */
+@media (display-mode: standalone) {
+  button,
+  [role='button'] {
+    -webkit-user-select: none;
+    user-select: none;
+  }
 }

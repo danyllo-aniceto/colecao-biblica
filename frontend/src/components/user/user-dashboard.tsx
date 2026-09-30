@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { InstallAppButton } from '@/components/pwa/install-app-button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { QuizAnswerScreen, type QuizAnswerFeedback, type QuizAnswerPayload } from '@/components/user/quiz-answer-screen';
@@ -648,6 +649,7 @@ export function UserDashboard() {
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
+              <InstallAppButton />
               <ThemeToggle />
               <Button variant="secondary" onClick={signOut}>
                 Sair

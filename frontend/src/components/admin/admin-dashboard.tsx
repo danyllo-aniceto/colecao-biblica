@@ -20,6 +20,7 @@ import { MermaidDiagram, sanitizeMermaidCode, validateMermaidSyntax } from '@/co
 import { RichContent } from '@/components/ui/rich-content';
 import { clearRichTextEditorDrafts, RichTextEditor } from '@/components/ui/rich-text-editor';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { InstallAppButton } from '@/components/pwa/install-app-button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { BIBLE_BOOKS_PT } from '@/lib/bible-books';
 import {
@@ -1568,6 +1569,7 @@ export function AdminDashboard() {
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
+                <InstallAppButton />
                 <ThemeToggle />
                 <Button variant="secondary" onClick={signOut} className="inline-flex items-center gap-2">
                   <LogoutRoundedIcon fontSize="small" />

@@ -13,6 +13,7 @@ import {
 } from '@/lib/auth-storage';
 import { getCurrentUser, login, register } from '@/lib/auth-client';
 import { SESSION_EXPIRED_EVENT } from '@/lib/http';
+import { clearCachedUserData } from '@/lib/pwa';
 import type { AuthResponse, LoginRequest, RegisterRequest, UserProfile } from '@/types/auth';
 
 type AuthState = {
@@ -39,6 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = useCallback(() => {
     clearAuthTokens();
     clearAuthProfile();
+    clearCachedUserData();
     setAccessToken(null);
     setRefreshToken(null);
     setUser(null);
@@ -77,6 +79,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [signOut]);
 
   const startSession = useCallback(async (tokens: AuthResponse) => {
+    // Descarta dados offline de uma sessão anterior (possivelmente de outro usuário).
+    clearCachedUserData();
     storeAuthTokens(tokens);
     setAccessToken(tokens.accessToken);
     setRefreshToken(tokens.refreshToken);
