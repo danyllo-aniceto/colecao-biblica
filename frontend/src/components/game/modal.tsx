@@ -1,5 +1,3 @@
-'use client';
-
 import { useEffect, useId, type ReactNode } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 

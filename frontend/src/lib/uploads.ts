@@ -5,10 +5,10 @@ import { apiRequest } from '@/lib/http';
 export type UploadFolder = 'personagens' | 'conteudo';
 
 /**
- * `blob` (produção na Vercel): envia ao Vercel Blob e devolve a URL pública.
- * `inline` (padrão local): converte para data URL base64, como antes.
+ * `blob` (produção, com BLOB_READ_WRITE_TOKEN): envia ao Vercel Blob e devolve a URL pública.
+ * `inline` (desenvolvimento): converte para data URL base64, salva no banco.
  */
-const UPLOAD_MODE = process.env.NEXT_PUBLIC_IMAGE_UPLOADS === 'blob' ? 'blob' : 'inline';
+const UPLOAD_MODE = __IMAGE_UPLOADS__;
 
 function readAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {

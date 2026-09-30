@@ -1,5 +1,3 @@
-'use client';
-
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded';
 import { EmptyState, LevelBadge, SectionHeading } from '@/components/game/game-ui';

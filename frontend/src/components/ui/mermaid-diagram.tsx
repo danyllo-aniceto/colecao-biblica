@@ -1,7 +1,4 @@
-'use client';
-
 import { useEffect, useRef, useState } from 'react';
-import mermaid from 'mermaid';
 
 type MermaidDiagramProps = {
   code: string;
@@ -9,20 +6,17 @@ type MermaidDiagramProps = {
   initialTheme?: 'default' | 'neutral' | 'forest' | 'dark';
 };
 
-let initialized = false;
+type Mermaid = (typeof import('mermaid'))['default'];
 
-function ensureMermaidInitialized() {
-  if (initialized) {
-    return;
-  }
+let mermaidPromise: Promise<Mermaid> | null = null;
 
-  mermaid.initialize({
-    startOnLoad: false,
-    theme: 'default',
-    securityLevel: 'strict',
+/** O mermaid é grande: só é baixado quando algum diagrama aparece na tela. */
+function loadMermaid(): Promise<Mermaid> {
+  mermaidPromise ??= import('mermaid').then(({ default: mermaid }) => {
+    mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'strict' });
+    return mermaid;
   });
-
-  initialized = true;
+  return mermaidPromise;
 }
 
 function extractMermaidErrorMessage(error: unknown) {
@@ -65,9 +59,8 @@ export async function validateMermaidSyntax(code: string) {
     return { valid: true as const, error: null as string | null };
   }
 
-  ensureMermaidInitialized();
-
   try {
+    const mermaid = await loadMermaid();
     await mermaid.parse(source);
     return { valid: true as const, error: null as string | null };
   } catch (error) {
@@ -97,10 +90,9 @@ export function MermaidDiagram({ code, className, initialTheme = 'neutral' }: Me
         return;
       }
 
-      ensureMermaidInitialized();
-
       const id = `mermaid-${Math.random().toString(36).slice(2)}`;
       try {
+        const mermaid = await loadMermaid();
         mermaid.initialize({ startOnLoad: false, theme, securityLevel: 'strict' });
         // parse não insere nada na página; render com erro deixaria o SVG de erro solto no <body>.
         await mermaid.parse(source);

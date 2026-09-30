@@ -1,5 +1,3 @@
-'use client';
-
 import { useMemo, useState } from 'react';
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';

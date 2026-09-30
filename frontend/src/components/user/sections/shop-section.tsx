@@ -1,5 +1,3 @@
-'use client';
-
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';

@@ -1,5 +1,3 @@
-'use client';
-
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import CloudOffRoundedIcon from '@mui/icons-material/CloudOffRounded';
 import SystemUpdateAltRoundedIcon from '@mui/icons-material/SystemUpdateAltRounded';
@@ -8,8 +6,7 @@ import {
   getIsStandalone,
   getOnlineStatus,
   isServiceWorkerSupported,
-  precacheLoadedAssets,
-  serviceWorkerUrl,
+  SERVICE_WORKER_URL,
   subscribeDisplayMode,
   subscribeOnlineStatus,
   type BeforeInstallPromptEvent,
@@ -66,7 +63,7 @@ export function PwaProvider({ children }: { children: ReactNode }) {
     }
 
     // Em desenvolvimento o cache atrapalha o hot reload: remove qualquer worker antigo.
-    if (process.env.NODE_ENV !== 'production') {
+    if (!import.meta.env.PROD) {
       void navigator.serviceWorker.getRegistrations().then((registrations) => {
         registrations.forEach((registration) => void registration.unregister());
       });
@@ -104,7 +101,7 @@ export function PwaProvider({ children }: { children: ReactNode }) {
     document.addEventListener('visibilitychange', checkForUpdate);
 
     navigator.serviceWorker
-      .register(serviceWorkerUrl(), { scope: '/' })
+      .register(SERVICE_WORKER_URL, { scope: '/' })
       .then((result) => {
         registration = result;
 
@@ -114,7 +111,6 @@ export function PwaProvider({ children }: { children: ReactNode }) {
         trackInstalling(result.installing);
         result.addEventListener('updatefound', () => trackInstalling(result.installing));
 
-        void navigator.serviceWorker.ready.then((ready) => precacheLoadedAssets(ready.active));
         intervalId = window.setInterval(checkForUpdate, UPDATE_CHECK_INTERVAL_MS);
       })
       .catch(() => {

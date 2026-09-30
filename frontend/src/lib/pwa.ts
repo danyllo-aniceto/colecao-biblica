@@ -1,5 +1,3 @@
-import { getApiBaseUrl } from '@/lib/api';
-
 /** Evento não padronizado do Chromium para instalação do PWA. */
 export type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -10,30 +8,11 @@ export function isServiceWorkerSupported() {
   return typeof window !== 'undefined' && 'serviceWorker' in navigator;
 }
 
-export function serviceWorkerUrl() {
-  const params = new URLSearchParams({
-    v: process.env.NEXT_PUBLIC_BUILD_ID ?? 'dev',
-    api: new URL(getApiBaseUrl()).origin,
-  });
-  return `/sw.js?${params.toString()}`;
-}
+/** Worker gerado pelo vite-plugin-pwa (src/sw.ts); o build pré-cacheia todos os arquivos do app. */
+export const SERVICE_WORKER_URL = '/sw.js';
 
-/**
- * Envia ao worker os arquivos do build já carregados por esta página, para que
- * a primeira visita (antes de o worker controlar a página) também funcione offline.
- */
-export function precacheLoadedAssets(worker: ServiceWorker | null | undefined) {
-  if (!worker) {
-    return;
-  }
-
-  const urls = new Set<string>();
-  performance.getEntriesByType('resource').forEach((entry) => urls.add(entry.name));
-  document.querySelectorAll<HTMLScriptElement>('script[src]').forEach((script) => urls.add(script.src));
-  document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"][href]').forEach((link) => urls.add(link.href));
-
-  worker.postMessage({ type: 'CACHE_URLS', urls: Array.from(urls) });
-}
+/** Commit do build em uso (aparece no perfil; ajuda a saber se o aparelho já pegou o deploy novo). */
+export const APP_VERSION = __BUILD_ID__;
 
 /**
  * Apaga as respostas da API guardadas para uso offline. Chamado no login e no

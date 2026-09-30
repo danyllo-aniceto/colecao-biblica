@@ -1,5 +1,3 @@
-'use client';
-
 import { useSyncExternalStore } from 'react';
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';

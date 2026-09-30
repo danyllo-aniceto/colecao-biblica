@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="Aprenda sobre a Bíblia jogando quizzes, colecionando figurinhas e subindo no ranking." />
+    <meta name="application-name" content="Coleção Bíblica" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#eef0ff" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a0e2c" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Coleção Bíblica" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+    <title>Coleção Bíblica</title>
+    <script>
+      // Aplica o tema salvo (ou o do sistema) antes da primeira pintura, sem "piscar" o claro.
+      (function () {
+        try {
+          var t = localStorage.getItem("colecao-biblica:theme");
+          if (t !== "dark" && t !== "light") {
+            t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          }
+          document.documentElement.setAttribute("data-theme", t);
+          var c = t === "dark" ? "#0a0e2c" : "#eef0ff";
+          document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) {
+            m.setAttribute("content", c);
+          });
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

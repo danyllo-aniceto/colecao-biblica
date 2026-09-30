@@ -1,35 +1,29 @@
 # Frontend
 
-Aplicação Next.js para a Coleção Bíblica.
+App React + Vite da Coleção Bíblica. A API fica no mesmo domínio, em `/api`
+(no desenvolvimento o Vite repassa `/api` para `http://localhost:3333`).
+Para rodar tudo junto, veja o README da raiz (`npm run dev`).
 
-## Setup
-
-1. Instale o Node.js LTS.
-2. Entre na pasta frontend.
-3. Copie `.env.example` para `.env.local`.
-4. Ajuste `NEXT_PUBLIC_API_BASE_URL` para a URL do backend (e `NEXT_PUBLIC_IMAGE_UPLOADS`: `inline` local, `blob` na Vercel).
-5. Execute `npm install`.
-6. Rode `npm run dev`.
-
-## Funcionalidades atuais
+## Funcionalidades
 
 - Tela inicial com Login e Cadastro na mesma interface.
 - Painel do usuário: figurinhas, quiz, loja, ranking e configurações da conta.
-- Painel do admin: usuários, personagens, perguntas, recompensas, loja e configurações do jogo.
+- Painel do admin (carregado só para admins): usuários, personagens, perguntas,
+  recompensas, loja e configurações do jogo.
 - Sessão com renovação automática: `src/lib/http.ts` renova o access token via
-  `POST /auth/refresh` ao receber `401` e repete a requisição. Só desloga se o
+  `POST /api/auth/refresh` ao receber `401` e repete a requisição. Só desloga se o
   refresh for recusado (falha de rede não derruba a sessão).
 - Quiz com cronômetro sincronizado com o servidor, envio automático ao fim do
   tempo e bônus (tempo extra, vida extra, XP em dobro).
-- Tema claro/escuro aplicado antes da primeira pintura (sem "piscar"); a variante
-  `dark:` do Tailwind segue o tema escolhido no app.
+- Tema claro/escuro aplicado antes da primeira pintura (script em `index.html`); a
+  variante `dark:` do Tailwind segue o tema escolhido no app.
 
 ## Scripts
 
-- `npm run dev`: ambiente de desenvolvimento
-- `npm run build`: build de produção
-- `npm run lint`: ESLint (config flat do Next)
-- `npx tsc --noEmit`: checagem de tipos
+- `npm run dev`: servidor de desenvolvimento (porta 5173)
+- `npm run build`: checagem de tipos + build de produção em `dist/`
+- `npm run preview`: serve o build (porta 4173), útil para testar o PWA
+- `npm run typecheck`: só a checagem de tipos
 - `npm run icons`: regenera os ícones do PWA a partir de `src/assets/logo.png`
 
 ## PWA
@@ -38,41 +32,35 @@ O app é instalável (Android, desktop e iPhone) e funciona offline com os dados
 
 | Arquivo | Papel |
 | --- | --- |
-| `src/app/manifest.ts` | Web App Manifest (nome, ícones, cores, `start_url: /dashboard`) |
-| `public/sw.js` | Service worker (cache e modo offline) |
+| `vite.config.ts` | Manifest (nome, ícones, cores, `start_url: /dashboard`) e lista de pré-cache |
+| `src/sw.ts` | Service worker (Workbox): pré-cache, rotas de cache e mensagens |
 | `src/components/pwa/pwa-provider.tsx` | Registro do worker, aviso de nova versão, aviso de offline, prompt de instalação |
 | `src/components/pwa/install-app-button.tsx` | Botão "Instalar app" (prompt nativo ou instruções no iPhone) |
-| `src/app/offline/page.tsx` | Tela exibida sem rede quando a página não está em cache |
 | `public/icons/` | Ícones gerados por `npm run icons` |
 
 Estratégias de cache do service worker:
 
-- **Páginas:** rede primeiro; sem rede, a última cópia salva ou `/offline`.
-- **`/_next/static`:** cache primeiro (arquivos com hash).
-- **Ícones e imagens:** cache, revalidando em segundo plano.
+- **App (HTML, JS principal, CSS, fontes, ícones):** pré-cacheados na instalação;
+  qualquer rota abre offline (é uma SPA).
+- **Demais arquivos do build** (painel admin, diagramas): guardados na primeira vez em que são usados.
+- **Imagens** (inclusive as do Vercel Blob): cache, revalidando em segundo plano.
 - **API:** somente leituras (personagens, coleção, ranking, loja, perfil, comentários,
   histórico e regras) com rede primeiro e cópia para uso offline. Quiz, compras e
   autenticação nunca usam cache. O cache da API é apagado no login e no logout.
 
-Atualizações: cada build recebe um identificador (`APP_BUILD_ID` ou o commit atual)
-que vai na URL do worker. Quando um deploy novo é detectado, o app mostra
-"Uma nova versão do app está disponível" e troca de versão quando o usuário aceita.
+Atualizações: cada deploy gera um `sw.js` diferente. Quando o navegador encontra a
+versão nova, o app mostra "Uma nova versão do app está disponível" e troca de versão
+quando o usuário aceita. A versão (commit) aparece no fim da tela de perfil.
 
-O service worker só é registrado em produção (`npm run build && npm run start`);
+O service worker só é registrado no build de produção (`npm run build && npm run preview`);
 em `npm run dev` qualquer worker antigo é removido para não atrapalhar o hot reload.
-
-### Publicação
-
-- O PWA exige **HTTPS** (exceto em `localhost`).
-- `NEXT_PUBLIC_API_BASE_URL` é lida **no build**; defina a URL da API antes de `npm run build`.
-- Inclua a origem do frontend em `CORS_ALLOWED_ORIGINS` no backend.
 
 ## Sistema visual
 
-- Tokens em `src/app/globals.css` (temas Dia e Noite), expostos ao Tailwind como `bg-surface`,
+- Tokens em `src/globals.css` (temas Dia e Noite), expostos ao Tailwind como `bg-surface`,
   `text-ink`, `text-muted`, `bg-primary`, `bg-accent`, `border-edge` etc. Os nomes antigos
   (`--bg-primary`, `--text-primary`, `--gold`...) apontam para os novos.
-- Fontes: Fredoka (`font-display`) e Nunito (texto).
+- Fontes: Fredoka (`font-display`) e Nunito (texto), empacotadas via `@fontsource`.
 - Classes de jogo: `panel`, `btn-3d`, `rarity` + `data-rarity` (`rarity-frame`, `rarity-text`,
   `rarity-bg`, `rarity-chip`) e animações `animate-fade-up`, `animate-pop-in`, `animate-float`.
 - Componentes de jogo em `src/components/game/` (moedas, bônus, XP, nível, figurinha, modal)
@@ -90,4 +78,3 @@ em `npm run dev` qualquer worker antigo é removido para não atrapalhar o hot r
 ## Próximos passos
 
 - Atalhos no ícone do app (manifest `shortcuts`) para Quiz e Figurinhas.
-- Navegação inferior no celular quando instalado.

@@ -1,5 +1,3 @@
-'use client';
-
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -1554,7 +1552,6 @@ export function AdminDashboard() {
     <main className="min-h-dvh lg:grid lg:grid-cols-[264px_1fr]">
       <aside className="sticky top-0 z-30 border-b border-edge bg-surface/95 backdrop-blur-xl lg:h-dvh lg:border-b-0 lg:border-r">
         <div className="flex items-center gap-3 px-4 py-3 lg:px-5 lg:py-6">
-          {/* eslint-disable-next-line @next/next/no-img-element -- ícone estático pré-cacheado */}
           <img src="/icons/icon-192.png" alt="" width={40} height={40} className="h-10 w-10 rounded-xl" />
           <div className="min-w-0 flex-1">
             <p className="truncate font-display text-base font-bold text-ink">Coleção Bíblica</p>

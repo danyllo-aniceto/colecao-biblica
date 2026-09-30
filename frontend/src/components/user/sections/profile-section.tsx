@@ -1,5 +1,3 @@
-'use client';
-
 import type { FormEvent } from 'react';
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
@@ -8,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { InstallAppButton } from '@/components/pwa/install-app-button';
+import { APP_VERSION } from '@/lib/pwa';
 import { Alert, BoostChips, CoinChip, LevelBadge, ProgressBar, SectionHeading, StatTile, levelProgress } from '@/components/game/game-ui';
 import type { UserProfile } from '@/types/auth';
 
@@ -105,6 +104,8 @@ export function ProfileSection({ profile, ownedCount, totalCount, form, onChange
           Excluir minha conta
         </Button>
       </section>
+
+      <p className="text-center text-xs text-muted">Versão do app: {APP_VERSION}</p>
     </div>
   );
 }

@@ -1,7 +1,5 @@
-'use client';
-
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 import {
   getAccessToken,
   getRefreshToken,
@@ -31,7 +29,7 @@ type AuthState = {
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [isHydrated, setIsHydrated] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
@@ -44,8 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAccessToken(null);
     setRefreshToken(null);
     setUser(null);
-    router.replace('/');
-  }, [router]);
+    navigate('/', { replace: true });
+  }, [navigate]);
 
   // Sincroniza uma única vez com o localStorage após a hidratação (o servidor não tem acesso a ele).
   /* eslint-disable react-hooks/set-state-in-effect */

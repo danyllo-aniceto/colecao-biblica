@@ -1,10 +1,6 @@
-const defaultBaseUrl = 'http://localhost:8080';
-
-export function getApiBaseUrl() {
-  return process.env.NEXT_PUBLIC_API_BASE_URL ?? defaultBaseUrl;
-}
+/** A API roda no mesmo domínio do app, em /api (função serverless na Vercel, proxy do Vite no dev). */
+const API_PREFIX = '/api';
 
 export function buildApiUrl(path: string) {
-  const baseUrl = getApiBaseUrl();
-  return new URL(path, baseUrl).toString();
+  return `${API_PREFIX}${path}`;
 }

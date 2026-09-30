@@ -1,5 +1,3 @@
-'use client';
-
 import type { ReactNode } from 'react';
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
@@ -49,7 +47,6 @@ export function PlayerHud({
   return (
     <header className="sticky top-0 z-40 border-b border-edge bg-bg/85 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
-        {/* eslint-disable-next-line @next/next/no-img-element -- ícone estático pré-cacheado pelo PWA */}
         <img src="/icons/icon-192.png" alt="Coleção Bíblica" width={40} height={40} className="hidden h-10 w-10 rounded-xl sm:block" />
 
         <div className="flex min-w-0 flex-1 items-center gap-3">

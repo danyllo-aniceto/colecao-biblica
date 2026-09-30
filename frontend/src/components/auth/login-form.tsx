@@ -1,7 +1,5 @@
-'use client';
-
 import { useState, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
@@ -13,7 +11,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 type AuthMode = 'login' | 'register';
 
 export function LoginForm() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
   const [mode, setMode] = useState<AuthMode>('login');
   const [name, setName] = useState('');
@@ -68,7 +66,7 @@ export function LoginForm() {
           ? 'Conta criada! Sua jornada começa agora.'
           : 'Bem-vindo de volta. Sua jornada continua.',
       );
-      router.replace('/dashboard');
+      navigate('/dashboard', { replace: true });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Não foi possível concluir a autenticação.';
       setErrorMessage(message);

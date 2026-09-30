@@ -1,5 +1,3 @@
-'use client';
-
 import { useState } from 'react';
 import AddBoxOutlinedIcon from '@mui/icons-material/AddBoxOutlined';
 import GetAppRoundedIcon from '@mui/icons-material/GetAppRounded';

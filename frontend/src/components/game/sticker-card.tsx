@@ -41,7 +41,6 @@ export function StickerCard({ name, rarity, imageUrl, owned, onClick, size = 'md
     >
       <div className={cn('relative aspect-[3/4] w-full overflow-hidden', owned ? 'rarity-bg' : 'bg-surface-3')}>
         {imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- imagens vêm do Blob ou de URLs externas cadastradas pelo admin
           <img
             src={imageUrl}
             alt=""

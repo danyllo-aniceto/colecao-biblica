@@ -221,6 +221,15 @@ describe.skipIf(!hasDatabase)("API", () => {
       expect(last.matchResult).toMatchObject({ xpGained: 0, scoreGained: -90, rewardGranted: false });
     });
 
+    it("não sorteia figurinha de raridade sem personagens (a partida não pode travar)", async () => {
+      // Os dados de demonstração não têm figurinhas comuns: só essa recompensa fica ativa.
+      await prisma.rewardDefinition.updateMany({ where: { name: { not: "Figurinha Comum" } }, data: { active: false } });
+      const token = await login("user@email.com");
+      const { last } = await playSession(token, { quizType: "GENERAL" }, (correct) => correct);
+      expect(last.finished).toBe(true);
+      expect(last.matchResult.rewardGranted).toBe(false);
+    });
+
     it("respeita o limite diário de partidas premiadas", async () => {
       const admin = await login("admin2@email.com");
       await api.put("/api/settings/admin").set(bearer(admin)).send({ rewardMatchLimitPerDay: 1 });

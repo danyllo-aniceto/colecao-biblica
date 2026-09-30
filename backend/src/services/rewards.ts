@@ -104,6 +104,20 @@ export function walletData(wallet: UserWallet): Prisma.UserUpdateInput {
   };
 }
 
+/**
+ * Recompensas que podem sair no sorteio agora: figurinha de uma raridade sem
+ * nenhum personagem cadastrado fica de fora (senão a partida terminaria em erro).
+ */
+export async function availableRewards(db: Db, rewards: RewardDefinition[]): Promise<RewardDefinition[]> {
+  const byRarity = await db.biblicalCharacter.groupBy({ by: ["rarity"], _count: { _all: true } });
+  const rarities = new Set(byRarity.filter((group) => group._count._all > 0).map((group) => group.rarity));
+  return rewards.filter((reward) => {
+    if (reward.rewardType !== "STICKER") return true;
+    if (reward.stickerCharacterId) return true;
+    return reward.stickerRarity !== null && rarities.has(reward.stickerRarity);
+  });
+}
+
 /** Garante que a compra terá efeito, para não cobrar moedas por nada. */
 export async function ensureRewardIsUseful(db: Db, wallet: UserWallet, reward: RewardDefinition, settings: GameSettings) {
   switch (reward.rewardType) {

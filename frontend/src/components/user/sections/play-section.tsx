@@ -1,5 +1,3 @@
-'use client';
-
 import type { FormEvent } from 'react';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import PersonSearchRoundedIcon from '@mui/icons-material/PersonSearchRounded';

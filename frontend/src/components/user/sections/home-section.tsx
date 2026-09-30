@@ -1,5 +1,3 @@
-'use client';
-
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
@@ -63,7 +61,6 @@ export function HomeSection({ profile, characters, collection, history, activeSe
               </Button>
             </div>
           </div>
-          {/* eslint-disable-next-line @next/next/no-img-element -- ícone estático pré-cacheado */}
           <img src="/icons/icon-512.png" alt="" width={176} height={176} className="animate-float hidden h-44 w-44 rounded-[2rem] shadow-[0_20px_40px_-12px_var(--shadow)] md:block" />
         </div>
       </section>

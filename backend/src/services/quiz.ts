@@ -16,7 +16,7 @@ import {
   shuffle,
   weightedPick,
 } from "./game-rules";
-import { applyReward, grantStickerIfMissing, walletData } from "./rewards";
+import { applyReward, availableRewards, grantStickerIfMissing, walletData } from "./rewards";
 import { getSettings, type GameSettings } from "./settings";
 
 type Tx = Prisma.TransactionClient;
@@ -441,7 +441,7 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
     const activeQuestions = await tx.question.count({ where: { active: true } });
     const required = requiredCorrectAnswersForReward(settings.rewardMinCorrectAnswers, activeQuestions);
     if (stats.correctAnswers >= required && (await rewardedMatchesToday(tx, user.id)) < dailyLimit) {
-      const rewards = await tx.rewardDefinition.findMany({ where: { active: true }, orderBy: { id: "asc" } });
+      const rewards = await availableRewards(tx, await tx.rewardDefinition.findMany({ where: { active: true }, orderBy: { id: "asc" } }));
       const drawn = weightedPick(rewards, (reward) => reward.dropChance, random);
       if (drawn) {
         const applied = await applyReward(tx, wallet, drawn, settings, random);

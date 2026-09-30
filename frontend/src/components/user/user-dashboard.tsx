@@ -1,7 +1,5 @@
-'use client';
-
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/game/game-ui';
@@ -65,7 +63,7 @@ const emptyQuizForm: QuizFormState = {
 
 export function UserDashboard() {
   const { accessToken, user, signOut } = useAuth();
-  const router = useRouter();
+  const navigateTo = useNavigate();
 
   const [section, setSection] = useState<SectionId>('home');
 
@@ -468,7 +466,7 @@ export function UserDashboard() {
     }
   }
 
-  const openSticker = (id: number) => router.push(`/dashboard/figurinhas/${id}`);
+  const openSticker = (id: number) => navigateTo(`/dashboard/figurinhas/${id}`);
 
   return (
     <div className="min-h-dvh pb-28 sm:pb-10">

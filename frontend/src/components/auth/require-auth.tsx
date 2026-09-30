@@ -1,11 +1,9 @@
-'use client';
-
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/providers/auth-provider';
 
 export function RequireAuth({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { isHydrated, isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -14,9 +12,9 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
     }
 
     if (!isAuthenticated) {
-      router.replace('/');
+      navigate('/', { replace: true });
     }
-  }, [isAuthenticated, isHydrated, router]);
+  }, [isAuthenticated, isHydrated, navigate]);
 
   if (!isHydrated) {
     return (
