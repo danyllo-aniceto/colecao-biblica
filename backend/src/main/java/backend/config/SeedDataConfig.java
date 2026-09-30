@@ -13,6 +13,7 @@ import backend.repository.UserRepository;
 import backend.service.GameSettingService;
 import backend.service.RewardService;
 import backend.service.ShopService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,7 +33,11 @@ public class SeedDataConfig {
                                PasswordEncoder passwordEncoder,
                                GameSettingService gameSettingService,
                                RewardService rewardService,
-                               ShopService shopService) {
+                               ShopService shopService,
+                               @Value("${app.seed.demo-users:true}") boolean seedDemoUsers,
+                               @Value("${app.seed.admin-email:}") String adminEmail,
+                               @Value("${app.seed.admin-password:}") String adminPassword,
+                               @Value("${app.seed.admin-name:Administrador}") String adminName) {
         return args -> {
             gameSettingService.ensureDefault(GameSettingService.KEY_MAX_QUESTIONS_PER_MATCH, "100", "Máximo de perguntas por partida geral");
             gameSettingService.ensureDefault(GameSettingService.KEY_STARTING_LIVES, "3", "Vidas iniciais por partida geral");
@@ -46,8 +51,17 @@ public class SeedDataConfig {
             gameSettingService.ensureDefault(GameSettingService.KEY_REWARD_MIN_CORRECT_ANSWERS, "7", "Acertos mínimos no quiz geral para concorrer a recompensa");
             gameSettingService.ensureDefault(GameSettingService.KEY_CHARACTER_STICKER_MIN_ACCURACY, "70", "Aproveitamento mínimo (%) no quiz de personagem para ganhar a figurinha");
 
-            ensureUser(userRepository, passwordEncoder, "Admin Teste", "admin2@email.com", "123456", Role.ADMIN);
-            ensureUser(userRepository, passwordEncoder, "Usuário Teste", "user@email.com", "123456", Role.USER);
+            if (seedDemoUsers) {
+                ensureUser(userRepository, passwordEncoder, "Admin Teste", "admin2@email.com", "123456", Role.ADMIN);
+                ensureUser(userRepository, passwordEncoder, "Usuário Teste", "user@email.com", "123456", Role.USER);
+            }
+
+            if (!adminEmail.isBlank()) {
+                if (adminPassword.length() < 8) {
+                    throw new IllegalStateException("ADMIN_PASSWORD precisa ter pelo menos 8 caracteres");
+                }
+                ensureUser(userRepository, passwordEncoder, adminName, adminEmail.trim(), adminPassword, Role.ADMIN);
+            }
 
             if (characterRepository.count() == 0) {
                 BiblicalCharacter david = characterRepository.save(BiblicalCharacter.builder()

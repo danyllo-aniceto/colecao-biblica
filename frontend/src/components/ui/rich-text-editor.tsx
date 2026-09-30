@@ -30,6 +30,7 @@ import Color from '@tiptap/extension-color';
 import Link from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
+import { uploadImage } from '@/lib/uploads';
 import Image from '@tiptap/extension-image';
 
 const toolbarButtonClass =
@@ -132,22 +133,6 @@ const RemovableImage = Image.extend({
     return ReactNodeViewRenderer(RemovableImageNodeView);
   },
 });
-
-async function fileToDataUrl(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        resolve(reader.result);
-        return;
-      }
-
-      reject(new Error('Não foi possível carregar a imagem.'));
-    };
-    reader.onerror = () => reject(new Error('Não foi possível carregar a imagem.'));
-    reader.readAsDataURL(file);
-  });
-}
 
 export function RichTextEditor({ value, onChange, placeholder, allowImages = false, syncKey }: RichTextEditorProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -395,14 +380,20 @@ export function RichTextEditor({ value, onChange, placeholder, allowImages = fal
             className="hidden"
             accept="image/*"
             onChange={async (event) => {
-              const file = event.target.files?.[0];
+              const input = event.target;
+              const file = input.files?.[0];
               if (!file) {
                 return;
               }
 
-              const dataUrl = await fileToDataUrl(file);
-              editor.chain().focus().setImage({ src: dataUrl }).run();
-              event.currentTarget.value = '';
+              try {
+                const src = await uploadImage(file, 'conteudo');
+                editor.chain().focus().setImage({ src }).run();
+              } catch (error) {
+                window.alert(error instanceof Error ? error.message : 'Não foi possível enviar a imagem.');
+              } finally {
+                input.value = '';
+              }
             }}
           />
         </div>

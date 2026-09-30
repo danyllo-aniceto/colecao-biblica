@@ -6,7 +6,7 @@
  * Estratégias:
  * - Páginas (navegação): rede primeiro; sem rede, página em cache ou /offline.
  * - /_next/static: cache primeiro (arquivos com hash, imutáveis).
- * - Ícones, manifest e imagens: cache com revalidação em segundo plano.
+ * - Ícones, manifest e imagens (inclusive as do Vercel Blob): cache com revalidação em segundo plano.
  * - API: apenas GETs de leitura listados abaixo, rede primeiro com cópia
  *   em cache para uso offline. Quiz, loja (compra) e autenticação nunca
  *   passam pelo cache.
@@ -132,6 +132,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Imagens do Vercel Blob (figurinhas e conteúdo): ficam disponíveis offline.
+  if (request.destination === 'image' && url.hostname.endsWith('.blob.vercel-storage.com')) {
+    event.respondWith(staleWhileRevalidate(request, IMAGES_CACHE, { allowOpaque: true }));
+    return;
+  }
+
   if (API_ORIGIN && url.origin === API_ORIGIN && CACHEABLE_API_PATHS.some((pattern) => pattern.test(url.pathname))) {
     event.respondWith(networkFirstApi(request));
   }
@@ -186,11 +192,12 @@ async function cacheFirst(request, cacheName) {
   return response;
 }
 
-async function staleWhileRevalidate(request, cacheName) {
+async function staleWhileRevalidate(request, cacheName, { allowOpaque = false } = {}) {
   const cached = await caches.match(request);
   const network = fetch(request)
     .then(async (response) => {
-      if (response.ok) {
+      // Imagens de outro domínio sem CORS chegam "opacas" (status 0): só aceitas quando pedido.
+      if (response.ok || (allowOpaque && response.type === 'opaque')) {
         await putAndTrim(cacheName, request, response.clone());
       }
       return response;

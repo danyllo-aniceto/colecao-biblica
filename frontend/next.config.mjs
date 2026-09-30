@@ -7,6 +7,11 @@ function resolveBuildId() {
     return process.env.APP_BUILD_ID;
   }
 
+  // Na Vercel cada deploy tem um id próprio.
+  if (process.env.VERCEL_DEPLOYMENT_ID) {
+    return process.env.VERCEL_DEPLOYMENT_ID;
+  }
+
   try {
     return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() + '-' + Date.now().toString(36);
   } catch {

@@ -23,6 +23,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { InstallAppButton } from '@/components/pwa/install-app-button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { BIBLE_BOOKS_PT } from '@/lib/bible-books';
+import { uploadImage } from '@/lib/uploads';
 import {
   createCharacter,
   createQuestion,
@@ -412,22 +413,6 @@ class Ismael secundario;
 class Jacó principal;`;
 }
 
-function fileToDataUrl(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        resolve(reader.result);
-        return;
-      }
-
-      reject(new Error('Não foi possível ler a imagem selecionada.'));
-    };
-    reader.onerror = () => reject(new Error('Não foi possível ler a imagem selecionada.'));
-    reader.readAsDataURL(file);
-  });
-}
-
 function appendMarkdownSnippet(currentValue: string, snippet: string) {
   const value = currentValue.trimEnd();
   return value.length > 0 ? `${value}\n\n${snippet}` : snippet;
@@ -678,6 +663,7 @@ export function AdminDashboard() {
 
   const [editingCharacterId, setEditingCharacterId] = useState<number | null>(null);
   const [characterForm, setCharacterForm] = useState<CharacterFormState>(emptyCharacterForm);
+  const [characterImageUploading, setCharacterImageUploading] = useState(false);
   const [characterSubmitError, setCharacterSubmitError] = useState<string | null>(null);
   const [characterSubmitting, setCharacterSubmitting] = useState(false);
   const [isCharacterEditorOpen, setIsCharacterEditorOpen] = useState(false);
@@ -1221,9 +1207,19 @@ export function AdminDashboard() {
       return;
     }
 
-    const dataUrl = await fileToDataUrl(file);
-    setCharacterForm((current) => ({ ...current, imageUrl: dataUrl }));
-    setCharacterImageMode('upload');
+    const input = event.target;
+    setCharacterImageUploading(true);
+    setCharacterSubmitError(null);
+    try {
+      const imageUrl = await uploadImage(file, 'personagens');
+      setCharacterForm((current) => ({ ...current, imageUrl }));
+      setCharacterImageMode('upload');
+    } catch (error) {
+      setCharacterSubmitError(error instanceof Error ? error.message : 'Não foi possível enviar a imagem.');
+    } finally {
+      setCharacterImageUploading(false);
+      input.value = '';
+    }
   }
 
   function applyCharacterFilter(event: FormEvent<HTMLFormElement>) {
@@ -1996,8 +1992,8 @@ export function AdminDashboard() {
                         />
                       </Field>
                     ) : (
-                      <Field label="Upload da imagem" hint="A imagem é convertida para URL base64.">
-                        <input className={controlClassName} type="file" accept="image/*" onChange={handleCharacterFileUpload} />
+                      <Field label="Upload da imagem" hint={characterImageUploading ? 'Enviando imagem...' : 'PNG, JPG, WEBP, GIF ou AVIF, até 5 MB.'}>
+                        <input className={controlClassName} type="file" accept="image/*" onChange={handleCharacterFileUpload} disabled={characterImageUploading} />
                       </Field>
                     )}
 
