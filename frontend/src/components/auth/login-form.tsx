@@ -3,7 +3,9 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
+import { Alert } from '@/components/game/game-ui';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -63,7 +65,7 @@ export function LoginForm() {
 
       setSuccessMessage(
         isRegisterMode
-          ? 'Conta criada com sucesso. Você recebeu sua primeira figurinha!'
+          ? 'Conta criada! Sua jornada começa agora.'
           : 'Bem-vindo de volta. Sua jornada continua.',
       );
       router.replace('/dashboard');
@@ -76,147 +78,118 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="parchment-grain overflow-hidden">
-      <CardHeader className="relative p-7 pb-0 sm:p-9 sm:pb-0">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--accent)]">Coleção Bíblica</p>
-        <CardTitle className="mt-3 max-w-md text-3xl leading-tight sm:text-4xl">
-          {isRegisterMode ? 'Comece sua jornada' : 'Entrar na sua jornada'}
-        </CardTitle>
-        <CardDescription className="mt-3 max-w-md text-base">
-          {isRegisterMode
-            ? 'Crie sua coleção e desbloqueie sua primeira conquista.'
-            : 'Continue sua coleção com acesso rápido e seguro.'}
-        </CardDescription>
-      </CardHeader>
+    <div className="panel overflow-hidden p-6 sm:p-8">
+      <div className="grid grid-cols-2 gap-1 rounded-2xl bg-surface-3 p-1" role="tablist" aria-label="Entrar ou criar conta">
+        {(['login', 'register'] as const).map((item) => (
+          <button
+            key={item}
+            type="button"
+            role="tab"
+            aria-selected={mode === item}
+            onClick={() => switchMode(item)}
+            className={
+              mode === item
+                ? 'h-11 rounded-xl bg-surface font-display font-semibold text-ink shadow-[0_2px_0_var(--edge-strong)]'
+                : 'h-11 rounded-xl font-display font-semibold text-muted transition hover:text-ink'
+            }
+          >
+            {item === 'login' ? 'Entrar' : 'Criar conta'}
+          </button>
+        ))}
+      </div>
 
-      <CardContent className="p-7 pt-6 sm:p-9 sm:pt-7">
-        <div className="mb-6 inline-flex w-full rounded-full border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_75%,white)] p-1">
-          <button
-            type="button"
-            onClick={() => switchMode('login')}
-            className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-              !isRegisterMode
-                ? 'bg-[linear-gradient(135deg,var(--gold),var(--gold-light))] text-[#2c1b10] shadow-sm'
-                : 'text-[var(--text-secondary)]'
-            }`}
-          >
-            Entrar na jornada
-          </button>
-          <button
-            type="button"
-            onClick={() => switchMode('register')}
-            className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-              isRegisterMode
-                ? 'bg-[linear-gradient(135deg,var(--gold),var(--gold-light))] text-[#2c1b10] shadow-sm'
-                : 'text-[var(--text-secondary)]'
-            }`}
-          >
-            Criar coleção
-          </button>
+      <h2 className="mt-6 font-display text-3xl font-bold text-ink">{isRegisterMode ? 'Comece sua coleção' : 'Bem-vindo de volta!'}</h2>
+      <p className="mt-1 text-sm text-muted">{isRegisterMode ? 'Leva menos de um minuto.' : 'Sua jornada continua de onde parou.'}</p>
+
+      <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+        {isRegisterMode ? (
+          <div className="space-y-2">
+            <Label htmlFor="name">Nome</Label>
+            <Input id="name" autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Seu nome" required />
+          </div>
+        ) : null}
+
+        <div className="space-y-2">
+          <Label htmlFor="email">E-mail</Label>
+          <Input id="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="seuemail@exemplo.com" required />
         </div>
 
-        <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-          {isRegisterMode ? (
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome</Label>
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                autoComplete="name"
-                placeholder="Seu nome"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                required
-              />
-            </div>
-          ) : null}
+        <PasswordField
+          id="password"
+          label="Senha"
+          value={password}
+          onChange={setPassword}
+          visible={showPassword}
+          onToggle={() => setShowPassword((current) => !current)}
+          autoComplete={isRegisterMode ? 'new-password' : 'current-password'}
+        />
 
-          <div className="space-y-2">
-            <Label htmlFor="email">E-mail</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="seuemail@exemplo.com"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-            />
-          </div>
+        {isRegisterMode ? (
+          <PasswordField
+            id="confirm-password"
+            label="Confirmar senha"
+            value={confirmPassword}
+            onChange={setConfirmPassword}
+            visible={showConfirmPassword}
+            onToggle={() => setShowConfirmPassword((current) => !current)}
+            autoComplete="new-password"
+            placeholder="Repita a senha"
+          />
+        ) : null}
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
-            <div className="relative">
-              <Input
-                id="password"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                autoComplete={isRegisterMode ? 'new-password' : 'current-password'}
-                placeholder="Digite sua senha"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((state) => !state)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-secondary)]"
-              >
-                {showPassword ? 'Ocultar' : 'Mostrar'}
-              </button>
-            </div>
-          </div>
+        {errorMessage ? <Alert tone="danger">{errorMessage}</Alert> : null}
+        {successMessage ? <Alert tone="success">{successMessage}</Alert> : null}
 
-          {isRegisterMode ? (
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar senha</Label>
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  placeholder="Confirme sua senha"
-                  value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword((state) => !state)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-secondary)]"
-                >
-                  {showConfirmPassword ? 'Ocultar' : 'Mostrar'}
-                </button>
-              </div>
-            </div>
-          ) : null}
+        <Button type="submit" size="xl" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? 'Entrando...' : isRegisterMode ? 'Criar minha conta' : 'Entrar e jogar'}
+        </Button>
+      </form>
+    </div>
+  );
+}
 
-          {errorMessage ? (
-            <div className="rounded-2xl border border-red-400/35 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-300">
-              {errorMessage}
-            </div>
-          ) : null}
-
-          {successMessage ? (
-            <div className="rounded-2xl border border-emerald-400/35 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-300">
-              {successMessage}
-            </div>
-          ) : null}
-
-          <Button type="submit" size="lg" className="mt-2 w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Processando...' : isRegisterMode ? 'Começar jornada' : 'Entrar na jornada'}
-          </Button>
-
-          <p className="text-xs leading-5 text-[var(--text-secondary)]">
-            {isRegisterMode
-              ? 'Já tem conta? Volte para entrar na sua jornada.'
-              : 'Ainda não começou? Clique em criar coleção.'}
-          </p>
-        </form>
-      </CardContent>
-    </Card>
+function PasswordField({
+  id,
+  label,
+  value,
+  onChange,
+  visible,
+  onToggle,
+  autoComplete,
+  placeholder = 'Digite sua senha',
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  visible: boolean;
+  onToggle: () => void;
+  autoComplete: string;
+  placeholder?: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="relative">
+        <Input
+          id={id}
+          type={visible ? 'text' : 'password'}
+          autoComplete={autoComplete}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          className="pr-12"
+          required
+        />
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-label={visible ? 'Esconder senha' : 'Mostrar senha'}
+          className="absolute inset-y-0 right-1 my-auto flex h-10 w-10 items-center justify-center rounded-xl text-muted transition hover:bg-surface-3 hover:text-ink"
+        >
+          {visible ? <VisibilityOffRoundedIcon fontSize="small" /> : <VisibilityRoundedIcon fontSize="small" />}
+        </button>
+      </div>
+    </div>
   );
 }

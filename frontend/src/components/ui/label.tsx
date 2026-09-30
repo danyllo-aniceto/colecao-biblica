@@ -5,5 +5,5 @@ function cn(...classes: Array<string | false | null | undefined>) {
 }
 
 export function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) {
-  return <label className={cn('text-sm font-medium text-[var(--text-secondary)]', className)} {...props} />;
+  return <label className={cn('text-sm font-bold text-muted', className)} {...props} />;
 }

@@ -1,45 +1,25 @@
 import type { StickerRarity } from './admin-api';
 
-export const rarityConfig: Record<
-  StickerRarity,
-  {
-    label: string;
-    background: string;
-    border: string;
-    badge: string;
-    text: string;
-  }
-> = {
-  COMMON: {
-    label: 'Comum',
-    background: 'bg-slate-50 dark:bg-slate-900/30',
-    border: 'border-slate-300 dark:border-slate-700',
-    badge: 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100',
-    text: 'text-slate-700 dark:text-slate-300',
-  },
-  RARE: {
-    label: 'Rara',
-    background: 'bg-blue-50 dark:bg-blue-900/30',
-    border: 'border-blue-300 dark:border-blue-700',
-    badge: 'bg-blue-200 dark:bg-blue-700 text-blue-900 dark:text-blue-100',
-    text: 'text-blue-700 dark:text-blue-300',
-  },
-  EPIC: {
-    label: 'Épica',
-    background: 'bg-purple-50 dark:bg-purple-900/30',
-    border: 'border-purple-300 dark:border-purple-700',
-    badge: 'bg-purple-200 dark:bg-purple-700 text-purple-900 dark:text-purple-100',
-    text: 'text-purple-700 dark:text-purple-300',
-  },
-  LEGENDARY: {
-    label: 'Lendária',
-    background: 'bg-yellow-50 dark:bg-yellow-900/30',
-    border: 'border-yellow-300 dark:border-yellow-700',
-    badge: 'bg-yellow-200 dark:bg-yellow-700 text-yellow-900 dark:text-yellow-100',
-    text: 'text-yellow-700 dark:text-yellow-300',
-  },
+export const RARITY_ORDER: StickerRarity[] = ['COMMON', 'RARE', 'EPIC', 'LEGENDARY'];
+
+const labels: Record<StickerRarity, string> = {
+  COMMON: 'Comum',
+  RARE: 'Rara',
+  EPIC: 'Épica',
+  LEGENDARY: 'Lendária',
 };
 
 export function getRarityLabel(rarity: StickerRarity): string {
-  return rarityConfig[rarity].label;
+  return labels[rarity] ?? rarity;
 }
+
+/**
+ * Classes por raridade. As cores vêm de `.rarity[data-rarity]` no globals.css;
+ * use junto com `data-rarity={rarity}` e a classe `rarity` no mesmo elemento ou num ancestral.
+ */
+export const rarityConfig: Record<StickerRarity, { label: string; background: string; border: string; badge: string; text: string }> = {
+  COMMON: { label: labels.COMMON, background: 'rarity-bg', border: 'rarity-frame', badge: 'rarity-chip', text: 'rarity-text' },
+  RARE: { label: labels.RARE, background: 'rarity-bg', border: 'rarity-frame', badge: 'rarity-chip', text: 'rarity-text' },
+  EPIC: { label: labels.EPIC, background: 'rarity-bg', border: 'rarity-frame', badge: 'rarity-chip', text: 'rarity-text' },
+  LEGENDARY: { label: labels.LEGENDARY, background: 'rarity-bg', border: 'rarity-frame', badge: 'rarity-chip', text: 'rarity-text' },
+};

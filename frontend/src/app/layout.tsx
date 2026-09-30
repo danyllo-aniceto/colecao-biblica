@@ -1,18 +1,19 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import { Cinzel, Inter } from 'next/font/google';
+import { Fredoka, Nunito } from 'next/font/google';
 import { AuthProvider } from '@/components/providers/auth-provider';
 import { PwaProvider } from '@/components/pwa/pwa-provider';
 import { THEME_COLORS, themeInitScript } from '@/lib/theme';
 import './globals.css';
 
-const bodyFont = Inter({
+const bodyFont = Nunito({
   subsets: ['latin'],
   variable: '--font-body',
 });
 
-const headingFont = Cinzel({
+const headingFont = Fredoka({
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-heading',
 });
 

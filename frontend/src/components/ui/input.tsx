@@ -4,6 +4,10 @@ function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ');
 }
 
+/** Aparência comum de campos (input, select, textarea). */
+export const fieldClassName =
+  'rounded-2xl border-2 border-edge bg-surface-2 px-4 text-sm font-semibold text-ink transition-colors placeholder:font-normal placeholder:text-muted/70 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 disabled:cursor-not-allowed disabled:opacity-60';
+
 export type InputProps = React.InputHTMLAttributes<HTMLInputElement>;
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
@@ -15,7 +19,8 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(function Inp
       ref={ref}
       type={type}
       className={cn(
-        'flex h-12 w-full rounded-2xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_86%,white)] px-4 text-sm text-[var(--text-primary)] shadow-sm transition-colors placeholder:text-[var(--text-secondary)]/70 focus-visible:border-[var(--gold)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--gold)_35%,transparent)] disabled:cursor-not-allowed disabled:opacity-60',
+        'flex h-12 w-full',
+        fieldClassName,
         className,
       )}
       {...props}

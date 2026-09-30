@@ -4,8 +4,8 @@ export const THEME_STORAGE_KEY = 'colecao-biblica:theme';
 
 /** Cor da barra do sistema/janela do app instalado em cada tema (mesmo --bg-primary do CSS). */
 export const THEME_COLORS: Record<Theme, string> = {
-  light: '#f5e9d7',
-  dark: '#121212',
+  light: '#eef0ff',
+  dark: '#0a0e2c',
 };
 
 /**

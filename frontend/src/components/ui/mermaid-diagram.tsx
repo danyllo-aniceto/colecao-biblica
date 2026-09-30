@@ -50,6 +50,15 @@ export function sanitizeMermaidCode(code: string) {
     .trim();
 }
 
+const MERMAID_START =
+  /^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram(-v2)?|erDiagram|journey|gantt|pie|mindmap|timeline|gitGraph|quadrantChart|requirementDiagram|C4\w+|block-beta|sankey-beta|xychart-beta|%%)/i;
+
+/** true quando o texto começa como um diagrama Mermaid (e não é apenas texto comum). */
+export function looksLikeMermaid(code?: string | null) {
+  const firstLine = (code ?? '').trim().split(/\r?\n/, 1)[0]?.trim() ?? '';
+  return MERMAID_START.test(firstLine);
+}
+
 export async function validateMermaidSyntax(code: string) {
   const source = sanitizeMermaidCode(code);
   if (!source) {
@@ -90,9 +99,11 @@ export function MermaidDiagram({ code, className, initialTheme = 'neutral' }: Me
 
       ensureMermaidInitialized();
 
+      const id = `mermaid-${Math.random().toString(36).slice(2)}`;
       try {
         mermaid.initialize({ startOnLoad: false, theme, securityLevel: 'strict' });
-        const id = `mermaid-${Math.random().toString(36).slice(2)}`;
+        // parse não insere nada na página; render com erro deixaria o SVG de erro solto no <body>.
+        await mermaid.parse(source);
         const result = await mermaid.render(id, source);
         if (!isMounted) {
           return;
@@ -101,6 +112,8 @@ export function MermaidDiagram({ code, className, initialTheme = 'neutral' }: Me
         setSvg(result.svg);
         setError(null);
       } catch (renderError) {
+        document.getElementById(id)?.remove();
+        document.getElementById(`d${id}`)?.remove();
         if (!isMounted) {
           return;
         }
@@ -139,7 +152,7 @@ export function MermaidDiagram({ code, className, initialTheme = 'neutral' }: Me
   }, [svg, zoom]);
 
   if (error) {
-    return <p className="text-sm text-red-700">{error}</p>;
+    return <p className="text-sm text-danger">{error}</p>;
   }
 
   if (!svg) {

@@ -235,13 +235,13 @@ const emptySettingsForm: SettingsFormState = {
 };
 
 const controlClassName =
-  'flex h-12 w-full rounded-2xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_86%,white)] px-4 text-sm text-[var(--text-primary)] shadow-sm transition-colors placeholder:text-[var(--text-secondary)]/70 focus-visible:border-[var(--gold)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--gold)_35%,transparent)] disabled:cursor-not-allowed disabled:opacity-60';
+  'flex h-12 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] px-4 text-sm text-[var(--text-primary)] shadow-sm transition-colors placeholder:text-[var(--text-secondary)]/70 focus-visible:border-[var(--gold)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--gold)_35%,transparent)] disabled:cursor-not-allowed disabled:opacity-60';
 
 const textareaClassName =
-  'min-h-28 w-full rounded-2xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_86%,white)] px-4 py-3 text-sm text-[var(--text-primary)] shadow-sm transition-colors placeholder:text-[var(--text-secondary)]/70 focus-visible:border-[var(--gold)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--gold)_35%,transparent)] disabled:cursor-not-allowed disabled:opacity-60';
+  'min-h-28 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm text-[var(--text-primary)] shadow-sm transition-colors placeholder:text-[var(--text-secondary)]/70 focus-visible:border-[var(--gold)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--gold)_35%,transparent)] disabled:cursor-not-allowed disabled:opacity-60';
 
 const markdownPreviewClassName =
-  'rounded-2xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_90%,white)] p-4 text-sm leading-7 text-[var(--text-primary)]';
+  'rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4 text-sm leading-7 text-[var(--text-primary)]';
 
 const selectClassName = `${controlClassName} pr-10`;
 
@@ -305,7 +305,7 @@ function SectionCard({
 }) {
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="border-b border-[var(--border)]/70 bg-[color-mix(in_srgb,var(--bg-primary)_78%,white)] pb-5">
+      <CardHeader className="border-b border-[var(--border)]/70 bg-[var(--surface-2)] pb-5">
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
@@ -602,7 +602,7 @@ function ImportantEventsPreview({ value }: { value: string }) {
     <div className="space-y-4">
       {events.map((event, index) => (
         <div key={`${event.marker}-${index}`} className="grid grid-cols-[110px_1fr] gap-3">
-          <div className="rounded-xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--gold)_12%,white)] px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.08em] text-[var(--accent)]">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-3)] px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.08em] text-[var(--accent)]">
             {event.marker}
           </div>
           <div className="relative rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-3 text-sm text-[var(--text-primary)]">
@@ -1551,63 +1551,72 @@ export function AdminDashboard() {
   const activeScreen = adminScreens.find((item) => item.id === screen) ?? adminScreens[0];
 
   return (
-    <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-        <Card className="overflow-hidden">
-          <CardHeader className="relative p-7 pb-0 sm:p-9 sm:pb-0">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--accent)]">Painel administrativo</p>
-                <CardTitle className="mt-3 text-3xl sm:text-4xl">Gestão central da Coleção Bíblica</CardTitle>
-                <CardDescription className="mt-3 max-w-3xl text-base">
-                  {user ? `Olá, ${user.name}. Aqui você administra usuários, personagens, perguntas, recompensas, loja e configurações do jogo.` : 'Aqui você administra usuários, personagens, perguntas, recompensas, loja e configurações do jogo.'}
-                </CardDescription>
-              </div>
+    <main className="min-h-dvh lg:grid lg:grid-cols-[264px_1fr]">
+      <aside className="sticky top-0 z-30 border-b border-edge bg-surface/95 backdrop-blur-xl lg:h-dvh lg:border-b-0 lg:border-r">
+        <div className="flex items-center gap-3 px-4 py-3 lg:px-5 lg:py-6">
+          {/* eslint-disable-next-line @next/next/no-img-element -- ícone estático pré-cacheado */}
+          <img src="/icons/icon-192.png" alt="" width={40} height={40} className="h-10 w-10 rounded-xl" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-display text-base font-bold text-ink">Coleção Bíblica</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-accent-strong dark:text-accent">Painel admin</p>
+          </div>
+          <div className="flex items-center gap-2 lg:hidden">
+            <ThemeToggle compact />
+            <button type="button" onClick={signOut} aria-label="Sair" className="flex h-10 w-10 items-center justify-center rounded-2xl bg-surface-3 text-muted hover:text-ink">
+              <LogoutRoundedIcon fontSize="small" />
+            </button>
+          </div>
+        </div>
 
-              <div className="flex flex-wrap items-center gap-3">
-                <InstallAppButton />
-                <ThemeToggle />
-                <Button variant="secondary" onClick={signOut} className="inline-flex items-center gap-2">
-                  <LogoutRoundedIcon fontSize="small" />
-                  Sair
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4 p-7 pt-6 sm:p-9 sm:pt-7">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-              <StatPill label="Usuários" value={stats.users} />
-              <StatPill label="Personagens" value={stats.characters} />
-              <StatPill label="Perguntas" value={stats.questions} />
-              <StatPill label="Recompensas" value={stats.rewards} />
-              <StatPill label="Loja" value={stats.shopItems} />
-            </div>
-          </CardContent>
-        </Card>
+        <nav className="no-scrollbar flex gap-1 overflow-x-auto px-3 pb-3 lg:flex-col lg:overflow-visible lg:px-3 lg:pb-0" aria-label="Telas administrativas">
+          {adminScreens.map((item) => {
+            const active = screen === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setScreen(item.id)}
+                aria-current={active ? 'page' : undefined}
+                className={
+                  active
+                    ? 'inline-flex h-11 shrink-0 items-center gap-3 rounded-2xl bg-primary px-4 font-display text-sm font-semibold text-on-primary shadow-[0_3px_0_var(--primary-strong)]'
+                    : 'inline-flex h-11 shrink-0 items-center gap-3 rounded-2xl px-4 font-display text-sm font-semibold text-muted transition hover:bg-surface-3 hover:text-ink'
+                }
+              >
+                <span className="inline-flex text-lg">{item.icon}</span>
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
 
-        <Card className="overflow-hidden">
-          <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--accent)]">Telas administrativas</p>
-              <p className="mt-1 text-sm text-[var(--text-secondary)]">Tela atual: {activeScreen.label}</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {adminScreens.map((item) => (
-                <Button
-                  key={item.id}
-                  type="button"
-                  variant={screen === item.id ? 'primary' : 'secondary'}
-                  size="sm"
-                  onClick={() => setScreen(item.id)}
-                  className="inline-flex items-center gap-2"
-                >
-                  <span className="inline-flex items-center justify-center text-[0.95em]">{item.icon}</span>
-                  {item.label}
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="hidden space-y-3 p-5 lg:absolute lg:inset-x-0 lg:bottom-0 lg:block">
+          <p className="truncate text-sm font-semibold text-muted">{user ? user.name : 'Administrador'}</p>
+          <div className="flex flex-wrap gap-2">
+            <ThemeToggle compact />
+            <InstallAppButton />
+            <Button variant="secondary" size="sm" onClick={signOut}>
+              <LogoutRoundedIcon fontSize="small" />
+              Sair
+            </Button>
+          </div>
+        </div>
+      </aside>
+
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <header className="space-y-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted">Administração</p>
+            <h1 className="font-display text-3xl font-bold text-ink sm:text-4xl">{activeScreen.label}</h1>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            <StatPill label="Usuários" value={stats.users} />
+            <StatPill label="Personagens" value={stats.characters} />
+            <StatPill label="Perguntas" value={stats.questions} />
+            <StatPill label="Recompensas" value={stats.rewards} />
+            <StatPill label="Loja" value={stats.shopItems} />
+          </div>
+        </header>
 
         {screen === 'overview' ? (
           <SectionCard title="Visão geral" description="Resumo rápido do estado do sistema e atalhos para os módulos principais.">
@@ -1666,8 +1675,8 @@ export function AdminDashboard() {
           </form>
 
           {usersState.loading ? <LoadingInline label="Carregando usuários..." /> : null}
-          {usersState.error ? <p className="text-sm text-red-700">{usersState.error}</p> : null}
-          {userSubmitError ? <p className="text-sm text-red-700">{userSubmitError}</p> : null}
+          {usersState.error ? <p className="text-sm text-danger">{usersState.error}</p> : null}
+          {userSubmitError ? <p className="text-sm text-danger">{userSubmitError}</p> : null}
 
           {(userNameFilter || userEmailFilter) && !usersState.loading ? (
             <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--text-secondary)]">
@@ -1730,7 +1739,7 @@ export function AdminDashboard() {
                 <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                   Itens por página
                   <select
-                    className="h-9 rounded-xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_86%,white)] px-2 text-sm text-[var(--text-primary)]"
+                    className="h-9 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-2 text-sm text-[var(--text-primary)]"
                     value={usersPageSize}
                     onChange={(event) => changeUsersPageSize(Number(event.target.value))}
                   >
@@ -1805,7 +1814,7 @@ export function AdminDashboard() {
                 </select>
               </Field>
 
-              {userSubmitError ? <p className="text-sm text-red-700">{userSubmitError}</p> : null}
+              {userSubmitError ? <p className="text-sm text-danger">{userSubmitError}</p> : null}
 
               <div className="flex flex-wrap justify-end gap-2">
                 <Button type="button" variant="secondary" onClick={closeUserModal} disabled={userSubmitting}>
@@ -1842,8 +1851,8 @@ export function AdminDashboard() {
           </form>
 
           {charactersState.loading ? <LoadingInline label="Carregando personagens..." /> : null}
-          {charactersState.error ? <p className="text-sm text-red-700">{charactersState.error}</p> : null}
-          {characterSubmitError ? <p className="text-sm text-red-700">{characterSubmitError}</p> : null}
+          {charactersState.error ? <p className="text-sm text-danger">{charactersState.error}</p> : null}
+          {characterSubmitError ? <p className="text-sm text-danger">{characterSubmitError}</p> : null}
 
           {characterNameFilter && !charactersState.loading ? (
             <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--text-secondary)]">
@@ -1903,7 +1912,7 @@ export function AdminDashboard() {
                 <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                   Itens por página
                   <select
-                    className="h-9 rounded-xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_86%,white)] px-2 text-sm text-[var(--text-primary)]"
+                    className="h-9 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-2 text-sm text-[var(--text-primary)]"
                     value={charactersPageSize}
                     onChange={(event) => changeCharactersPageSize(Number(event.target.value))}
                   >
@@ -1938,7 +1947,7 @@ export function AdminDashboard() {
           ) : null}
 
           {isCharacterEditorOpen ? (
-            <Card className="border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-secondary)_74%,white)]">
+            <Card className="border-[var(--border)] bg-[var(--surface)]">
               <CardHeader>
                 <CardTitle>{editingCharacterId === null ? 'Nova figurinha' : 'Editar figurinha'}</CardTitle>
                 <CardDescription>Editor completo para cadastro de conteúdo visual e textual.</CardDescription>
@@ -1958,7 +1967,7 @@ export function AdminDashboard() {
                   </Field>
 
                   <div className="space-y-3 lg:col-span-2">
-                    <div className="inline-flex w-full rounded-full border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_75%,white)] p-1">
+                    <div className="inline-flex w-full rounded-full border border-[var(--border)] bg-[var(--surface-2)] p-1">
                       <button
                         type="button"
                         onClick={() => setCharacterImageMode('url')}
@@ -2066,7 +2075,7 @@ export function AdminDashboard() {
                   </Field>
 
                   <Field label="Livros bíblicos" hint="Selecione todos os livros onde o personagem aparece.">
-                    <div className="max-h-72 space-y-2 overflow-y-auto rounded-2xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_86%,white)] p-3">
+                    <div className="max-h-72 space-y-2 overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-3">
                       {BIBLE_BOOKS_PT.map((book) => {
                         const checked = characterForm.bibleBooks.includes(book);
                         return (
@@ -2176,7 +2185,7 @@ export function AdminDashboard() {
                     </div>
                   </div>
 
-                  {characterSubmitError ? <p className="lg:col-span-2 text-sm text-red-700">{characterSubmitError}</p> : null}
+                  {characterSubmitError ? <p className="lg:col-span-2 text-sm text-danger">{characterSubmitError}</p> : null}
 
                   <div className="flex flex-wrap justify-end gap-2 lg:col-span-2">
                     <Button type="button" variant="secondary" onClick={closeCharacterEditor} disabled={characterSubmitting}>
@@ -2216,8 +2225,8 @@ export function AdminDashboard() {
           </form>
 
           {questionsState.loading ? <LoadingInline label="Carregando perguntas..." /> : null}
-          {questionsState.error ? <p className="text-sm text-red-700">{questionsState.error}</p> : null}
-          {questionSubmitError ? <p className="text-sm text-red-700">{questionSubmitError}</p> : null}
+          {questionsState.error ? <p className="text-sm text-danger">{questionsState.error}</p> : null}
+          {questionSubmitError ? <p className="text-sm text-danger">{questionSubmitError}</p> : null}
 
           {questionTextFilter && !questionsState.loading ? (
             <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--text-secondary)]">
@@ -2279,7 +2288,7 @@ export function AdminDashboard() {
                 <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                   Itens por página
                   <select
-                    className="h-9 rounded-xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_86%,white)] px-2 text-sm text-[var(--text-primary)]"
+                    className="h-9 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-2 text-sm text-[var(--text-primary)]"
                     value={questionsPageSize}
                     onChange={(event) => changeQuestionsPageSize(Number(event.target.value))}
                   >
@@ -2364,11 +2373,11 @@ export function AdminDashboard() {
                   ))}
                 </select>
               </Field>
-              <label className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_86%,white)] px-4 py-3 text-sm text-[var(--text-secondary)] lg:col-span-2">
+              <label className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm text-[var(--text-secondary)] lg:col-span-2">
                 <input type="checkbox" checked={questionForm.active} onChange={(event) => setQuestionForm((current) => ({ ...current, active: event.target.checked }))} />
                 Pergunta ativa
               </label>
-              {questionSubmitError ? <p className="lg:col-span-2 text-sm text-red-700">{questionSubmitError}</p> : null}
+              {questionSubmitError ? <p className="lg:col-span-2 text-sm text-danger">{questionSubmitError}</p> : null}
               <div className="flex flex-wrap justify-end gap-2 lg:col-span-2">
                 <Button type="button" variant="secondary" onClick={closeQuestionModal} disabled={questionSubmitting}>
                   Cancelar
@@ -2453,12 +2462,12 @@ export function AdminDashboard() {
                 <Input type="number" min={0.0001} step="0.0001" value={rewardForm.dropChance} onChange={(event) => setRewardForm((current) => ({ ...current, dropChance: event.target.value }))} required />
               </Field>
 
-              <label className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_86%,white)] px-4 py-3 text-sm text-[var(--text-secondary)] lg:col-span-2">
+              <label className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm text-[var(--text-secondary)] lg:col-span-2">
                 <input type="checkbox" checked={rewardForm.active} onChange={(event) => setRewardForm((current) => ({ ...current, active: event.target.checked }))} />
                 Recompensa ativa
               </label>
 
-              {rewardSubmitError ? <p className="lg:col-span-2 text-sm text-red-700">{rewardSubmitError}</p> : null}
+              {rewardSubmitError ? <p className="lg:col-span-2 text-sm text-danger">{rewardSubmitError}</p> : null}
               <div className="flex flex-wrap gap-3 lg:col-span-2">
                 <Button type="submit" disabled={rewardSubmitting || editingRewardId === null} className="inline-flex items-center gap-2">
                   {rewardSubmitting ? <AutorenewRoundedIcon className="animate-spin" fontSize="small" /> : null}
@@ -2483,7 +2492,7 @@ export function AdminDashboard() {
             </form>
 
           {rewardsState.loading ? <p className="text-sm text-[var(--text-secondary)]">Carregando recompensas...</p> : null}
-          {rewardsState.error ? <p className="text-sm text-red-700">{rewardsState.error}</p> : null}
+          {rewardsState.error ? <p className="text-sm text-danger">{rewardsState.error}</p> : null}
 
           {!rewardsState.loading ? (
             <div className="overflow-x-auto rounded-3xl border border-[var(--border)]">
@@ -2559,11 +2568,11 @@ export function AdminDashboard() {
                 ))}
               </select>
             </Field>
-            <label className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_86%,white)] px-4 py-3 text-sm text-[var(--text-secondary)] lg:col-span-2">
+            <label className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm text-[var(--text-secondary)] lg:col-span-2">
               <input type="checkbox" checked={shopForm.active} onChange={(event) => setShopForm((current) => ({ ...current, active: event.target.checked }))} />
               Item ativo
             </label>
-            {shopSubmitError ? <p className="lg:col-span-2 text-sm text-red-700">{shopSubmitError}</p> : null}
+            {shopSubmitError ? <p className="lg:col-span-2 text-sm text-danger">{shopSubmitError}</p> : null}
             <div className="flex flex-wrap gap-3 lg:col-span-2">
               <Button type="submit" disabled={shopSubmitting}>
                 {shopSubmitting ? 'Salvando...' : 'Salvar configuração'}
@@ -2572,7 +2581,7 @@ export function AdminDashboard() {
           </form>
 
           {shopState.loading ? <p className="text-sm text-[var(--text-secondary)]">Carregando loja...</p> : null}
-          {shopState.error ? <p className="text-sm text-red-700">{shopState.error}</p> : null}
+          {shopState.error ? <p className="text-sm text-danger">{shopState.error}</p> : null}
 
           {!shopState.loading ? (
             <div className="overflow-x-auto rounded-3xl border border-[var(--border)]">
@@ -2652,8 +2661,8 @@ export function AdminDashboard() {
             <Field label="Aproveitamento mínimo para figurinha no estudo de personagem (%)">
               <Input type="number" min={0} max={100} value={settingsForm.characterStickerMinAccuracyPercent} onChange={(event) => setSettingsForm((current) => ({ ...current, characterStickerMinAccuracyPercent: event.target.value }))} required />
             </Field>
-            {settingsSubmitError ? <p className="lg:col-span-2 text-sm text-red-700">{settingsSubmitError}</p> : null}
-            {settingsState.error ? <p className="lg:col-span-2 text-sm text-red-700">{settingsState.error}</p> : null}
+            {settingsSubmitError ? <p className="lg:col-span-2 text-sm text-danger">{settingsSubmitError}</p> : null}
+            {settingsState.error ? <p className="lg:col-span-2 text-sm text-danger">{settingsState.error}</p> : null}
             <div className="flex flex-wrap gap-3 lg:col-span-2">
               <Button type="submit" disabled={settingsSubmitting}>
                 {settingsSubmitting ? 'Salvando...' : 'Salvar configurações'}
@@ -2735,9 +2744,9 @@ function LoadingInline({ label }: { label: string }) {
 
 function StatPill({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-3xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_80%,white)] px-4 py-3 text-center">
-      <div className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">{label}</div>
-      <div className="mt-1 text-2xl font-semibold text-[var(--text-primary)]">{value}</div>
+    <div className="panel px-4 py-3">
+      <div className="text-xs font-bold uppercase tracking-wider text-muted">{label}</div>
+      <div className="mt-0.5 font-display text-2xl font-bold text-ink">{value}</div>
     </div>
   );
 }

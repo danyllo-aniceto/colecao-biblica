@@ -37,7 +37,7 @@ const toolbarButtonClass =
   'inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--border)] text-[var(--text-primary)] transition-colors hover:bg-[color-mix(in_srgb,var(--gold)_16%,transparent)] disabled:opacity-50';
 
 const toolbarGroupClass =
-  'flex flex-wrap items-center gap-2 rounded-2xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_90%,white)] p-2';
+  'flex flex-wrap items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-2';
 
 const draftCacheBySyncKey = new Map<string, string>();
 
@@ -176,7 +176,7 @@ export function RichTextEditor({ value, onChange, placeholder, allowImages = fal
     editorProps: {
       attributes: {
         class:
-          'min-h-40 rounded-2xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-primary)_86%,white)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none',
+          'min-h-40 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none',
       },
     },
     onUpdate: ({ editor: currentEditor }) => {

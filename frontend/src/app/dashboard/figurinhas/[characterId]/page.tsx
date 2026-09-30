@@ -3,14 +3,19 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
-import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
+import AutoStoriesRoundedIcon from '@mui/icons-material/AutoStoriesRounded';
+import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
+import FormatQuoteRoundedIcon from '@mui/icons-material/FormatQuoteRounded';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import { RequireAuth } from '@/components/auth/require-auth';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { MermaidDiagram } from '@/components/ui/mermaid-diagram';
+import { Alert } from '@/components/game/game-ui';
+import { StickerCard } from '@/components/game/sticker-card';
+import { fieldClassName } from '@/components/ui/input';
+import { MermaidDiagram, looksLikeMermaid } from '@/components/ui/mermaid-diagram';
 import { RichContent } from '@/components/ui/rich-content';
 import {
   createComment,
@@ -21,7 +26,7 @@ import {
   type CharacterEntry,
   type CommentEntry,
 } from '@/lib/user-api';
-import { rarityConfig } from '@/lib/rarity-theme';
+import { getRarityLabel } from '@/lib/rarity-theme';
 
 function formatDate(value?: string | null) {
   if (!value) {
@@ -121,14 +126,6 @@ export default function StickerDetailsPage() {
     };
   }, [accessToken, parsedCharacterId]);
 
-  const rarityBadgeClassName = useMemo(() => {
-    if (!character) {
-      return '';
-    }
-
-    return rarityConfig[character.rarity].badge;
-  }, [character]);
-
   const keywordChips = useMemo(() => toChipList(character?.keywords), [character?.keywords]);
   const keyVersesChips = useMemo(() => toChipList(character?.keyVerses), [character?.keyVerses]);
 
@@ -164,187 +161,189 @@ export default function StickerDetailsPage() {
 
   return (
     <RequireAuth>
-      <main className="min-h-screen bg-[radial-gradient(circle_at_top,_color-mix(in_srgb,var(--gold)_18%,transparent),transparent_30%),linear-gradient(180deg,color-mix(in_srgb,var(--bg-primary)_92%,white),var(--bg-primary))] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-          <div className="flex items-center justify-between gap-3">
-            <Button type="button" variant="secondary" onClick={() => router.push('/dashboard')}>
-              <ArrowBackRoundedIcon />
-              Voltar para figurinhas
-            </Button>
+      <main className="mx-auto w-full max-w-5xl px-4 pb-16 pt-4 sm:px-6">
+        <Button type="button" variant="ghost" onClick={() => router.push('/dashboard')} className="-ml-2">
+          <ArrowBackRoundedIcon />
+          Voltar
+        </Button>
+
+        {loading ? (
+          <div className="mt-4 grid gap-6 md:grid-cols-[280px_1fr]" aria-busy="true">
+            <div className="panel aspect-[3/4] animate-pulse" />
+            <div className="panel h-64 animate-pulse" />
           </div>
+        ) : null}
 
-          {loading ? (
-            <Card className="border-[var(--border)]">
-              <CardContent className="p-6 text-sm text-[var(--text-secondary)]">Carregando detalhes da figurinha...</CardContent>
-            </Card>
-          ) : null}
+        {error ? (
+          <div className="mt-4">
+            <Alert tone="danger">{error}</Alert>
+          </div>
+        ) : null}
 
-          {error ? (
-            <Card className="border-[var(--border)]">
-              <CardContent className="p-6 text-sm text-red-700">{error}</CardContent>
-            </Card>
-          ) : null}
-
-          {!loading && !error && character ? (
-            <>
-              <Card className="border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-secondary)_74%,white)]">
-                <CardHeader>
-                  <CardTitle>{character.name}</CardTitle>
-                  <CardDescription>
-                    {isOwned ? 'Resumo da figurinha' : 'Desbloqueie esta figurinha para visualizar os detalhes completos.'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+        {!loading && !error && character ? (
+          <div className="mt-4 space-y-6">
+            <section className="rarity grid items-start gap-6 md:grid-cols-[280px_1fr]" data-rarity={character.rarity}>
+              <div className="animate-pop-in mx-auto w-56 md:w-full">
+                <StickerCard name={character.name} rarity={character.rarity} imageUrl={character.imageUrl} owned={isOwned} size="lg" />
+              </div>
+              <div className="panel relative overflow-hidden p-6 sm:p-8">
+                <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[var(--r)] opacity-20 blur-3xl" />
+                <div className="relative">
+                  <span className="rarity-chip inline-block rounded-full px-3 py-1 font-display text-xs font-bold uppercase tracking-wider">
+                    Figurinha {getRarityLabel(character.rarity)}
+                  </span>
+                  <h1 className="mt-3 font-display text-4xl font-bold text-ink sm:text-5xl">{character.name}</h1>
                   {isOwned ? (
-                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 text-sm leading-6 text-[var(--text-secondary)]">
-                      <RichContent value={character.shortSummary} />
+                    <>
+                      <div className="mt-4 text-lg text-muted">
+                        <RichContent value={character.shortSummary} />
+                      </div>
+                      {character.bibleBooks ? (
+                        <div className="mt-5 flex flex-wrap gap-2">
+                          {toChipList(character.bibleBooks).map((book) => (
+                            <Badge key={book} tone="violet">
+                              <AutoStoriesRoundedIcon sx={{ fontSize: 14 }} />
+                              {book}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : null}
+                    </>
+                  ) : (
+                    <div className="mt-4 space-y-4">
+                      <p className="flex items-center gap-2 text-lg text-muted">
+                        <LockRoundedIcon /> Conquiste esta figurinha para ler a história completa.
+                      </p>
+                      <Button size="lg" onClick={() => router.push('/dashboard')}>
+                        <PlayArrowRoundedIcon />
+                        Jogar para conquistar
+                      </Button>
                     </div>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {isOwned ? (
+              <>
+                <InfoPanel title="História">
+                  <RichContent value={character.fullDescription} />
+                </InfoPanel>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {character.narrativeRole ? (
+                    <InfoPanel title="Papel na história">
+                      <RichContent value={character.narrativeRole} />
+                    </InfoPanel>
                   ) : null}
+                  {character.historicalPeriod ? (
+                    <InfoPanel title="Período histórico">
+                      <RichContent value={character.historicalPeriod} />
+                    </InfoPanel>
+                  ) : null}
+                  {character.curiosities ? (
+                    <InfoPanel title="Curiosidades">
+                      <RichContent value={character.curiosities} />
+                    </InfoPanel>
+                  ) : null}
+                  {character.bibleReferences ? (
+                    <InfoPanel title="Onde ler">
+                      <RichContent value={character.bibleReferences} />
+                    </InfoPanel>
+                  ) : null}
+                </div>
 
-                  <div className="overflow-hidden rounded-3xl border border-[var(--border)]">
-                    {character.imageUrl ? (
-                      <img src={character.imageUrl} alt={character.name} className={isOwned ? '' : 'blur-[3px] grayscale'} />
+                {character.genealogy?.trim() ? (
+                  <InfoPanel title="Árvore genealógica">
+                    {looksLikeMermaid(character.genealogy) ? (
+                      <MermaidDiagram code={character.genealogy} className="rounded-2xl bg-white p-3 [&_svg]:h-auto [&_svg]:w-full" />
                     ) : (
-                      <div className="flex h-64 items-center justify-center bg-[linear-gradient(135deg,color-mix(in_srgb,var(--gold)_18%,transparent),color-mix(in_srgb,var(--bg-secondary)_84%,white))] text-[var(--accent)]">
-                        <CollectionsBookmarkRoundedIcon fontSize="large" />
-                      </div>
+                      <RichContent value={character.genealogy} />
                     )}
+                  </InfoPanel>
+                ) : null}
+
+                {character.importantEvents?.trim() ? (
+                  <InfoPanel title="Linha do tempo">
+                    {looksLikeMermaid(character.importantEvents) ? (
+                      <MermaidDiagram code={character.importantEvents} className="rounded-2xl bg-white p-3 [&_svg]:h-auto [&_svg]:w-full" />
+                    ) : (
+                      <RichContent value={character.importantEvents} />
+                    )}
+                  </InfoPanel>
+                ) : null}
+
+                {keyVersesChips.length > 0 || keywordChips.length > 0 ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {keyVersesChips.length > 0 ? (
+                      <InfoPanel title="Versículos-chave">
+                        <div className="flex flex-wrap gap-2">
+                          {keyVersesChips.map((chip) => (
+                            <Badge key={chip} tone="primary">
+                              <FormatQuoteRoundedIcon sx={{ fontSize: 14 }} />
+                              {chip}
+                            </Badge>
+                          ))}
+                        </div>
+                      </InfoPanel>
+                    ) : null}
+                    {keywordChips.length > 0 ? (
+                      <InfoPanel title="Palavras-chave">
+                        <div className="flex flex-wrap gap-2">
+                          {keywordChips.map((chip) => (
+                            <Badge key={chip} tone="accent">
+                              #{chip}
+                            </Badge>
+                          ))}
+                        </div>
+                      </InfoPanel>
+                    ) : null}
                   </div>
+                ) : null}
 
-                  <div className="flex flex-wrap gap-2">
-                    <Badge className={rarityBadgeClassName}>{rarityConfig[character.rarity].label}</Badge>
-                    {isOwned ? <Badge>Desbloqueada</Badge> : <Badge>Bloqueada</Badge>}
-                  </div>
-
-                  {isOwned ? (
-                    <>
-                      <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 text-sm leading-6 text-[var(--text-secondary)]">
-                        <RichContent value={character.fullDescription} />
-                      </div>
-
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <DetailBlock title="Livros bíblicos">
-                          <p>{character.bibleBooks ?? '-'}</p>
-                        </DetailBlock>
-                        <DetailBlock title="Papel narrativo">
-                          <RichContent value={character.narrativeRole} />
-                        </DetailBlock>
-                        <DetailBlock title="Período histórico">
-                          <RichContent value={character.historicalPeriod} />
-                        </DetailBlock>
-                        <DetailBlock title="Curiosidades">
-                          <RichContent value={character.curiosities} />
-                        </DetailBlock>
-                        <DetailBlock title="Referências bíblicas">
-                          <RichContent value={character.bibleReferences} />
-                        </DetailBlock>
-                      </div>
-
-                      {character.genealogy?.trim() ? (
-                        <DetailBlock title="Genealogia">
-                          <MermaidDiagram code={character.genealogy} className="[&_svg]:h-auto [&_svg]:w-full" />
-                        </DetailBlock>
-                      ) : null}
-
-                      {character.importantEvents?.trim() ? (
-                        <DetailBlock title="Eventos importantes">
-                          <MermaidDiagram code={character.importantEvents} className="[&_svg]:h-auto [&_svg]:w-full" />
-                        </DetailBlock>
-                      ) : null}
-
-                      {keyVersesChips.length > 0 ? (
-                        <DetailBlock title="Versículos-chave">
-                          <div className="flex flex-wrap gap-2">
-                            {keyVersesChips.map((chip) => (
-                              <Badge key={chip} className="bg-[color-mix(in_srgb,var(--gold)_18%,transparent)] text-[var(--text-primary)]">
-                                {chip}
-                              </Badge>
-                            ))}
-                          </div>
-                        </DetailBlock>
-                      ) : null}
-
-                      {keywordChips.length > 0 ? (
-                        <DetailBlock title="Palavras-chave">
-                          <div className="flex flex-wrap gap-2">
-                            {keywordChips.map((chip) => (
-                              <Badge key={chip} className="bg-[color-mix(in_srgb,var(--accent)_16%,transparent)] text-[var(--text-primary)]">
-                                {chip}
-                              </Badge>
-                            ))}
-                          </div>
-                        </DetailBlock>
-                      ) : null}
-                    </>
-                  ) : (
-                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 text-sm text-[var(--text-secondary)]">
-                      <div className="flex items-center gap-2 font-medium text-[var(--text-primary)]">
-                        <LockRoundedIcon fontSize="small" />
-                        Conteúdo bloqueado
-                      </div>
-                      <p className="mt-2">Volte para a coleção e desbloqueie esta figurinha para acessar descrição e comentários.</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card className="border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-secondary)_74%,white)]">
-                <CardHeader>
-                  <CardTitle>Meus comentários</CardTitle>
-                  <CardDescription>Comentários ficam abaixo do conteúdo da figurinha para facilitar o estudo.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {isOwned ? (
-                    <>
-                      <form className="space-y-4" onSubmit={handleSaveComment}>
-                        <textarea
-                          className="min-h-36 w-full rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none"
-                          value={commentDraft}
-                          onChange={(event) => setCommentDraft(event.target.value)}
-                          placeholder="Escreva aqui sua reflexão sobre este personagem..."
-                        />
-                        {commentError ? <p className="text-sm text-red-700">{commentError}</p> : null}
-                        <Button type="submit" disabled={commentSubmitting}>
-                          {commentSubmitting ? 'Salvando...' : commentEditingId ? 'Atualizar comentário' : 'Salvar comentário'}
-                        </Button>
-                      </form>
-
-                      <div className="mt-5 space-y-3">
-                        {comments.length > 0 ? (
-                          comments.map((comment) => (
-                            <div key={comment.id} className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-4">
-                              <div className="flex items-center justify-between gap-3">
-                                <p className="font-semibold text-[var(--text-primary)]">{comment.characterName}</p>
-                                <span className="text-xs text-[var(--text-secondary)]">{formatDate(comment.updatedAt ?? comment.createdAt)}</span>
-                              </div>
-                              <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{comment.text}</p>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-sm text-[var(--text-secondary)]">Nenhum comentário salvo para esta figurinha.</p>
-                        )}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 text-sm text-[var(--text-secondary)]">
-                      Desbloqueie a figurinha para escrever comentários.
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </>
-          ) : null}
-        </div>
+                <section className="panel space-y-4 p-5 sm:p-6">
+                  <h2 className="flex items-center gap-2 font-display text-2xl font-bold text-ink">
+                    <EditNoteRoundedIcon className="text-info" />
+                    Minhas anotações
+                  </h2>
+                  <p className="text-sm text-muted">Só você vê o que escreve aqui.</p>
+                  <form className="space-y-3" onSubmit={handleSaveComment}>
+                    <textarea
+                      className={`${fieldClassName} min-h-36 w-full py-3`}
+                      value={commentDraft}
+                      onChange={(event) => setCommentDraft(event.target.value)}
+                      placeholder="O que você aprendeu com este personagem?"
+                    />
+                    {commentError ? <Alert tone="danger">{commentError}</Alert> : null}
+                    <Button type="submit" disabled={commentSubmitting || !commentDraft.trim()}>
+                      {commentSubmitting ? 'Salvando...' : commentEditingId ? 'Atualizar anotação' : 'Salvar anotação'}
+                    </Button>
+                  </form>
+                  {comments.length > 0 ? (
+                    <ul className="space-y-2">
+                      {comments.map((comment) => (
+                        <li key={comment.id} className="rounded-2xl bg-surface-2 p-4">
+                          <span className="text-xs font-bold text-muted">{formatDate(comment.updatedAt ?? comment.createdAt)}</span>
+                          <p className="mt-1 whitespace-pre-line text-sm leading-6 text-ink">{comment.text}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </section>
+              </>
+            ) : null}
+          </div>
+        ) : null}
       </main>
     </RequireAuth>
   );
 }
 
-function DetailBlock({ title, children }: { title: string; children: React.ReactNode }) {
+function InfoPanel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-4">
-      <p className="mb-3 text-xs uppercase tracking-[0.18em] text-[var(--text-secondary)]">{title}</p>
-      <div className="text-sm text-[var(--text-secondary)]">{children}</div>
-    </div>
+    <section className="panel p-5 sm:p-6">
+      <h2 className="rarity-text mb-3 font-display text-lg font-bold">{title}</h2>
+      <div className="text-base leading-7 text-ink">{children}</div>
+    </section>
   );
 }
