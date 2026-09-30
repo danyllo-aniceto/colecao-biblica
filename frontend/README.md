@@ -7,7 +7,7 @@ Aplicação Next.js para a Coleção Bíblica.
 1. Instale o Node.js LTS.
 2. Entre na pasta frontend.
 3. Copie `.env.example` para `.env.local`.
-4. Ajuste `NEXT_PUBLIC_API_BASE_URL` para a URL do backend.
+4. Ajuste `NEXT_PUBLIC_API_BASE_URL` para a URL do backend (e `NEXT_PUBLIC_IMAGE_UPLOADS`: `inline` local, `blob` na Vercel).
 5. Execute `npm install`.
 6. Rode `npm run dev`.
 
@@ -66,6 +66,17 @@ em `npm run dev` qualquer worker antigo é removido para não atrapalhar o hot r
 - O PWA exige **HTTPS** (exceto em `localhost`).
 - `NEXT_PUBLIC_API_BASE_URL` é lida **no build**; defina a URL da API antes de `npm run build`.
 - Inclua a origem do frontend em `CORS_ALLOWED_ORIGINS` no backend.
+
+## Sistema visual
+
+- Tokens em `src/app/globals.css` (temas Dia e Noite), expostos ao Tailwind como `bg-surface`,
+  `text-ink`, `text-muted`, `bg-primary`, `bg-accent`, `border-edge` etc. Os nomes antigos
+  (`--bg-primary`, `--text-primary`, `--gold`...) apontam para os novos.
+- Fontes: Fredoka (`font-display`) e Nunito (texto).
+- Classes de jogo: `panel`, `btn-3d`, `rarity` + `data-rarity` (`rarity-frame`, `rarity-text`,
+  `rarity-bg`, `rarity-chip`) e animações `animate-fade-up`, `animate-pop-in`, `animate-float`.
+- Componentes de jogo em `src/components/game/` (moedas, bônus, XP, nível, figurinha, modal)
+  e seções do painel em `src/components/user/sections/`.
 
 ## Componentes reutilizáveis
 
