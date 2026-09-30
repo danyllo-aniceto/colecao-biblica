@@ -1,0 +1,41 @@
+import { Router } from "express";
+import { prisma } from "../db/prisma";
+import { z } from "../lib/validation";
+import { requireAdmin } from "../middleware/auth";
+import { asyncHandler } from "../middleware/errorHandler";
+import { getSettings, updateSettings } from "../services/settings";
+
+export const settingsRouter = Router();
+
+const int = (min: number, max: number) => z.number().int().min(min).max(max).nullish();
+
+const updateSchema = z.object({
+  maxQuestionsPerMatch: int(1, 1000),
+  startingLives: int(1, 20),
+  rewardMatchLimitPerDay: int(0, 20),
+  characterStudyXpPercent: int(0, 100),
+  maxExtraLifeBoosts: int(1, 20),
+  maxExtraTimeBoosts: int(1, 20),
+  maxDoubleXpBoosts: int(1, 20),
+  doubleXpMultiplier: z.number().min(1).max(10).nullish(),
+  extraTimeSeconds: int(1, 120),
+  rewardMinCorrectAnswers: int(1, 100),
+  characterStickerMinAccuracyPercent: int(0, 100),
+});
+
+settingsRouter.get(
+  "/",
+  asyncHandler(async (_req, res) => {
+    res.json(await getSettings(prisma));
+  }),
+);
+
+settingsRouter.put(
+  "/admin",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const input = updateSchema.parse(req.body);
+    const changes = Object.fromEntries(Object.entries(input).filter(([, value]) => value != null)) as Record<string, number>;
+    res.json(await updateSettings(prisma, changes));
+  }),
+);

@@ -1,0 +1,9 @@
+{
+  "buildCommand": "npm run vercel-build",
+  "outputDirectory": "frontend/dist",
+  "regions": ["gru1"],
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
+}

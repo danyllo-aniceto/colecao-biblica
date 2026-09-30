@@ -1,0 +1,249 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum StickerRarity {
+  COMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+enum QuestionDifficulty {
+  EASY
+  MEDIUM
+  HARD
+  VERY_HARD
+}
+
+enum RewardType {
+  STICKER
+  EXTRA_LIFE
+  EXTRA_TIME
+  XP_MULTIPLIER
+  COINS
+}
+
+enum ShopItemType {
+  STICKER
+  GAME_BONUS
+  ECONOMY
+}
+
+enum QuizType {
+  GENERAL
+  CHARACTER_STUDY
+}
+
+enum QuizSessionStatus {
+  IN_PROGRESS
+  FINISHED
+  ABANDONED
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  name            String
+  email           String    @unique
+  password        String
+  role            Role      @default(USER)
+  xp              Int       @default(0)
+  level           Int       @default(1)
+  coins           Int       @default(0)
+  totalScore      Int       @default(0) @map("total_score")
+  extraLifeBoosts Int       @default(0) @map("extra_life_boosts")
+  extraTimeBoosts Int       @default(0) @map("extra_time_boosts")
+  doubleXpBoosts  Int       @default(0) @map("double_xp_boosts")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  createdBy       String    @map("created_by")
+  updatedBy       String?   @map("updated_by")
+  deleted         Boolean   @default(false)
+  deletedAt       DateTime? @map("deleted_at")
+  deletedBy       String?   @map("deleted_by")
+
+  stickers     UserSticker[]
+  comments     UserComment[]
+  quizMatches  QuizMatch[]
+  quizSessions QuizSession[]
+
+  @@index([totalScore, xp])
+  @@map("users")
+}
+
+model BiblicalCharacter {
+  id               Int           @id @default(autoincrement())
+  name             String        @unique
+  imageUrl         String?       @map("image_url")
+  rarity           StickerRarity
+  shortSummary     String        @map("short_summary")
+  fullDescription  String        @map("full_description")
+  bibleBooks       String?       @map("bible_books")
+  bibleReferences  String?       @map("bible_references")
+  historicalPeriod String?       @map("historical_period")
+  narrativeRole    String?       @map("narrative_role")
+  genealogy        String?
+  curiosities      String?
+  importantEvents  String?       @map("important_events")
+  keyVerses        String?       @map("key_verses")
+  keywords         String?
+  createdAt        DateTime      @default(now()) @map("created_at")
+  createdBy        String        @map("created_by")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  questions     Question[]
+  stickers      UserSticker[]
+  comments      UserComment[]
+  quizSessions  QuizSession[]
+  stickerReward RewardDefinition[]
+
+  @@map("biblical_characters")
+}
+
+model Question {
+  id                 Int                @id @default(autoincrement())
+  text               String
+  difficulty         QuestionDifficulty
+  timeLimitSeconds   Int                @map("time_limit_seconds")
+  optionA            String             @map("option_a")
+  optionB            String             @map("option_b")
+  optionC            String             @map("option_c")
+  optionD            String             @map("option_d")
+  correctOption      String             @map("correct_option") @db.Char(1)
+  relatedCharacterId Int?               @map("character_id")
+  active             Boolean            @default(true)
+
+  relatedCharacter BiblicalCharacter? @relation(fields: [relatedCharacterId], references: [id], onDelete: SetNull)
+
+  @@index([active, relatedCharacterId])
+  @@map("questions")
+}
+
+model RewardDefinition {
+  id                 Int            @id @default(autoincrement())
+  name               String         @unique
+  rewardType         RewardType     @map("reward_type")
+  stickerRarity      StickerRarity? @map("sticker_rarity")
+  stickerCharacterId Int?           @map("sticker_character_id")
+  coinAmount         Int?           @map("coin_amount")
+  extraLives         Int?           @map("extra_lives")
+  extraTimeSeconds   Int?           @map("extra_time_seconds")
+  xpMultiplier       Float?         @map("xp_multiplier")
+  dropChance         Float          @map("drop_chance")
+  active             Boolean        @default(true)
+
+  stickerCharacter BiblicalCharacter? @relation(fields: [stickerCharacterId], references: [id], onDelete: SetNull)
+  shopItems        ShopItem[]
+
+  @@map("reward_definitions")
+}
+
+model ShopItem {
+  id                 Int          @id @default(autoincrement())
+  name               String       @unique
+  description        String
+  itemType           ShopItemType @map("item_type")
+  priceCoins         Int          @map("price_coins")
+  rewardDefinitionId Int?         @map("reward_definition_id")
+  active             Boolean      @default(true)
+
+  rewardDefinition RewardDefinition? @relation(fields: [rewardDefinitionId], references: [id], onDelete: SetNull)
+
+  @@map("shop_items")
+}
+
+model UserSticker {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  characterId Int      @map("character_id")
+  acquiredAt  DateTime @default(now()) @map("acquired_at")
+
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  character BiblicalCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, characterId])
+  @@map("user_stickers")
+}
+
+model UserComment {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  characterId Int      @map("character_id")
+  text        String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  character BiblicalCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@index([userId, updatedAt])
+  @@map("user_comments")
+}
+
+model QuizMatch {
+  id                Int       @id @default(autoincrement())
+  userId            Int       @map("user_id")
+  quizType          QuizType  @map("quiz_type")
+  startedAt         DateTime? @map("started_at")
+  finishedAt        DateTime  @map("finished_at")
+  questionsAnswered Int       @map("questions_answered")
+  correctAnswers    Int       @map("correct_answers")
+  wrongAnswers      Int       @map("wrong_answers")
+  xpGained          Int       @map("xp_gained")
+  scoreGained       Int       @map("score_gained")
+  rewardGranted     Boolean   @default(false) @map("reward_granted")
+  rewardGrantedName String?   @map("reward_granted_name")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, finishedAt])
+  @@map("quiz_matches")
+}
+
+model QuizSession {
+  id                          Int               @id @default(autoincrement())
+  userId                      Int               @map("user_id")
+  quizType                    QuizType          @map("quiz_type")
+  characterId                 Int?              @map("character_id")
+  status                      QuizSessionStatus
+  startedAt                   DateTime          @default(now()) @map("started_at")
+  finishedAt                  DateTime?         @map("finished_at")
+  totalQuestions              Int               @map("total_questions")
+  currentQuestionIndex        Int               @default(0) @map("current_question_index")
+  livesRemaining              Int               @map("lives_remaining")
+  correctAnswers              Int               @default(0) @map("correct_answers")
+  wrongAnswers                Int               @default(0) @map("wrong_answers")
+  xpMultiplier                Float             @default(1) @map("xp_multiplier")
+  extraTimeUsed               Boolean           @default(false) @map("extra_time_used")
+  extraLifeUsed               Boolean           @default(false) @map("extra_life_used")
+  xpMultiplierUsed            Boolean           @default(false) @map("xp_multiplier_used")
+  questionIds                 Int[]             @map("question_ids")
+  currentQuestionStartedAt    DateTime?         @map("current_question_started_at")
+  currentQuestionExtraSeconds Int               @default(0) @map("current_question_extra_seconds")
+
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  character BiblicalCharacter? @relation(fields: [characterId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+  @@map("quiz_sessions")
+}
+
+model GameSetting {
+  id           Int     @id @default(autoincrement())
+  settingKey   String  @unique @map("setting_key")
+  settingValue String  @map("setting_value")
+  description  String?
+
+  @@map("game_settings")
+}

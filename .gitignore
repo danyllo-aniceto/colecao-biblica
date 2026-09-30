@@ -1,9 +1,9 @@
+node_modules/
+dist/
 .env
 **/.env
+*.tsbuildinfo
+frontend/dev-dist/
+.vercel/
 .history/
-node_modules/
-
-# Logs e dumps de JVM
 *.log
-hs_err_pid*.log
-replay_pid*.log
