@@ -180,7 +180,7 @@ describe.skipIf(!hasDatabase)("API", () => {
       expect((await api.delete("/api/rewards/admin/1").set(bearer(admin))).status).toBe(400);
 
       const rewards = await api.get("/api/rewards").set(bearer(admin));
-      expect(rewards.body).toHaveLength(11);
+      expect(rewards.body).toHaveLength(18);
       expect(rewards.body.every((reward: { system: boolean }) => reward.system)).toBe(true);
       const coins = rewards.body.find((reward: { rewardType: string }) => reward.rewardType === "COINS");
       const zero = await api.put(`/api/rewards/admin/${coins.id}`).set(bearer(admin)).send({ dropChance: 0 });
@@ -270,22 +270,22 @@ describe.skipIf(!hasDatabase)("API", () => {
       expect(last.finished).toBe(true);
       const result = last.matchResult;
       expect(result.xpGained).toBe(66); // 3 acertos × (10 + 12 de bônus por 100%)
-      expect(result.scoreGained).toBe(300);
+      expect(result.scoreGained).toBe(305); // 300 + 5 do 3º acerto seguido (sequência)
       expect(result.rewardGranted).toBe(true);
       expect(result.rewardName).toBeTruthy();
       expect(result.rewardMatchesUsedToday).toBe(1);
       expect(result.rewardMatchesLimitPerDay).toBe(4);
-      expect(result.coinsGained).toBe(6); // 3 acertos × 2 (bônus de perfeita só com 5+ perguntas)
+      expect(result.coinsGained).toBe(7); // 1 da sequência + 3 acertos × 2 (bônus de perfeita só com 5+ perguntas)
       expect(result.unlockedAchievements).toEqual(expect.arrayContaining([expect.objectContaining({ code: "FIRST_MATCH", coins: 30 })]));
       expect(last.correctOption).toMatch(/^[ABCD]$/);
 
       const me = await api.get("/api/users/me").set(bearer(token));
-      expect(me.body).toMatchObject({ xp: 66, totalScore: 300, level: 1 });
+      expect(me.body).toMatchObject({ xp: 66, totalScore: 305, level: 1 });
       expect(me.body.coins).toBe(result.userCoins);
 
       const matches = await api.get("/api/quiz/matches?size=5").set(bearer(token));
       expect(matches.body).toMatchObject({ totalElements: 1 });
-      expect(matches.body.content[0].coinsGained).toBe(6);
+      expect(matches.body.content[0].coinsGained).toBe(7);
 
       const history = await api.get("/api/quiz/history").set(bearer(token));
       expect(history.body.sessions[0].status).toBe("FINISHED");
@@ -425,7 +425,7 @@ describe.skipIf(!hasDatabase)("API", () => {
     it("compra com moedas, respeita limites e não vende o que já tem", async () => {
       const token = await login("user@email.com");
       const shop = await api.get("/api/shop").set(bearer(token));
-      expect(shop.body.map((item: { priceCoins: number }) => item.priceCoins)).toEqual([120, 140, 150, 180, 200, 220, 250, 260, 450]);
+      expect(shop.body.map((item: { priceCoins: number }) => item.priceCoins)).toEqual([120, 130, 140, 150, 150, 150, 160, 170, 180, 200, 200, 220, 240, 250, 260, 450]);
       const life = shop.body.find((item: { name: string }) => item.name === "Vida extra");
       const rare = shop.body.find((item: { name: string }) => item.name === "Figurinha Rara");
 

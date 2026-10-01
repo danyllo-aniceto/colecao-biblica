@@ -47,6 +47,20 @@ const updateSchema = z.object({
   tradesPerDay: int(0, 100),
   maxPendingTrades: int(1, 100),
   tradeExpireDays: int(1, 60),
+  maxSkipBoosts: int(1, 20),
+  maxSecondChanceBoosts: int(1, 20),
+  maxCrowdBoosts: int(1, 20),
+  maxVerseHintBoosts: int(1, 20),
+  maxFreezeTimeBoosts: int(1, 20),
+  maxDoubleCoinsBoosts: int(1, 20),
+  maxComboShieldBoosts: int(1, 20),
+  doubleCoinsMultiplier: z.number().min(1).max(10).nullish(),
+  comboStartAt: int(2, 20),
+  comboPointsPerAnswer: int(0, 100),
+  comboCoinsPerAnswer: int(0, 20),
+  chestBaseCoins: int(0, 10_000),
+  chestCoinsPerLevel: int(0, 1000),
+  chestCosmeticChance: int(0, 100),
 });
 
 settingsRouter.get(

@@ -8,7 +8,7 @@ import { visibleCharacter } from "./visibility";
  * desbloqueou o quê.
  */
 
-type AchievementStats = {
+export type AchievementStats = {
   matches: number;
   characterStudyMatches: number;
   perfectMatches: number;
@@ -64,7 +64,7 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
   { code: "NOTES_5", title: "Estudioso", description: "Escreva anotações em 5 figurinhas.", icon: "note", coins: 80, progress: (s) => ({ current: s.notes, target: 5 }) },
 ];
 
-async function loadStats(db: Db, userId: number): Promise<AchievementStats> {
+export async function loadStats(db: Db, userId: number): Promise<AchievementStats> {
   const [user, matches, characterStudyMatches, perfectMatches, stickers, totalStickers, legendaryStickers, notes, friends, trades] = await Promise.all([
     db.user.findUniqueOrThrow({ where: { id: userId }, select: { level: true, dailyStreak: true } }),
     db.quizMatch.count({ where: { userId } }),

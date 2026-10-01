@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { badRequest } from "../lib/errors";
 import { readPage } from "../lib/pagination";
 import { parseId, parseIntQuery, requiredText, z } from "../lib/validation";
 import { currentUser } from "../middleware/auth";
@@ -18,6 +19,8 @@ import {
   respondTrade,
   sendFriendRequest,
   sendMessage,
+  sendReaction,
+  myReactions,
   socialSummary,
   unblockUser,
 } from "../services/social";
@@ -119,8 +122,22 @@ socialRouter.get(
 socialRouter.post(
   "/chat/:userId",
   asyncHandler(async (req, res) => {
-    const { text } = z.object({ text: requiredText(500) }).parse(req.body);
-    res.status(201).json(await sendMessage(currentUser(req).id, parseId(req.params.userId), text));
+    const input = z.object({ text: requiredText(500).optional(), reactionId: z.number().int().positive().optional() }).parse(req.body);
+    const userId = currentUser(req).id;
+    const friendId = parseId(req.params.userId);
+    if (input.reactionId) {
+      res.status(201).json(await sendReaction(userId, friendId, input.reactionId));
+      return;
+    }
+    if (!input.text) throw badRequest("Escreva uma mensagem");
+    res.status(201).json(await sendMessage(userId, friendId, input.text));
+  }),
+);
+
+socialRouter.get(
+  "/reactions",
+  asyncHandler(async (req, res) => {
+    res.json(await myReactions(currentUser(req).id));
   }),
 );
 

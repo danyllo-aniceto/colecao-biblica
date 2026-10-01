@@ -1,5 +1,6 @@
 import type { BiblicalCharacter, Question, RewardDefinition, ShopItem, User } from "@prisma/client";
 import { suggestedDifficulty } from "./game-rules";
+import { helperCounts } from "./helpers";
 
 /** Formato das respostas JSON (mesmos campos da API original, que o frontend já usa). */
 
@@ -17,6 +18,14 @@ export function toUserResponse(user: User) {
     streakFreezes: user.streakFreezes,
     stickerPity: user.stickerPity,
     friendCode: user.friendCode,
+    ...helperCounts(user),
+    bestCombo: user.bestCombo,
+    chestsPending: Math.max(0, user.level - user.chestLevel),
+    avatarId: user.avatarId,
+    frameId: user.frameId,
+    titleId: user.titleId,
+    nameColorId: user.nameColorId,
+    showcase: user.showcase,
     dailyStreak: user.dailyStreak,
     lastDailyClaim: user.lastDailyClaim,
     name: user.name,
@@ -115,6 +124,8 @@ export function toRewardResponse(reward: RewardWithCharacter) {
     extraTimeSeconds: reward.extraTimeSeconds,
     xpMultiplier: reward.xpMultiplier,
     hintAmount: reward.hintAmount,
+    boostAmount: reward.boostAmount,
+    cosmeticId: reward.cosmeticId,
     dropChance: reward.dropChance,
     active: reward.active,
     system: reward.system,

@@ -4,6 +4,7 @@ import { env } from "../lib/env";
 import { pageOf } from "../lib/pagination";
 import { previousWeekKey, weekKeyInTimeZone, weekRangeInTimeZone } from "./game-rules";
 import { getSettings, type GameSettings } from "./settings";
+import { playerLooks } from "./cosmetics";
 
 /**
  * Liga semanal: ranking pelos pontos ganhos na semana (segunda a domingo, no
@@ -38,11 +39,13 @@ export async function getLeague(userId: number, page: number, size: number) {
   const slice = current.slice(page * size, page * size + size);
   const users = await prisma.user.findMany({ where: { id: { in: slice.map((entry) => entry.userId) } }, select: { id: true, name: true, level: true } });
   const byId = new Map(users.map((user) => [user.id, user]));
+  const looks = await playerLooks(prisma, slice.map((entry) => entry.userId));
   const content = slice.map((entry, index) => ({
     position: page * size + index + 1,
     userId: entry.userId,
     userName: byId.get(entry.userId)?.name ?? "Jogador",
     level: byId.get(entry.userId)?.level ?? 1,
+    look: looks.get(entry.userId) ?? null,
     score: entry.score,
     matches: entry.matches,
     prize: prizeFor(page * size + index + 1, settings),
@@ -75,7 +78,9 @@ export async function claimLeaguePrize(userId: number) {
     if (prize <= 0) {
       throw badRequest("Você não ficou entre os 3 primeiros da semana passada");
     }
-    const created = await tx.userClaim.createMany({ data: [{ userId, kind: "LEAGUE", code: "TOP3", periodKey: lastWeekKey }], skipDuplicates: true });
+    // O código guarda a posição (POS1 conta como vitória para títulos e ícones).
+    const already = await tx.userClaim.findFirst({ where: { userId, kind: "LEAGUE", periodKey: lastWeekKey }, select: { id: true } });
+    const created = already ? { count: 0 } : await tx.userClaim.createMany({ data: [{ userId, kind: "LEAGUE", code: `POS${position}`, periodKey: lastWeekKey }], skipDuplicates: true });
     if (created.count === 0) {
       throw badRequest("Prêmio da liga já resgatado");
     }

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { helperCounts } from "../services/helpers";
 import type { Prisma } from "@prisma/client";
 import { lockUser, prisma, transaction } from "../db/prisma";
 import { badRequest, notFound } from "../lib/errors";
@@ -180,6 +181,9 @@ shopRouter.post(
         doubleXpBoosts: saved.doubleXpBoosts,
         hintBoosts: saved.hintBoosts,
         streakFreezes: saved.streakFreezes,
+        ...helperCounts(saved),
+        cosmeticId: applied.cosmeticId,
+        cosmeticName: applied.cosmeticName,
       };
     });
 

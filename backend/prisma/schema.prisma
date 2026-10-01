@@ -36,6 +36,31 @@ enum RewardType {
   FIFTY_FIFTY
   STREAK_FREEZE
   COINS
+  SKIP_QUESTION
+  SECOND_CHANCE
+  CROWD_HELP
+  VERSE_HINT
+  FREEZE_TIME
+  DOUBLE_COINS
+  COMBO_SHIELD
+  COSMETIC
+}
+
+/// Item visual do jogador.
+enum CosmeticType {
+  AVATAR
+  FRAME
+  TITLE
+  NAME_COLOR
+  REACTION
+}
+
+/// Como o item é obtido: grátis para todos, comprado, por meta ou só como prêmio (admin, baú, coleção, passe).
+enum CosmeticUnlock {
+  FREE
+  SHOP
+  REQUIREMENT
+  REWARD
 }
 
 enum Testament {
@@ -82,32 +107,49 @@ enum QuizSessionStatus {
 }
 
 model User {
-  id              Int       @id @default(autoincrement())
-  name            String
-  email           String    @unique
-  password        String
-  role            Role      @default(USER)
-  xp              Int       @default(0)
-  level           Int       @default(1)
-  coins           Int       @default(0)
-  totalScore      Int       @default(0) @map("total_score")
-  extraLifeBoosts Int       @default(0) @map("extra_life_boosts")
-  extraTimeBoosts Int       @default(0) @map("extra_time_boosts")
-  doubleXpBoosts  Int       @default(0) @map("double_xp_boosts")
-  hintBoosts      Int       @default(0) @map("hint_boosts")
-  dailyStreak     Int       @default(0) @map("daily_streak")
-  lastDailyClaim  DateTime? @map("last_daily_claim")
-  streakFreezes   Int       @default(0) @map("streak_freezes")
-  stickerPity     Int       @default(0) @map("sticker_pity")
+  id                 Int       @id @default(autoincrement())
+  name               String
+  email              String    @unique
+  password           String
+  role               Role      @default(USER)
+  xp                 Int       @default(0)
+  level              Int       @default(1)
+  coins              Int       @default(0)
+  totalScore         Int       @default(0) @map("total_score")
+  extraLifeBoosts    Int       @default(0) @map("extra_life_boosts")
+  extraTimeBoosts    Int       @default(0) @map("extra_time_boosts")
+  doubleXpBoosts     Int       @default(0) @map("double_xp_boosts")
+  hintBoosts         Int       @default(0) @map("hint_boosts")
+  dailyStreak        Int       @default(0) @map("daily_streak")
+  lastDailyClaim     DateTime? @map("last_daily_claim")
+  streakFreezes      Int       @default(0) @map("streak_freezes")
+  stickerPity        Int       @default(0) @map("sticker_pity")
   /// Código para adicionar como amigo (gerado no primeiro acesso à tela de amigos).
-  friendCode      String?   @unique @map("friend_code")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
-  createdBy       String    @map("created_by")
-  updatedBy       String?   @map("updated_by")
-  deleted         Boolean   @default(false)
-  deletedAt       DateTime? @map("deleted_at")
-  deletedBy       String?   @map("deleted_by")
+  friendCode         String?   @unique @map("friend_code")
+  skipBoosts         Int       @default(0) @map("skip_boosts")
+  secondChanceBoosts Int       @default(0) @map("second_chance_boosts")
+  crowdBoosts        Int       @default(0) @map("crowd_boosts")
+  verseHintBoosts    Int       @default(0) @map("verse_hint_boosts")
+  freezeTimeBoosts   Int       @default(0) @map("freeze_time_boosts")
+  doubleCoinsBoosts  Int       @default(0) @map("double_coins_boosts")
+  comboShieldBoosts  Int       @default(0) @map("combo_shield_boosts")
+  /// Maior sequência de acertos numa partida.
+  bestCombo          Int       @default(0) @map("best_combo")
+  /// Último nível cujo baú já foi aberto (baús pendentes = level - chestLevel).
+  chestLevel         Int       @default(1) @map("chest_level")
+  avatarId           Int?      @map("avatar_id")
+  frameId            Int?      @map("frame_id")
+  titleId            Int?      @map("title_id")
+  nameColorId        Int?      @map("name_color_id")
+  /// Figurinhas escolhidas para a vitrine do perfil (até 3).
+  showcase           Int[]     @default([])
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  createdBy          String    @map("created_by")
+  updatedBy          String?   @map("updated_by")
+  deleted            Boolean   @default(false)
+  deletedAt          DateTime? @map("deleted_at")
+  deletedBy          String?   @map("deleted_by")
 
   stickers     UserSticker[]
   comments     UserComment[]
@@ -116,6 +158,12 @@ model User {
   achievements UserAchievement[]
   claims       UserClaim[]
   reports      QuestionReport[]
+  cosmetics    UserCosmetic[]
+
+  avatar    Cosmetic? @relation("UserAvatar", fields: [avatarId], references: [id], onDelete: SetNull)
+  frame     Cosmetic? @relation("UserFrame", fields: [frameId], references: [id], onDelete: SetNull)
+  title     Cosmetic? @relation("UserTitle", fields: [titleId], references: [id], onDelete: SetNull)
+  nameColor Cosmetic? @relation("UserNameColor", fields: [nameColorId], references: [id], onDelete: SetNull)
 
   friendRequestsSent     Friendship[] @relation("FriendshipRequester")
   friendRequestsReceived Friendship[] @relation("FriendshipAddressee")
@@ -152,13 +200,14 @@ model BiblicalCharacter {
   createdBy        String        @map("created_by")
   updatedAt        DateTime      @updatedAt @map("updated_at")
 
-  questions     Question[]
-  stickers      UserSticker[]
-  tradesOffered   Trade[] @relation("TradeOffered")
-  tradesRequested Trade[] @relation("TradeRequested")
-  comments      UserComment[]
-  quizSessions  QuizSession[]
-  stickerReward RewardDefinition[]
+  questions       Question[]
+  stickers        UserSticker[]
+  tradesOffered   Trade[]               @relation("TradeOffered")
+  tradesRequested Trade[]               @relation("TradeRequested")
+  comments        UserComment[]
+  quizSessions    QuizSession[]
+  stickerReward   RewardDefinition[]
+  collections     CharacterCollection[] @relation("CollectionCharacters")
 
   @@map("biblical_characters")
 }
@@ -179,6 +228,11 @@ model Question {
   active             Boolean            @default(true)
   timesAnswered      Int                @default(0) @map("times_answered")
   timesCorrect       Int                @default(0) @map("times_correct")
+  /// Quantas vezes cada alternativa foi escolhida (voz da multidão).
+  answersA           Int                @default(0) @map("answers_a")
+  answersB           Int                @default(0) @map("answers_b")
+  answersC           Int                @default(0) @map("answers_c")
+  answersD           Int                @default(0) @map("answers_d")
 
   relatedCharacter BiblicalCharacter? @relation(fields: [relatedCharacterId], references: [id], onDelete: SetNull)
   reports          QuestionReport[]
@@ -198,12 +252,17 @@ model RewardDefinition {
   extraTimeSeconds   Int?           @map("extra_time_seconds")
   xpMultiplier       Float?         @map("xp_multiplier")
   hintAmount         Int?           @map("hint_amount")
+  /// Quantidade das ajudas novas (pular, segunda chance...).
+  boostAmount        Int?           @map("boost_amount")
+  cosmeticId         Int?           @map("cosmetic_id")
   dropChance         Float          @map("drop_chance")
   active             Boolean        @default(true)
   system             Boolean        @default(false)
 
   stickerCharacter BiblicalCharacter? @relation(fields: [stickerCharacterId], references: [id], onDelete: SetNull)
+  cosmetic         Cosmetic?          @relation(fields: [cosmeticId], references: [id], onDelete: SetNull)
   shopItems        ShopItem[]
+  passTiers        PassTier[]
 
   @@map("reward_definitions")
 }
@@ -298,6 +357,24 @@ model QuizSession {
   questionIds                 Int[]             @map("question_ids")
   currentQuestionStartedAt    DateTime?         @map("current_question_started_at")
   currentQuestionExtraSeconds Int               @default(0) @map("current_question_extra_seconds")
+  skipUsed                    Boolean           @default(false) @map("skip_used")
+  secondChanceUsed            Boolean           @default(false) @map("second_chance_used")
+  secondChanceQuestionId      Int?              @map("second_chance_question_id")
+  /// Alternativa errada já tentada com a segunda chance.
+  secondChanceRemoved         String?           @map("second_chance_removed") @db.Char(1)
+  crowdUsed                   Boolean           @default(false) @map("crowd_used")
+  crowdQuestionId             Int?              @map("crowd_question_id")
+  verseHintUsed               Boolean           @default(false) @map("verse_hint_used")
+  verseHintQuestionId         Int?              @map("verse_hint_question_id")
+  freezeUsed                  Boolean           @default(false) @map("freeze_used")
+  frozenQuestionId            Int?              @map("frozen_question_id")
+  doubleCoinsUsed             Boolean           @default(false) @map("double_coins_used")
+  comboShieldUsed             Boolean           @default(false) @map("combo_shield_used")
+  comboShieldArmed            Boolean           @default(false) @map("combo_shield_armed")
+  comboStreak                 Int               @default(0) @map("combo_streak")
+  bestCombo                   Int               @default(0) @map("best_combo")
+  comboPoints                 Int               @default(0) @map("combo_points")
+  comboCoins                  Int               @default(0) @map("combo_coins")
 
   user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   character BiblicalCharacter? @relation(fields: [characterId], references: [id], onDelete: SetNull)
@@ -385,12 +462,15 @@ model Message {
   receiverId Int       @map("receiver_id")
   text       String
   tradeId    Int?      @map("trade_id")
+  /// Reação animada (item visual do tipo REACTION).
+  reactionId Int?      @map("reaction_id")
   createdAt  DateTime  @default(now()) @map("created_at")
   readAt     DateTime? @map("read_at")
 
-  sender   User   @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver User   @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
-  trade    Trade? @relation(fields: [tradeId], references: [id], onDelete: SetNull)
+  sender   User      @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User      @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  trade    Trade?    @relation(fields: [tradeId], references: [id], onDelete: SetNull)
+  reaction Cosmetic? @relation(fields: [reactionId], references: [id], onDelete: SetNull)
 
   @@index([senderId, receiverId, id])
   @@index([receiverId, readAt])
@@ -418,4 +498,114 @@ model Trade {
   @@index([receiverId, status])
   @@index([proposerId, status])
   @@map("trades")
+}
+
+/// Item visual cadastrado pelo admin: ícone, moldura, título, cor do nome ou reação do chat.
+model Cosmetic {
+  id               Int            @id @default(autoincrement())
+  type             CosmeticType
+  name             String
+  description      String?
+  rarity           StickerRarity  @default(COMMON)
+  /// Imagem do ícone, da reação ou da moldura.
+  imageUrl         String?        @map("image_url")
+  /// Cor principal (título, cor do nome, moldura), em #rrggbb.
+  color            String?
+  /// Efeito: títulos (plain, glow, rainbow, pulse) e molduras (solid, wood, silver, gold, fire, rainbow).
+  style            String?
+  unlock           CosmeticUnlock
+  priceCoins       Int?           @map("price_coins")
+  /// Meta para os de unlock REQUIREMENT (ex.: LEVEL, ALBUM_COMPLETE, BEST_COMBO).
+  requirement      String?
+  requirementValue Int?           @map("requirement_value")
+  /// Pode sair no baú de nível.
+  inChestPool      Boolean        @default(false) @map("in_chest_pool")
+  /// Só fica à venda durante o evento.
+  eventId          Int?           @map("event_id")
+  active           Boolean        @default(true)
+  sortOrder        Int            @default(0) @map("sort_order")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  /// Itens padrão do sistema (criados no deploy; o admin pode desativar, não excluir).
+  system           Boolean        @default(false)
+
+  event       GameEvent?            @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  owners      UserCosmetic[]
+  avatarOf    User[]                @relation("UserAvatar")
+  frameOf     User[]                @relation("UserFrame")
+  titleOf     User[]                @relation("UserTitle")
+  nameColorOf User[]                @relation("UserNameColor")
+  messages    Message[]
+  rewards     RewardDefinition[]
+  collections CharacterCollection[]
+  passTiers   PassTier[]
+
+  @@unique([type, name])
+  @@index([type, active])
+  @@map("cosmetics")
+}
+
+model UserCosmetic {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  cosmeticId Int      @map("cosmetic_id")
+  /// De onde veio: FREE, SHOP, REQUIREMENT, ADMIN, CHEST, COLLECTION, PASS, REWARD.
+  source     String
+  acquiredAt DateTime @default(now()) @map("acquired_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cosmetic Cosmetic @relation(fields: [cosmeticId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, cosmeticId])
+  @@map("user_cosmetics")
+}
+
+/// Coleção temática (ex.: os 12 apóstolos): completar dá um prêmio único.
+model CharacterCollection {
+  id               Int      @id @default(autoincrement())
+  name             String   @unique
+  description      String?
+  rewardCoins      Int      @default(0) @map("reward_coins")
+  rewardCosmeticId Int?     @map("reward_cosmetic_id")
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  rewardCosmetic Cosmetic?           @relation(fields: [rewardCosmeticId], references: [id], onDelete: SetNull)
+  characters     BiblicalCharacter[] @relation("CollectionCharacters")
+
+  @@map("character_collections")
+}
+
+/// Degrau do passe da temporada (a trilha recomeça todo mês; o progresso é o XP do mês).
+model PassTier {
+  id                 Int     @id @default(autoincrement())
+  level              Int     @unique
+  requiredXp         Int     @map("required_xp")
+  rewardCoins        Int     @default(0) @map("reward_coins")
+  rewardDefinitionId Int?    @map("reward_definition_id")
+  rewardCosmeticId   Int?    @map("reward_cosmetic_id")
+  active             Boolean @default(true)
+
+  rewardDefinition RewardDefinition? @relation(fields: [rewardDefinitionId], references: [id], onDelete: SetNull)
+  rewardCosmetic   Cosmetic?         @relation(fields: [rewardCosmeticId], references: [id], onDelete: SetNull)
+
+  @@map("pass_tiers")
+}
+
+/// Evento por tempo limitado (Páscoa, Natal...): multiplica XP/moedas e libera itens na loja.
+model GameEvent {
+  id             Int      @id @default(autoincrement())
+  name           String
+  description    String?
+  startsAt       DateTime @map("starts_at")
+  endsAt         DateTime @map("ends_at")
+  xpMultiplier   Float    @default(1) @map("xp_multiplier")
+  coinMultiplier Float    @default(1) @map("coin_multiplier")
+  color          String?
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  cosmetics Cosmetic[]
+
+  @@index([startsAt, endsAt])
+  @@map("game_events")
 }

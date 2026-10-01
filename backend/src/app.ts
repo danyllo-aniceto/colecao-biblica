@@ -8,10 +8,12 @@ import { authRouter } from "./routes/auth";
 import { charactersRouter } from "./routes/characters";
 import { collectionRouter } from "./routes/collection";
 import { commentsRouter } from "./routes/comments";
+import { cosmeticsRouter } from "./routes/cosmetics";
 import { dailyRouter } from "./routes/daily";
 import { leagueRouter, missionsRouter } from "./routes/engagement";
 import { reportsRouter } from "./routes/reports";
 import { socialRouter } from "./routes/social";
+import { chestsRouter, collectionsRouter, eventsRouter, passRouter } from "./routes/progression";
 import { questionsRouter } from "./routes/questions";
 import { quizRouter } from "./routes/quiz";
 import { rankingRouter } from "./routes/ranking";
@@ -62,6 +64,11 @@ export function createApp() {
   app.use("/api/league", requireAuth, leagueRouter);
   app.use("/api/reports", requireAuth, reportsRouter);
   app.use("/api/social", requireAuth, socialRouter);
+  app.use("/api/cosmetics", requireAuth, cosmeticsRouter);
+  app.use("/api/chests", requireAuth, chestsRouter);
+  app.use("/api/collections", requireAuth, collectionsRouter);
+  app.use("/api/pass", requireAuth, passRouter);
+  app.use("/api/events", requireAuth, eventsRouter);
 
   app.use("/api", notFoundHandler);
   app.use(errorHandler);

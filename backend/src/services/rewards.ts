@@ -2,6 +2,7 @@ import type { BiblicalCharacter, Prisma, RewardDefinition, RewardType, ShopItemT
 import type { Db } from "../db/prisma";
 import { badRequest } from "../lib/errors";
 import { pickPackRarity } from "./game-rules";
+import { HELPERS, helperByReward, type HelperField } from "./helpers";
 import type { GameSettings } from "./settings";
 import { visibleCharacter } from "./visibility";
 
@@ -15,10 +16,19 @@ export type RewardApplication = {
   characterUnlocked: boolean;
   /** A figurinha já era do jogador: a cópia foi guardada como repetida (para vender ou fundir). */
   duplicate: boolean;
+  /** Item visual concedido (recompensa do tipo COSMETIC). */
+  cosmeticId: number | null;
+  cosmeticName: string | null;
+  cosmeticType: string | null;
+  /** O item visual já era do jogador: virou moedas. */
+  cosmeticConvertedCoins: number;
 };
 
+/** Moedas dadas no lugar de um item visual que o jogador já tem. */
+export const DUPLICATE_COSMETIC_COINS = 50;
+
 /** Campos do usuário que as recompensas alteram. */
-export type UserWallet = Pick<User, "id" | "coins" | "extraLifeBoosts" | "extraTimeBoosts" | "doubleXpBoosts" | "hintBoosts" | "streakFreezes">;
+export type UserWallet = Pick<User, "id" | "coins" | "extraLifeBoosts" | "extraTimeBoosts" | "doubleXpBoosts" | "hintBoosts" | "streakFreezes" | HelperField>;
 
 /** Só figurinhas visíveis entram no jogo (rascunhos e agendadas ficam no painel). */
 const visible = () => visibleCharacter();
@@ -113,9 +123,27 @@ export async function applyReward(
     characterImageUrl: null,
     characterUnlocked: false,
     duplicate: false,
+    cosmeticId: null,
+    cosmeticName: null,
+    cosmeticType: null,
+    cosmeticConvertedCoins: 0,
   };
 
+  const helper = helperByReward(reward.rewardType);
+  if (helper) {
+    wallet[helper.field] = Math.min(wallet[helper.field] + Math.max(reward.boostAmount ?? 1, 1), settings[helper.maxSetting]);
+    return base;
+  }
+
   switch (reward.rewardType) {
+    case "COSMETIC": {
+      const cosmetic = reward.cosmeticId ? await db.cosmetic.findUnique({ where: { id: reward.cosmeticId } }) : null;
+      if (!cosmetic) throw badRequest("Recompensa de item visual sem item vinculado");
+      const created = await db.userCosmetic.createMany({ data: [{ userId: wallet.id, cosmeticId: cosmetic.id, source: "REWARD" }], skipDuplicates: true });
+      const converted = created.count === 0 ? DUPLICATE_COSMETIC_COINS : 0;
+      wallet.coins += converted;
+      return { ...base, cosmeticId: cosmetic.id, cosmeticName: cosmetic.name, cosmeticType: cosmetic.type, cosmeticConvertedCoins: converted };
+    }
     case "COINS":
       wallet.coins += reward.coinAmount ?? 0;
       return base;
@@ -148,6 +176,8 @@ export async function applyReward(
         duplicate: !unlocked,
       };
     }
+    default:
+      throw badRequest("Tipo de recompensa desconhecido");
   }
 }
 
@@ -159,6 +189,7 @@ export function walletData(wallet: UserWallet): Prisma.UserUpdateInput {
     doubleXpBoosts: wallet.doubleXpBoosts,
     hintBoosts: wallet.hintBoosts,
     streakFreezes: wallet.streakFreezes,
+    ...Object.fromEntries(HELPERS.map((helper) => [helper.field, wallet[helper.field]])),
   };
 }
 
@@ -178,7 +209,17 @@ export async function availableRewards(db: Db, rewards: RewardDefinition[]): Pro
 
 /** Garante que a compra terá efeito, para não cobrar moedas por nada. */
 export async function ensureRewardIsUseful(db: Db, wallet: UserWallet, reward: RewardDefinition, settings: GameSettings) {
+  const helper = helperByReward(reward.rewardType);
+  if (helper) {
+    if (wallet[helper.field] >= settings[helper.maxSetting]) throw badRequest(`Você já tem o máximo de "${helper.name}"`);
+    return;
+  }
   switch (reward.rewardType) {
+    case "COSMETIC":
+      if (reward.cosmeticId && (await db.userCosmetic.findUnique({ where: { userId_cosmeticId: { userId: wallet.id, cosmeticId: reward.cosmeticId } } }))) {
+        throw badRequest("Você já tem este item");
+      }
+      return;
     case "EXTRA_LIFE":
       if (wallet.extraLifeBoosts >= settings.maxExtraLifeBoosts) throw badRequest("Você já atingiu o limite de vidas extras");
       return;
@@ -239,6 +280,7 @@ type FixedReward = {
   extraTimeSeconds: number;
   xpMultiplier: number;
   hintAmount?: number;
+  boostAmount?: number;
   dropChance: number;
 };
 
@@ -254,6 +296,17 @@ export const FIXED_REWARDS: FixedReward[] = [
   { name: "Dica 50/50", rewardType: "FIFTY_FIFTY", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, hintAmount: 1, dropChance: 4 },
   { name: "Pacote surpresa", rewardType: "STICKER_PACK", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 3 },
   { name: "Protetor de sequência", rewardType: "STREAK_FREEZE", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 2 },
+  ...HELPERS.map((helper) => ({
+    name: helper.name,
+    rewardType: helper.rewardType,
+    stickerRarity: null,
+    coinAmount: 0,
+    extraLives: 0,
+    extraTimeSeconds: 0,
+    xpMultiplier: 1,
+    boostAmount: 1,
+    dropChance: 2,
+  })),
 ];
 
 type FixedShopItem = { name: string; description: string; itemType: ShopItemType; priceCoins: number; rewardName: string };
@@ -280,6 +333,25 @@ export const FIXED_SHOP_ITEMS: FixedShopItem[] = [
     priceCoins: 250,
     rewardName: "Protetor de sequência",
   },
+  { name: "Pular pergunta", description: "Troca a pergunta por outra, sem perder vida.", itemType: "GAME_BONUS", priceCoins: 160, rewardName: "Pular pergunta" },
+  {
+    name: "Segunda chance",
+    description: "Ative antes de responder: se errar, tenta de novo na mesma pergunta sem perder vida.",
+    itemType: "GAME_BONUS",
+    priceCoins: 200,
+    rewardName: "Segunda chance",
+  },
+  { name: "Voz da multidão", description: "Mostra quantos % dos jogadores escolheram cada alternativa.", itemType: "GAME_BONUS", priceCoins: 150, rewardName: "Voz da multidão" },
+  { name: "Pista do versículo", description: "Mostra a referência bíblica que leva à resposta.", itemType: "GAME_BONUS", priceCoins: 130, rewardName: "Pista do versículo" },
+  { name: "Ampulheta", description: "Congela o cronômetro da pergunta atual.", itemType: "GAME_BONUS", priceCoins: 170, rewardName: "Ampulheta" },
+  { name: "Bênção dobrada", description: "A partida em que você usar rende o dobro de moedas.", itemType: "GAME_BONUS", priceCoins: 240, rewardName: "Bênção dobrada" },
+  {
+    name: "Escudo de sequência",
+    description: "Um erro não zera a sua sequência de acertos (você ainda perde a vida).",
+    itemType: "GAME_BONUS",
+    priceCoins: 150,
+    rewardName: "Escudo de sequência",
+  },
 ];
 
 const sameName = (left: string, right: string) => left.localeCompare(right, "pt-BR", { sensitivity: "accent" }) === 0;
@@ -305,6 +377,7 @@ export async function ensureFixedRewards(db: Db) {
           extraTimeSeconds: fixed.extraTimeSeconds,
           xpMultiplier: fixed.xpMultiplier,
           hintAmount: fixed.hintAmount ?? null,
+          boostAmount: fixed.boostAmount ?? null,
           dropChance: fixed.dropChance,
           active: true,
         },

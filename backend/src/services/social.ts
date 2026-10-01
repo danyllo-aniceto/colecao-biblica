@@ -10,6 +10,7 @@ import { moderateText } from "./moderation";
 import { grantStickerOrDuplicate } from "./rewards";
 import { getSettings } from "./settings";
 import { visibleCharacter } from "./visibility";
+import { playerLooks } from "./cosmetics";
 
 type Tx = Prisma.TransactionClient;
 
@@ -198,6 +199,7 @@ export async function listFriends(userId: number, page: number, size: number) {
     ),
   ]);
 
+  const looks = await playerLooks(prisma, ids);
   const unreadBy = new Map(unread.map((row) => [row.senderId, row._count._all]));
   const stickersBy = new Map(stickers.map((row) => [row.userId, { owned: row._count._all, duplicates: row._sum.duplicates ?? 0 }]));
   const lastBy = new Map(ids.map((friendId, index) => [friendId, lastMessages[index]]));
@@ -209,6 +211,7 @@ export async function listFriends(userId: number, page: number, size: number) {
         userId: user.id,
         name: user.name,
         level: user.level,
+        look: looks.get(user.id) ?? null,
         stickers: stickersBy.get(user.id)?.owned ?? 0,
         duplicates: stickersBy.get(user.id)?.duplicates ?? 0,
         unread: unreadBy.get(user.id) ?? 0,
@@ -316,7 +319,7 @@ export async function getMessages(userId: number, friendId: number, before: numb
     },
     orderBy: { id: "desc" },
     take: take + 1,
-    include: { trade: { include: tradeInclude } },
+    include: { trade: { include: tradeInclude }, reaction: { select: reactionSelect } },
   });
   // Abrir a conversa marca como lidas as mensagens recebidas.
   await prisma.message.updateMany({ where: { senderId: friendId, receiverId: userId, readAt: null }, data: { readAt: new Date() } });
@@ -334,8 +337,35 @@ export async function getMessages(userId: number, friendId: number, before: numb
         createdAt: message.createdAt,
         readAt: message.readAt,
         trade: message.trade ? toTrade(message.trade) : null,
+        reaction: message.reaction,
       })),
   };
+}
+
+const reactionSelect = { id: true, name: true, imageUrl: true, style: true } as const;
+
+/** Reações que o jogador pode mandar (as que ele tem). */
+export async function myReactions(userId: number) {
+  const rows = await prisma.userCosmetic.findMany({
+    where: { userId, cosmetic: { type: "REACTION", active: true } },
+    select: { cosmetic: { select: reactionSelect } },
+    orderBy: { cosmetic: { sortOrder: "asc" } },
+  });
+  return rows.map((row) => row.cosmetic);
+}
+
+/** Manda uma reação animada (um item visual do tipo REACTION que o jogador tem). */
+export async function sendReaction(userId: number, friendId: number, reactionId: number) {
+  const settings = await getSettings(prisma);
+  if (settings.chatEnabled !== 1) throw badRequest("A conversa está desligada no momento");
+  await requireFriends(prisma, userId, friendId);
+  const owned = await prisma.userCosmetic.findFirst({ where: { userId, cosmeticId: reactionId, cosmetic: { type: "REACTION", active: true } }, include: { cosmetic: true } });
+  if (!owned) throw badRequest("Você não tem esta reação");
+  const recent = await prisma.message.count({ where: { senderId: userId, tradeId: null, createdAt: { gte: new Date(Date.now() - 60_000) } } });
+  if (recent >= MESSAGES_PER_MINUTE) throw new HttpError(429, "Muitas mensagens seguidas. Espere um pouco.");
+  const message = await prisma.message.create({ data: { senderId: userId, receiverId: friendId, text: `Reação: ${owned.cosmetic.name}`, reactionId } });
+  const { id, name, imageUrl, style } = owned.cosmetic;
+  return { id: message.id, senderId: userId, text: message.text, createdAt: message.createdAt, readAt: null, trade: null, reaction: { id, name, imageUrl, style } };
 }
 
 export async function sendMessage(userId: number, friendId: number, text: string) {
@@ -345,7 +375,7 @@ export async function sendMessage(userId: number, friendId: number, text: string
   const recent = await prisma.message.count({ where: { senderId: userId, tradeId: null, createdAt: { gte: new Date(Date.now() - 60_000) } } });
   if (recent >= MESSAGES_PER_MINUTE) throw new HttpError(429, "Muitas mensagens seguidas. Espere um pouco.");
   const message = await prisma.message.create({ data: { senderId: userId, receiverId: friendId, text: moderateText(text.trim()) } });
-  return { id: message.id, senderId: message.senderId, text: message.text, createdAt: message.createdAt, readAt: null, trade: null };
+  return { id: message.id, senderId: message.senderId, text: message.text, createdAt: message.createdAt, readAt: null, trade: null, reaction: null };
 }
 
 // ---------------------------------------------------------------------------

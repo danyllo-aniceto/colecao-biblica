@@ -343,3 +343,98 @@ export function dailyStatusWithFreezes(lastClaim: Date | null, currentStreak: nu
   }
   return { ...base, freezesUsed: 0 };
 }
+
+// ---------------------------------------------------------------------------
+// Ajudas novas e sequência de acertos
+// ---------------------------------------------------------------------------
+
+export const OPTION_LETTERS = ["A", "B", "C", "D"] as const;
+export type OptionLetter = (typeof OPTION_LETTERS)[number];
+
+/** Votos "imaginários" somados aos reais: perguntas novas já mostram uma multidão plausível. */
+const CROWD_PRIOR_VOTES = 20;
+const CROWD_PRIOR_CORRECT: Record<QuestionDifficulty, number> = { EASY: 0.7, MEDIUM: 0.55, HARD: 0.4, VERY_HARD: 0.32 };
+
+/**
+ * Voz da multidão: % de jogadores em cada alternativa. Mistura o que foi
+ * respondido de verdade com uma estimativa pela dificuldade; alternativas
+ * eliminadas (50/50, segunda chance) ficam com 0. Soma sempre 100.
+ */
+export function crowdPercentages(
+  counts: Record<OptionLetter, number>,
+  correctOption: string,
+  difficulty: QuestionDifficulty,
+  removed: string[] = [],
+): Record<OptionLetter, number> {
+  const correct = correctOption.toUpperCase();
+  const open = OPTION_LETTERS.filter((letter) => !removed.includes(letter));
+  const wrongOpen = open.filter((letter) => letter !== correct).length;
+  const share = CROWD_PRIOR_CORRECT[difficulty];
+  const weights = OPTION_LETTERS.map((letter) => {
+    if (!open.includes(letter)) return 0;
+    const prior = letter === correct ? CROWD_PRIOR_VOTES * share : wrongOpen > 0 ? (CROWD_PRIOR_VOTES * (1 - share)) / wrongOpen : 0;
+    return Math.max(0, counts[letter]) + prior;
+  });
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  const result = { A: 0, B: 0, C: 0, D: 0 } as Record<OptionLetter, number>;
+  if (total <= 0) return result;
+  // Maior resto: arredonda sem perder nem sobrar ponto percentual.
+  const exact = weights.map((weight) => (weight / total) * 100);
+  const floors = exact.map(Math.floor);
+  let missing = 100 - floors.reduce((sum, value) => sum + value, 0);
+  const order = exact.map((value, index) => ({ index, rest: value - floors[index] })).sort((left, right) => right.rest - left.rest);
+  for (const { index } of order) {
+    if (missing <= 0) break;
+    if (weights[index] > 0) {
+      floors[index] += 1;
+      missing -= 1;
+    }
+  }
+  OPTION_LETTERS.forEach((letter, index) => (result[letter] = floors[index]));
+  return result;
+}
+
+type ComboRules = { comboStartAt: number; comboPointsPerAnswer: number; comboCoinsPerAnswer: number };
+
+/**
+ * Sequência de acertos depois de uma resposta. O escudo armado segura a
+ * sequência num erro (e é gasto); sem escudo, o erro zera.
+ */
+export function nextCombo(streak: number, correct: boolean, shieldArmed: boolean): { streak: number; shieldSpent: boolean } {
+  if (correct) return { streak: streak + 1, shieldSpent: false };
+  if (shieldArmed) return { streak, shieldSpent: true };
+  return { streak: 0, shieldSpent: false };
+}
+
+/** Bônus de um acerto dentro da sequência (a partir do N-ésimo acerto seguido). */
+export function comboBonus(streak: number, rules: ComboRules): { points: number; coins: number } {
+  if (streak < Math.max(2, rules.comboStartAt)) return { points: 0, coins: 0 };
+  return { points: rules.comboPointsPerAnswer, coins: rules.comboCoinsPerAnswer };
+}
+
+/** Moedas com multiplicador (bênção dobrada, evento), sem frações. */
+export function multiplyCoins(coins: number, ...multipliers: number[]): number {
+  return Math.round(multipliers.reduce((total, multiplier) => total * Math.max(1, multiplier), coins));
+}
+
+// ---------------------------------------------------------------------------
+// Baú de nível e passe da temporada
+// ---------------------------------------------------------------------------
+
+/** "2026-10": mês corrente no fuso do jogo (o passe recomeça todo mês). */
+export function monthKeyInTimeZone(date: Date, timeZone: string): string {
+  return dayKeyInTimeZone(date, timeZone).slice(0, 7);
+}
+
+/** Início e fim do mês (meia-noite local) a partir de "AAAA-MM". */
+export function monthRangeInTimeZone(monthKey: string, timeZone: string): { start: Date; end: Date } {
+  const [year, month] = monthKey.split("-").map(Number);
+  return { start: zonedMidnight(year, month, 1, timeZone), end: zonedMidnight(year, month + 1, 1, timeZone) };
+}
+
+type ChestRules = { chestBaseCoins: number; chestCoinsPerLevel: number };
+
+/** Moedas do baú do nível alcançado: cresce com o nível. */
+export function chestCoins(level: number, rules: ChestRules): number {
+  return Math.max(0, rules.chestBaseCoins + rules.chestCoinsPerLevel * Math.max(level, 1));
+}

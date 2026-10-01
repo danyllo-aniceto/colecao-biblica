@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  chestCoins,
+  comboBonus,
+  monthKeyInTimeZone,
+  monthRangeInTimeZone,
+  crowdPercentages,
+  multiplyCoins,
+  nextCombo,
   accuracyBonus,
   applyCharacterStudyPercent,
   calculateLevel,
@@ -226,5 +233,42 @@ describe("engajamento", () => {
     expect(dailyStatusWithFreezes(last, 4, 1, new Date("2026-10-03T15:00:00Z"), tz)).toEqual({ claimedToday: false, nextStreak: 5, freezesUsed: 1 });
     expect(dailyStatusWithFreezes(last, 4, 1, new Date("2026-10-04T15:00:00Z"), tz)).toEqual({ claimedToday: false, nextStreak: 1, freezesUsed: 0 });
     expect(dailyStatusWithFreezes(last, 4, 2, new Date("2026-10-02T15:00:00Z"), tz)).toEqual({ claimedToday: false, nextStreak: 5, freezesUsed: 0 });
+  });
+});
+
+describe("ajudas novas", () => {
+  it("voz da multidão soma 100, zera eliminadas e favorece a certa em pergunta fácil sem dados", () => {
+    const empty = { A: 0, B: 0, C: 0, D: 0 };
+    const easy = crowdPercentages(empty, "B", "EASY");
+    expect(Object.values(easy).reduce((sum, value) => sum + value, 0)).toBe(100);
+    expect(easy.B).toBe(70);
+    const removed = crowdPercentages(empty, "C", "HARD", ["A", "D"]);
+    expect(removed.A).toBe(0);
+    expect(removed.D).toBe(0);
+    expect(removed.B + removed.C).toBe(100);
+    // Com muitas respostas reais, os dados reais pesam mais que a estimativa.
+    const real = crowdPercentages({ A: 900, B: 50, C: 25, D: 25 }, "B", "EASY");
+    expect(real.A).toBeGreaterThan(80);
+  });
+
+  it("sequência de acertos: escudo segura um erro e o bônus começa no N-ésimo acerto", () => {
+    expect(nextCombo(4, true, false)).toEqual({ streak: 5, shieldSpent: false });
+    expect(nextCombo(4, false, true)).toEqual({ streak: 4, shieldSpent: true });
+    expect(nextCombo(4, false, false)).toEqual({ streak: 0, shieldSpent: false });
+    const rules = { comboStartAt: 3, comboPointsPerAnswer: 5, comboCoinsPerAnswer: 1 };
+    expect(comboBonus(2, rules)).toEqual({ points: 0, coins: 0 });
+    expect(comboBonus(3, rules)).toEqual({ points: 5, coins: 1 });
+    expect(multiplyCoins(15, 2, 1.5)).toBe(45);
+    expect(multiplyCoins(15, 0.5)).toBe(15);
+  });
+});
+
+describe("baú e passe", () => {
+  it("moedas do baú crescem com o nível e o mês do passe vira na meia-noite local", () => {
+    expect(chestCoins(5, { chestBaseCoins: 40, chestCoinsPerLevel: 10 })).toBe(90);
+    expect(monthKeyInTimeZone(new Date("2026-11-01T02:00:00Z"), "America/Sao_Paulo")).toBe("2026-10");
+    const range = monthRangeInTimeZone("2026-12", "America/Sao_Paulo");
+    expect(range.start.toISOString()).toBe("2026-12-01T03:00:00.000Z");
+    expect(range.end.toISOString()).toBe("2027-01-01T03:00:00.000Z");
   });
 });

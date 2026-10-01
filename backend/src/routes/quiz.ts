@@ -6,6 +6,13 @@ import { readPage } from "../lib/pagination";
 import {
   abandonSession,
   answerQuestion,
+  armComboShield,
+  armSecondChance,
+  freezeTime,
+  skipQuestion,
+  useCrowd,
+  useDoubleCoins,
+  useVerseHint,
   getActiveSession,
   getDailyChallenge,
   getHistory,
@@ -81,6 +88,26 @@ quizRouter.post(
     res.json(await useFiftyFifty(currentUser(req).id, parseId(req.params.id)));
   }),
 );
+
+// Ajudas novas: cada uma gasta 1 do inventário e vale uma vez por partida.
+const helperRoutes = {
+  skip: skipQuestion,
+  "second-chance": armSecondChance,
+  crowd: useCrowd,
+  "verse-hint": useVerseHint,
+  freeze: freezeTime,
+  "double-coins": useDoubleCoins,
+  "combo-shield": armComboShield,
+} as const;
+
+for (const [path, handler] of Object.entries(helperRoutes)) {
+  quizRouter.post(
+    `/sessions/:id/${path}`,
+    asyncHandler(async (req, res) => {
+      res.json(await handler(currentUser(req).id, parseId(req.params.id)));
+    }),
+  );
+}
 
 quizRouter.post(
   "/sessions/:id/abandon",

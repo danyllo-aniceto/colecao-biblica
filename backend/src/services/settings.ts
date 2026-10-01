@@ -51,6 +51,20 @@ export const SETTINGS = {
   tradesPerDay: { key: "social.tradesPerDay", defaultValue: 5, description: "Trocas/presentes concluídos por jogador por dia", kind: "int" },
   maxPendingTrades: { key: "social.maxPendingTrades", defaultValue: 10, description: "Propostas de troca abertas por jogador", kind: "int" },
   tradeExpireDays: { key: "social.tradeExpireDays", defaultValue: 7, description: "Dias até uma proposta de troca expirar", kind: "int" },
+  maxSkipBoosts: { key: "reward.boost.maxSkip", defaultValue: 3, description: "Máximo de \"pular pergunta\" guardados", kind: "int" },
+  maxSecondChanceBoosts: { key: "reward.boost.maxSecondChance", defaultValue: 3, description: "Máximo de segundas chances guardadas", kind: "int" },
+  maxCrowdBoosts: { key: "reward.boost.maxCrowd", defaultValue: 3, description: "Máximo de \"voz da multidão\" guardados", kind: "int" },
+  maxVerseHintBoosts: { key: "reward.boost.maxVerseHint", defaultValue: 3, description: "Máximo de pistas do versículo guardadas", kind: "int" },
+  maxFreezeTimeBoosts: { key: "reward.boost.maxFreezeTime", defaultValue: 3, description: "Máximo de ampulhetas guardadas", kind: "int" },
+  maxDoubleCoinsBoosts: { key: "reward.boost.maxDoubleCoins", defaultValue: 3, description: "Máximo de bênçãos dobradas (moedas em dobro) guardadas", kind: "int" },
+  maxComboShieldBoosts: { key: "reward.boost.maxComboShield", defaultValue: 3, description: "Máximo de escudos de sequência guardados", kind: "int" },
+  doubleCoinsMultiplier: { key: "reward.boost.doubleCoinsMultiplier", defaultValue: 2.0, description: "Multiplicador de moedas da bênção dobrada", kind: "float" },
+  comboStartAt: { key: "combo.startAt", defaultValue: 3, description: "Acertos seguidos para começar o bônus de sequência", kind: "int" },
+  comboPointsPerAnswer: { key: "combo.pointsPerAnswer", defaultValue: 5, description: "Pontos extras por acerto dentro da sequência", kind: "int" },
+  comboCoinsPerAnswer: { key: "combo.coinsPerAnswer", defaultValue: 1, description: "Moedas extras por acerto dentro da sequência", kind: "int" },
+  chestBaseCoins: { key: "chest.baseCoins", defaultValue: 40, description: "Moedas fixas do baú de nível", kind: "int" },
+  chestCoinsPerLevel: { key: "chest.coinsPerLevel", defaultValue: 10, description: "Moedas a mais no baú por nível alcançado", kind: "int" },
+  chestCosmeticChance: { key: "chest.cosmeticChance", defaultValue: 20, description: "Chance (%) do baú trazer um item visual", kind: "int" },
 } satisfies Record<string, SettingDefinition>;
 
 export type SettingName = keyof typeof SETTINGS;

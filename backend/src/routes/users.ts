@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { HELPERS, type HelperField } from "../services/helpers";
 import bcrypt from "bcryptjs";
 import type { Prisma, User } from "@prisma/client";
 import { prisma } from "../db/prisma";
@@ -182,7 +183,9 @@ const grantSchema = z.object({
   extraTimeBoosts: z.number().int().min(-100).max(100).optional(),
   doubleXpBoosts: z.number().int().min(-100).max(100).optional(),
   hintBoosts: z.number().int().min(-100).max(100).optional(),
-});
+  streakFreezes: z.number().int().min(-100).max(100).optional(),
+  ...Object.fromEntries(HELPERS.map((helper) => [helper.field, z.number().int().min(-100).max(100).optional()])),
+}) as z.ZodType<Partial<Record<"coins" | "extraLifeBoosts" | "extraTimeBoosts" | "doubleXpBoosts" | "hintBoosts" | "streakFreezes" | HelperField, number>>>;
 
 /** Admin ajusta o saldo de um jogador (valores somados; nada fica negativo). Útil para suporte e eventos. */
 usersRouter.post(
@@ -200,6 +203,8 @@ usersRouter.post(
         extraTimeBoosts: add(target.extraTimeBoosts, input.extraTimeBoosts),
         doubleXpBoosts: add(target.doubleXpBoosts, input.doubleXpBoosts),
         hintBoosts: add(target.hintBoosts, input.hintBoosts),
+        streakFreezes: add(target.streakFreezes, input.streakFreezes),
+        ...Object.fromEntries(HELPERS.map((helper) => [helper.field, add(target[helper.field], input[helper.field])])),
         updatedBy: currentUser(req).email,
       },
     });

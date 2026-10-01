@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { playerLooks } from "../services/cosmetics";
 import { prisma } from "../db/prisma";
 import { pageOf, readPage } from "../lib/pagination";
 import { currentUser } from "../middleware/auth";
@@ -32,18 +33,20 @@ rankingRouter.get(
       },
     });
 
+    const looks = await playerLooks(prisma, [...users.map((user) => user.id), me.id]);
     const entries = users.map((user, index) => ({
       position: skip + index + 1,
       userId: user.id,
       userName: user.name,
       level: user.level,
+      look: looks.get(user.id) ?? null,
       totalScore: user.totalScore,
       xp: user.xp,
     }));
 
     res.json({
       ...pageOf(entries, total, page, size),
-      me: { position: ahead + 1, userId: me.id, userName: me.name, level: me.level, totalScore: me.totalScore, xp: me.xp },
+      me: { position: ahead + 1, userId: me.id, userName: me.name, level: me.level, look: looks.get(me.id) ?? null, totalScore: me.totalScore, xp: me.xp },
     });
   }),
 );

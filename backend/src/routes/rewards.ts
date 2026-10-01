@@ -11,7 +11,24 @@ export const rewardsRouter = Router();
 
 const include = { stickerCharacter: characterRef } as const;
 
-const rewardType = z.enum(["STICKER", "STICKER_PACK", "EXTRA_LIFE", "EXTRA_TIME", "XP_MULTIPLIER", "FIFTY_FIFTY", "COINS"]);
+const rewardType = z.enum([
+  "STICKER",
+  "STICKER_PACK",
+  "EXTRA_LIFE",
+  "EXTRA_TIME",
+  "XP_MULTIPLIER",
+  "FIFTY_FIFTY",
+  "COINS",
+  "STREAK_FREEZE",
+  "SKIP_QUESTION",
+  "SECOND_CHANCE",
+  "CROWD_HELP",
+  "VERSE_HINT",
+  "FREEZE_TIME",
+  "DOUBLE_COINS",
+  "COMBO_SHIELD",
+  "COSMETIC",
+]);
 const rarity = z.enum(["COMMON", "RARE", "EPIC", "LEGENDARY"]);
 const amount = z.number().int().min(1).max(10_000);
 
@@ -25,6 +42,8 @@ const updateSchema = z.object({
   extraTimeSeconds: z.number().int().min(0).max(20).nullish(),
   xpMultiplier: z.number().min(0).nullish(),
   hintAmount: z.number().int().min(0).max(20).nullish(),
+  boostAmount: z.number().int().min(0).max(20).nullish(),
+  cosmeticId: z.number().int().positive().nullish(),
   dropChance: z.number().nullish(),
   active: z.boolean().nullish(),
 });
@@ -34,6 +53,7 @@ const createSchema = z.object({
   rewardType,
   stickerRarity: rarity.nullish(),
   stickerCharacterId: z.number().int().positive().nullish(),
+  cosmeticId: z.number().int().positive().nullish(),
   amount: amount.nullish(),
   dropChance: z.number().positive().max(1000),
   active: z.boolean().optional(),
@@ -50,6 +70,14 @@ function amountData(type: RewardDefinition["rewardType"], value: number): Partia
       return { extraTimeSeconds: value };
     case "FIFTY_FIFTY":
       return { hintAmount: value };
+    case "SKIP_QUESTION":
+    case "SECOND_CHANCE":
+    case "CROWD_HELP":
+    case "VERSE_HINT":
+    case "FREEZE_TIME":
+    case "DOUBLE_COINS":
+    case "COMBO_SHIELD":
+      return { boostAmount: Math.min(value, 20) };
     default:
       return {};
   }
@@ -64,6 +92,13 @@ async function ensureStickerTarget(type: string, stickerRarity?: string | null, 
     const character = await prisma.biblicalCharacter.findUnique({ where: { id: characterId }, select: { id: true } });
     if (!character) throw notFound("Personagem não encontrado");
   }
+}
+
+async function ensureCosmeticTarget(type: string, cosmeticId?: number | null) {
+  if (type !== "COSMETIC") return;
+  if (!cosmeticId) throw badRequest("Escolha o item visual da recompensa");
+  const cosmetic = await prisma.cosmetic.findUnique({ where: { id: cosmeticId }, select: { type: true } });
+  if (!cosmetic) throw notFound("Item visual não encontrado");
 }
 
 async function ensureNameAvailable(name: string, exceptId?: number) {
@@ -89,6 +124,7 @@ rewardsRouter.post(
     const input = createSchema.parse(req.body);
     await ensureNameAvailable(input.name);
     await ensureStickerTarget(input.rewardType, input.stickerRarity, input.stickerCharacterId);
+    await ensureCosmeticTarget(input.rewardType, input.cosmeticId);
     const isSticker = input.rewardType === "STICKER";
     const reward = await prisma.rewardDefinition.create({
       data: {
@@ -96,6 +132,7 @@ rewardsRouter.post(
         rewardType: input.rewardType,
         stickerRarity: isSticker ? (input.stickerRarity ?? null) : null,
         stickerCharacterId: isSticker ? (input.stickerCharacterId ?? null) : null,
+        cosmeticId: input.rewardType === "COSMETIC" ? (input.cosmeticId ?? null) : null,
         xpMultiplier: 1,
         ...amountData(input.rewardType, input.amount ?? 1),
         dropChance: input.dropChance,
@@ -125,6 +162,7 @@ rewardsRouter.put(
     if (input.extraTimeSeconds != null) data.extraTimeSeconds = input.extraTimeSeconds;
     if (input.xpMultiplier != null) data.xpMultiplier = input.xpMultiplier;
     if (input.hintAmount != null) data.hintAmount = input.hintAmount;
+    if (input.boostAmount != null) data.boostAmount = input.boostAmount;
     if (input.dropChance != null) {
       if (input.dropChance <= 0) {
         throw badRequest("Chance de drop deve ser maior que zero");
@@ -145,6 +183,10 @@ rewardsRouter.put(
         await ensureStickerTarget("STICKER", nextRarity, nextCharacter);
         data.stickerRarity = nextRarity;
         data.stickerCharacterId = nextCharacter;
+      }
+      if (reward.rewardType === "COSMETIC" && input.cosmeticId !== undefined) {
+        await ensureCosmeticTarget("COSMETIC", input.cosmeticId);
+        data.cosmeticId = input.cosmeticId;
       }
     }
 
