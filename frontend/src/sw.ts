@@ -44,6 +44,10 @@ const CACHEABLE_API_PATHS = [
   /^\/api\/shop$/,
   /^\/api\/users\/me$/,
   /^\/api\/quiz\/history$/,
+  /^\/api\/quiz\/matches$/,
+  /^\/api\/achievements$/,
+  /^\/api\/missions$/,
+  /^\/api\/characters\/upcoming$/,
 ];
 
 registerRoute(

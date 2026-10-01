@@ -52,6 +52,13 @@
   --r-epic: #a64dff;
   --r-legendary: #ffae00;
 
+  /* Álbum: capa de couro e folhas de papel. */
+  --album-cover: #5a2fd6;
+  --album-cover-strong: #3d1d9e;
+  --album-paper: #fffaf0;
+  --album-paper-line: rgba(140, 110, 60, 0.12);
+  --album-fold: rgba(70, 50, 20, 0.22);
+
   /* Nomes antigos, usados pelas telas que ainda não foram redesenhadas. */
   --bg-primary: var(--surface-2);
   --bg-secondary: var(--surface);
@@ -107,6 +114,12 @@
   --r-rare: #4da3ff;
   --r-epic: #c07bff;
   --r-legendary: #ffc23d;
+
+  --album-cover: #3a2591;
+  --album-cover-strong: #1f1260;
+  --album-paper: #1e2552;
+  --album-paper-line: rgba(255, 255, 255, 0.05);
+  --album-fold: rgba(0, 0, 0, 0.45);
 
   color-scheme: dark;
 }
@@ -203,6 +216,169 @@ a {
 
 ::selection {
   background: color-mix(in srgb, var(--primary) 45%, transparent);
+}
+
+/* ------------------------------------------------------------------
+ * Elementos do navegador no visual do app
+ * ------------------------------------------------------------------ */
+
+/* Controles nativos que sobrarem (rádio, range, cor) usam a cor do tema. */
+:root {
+  accent-color: var(--primary);
+}
+
+/* Barras de rolagem finas e na cor do tema. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--edge-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: var(--edge-strong) padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--muted) padding-box;
+}
+
+/* Campos numéricos sem as setinhas do navegador. */
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+/* Controle deslizante (zoom) no visual do app. */
+input[type='range'].range {
+  height: 1.5rem;
+  cursor: pointer;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type='range'].range::-webkit-slider-runnable-track {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+
+input[type='range'].range::-moz-range-track {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+
+input[type='range'].range::-webkit-slider-thumb {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: -0.375rem;
+  border: 3px solid var(--surface);
+  border-radius: 999px;
+  background: var(--primary);
+  box-shadow: 0 2px 0 var(--primary-strong);
+  -webkit-appearance: none;
+}
+
+input[type='range'].range::-moz-range-thumb {
+  width: 1rem;
+  height: 1rem;
+  border: 3px solid var(--surface);
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+input[type='range'].range:focus-visible {
+  outline: none;
+}
+
+input[type='range'].range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+/* Busca sem o "x" nativo. */
+input[type='search']::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+/* Autopreenchimento do navegador sem fundo amarelo/azul. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink);
+  caret-color: var(--ink);
+  box-shadow: 0 0 0 1000px var(--surface-2) inset;
+  transition: background-color 9999s ease-out 0s;
+}
+
+/* Texto rico (descrições, curiosidades) com tipografia do app. */
+.rich-content :where(p, ul, ol, blockquote, figure) {
+  margin: 0 0 0.75em;
+}
+
+.rich-content :where(ul) {
+  list-style: disc;
+  padding-left: 1.4em;
+}
+
+.rich-content :where(ol) {
+  list-style: decimal;
+  padding-left: 1.4em;
+}
+
+.rich-content :where(h2) {
+  margin: 1em 0 0.4em;
+  font-size: 1.35em;
+  font-weight: 700;
+}
+
+.rich-content :where(h3) {
+  margin: 0.9em 0 0.35em;
+  font-size: 1.15em;
+  font-weight: 700;
+}
+
+.rich-content :where(blockquote) {
+  border-left: 4px solid var(--primary);
+  padding-left: 0.9em;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.rich-content :where(a) {
+  color: var(--info-strong);
+  text-decoration: underline;
+}
+
+.rich-content :where(img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.9rem;
+}
+
+.rich-content :where(mark) {
+  border-radius: 0.25em;
+  padding: 0 0.15em;
+}
+
+.rich-content > :last-child {
+  margin-bottom: 0;
 }
 
 /* ------------------------------------------------------------------
@@ -412,6 +588,242 @@ a {
 
 .animate-spin-slow {
   animation: spin-slow 14s linear infinite;
+}
+
+/* ---------- Visual do jogador: molduras e títulos ---------- */
+.avatar-frame {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 9999px;
+}
+
+/* O fundo gira por baixo do ícone; o ícone fica por cima com um anel de folga. */
+.avatar-frame::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  z-index: -1;
+  background: var(--frame-bg, var(--edge-strong));
+  animation: spin-slow var(--frame-speed, 0s) linear infinite;
+}
+
+.frame-solid {
+  --frame-bg: var(--frame-color, var(--primary));
+}
+
+.frame-wood {
+  --frame-bg: repeating-linear-gradient(35deg, #7a4a24 0 6px, #a0693a 6px 11px, #8a5a2b 11px 15px);
+}
+
+.frame-silver {
+  --frame-bg: conic-gradient(#f4f6fb, #9aa4b8, #ffffff, #8a94ad, #eef1f8, #9aa4b8, #f4f6fb);
+  --frame-speed: 8s;
+}
+
+.frame-gold {
+  --frame-bg: conic-gradient(#fff3b0, #d98f00, #ffe08a, #b57200, #fff3b0, #d98f00, #fff3b0);
+  --frame-speed: 6s;
+}
+
+.frame-fire {
+  --frame-bg: conic-gradient(#ffd23f, #ff6a3d, #c9381a, #ff8c42, #ffd23f, #ff3d2e, #ffd23f);
+  --frame-speed: 2.5s;
+}
+
+.frame-rainbow {
+  --frame-bg: conic-gradient(#ff4d6a, #ffbf1f, #22c77a, #2f8cff, #a64dff, #ff4d6a);
+  --frame-speed: 4s;
+}
+
+.player-title {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--title-color, var(--muted));
+}
+
+.title-glow {
+  text-shadow:
+    0 0 6px color-mix(in srgb, var(--title-color) 65%, transparent),
+    0 0 14px color-mix(in srgb, var(--title-color) 40%, transparent);
+}
+
+.title-rainbow {
+  background: linear-gradient(90deg, #ff4d6a, #ffbf1f, #22c77a, #2f8cff, #a64dff, #ff4d6a);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: title-rainbow 3s linear infinite;
+  filter: drop-shadow(0 0 6px rgba(166, 77, 255, 0.35));
+}
+
+.title-pulse {
+  animation: title-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes title-rainbow {
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes title-pulse {
+  0%,
+  100% {
+    text-shadow: 0 0 2px color-mix(in srgb, var(--title-color) 30%, transparent);
+  }
+  50% {
+    text-shadow:
+      0 0 10px color-mix(in srgb, var(--title-color) 80%, transparent),
+      0 0 22px color-mix(in srgb, var(--title-color) 45%, transparent);
+  }
+}
+
+/* Reação do chat: o emoji/imagem entra pulando. */
+.reaction-pop {
+  animation: reaction-pop 900ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+@keyframes reaction-pop {
+  0% {
+    transform: scale(0.2) rotate(-20deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.2) rotate(8deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+/* Baú abrindo. */
+.chest-shake {
+  animation: chest-shake 700ms ease-in-out both;
+}
+
+@keyframes chest-shake {
+  0%,
+  100% {
+    transform: rotate(0) scale(1);
+  }
+  20% {
+    transform: rotate(-8deg) scale(1.05);
+  }
+  40% {
+    transform: rotate(8deg) scale(1.08);
+  }
+  60% {
+    transform: rotate(-6deg) scale(1.1);
+  }
+  80% {
+    transform: rotate(4deg) scale(1.12);
+  }
+}
+
+/* ---------- Álbum em forma de livro ---------- */
+.album-cover {
+  background: linear-gradient(135deg, var(--album-cover), var(--album-cover-strong));
+  box-shadow:
+    0 18px 40px -18px var(--shadow),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.08);
+}
+
+.album-paper {
+  background-color: var(--album-paper);
+  background-image: repeating-linear-gradient(0deg, transparent 0 27px, var(--album-paper-line) 27px 28px);
+}
+
+/* Sombra da dobra perto da lombada. */
+.album-paper-left {
+  box-shadow: inset -26px 0 30px -24px var(--album-fold);
+}
+
+.album-paper-right {
+  box-shadow: inset 26px 0 30px -24px var(--album-fold);
+}
+
+.album-leaf {
+  transform-style: preserve-3d;
+  will-change: transform;
+  animation-duration: 650ms;
+  animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
+  animation-fill-mode: forwards;
+}
+
+.album-leaf-next {
+  transform-origin: left center;
+  animation-name: album-flip-next;
+}
+
+.album-leaf-prev {
+  transform-origin: right center;
+  animation-name: album-flip-prev;
+}
+
+.album-leaf-in {
+  transform-origin: left center;
+  animation-name: album-flip-in;
+}
+
+.album-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overflow: hidden;
+}
+
+.album-face-back {
+  transform: rotateY(180deg);
+}
+
+/* Escurece a folha no meio da virada, como a luz batendo no papel. */
+.album-face::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.18), transparent 60%);
+  opacity: 0;
+  animation: album-shade 650ms ease-in-out;
+}
+
+@keyframes album-flip-next {
+  from {
+    transform: perspective(1800px) rotateY(0deg);
+  }
+  to {
+    transform: perspective(1800px) rotateY(-180deg);
+  }
+}
+
+@keyframes album-flip-prev {
+  from {
+    transform: perspective(1800px) rotateY(0deg);
+  }
+  to {
+    transform: perspective(1800px) rotateY(180deg);
+  }
+}
+
+@keyframes album-flip-in {
+  from {
+    transform: perspective(1800px) rotateY(-180deg);
+  }
+  to {
+    transform: perspective(1800px) rotateY(0deg);
+  }
+}
+
+@keyframes album-shade {
+  50% {
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

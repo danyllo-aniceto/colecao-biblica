@@ -6,18 +6,33 @@ import {
   applyCharacterStudyPercent,
   availableSeconds,
   calculateLevel,
+  calculateMatchCoins,
+  dailyChallengeQuestionIds,
+  dayKeyInTimeZone,
+  pityActive,
   calculateScore,
   calculateXp,
+  comboBonus,
+  crowdPercentages,
   dayRangeInTimeZone,
+  multiplyCoins,
+  nextCombo,
   isTimeExpired,
+  pickFiftyFiftyRemovals,
   reachedStickerAccuracy,
   remainingSeconds,
   requiredCorrectAnswersForReward,
   shuffle,
   weightedPick,
 } from "./game-rules";
+import { checkAchievements } from "./achievements";
 import { applyReward, availableRewards, grantStickerIfMissing, walletData } from "./rewards";
 import { getSettings, type GameSettings } from "./settings";
+import { pageOf } from "../lib/pagination";
+import { visibleCharacter } from "./visibility";
+import { activeEvent } from "./events";
+import { checkCosmetics, playerLooks } from "./cosmetics";
+import type { HelperField } from "./helpers";
 
 type Tx = Prisma.TransactionClient;
 
@@ -33,8 +48,20 @@ function timerOf(session: QuizSession, question: Question) {
   };
 }
 
+/** Ampulheta: a pergunta congelada não tem prazo. */
+function expired(session: QuizSession, question: Question) {
+  return session.frozenQuestionId !== question.id && isTimeExpired(timerOf(session, question));
+}
+
+function removedOptionsOf(session: QuizSession, question: Question): string[] {
+  const removed = session.fiftyFiftyQuestionId === question.id && session.fiftyFiftyRemoved ? session.fiftyFiftyRemoved.split("") : [];
+  if (session.secondChanceQuestionId === question.id && session.secondChanceRemoved) removed.push(session.secondChanceRemoved);
+  return removed;
+}
+
 function toQuestionView(session: QuizSession, question: Question) {
   const timer = timerOf(session, question);
+  const removedOptions = removedOptionsOf(session, question);
   return {
     id: question.id,
     text: question.text,
@@ -45,6 +72,16 @@ function toQuestionView(session: QuizSession, question: Question) {
     optionB: question.optionB,
     optionC: question.optionC,
     optionD: question.optionD,
+    // Alternativas eliminadas pela dica 50/50 ou já tentadas com a segunda chance.
+    removedOptions,
+    timeFrozen: session.frozenQuestionId === question.id,
+    hasVerseHint: Boolean(question.bibleReference?.trim()),
+    verseHint: session.verseHintQuestionId === question.id ? question.bibleReference : null,
+    crowd:
+      session.crowdQuestionId === question.id
+        ? crowdPercentages({ A: question.answersA, B: question.answersB, C: question.answersC, D: question.answersD }, question.correctOption, question.difficulty, removedOptions)
+        : null,
+    secondChanceArmed: session.secondChanceQuestionId === question.id && !session.secondChanceRemoved,
   };
 }
 
@@ -62,6 +99,19 @@ function toStatusResponse(session: QuizSession, currentQuestion: Question | null
     extraTimeUsed: session.extraTimeUsed,
     extraLifeUsed: session.extraLifeUsed,
     xpMultiplierUsed: session.xpMultiplierUsed,
+    fiftyFiftyUsed: session.fiftyFiftyUsed,
+    skipUsed: session.skipUsed,
+    secondChanceUsed: session.secondChanceUsed,
+    crowdUsed: session.crowdUsed,
+    verseHintUsed: session.verseHintUsed,
+    freezeUsed: session.freezeUsed,
+    doubleCoinsUsed: session.doubleCoinsUsed,
+    comboShieldUsed: session.comboShieldUsed,
+    comboShieldArmed: session.comboShieldArmed,
+    comboStreak: session.comboStreak,
+    bestCombo: session.bestCombo,
+    comboPoints: session.comboPoints,
+    characterId: session.characterId,
     currentQuestion: currentQuestion ? toQuestionView(session, currentQuestion) : null,
   };
 }
@@ -99,6 +149,17 @@ async function getCurrentQuestion(db: Db, session: QuizSession): Promise<Questio
   return question;
 }
 
+/**
+ * O cronômetro de cada pergunta só começa quando ela é mostrada: depois de
+ * responder, o jogador vê o gabarito com calma e pede a próxima.
+ */
+async function ensureQuestionStarted(db: Db, session: QuizSession): Promise<QuizSession> {
+  if (session.status !== "IN_PROGRESS" || session.currentQuestionStartedAt) {
+    return session;
+  }
+  return db.quizSession.update({ where: { id: session.id }, data: { currentQuestionStartedAt: new Date() } });
+}
+
 function ensureInProgress(session: QuizSession) {
   if (session.status !== "IN_PROGRESS") {
     throw badRequest("Sessão de quiz já finalizada");
@@ -118,7 +179,7 @@ export async function startSession(user: User, input: StartInput) {
     if (!input.characterId) {
       throw badRequest("characterId é obrigatório no quiz de personagem");
     }
-    const character = await prisma.biblicalCharacter.findUnique({ where: { id: input.characterId }, select: { id: true } });
+    const character = await prisma.biblicalCharacter.findFirst({ where: { id: input.characterId, ...visibleCharacter() }, select: { id: true } });
     if (!character) {
       throw notFound("Personagem não encontrado");
     }
@@ -130,10 +191,25 @@ export async function startSession(user: User, input: StartInput) {
     select: { id: true },
   });
   if (available.length === 0) {
-    throw badRequest("Não há perguntas disponíveis para iniciar a sessão");
+    throw badRequest(characterId ? "Este personagem ainda não tem perguntas. Escolha outro." : "Não há perguntas disponíveis para iniciar a sessão");
   }
 
-  const selected = shuffle(available.map((question) => question.id)).slice(0, questionLimit);
+  let selected: number[];
+  if (input.quizType === "DAILY_CHALLENGE") {
+    // Uma tentativa por dia (abandonar também conta) e as mesmas perguntas para todos.
+    const { start, end } = dayRangeInTimeZone(new Date(), env.timezone);
+    const played = await prisma.quizSession.count({ where: { userId: user.id, quizType: "DAILY_CHALLENGE", startedAt: { gte: start, lt: end } } });
+    if (played > 0) {
+      throw badRequest("Você já fez o desafio de hoje. Volte amanhã para um novo!");
+    }
+    selected = dailyChallengeQuestionIds(
+      available.map((question) => question.id),
+      dayKeyInTimeZone(new Date(), env.timezone),
+      settings.dailyChallengeQuestions,
+    );
+  } else {
+    selected = shuffle(available.map((question) => question.id)).slice(0, questionLimit);
+  }
 
   const existing = await prisma.quizSession.findFirst({ where: { userId: user.id, status: "IN_PROGRESS" }, select: { id: true } });
   if (existing) {
@@ -171,7 +247,7 @@ export async function startSession(user: User, input: StartInput) {
 }
 
 export async function getSessionStatus(user: User, sessionId: number) {
-  const session = await getOwnedSession(prisma, sessionId, user.id);
+  const session = await ensureQuestionStarted(prisma, await getOwnedSession(prisma, sessionId, user.id));
   const question = session.status === "IN_PROGRESS" ? await getCurrentQuestion(prisma, session) : null;
   return toStatusResponse(session, question);
 }
@@ -184,7 +260,8 @@ export async function getActiveSession(user: User) {
   if (!session) {
     throw notFound("Nenhuma sessão ativa encontrada");
   }
-  return toStatusResponse(session, await getCurrentQuestion(prisma, session));
+  const started = await ensureQuestionStarted(prisma, session);
+  return toStatusResponse(started, await getCurrentQuestion(prisma, started));
 }
 
 type AnswerInput = {
@@ -209,8 +286,37 @@ export async function answerQuestion(userId: number, sessionId: number, input: A
     const settings = await getSettings(tx);
 
     // Sem alternativa ou fora do prazo conta como erro, independente do que o cliente enviou.
-    const timedOut = !input.selectedOption || isTimeExpired(timerOf(session, question));
-    const correct = !timedOut && question.correctOption.toUpperCase() === input.selectedOption!.toUpperCase();
+    const timedOut = !input.selectedOption || expired(session, question);
+    const selected = input.selectedOption?.toUpperCase() ?? null;
+    if (!timedOut && selected && removedOptionsOf(session, question).includes(selected)) {
+      throw badRequest("Essa alternativa já foi eliminada");
+    }
+    const correct = !timedOut && question.correctOption.toUpperCase() === selected;
+
+    // Segunda chance armada: o primeiro erro não conta, a alternativa sai e o jogador tenta de novo.
+    if (!correct && !timedOut && selected && session.secondChanceQuestionId === question.id && !session.secondChanceRemoved) {
+      const saved = await tx.quizSession.update({ where: { id: session.id }, data: { secondChanceRemoved: selected } });
+      return {
+        retry: true,
+        removedOption: selected,
+        correct: false,
+        timedOut: false,
+        livesRemaining: saved.livesRemaining,
+        correctAnswers: saved.correctAnswers,
+        wrongAnswers: saved.wrongAnswers,
+        finished: false,
+        comboStreak: saved.comboStreak,
+        hasNextQuestion: true,
+        session: toStatusResponse(saved, question),
+      };
+    }
+
+    // Estatística da pergunta: taxa de acerto (calibrar dificuldade) e votos por alternativa (voz da multidão).
+    const voteField = selected && !timedOut ? ({ A: "answersA", B: "answersB", C: "answersC", D: "answersD" } as const)[selected as "A" | "B" | "C" | "D"] : undefined;
+    await tx.question.update({
+      where: { id: question.id },
+      data: { timesAnswered: { increment: 1 }, ...(correct ? { timesCorrect: { increment: 1 } } : {}), ...(voteField ? { [voteField]: { increment: 1 } } : {}) },
+    });
 
     const userChanges: Prisma.UserUpdateInput = {};
     let extraLifeApplied = false;
@@ -231,6 +337,15 @@ export async function answerQuestion(userId: number, sessionId: number, input: A
       session.xpMultiplierUsed = true;
     }
 
+    // Sequência de acertos: bônus a partir do N-ésimo acerto seguido; o escudo segura um erro.
+    const combo = nextCombo(session.comboStreak, correct, session.comboShieldArmed);
+    session.comboStreak = combo.streak;
+    if (combo.shieldSpent) session.comboShieldArmed = false;
+    session.bestCombo = Math.max(session.bestCombo, session.comboStreak);
+    const bonus = correct ? comboBonus(session.comboStreak, settings) : { points: 0, coins: 0 };
+    session.comboPoints += bonus.points;
+    session.comboCoins += bonus.coins;
+
     if (correct) {
       session.correctAnswers += 1;
     } else {
@@ -241,7 +356,8 @@ export async function answerQuestion(userId: number, sessionId: number, input: A
     }
 
     session.currentQuestionIndex += 1;
-    session.currentQuestionStartedAt = new Date();
+    // A próxima pergunta só começa a contar quando for pedida (POST /next).
+    session.currentQuestionStartedAt = null;
     session.currentQuestionExtraSeconds = 0;
 
     const finished = session.livesRemaining <= 0 || session.currentQuestionIndex >= session.totalQuestions;
@@ -263,6 +379,11 @@ export async function answerQuestion(userId: number, sessionId: number, input: A
         extraLifeUsed: session.extraLifeUsed,
         xpMultiplier: session.xpMultiplier,
         xpMultiplierUsed: session.xpMultiplierUsed,
+        comboStreak: session.comboStreak,
+        bestCombo: session.bestCombo,
+        comboPoints: session.comboPoints,
+        comboCoins: session.comboCoins,
+        comboShieldArmed: session.comboShieldArmed,
         status: session.status,
         finishedAt: session.finishedAt,
       },
@@ -277,14 +398,20 @@ export async function answerQuestion(userId: number, sessionId: number, input: A
           characterId: saved.characterId,
           xpMultiplier: saved.xpMultiplier,
           startedAt: saved.startedAt,
+          comboPoints: saved.comboPoints,
+          comboCoins: saved.comboCoins,
+          bestCombo: saved.bestCombo,
+          coinMultiplier: saved.doubleCoinsUsed ? settings.doubleCoinsMultiplier : 1,
         })
       : null;
 
-    const nextQuestion = finished ? null : toQuestionView(saved, await getCurrentQuestion(tx, saved));
-
     return {
+      retry: false,
       correct,
       timedOut,
+      comboStreak: saved.comboStreak,
+      comboBonusPoints: bonus.points,
+      comboShieldSpent: combo.shieldSpent,
       livesRemaining: Math.max(saved.livesRemaining, 0),
       correctAnswers: saved.correctAnswers,
       wrongAnswers: saved.wrongAnswers,
@@ -292,9 +419,53 @@ export async function answerQuestion(userId: number, sessionId: number, input: A
       extraTimeUsed: saved.extraTimeUsed,
       extraLifeUsed: saved.extraLifeUsed,
       xpMultiplierUsed: saved.xpMultiplierUsed,
-      nextQuestion,
+      // A resposta já foi registrada: pode mostrar o gabarito e a explicação.
+      correctOption: question.correctOption,
+      explanation: question.explanation,
+      bibleReference: question.bibleReference,
+      fiftyFiftyUsed: saved.fiftyFiftyUsed,
+      hasNextQuestion: !finished,
       matchResult,
     };
+  });
+}
+
+/** Mostra a próxima pergunta e inicia o cronômetro dela. */
+export async function nextQuestion(userId: number, sessionId: number) {
+  return transaction(async (tx) => {
+    const session = await getOwnedSession(tx, sessionId, userId, true);
+    ensureInProgress(session);
+    const started = await ensureQuestionStarted(tx, session);
+    return toStatusResponse(started, await getCurrentQuestion(tx, started));
+  });
+}
+
+/** Consome uma dica 50/50 e elimina duas alternativas erradas da pergunta atual. */
+export async function useFiftyFifty(userId: number, sessionId: number) {
+  return transaction(async (tx) => {
+    const session = await getOwnedSession(tx, sessionId, userId, true);
+    ensureInProgress(session);
+    if (session.fiftyFiftyUsed) {
+      throw badRequest("A dica 50/50 já foi usada nesta partida");
+    }
+
+    await lockUser(tx, userId);
+    const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
+    if (user.hintBoosts <= 0) {
+      throw badRequest("Você não possui dicas 50/50");
+    }
+
+    const question = await getCurrentQuestion(tx, session);
+    if (expired(session, question)) {
+      throw badRequest("O tempo desta pergunta já acabou");
+    }
+
+    await tx.user.update({ where: { id: userId }, data: { hintBoosts: user.hintBoosts - 1 } });
+    const saved = await tx.quizSession.update({
+      where: { id: session.id },
+      data: { fiftyFiftyUsed: true, fiftyFiftyQuestionId: question.id, fiftyFiftyRemoved: pickFiftyFiftyRemovals(question.correctOption).join("") },
+    });
+    return toStatusResponse(saved, question);
   });
 }
 
@@ -314,7 +485,7 @@ export async function useExtraTime(userId: number, sessionId: number) {
     }
 
     const question = await getCurrentQuestion(tx, session);
-    if (isTimeExpired(timerOf(session, question))) {
+    if (expired(session, question)) {
       throw badRequest("O tempo desta pergunta já acabou");
     }
 
@@ -329,6 +500,126 @@ export async function useExtraTime(userId: number, sessionId: number) {
   });
 }
 
+type HelperUse = {
+  field: HelperField;
+  /** Já usado nesta partida? */
+  used: (session: QuizSession) => boolean;
+  usedMessage: string;
+  missingMessage: string;
+  /** Não deixa usar com o tempo da pergunta esgotado. */
+  needsTime?: boolean;
+  apply: (tx: Tx, session: QuizSession, question: Question, settings: GameSettings) => Promise<Prisma.QuizSessionUpdateInput>;
+};
+
+/** Gasta uma ajuda do inventário e aplica o efeito na pergunta atual (uma vez por partida). */
+async function useHelper(userId: number, sessionId: number, helper: HelperUse) {
+  return transaction(async (tx) => {
+    const session = await getOwnedSession(tx, sessionId, userId, true);
+    ensureInProgress(session);
+    if (helper.used(session)) throw badRequest(helper.usedMessage);
+
+    await lockUser(tx, userId);
+    const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
+    if (user[helper.field] <= 0) throw badRequest(helper.missingMessage);
+
+    const question = await getCurrentQuestion(tx, session);
+    if (helper.needsTime !== false && expired(session, question)) throw badRequest("O tempo desta pergunta já acabou");
+
+    const settings = await getSettings(tx);
+    const data = await helper.apply(tx, session, question, settings);
+    await tx.user.update({ where: { id: userId }, data: { [helper.field]: user[helper.field] - 1 } });
+    const saved = await tx.quizSession.update({ where: { id: session.id }, data });
+    const current = await getCurrentQuestion(tx, saved);
+    return toStatusResponse(saved, current);
+  });
+}
+
+/** Pular: troca a pergunta atual por outra ainda não sorteada, sem perder vida. */
+export const skipQuestion = (userId: number, sessionId: number) =>
+  useHelper(userId, sessionId, {
+    field: "skipBoosts",
+    used: (session) => session.skipUsed,
+    usedMessage: "Você já pulou uma pergunta nesta partida",
+    missingMessage: "Você não tem \"pular pergunta\"",
+    apply: async (tx, session) => {
+      if (session.quizType === "DAILY_CHALLENGE") throw badRequest("No desafio do dia todos respondem as mesmas perguntas: não dá para pular");
+      const candidates = await tx.question.findMany({
+        where: { active: true, id: { notIn: session.questionIds }, ...(session.characterId ? { relatedCharacterId: session.characterId } : {}) },
+        select: { id: true },
+      });
+      if (candidates.length === 0) throw badRequest("Não há outra pergunta disponível para trocar");
+      const replacement = candidates[Math.floor(Math.random() * candidates.length)].id;
+      const questionIds = [...session.questionIds];
+      questionIds[session.currentQuestionIndex] = replacement;
+      return { skipUsed: true, questionIds, currentQuestionStartedAt: new Date(), currentQuestionExtraSeconds: 0 };
+    },
+  });
+
+/** Segunda chance: armada na pergunta atual; o primeiro erro nela não conta. */
+export const armSecondChance = (userId: number, sessionId: number) =>
+  useHelper(userId, sessionId, {
+    field: "secondChanceBoosts",
+    used: (session) => session.secondChanceUsed,
+    usedMessage: "A segunda chance já foi usada nesta partida",
+    missingMessage: "Você não tem segunda chance",
+    apply: async (_tx, _session, question) => ({ secondChanceUsed: true, secondChanceQuestionId: question.id, secondChanceRemoved: null }),
+  });
+
+/** Voz da multidão: mostra o % de cada alternativa na pergunta atual. */
+export const useCrowd = (userId: number, sessionId: number) =>
+  useHelper(userId, sessionId, {
+    field: "crowdBoosts",
+    used: (session) => session.crowdUsed,
+    usedMessage: "A voz da multidão já foi usada nesta partida",
+    missingMessage: "Você não tem \"voz da multidão\"",
+    apply: async (_tx, _session, question) => ({ crowdUsed: true, crowdQuestionId: question.id }),
+  });
+
+/** Pista do versículo: mostra a referência bíblica da pergunta (só se ela tiver uma). */
+export const useVerseHint = (userId: number, sessionId: number) =>
+  useHelper(userId, sessionId, {
+    field: "verseHintBoosts",
+    used: (session) => session.verseHintUsed,
+    usedMessage: "A pista do versículo já foi usada nesta partida",
+    missingMessage: "Você não tem pista do versículo",
+    apply: async (_tx, _session, question) => {
+      if (!question.bibleReference?.trim()) throw badRequest("Esta pergunta não tem pista de versículo");
+      return { verseHintUsed: true, verseHintQuestionId: question.id };
+    },
+  });
+
+/** Ampulheta: congela o cronômetro da pergunta atual. */
+export const freezeTime = (userId: number, sessionId: number) =>
+  useHelper(userId, sessionId, {
+    field: "freezeTimeBoosts",
+    used: (session) => session.freezeUsed,
+    usedMessage: "A ampulheta já foi usada nesta partida",
+    missingMessage: "Você não tem ampulheta",
+    apply: async (_tx, _session, question) => ({ freezeUsed: true, frozenQuestionId: question.id }),
+  });
+
+/** Bênção dobrada: as moedas desta partida saem multiplicadas no fim. */
+export const useDoubleCoins = (userId: number, sessionId: number) =>
+  useHelper(userId, sessionId, {
+    field: "doubleCoinsBoosts",
+    used: (session) => session.doubleCoinsUsed,
+    usedMessage: "A bênção dobrada já está ativa nesta partida",
+    missingMessage: "Você não tem bênção dobrada",
+    needsTime: false,
+    apply: async () => ({ doubleCoinsUsed: true }),
+  });
+
+/** Escudo de sequência: o próximo erro não zera a sequência de acertos. */
+export const armComboShield = (userId: number, sessionId: number) =>
+  useHelper(userId, sessionId, {
+    field: "comboShieldBoosts",
+    used: (session) => session.comboShieldUsed,
+    usedMessage: "O escudo de sequência já foi usado nesta partida",
+    missingMessage: "Você não tem escudo de sequência",
+    needsTime: false,
+    apply: async () => ({ comboShieldUsed: true, comboShieldArmed: true }),
+  });
+
 export async function abandonSession(userId: number, sessionId: number) {
   return transaction(async (tx) => {
     const session = await getOwnedSession(tx, sessionId, userId, true);
@@ -341,6 +632,35 @@ export async function abandonSession(userId: number, sessionId: number) {
     });
     return toStatusResponse(saved, null);
   });
+}
+
+/** Histórico paginado das partidas terminadas. */
+export async function getMatchesPage(userId: number, page: number, size: number) {
+  const take = Math.max(1, Math.min(size, 50));
+  const skip = Math.max(0, page) * take;
+  const [matches, total] = await Promise.all([
+    prisma.quizMatch.findMany({ where: { userId }, orderBy: { finishedAt: "desc" }, skip, take }),
+    prisma.quizMatch.count({ where: { userId } }),
+  ]);
+  return pageOf(
+    matches.map((match) => ({
+      matchId: match.id,
+      quizType: match.quizType,
+      startedAt: match.startedAt,
+      finishedAt: match.finishedAt,
+      questionsAnswered: match.questionsAnswered,
+      correctAnswers: match.correctAnswers,
+      wrongAnswers: match.wrongAnswers,
+      xpGained: match.xpGained,
+      scoreGained: match.scoreGained,
+      coinsGained: match.coinsGained,
+      rewardGranted: match.rewardGranted,
+      rewardGrantedName: match.rewardGrantedName,
+    })),
+    total,
+    Math.max(0, page),
+    take,
+  );
 }
 
 export async function getHistory(userId: number, limit: number) {
@@ -372,6 +692,7 @@ export async function getHistory(userId: number, limit: number) {
       wrongAnswers: match.wrongAnswers,
       xpGained: match.xpGained,
       scoreGained: match.scoreGained,
+      coinsGained: match.coinsGained,
       rewardGranted: match.rewardGranted,
       rewardGrantedName: match.rewardGrantedName,
     })),
@@ -390,6 +711,11 @@ type MatchStats = {
   characterId: number | null;
   xpMultiplier: number;
   startedAt: Date;
+  comboPoints?: number;
+  comboCoins?: number;
+  bestCombo?: number;
+  /** Bênção dobrada. */
+  coinMultiplier?: number;
 };
 
 async function rewardedMatchesToday(tx: Tx, userId: number) {
@@ -399,9 +725,15 @@ async function rewardedMatchesToday(tx: Tx, userId: number) {
   });
 }
 
+async function coinMatchesToday(tx: Tx, userId: number) {
+  const { start, end } = dayRangeInTimeZone(new Date(), env.timezone);
+  return tx.quizMatch.count({ where: { userId, coinsGained: { gt: 0 }, finishedAt: { gte: start, lt: end } } });
+}
+
 export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, stats: MatchStats, random: () => number = Math.random) {
+  const event = await activeEvent(tx);
   let xp = calculateXp(stats.correctAnswers, stats.questionsAnswered, stats.xpMultiplier);
-  const score = calculateScore(stats.correctAnswers, stats.wrongAnswers);
+  const score = calculateScore(stats.correctAnswers, stats.wrongAnswers) + (stats.comboPoints ?? 0);
 
   let rewardGranted = false;
   let rewardName: string | null = null;
@@ -409,7 +741,11 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
   let rewardCharacterId: number | null = null;
   let rewardCharacterName: string | null = null;
   let rewardCharacterRarity: string | null = null;
+  let rewardCharacterImageUrl: string | null = null;
   let rewardCharacterUnlocked = false;
+  let rewardDuplicate = false;
+  let pityGuaranteed = false;
+  let stickerPity = user.stickerPity;
 
   if (stats.quizType === "CHARACTER_STUDY") {
     xp = applyCharacterStudyPercent(xp, settings.characterStudyXpPercent);
@@ -422,19 +758,28 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
         rewardCharacterId = character.id;
         rewardCharacterName = character.name;
         rewardCharacterRarity = character.rarity;
+        rewardCharacterImageUrl = character.imageUrl;
         rewardCharacterUnlocked = await grantStickerIfMissing(tx, user.id, character.id);
       }
     }
   }
 
-  const wallet = {
-    id: user.id,
-    coins: user.coins,
-    extraLifeBoosts: user.extraLifeBoosts,
-    extraTimeBoosts: user.extraTimeBoosts,
-    doubleXpBoosts: user.doubleXpBoosts,
-  };
+  // Evento ativo multiplica o XP da partida.
+  if (event && event.xpMultiplier > 1) xp = Math.round(xp * event.xpMultiplier);
+
+  const wallet = { ...user };
   const totalXp = user.xp + xp;
+
+  // Moedas por acerto: toda partida conta, até o limite diário (evita "farmar" o mesmo quiz).
+  let coinsGained = 0;
+  if (stats.correctAnswers > 0 && (await coinMatchesToday(tx, user.id)) < settings.coinMatchLimitPerDay) {
+    coinsGained = calculateMatchCoins(stats.correctAnswers, stats.wrongAnswers, settings) + (stats.comboCoins ?? 0);
+    if (stats.quizType === "CHARACTER_STUDY") {
+      coinsGained = applyCharacterStudyPercent(coinsGained, settings.characterStudyXpPercent);
+    }
+    coinsGained = multiplyCoins(coinsGained, stats.coinMultiplier ?? 1, event?.coinMultiplier ?? 1);
+    wallet.coins += coinsGained;
+  }
 
   const dailyLimit = settings.rewardMatchLimitPerDay;
   if (stats.quizType === "GENERAL") {
@@ -442,7 +787,10 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
     const required = requiredCorrectAnswersForReward(settings.rewardMinCorrectAnswers, activeQuestions);
     if (stats.correctAnswers >= required && (await rewardedMatchesToday(tx, user.id)) < dailyLimit) {
       const rewards = await availableRewards(tx, await tx.rewardDefinition.findMany({ where: { active: true }, orderBy: { id: "asc" } }));
-      const drawn = weightedPick(rewards, (reward) => reward.dropChance, random);
+      // Garantia contra azar: depois de N prêmios sem figurinha, só concorrem figurinhas.
+      const stickerRewards = rewards.filter((reward) => reward.rewardType === "STICKER" || reward.rewardType === "STICKER_PACK");
+      pityGuaranteed = pityActive(stickerPity, settings.pityThreshold) && stickerRewards.length > 0;
+      const drawn = weightedPick(pityGuaranteed ? stickerRewards : rewards, (reward) => reward.dropChance, random);
       if (drawn) {
         const applied = await applyReward(tx, wallet, drawn, settings, random);
         rewardGranted = true;
@@ -451,7 +799,10 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
         rewardCharacterId = applied.characterId;
         rewardCharacterName = applied.characterName;
         rewardCharacterRarity = applied.characterRarity;
+        rewardCharacterImageUrl = applied.characterImageUrl;
         rewardCharacterUnlocked = applied.characterUnlocked;
+        rewardDuplicate = applied.duplicate;
+        stickerPity = applied.characterId ? 0 : stickerPity + 1;
       }
     }
   }
@@ -463,6 +814,8 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
       xp: totalXp,
       totalScore: user.totalScore + score,
       level: calculateLevel(totalXp),
+      stickerPity,
+      bestCombo: Math.max(user.bestCombo, stats.bestCombo ?? 0),
     },
   });
 
@@ -477,10 +830,15 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
       wrongAnswers: stats.wrongAnswers,
       xpGained: xp,
       scoreGained: score,
+      coinsGained,
       rewardGranted,
       rewardGrantedName: rewardName,
     },
   });
+
+  const unlockedAchievements = await checkAchievements(tx, user.id);
+  const achievementCoins = unlockedAchievements.reduce((sum, achievement) => sum + achievement.coins, 0);
+  const unlockedCosmetics = await checkCosmetics(tx, user.id);
 
   return {
     matchId: match.id,
@@ -492,11 +850,74 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
     rewardCharacterId,
     rewardCharacterName,
     rewardCharacterRarity,
+    rewardCharacterImageUrl,
     rewardCharacterUnlocked,
+    coinsGained,
+    rewardDuplicate,
+    pityGuaranteed,
+    // Prêmios que faltam para a figurinha garantida (null quando desligado).
+    pityRemaining: settings.pityThreshold > 0 ? Math.max(1, settings.pityThreshold - stickerPity) : null,
+    unlockedAchievements,
+    unlockedCosmetics,
+    bestCombo: stats.bestCombo ?? 0,
+    comboBonusPoints: stats.comboPoints ?? 0,
+    coinMultiplier: stats.coinMultiplier ?? 1,
+    eventName: event && (event.xpMultiplier > 1 || event.coinMultiplier > 1) ? event.name : null,
+    levelUp: updated.level > user.level,
+    chestsPending: Math.max(0, updated.level - updated.chestLevel),
     userXp: updated.xp,
     userLevel: updated.level,
-    userCoins: updated.coins,
+    userCoins: updated.coins + achievementCoins,
     rewardMatchesUsedToday: await rewardedMatchesToday(tx, user.id),
     rewardMatchesLimitPerDay: dailyLimit,
+  };
+}
+
+/**
+ * Desafio do dia: as mesmas perguntas para todos, uma tentativa por dia.
+ * Ranking por acertos e, no empate, por quem terminou mais rápido.
+ */
+export async function getDailyChallenge(userId: number, page: number, size: number) {
+  const now = new Date();
+  const { start, end } = dayRangeInTimeZone(now, env.timezone);
+  const [settings, activeQuestions, attempt, matches] = await Promise.all([
+    getSettings(prisma),
+    prisma.question.count({ where: { active: true } }),
+    prisma.quizSession.findFirst({ where: { userId, quizType: "DAILY_CHALLENGE", startedAt: { gte: start, lt: end } }, orderBy: { startedAt: "desc" } }),
+    prisma.quizMatch.findMany({
+      where: { quizType: "DAILY_CHALLENGE", finishedAt: { gte: start, lt: end }, user: { deleted: false } },
+      include: { user: { select: { name: true, level: true } } },
+    }),
+  ]);
+
+  const durationOf = (match: (typeof matches)[number]) => (match.startedAt ? match.finishedAt.getTime() - match.startedAt.getTime() : Number.MAX_SAFE_INTEGER);
+  const ranked = matches
+    .sort((left, right) => right.correctAnswers - left.correctAnswers || durationOf(left) - durationOf(right) || left.id - right.id)
+    .map((match, index) => ({
+      position: index + 1,
+      userId: match.userId,
+      userName: match.user.name,
+      level: match.user.level,
+      correctAnswers: match.correctAnswers,
+      questionsAnswered: match.questionsAnswered,
+      seconds: Number.isFinite(durationOf(match)) ? Math.round(durationOf(match) / 1000) : null,
+    }));
+
+  const mine = ranked.find((entry) => entry.userId === userId) ?? null;
+  const pageEntries = ranked.slice(page * size, page * size + size);
+  const looks = await playerLooks(prisma, pageEntries.map((entry) => entry.userId));
+  return {
+    ...pageOf(
+      pageEntries.map((entry) => ({ ...entry, look: looks.get(entry.userId) ?? null })),
+      ranked.length,
+      page,
+      size,
+    ),
+    dayKey: dayKeyInTimeZone(now, env.timezone),
+    endsAt: end,
+    totalQuestions: Math.min(settings.dailyChallengeQuestions, activeQuestions),
+    // IN_PROGRESS: começou e não terminou; FINISHED/ABANDONED: tentativa do dia já usada.
+    attemptStatus: attempt?.status ?? null,
+    me: mine,
   };
 }

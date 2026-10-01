@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { RequireAuth } from '@/components/auth/require-auth';
 import { useAuth } from '@/components/providers/auth-provider';
+import { LoadingState } from '@/components/ui/spinner';
 import { UserDashboard } from '@/components/user/user-dashboard';
 
 // O painel do admin (editor de texto, diagramas) só é baixado por quem é admin.
@@ -23,9 +24,5 @@ export function DashboardPage() {
 }
 
 export function PageLoading() {
-  return (
-    <div role="status" className="flex min-h-dvh items-center justify-center font-display text-lg font-semibold text-muted">
-      Carregando...
-    </div>
-  );
+  return <LoadingState fullScreen />;
 }

@@ -66,3 +66,16 @@ export const BIBLE_BOOKS_PT: string[] = [
   'Judas',
   'Apocalipse',
 ];
+
+/** Os 39 primeiros livros são do Antigo Testamento; os 27 seguintes, do Novo. */
+export const OLD_TESTAMENT_BOOKS = BIBLE_BOOKS_PT.slice(0, 39);
+export const NEW_TESTAMENT_BOOKS = BIBLE_BOOKS_PT.slice(39);
+
+/** Ordem canônica (Gênesis → Apocalipse); livros desconhecidos vão para o fim. */
+export function sortBooks(books: string[]) {
+  const position = (book: string) => {
+    const index = BIBLE_BOOKS_PT.indexOf(book);
+    return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+  };
+  return [...books].sort((left, right) => position(left) - position(right));
+}

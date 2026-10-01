@@ -1,4 +1,6 @@
 import type { BiblicalCharacter, Question, RewardDefinition, ShopItem, User } from "@prisma/client";
+import { suggestedDifficulty } from "./game-rules";
+import { helperCounts } from "./helpers";
 
 /** Formato das respostas JSON (mesmos campos da API original, que o frontend já usa). */
 
@@ -12,6 +14,20 @@ export function toUserResponse(user: User) {
     extraLifeBoosts: user.extraLifeBoosts,
     extraTimeBoosts: user.extraTimeBoosts,
     doubleXpBoosts: user.doubleXpBoosts,
+    hintBoosts: user.hintBoosts,
+    streakFreezes: user.streakFreezes,
+    stickerPity: user.stickerPity,
+    friendCode: user.friendCode,
+    ...helperCounts(user),
+    bestCombo: user.bestCombo,
+    chestsPending: Math.max(0, user.level - user.chestLevel),
+    avatarId: user.avatarId,
+    frameId: user.frameId,
+    titleId: user.titleId,
+    nameColorId: user.nameColorId,
+    showcase: user.showcase,
+    dailyStreak: user.dailyStreak,
+    lastDailyClaim: user.lastDailyClaim,
     name: user.name,
     email: user.email,
     role: user.role,
@@ -31,6 +47,9 @@ export function toCharacterResponse(character: BiblicalCharacter) {
     name: character.name,
     imageUrl: character.imageUrl,
     rarity: character.rarity,
+    testament: character.testament,
+    published: character.published,
+    publishAt: character.publishAt,
     shortSummary: character.shortSummary,
     fullDescription: character.fullDescription,
     bibleBooks: character.bibleBooks,
@@ -44,6 +63,24 @@ export function toCharacterResponse(character: BiblicalCharacter) {
     keywords: character.keywords,
     createdAt: character.createdAt,
     createdBy: character.createdBy,
+    updatedAt: character.updatedAt,
+  };
+}
+
+/** Versão leve para o álbum e listas (sem os textos longos). */
+export function toCharacterSummary(character: BiblicalCharacter, questionCount = 0) {
+  return {
+    id: character.id,
+    name: character.name,
+    imageUrl: character.imageUrl,
+    rarity: character.rarity,
+    testament: character.testament,
+    published: character.published,
+    publishAt: character.publishAt,
+    bibleBooks: character.bibleBooks,
+    historicalPeriod: character.historicalPeriod,
+    narrativeRole: character.narrativeRole,
+    questionCount,
     updatedAt: character.updatedAt,
   };
 }
@@ -63,7 +100,12 @@ export function toQuestionResponse(question: QuestionWithCharacter) {
     correctOption: question.correctOption,
     relatedCharacterId: question.relatedCharacter?.id ?? null,
     relatedCharacterName: question.relatedCharacter?.name ?? null,
+    explanation: question.explanation,
+    bibleReference: question.bibleReference,
     active: question.active,
+    timesAnswered: question.timesAnswered,
+    timesCorrect: question.timesCorrect,
+    suggestedDifficulty: suggestedDifficulty(question.timesAnswered, question.timesCorrect),
   };
 }
 
@@ -81,12 +123,16 @@ export function toRewardResponse(reward: RewardWithCharacter) {
     extraLives: reward.extraLives,
     extraTimeSeconds: reward.extraTimeSeconds,
     xpMultiplier: reward.xpMultiplier,
+    hintAmount: reward.hintAmount,
+    boostAmount: reward.boostAmount,
+    cosmeticId: reward.cosmeticId,
     dropChance: reward.dropChance,
     active: reward.active,
+    system: reward.system,
   };
 }
 
-export type ShopItemWithReward = ShopItem & { rewardDefinition: Pick<RewardDefinition, "id" | "name"> | null };
+export type ShopItemWithReward = ShopItem & { rewardDefinition: Pick<RewardDefinition, "id" | "name" | "rewardType" | "stickerRarity"> | null };
 
 export function toShopItemResponse(item: ShopItemWithReward) {
   return {
@@ -97,9 +143,12 @@ export function toShopItemResponse(item: ShopItemWithReward) {
     priceCoins: item.priceCoins,
     rewardDefinitionId: item.rewardDefinition?.id ?? null,
     rewardName: item.rewardDefinition?.name ?? null,
+    rewardType: item.rewardDefinition?.rewardType ?? null,
+    rewardRarity: item.rewardDefinition?.stickerRarity ?? null,
     active: item.active,
+    system: item.system,
   };
 }
 
 export const characterRef = { select: { id: true, name: true } } as const;
-export const rewardRef = { select: { id: true, name: true } } as const;
+export const rewardRef = { select: { id: true, name: true, rewardType: true, stickerRarity: true } } as const;

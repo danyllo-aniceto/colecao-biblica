@@ -1,10 +1,12 @@
-import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
-import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
-import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
 import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
 import { Button } from '@/components/ui/button';
 import { CoinIcon } from '@/components/game/game-ui';
+import { rewardVisual } from '@/lib/reward-visual';
+import LocalFireDepartmentRoundedIcon from '@mui/icons-material/LocalFireDepartmentRounded';
+import CelebrationRoundedIcon from '@mui/icons-material/CelebrationRounded';
+import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
+import PaletteRoundedIcon from '@mui/icons-material/PaletteRounded';
 import { StickerCard } from '@/components/game/sticker-card';
 import type { StickerRarity } from '@/lib/admin-api';
 import type { QuizMatchResult } from '@/lib/user-api';
@@ -33,7 +35,17 @@ function starsFor(correct: number, answered: number) {
 
 const HEADLINES = ['Continue tentando!', 'Boa!', 'Muito bem!', 'Incrível!'];
 
-export function MatchResult({ summary, minCorrectForReward, onContinue }: { summary: MatchSummary | null; minCorrectForReward: number | null; onContinue: () => void }) {
+export function MatchResult({
+  summary,
+  minCorrectForReward,
+  onContinue,
+  onOpenSticker,
+}: {
+  summary: MatchSummary | null;
+  minCorrectForReward: number | null;
+  onContinue: () => void;
+  onOpenSticker?: (id: number) => void;
+}) {
   if (!summary) {
     return null;
   }
@@ -41,7 +53,7 @@ export function MatchResult({ summary, minCorrectForReward, onContinue }: { summ
   const { result, correct, answered, previousLevel } = summary;
   const stars = starsFor(correct, answered);
   const leveledUp = result.userLevel > previousLevel;
-  const wonSticker = result.rewardType === 'STICKER' && result.rewardCharacterName;
+  const wonSticker = (result.rewardType === 'STICKER' || result.rewardType === 'STICKER_PACK') && result.rewardCharacterName;
   const dailyLimitReached = !result.rewardGranted && result.rewardMatchesLimitPerDay > 0 && result.rewardMatchesUsedToday >= result.rewardMatchesLimitPerDay;
 
   return (
@@ -65,7 +77,7 @@ export function MatchResult({ summary, minCorrectForReward, onContinue }: { summ
           {correct} de {answered} {answered === 1 ? 'acerto' : 'acertos'}
         </p>
 
-        <div className="relative mt-5 grid grid-cols-2 gap-3">
+        <div className="relative mt-5 grid grid-cols-3 gap-3">
           <div className="rounded-2xl bg-violet/15 p-3">
             <div className="font-display text-2xl font-bold text-violet-strong dark:text-violet">+{result.xpGained}</div>
             <div className="text-xs font-bold uppercase tracking-wider text-muted">XP</div>
@@ -77,12 +89,52 @@ export function MatchResult({ summary, minCorrectForReward, onContinue }: { summ
             </div>
             <div className="text-xs font-bold uppercase tracking-wider text-muted">Pontos</div>
           </div>
+          <div className="rounded-2xl bg-primary/15 p-3">
+            <div className="flex items-center justify-center gap-1 font-display text-2xl font-bold text-primary-strong dark:text-primary">
+              <CoinIcon className="h-5 w-5" />+{result.coinsGained ?? 0}
+            </div>
+            <div className="text-xs font-bold uppercase tracking-wider text-muted">Moedas</div>
+          </div>
         </div>
 
         {leveledUp ? (
-          <div className="relative mt-3 flex items-center justify-center gap-2 rounded-2xl bg-primary/20 p-3 font-display font-bold text-ink">
-            <TrendingUpRoundedIcon className="text-primary-strong dark:text-primary" />
-            Subiu para o nível {result.userLevel}!
+          <div className="relative mt-3 flex flex-col items-center justify-center gap-1 rounded-2xl bg-primary/20 p-3 font-display font-bold text-ink">
+            <span className="flex items-center gap-2">
+              <TrendingUpRoundedIcon className="text-primary-strong dark:text-primary" />
+              Subiu para o nível {result.userLevel}!
+            </span>
+            {result.chestsPending ? (
+              <span className="flex items-center gap-1.5 text-sm text-primary-strong dark:text-primary">
+                <Inventory2RoundedIcon fontSize="small" /> Um baú de nível está esperando por você no início.
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+
+        {(result.bestCombo ?? 0) >= 3 || (result.coinMultiplier ?? 1) > 1 || result.eventName ? (
+          <div className="relative mt-3 flex flex-wrap justify-center gap-2 text-sm font-bold">
+            {(result.bestCombo ?? 0) >= 3 ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-danger/15 px-3 py-1 text-danger">
+                <LocalFireDepartmentRoundedIcon fontSize="small" /> {result.bestCombo} seguidas
+                {result.comboBonusPoints ? ` · +${result.comboBonusPoints} pts` : ''}
+              </span>
+            ) : null}
+            {(result.coinMultiplier ?? 1) > 1 ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/20 px-3 py-1 text-primary-strong dark:text-primary">
+                <CoinIcon className="h-4 w-4" /> Moedas x{result.coinMultiplier}
+              </span>
+            ) : null}
+            {result.eventName ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-violet/15 px-3 py-1 text-violet-strong dark:text-violet">
+                <CelebrationRoundedIcon fontSize="small" /> Bônus do evento {result.eventName}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+
+        {result.unlockedCosmetics?.length ? (
+          <div className="relative mt-3 rounded-2xl bg-accent/15 p-3 text-sm font-bold text-accent-strong dark:text-accent">
+            <PaletteRoundedIcon fontSize="small" /> Item novo liberado: {result.unlockedCosmetics.map((item) => item.name).join(', ')}. Equipe em Perfil → Visual.
           </div>
         ) : null}
 
@@ -90,10 +142,19 @@ export function MatchResult({ summary, minCorrectForReward, onContinue }: { summ
           {wonSticker ? (
             <div className="space-y-3">
               <p className="font-display text-lg font-bold text-ink">{result.rewardCharacterUnlocked ? 'Nova figurinha!' : 'Figurinha repetida'}</p>
+              {result.pityGuaranteed ? <p className="text-xs font-bold uppercase tracking-wider text-violet-strong dark:text-violet">Figurinha garantida pela sorte acumulada</p> : null}
               <div className="mx-auto w-40">
-                <StickerCard name={result.rewardCharacterName ?? ''} rarity={(result.rewardCharacterRarity ?? 'COMMON') as StickerRarity} owned />
+                <StickerCard
+                  name={result.rewardCharacterName ?? ''}
+                  rarity={(result.rewardCharacterRarity ?? 'COMMON') as StickerRarity}
+                  imageUrl={result.rewardCharacterImageUrl}
+                  owned
+                  onClick={onOpenSticker && result.rewardCharacterId ? () => onOpenSticker(result.rewardCharacterId!) : undefined}
+                />
               </div>
-              {!result.rewardCharacterUnlocked ? <p className="text-sm text-muted">Você já tinha essa figurinha.</p> : null}
+              {!result.rewardCharacterUnlocked ? (
+                <p className="text-sm text-muted">Você já tinha: a cópia foi guardada nas repetidas do álbum (venda ou funda).</p>
+              ) : null}
             </div>
           ) : result.rewardGranted ? (
             <div className="flex flex-col items-center gap-2">
@@ -112,6 +173,12 @@ export function MatchResult({ summary, minCorrectForReward, onContinue }: { summ
           )}
         </div>
 
+        {result.rewardGranted && !wonSticker && result.pityRemaining ? (
+          <p className="relative mt-3 text-xs text-muted">
+            {result.pityRemaining === 1 ? 'O próximo prêmio é figurinha garantida!' : `Figurinha garantida em no máximo ${result.pityRemaining} prêmios.`}
+          </p>
+        ) : null}
+
         {result.rewardMatchesLimitPerDay > 0 ? (
           <p className="relative mt-4 text-xs font-bold uppercase tracking-wider text-muted">
             Prêmios hoje: {result.rewardMatchesUsedToday}/{result.rewardMatchesLimitPerDay}
@@ -127,8 +194,6 @@ export function MatchResult({ summary, minCorrectForReward, onContinue }: { summ
 }
 
 function RewardIcon({ type }: { type?: string | null }) {
-  if (type === 'COINS') return <CoinIcon className="h-12 w-12" />;
-  if (type === 'EXTRA_LIFE') return <FavoriteRoundedIcon className="text-danger" sx={{ fontSize: 48 }} />;
-  if (type === 'EXTRA_TIME') return <TimerRoundedIcon className="text-info" sx={{ fontSize: 48 }} />;
-  return <BoltRoundedIcon className="text-primary" sx={{ fontSize: 48 }} />;
+  const { icon, tint } = rewardVisual(type, 44);
+  return <span className={cn('flex h-full w-full items-center justify-center rounded-3xl text-5xl', tint)}>{icon}</span>;
 }

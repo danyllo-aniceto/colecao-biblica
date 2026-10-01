@@ -1,4 +1,10 @@
 import { Router } from "express";
+import { env } from "../lib/env";
+import { dayKeyInTimeZone } from "../services/game-rules";
+
+const STICKER_PURCHASE = "SHOP_STICKER";
+const isStickerReward = (type: string) => type === "STICKER" || type === "STICKER_PACK";
+import { helperCounts } from "../services/helpers";
 import type { Prisma } from "@prisma/client";
 import { lockUser, prisma, transaction } from "../db/prisma";
 import { badRequest, notFound } from "../lib/errors";
@@ -6,6 +12,7 @@ import { parseId, requiredText, z } from "../lib/validation";
 import { currentUser, requireAdmin } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
 import { rewardRef, toShopItemResponse } from "../services/mappers";
+import { checkAchievements } from "../services/achievements";
 import { applyReward, ensureRewardIsUseful, validateShopReward, walletData } from "../services/rewards";
 import { getSettings } from "../services/settings";
 
@@ -30,9 +37,64 @@ shopRouter.get(
   }),
 );
 
-shopRouter.post("/admin", requireAdmin, () => {
-  throw badRequest("Os itens da loja são fixos do sistema e não podem ser criados");
+const createSchema = z.object({
+  name: requiredText(150),
+  description: requiredText(2000),
+  itemType: z.enum(["STICKER", "GAME_BONUS", "ECONOMY"]),
+  priceCoins: z.number().int().min(1).max(100_000),
+  rewardDefinitionId: z.number().int().positive(),
+  active: z.boolean().optional(),
 });
+
+async function shopReward(id: number) {
+  const reward = await prisma.rewardDefinition.findUnique({ where: { id } });
+  if (!reward) {
+    throw notFound("Recompensa da loja não encontrada");
+  }
+  validateShopReward(reward);
+  return reward;
+}
+
+async function ensureNameAvailable(name: string, exceptId?: number) {
+  const existing = await prisma.shopItem.findFirst({
+    where: { name: { equals: name, mode: "insensitive" }, ...(exceptId ? { id: { not: exceptId } } : {}) },
+    select: { id: true },
+  });
+  if (existing) throw badRequest("Já existe um item com esse nome");
+}
+
+/** Painel: todos os itens, inclusive os inativos. */
+shopRouter.get(
+  "/admin",
+  requireAdmin,
+  asyncHandler(async (_req, res) => {
+    const items = await prisma.shopItem.findMany({ include, orderBy: [{ system: "desc" }, { priceCoins: "asc" }, { id: "asc" }] });
+    res.json(items.map(toShopItemResponse));
+  }),
+);
+
+shopRouter.post(
+  "/admin",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const input = createSchema.parse(req.body);
+    await ensureNameAvailable(input.name);
+    const reward = await shopReward(input.rewardDefinitionId);
+    const item = await prisma.shopItem.create({
+      data: {
+        name: input.name,
+        description: input.description,
+        itemType: input.itemType,
+        priceCoins: input.priceCoins,
+        rewardDefinitionId: reward.id,
+        active: input.active ?? true,
+        system: false,
+      },
+      include,
+    });
+    res.status(201).json(toShopItemResponse(item));
+  }),
+);
 
 shopRouter.put(
   "/admin/:id",
@@ -46,27 +108,50 @@ shopRouter.put(
     }
 
     const data: Prisma.ShopItemUncheckedUpdateInput = {};
-    if (input.name !== undefined) data.name = input.name;
     if (input.description !== undefined) data.description = input.description;
-    if (input.itemType != null) data.itemType = input.itemType;
     if (input.priceCoins != null) data.priceCoins = input.priceCoins;
-    if (input.rewardDefinitionId != null) {
-      const reward = await prisma.rewardDefinition.findUnique({ where: { id: input.rewardDefinitionId } });
-      if (!reward) {
-        throw notFound("Recompensa da loja não encontrada");
-      }
-      validateShopReward(reward);
-      data.rewardDefinitionId = reward.id;
-    }
     if (input.active != null) data.active = input.active;
+    // Nome, tipo e recompensa dos itens do sistema são fixos (o deploy os reaplica).
+    if (!item.system) {
+      if (input.name !== undefined && input.name !== item.name) {
+        await ensureNameAvailable(input.name, item.id);
+        data.name = input.name;
+      }
+      if (input.itemType != null) data.itemType = input.itemType;
+      if (input.rewardDefinitionId != null) data.rewardDefinitionId = (await shopReward(input.rewardDefinitionId)).id;
+    }
 
     res.json(toShopItemResponse(await prisma.shopItem.update({ where: { id }, data, include })));
   }),
 );
 
-shopRouter.delete("/admin/:id", requireAdmin, () => {
-  throw badRequest("Os itens da loja são fixos do sistema e não podem ser removidos");
-});
+shopRouter.delete(
+  "/admin/:id",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const item = await prisma.shopItem.findUnique({ where: { id: parseId(req.params.id) } });
+    if (!item) {
+      throw notFound("Item da loja não encontrado");
+    }
+    if (item.system) {
+      throw badRequest("Os itens fixos da loja não podem ser removidos. Você pode desativá-los.");
+    }
+    await prisma.shopItem.delete({ where: { id: item.id } });
+    res.status(204).end();
+  }),
+);
+
+/** Quantas figurinhas o jogador ainda pode comprar hoje. */
+shopRouter.get(
+  "/limits",
+  asyncHandler(async (req, res) => {
+    const settings = await getSettings(prisma);
+    const bought = await prisma.userClaim.count({
+      where: { userId: currentUser(req).id, kind: STICKER_PURCHASE, periodKey: dayKeyInTimeZone(new Date(), env.timezone) },
+    });
+    res.json({ stickerLimitPerDay: settings.shopStickerLimitPerDay, stickersBoughtToday: bought });
+  }),
+);
 
 shopRouter.post(
   "/buy/:id",
@@ -91,9 +176,21 @@ shopRouter.post(
       const settings = await getSettings(tx);
       await ensureRewardIsUseful(tx, user, reward, settings);
 
+      // Limite diário de figurinhas compradas: a loja complementa, não substitui o jogo.
+      if (isStickerReward(reward.rewardType) && settings.shopStickerLimitPerDay > 0) {
+        const dayKey = dayKeyInTimeZone(new Date(), env.timezone);
+        const bought = await tx.userClaim.count({ where: { userId, kind: STICKER_PURCHASE, periodKey: dayKey } });
+        if (bought >= settings.shopStickerLimitPerDay) {
+          throw badRequest(`Você já comprou ${settings.shopStickerLimitPerDay} figurinha(s) hoje. Jogue para ganhar mais ou volte amanhã!`);
+        }
+        await tx.userClaim.create({ data: { userId, kind: STICKER_PURCHASE, code: `n${bought + 1}`, periodKey: dayKey } });
+      }
+
       const wallet = { ...user, coins: user.coins - item.priceCoins };
       const applied = await applyReward(tx, wallet, reward, settings);
-      const saved = await tx.user.update({ where: { id: userId }, data: walletData(wallet) });
+      await tx.user.update({ where: { id: userId }, data: walletData(wallet) });
+      const unlockedAchievements = await checkAchievements(tx, userId);
+      const saved = await tx.user.findUniqueOrThrow({ where: { id: userId } });
 
       return {
         item: toShopItemResponse(item),
@@ -101,11 +198,19 @@ shopRouter.post(
         characterId: applied.characterId,
         characterName: applied.characterName,
         characterRarity: applied.characterRarity,
+        characterImageUrl: applied.characterImageUrl,
         characterUnlocked: applied.characterUnlocked,
+        duplicate: applied.duplicate,
+        unlockedAchievements,
         userCoins: saved.coins,
         extraLifeBoosts: saved.extraLifeBoosts,
         extraTimeBoosts: saved.extraTimeBoosts,
         doubleXpBoosts: saved.doubleXpBoosts,
+        hintBoosts: saved.hintBoosts,
+        streakFreezes: saved.streakFreezes,
+        ...helperCounts(saved),
+        cosmeticId: applied.cosmeticId,
+        cosmeticName: applied.cosmeticName,
       };
     });
 

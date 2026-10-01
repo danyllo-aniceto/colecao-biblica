@@ -3,6 +3,7 @@ import type { Role } from "@prisma/client";
 import type { Db } from "../db/prisma";
 import { ensureFixedRewards, ensureFixedShopItems } from "./rewards";
 import { ensureDefaultSettings } from "./settings";
+import { ensureDefaultCosmetics, ensureDefaultPassTiers } from "./default-cosmetics";
 
 type SeedOptions = {
   demoData: boolean;
@@ -121,4 +122,6 @@ export async function runSeed(db: Db, options: SeedOptions) {
 
   await ensureFixedRewards(db);
   await ensureFixedShopItems(db);
+  await ensureDefaultCosmetics(db);
+  await ensureDefaultPassTiers(db);
 }

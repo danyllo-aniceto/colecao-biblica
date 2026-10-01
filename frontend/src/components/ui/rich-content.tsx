@@ -14,7 +14,7 @@ function looksLikeHtml(value: string) {
 export function RichContent({ value, className }: RichContentProps) {
   const content = value?.trim() ?? '';
   if (!content) {
-    return <p className="text-sm text-[var(--text-secondary)]">Sem conteúdo.</p>;
+    return <p className="text-sm text-muted">Sem conteúdo.</p>;
   }
 
   if (looksLikeHtml(content)) {
@@ -24,16 +24,11 @@ export function RichContent({ value, className }: RichContentProps) {
       ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|data):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i,
     });
 
-    return (
-      <div
-        className={className}
-        dangerouslySetInnerHTML={{ __html: sanitized }}
-      />
-    );
+    return <div className={`rich-content ${className ?? ''}`} dangerouslySetInnerHTML={{ __html: sanitized }} />;
   }
 
   return (
-    <div className={className}>
+    <div className={`rich-content ${className ?? ''}`}>
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
     </div>
   );

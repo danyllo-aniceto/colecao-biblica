@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { HELPERS, type HelperField } from "../services/helpers";
 import bcrypt from "bcryptjs";
 import type { Prisma, User } from "@prisma/client";
 import { prisma } from "../db/prisma";
@@ -173,6 +174,41 @@ usersRouter.put(
     }
 
     res.json(toUserResponse(await prisma.user.update({ where: { id: target.id }, data })));
+  }),
+);
+
+const grantSchema = z.object({
+  coins: z.number().int().min(-1_000_000).max(1_000_000).optional(),
+  extraLifeBoosts: z.number().int().min(-100).max(100).optional(),
+  extraTimeBoosts: z.number().int().min(-100).max(100).optional(),
+  doubleXpBoosts: z.number().int().min(-100).max(100).optional(),
+  hintBoosts: z.number().int().min(-100).max(100).optional(),
+  streakFreezes: z.number().int().min(-100).max(100).optional(),
+  ...Object.fromEntries(HELPERS.map((helper) => [helper.field, z.number().int().min(-100).max(100).optional()])),
+}) as z.ZodType<Partial<Record<"coins" | "extraLifeBoosts" | "extraTimeBoosts" | "doubleXpBoosts" | "hintBoosts" | "streakFreezes" | HelperField, number>>>;
+
+/** Admin ajusta o saldo de um jogador (valores somados; nada fica negativo). Útil para suporte e eventos. */
+usersRouter.post(
+  "/:id/grant",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const input = grantSchema.parse(req.body);
+    const target = await getActiveUser(parseId(req.params.id));
+    const add = (current: number, delta?: number) => Math.max(0, current + (delta ?? 0));
+    const updated = await prisma.user.update({
+      where: { id: target.id },
+      data: {
+        coins: add(target.coins, input.coins),
+        extraLifeBoosts: add(target.extraLifeBoosts, input.extraLifeBoosts),
+        extraTimeBoosts: add(target.extraTimeBoosts, input.extraTimeBoosts),
+        doubleXpBoosts: add(target.doubleXpBoosts, input.doubleXpBoosts),
+        hintBoosts: add(target.hintBoosts, input.hintBoosts),
+        streakFreezes: add(target.streakFreezes, input.streakFreezes),
+        ...Object.fromEntries(HELPERS.map((helper) => [helper.field, add(target[helper.field], input[helper.field])])),
+        updatedBy: currentUser(req).email,
+      },
+    });
+    res.json(toUserResponse(updated));
   }),
 );
 

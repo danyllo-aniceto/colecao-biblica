@@ -30,6 +30,35 @@ export const requiredText = (max?: number) => {
 /** Texto opcional em atualizações: se vier, não pode ser vazio. */
 export const optionalText = (max?: number) => requiredText(max).optional();
 
+/** Texto sem as tags HTML (o editor rico salva "<p></p>" quando está vazio). */
+export function plainText(value: string) {
+  return value
+    .replace(/<img\b[^>]*>/gi, " [imagem] ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Conteúdo do editor rico obrigatório: não aceita só tags vazias. */
+export const richText = (message = "não pode ficar em branco") =>
+  z.string().refine((value) => plainText(value).length > 0, { message });
+
+/**
+ * Campo opcional em atualizações: ausente não altera; null ou texto vazio limpa
+ * (vira null no banco). Assim o admin consegue apagar um campo pelo painel.
+ */
+export const clearableText = (max?: number) =>
+  z
+    .union([z.string(), z.null()])
+    .optional()
+    .transform((value) => {
+      if (value === undefined) return undefined;
+      const trimmed = value?.trim() ?? "";
+      return trimmed && plainText(trimmed) ? trimmed : null;
+    })
+    .refine((value) => !max || !value || value.length <= max, { message: `deve ter no máximo ${max} caracteres` });
+
 export const optionLetter = z
   .string()
   .trim()
