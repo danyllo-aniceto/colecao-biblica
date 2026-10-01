@@ -11,11 +11,14 @@ import { Input } from '@/components/ui/input';
 import { LoadingState } from '@/components/ui/spinner';
 import { errorMessage, useToast } from '@/components/ui/toast';
 import { Tooltip } from '@/components/ui/tooltip';
-import { Alert, LevelBadge } from '@/components/game/game-ui';
+import { Alert } from '@/components/game/game-ui';
+import { PlayerAvatar, PlayerName, ReactionGlyph } from '@/components/game/player-look';
+import { useOpenProfile } from '@/components/user/rewards/player-profile-modal';
+import EmojiEmotionsRoundedIcon from '@mui/icons-material/EmojiEmotionsRounded';
 import { TradeCard } from '@/components/user/social/trade-card';
 import { TradeComposer } from '@/components/user/social/trade-composer';
 import { cn } from '@/lib/cn';
-import { blockUser, getChat, removeFriend, sendChatMessage, type ChatMessage, type Friend, type TradeResponse } from '@/lib/social-api';
+import { blockUser, getChat, listMyReactions, removeFriend, sendChatMessage, sendChatReaction, type ChatMessage, type ChatReaction, type Friend, type TradeResponse } from '@/lib/social-api';
 
 const POLL_MS = 5000;
 
@@ -57,7 +60,7 @@ export function ChatView({
   onTradeDone,
 }: {
   meId: number;
-  friend: Pick<Friend, 'userId' | 'name' | 'level'>;
+  friend: Pick<Friend, 'userId' | 'name' | 'level' | 'look'>;
   onClose: () => void;
   onFriendGone: () => void;
   onTradeDone: (result: TradeResponse) => void;
@@ -73,6 +76,9 @@ export function ChatView({
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [composing, setComposing] = useState(false);
+  const [reactions, setReactions] = useState<ChatReaction[] | null>(null);
+  const [picking, setPicking] = useState(false);
+  const openProfile = useOpenProfile();
   const listRef = useRef<HTMLDivElement | null>(null);
   const stickToBottom = useRef(true);
   const keepOffset = useRef<number | null>(null);
@@ -159,6 +165,29 @@ export function ChatView({
     }
   }
 
+  async function togglePicker() {
+    setPicking((current) => !current);
+    if (reactions === null) {
+      try {
+        setReactions(await listMyReactions());
+      } catch (reason) {
+        toast.error(errorMessage(reason));
+        setReactions([]);
+      }
+    }
+  }
+
+  async function react(reaction: ChatReaction) {
+    setPicking(false);
+    try {
+      const message = await sendChatReaction(friend.userId, reaction.id);
+      stickToBottom.current = true;
+      setMessages((current) => merge(current, [message]));
+    } catch (reason) {
+      toast.error(errorMessage(reason));
+    }
+  }
+
   async function unfriend() {
     const ok = await confirm({
       title: `Desfazer amizade com ${friend.name}?`,
@@ -207,8 +236,12 @@ export function ChatView({
           <IconAction label="Voltar" onClick={onClose}>
             <ArrowBackRoundedIcon />
           </IconAction>
-          <LevelBadge level={friend.level} />
-          <h2 className="min-w-0 flex-1 truncate font-display text-lg font-bold text-ink">{friend.name}</h2>
+          <button type="button" onClick={() => openProfile(friend.userId)} className="flex min-w-0 flex-1 items-center gap-2 text-left" aria-label={`Ver perfil de ${friend.name}`}>
+            <PlayerAvatar look={friend.look} name={friend.name} size="sm" />
+            <h2 className="min-w-0 flex-1">
+              <PlayerName name={friend.name} look={friend.look} nameClassName="text-lg" />
+            </h2>
+          </button>
           <IconAction label="Propor troca" onClick={() => setComposing(true)}>
             <SwapHorizRoundedIcon />
           </IconAction>
@@ -258,7 +291,12 @@ export function ChatView({
               <div key={message.id}>
                 {showDay ? <p className="my-3 text-center text-xs font-bold uppercase tracking-wider text-muted">{day(message.createdAt)}</p> : null}
                 <div className={cn('flex', mine ? 'justify-end' : 'justify-start')}>
-                  {message.trade ? (
+                  {message.reaction ? (
+                    <div className={cn('flex flex-col', mine ? 'items-end' : 'items-start')}>
+                      <ReactionGlyph reaction={message.reaction} size="lg" animate />
+                      <p className="text-[11px] text-muted">{time(message.createdAt)}</p>
+                    </div>
+                  ) : message.trade ? (
                     <div className="w-full max-w-xs">
                       <TradeCard
                         trade={message.trade}
@@ -288,8 +326,26 @@ export function ChatView({
         </div>
 
         <footer className="border-t border-edge bg-surface p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          {chatEnabled && picking ? (
+            <div className="animate-pop-in mb-3 rounded-2xl border border-edge bg-surface-2 p-2" role="listbox" aria-label="Suas reações">
+              {reactions === null ? <LoadingState label="Abrindo reações..." /> : null}
+              {reactions?.length === 0 ? <p className="p-2 text-sm text-muted">Você ainda não tem reações. Compre na loja (aba Visual).</p> : null}
+              <div className="flex flex-wrap gap-1">
+                {reactions?.map((reaction) => (
+                  <Tooltip key={reaction.id} content={reaction.name}>
+                    <button type="button" role="option" aria-selected={false} aria-label={reaction.name} onClick={() => void react(reaction)} className="rounded-xl p-1 transition hover:scale-110 hover:bg-surface-3">
+                      <ReactionGlyph reaction={reaction} size="md" />
+                    </button>
+                  </Tooltip>
+                ))}
+              </div>
+            </div>
+          ) : null}
           {chatEnabled ? (
             <form onSubmit={(event) => void send(event)} className="flex gap-2">
+              <IconAction label="Reações" onClick={() => void togglePicker()}>
+                <EmojiEmotionsRoundedIcon />
+              </IconAction>
               <Input value={text} onChange={(event) => setText(event.target.value)} maxLength={500} placeholder="Escreva uma mensagem" aria-label="Mensagem" className="flex-1" />
               <Button type="submit" loading={sending} disabled={!text.trim()} aria-label="Enviar">
                 {sending ? null : <SendRoundedIcon fontSize="small" />}

@@ -1,11 +1,12 @@
-import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
-import ContentCutRoundedIcon from '@mui/icons-material/ContentCutRounded';
-import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
-import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
 import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
 import { Button } from '@/components/ui/button';
 import { CoinIcon } from '@/components/game/game-ui';
+import { rewardVisual } from '@/lib/reward-visual';
+import LocalFireDepartmentRoundedIcon from '@mui/icons-material/LocalFireDepartmentRounded';
+import CelebrationRoundedIcon from '@mui/icons-material/CelebrationRounded';
+import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
+import PaletteRoundedIcon from '@mui/icons-material/PaletteRounded';
 import { StickerCard } from '@/components/game/sticker-card';
 import type { StickerRarity } from '@/lib/admin-api';
 import type { QuizMatchResult } from '@/lib/user-api';
@@ -97,9 +98,43 @@ export function MatchResult({
         </div>
 
         {leveledUp ? (
-          <div className="relative mt-3 flex items-center justify-center gap-2 rounded-2xl bg-primary/20 p-3 font-display font-bold text-ink">
-            <TrendingUpRoundedIcon className="text-primary-strong dark:text-primary" />
-            Subiu para o nível {result.userLevel}!
+          <div className="relative mt-3 flex flex-col items-center justify-center gap-1 rounded-2xl bg-primary/20 p-3 font-display font-bold text-ink">
+            <span className="flex items-center gap-2">
+              <TrendingUpRoundedIcon className="text-primary-strong dark:text-primary" />
+              Subiu para o nível {result.userLevel}!
+            </span>
+            {result.chestsPending ? (
+              <span className="flex items-center gap-1.5 text-sm text-primary-strong dark:text-primary">
+                <Inventory2RoundedIcon fontSize="small" /> Um baú de nível está esperando por você no início.
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+
+        {(result.bestCombo ?? 0) >= 3 || (result.coinMultiplier ?? 1) > 1 || result.eventName ? (
+          <div className="relative mt-3 flex flex-wrap justify-center gap-2 text-sm font-bold">
+            {(result.bestCombo ?? 0) >= 3 ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-danger/15 px-3 py-1 text-danger">
+                <LocalFireDepartmentRoundedIcon fontSize="small" /> {result.bestCombo} seguidas
+                {result.comboBonusPoints ? ` · +${result.comboBonusPoints} pts` : ''}
+              </span>
+            ) : null}
+            {(result.coinMultiplier ?? 1) > 1 ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/20 px-3 py-1 text-primary-strong dark:text-primary">
+                <CoinIcon className="h-4 w-4" /> Moedas x{result.coinMultiplier}
+              </span>
+            ) : null}
+            {result.eventName ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-violet/15 px-3 py-1 text-violet-strong dark:text-violet">
+                <CelebrationRoundedIcon fontSize="small" /> Bônus do evento {result.eventName}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+
+        {result.unlockedCosmetics?.length ? (
+          <div className="relative mt-3 rounded-2xl bg-accent/15 p-3 text-sm font-bold text-accent-strong dark:text-accent">
+            <PaletteRoundedIcon fontSize="small" /> Item novo liberado: {result.unlockedCosmetics.map((item) => item.name).join(', ')}. Equipe em Perfil → Visual.
           </div>
         ) : null}
 
@@ -159,9 +194,6 @@ export function MatchResult({
 }
 
 function RewardIcon({ type }: { type?: string | null }) {
-  if (type === 'COINS') return <CoinIcon className="h-12 w-12" />;
-  if (type === 'FIFTY_FIFTY') return <ContentCutRoundedIcon className="text-violet" sx={{ fontSize: 48 }} />;
-  if (type === 'EXTRA_LIFE') return <FavoriteRoundedIcon className="text-danger" sx={{ fontSize: 48 }} />;
-  if (type === 'EXTRA_TIME') return <TimerRoundedIcon className="text-info" sx={{ fontSize: 48 }} />;
-  return <BoltRoundedIcon className="text-primary" sx={{ fontSize: 48 }} />;
+  const { icon, tint } = rewardVisual(type, 44);
+  return <span className={cn('flex h-full w-full items-center justify-center rounded-3xl text-5xl', tint)}>{icon}</span>;
 }

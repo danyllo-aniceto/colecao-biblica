@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Pagination } from '@/components/ui/pagination';
 import { LoadingState, Spinner } from '@/components/ui/spinner';
 import { errorMessage, useToast } from '@/components/ui/toast';
-import { Alert, CoinIcon, EmptyState, LevelBadge } from '@/components/game/game-ui';
+import { Alert, CoinIcon, EmptyState } from '@/components/game/game-ui';
+import { PlayerChip } from '@/components/user/rewards/player-profile-modal';
 import { cn } from '@/lib/cn';
 import { claimLeague, getLeague, type LeaguePage } from '@/lib/user-api';
 
@@ -107,11 +108,8 @@ export function LeaguePanel({ currentUserId, onClaimed }: { currentUserId?: numb
               return (
                 <li key={entry.userId} className={cn('flex items-center gap-3 px-4 py-3', isMe && 'bg-accent/10')}>
                   <span className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-display font-bold', entry.position <= 3 ? MEDALS[entry.position - 1] : 'text-muted')}>{entry.position}</span>
-                  <LevelBadge level={entry.level} size="sm" />
-                  <div className="min-w-0 flex-1">
-                    <p className={cn('truncate font-display font-semibold', isMe ? 'text-accent-strong dark:text-accent' : 'text-ink')}>{isMe ? `${entry.userName} (você)` : entry.userName}</p>
-                    <p className="text-xs font-semibold text-muted">{entry.matches} partida(s)</p>
-                  </div>
+                  <PlayerChip userId={entry.userId} name={entry.userName} look={entry.look} suffix={isMe ? '(você)' : undefined} />
+                  <span className="hidden text-xs font-semibold text-muted sm:inline">{entry.matches} partida(s)</span>
                   <span className="font-display font-bold text-ink">{entry.score.toLocaleString('pt-BR')}</span>
                 </li>
               );

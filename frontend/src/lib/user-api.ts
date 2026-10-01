@@ -1,6 +1,7 @@
 import { apiRequest, apiRequestVoid } from '@/lib/http';
 import type { UserProfile } from '@/types/auth';
 import type { PaginatedResponse, StickerRarity, Testament } from '@/lib/admin-api';
+import type { PlayerLook, UnlockedCosmetic } from '@/lib/rewards-api';
 
 export type UserSticker = {
   characterId: number;
@@ -22,6 +23,7 @@ export type RankingEntry = {
   userId: number;
   userName: string;
   level: number;
+  look?: PlayerLook | null;
   totalScore: number;
   xp: number;
 };
@@ -88,8 +90,15 @@ export type QuizQuestionView = {
   optionB: string;
   optionC: string;
   optionD: string;
-  /** Alternativas eliminadas pela dica 50/50. */
+  /** Alternativas eliminadas pela dica 50/50 ou já tentadas com a segunda chance. */
   removedOptions?: string[];
+  /** Ampulheta: sem prazo nesta pergunta. */
+  timeFrozen?: boolean;
+  hasVerseHint?: boolean;
+  verseHint?: string | null;
+  /** Voz da multidão: % por alternativa. */
+  crowd?: Record<'A' | 'B' | 'C' | 'D', number> | null;
+  secondChanceArmed?: boolean;
 };
 
 export type QuizSessionStatus = {
@@ -106,9 +115,27 @@ export type QuizSessionStatus = {
   extraLifeUsed: boolean;
   xpMultiplierUsed: boolean;
   fiftyFiftyUsed?: boolean;
+  skipUsed?: boolean;
+  secondChanceUsed?: boolean;
+  crowdUsed?: boolean;
+  verseHintUsed?: boolean;
+  freezeUsed?: boolean;
+  doubleCoinsUsed?: boolean;
+  comboShieldUsed?: boolean;
+  comboShieldArmed?: boolean;
+  comboStreak?: number;
+  bestCombo?: number;
+  comboPoints?: number;
   characterId?: number | null;
   currentQuestion?: QuizQuestionView | null;
 };
+
+/** Ajudas novas: rota no servidor de cada uma. */
+export type QuizHelperAction = 'skip' | 'second-chance' | 'crowd' | 'verse-hint' | 'freeze' | 'double-coins' | 'combo-shield';
+
+export async function applyQuizHelper(sessionId: number, action: QuizHelperAction): Promise<QuizSessionStatus> {
+  return apiRequest<QuizSessionStatus>(`/quiz/sessions/${sessionId}/${action}`, { method: 'POST' }, 'Não foi possível usar a ajuda.');
+}
 
 export type UnlockedAchievement = { code: string; title: string; coins: number };
 
@@ -138,6 +165,13 @@ export type QuizMatchResult = {
   /** Prêmios até a figurinha garantida (null quando a garantia está desligada). */
   pityRemaining?: number | null;
   unlockedAchievements?: UnlockedAchievement[];
+  unlockedCosmetics?: UnlockedCosmetic[];
+  bestCombo?: number;
+  comboBonusPoints?: number;
+  coinMultiplier?: number;
+  eventName?: string | null;
+  levelUp?: boolean;
+  chestsPending?: number;
   userXp: number;
   userLevel: number;
   userCoins: number;
@@ -146,6 +180,13 @@ export type QuizMatchResult = {
 };
 
 export type AnswerQuizQuestionResult = {
+  /** Segunda chance: errou a primeira vez, a alternativa saiu e pode tentar de novo. */
+  retry?: boolean;
+  removedOption?: string;
+  session?: QuizSessionStatus;
+  comboStreak?: number;
+  comboBonusPoints?: number;
+  comboShieldSpent?: boolean;
   correct: boolean;
   timedOut: boolean;
   livesRemaining: number;
@@ -284,6 +325,13 @@ export type ShopPurchaseResult = {
   doubleXpBoosts: number;
   hintBoosts: number;
   streakFreezes: number;
+  skipBoosts?: number;
+  secondChanceBoosts?: number;
+  crowdBoosts?: number;
+  verseHintBoosts?: number;
+  freezeTimeBoosts?: number;
+  doubleCoinsBoosts?: number;
+  comboShieldBoosts?: number;
 };
 
 export async function getGameRules(): Promise<GameRules> {
@@ -421,7 +469,7 @@ export type Mission = {
   endsAt: string;
 };
 
-export type LeagueEntry = { position: number; userId: number; userName: string; level: number; score: number; matches: number; prize: number };
+export type LeagueEntry = { position: number; userId: number; userName: string; level: number; look?: PlayerLook | null; score: number; matches: number; prize: number };
 
 export type LeaguePage = PaginatedResponse<LeagueEntry> & {
   weekKey: string;
@@ -431,7 +479,7 @@ export type LeaguePage = PaginatedResponse<LeagueEntry> & {
   lastWeek: { weekKey: string; position: number | null; prize: number; claimed: boolean };
 };
 
-export type ChallengeEntry = { position: number; userId: number; userName: string; level: number; correctAnswers: number; questionsAnswered: number; seconds: number | null };
+export type ChallengeEntry = { position: number; userId: number; userName: string; level: number; look?: PlayerLook | null; correctAnswers: number; questionsAnswered: number; seconds: number | null };
 
 export type DailyChallenge = PaginatedResponse<ChallengeEntry> & {
   dayKey: string;

@@ -9,6 +9,8 @@ import { BoostChips, CoinChip, LevelBadge, ProgressBar, levelProgress } from '@/
 import { InstallAppButton } from '@/components/pwa/install-app-button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import type { UserProfile } from '@/types/auth';
+import { PlayerAvatar } from '@/components/game/player-look';
+import type { PlayerLook } from '@/lib/rewards-api';
 
 export type SectionId = 'home' | 'stickers' | 'quiz' | 'shop' | 'ranking' | 'friends' | 'settings';
 
@@ -34,21 +36,15 @@ function NoticeDot({ value, className }: { value: number; className?: string }) 
   );
 }
 
-function initials(name?: string) {
-  if (!name) {
-    return '?';
-  }
-  const parts = name.trim().split(/\s+/);
-  return (parts[0][0] + (parts.length > 1 ? parts.at(-1)![0] : '')).toUpperCase();
-}
-
 /** Barra do jogador: nível, XP, moedas e bônus sempre à vista. */
 export function PlayerHud({
   profile,
   section,
   onNavigate,
   socialNotices = 0,
+  look = null,
 }: {
+  look?: PlayerLook | null;
   profile: UserProfile | null;
   section: SectionId;
   onNavigate: (id: SectionId) => void;
@@ -66,7 +62,9 @@ export function PlayerHud({
           <LevelBadge level={profile?.level ?? 1} />
           <div className="min-w-0 flex-1 sm:max-w-xs">
             <div className="flex items-baseline justify-between gap-2">
-              <span className="truncate font-display text-base font-semibold text-ink">{profile?.name ?? 'Jogador'}</span>
+              <span className="truncate font-display text-base font-semibold text-ink" style={look?.nameColor ? { color: look.nameColor } : undefined}>
+                {profile?.name ?? 'Jogador'}
+              </span>
               <span className="shrink-0 text-xs font-bold text-muted">
                 {progress.current}/{progress.needed} XP
               </span>
@@ -101,12 +99,9 @@ export function PlayerHud({
             onClick={() => onNavigate('settings')}
             aria-label="Meu perfil"
             aria-current={section === 'settings' ? 'page' : undefined}
-            className={cn(
-              'flex h-10 w-10 items-center justify-center rounded-2xl font-display text-sm font-bold transition',
-              section === 'settings' ? 'bg-primary text-on-primary' : 'bg-accent/20 text-accent-strong hover:bg-accent/30 dark:text-accent',
-            )}
+            className={cn('flex items-center justify-center rounded-full transition', section === 'settings' && 'ring-4 ring-primary/50')}
           >
-            {initials(profile?.name)}
+            <PlayerAvatar look={look} name={profile?.name} size="md" />
           </button>
         </div>
       </div>

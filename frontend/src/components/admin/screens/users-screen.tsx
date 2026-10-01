@@ -23,6 +23,8 @@ import { createUser, deleteUser, grantUser, listUsers, updateUser, type GrantPay
 import type { UserProfile } from '@/types/auth';
 import { AdminPanel, Cell, DataTable, IconAction, Row, SearchInput } from '../admin-ui';
 import { useDebouncedValue, usePagedList } from '../use-paged-list';
+import { QUIZ_HELPERS } from '@/lib/quiz-helpers';
+import { rewardVisual } from '@/lib/reward-visual';
 
 const fetchUsers = (params: { page: number; size: number; search?: string; role?: string }) =>
   listUsers({ page: params.page, size: params.size, role: params.role, ...(params.search?.includes('@') ? { email: params.search } : { name: params.search }) });
@@ -236,6 +238,8 @@ const GRANT_FIELDS: Array<{ key: keyof GrantPayload; label: string; icon: React.
   { key: 'extraTimeBoosts', label: 'Tempo extra', icon: <TimerRoundedIcon className="text-info" fontSize="small" /> },
   { key: 'doubleXpBoosts', label: 'XP em dobro', icon: <BoltRoundedIcon className="text-primary" fontSize="small" /> },
   { key: 'hintBoosts', label: 'Dicas 50/50', icon: <ContentCutRoundedIcon className="text-violet" fontSize="small" /> },
+  { key: 'streakFreezes', label: 'Protetores de sequência', icon: <span className="text-info">{rewardVisual('STREAK_FREEZE', 20).icon}</span> },
+  ...QUIZ_HELPERS.map((helper) => ({ key: helper.field, label: helper.name, icon: <span className={`flex ${rewardVisual(helper.rewardType, 20).tint} rounded-lg`}>{rewardVisual(helper.rewardType, 20).icon}</span> })),
 ];
 
 function GrantModal({ user, onClose, onSaved }: { user: UserProfile; onClose: () => void; onSaved: () => void }) {
@@ -266,16 +270,10 @@ function GrantModal({ user, onClose, onSaved }: { user: UserProfile; onClose: ()
     }
   }
 
-  const current: Record<keyof GrantPayload, number> = {
-    coins: user.coins ?? 0,
-    extraLifeBoosts: user.extraLifeBoosts ?? 0,
-    extraTimeBoosts: user.extraTimeBoosts ?? 0,
-    doubleXpBoosts: user.doubleXpBoosts ?? 0,
-    hintBoosts: user.hintBoosts ?? 0,
-  };
+  const current = Object.fromEntries(GRANT_FIELDS.map((field) => [field.key, (user[field.key as keyof UserProfile] as number | undefined) ?? 0])) as Record<keyof GrantPayload, number>;
 
   return (
-    <Modal open size="sm" title={`Ajustar saldo de ${user.name}`} description="Use valores positivos para dar e negativos para tirar. Nada fica abaixo de zero." onClose={saving ? undefined : onClose}>
+    <Modal open size="md" title={`Ajustar saldo de ${user.name}`} description="Use valores positivos para dar e negativos para tirar. Nada fica abaixo de zero." onClose={saving ? undefined : onClose}>
       <form className="space-y-3" onSubmit={submit}>
         {GRANT_FIELDS.map((field) => (
           <div key={field.key} className="flex items-center gap-3">

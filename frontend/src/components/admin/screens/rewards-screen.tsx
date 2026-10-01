@@ -27,11 +27,23 @@ import {
   type StickerRarity,
 } from '@/lib/admin-api';
 import { REWARD_TYPE_LABELS } from '@/lib/labels';
+import { listCosmeticsAdmin } from '@/lib/admin-rewards-api';
+import type { CosmeticType } from '@/lib/rewards-api';
+import { COSMETIC_TYPE_LABELS } from '@/components/user/rewards/cosmetic-preview';
 import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
 import { AdminPanel, Cell, DataTable, IconAction, Row, StatusBadge } from '../admin-ui';
 
 /** Campo de quantidade de cada tipo (os outros tipos não têm quantidade). */
-const AMOUNT_FIELD: Partial<Record<RewardType, { key: 'coinAmount' | 'extraLives' | 'extraTimeSeconds' | 'hintAmount'; label: string; max: number }>> = {
+const HELPER_AMOUNT = { key: 'boostAmount', label: 'Quantidade entregue', max: 20 } as const;
+
+const AMOUNT_FIELD: Partial<Record<RewardType, { key: 'coinAmount' | 'extraLives' | 'extraTimeSeconds' | 'hintAmount' | 'boostAmount'; label: string; max: number }>> = {
+  SKIP_QUESTION: HELPER_AMOUNT,
+  SECOND_CHANCE: HELPER_AMOUNT,
+  CROWD_HELP: HELPER_AMOUNT,
+  VERSE_HINT: HELPER_AMOUNT,
+  FREEZE_TIME: HELPER_AMOUNT,
+  DOUBLE_COINS: HELPER_AMOUNT,
+  COMBO_SHIELD: HELPER_AMOUNT,
   COINS: { key: 'coinAmount', label: 'Moedas entregues', max: 10_000 },
   EXTRA_LIFE: { key: 'extraLives', label: 'Vidas extras entregues', max: 20 },
   EXTRA_TIME: { key: 'extraTimeSeconds', label: 'Bônus de tempo extra entregues', max: 20 },
@@ -47,6 +59,14 @@ const TYPE_HELP: Record<RewardType, string> = {
   FIFTY_FIFTY: 'Bônus guardado no inventário: elimina duas alternativas erradas.',
   STREAK_FREEZE: 'Guardado no inventário: salva a sequência do prêmio diário quando o jogador esquece um dia.',
   COINS: 'Moedas entregues na hora. Não pode ser vendida na loja.',
+  SKIP_QUESTION: 'Ajuda guardada: troca a pergunta por outra sem perder vida.',
+  SECOND_CHANCE: 'Ajuda guardada: o primeiro erro na pergunta não conta e o jogador tenta de novo.',
+  CROWD_HELP: 'Ajuda guardada: mostra o % de jogadores em cada alternativa.',
+  VERSE_HINT: 'Ajuda guardada: mostra a referência bíblica da pergunta (só funciona em perguntas com referência).',
+  FREEZE_TIME: 'Ajuda guardada: congela o cronômetro da pergunta.',
+  DOUBLE_COINS: 'Ajuda guardada: a partida rende moedas multiplicadas (multiplicador em Configurações).',
+  COMBO_SHIELD: 'Ajuda guardada: um erro não zera a sequência de acertos.',
+  COSMETIC: 'Item visual (ícone, moldura, título, cor do nome ou reação). Se o jogador já tiver, vira 50 moedas.',
 };
 
 export function rewardSummary(reward: AdminReward) {
@@ -67,6 +87,10 @@ export function rewardSummary(reward: AdminReward) {
       return '1 protetor de sequência';
     case 'COINS':
       return `${reward.coinAmount ?? 0} moedas`;
+    case 'COSMETIC':
+      return 'Item visual';
+    default:
+      return `${reward.boostAmount ?? 1}x ${REWARD_TYPE_LABELS[reward.rewardType].toLowerCase()}`;
   }
 }
 
@@ -221,6 +245,15 @@ function RewardModal({ reward, totalWeight, onClose, onSaved }: { reward: AdminR
   const [active, setActive] = useState(reward?.active ?? true);
   const [saving, setSaving] = useState(false);
   const [characters, setCharacters] = useState<CharacterOption[]>([]);
+  const [cosmeticId, setCosmeticId] = useState(reward?.cosmeticId ? String(reward.cosmeticId) : '');
+  const [cosmetics, setCosmetics] = useState<Array<{ id: number; name: string; type: string }>>([]);
+
+  useEffect(() => {
+    if (type === 'COSMETIC' && editableIdentity)
+      listCosmeticsAdmin({ page: 0, size: 100 })
+        .then((page) => setCosmetics(page.content))
+        .catch(() => setCosmetics([]));
+  }, [type, editableIdentity]);
 
   useEffect(() => {
     if (type === 'STICKER' && editableIdentity) listCharacterOptions().then(setCharacters).catch(() => setCharacters([]));
@@ -236,6 +269,10 @@ function RewardModal({ reward, totalWeight, onClose, onSaved }: { reward: AdminR
       toast.error('O peso no sorteio precisa ser maior que zero.');
       return;
     }
+    if (type === 'COSMETIC' && editableIdentity && !cosmeticId) {
+      toast.error('Escolha o item visual.');
+      return;
+    }
     if (type === 'STICKER' && editableIdentity && !rarity && !characterId) {
       toast.error('Escolha uma raridade ou um personagem para a figurinha.');
       return;
@@ -248,6 +285,7 @@ function RewardModal({ reward, totalWeight, onClose, onSaved }: { reward: AdminR
           rewardType: type,
           stickerRarity: type === 'STICKER' ? rarity || null : null,
           stickerCharacterId: type === 'STICKER' && characterId ? Number(characterId) : null,
+          cosmeticId: type === 'COSMETIC' && cosmeticId ? Number(cosmeticId) : null,
           amount: amountField ? Number(amount) : null,
           dropChance: weightNumber,
           active,
@@ -257,6 +295,7 @@ function RewardModal({ reward, totalWeight, onClose, onSaved }: { reward: AdminR
         await updateReward(reward.id, {
           ...(editableIdentity ? { name: name.trim() } : {}),
           ...(editableIdentity && type === 'STICKER' ? { stickerRarity: rarity || null, stickerCharacterId: characterId ? Number(characterId) : null } : {}),
+          ...(editableIdentity && type === 'COSMETIC' && cosmeticId ? { cosmeticId: Number(cosmeticId) } : {}),
           ...(amountField ? { [amountField.key]: Number(amount) } : {}),
           dropChance: weightNumber,
           active,
@@ -272,6 +311,19 @@ function RewardModal({ reward, totalWeight, onClose, onSaved }: { reward: AdminR
   }
 
   let typeFields: ReactNode = null;
+  if (type === 'COSMETIC' && editableIdentity) {
+    typeFields = (
+      <Field label="Item visual" hint="Cadastre os itens na tela Visual.">
+        <Select
+          aria-label="Item visual"
+          searchable
+          value={cosmeticId}
+          onChange={setCosmeticId}
+          options={[{ value: '', label: 'Escolha um item' }, ...cosmetics.map((item) => ({ value: String(item.id), label: `${item.name} (${COSMETIC_TYPE_LABELS[item.type as CosmeticType].one})` }))]}
+        />
+      </Field>
+    );
+  }
   if (type === 'STICKER') {
     typeFields = editableIdentity ? (
       <div className="grid gap-4 md:grid-cols-2">

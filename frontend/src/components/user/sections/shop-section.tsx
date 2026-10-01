@@ -1,37 +1,20 @@
-import type { ReactNode } from 'react';
-import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
-import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
-import ContentCutRoundedIcon from '@mui/icons-material/ContentCutRounded';
-import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
-import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
-import ShieldRoundedIcon from '@mui/icons-material/ShieldRounded';
+import { useState, type ReactNode } from 'react';
+import { Segmented } from '@/components/ui/segmented';
+import { CosmeticShop } from '@/components/user/rewards/cosmetic-shop';
+import type { UserProfile } from '@/types/auth';
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
-import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
 import { Button } from '@/components/ui/button';
 import { Alert, CoinChip, CoinIcon, EmptyState, SectionHeading } from '@/components/game/game-ui';
 import { cn } from '@/lib/cn';
+import { rewardVisual } from '@/lib/reward-visual';
 import type { StickerRarity } from '@/lib/admin-api';
 import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
 import type { GameRules, ShopItem } from '@/lib/user-api';
 
 /** Visual de cada item a partir da recompensa que ele entrega. */
 function describeItem(item: ShopItem): { rarity?: StickerRarity; icon: ReactNode; tint: string } {
-  switch (item.rewardType) {
-    case 'STICKER':
-      return { rarity: item.rewardRarity ?? 'COMMON', icon: <MenuBookRoundedIcon sx={{ fontSize: 40 }} />, tint: '' };
-    case 'STICKER_PACK':
-      return { icon: <CardGiftcardRoundedIcon sx={{ fontSize: 40 }} />, tint: 'bg-[linear-gradient(135deg,var(--violet),var(--info))] text-white' };
-    case 'EXTRA_LIFE':
-      return { icon: <FavoriteRoundedIcon sx={{ fontSize: 40 }} />, tint: 'bg-danger/15 text-danger' };
-    case 'EXTRA_TIME':
-      return { icon: <TimerRoundedIcon sx={{ fontSize: 40 }} />, tint: 'bg-info/15 text-info' };
-    case 'FIFTY_FIFTY':
-      return { icon: <ContentCutRoundedIcon sx={{ fontSize: 40 }} />, tint: 'bg-violet/15 text-violet' };
-    case 'STREAK_FREEZE':
-      return { icon: <ShieldRoundedIcon sx={{ fontSize: 40 }} />, tint: 'bg-info/15 text-info' };
-    default:
-      return { icon: <BoltRoundedIcon sx={{ fontSize: 40 }} />, tint: 'bg-primary/20 text-primary-strong dark:text-primary' };
-  }
+  if (item.rewardType === 'STICKER') return { rarity: item.rewardRarity ?? 'COMMON', ...rewardVisual('STICKER') , tint: '' };
+  return rewardVisual(item.rewardType);
 }
 
 function packOdds(rules: GameRules | null) {
@@ -48,28 +31,43 @@ type ShopSectionProps = {
   buyingItemId: number | null;
   error: string | null;
   onBuy: (item: ShopItem) => void;
+  profile: UserProfile | null;
+  onCoins: (coins: number) => void;
 };
 
-export function ShopSection({ items, coins, gameRules, buyingItemId, error, onBuy }: ShopSectionProps) {
+export function ShopSection({ items, coins, gameRules, buyingItemId, error, onBuy, profile, onCoins }: ShopSectionProps) {
+  const [tab, setTab] = useState<'items' | 'visual'>('items');
   const odds = packOdds(gameRules);
   const groups = [
     { title: 'Figurinhas', description: 'Sorteia uma figurinha que você ainda não tem.', items: items.filter((item) => item.itemType === 'STICKER') },
-    { title: 'Bônus para as partidas', description: 'Ficam guardados; use um de cada por partida.', items: items.filter((item) => item.itemType !== 'STICKER') },
+    { title: 'Ajudas para as partidas', description: 'Ficam guardadas; use uma de cada por partida.', items: items.filter((item) => item.itemType !== 'STICKER') },
   ].filter((group) => group.items.length > 0);
 
   return (
     <div className="space-y-6">
-      <SectionHeading title="Loja" subtitle="Troque suas moedas por figurinhas e bônus." action={<CoinChip value={coins} className="h-11 text-base" />} />
+      <SectionHeading title="Loja" subtitle="Troque suas moedas por figurinhas, ajudas e visual." action={<CoinChip value={coins} className="h-11 text-base" />} />
+
+      <Segmented
+        aria-label="Parte da loja"
+        value={tab}
+        onChange={setTab}
+        options={[
+          { value: 'items', label: 'Figurinhas e ajudas' },
+          { value: 'visual', label: 'Visual' },
+        ]}
+      />
+
+      {tab === 'visual' ? <CosmeticShop profile={profile} coins={coins} onCoins={onCoins} /> : null}
 
       {error ? <Alert tone="danger">{error}</Alert> : null}
 
-      {items.length === 0 && !error ? (
+      {tab === 'items' && items.length === 0 && !error ? (
         <EmptyState icon={<StorefrontRoundedIcon fontSize="large" />} title="A loja está vazia">
           Volte mais tarde.
         </EmptyState>
       ) : null}
 
-      {groups.map((group) => (
+      {tab === 'visual' ? null : groups.map((group) => (
         <section key={group.title} className="space-y-3">
           <div>
             <h3 className="font-display text-xl font-bold text-ink">{group.title}</h3>

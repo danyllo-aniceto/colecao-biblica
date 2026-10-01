@@ -590,6 +590,141 @@ input:-webkit-autofill:focus {
   animation: spin-slow 14s linear infinite;
 }
 
+/* ---------- Visual do jogador: molduras e títulos ---------- */
+.avatar-frame {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 9999px;
+}
+
+/* O fundo gira por baixo do ícone; o ícone fica por cima com um anel de folga. */
+.avatar-frame::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  z-index: -1;
+  background: var(--frame-bg, var(--edge-strong));
+  animation: spin-slow var(--frame-speed, 0s) linear infinite;
+}
+
+.frame-solid {
+  --frame-bg: var(--frame-color, var(--primary));
+}
+
+.frame-wood {
+  --frame-bg: repeating-linear-gradient(35deg, #7a4a24 0 6px, #a0693a 6px 11px, #8a5a2b 11px 15px);
+}
+
+.frame-silver {
+  --frame-bg: conic-gradient(#f4f6fb, #9aa4b8, #ffffff, #8a94ad, #eef1f8, #9aa4b8, #f4f6fb);
+  --frame-speed: 8s;
+}
+
+.frame-gold {
+  --frame-bg: conic-gradient(#fff3b0, #d98f00, #ffe08a, #b57200, #fff3b0, #d98f00, #fff3b0);
+  --frame-speed: 6s;
+}
+
+.frame-fire {
+  --frame-bg: conic-gradient(#ffd23f, #ff6a3d, #c9381a, #ff8c42, #ffd23f, #ff3d2e, #ffd23f);
+  --frame-speed: 2.5s;
+}
+
+.frame-rainbow {
+  --frame-bg: conic-gradient(#ff4d6a, #ffbf1f, #22c77a, #2f8cff, #a64dff, #ff4d6a);
+  --frame-speed: 4s;
+}
+
+.player-title {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--title-color, var(--muted));
+}
+
+.title-glow {
+  text-shadow:
+    0 0 6px color-mix(in srgb, var(--title-color) 65%, transparent),
+    0 0 14px color-mix(in srgb, var(--title-color) 40%, transparent);
+}
+
+.title-rainbow {
+  background: linear-gradient(90deg, #ff4d6a, #ffbf1f, #22c77a, #2f8cff, #a64dff, #ff4d6a);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: title-rainbow 3s linear infinite;
+  filter: drop-shadow(0 0 6px rgba(166, 77, 255, 0.35));
+}
+
+.title-pulse {
+  animation: title-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes title-rainbow {
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes title-pulse {
+  0%,
+  100% {
+    text-shadow: 0 0 2px color-mix(in srgb, var(--title-color) 30%, transparent);
+  }
+  50% {
+    text-shadow:
+      0 0 10px color-mix(in srgb, var(--title-color) 80%, transparent),
+      0 0 22px color-mix(in srgb, var(--title-color) 45%, transparent);
+  }
+}
+
+/* Reação do chat: o emoji/imagem entra pulando. */
+.reaction-pop {
+  animation: reaction-pop 900ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+@keyframes reaction-pop {
+  0% {
+    transform: scale(0.2) rotate(-20deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.2) rotate(8deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+/* Baú abrindo. */
+.chest-shake {
+  animation: chest-shake 700ms ease-in-out both;
+}
+
+@keyframes chest-shake {
+  0%,
+  100% {
+    transform: rotate(0) scale(1);
+  }
+  20% {
+    transform: rotate(-8deg) scale(1.05);
+  }
+  40% {
+    transform: rotate(8deg) scale(1.08);
+  }
+  60% {
+    transform: rotate(-6deg) scale(1.1);
+  }
+  80% {
+    transform: rotate(4deg) scale(1.12);
+  }
+}
+
 /* ---------- Álbum em forma de livro ---------- */
 .album-cover {
   background: linear-gradient(135deg, var(--album-cover), var(--album-cover-strong));

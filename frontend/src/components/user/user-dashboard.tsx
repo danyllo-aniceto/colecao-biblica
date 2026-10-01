@@ -50,9 +50,14 @@ import {
   type StartQuizSessionPayload,
   type UnlockedAchievement,
   type UserSticker,
+  type QuizHelperAction,
+  applyQuizHelper,
 } from '@/lib/user-api';
+import { getPlayerProfile, type PlayerLook } from '@/lib/rewards-api';
+import { PlayerProfileProvider } from '@/components/user/rewards/player-profile-modal';
 import { getSocialSummary, type SocialSummary, type TradeResponse } from '@/lib/social-api';
 import type { UserProfile } from '@/types/auth';
+import { QUIZ_HELPERS, helperCounts, spentHelpers } from '@/lib/quiz-helpers';
 
 /** Figurinha mostrada no modal depois de uma compra ou fusão. */
 type StickerReveal = Pick<ShopPurchaseResult, 'characterId' | 'characterName' | 'characterRarity' | 'characterImageUrl' | 'characterUnlocked' | 'duplicate'> & { title?: string };
@@ -96,6 +101,7 @@ export function UserDashboard() {
   const [accountSubmitting, setAccountSubmitting] = useState(false);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [socialSummary, setSocialSummary] = useState<SocialSummary | null>(null);
+  const [myLook, setMyLook] = useState<PlayerLook | null>(null);
 
   const refreshSocial = useCallback(() => {
     getSocialSummary()
@@ -112,6 +118,15 @@ export function UserDashboard() {
     }, 30000);
     return () => window.clearInterval(timer);
   }, [accessToken, refreshSocial]);
+
+  // Aparência do próprio jogador (ícone, moldura, título, cor do nome) para o topo e o perfil.
+  const profileId = profile?.id;
+  useEffect(() => {
+    if (!profileId) return;
+    getPlayerProfile(profileId)
+      .then((data) => setMyLook(data.look))
+      .catch(() => undefined);
+  }, [profileId]);
 
   function handleTradeDone(result: TradeResponse) {
     if (result.trade.status === 'ACCEPTED') void refreshCollection();
@@ -269,6 +284,13 @@ export function UserDashboard() {
         useXpMultiplier: payload.useXpMultiplier,
       });
 
+      // Segunda chance: errou, mas a alternativa saiu e a pergunta continua.
+      if (result.retry && result.session) {
+        setQuizSession(result.session);
+        toast.info('A segunda chance te salvou!', { description: `A letra ${result.removedOption} saiu. Tente de novo.` });
+        return;
+      }
+
       consumeBoosts(quizSession, result);
       // Placar e vidas atualizam já; a próxima pergunta abre quando o jogador pedir.
       setQuizSession({
@@ -280,7 +302,10 @@ export function UserDashboard() {
         extraLifeUsed: result.extraLifeUsed,
         xpMultiplierUsed: result.xpMultiplierUsed,
         fiftyFiftyUsed: result.fiftyFiftyUsed ?? quizSession.fiftyFiftyUsed,
+        comboStreak: result.comboStreak ?? quizSession.comboStreak,
+        comboShieldArmed: result.comboShieldSpent ? false : quizSession.comboShieldArmed,
       });
+      if (result.comboShieldSpent) toast.info('O escudo segurou sua sequência de acertos!');
       setReveal({
         selected: payload.selectedOption,
         correctOption: result.correctOption ?? '',
@@ -380,6 +405,22 @@ export function UserDashboard() {
     }
   }
 
+  /** Ajudas novas: usa no servidor e desconta do inventário. */
+  async function applyHelper(action: QuizHelperAction): Promise<QuizSessionStatus | null> {
+    if (!quizSession) return null;
+    setQuizAnswerError(null);
+    try {
+      const updated = await applyQuizHelper(quizSession.sessionId, action);
+      const spent = spentHelpers(quizSession, updated);
+      setProfile((current) => (current ? { ...current, ...Object.fromEntries(spent.map((field) => [field, Math.max(0, (current[field] ?? 0) - 1)])) } : current));
+      setQuizSession(updated);
+      return updated;
+    } catch (error) {
+      setQuizAnswerError(errorMessage(error, 'Não foi possível usar a ajuda.'));
+      return null;
+    }
+  }
+
   async function handleBuyItem(item: ShopItem) {
     setBuyingItemId(item.id);
     try {
@@ -394,6 +435,7 @@ export function UserDashboard() {
               doubleXpBoosts: result.doubleXpBoosts,
               hintBoosts: result.hintBoosts,
               streakFreezes: result.streakFreezes,
+              ...Object.fromEntries(QUIZ_HELPERS.map((helper) => [helper.field, result[helper.field] ?? current[helper.field] ?? 0])),
             }
           : current,
       );
@@ -482,8 +524,9 @@ export function UserDashboard() {
   const openSticker = (id: number) => navigateTo(`/dashboard/figurinhas/${id}`);
 
   return (
+    <PlayerProfileProvider>
     <div className="min-h-dvh pb-28 sm:pb-10">
-      <PlayerHud profile={profile} section={section} onNavigate={navigate} socialNotices={socialSummary ? socialSummary.pendingRequests + socialSummary.pendingTrades + socialSummary.unreadMessages : 0} />
+      <PlayerHud look={myLook} profile={profile} section={section} onNavigate={navigate} socialNotices={socialSummary ? socialSummary.pendingRequests + socialSummary.pendingTrades + socialSummary.unreadMessages : 0} />
 
       <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
         {profileError ? (
@@ -508,6 +551,11 @@ export function UserDashboard() {
                 onResume={handleResumeQuiz}
                 onOpenSticker={openSticker}
                 onWallet={updateWallet}
+                onUserUpdate={(user, achievements) => {
+                  setProfile((current) => (current ? { ...current, ...user } : user));
+                  celebrate(achievements);
+                  void refreshCollection();
+                }}
                 onDailyClaimed={(result) => {
                   setProfile((current) => (current ? { ...current, coins: result.userCoins, hintBoosts: result.hintBoosts, dailyStreak: result.streak } : current));
                   toast.success(`Prêmio do dia ${result.day} resgatado!`, {
@@ -521,6 +569,7 @@ export function UserDashboard() {
 
             {section === 'stickers' ? (
               <AlbumSection
+                playerName={profile?.name ?? 'Você'}
                 characters={characters}
                 ownedIds={ownedIds}
                 collection={collection}
@@ -557,7 +606,7 @@ export function UserDashboard() {
             ) : null}
 
             {section === 'shop' ? (
-              <ShopSection items={shopItems} coins={profile?.coins ?? 0} gameRules={gameRules} buyingItemId={buyingItemId} error={shopError} onBuy={handleBuyItem} />
+              <ShopSection items={shopItems} coins={profile?.coins ?? 0} gameRules={gameRules} buyingItemId={buyingItemId} error={shopError} onBuy={handleBuyItem} profile={profile} onCoins={(coins) => updateWallet({ userCoins: coins })} />
             ) : null}
 
             {section === 'ranking' ? <RankingSection currentUserId={profile?.id} onWallet={updateWallet} /> : null}
@@ -578,6 +627,10 @@ export function UserDashboard() {
                 onSave={handleSaveAccount}
                 onAskDelete={handleDeleteAccount}
                 onSignOut={signOut}
+                look={myLook}
+                onLookChange={setMyLook}
+                collection={collection}
+                onShowcaseChange={(showcase) => setProfile((current) => (current ? { ...current, showcase } : current))}
               />
             ) : null}
           </div>
@@ -595,6 +648,8 @@ export function UserDashboard() {
           onNext={() => void handleNextQuestion()}
           onUseExtraTime={() => applyBoost(requestQuizExtraTime, 'Não foi possível usar o tempo extra.')}
           onUseFiftyFifty={() => applyBoost(requestFiftyFifty, 'Não foi possível usar a dica 50/50.')}
+          onUseHelper={applyHelper}
+          helpers={helperCounts(profile)}
           onClose={() => setShowQuizAnswer(false)}
           onAbandon={() => void handleAbandonQuiz()}
           isLoading={quizSubmitting}
@@ -651,5 +706,6 @@ export function UserDashboard() {
         ) : null}
       </Modal>
     </div>
+    </PlayerProfileProvider>
   );
 }

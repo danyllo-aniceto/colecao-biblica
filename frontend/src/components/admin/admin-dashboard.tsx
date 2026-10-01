@@ -24,9 +24,15 @@ import { countOpenReports } from '@/lib/admin-api';
 import { RewardsScreen } from './screens/rewards-screen';
 import { SettingsScreen } from './screens/settings-screen';
 import { ShopScreen } from './screens/shop-screen';
+import { CosmeticsScreen } from './screens/cosmetics-screen';
+import { CollectionsScreen } from './screens/collections-screen';
+import { SeasonScreen } from './screens/season-screen';
+import PaletteRoundedIcon from '@mui/icons-material/PaletteRounded';
+import WorkspacesRoundedIcon from '@mui/icons-material/WorkspacesRounded';
+import MilitaryTechRoundedIcon from '@mui/icons-material/MilitaryTechRounded';
 import { UsersScreen } from './screens/users-screen';
 
-export type AdminScreen = 'visao-geral' | 'usuarios' | 'personagens' | 'perguntas' | 'reportes' | 'recompensas' | 'loja' | 'configuracoes';
+export type AdminScreen = 'visao-geral' | 'usuarios' | 'personagens' | 'perguntas' | 'reportes' | 'recompensas' | 'loja' | 'visual' | 'colecoes' | 'temporada' | 'configuracoes';
 
 const SCREENS: Array<{ id: AdminScreen; label: string; description: string; icon: ReactNode }> = [
   { id: 'visao-geral', label: 'Visão geral', description: 'Números do jogo e o que falta no conteúdo.', icon: <DashboardRoundedIcon fontSize="inherit" /> },
@@ -35,6 +41,9 @@ const SCREENS: Array<{ id: AdminScreen; label: string; description: string; icon
   { id: 'reportes', label: 'Reportes', description: 'Perguntas que os jogadores marcaram como erradas ou confusas.', icon: <FlagRoundedIcon fontSize="inherit" /> },
   { id: 'recompensas', label: 'Recompensas', description: 'Prêmios sorteados no fim das partidas e usados pela loja.', icon: <EmojiEventsRoundedIcon fontSize="inherit" /> },
   { id: 'loja', label: 'Loja', description: 'Itens que os jogadores compram com moedas.', icon: <StorefrontRoundedIcon fontSize="inherit" /> },
+  { id: 'visual', label: 'Visual', description: 'Ícones, molduras, títulos, cores do nome e reações dos jogadores.', icon: <PaletteRoundedIcon fontSize="inherit" /> },
+  { id: 'colecoes', label: 'Coleções', description: 'Grupos de figurinhas com prêmio para quem completar.', icon: <WorkspacesRoundedIcon fontSize="inherit" /> },
+  { id: 'temporada', label: 'Passe e eventos', description: 'Trilha mensal de prêmios e eventos com bônus por tempo limitado.', icon: <MilitaryTechRoundedIcon fontSize="inherit" /> },
   { id: 'usuarios', label: 'Usuários', description: 'Contas, papéis e ajustes de saldo.', icon: <PeopleAltRoundedIcon fontSize="inherit" /> },
   { id: 'configuracoes', label: 'Configurações', description: 'Regras do jogo, economia e prêmio diário.', icon: <SettingsRoundedIcon fontSize="inherit" /> },
 ];
@@ -145,6 +154,9 @@ export function AdminDashboard() {
             {screen === 'reportes' ? <ReportsScreen onChanged={refreshReports} /> : null}
             {screen === 'recompensas' ? <RewardsScreen /> : null}
             {screen === 'loja' ? <ShopScreen /> : null}
+            {screen === 'visual' ? <CosmeticsScreen /> : null}
+            {screen === 'colecoes' ? <CollectionsScreen /> : null}
+            {screen === 'temporada' ? <SeasonScreen /> : null}
             {screen === 'usuarios' ? <UsersScreen /> : null}
             {screen === 'configuracoes' ? <SettingsScreen /> : null}
           </>

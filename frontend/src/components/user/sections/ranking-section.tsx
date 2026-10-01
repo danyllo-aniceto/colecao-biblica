@@ -8,6 +8,8 @@ import { LoadingState, Spinner } from '@/components/ui/spinner';
 import { Alert, EmptyState, LevelBadge, SectionHeading } from '@/components/game/game-ui';
 import { cn } from '@/lib/cn';
 import { listRanking, type RankingPage } from '@/lib/user-api';
+import { PlayerAvatar, PlayerName } from '@/components/game/player-look';
+import { PlayerChip, useOpenProfile } from '@/components/user/rewards/player-profile-modal';
 
 const PODIUM = [
   { place: 2, height: 'h-24', color: 'bg-[#c7cedd] text-[#2b3040]', ring: 'ring-[#c7cedd]' },
@@ -38,6 +40,7 @@ export function RankingSection({ currentUserId, onWallet }: { currentUserId?: nu
 }
 
 function GeneralRanking({ currentUserId }: { currentUserId?: number }) {
+  const openProfile = useOpenProfile();
   const [page, setPage] = useState(0);
   const [data, setData] = useState<RankingPage | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,10 +102,10 @@ function GeneralRanking({ currentUserId }: { currentUserId?: number }) {
               return (
                 <div key={slot.place} className="animate-pop-in flex flex-col items-center gap-2 text-center" style={{ animationDelay: `${(3 - slot.place) * 120}ms` }}>
                   {slot.place === 1 ? <WorkspacePremiumRoundedIcon className="animate-float text-primary" sx={{ fontSize: 36 }} /> : null}
-                  <span className={cn('flex h-14 w-14 items-center justify-center rounded-full bg-surface-3 font-display text-lg font-bold text-ink ring-4', slot.ring)}>
-                    {entry.userName.slice(0, 1).toUpperCase()}
-                  </span>
-                  <span className={cn('max-w-full truncate font-display text-sm font-semibold', isMe ? 'text-accent-strong dark:text-accent' : 'text-ink')}>{isMe ? 'Você' : entry.userName}</span>
+                  <button type="button" onClick={() => openProfile(entry.userId)} aria-label={`Ver perfil de ${entry.userName}`} className={cn('rounded-full ring-4', slot.ring)}>
+                    <PlayerAvatar look={entry.look} name={entry.userName} size="lg" />
+                  </button>
+                  <PlayerName name={isMe ? 'Você' : entry.userName} look={entry.look} className="max-w-full items-center text-sm" />
                   <span className="text-xs font-bold text-muted">{entry.totalScore.toLocaleString('pt-BR')} pts</span>
                   <div className={cn('flex w-full items-start justify-center rounded-t-2xl pt-2 font-display text-3xl font-bold', slot.height, slot.color)}>{slot.place}</div>
                 </div>
@@ -125,11 +128,8 @@ function GeneralRanking({ currentUserId }: { currentUserId?: number }) {
             return (
               <li key={entry.userId} className={cn('flex items-center gap-3 px-4 py-3', isMe && 'bg-accent/10')}>
                 <span className="w-10 text-center font-display text-lg font-bold text-muted">{entry.position}</span>
+                <PlayerChip userId={entry.userId} name={entry.userName} look={entry.look} suffix={isMe ? '(você)' : undefined} />
                 <LevelBadge level={entry.level} size="sm" />
-                <div className="min-w-0 flex-1">
-                  <p className={cn('truncate font-display font-semibold', isMe ? 'text-accent-strong dark:text-accent' : 'text-ink')}>{isMe ? `${entry.userName} (você)` : entry.userName}</p>
-                  <p className="text-xs font-semibold text-muted">{entry.xp.toLocaleString('pt-BR')} XP</p>
-                </div>
                 <span className="font-display font-bold text-ink">{entry.totalScore.toLocaleString('pt-BR')}</span>
               </li>
             );

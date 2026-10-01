@@ -9,6 +9,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { EmptyState } from '@/components/game/game-ui';
 import { cn } from '@/lib/cn';
 import { getDailyChallenge, type DailyChallenge } from '@/lib/user-api';
+import { PlayerChip } from '@/components/user/rewards/player-profile-modal';
 
 function formatSeconds(seconds: number | null) {
   if (seconds === null) return '';
@@ -85,7 +86,7 @@ export function DailyChallengeCard({ onStart, starting, currentUserId }: { onSta
               {data.content.map((entry) => (
                 <li key={entry.userId} className={cn('flex items-center gap-3 px-4 py-3', entry.userId === currentUserId && 'bg-accent/10')}>
                   <span className="w-8 text-center font-display text-lg font-bold text-muted">{entry.position}</span>
-                  <span className="min-w-0 flex-1 truncate font-display font-semibold text-ink">{entry.userId === currentUserId ? `${entry.userName} (você)` : entry.userName}</span>
+                  <PlayerChip userId={entry.userId} name={entry.userName} look={entry.look} suffix={entry.userId === currentUserId ? '(você)' : undefined} size="xs" />
                   <span className="text-right text-sm">
                     <span className="block font-bold text-ink">
                       {entry.correctAnswers}/{entry.questionsAnswered}

@@ -19,6 +19,14 @@ export const REWARD_TYPE_LABELS: Record<RewardType, string> = {
   FIFTY_FIFTY: 'Dica 50/50',
   STREAK_FREEZE: 'Protetor de sequência',
   COINS: 'Moedas',
+  SKIP_QUESTION: 'Pular pergunta',
+  SECOND_CHANCE: 'Segunda chance',
+  CROWD_HELP: 'Voz da multidão',
+  VERSE_HINT: 'Pista do versículo',
+  FREEZE_TIME: 'Ampulheta',
+  DOUBLE_COINS: 'Bênção dobrada',
+  COMBO_SHIELD: 'Escudo de sequência',
+  COSMETIC: 'Item visual',
 };
 
 export const REPORT_REASON_LABELS: Record<ReportReason, string> = {

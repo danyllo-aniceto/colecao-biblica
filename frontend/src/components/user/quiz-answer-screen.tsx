@@ -8,6 +8,11 @@ import ContentCutRoundedIcon from '@mui/icons-material/ContentCutRounded';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
+import AcUnitRoundedIcon from '@mui/icons-material/AcUnitRounded';
+import LocalFireDepartmentRoundedIcon from '@mui/icons-material/LocalFireDepartmentRounded';
+import ShieldRoundedIcon from '@mui/icons-material/ShieldRounded';
+import MonetizationOnRoundedIcon from '@mui/icons-material/MonetizationOnRounded';
+import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 import { Button } from '@/components/ui/button';
 import { LoadingState } from '@/components/ui/spinner';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -15,7 +20,8 @@ import { Hearts } from '@/components/user/sections/play-section';
 import { ReportQuestionModal } from '@/components/user/report-question-modal';
 import FlagRoundedIcon from '@mui/icons-material/FlagRounded';
 import { cn } from '@/lib/cn';
-import type { QuizSessionStatus } from '@/lib/user-api';
+import { QUIZ_HELPERS, type HelperField } from '@/lib/quiz-helpers';
+import type { QuizHelperAction, QuizSessionStatus } from '@/lib/user-api';
 
 type AnswerOption = 'A' | 'B' | 'C' | 'D';
 
@@ -46,6 +52,9 @@ type QuizAnswerScreenProps = {
   /** Usa o bônus de tempo extra e devolve a sessão atualizada (ou null em caso de erro). */
   onUseExtraTime: () => Promise<QuizSessionStatus | null>;
   onUseFiftyFifty: () => Promise<QuizSessionStatus | null>;
+  /** Ajudas novas (pular, segunda chance, multidão...). */
+  onUseHelper: (action: QuizHelperAction) => Promise<QuizSessionStatus | null>;
+  helpers: Record<HelperField, number>;
   onNext: () => void;
   onClose: () => void;
   onAbandon: () => void;
@@ -83,6 +92,8 @@ export function QuizAnswerScreen({
   onAnswer,
   onUseExtraTime,
   onUseFiftyFifty,
+  onUseHelper,
+  helpers,
   onNext,
   onClose,
   onAbandon,
@@ -97,7 +108,7 @@ export function QuizAnswerScreen({
 
   const [selected, setSelected] = useState<AnswerOption | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [usingBoost, setUsingBoost] = useState<'time' | 'hint' | null>(null);
+  const [usingBoost, setUsingBoost] = useState<string | null>(null);
   const [useExtraLife, setUseExtraLife] = useState(false);
   const [useXpMultiplier, setUseXpMultiplier] = useState(false);
   const [totalSeconds, setTotalSeconds] = useState(() => question?.timeLimitSeconds ?? 0);
@@ -111,9 +122,18 @@ export function QuizAnswerScreen({
   const latest = useRef({ selected, useExtraLife, useXpMultiplier });
   latest.current = { selected, useExtraLife, useXpMultiplier };
 
-  const timeLeft = secondsUntil(deadline, now);
+  const frozen = Boolean(question?.timeFrozen);
+  // Ampulheta: o relógio para no segundo em que foi usada.
+  const [frozenAt, setFrozenAt] = useState<number | null>(null);
+  const timeLeft = frozen ? (frozenAt ?? secondsUntil(deadline, now)) : secondsUntil(deadline, now);
   const timeProgress = totalSeconds > 0 ? Math.min(100, (timeLeft / totalSeconds) * 100) : 0;
   const removed = new Set(question?.removedOptions ?? []);
+  const removedKey = (question?.removedOptions ?? []).join('');
+
+  // Segunda chance: a alternativa errada saiu; limpa a seleção para tentar de novo.
+  useEffect(() => {
+    if (selected && removedKey.includes(selected)) setSelected(null);
+  }, [removedKey, selected]);
 
   async function submit(option: AnswerOption | null) {
     if (!question?.id || submittingRef.current || reveal) {
@@ -140,7 +160,7 @@ export function QuizAnswerScreen({
   submitRef.current = submit;
 
   useEffect(() => {
-    if (reveal) {
+    if (reveal || frozen) {
       return;
     }
     const intervalId = window.setInterval(() => {
@@ -155,7 +175,7 @@ export function QuizAnswerScreen({
     }, 250);
 
     return () => window.clearInterval(intervalId);
-  }, [deadline, reveal]);
+  }, [deadline, reveal, frozen]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -177,6 +197,17 @@ export function QuizAnswerScreen({
         setDeadline(Date.now() + updatedQuestion.remainingSeconds * 1000);
         autoSubmittedRef.current = false;
       }
+    } finally {
+      setUsingBoost(null);
+    }
+  }
+
+  async function handleHelper(action: QuizHelperAction) {
+    setUsingBoost(action);
+    try {
+      const secondsLeft = secondsUntil(deadline, Date.now());
+      const updated = await onUseHelper(action);
+      if (action === 'freeze' && updated?.currentQuestion?.timeFrozen) setFrozenAt(secondsLeft);
     } finally {
       setUsingBoost(null);
     }
@@ -253,12 +284,41 @@ export function QuizAnswerScreen({
             Questão {session.currentQuestionIndex + 1}
             <span className="text-muted">/{session.totalQuestions}</span>
           </span>
-          <span className="text-sm font-bold text-muted">
-            <span className="text-success">{session.correctAnswers} ✓</span> · <span className="text-danger">{session.wrongAnswers} ✗</span>
+          <span className="flex flex-wrap items-center justify-end gap-2 text-sm font-bold text-muted">
+            {session.doubleCoinsUsed ? (
+              <Tooltip content="Bênção dobrada: moedas x2 nesta partida">
+                <span className="inline-flex items-center gap-0.5 rounded-full bg-primary/20 px-2 py-0.5 text-primary-strong dark:text-primary">
+                  <MonetizationOnRoundedIcon sx={{ fontSize: 16 }} />x2
+                </span>
+              </Tooltip>
+            ) : null}
+            {(session.comboStreak ?? 0) >= 2 ? (
+              <Tooltip content="Sequência de acertos: a partir do 3º seguido cada acerto vale pontos e moedas extras">
+                <span className="animate-pop-in inline-flex items-center gap-0.5 rounded-full bg-danger/15 px-2 py-0.5 text-danger" key={session.comboStreak}>
+                  <LocalFireDepartmentRoundedIcon sx={{ fontSize: 16 }} />
+                  {session.comboStreak}
+                  {session.comboShieldArmed ? <ShieldRoundedIcon sx={{ fontSize: 14 }} /> : null}
+                </span>
+              </Tooltip>
+            ) : session.comboShieldArmed ? (
+              <Tooltip content="Escudo de sequência ativo">
+                <span className="inline-flex items-center rounded-full bg-danger/15 px-2 py-0.5 text-danger">
+                  <ShieldRoundedIcon sx={{ fontSize: 16 }} />
+                </span>
+              </Tooltip>
+            ) : null}
+            <span>
+              <span className="text-success">{session.correctAnswers} ✓</span> · <span className="text-danger">{session.wrongAnswers} ✗</span>
+            </span>
           </span>
         </div>
 
-        {reveal ? null : (
+        {reveal ? null : frozen ? (
+          <div className="flex items-center gap-3 rounded-2xl bg-info/15 px-4 py-2 font-display font-bold text-info" role="status">
+            <AcUnitRoundedIcon />
+            Tempo congelado pela ampulheta: responda com calma.
+          </div>
+        ) : (
           <div className="flex items-center gap-3">
             <TimerRoundedIcon className={timeLeft <= 5 ? 'animate-shake text-danger' : 'text-muted'} />
             <div className="h-4 flex-1 overflow-hidden rounded-full bg-surface-3">
@@ -271,6 +331,16 @@ export function QuizAnswerScreen({
         <div className="panel animate-pop-in p-5 text-center sm:p-8">
           {question.difficulty ? <span className="text-xs font-bold uppercase tracking-widest text-muted">{difficultyLabel(question.difficulty)}</span> : null}
           <p className="mt-2 font-display text-xl font-semibold leading-snug text-ink sm:text-3xl">{question.text}</p>
+          {question.verseHint && !reveal ? (
+            <p className="animate-pop-in mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full bg-violet/15 px-3 py-1 text-sm font-bold text-violet-strong dark:text-violet">
+              <MenuBookRoundedIcon fontSize="small" /> Pista: {question.verseHint}
+            </p>
+          ) : null}
+          {question.secondChanceArmed && !reveal ? (
+            <p className="mx-auto mt-3 flex w-fit items-center gap-1.5 rounded-full bg-success/15 px-3 py-1 text-sm font-bold text-success-strong dark:text-success">
+              <ReplayRoundedIcon fontSize="small" /> Segunda chance ativa: se errar, tenta de novo
+            </p>
+          ) : null}
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -300,6 +370,14 @@ export function QuizAnswerScreen({
               >
                 <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-xl font-bold', optionStyles[option.id].letter)}>{option.id}</span>
                 <span className="flex-1 leading-snug">{option.text}</span>
+                {question.crowd && !reveal && !isRemoved ? (
+                  <span className="flex shrink-0 flex-col items-end gap-1" aria-label={`${question.crowd[option.id]}% dos jogadores`}>
+                    <span className="font-display text-base font-bold">{question.crowd[option.id]}%</span>
+                    <span className="h-1.5 w-14 overflow-hidden rounded-full bg-black/15">
+                      <span className="block h-full rounded-full bg-white/90" style={{ width: `${question.crowd[option.id]}%` }} />
+                    </span>
+                  </span>
+                ) : null}
                 {reveal && isCorrect ? <CheckCircleRoundedIcon /> : null}
                 {reveal && isSelected && !isCorrect ? <CancelRoundedIcon /> : null}
               </button>
@@ -327,7 +405,7 @@ export function QuizAnswerScreen({
             ) : null}
           </>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
             <PowerUp
               icon={<TimerRoundedIcon />}
               label={session.extraTimeUsed ? 'Usado' : usingBoost === 'time' ? 'Aplicando' : `+${extraTimeSeconds}s`}
@@ -368,6 +446,33 @@ export function QuizAnswerScreen({
               tone="primary"
               hint="XP em dobro: multiplica o XP de toda a partida"
             />
+            {QUIZ_HELPERS.map((helper) => {
+              const used = Boolean(session[helper.usedKey]);
+              const skipBlocked = helper.action === 'skip' && session.quizType === 'DAILY_CHALLENGE';
+              const hintBlocked = helper.action === 'verse-hint' && !question.hasVerseHint;
+              return (
+                <PowerUp
+                  key={helper.action}
+                  icon={helper.icon}
+                  label={used ? 'Usada' : usingBoost === helper.action ? '...' : helper.short}
+                  count={helpers[helper.field]}
+                  active={used}
+                  disabled={
+                    used ||
+                    helpers[helper.field] <= 0 ||
+                    locked ||
+                    usingBoost !== null ||
+                    skipBlocked ||
+                    hintBlocked ||
+                    (helper.needsTime && timeLeft === 0 && !frozen) ||
+                    (helper.action === 'freeze' && frozen)
+                  }
+                  onClick={() => void handleHelper(helper.action)}
+                  tone={helper.tone}
+                  hint={skipBlocked ? 'No desafio do dia não dá para pular' : hintBlocked ? 'Esta pergunta não tem pista de versículo' : helper.hint}
+                />
+              );
+            })}
           </div>
         )}
 
@@ -448,7 +553,7 @@ function PowerUp({
   active: boolean;
   disabled: boolean;
   onClick: () => void;
-  tone: 'info' | 'danger' | 'primary' | 'violet';
+  tone: 'info' | 'danger' | 'primary' | 'violet' | 'accent' | 'success';
   hint: string;
 }) {
   const toneClass = {
@@ -456,6 +561,8 @@ function PowerUp({
     danger: active ? 'bg-danger text-white' : 'bg-danger/15 text-danger',
     primary: active ? 'bg-primary text-on-primary' : 'bg-primary/20 text-primary-strong dark:text-primary',
     violet: active ? 'bg-violet text-white' : 'bg-violet/15 text-violet-strong dark:text-violet',
+    accent: active ? 'bg-accent text-on-accent' : 'bg-accent/15 text-accent-strong dark:text-accent',
+    success: active ? 'bg-success text-white' : 'bg-success/15 text-success-strong dark:text-success',
   }[tone];
 
   return (
@@ -466,9 +573,9 @@ function PowerUp({
         disabled={disabled}
         aria-pressed={active}
         aria-label={`${hint}. Você tem ${count}.`}
-        className={cn('relative flex w-full flex-col items-center gap-1 rounded-3xl p-3 font-display text-sm font-semibold transition', toneClass, disabled && !active && 'opacity-40')}
+        className={cn('relative flex w-full flex-col items-center gap-0.5 rounded-2xl px-1 py-2.5 font-display text-xs font-semibold leading-tight transition sm:text-sm', toneClass, disabled && !active && 'opacity-40')}
       >
-        <span className="absolute right-2 top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-surface px-1 text-[11px] font-bold text-ink">{count}</span>
+        <span className="absolute right-1 top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-surface px-1 text-[11px] font-bold text-ink">{count}</span>
         {icon}
         {label}
       </button>

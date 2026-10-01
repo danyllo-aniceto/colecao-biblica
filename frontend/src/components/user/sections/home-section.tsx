@@ -13,7 +13,10 @@ import type { SectionId } from '@/components/user/game-shell';
 import { DailyRewardCard } from '@/components/user/daily-reward-card';
 import { MissionsCard } from '@/components/user/missions-card';
 import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
-import type { CharacterEntry, DailyClaimResult, QuizHistory, QuizSessionStatus, UserSticker } from '@/lib/user-api';
+import type { CharacterEntry, DailyClaimResult, QuizHistory, QuizSessionStatus, UnlockedAchievement, UserSticker } from '@/lib/user-api';
+import { EventBanner } from '@/components/user/rewards/event-banner';
+import { LevelChestCard } from '@/components/user/rewards/level-chest';
+import { SeasonPassCard } from '@/components/user/rewards/season-pass';
 import type { UserProfile } from '@/types/auth';
 
 type HomeSectionProps = {
@@ -28,9 +31,10 @@ type HomeSectionProps = {
   onOpenSticker: (id: number) => void;
   onDailyClaimed: (result: DailyClaimResult) => void;
   onWallet: (wallet: { userCoins: number; hintBoosts?: number }) => void;
+  onUserUpdate: (user: UserProfile, achievements?: UnlockedAchievement[]) => void;
 };
 
-export function HomeSection({ profile, characters, collection, history, activeSession, commentsCount, onNavigate, onResume, onOpenSticker, onDailyClaimed, onWallet }: HomeSectionProps) {
+export function HomeSection({ profile, characters, collection, history, activeSession, commentsCount, onNavigate, onResume, onOpenSticker, onDailyClaimed, onWallet, onUserUpdate }: HomeSectionProps) {
   const ownedIds = new Set(collection.map((item) => item.characterId));
   const firstName = profile?.name?.split(' ')[0] ?? 'jogador';
   const recentStickers = [...collection]
@@ -69,6 +73,12 @@ export function HomeSection({ profile, characters, collection, history, activeSe
           <img src="/icons/icon-512.png" alt="" width={176} height={176} className="animate-float hidden h-44 w-44 rounded-[2rem] shadow-[0_20px_40px_-12px_var(--shadow)] md:block" />
         </div>
       </section>
+
+      <EventBanner onOpenShop={() => onNavigate('shop')} />
+
+      <LevelChestCard profile={profile} onOpened={(user) => onUserUpdate(user)} />
+
+      <SeasonPassCard profile={profile} onClaimed={onUserUpdate} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <DailyRewardCard onClaimed={onDailyClaimed} />

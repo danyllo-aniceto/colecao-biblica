@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
 import HourglassTopRoundedIcon from '@mui/icons-material/HourglassTopRounded';
-import LockRoundedIcon from '@mui/icons-material/LockRounded';
+import { ThemeCollections } from '@/components/user/rewards/theme-collections';
 import { AlbumBook } from '@/components/user/album-book';
 import { DuplicatesModal } from '@/components/user/duplicates-modal';
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
@@ -20,7 +20,7 @@ import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
 import { listUpcoming, type CharacterEntry, type FuseResult, type GameRules, type UpcomingSticker, type UserSticker } from '@/lib/user-api';
 
 type SortOption = 'alphabetical' | 'rarityAsc' | 'rarityDesc' | 'period';
-type AlbumTab = 'album' | 'locked';
+type AlbumTab = 'album' | 'locked' | 'collections';
 
 const PAGE_SIZE = 20;
 
@@ -47,6 +47,7 @@ type AlbumSectionProps = {
   onOpenSticker: (id: number) => void;
   onWallet: (wallet: { userCoins: number }) => void;
   onFused: (result: FuseResult) => void;
+  playerName: string;
 };
 
 /** "em 3 dias", "amanhã", "hoje às 18:00". */
@@ -58,7 +59,7 @@ function untilLabel(date: string) {
   return `em ${days} dias`;
 }
 
-export function AlbumSection({ characters, ownedIds, collection, gameRules, onOpenSticker, onWallet, onFused }: AlbumSectionProps) {
+export function AlbumSection({ characters, ownedIds, collection, gameRules, onOpenSticker, onWallet, onFused, playerName }: AlbumSectionProps) {
   const [rarity, setRarity] = useState<StickerRarity | 'ALL'>('ALL');
   const [tab, setTab] = useState<AlbumTab>('album');
   const [books, setBooks] = useState<string[]>([]);
@@ -158,10 +159,13 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
         value={tab}
         onChange={setTab}
         options={[
-          { value: 'album', label: `Álbum (${ownedCount})`, icon: <CollectionsBookmarkRoundedIcon fontSize="small" /> },
-          { value: 'locked', label: `A desbloquear (${lockedTotal})`, icon: <LockRoundedIcon fontSize="small" /> },
+          { value: 'album', label: `Álbum (${ownedCount})` },
+          { value: 'locked', label: `Faltam (${lockedTotal})` },
+          { value: 'collections', label: 'Coleções' },
         ]}
       />
+
+      {tab === 'collections' ? <ThemeCollections playerName={playerName} onCoins={(coins) => onWallet({ userCoins: coins })} refreshKey={collection.length} /> : null}
 
       {tab === 'album' ? (
         <AlbumBook items={ownedFiltered} totalCharacters={characters.length} ownedCount={ownedCount} duplicatesById={duplicatesById} onOpenSticker={onOpenSticker} resetKey={resetKey} />

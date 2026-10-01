@@ -152,15 +152,56 @@ consultas curtas e leves. Se o uso crescer, dá para trocar por um serviço de t
   A primeira folha é a abertura (total, % completo e contagem por raridade).
 - Trocar de página vira a folha com animação 3D: setas nas laterais, arrastar o dedo, setas do
   teclado ou a paginação embaixo (respeita "reduzir movimento" do sistema).
-- A aba **A desbloquear** lista as que faltam, paginadas, com foto e cartão em cinza, cadeado e sem
+- A aba **Faltam** lista as que faltam, paginadas, com foto e cartão em cinza, cadeado e sem
   clique. As figurinhas agendadas ("em breve") também aparecem ali.
 - A ficha completa só abre para quem tem a figurinha: o app mostra "Figurinha bloqueada" e a API
   responde 403 para o jogador que não a conquistou (o admin continua vendo tudo).
 
-## 8. Ideias para depois
+## 8. Quarta rodada: ajudas, visual do jogador e progressão (implementado)
+
+**7 ajudas novas no quiz** (somam às 4 antigas; cada uma vale uma vez por partida, limite guardado
+em Configurações → Ajudas novas, à venda na loja, no sorteio, no baú e no passe):
+
+| Ajuda | Efeito |
+| --- | --- |
+| Pular pergunta | Troca a pergunta por outra ainda não sorteada, sem perder vida (fora do desafio do dia). |
+| Segunda chance | Ativada antes de responder: o 1º erro não conta, a alternativa sai e o jogador tenta de novo. |
+| Voz da multidão | Mostra o % de jogadores em cada alternativa. Usa os votos reais por alternativa somados a uma estimativa pela dificuldade (perguntas novas também funcionam). |
+| Pista do versículo | Mostra a referência bíblica cadastrada na pergunta (sem referência, o botão fica desligado). |
+| Ampulheta | Congela o cronômetro da pergunta. |
+| Bênção dobrada | A partida rende moedas multiplicadas (padrão x2). |
+| Escudo de sequência | O próximo erro não zera a sequência de acertos. |
+
+**Sequência de acertos**: a partir do 3º acerto seguido, cada acerto vale +5 pontos e +1 moeda
+(configurável). O quiz mostra o 🔥 com a sequência; o resultado mostra a melhor sequência.
+
+**Visual do jogador** (admin cadastra em **Visual**, com imagem, cor, efeito e prévia):
+- Ícones (avatar), molduras (madeira, prata, ouro, fogo, arco-íris animados ou cor sólida),
+  **títulos que brilham embaixo do nome** (brilho, arco-íris, pulsando), cor do nome e reações do chat.
+- Formas de ganhar: grátis, loja (opcionalmente só durante um evento), **meta** (nível, álbum
+  completo, todas as lendárias, dias seguidos, acertos, partidas perfeitas, sequência, liga vencida,
+  amigos, trocas, conquistas, coleções) ou prêmio (baú, coleção, passe, recompensa ou dado pelo admin).
+- Já vêm 41 itens: 12 ícones, 6 molduras, 10 títulos (os melhores bem difíceis: 100 dias seguidos,
+  álbum completo, todas as lendárias, 50 partidas perfeitas...), 5 cores e 8 reações.
+- O jogador equipa em Perfil → Visual; a aparência aparece no topo, no ranking, na liga, no desafio
+  do dia, nos amigos e na conversa. Tocar num jogador abre o **cartão de perfil** (álbum, números e
+  vitrine com até 3 figurinhas escolhidas).
+
+**Progressão**:
+- **Baú de nível**: cada nível novo dá um baú (moedas crescentes, uma ajuda sorteada e chance de
+  item visual). Jogadores antigos começam do nível atual (sem baús retroativos).
+- **Coleções temáticas** (admin → Coleções): grupos de figurinhas com prêmio único ao completar;
+  as que faltam aparecem só pela raridade. Ficam na aba Coleções do álbum.
+- **Passe da temporada** (admin → Passe e eventos): trilha mensal liberada pelo XP do mês, 8 degraus
+  padrão terminando no título "Peregrino da temporada".
+- **Eventos**: período com XP e/ou moedas multiplicados, faixa na tela inicial e itens visuais à
+  venda só durante o evento.
+
+## 9. Ideias para depois
 
 1. Notificações do PWA (lembrete do prêmio diário, liga acabando, proposta de troca recebida).
 2. Eventos temáticos com figurinhas por tempo limitado (Páscoa, Natal).
 3. Modo duelo entre amigos: as mesmas perguntas, ao vivo ou assíncrono.
 4. Trilhas de estudo (ex.: "Vida de Davi") liberando figurinhas em sequência.
 5. Ver o álbum completo do amigo (hoje o compositor mostra só as repetidas).
+6. Ranking por região/igreja e grupos (turmas de escola dominical) com liga própria.

@@ -5,7 +5,23 @@ export type Role = 'ADMIN' | 'USER';
 export type StickerRarity = 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY';
 export type Testament = 'OLD' | 'NEW';
 export type QuestionDifficulty = 'EASY' | 'MEDIUM' | 'HARD' | 'VERY_HARD';
-export type RewardType = 'STICKER' | 'STICKER_PACK' | 'EXTRA_LIFE' | 'EXTRA_TIME' | 'XP_MULTIPLIER' | 'FIFTY_FIFTY' | 'STREAK_FREEZE' | 'COINS';
+export type RewardType =
+  | 'STICKER'
+  | 'STICKER_PACK'
+  | 'EXTRA_LIFE'
+  | 'EXTRA_TIME'
+  | 'XP_MULTIPLIER'
+  | 'FIFTY_FIFTY'
+  | 'STREAK_FREEZE'
+  | 'COINS'
+  | 'SKIP_QUESTION'
+  | 'SECOND_CHANCE'
+  | 'CROWD_HELP'
+  | 'VERSE_HINT'
+  | 'FREEZE_TIME'
+  | 'DOUBLE_COINS'
+  | 'COMBO_SHIELD'
+  | 'COSMETIC';
 export type ReportStatus = 'OPEN' | 'RESOLVED' | 'DISMISSED';
 export type ReportReason = 'WRONG_ANSWER' | 'TYPO' | 'CONFUSING' | 'OTHER';
 export type ShopItemType = 'STICKER' | 'GAME_BONUS' | 'ECONOMY';
@@ -101,6 +117,8 @@ export type AdminReward = {
   extraTimeSeconds?: number | null;
   xpMultiplier?: number | null;
   hintAmount?: number | null;
+  boostAmount?: number | null;
+  cosmeticId?: number | null;
   dropChance: number;
   active: boolean;
   system: boolean;
@@ -158,6 +176,20 @@ export type GameSettings = {
   tradesPerDay: number;
   maxPendingTrades: number;
   tradeExpireDays: number;
+  maxSkipBoosts: number;
+  maxSecondChanceBoosts: number;
+  maxCrowdBoosts: number;
+  maxVerseHintBoosts: number;
+  maxFreezeTimeBoosts: number;
+  maxDoubleCoinsBoosts: number;
+  maxComboShieldBoosts: number;
+  doubleCoinsMultiplier: number;
+  comboStartAt: number;
+  comboPointsPerAnswer: number;
+  comboCoinsPerAnswer: number;
+  chestBaseCoins: number;
+  chestCoinsPerLevel: number;
+  chestCosmeticChance: number;
 };
 
 export type AdminStats = {
@@ -224,6 +256,7 @@ export type CreateRewardPayload = {
   rewardType: RewardType;
   stickerRarity?: StickerRarity | null;
   stickerCharacterId?: number | null;
+  cosmeticId?: number | null;
   amount?: number | null;
   dropChance: number;
   active?: boolean;
@@ -237,6 +270,8 @@ export type UpdateRewardPayload = Partial<{
   extraLives: number;
   extraTimeSeconds: number;
   hintAmount: number;
+  boostAmount: number;
+  cosmeticId: number | null;
   dropChance: number;
   active: boolean;
 }>;
@@ -259,7 +294,24 @@ export type CreateUserPayload = {
 
 export type UpdateUserPayload = Partial<CreateUserPayload>;
 
-export type GrantPayload = Partial<Record<'coins' | 'extraLifeBoosts' | 'extraTimeBoosts' | 'doubleXpBoosts' | 'hintBoosts', number>>;
+export type GrantPayload = Partial<
+  Record<
+    | 'coins'
+    | 'extraLifeBoosts'
+    | 'extraTimeBoosts'
+    | 'doubleXpBoosts'
+    | 'hintBoosts'
+    | 'streakFreezes'
+    | 'skipBoosts'
+    | 'secondChanceBoosts'
+    | 'crowdBoosts'
+    | 'verseHintBoosts'
+    | 'freezeTimeBoosts'
+    | 'doubleCoinsBoosts'
+    | 'comboShieldBoosts',
+    number
+  >
+>;
 
 type Query = Record<string, string | number | undefined | null>;
 

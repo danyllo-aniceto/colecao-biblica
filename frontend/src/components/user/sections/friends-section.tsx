@@ -13,6 +13,7 @@ import { LoadingState, Spinner } from '@/components/ui/spinner';
 import { errorMessage, useToast } from '@/components/ui/toast';
 import { Tooltip } from '@/components/ui/tooltip';
 import { Alert, EmptyState, LevelBadge, SectionHeading } from '@/components/game/game-ui';
+import { PlayerAvatar, PlayerName } from '@/components/game/player-look';
 import { ChatView } from '@/components/user/social/chat-view';
 import { TradeCard } from '@/components/user/social/trade-card';
 import { cn } from '@/lib/cn';
@@ -297,10 +298,10 @@ function FriendsList({ onOpen }: { onOpen: (friend: Friend) => void }) {
         {data.content.map((friend) => (
           <li key={friend.userId}>
             <button type="button" onClick={() => onOpen(friend)} className="panel flex w-full items-center gap-3 p-3 text-left transition hover:border-primary/60">
-              <LevelBadge level={friend.level} />
+              <PlayerAvatar look={friend.look} name={friend.name} size="md" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate font-display font-bold text-ink">{friend.name}</span>
+                  <PlayerName name={friend.name} look={friend.look} />
                   {friend.lastMessage ? <span className="shrink-0 text-xs text-muted">{ago(friend.lastMessage.createdAt)}</span> : null}
                 </div>
                 <p className={cn('truncate text-sm', friend.unread ? 'font-bold text-ink' : 'text-muted')}>

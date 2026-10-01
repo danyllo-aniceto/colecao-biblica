@@ -81,6 +81,38 @@ const GROUPS: Array<{ title: string; description: string; fields: FieldDef[] }> 
     ],
   },
   {
+    title: 'Ajudas novas',
+    description: 'Quantas de cada ajuda o jogador pode guardar. Cada uma vale uma vez por partida.',
+    fields: [
+      { key: 'maxSkipBoosts', label: 'Pular pergunta', min: 1, max: 20 },
+      { key: 'maxSecondChanceBoosts', label: 'Segunda chance', min: 1, max: 20 },
+      { key: 'maxCrowdBoosts', label: 'Voz da multidão', min: 1, max: 20 },
+      { key: 'maxVerseHintBoosts', label: 'Pista do versículo', min: 1, max: 20 },
+      { key: 'maxFreezeTimeBoosts', label: 'Ampulheta', min: 1, max: 20 },
+      { key: 'maxDoubleCoinsBoosts', label: 'Bênção dobrada', min: 1, max: 20 },
+      { key: 'maxComboShieldBoosts', label: 'Escudo de sequência', min: 1, max: 20 },
+      { key: 'doubleCoinsMultiplier', label: 'Multiplicador da bênção dobrada', min: 1, max: 10, step: 0.1, suffix: '×' },
+    ],
+  },
+  {
+    title: 'Sequência de acertos',
+    description: 'Acertos seguidos numa partida dão pontos e moedas extras a cada acerto, a partir do N-ésimo.',
+    fields: [
+      { key: 'comboStartAt', label: 'Começa no acerto seguido nº', min: 2, max: 20 },
+      { key: 'comboPointsPerAnswer', label: 'Pontos extras por acerto', min: 0, max: 100 },
+      { key: 'comboCoinsPerAnswer', label: 'Moedas extras por acerto', min: 0, max: 20, hint: 'Entram no limite diário de partidas com moedas.' },
+    ],
+  },
+  {
+    title: 'Baú de nível',
+    description: 'Cada nível novo dá um baú: moedas, uma ajuda sorteada e chance de item visual (os marcados "pode sair no baú" em Visual).',
+    fields: [
+      { key: 'chestBaseCoins', label: 'Moedas fixas', min: 0, max: 10000 },
+      { key: 'chestCoinsPerLevel', label: 'Moedas a mais por nível', min: 0, max: 1000 },
+      { key: 'chestCosmeticChance', label: 'Chance de item visual', min: 0, max: 100, suffix: '%' },
+    ],
+  },
+  {
     title: 'Social',
     description: 'Amigos, conversa e troca de figurinhas repetidas entre jogadores.',
     fields: [
