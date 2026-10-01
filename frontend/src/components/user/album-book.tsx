@@ -83,7 +83,7 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
   }
 
   function renderPage(index: number, side: 'left' | 'right' | 'single') {
-    const paper = cn('album-paper relative flex h-full flex-col p-3 sm:p-5', side === 'left' && 'album-paper-left', side === 'right' && 'album-paper-right');
+    const paper = cn('album-paper relative flex min-h-full w-full flex-col p-3 sm:p-5', side === 'left' && 'album-paper-left', side === 'right' && 'album-paper-right');
     if (index === 0) {
       return (
         <div className={paper}>
@@ -145,8 +145,8 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
     const rightPage = flip ? (forward ? right(flip.to) : right(flip.from)) : right(view);
     base = (
       <div className="grid grid-cols-2">
-        <div className="min-h-[34rem]">{renderPage(leftPage, 'left')}</div>
-        <div className="min-h-[34rem]">{renderPage(rightPage, 'right')}</div>
+        <div className="flex min-h-[34rem]">{renderPage(leftPage, 'left')}</div>
+        <div className="flex min-h-[34rem]">{renderPage(rightPage, 'right')}</div>
       </div>
     );
     if (flip) {
@@ -158,7 +158,7 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
       );
     }
   } else {
-    base = <div className="min-h-[31rem]">{renderPage(flip ? (forward ? flip.to : flip.from) : view, 'single')}</div>;
+    base = <div className="flex min-h-[31rem]">{renderPage(flip ? (forward ? flip.to : flip.from) : view, 'single')}</div>;
     if (flip) {
       leaf = (
         <div className={cn('album-leaf pointer-events-none absolute inset-0 z-20', forward ? 'album-leaf-next' : 'album-leaf-in')} onAnimationEnd={(event) => event.target === event.currentTarget && done?.()}>
