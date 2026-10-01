@@ -6,11 +6,18 @@ import {
   calculateMatchCoins,
   cycleDay,
   dailyRewardFor,
+  dailyChallengeQuestionIds,
   dailyStatus,
+  dailyStatusWithFreezes,
   duplicateStickerCoins,
   packOdds,
   pickFiftyFiftyRemovals,
   pickPackRarity,
+  pityActive,
+  previousWeekKey,
+  suggestedDifficulty,
+  weekKeyInTimeZone,
+  weekRangeInTimeZone,
   calculateScore,
   calculateXp,
   dayRangeInTimeZone,
@@ -179,5 +186,45 @@ describe("prêmio diário", () => {
     expect(dailyStatus(last, 3, new Date("2026-10-01T02:30:00Z"), tz)).toEqual({ claimedToday: true, nextStreak: 3 });
     expect(dailyStatus(last, 3, new Date("2026-10-02T12:00:00Z"), tz)).toEqual({ claimedToday: false, nextStreak: 1 });
     expect(dailyStatus(null, 0, new Date(), tz)).toEqual({ claimedToday: false, nextStreak: 1 });
+  });
+});
+
+describe("engajamento", () => {
+  it("desafio do dia: mesmas perguntas no mesmo dia, outras no dia seguinte", () => {
+    const ids = Array.from({ length: 30 }, (_, index) => index + 1);
+    const today = dailyChallengeQuestionIds(ids, "2026-10-01", 10);
+    expect(dailyChallengeQuestionIds([...ids].reverse(), "2026-10-01", 10)).toEqual(today);
+    expect(new Set(today).size).toBe(10);
+    expect(dailyChallengeQuestionIds(ids, "2026-10-02", 10)).not.toEqual(today);
+  });
+
+  it("garantia contra azar a partir do limite", () => {
+    expect(pityActive(3, 5)).toBe(false);
+    expect(pityActive(4, 5)).toBe(true);
+    expect(pityActive(10, 0)).toBe(false);
+  });
+
+  it("dificuldade sugerida pela taxa de acerto", () => {
+    expect(suggestedDifficulty(10, 10)).toBeNull();
+    expect(suggestedDifficulty(20, 18)).toBe("EASY");
+    expect(suggestedDifficulty(20, 12)).toBe("MEDIUM");
+    expect(suggestedDifficulty(20, 7)).toBe("HARD");
+    expect(suggestedDifficulty(20, 2)).toBe("VERY_HARD");
+  });
+
+  it("semana começa na segunda no fuso do Brasil", () => {
+    // Domingo 04/10/2026 às 23h em São Paulo (segunda 02h UTC) ainda é a semana de 28/09.
+    expect(weekKeyInTimeZone(new Date("2026-10-05T02:00:00Z"), "America/Sao_Paulo")).toBe("2026-09-28");
+    expect(weekKeyInTimeZone(new Date("2026-10-05T12:00:00Z"), "America/Sao_Paulo")).toBe("2026-10-05");
+    expect(previousWeekKey("2026-10-05")).toBe("2026-09-28");
+    expect(weekRangeInTimeZone("2026-09-28", "America/Sao_Paulo").start.toISOString()).toBe("2026-09-28T03:00:00.000Z");
+  });
+
+  it("protetor cobre os dias esquecidos", () => {
+    const tz = "America/Sao_Paulo";
+    const last = new Date("2026-10-01T15:00:00Z");
+    expect(dailyStatusWithFreezes(last, 4, 1, new Date("2026-10-03T15:00:00Z"), tz)).toEqual({ claimedToday: false, nextStreak: 5, freezesUsed: 1 });
+    expect(dailyStatusWithFreezes(last, 4, 1, new Date("2026-10-04T15:00:00Z"), tz)).toEqual({ claimedToday: false, nextStreak: 1, freezesUsed: 0 });
+    expect(dailyStatusWithFreezes(last, 4, 2, new Date("2026-10-02T15:00:00Z"), tz)).toEqual({ claimedToday: false, nextStreak: 5, freezesUsed: 0 });
   });
 });

@@ -34,6 +34,7 @@ enum RewardType {
   EXTRA_TIME
   XP_MULTIPLIER
   FIFTY_FIFTY
+  STREAK_FREEZE
   COINS
 }
 
@@ -51,6 +52,13 @@ enum ShopItemType {
 enum QuizType {
   GENERAL
   CHARACTER_STUDY
+  DAILY_CHALLENGE
+}
+
+enum ReportStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
 }
 
 enum QuizSessionStatus {
@@ -75,6 +83,8 @@ model User {
   hintBoosts      Int       @default(0) @map("hint_boosts")
   dailyStreak     Int       @default(0) @map("daily_streak")
   lastDailyClaim  DateTime? @map("last_daily_claim")
+  streakFreezes   Int       @default(0) @map("streak_freezes")
+  stickerPity     Int       @default(0) @map("sticker_pity")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
   createdBy       String    @map("created_by")
@@ -88,6 +98,8 @@ model User {
   quizMatches  QuizMatch[]
   quizSessions QuizSession[]
   achievements UserAchievement[]
+  claims       UserClaim[]
+  reports      QuestionReport[]
 
   @@index([totalScore, xp])
   @@map("users")
@@ -100,6 +112,8 @@ model BiblicalCharacter {
   rarity           StickerRarity
   testament        Testament?
   published        Boolean       @default(true)
+  /// Publicação agendada: com published = true, só aparece a partir desta data.
+  publishAt        DateTime?     @map("publish_at")
   shortSummary     String        @map("short_summary")
   fullDescription  String        @map("full_description")
   bibleBooks       String?       @map("bible_books")
@@ -138,8 +152,11 @@ model Question {
   explanation        String?
   bibleReference     String?            @map("bible_reference")
   active             Boolean            @default(true)
+  timesAnswered      Int                @default(0) @map("times_answered")
+  timesCorrect       Int                @default(0) @map("times_correct")
 
   relatedCharacter BiblicalCharacter? @relation(fields: [relatedCharacterId], references: [id], onDelete: SetNull)
+  reports          QuestionReport[]
 
   @@index([active, relatedCharacterId])
   @@map("questions")
@@ -186,6 +203,8 @@ model UserSticker {
   userId      Int      @map("user_id")
   characterId Int      @map("character_id")
   acquiredAt  DateTime @default(now()) @map("acquired_at")
+  /// Cópias repetidas guardadas para vender ou fundir.
+  duplicates  Int      @default(0)
 
   user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   character BiblicalCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
@@ -227,6 +246,7 @@ model QuizMatch {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, finishedAt])
+  @@index([quizType, finishedAt])
   @@map("quiz_matches")
 }
 
@@ -271,6 +291,40 @@ model UserAchievement {
 
   @@unique([userId, code])
   @@map("user_achievements")
+}
+
+/// Prêmios resgatados uma vez por período (missões, liga semanal).
+model UserClaim {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  kind      String
+  code      String
+  periodKey String   @map("period_key")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, kind, code, periodKey])
+  @@map("user_claims")
+}
+
+/// Pergunta marcada pelo jogador como errada ou confusa.
+model QuestionReport {
+  id         Int          @id @default(autoincrement())
+  questionId Int          @map("question_id")
+  userId     Int          @map("user_id")
+  reason     String
+  message    String?
+  status     ReportStatus @default(OPEN)
+  createdAt  DateTime     @default(now()) @map("created_at")
+  resolvedAt DateTime?    @map("resolved_at")
+  resolvedBy String?      @map("resolved_by")
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@map("question_reports")
 }
 
 model GameSetting {

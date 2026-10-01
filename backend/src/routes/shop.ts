@@ -172,13 +172,14 @@ shopRouter.post(
         characterRarity: applied.characterRarity,
         characterImageUrl: applied.characterImageUrl,
         characterUnlocked: applied.characterUnlocked,
-        duplicateCoins: applied.duplicateCoins,
+        duplicate: applied.duplicate,
         unlockedAchievements,
         userCoins: saved.coins,
         extraLifeBoosts: saved.extraLifeBoosts,
         extraTimeBoosts: saved.extraTimeBoosts,
         doubleXpBoosts: saved.doubleXpBoosts,
         hintBoosts: saved.hintBoosts,
+        streakFreezes: saved.streakFreezes,
       };
     });
 

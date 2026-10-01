@@ -1,5 +1,6 @@
 import type { Db } from "../db/prisma";
 import { PERFECT_MATCH_MIN_QUESTIONS } from "./game-rules";
+import { visibleCharacter } from "./visibility";
 
 /**
  * Conquistas: metas permanentes que dão moedas uma única vez. Ficam no código
@@ -65,8 +66,8 @@ async function loadStats(db: Db, userId: number): Promise<AchievementStats> {
     db.quizMatch.count({ where: { userId } }),
     db.quizMatch.count({ where: { userId, quizType: "CHARACTER_STUDY" } }),
     db.quizMatch.count({ where: { userId, wrongAnswers: 0, correctAnswers: { gte: PERFECT_MATCH_MIN_QUESTIONS } } }),
-    db.userSticker.count({ where: { userId, character: { published: true } } }),
-    db.biblicalCharacter.count({ where: { published: true } }),
+    db.userSticker.count({ where: { userId, character: visibleCharacter() } }),
+    db.biblicalCharacter.count({ where: visibleCharacter() }),
     db.userSticker.count({ where: { userId, character: { rarity: "LEGENDARY" } } }),
     db.userComment.groupBy({ by: ["characterId"], where: { userId } }).then((groups) => groups.length),
   ]);

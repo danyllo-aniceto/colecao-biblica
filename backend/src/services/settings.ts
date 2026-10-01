@@ -40,6 +40,13 @@ export const SETTINGS = {
   packOddsRare: { key: "pack.odds.rare", defaultValue: 28, description: "Peso da raridade rara no pacote surpresa", kind: "int" },
   packOddsEpic: { key: "pack.odds.epic", defaultValue: 10, description: "Peso da raridade épica no pacote surpresa", kind: "int" },
   packOddsLegendary: { key: "pack.odds.legendary", defaultValue: 2, description: "Peso da raridade lendária no pacote surpresa", kind: "int" },
+  maxStreakFreezes: { key: "reward.boost.maxStreakFreeze", defaultValue: 2, description: "Máximo de protetores de sequência guardados", kind: "int" },
+  pityThreshold: { key: "reward.pityThreshold", defaultValue: 5, description: "Prêmios seguidos sem figurinha até a próxima ser garantida (0 desliga)", kind: "int" },
+  fuseCost: { key: "collection.fuseCost", defaultValue: 3, description: "Repetidas da mesma raridade para fundir em uma de raridade acima", kind: "int" },
+  dailyChallengeQuestions: { key: "challenge.questions", defaultValue: 10, description: "Perguntas do desafio do dia", kind: "int" },
+  leagueFirstCoins: { key: "league.firstCoins", defaultValue: 500, description: "Moedas do 1º lugar da liga semanal", kind: "int" },
+  leagueSecondCoins: { key: "league.secondCoins", defaultValue: 300, description: "Moedas do 2º lugar da liga semanal", kind: "int" },
+  leagueThirdCoins: { key: "league.thirdCoins", defaultValue: 150, description: "Moedas do 3º lugar da liga semanal", kind: "int" },
 } satisfies Record<string, SettingDefinition>;
 
 export type SettingName = keyof typeof SETTINGS;

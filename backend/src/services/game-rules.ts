@@ -265,3 +265,81 @@ function zonedMidnight(year: number, month: number, day: number, timeZone: strin
   result = guess - timeZoneOffsetMs(new Date(result), timeZone);
   return new Date(result);
 }
+
+/** Hash simples e estável de um texto (para sementes). */
+export function hashString(text: string): number {
+  let hash = 2166136261;
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+/** Gerador pseudoaleatório com semente (mulberry32): mesma semente, mesma sequência. */
+export function seededRandom(seed: number): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let value = Math.imul(state ^ (state >>> 15), 1 | state);
+    value = (value + Math.imul(value ^ (value >>> 7), 61 | value)) ^ value;
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Perguntas do desafio do dia: as mesmas para todos no mesmo dia. */
+export function dailyChallengeQuestionIds(questionIds: number[], dayKey: string, count: number): number[] {
+  const ordered = [...questionIds].sort((a, b) => a - b);
+  return shuffle(ordered, seededRandom(hashString(`desafio:${dayKey}`))).slice(0, Math.max(1, count));
+}
+
+/** Garantia contra azar: depois de N prêmios seguidos sem figurinha, o próximo é figurinha. */
+export function pityActive(prizesWithoutSticker: number, threshold: number): boolean {
+  return threshold > 0 && prizesWithoutSticker >= threshold - 1;
+}
+
+/** Dificuldade sugerida pela taxa de acerto (só com respostas suficientes). */
+export function suggestedDifficulty(timesAnswered: number, timesCorrect: number, minAnswers = 20): QuestionDifficulty | null {
+  if (timesAnswered < minAnswers) return null;
+  const rate = timesCorrect / timesAnswered;
+  if (rate >= 0.8) return "EASY";
+  if (rate >= 0.55) return "MEDIUM";
+  if (rate >= 0.3) return "HARD";
+  return "VERY_HARD";
+}
+
+/** Chave da semana (segunda-feira, AAAA-MM-DD) no fuso informado, e o intervalo dela. */
+export function weekKeyInTimeZone(date: Date, timeZone: string): string {
+  const key = dayKeyInTimeZone(date, timeZone);
+  const [year, month, day] = key.split("-").map(Number);
+  const utc = new Date(Date.UTC(year, month - 1, day));
+  const weekday = (utc.getUTCDay() + 6) % 7; // segunda = 0
+  utc.setUTCDate(utc.getUTCDate() - weekday);
+  return utc.toISOString().slice(0, 10);
+}
+
+export function weekRangeInTimeZone(weekKey: string, timeZone: string): { start: Date; end: Date } {
+  const [year, month, day] = weekKey.split("-").map(Number);
+  return { start: zonedMidnight(year, month, day, timeZone), end: zonedMidnight(year, month, day + 7, timeZone) };
+}
+
+export function previousWeekKey(weekKey: string): string {
+  const [year, month, day] = weekKey.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day - 7)).toISOString().slice(0, 10);
+}
+
+/**
+ * Prêmio diário com protetores: dias esquecidos são cobertos por protetores
+ * (um por dia). Se não houver protetores suficientes, a sequência recomeça.
+ */
+export function dailyStatusWithFreezes(lastClaim: Date | null, currentStreak: number, freezes: number, now: Date, timeZone: string) {
+  const base = dailyStatus(lastClaim, currentStreak, now, timeZone);
+  if (!lastClaim || base.claimedToday) {
+    return { ...base, freezesUsed: 0 };
+  }
+  const missed = daysBetweenKeys(dayKeyInTimeZone(lastClaim, timeZone), dayKeyInTimeZone(now, timeZone)) - 1;
+  if (missed > 0 && currentStreak > 0 && freezes >= missed) {
+    return { claimedToday: false, nextStreak: currentStreak + 1, freezesUsed: missed };
+  }
+  return { ...base, freezesUsed: 0 };
+}

@@ -180,7 +180,7 @@ describe.skipIf(!hasDatabase)("API", () => {
       expect((await api.delete("/api/rewards/admin/1").set(bearer(admin))).status).toBe(400);
 
       const rewards = await api.get("/api/rewards").set(bearer(admin));
-      expect(rewards.body).toHaveLength(10);
+      expect(rewards.body).toHaveLength(11);
       expect(rewards.body.every((reward: { system: boolean }) => reward.system)).toBe(true);
       const coins = rewards.body.find((reward: { rewardType: string }) => reward.rewardType === "COINS");
       const zero = await api.put(`/api/rewards/admin/${coins.id}`).set(bearer(admin)).send({ dropChance: 0 });
@@ -418,7 +418,7 @@ describe.skipIf(!hasDatabase)("API", () => {
     it("compra com moedas, respeita limites e não vende o que já tem", async () => {
       const token = await login("user@email.com");
       const shop = await api.get("/api/shop").set(bearer(token));
-      expect(shop.body.map((item: { priceCoins: number }) => item.priceCoins)).toEqual([120, 140, 150, 180, 200, 220, 260, 450]);
+      expect(shop.body.map((item: { priceCoins: number }) => item.priceCoins)).toEqual([120, 140, 150, 180, 200, 220, 250, 260, 450]);
       const life = shop.body.find((item: { name: string }) => item.name === "Vida extra");
       const rare = shop.body.find((item: { name: string }) => item.name === "Figurinha Rara");
 
@@ -492,7 +492,7 @@ describe.skipIf(!hasDatabase)("API", () => {
       expect((await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } })).hintBoosts).toBe(1);
     });
 
-    it("pacote surpresa dá figurinha e a repetida vira moedas", async () => {
+    it("pacote surpresa dá figurinha e a repetida fica guardada para vender ou fundir", async () => {
       const token = await login("user@email.com");
       const pack = (await api.get("/api/shop").set(bearer(token))).body.find((item: { name: string }) => item.name === "Pacote surpresa");
       expect(pack).toMatchObject({ rewardType: "STICKER_PACK", priceCoins: 200 });
@@ -502,9 +502,17 @@ describe.skipIf(!hasDatabase)("API", () => {
       await prisma.user.update({ where: { id: user.id }, data: { coins: 200 } });
 
       const bought = await api.post(`/api/shop/buy/${pack.id}`).set(bearer(token));
-      expect(bought.body.characterUnlocked).toBe(false);
-      expect(bought.body.duplicateCoins).toBeGreaterThan(0);
-      expect(bought.body.userCoins).toBeGreaterThanOrEqual(bought.body.duplicateCoins);
+      // A compra também libera conquistas (álbum completo, lenda), que pagam moedas.
+      expect(bought.body).toMatchObject({ characterUnlocked: false, duplicate: true });
+
+      const collection = await api.get("/api/collection/my").set(bearer(token));
+      const copy = collection.body.find((sticker: { characterId: number }) => sticker.characterId === bought.body.characterId);
+      expect(copy.duplicates).toBe(1);
+
+      const sold = await api.post("/api/collection/sell").set(bearer(token)).send({ characterId: bought.body.characterId, quantity: 5 });
+      expect(sold.body.sold).toBe(1);
+      expect(sold.body.userCoins).toBe(bought.body.userCoins + sold.body.coins);
+      expect((await api.post("/api/collection/sell").set(bearer(token)).send({ characterId: bought.body.characterId })).status).toBe(404);
     });
 
     it("admin vê estatísticas e ajusta o saldo de um jogador", async () => {
@@ -534,6 +542,185 @@ describe.skipIf(!hasDatabase)("API", () => {
 
       const user = await login("user@email.com");
       expect((await api.post("/api/uploads?folder=personagens").set(bearer(user)).set("Content-Type", "image/png").send(png)).status).toBe(403);
+    });
+  });
+
+  describe("engajamento", () => {
+    async function addCharacter(name: string, rarity: string, extra: Record<string, unknown> = {}) {
+      return prisma.biblicalCharacter.create({ data: { name, rarity: rarity as "COMMON", shortSummary: "x", fullDescription: "y", createdBy: "teste", ...extra } });
+    }
+
+    it("fusão: 3 repetidas comuns viram uma rara nova", async () => {
+      const token = await login("user@email.com");
+      const user = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
+      const rute = await addCharacter("Rute", "COMMON");
+      const noemi = await addCharacter("Noemi", "COMMON");
+      await prisma.userSticker.createMany({ data: [{ userId: user.id, characterId: rute.id, duplicates: 2 }, { userId: user.id, characterId: noemi.id, duplicates: 1 }] });
+
+      expect((await api.post("/api/collection/fuse").set(bearer(token)).send({ rarity: "LEGENDARY" })).status).toBe(400);
+      const fused = await api.post("/api/collection/fuse").set(bearer(token)).send({ rarity: "COMMON" });
+      expect(fused.body).toMatchObject({ spent: 3, characterName: "Davi", characterRarity: "RARE", characterUnlocked: true });
+      const left = await prisma.userSticker.aggregate({ where: { userId: user.id }, _sum: { duplicates: true } });
+      expect(left._sum.duplicates).toBe(0);
+      expect((await api.post("/api/collection/fuse").set(bearer(token)).send({ rarity: "COMMON" })).body.message).toMatch(/precisa de 3/);
+    });
+
+    it("publicação agendada: some do álbum até a data e aparece como em breve", async () => {
+      const admin = await login("admin2@email.com");
+      const future = new Date(Date.now() + 3 * 86_400_000).toISOString();
+      const created = await api
+        .post("/api/characters/admin")
+        .set(bearer(admin))
+        .send({ name: "Gideão", rarity: "EPIC", published: true, publishAt: future, shortSummary: "<p>Juiz</p>", fullDescription: "x" });
+      expect(created.status).toBe(201);
+
+      const token = await login("user@email.com");
+      expect((await api.get("/api/characters").set(bearer(token))).body.some((c: { name: string }) => c.name === "Gideão")).toBe(false);
+      expect((await api.get(`/api/characters/${created.body.id}`).set(bearer(token))).status).toBe(404);
+      const upcoming = await api.get("/api/characters/upcoming").set(bearer(token));
+      expect(upcoming.body).toEqual([expect.objectContaining({ rarity: "EPIC" })]);
+      expect(upcoming.body[0]).not.toHaveProperty("name");
+
+      await api.put(`/api/characters/admin/${created.body.id}`).set(bearer(admin)).send({ publishAt: null });
+      expect((await api.get("/api/characters").set(bearer(token))).body.some((c: { name: string }) => c.name === "Gideão")).toBe(true);
+    });
+
+    it("missões diárias e semanais: progresso e resgate único", async () => {
+      const token = await login("user@email.com");
+      const before = await api.get("/api/missions").set(bearer(token));
+      expect(before.body.filter((m: { period: string }) => m.period === "DAILY")).toHaveLength(3);
+      expect(before.body.filter((m: { period: string }) => m.period === "WEEKLY")).toHaveLength(3);
+      expect((await api.post("/api/missions/W_PLAY_15/claim").set(bearer(token))).body.message).toBe("Missão ainda não concluída");
+
+      const user = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
+      await prisma.quizMatch.createMany({
+        data: Array.from({ length: 15 }, () => ({ userId: user.id, quizType: "GENERAL" as const, finishedAt: new Date(), questionsAnswered: 10, correctAnswers: 7, wrongAnswers: 3, xpGained: 0, scoreGained: 0 })),
+      });
+      const claim = await api.post("/api/missions/W_PLAY_15/claim").set(bearer(token));
+      expect(claim.body).toMatchObject({ coins: 150, userCoins: 150 });
+      expect((await api.post("/api/missions/W_PLAY_15/claim").set(bearer(token))).status).toBe(400);
+      const after = await api.get("/api/missions").set(bearer(token));
+      expect(after.body.find((m: { code: string }) => m.code === "W_PLAY_15")).toMatchObject({ completed: true, claimed: true });
+    });
+
+    it("liga semanal: ranking da semana e prêmio do top 3 da semana passada", async () => {
+      const token = await login("user@email.com");
+      const user = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
+      const match = { userId: user.id, quizType: "GENERAL" as const, questionsAnswered: 5, correctAnswers: 5, wrongAnswers: 0, xpGained: 0 };
+      await prisma.quizMatch.createMany({
+        data: [
+          { ...match, finishedAt: new Date(), scoreGained: 400 },
+          { ...match, finishedAt: new Date(Date.now() - 7 * 86_400_000), scoreGained: 300 },
+        ],
+      });
+      const league = await api.get("/api/league").set(bearer(token));
+      expect(league.body.content[0]).toMatchObject({ position: 1, score: 400, prize: 500 });
+      expect(league.body.me).toMatchObject({ position: 1, score: 400 });
+      expect(league.body.lastWeek).toMatchObject({ position: 1, prize: 500, claimed: false });
+
+      const claimed = await api.post("/api/league/claim").set(bearer(token));
+      expect(claimed.body).toMatchObject({ position: 1, coins: 500 });
+      expect((await api.post("/api/league/claim").set(bearer(token))).status).toBe(400);
+    });
+
+    it("protetor de sequência salva o prêmio diário de um dia esquecido", async () => {
+      const token = await login("user@email.com");
+      const freeze = (await api.get("/api/shop").set(bearer(token))).body.find((item: { name: string }) => item.name === "Protetor de sequência");
+      await prisma.user.update({ where: { email: "user@email.com" }, data: { coins: 250, dailyStreak: 4, lastDailyClaim: new Date(Date.now() - 2 * 86_400_000) } });
+      expect((await api.post(`/api/shop/buy/${freeze.id}`).set(bearer(token))).body).toMatchObject({ streakFreezes: 1 });
+
+      expect((await api.get("/api/daily-reward").set(bearer(token))).body).toMatchObject({ canClaim: true, streak: 4, nextDay: 5, freezesToUse: 1 });
+      const claimed = await api.post("/api/daily-reward/claim").set(bearer(token));
+      expect(claimed.body).toMatchObject({ day: 5, streak: 5, freezesUsed: 1 });
+      expect((await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } })).streakFreezes).toBe(0);
+    });
+
+    it("garantia contra azar: depois de 4 prêmios sem figurinha, o 5º é figurinha", async () => {
+      await prisma.user.update({ where: { email: "user@email.com" }, data: { stickerPity: 4 } });
+      const token = await login("user@email.com");
+      const { last } = await playSession(token, { quizType: "GENERAL" }, (correct) => correct);
+      expect(last.matchResult.pityGuaranteed).toBe(true);
+      expect(["STICKER", "STICKER_PACK"]).toContain(last.matchResult.rewardType);
+      expect((await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } })).stickerPity).toBe(0);
+    });
+
+    it("desafio do dia: mesmas perguntas para todos, uma tentativa e ranking do dia", async () => {
+      const token = await login("user@email.com");
+      const admin = await login("admin2@email.com");
+      const mine = await api.post("/api/quiz/sessions/start").set(bearer(token)).send({ quizType: "DAILY_CHALLENGE" });
+      const other = await api.post("/api/quiz/sessions/start").set(bearer(admin)).send({ quizType: "DAILY_CHALLENGE" });
+      const idsOf = async (sessionId: number) => (await prisma.quizSession.findUniqueOrThrow({ where: { id: sessionId } })).questionIds;
+      expect(await idsOf(mine.body.sessionId)).toEqual(await idsOf(other.body.sessionId));
+
+      await api.post(`/api/quiz/sessions/${mine.body.sessionId}/abandon`).set(bearer(token));
+      expect((await api.post("/api/quiz/sessions/start").set(bearer(token)).send({ quizType: "DAILY_CHALLENGE" })).body.message).toMatch(/já fez o desafio/);
+
+      // Termina a do admin para aparecer no ranking.
+      let question = other.body.currentQuestion;
+      while (question) {
+        const answered = await api
+          .post(`/api/quiz/sessions/${other.body.sessionId}/answer`)
+          .set(bearer(admin))
+          .send({ questionId: question.id, selectedOption: await correctOptionOf(question.id) });
+        question = answered.body.hasNextQuestion ? (await api.post(`/api/quiz/sessions/${other.body.sessionId}/next`).set(bearer(admin))).body.currentQuestion : null;
+      }
+      const challenge = await api.get("/api/quiz/daily-challenge").set(bearer(token));
+      expect(challenge.body).toMatchObject({ attemptStatus: "ABANDONED", totalQuestions: 3, totalElements: 1, me: null });
+      expect(challenge.body.content[0]).toMatchObject({ position: 1, userName: "Admin Teste", correctAnswers: 3 });
+    });
+
+    it("reportar pergunta e o admin resolve", async () => {
+      const token = await login("user@email.com");
+      const question = await prisma.question.findFirstOrThrow();
+      expect((await api.post("/api/reports").set(bearer(token)).send({ questionId: question.id, reason: "WRONG_ANSWER", message: "A resposta é outra" })).status).toBe(201);
+      expect((await api.post("/api/reports").set(bearer(token)).send({ questionId: question.id, reason: "TYPO" })).status).toBe(400);
+      expect((await api.get("/api/reports/admin").set(bearer(token))).status).toBe(403);
+
+      const admin = await login("admin2@email.com");
+      const list = await api.get("/api/reports/admin").set(bearer(admin));
+      expect(list.body.content[0]).toMatchObject({ questionId: question.id, reason: "WRONG_ANSWER", userName: "Usuário Teste", status: "OPEN" });
+      expect((await api.get("/api/questions?reported=open").set(bearer(admin))).body.totalElements).toBe(1);
+      await api.put(`/api/reports/admin/${list.body.content[0].id}`).set(bearer(admin)).send({ status: "RESOLVED" });
+      expect((await api.get("/api/reports/admin/count").set(bearer(admin))).body.open).toBe(0);
+    });
+
+    it("importação em lote: prévia, erros por linha e criação", async () => {
+      const admin = await login("admin2@email.com");
+      const rows = [
+        { text: "Quem construiu a arca?", optionA: "Noé", optionB: "Moisés", optionC: "Abraão", optionD: "Davi", correctOption: "a", difficulty: "Fácil", character: "davi" },
+        { text: "Quem derrotou Golias?", optionA: "a", optionB: "b", optionC: "c", optionD: "d", correctOption: "A" },
+        { text: "Pergunta ruim", optionA: "x", optionB: "x", optionC: "y", optionD: "z", correctOption: "A" },
+        { text: "Outra", optionA: "1", optionB: "2", optionC: "3", optionD: "4", correctOption: "E" },
+        { text: "Quantos livros tem a Bíblia?", optionA: "66", optionB: "72", optionC: "39", optionD: "27", correctOption: "A", difficulty: "Muito difícil", character: "Ninguém" },
+      ];
+      const preview = await api.post("/api/questions/admin/bulk").set(bearer(admin)).send({ rows, dryRun: true });
+      expect(preview.body.valid).toBe(1);
+      expect(preview.body.errors.map((error: { row: number }) => error.row)).toEqual([2, 3, 4, 5]);
+      expect(preview.body.errors[0].message).toMatch(/já existe/);
+      expect(await prisma.question.count()).toBe(3);
+
+      const imported = await api.post("/api/questions/admin/bulk").set(bearer(admin)).send({ rows });
+      expect(imported.body.created).toBe(1);
+      const created = await prisma.question.findFirstOrThrow({ where: { text: "Quem construiu a arca?" }, include: { relatedCharacter: true } });
+      expect(created).toMatchObject({ difficulty: "EASY", timeLimitSeconds: 30, correctOption: "A" });
+      expect(created.relatedCharacter?.name).toBe("Davi");
+    });
+
+    it("estatística por pergunta e dificuldade sugerida", async () => {
+      const token = await login("user@email.com");
+      await playSession(token, { quizType: "GENERAL" }, (correct) => correct);
+      expect(await prisma.question.aggregate({ _sum: { timesAnswered: true, timesCorrect: true } })).toMatchObject({ _sum: { timesAnswered: 3, timesCorrect: 3 } });
+
+      const admin = await login("admin2@email.com");
+      const question = await prisma.question.findFirstOrThrow({ where: { difficulty: "EASY" } });
+      await prisma.question.update({ where: { id: question.id }, data: { timesAnswered: 40, timesCorrect: 4 } });
+      const mismatch = await api.get("/api/questions?calibration=mismatch").set(bearer(admin));
+      expect(mismatch.body.content).toEqual([expect.objectContaining({ id: question.id, suggestedDifficulty: "VERY_HARD" })]);
+      expect((await api.get("/api/admin/stats").set(bearer(admin))).body.needsCalibration).toBe(1);
+
+      const applied = await api.post("/api/questions/admin/apply-suggestions").set(bearer(admin)).send({ ids: [question.id] });
+      expect(applied.body.updated).toBe(1);
+      expect(await prisma.question.findUniqueOrThrow({ where: { id: question.id } })).toMatchObject({ difficulty: "VERY_HARD", timeLimitSeconds: 15 });
     });
   });
 

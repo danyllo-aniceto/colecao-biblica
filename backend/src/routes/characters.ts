@@ -7,6 +7,7 @@ import { clearableText, parseId, requiredText, richText, z } from "../lib/valida
 import { currentUser, requireAdmin } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
 import { toCharacterResponse, toCharacterSummary } from "../services/mappers";
+import { isCharacterVisible, scheduledCharacter, visibleCharacter } from "../services/visibility";
 
 export const charactersRouter = Router();
 
@@ -26,6 +27,12 @@ const optionalFields = {
   importantEvents: clearableText(),
   keyVerses: clearableText(1000),
   keywords: clearableText(1000),
+  // Publicação agendada (ISO 8601). null tira o agendamento.
+  publishAt: z
+    .string()
+    .datetime({ offset: true })
+    .nullish()
+    .transform((value) => (value === undefined ? undefined : value === null ? null : new Date(value))),
 };
 
 const createSchema = z.object({
@@ -97,7 +104,13 @@ charactersRouter.get(
     const where: Prisma.BiblicalCharacterWhereInput = {
       ...(search ? { name: { contains: search, mode: "insensitive" } } : {}),
       ...(rarityFilter ? { rarity: rarity.parse(rarityFilter) } : {}),
-      ...(status === "published" ? { published: true } : status === "draft" ? { published: false } : {}),
+      ...(status === "published"
+        ? visibleCharacter()
+        : status === "draft"
+          ? { published: false }
+          : status === "scheduled"
+            ? scheduledCharacter()
+            : {}),
       ...(issue === "noImage" ? { OR: [{ imageUrl: null }, { imageUrl: "" }] } : {}),
       ...(issue === "noQuestions" ? { questions: { none: { active: true } } } : {}),
     };
@@ -181,9 +194,23 @@ charactersRouter.delete(
 charactersRouter.get(
   "/",
   asyncHandler(async (_req, res) => {
-    const characters = await prisma.biblicalCharacter.findMany({ where: { published: true }, orderBy: [{ name: "asc" }, { id: "asc" }] });
+    const characters = await prisma.biblicalCharacter.findMany({ where: visibleCharacter(), orderBy: [{ name: "asc" }, { id: "asc" }] });
     const counts = await activeQuestionCounts();
     res.json(characters.map((character) => toCharacterSummary(character, counts.get(character.id) ?? 0)));
+  }),
+);
+
+/** Figurinhas agendadas ("em breve"): só raridade e data, sem revelar quem é. */
+charactersRouter.get(
+  "/upcoming",
+  asyncHandler(async (_req, res) => {
+    const upcoming = await prisma.biblicalCharacter.findMany({
+      where: scheduledCharacter(),
+      orderBy: { publishAt: "asc" },
+      take: 6,
+      select: { rarity: true, publishAt: true, testament: true },
+    });
+    res.json(upcoming);
   }),
 );
 
@@ -192,7 +219,7 @@ charactersRouter.get(
   asyncHandler(async (req, res) => {
     const character = await getCharacter(parseId(req.params.id));
     // Rascunhos só aparecem para o admin.
-    if (!character.published && currentUser(req).role !== "ADMIN") {
+    if (!isCharacterVisible(character) && currentUser(req).role !== "ADMIN") {
       throw notFound("Personagem não encontrado");
     }
     res.json(toCharacterResponse(character));

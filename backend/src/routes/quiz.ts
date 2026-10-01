@@ -7,6 +7,7 @@ import {
   abandonSession,
   answerQuestion,
   getActiveSession,
+  getDailyChallenge,
   getHistory,
   getMatchesPage,
   getSessionStatus,
@@ -19,7 +20,7 @@ import {
 export const quizRouter = Router();
 
 const startSchema = z.object({
-  quizType: z.enum(["GENERAL", "CHARACTER_STUDY"]),
+  quizType: z.enum(["GENERAL", "CHARACTER_STUDY", "DAILY_CHALLENGE"]),
   characterId: z.number().int().positive().nullish(),
   questionLimit: z.number().int().min(1).max(100).nullish(),
 });
@@ -100,5 +101,13 @@ quizRouter.get(
   asyncHandler(async (req, res) => {
     const { page, size } = readPage(req, 10, 50);
     res.json(await getMatchesPage(currentUser(req).id, page, size));
+  }),
+);
+
+quizRouter.get(
+  "/daily-challenge",
+  asyncHandler(async (req, res) => {
+    const { page, size } = readPage(req, 10, 50);
+    res.json(await getDailyChallenge(currentUser(req).id, page, size));
   }),
 );

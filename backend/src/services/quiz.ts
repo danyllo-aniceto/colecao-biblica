@@ -7,6 +7,9 @@ import {
   availableSeconds,
   calculateLevel,
   calculateMatchCoins,
+  dailyChallengeQuestionIds,
+  dayKeyInTimeZone,
+  pityActive,
   calculateScore,
   calculateXp,
   dayRangeInTimeZone,
@@ -22,6 +25,7 @@ import { checkAchievements } from "./achievements";
 import { applyReward, availableRewards, grantStickerIfMissing, walletData } from "./rewards";
 import { getSettings, type GameSettings } from "./settings";
 import { pageOf } from "../lib/pagination";
+import { visibleCharacter } from "./visibility";
 
 type Tx = Prisma.TransactionClient;
 
@@ -137,7 +141,7 @@ export async function startSession(user: User, input: StartInput) {
     if (!input.characterId) {
       throw badRequest("characterId é obrigatório no quiz de personagem");
     }
-    const character = await prisma.biblicalCharacter.findFirst({ where: { id: input.characterId, published: true }, select: { id: true } });
+    const character = await prisma.biblicalCharacter.findFirst({ where: { id: input.characterId, ...visibleCharacter() }, select: { id: true } });
     if (!character) {
       throw notFound("Personagem não encontrado");
     }
@@ -152,7 +156,22 @@ export async function startSession(user: User, input: StartInput) {
     throw badRequest(characterId ? "Este personagem ainda não tem perguntas. Escolha outro." : "Não há perguntas disponíveis para iniciar a sessão");
   }
 
-  const selected = shuffle(available.map((question) => question.id)).slice(0, questionLimit);
+  let selected: number[];
+  if (input.quizType === "DAILY_CHALLENGE") {
+    // Uma tentativa por dia (abandonar também conta) e as mesmas perguntas para todos.
+    const { start, end } = dayRangeInTimeZone(new Date(), env.timezone);
+    const played = await prisma.quizSession.count({ where: { userId: user.id, quizType: "DAILY_CHALLENGE", startedAt: { gte: start, lt: end } } });
+    if (played > 0) {
+      throw badRequest("Você já fez o desafio de hoje. Volte amanhã para um novo!");
+    }
+    selected = dailyChallengeQuestionIds(
+      available.map((question) => question.id),
+      dayKeyInTimeZone(new Date(), env.timezone),
+      settings.dailyChallengeQuestions,
+    );
+  } else {
+    selected = shuffle(available.map((question) => question.id)).slice(0, questionLimit);
+  }
 
   const existing = await prisma.quizSession.findFirst({ where: { userId: user.id, status: "IN_PROGRESS" }, select: { id: true } });
   if (existing) {
@@ -231,6 +250,12 @@ export async function answerQuestion(userId: number, sessionId: number, input: A
     // Sem alternativa ou fora do prazo conta como erro, independente do que o cliente enviou.
     const timedOut = !input.selectedOption || isTimeExpired(timerOf(session, question));
     const correct = !timedOut && question.correctOption.toUpperCase() === input.selectedOption!.toUpperCase();
+
+    // Estatística da pergunta (taxa de acerto para calibrar a dificuldade).
+    await tx.question.update({
+      where: { id: question.id },
+      data: { timesAnswered: { increment: 1 }, ...(correct ? { timesCorrect: { increment: 1 } } : {}) },
+    });
 
     const userChanges: Prisma.UserUpdateInput = {};
     let extraLifeApplied = false;
@@ -509,7 +534,9 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
   let rewardCharacterRarity: string | null = null;
   let rewardCharacterImageUrl: string | null = null;
   let rewardCharacterUnlocked = false;
-  let duplicateCoins = 0;
+  let rewardDuplicate = false;
+  let pityGuaranteed = false;
+  let stickerPity = user.stickerPity;
 
   if (stats.quizType === "CHARACTER_STUDY") {
     xp = applyCharacterStudyPercent(xp, settings.characterStudyXpPercent);
@@ -535,6 +562,7 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
     extraTimeBoosts: user.extraTimeBoosts,
     doubleXpBoosts: user.doubleXpBoosts,
     hintBoosts: user.hintBoosts,
+    streakFreezes: user.streakFreezes,
   };
   const totalXp = user.xp + xp;
 
@@ -554,7 +582,10 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
     const required = requiredCorrectAnswersForReward(settings.rewardMinCorrectAnswers, activeQuestions);
     if (stats.correctAnswers >= required && (await rewardedMatchesToday(tx, user.id)) < dailyLimit) {
       const rewards = await availableRewards(tx, await tx.rewardDefinition.findMany({ where: { active: true }, orderBy: { id: "asc" } }));
-      const drawn = weightedPick(rewards, (reward) => reward.dropChance, random);
+      // Garantia contra azar: depois de N prêmios sem figurinha, só concorrem figurinhas.
+      const stickerRewards = rewards.filter((reward) => reward.rewardType === "STICKER" || reward.rewardType === "STICKER_PACK");
+      pityGuaranteed = pityActive(stickerPity, settings.pityThreshold) && stickerRewards.length > 0;
+      const drawn = weightedPick(pityGuaranteed ? stickerRewards : rewards, (reward) => reward.dropChance, random);
       if (drawn) {
         const applied = await applyReward(tx, wallet, drawn, settings, random);
         rewardGranted = true;
@@ -565,7 +596,8 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
         rewardCharacterRarity = applied.characterRarity;
         rewardCharacterImageUrl = applied.characterImageUrl;
         rewardCharacterUnlocked = applied.characterUnlocked;
-        duplicateCoins = applied.duplicateCoins;
+        rewardDuplicate = applied.duplicate;
+        stickerPity = applied.characterId ? 0 : stickerPity + 1;
       }
     }
   }
@@ -577,6 +609,7 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
       xp: totalXp,
       totalScore: user.totalScore + score,
       level: calculateLevel(totalXp),
+      stickerPity,
     },
   });
 
@@ -613,12 +646,57 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
     rewardCharacterImageUrl,
     rewardCharacterUnlocked,
     coinsGained,
-    duplicateCoins,
+    rewardDuplicate,
+    pityGuaranteed,
+    // Prêmios que faltam para a figurinha garantida (null quando desligado).
+    pityRemaining: settings.pityThreshold > 0 ? Math.max(1, settings.pityThreshold - stickerPity) : null,
     unlockedAchievements,
     userXp: updated.xp,
     userLevel: updated.level,
     userCoins: updated.coins + achievementCoins,
     rewardMatchesUsedToday: await rewardedMatchesToday(tx, user.id),
     rewardMatchesLimitPerDay: dailyLimit,
+  };
+}
+
+/**
+ * Desafio do dia: as mesmas perguntas para todos, uma tentativa por dia.
+ * Ranking por acertos e, no empate, por quem terminou mais rápido.
+ */
+export async function getDailyChallenge(userId: number, page: number, size: number) {
+  const now = new Date();
+  const { start, end } = dayRangeInTimeZone(now, env.timezone);
+  const [settings, activeQuestions, attempt, matches] = await Promise.all([
+    getSettings(prisma),
+    prisma.question.count({ where: { active: true } }),
+    prisma.quizSession.findFirst({ where: { userId, quizType: "DAILY_CHALLENGE", startedAt: { gte: start, lt: end } }, orderBy: { startedAt: "desc" } }),
+    prisma.quizMatch.findMany({
+      where: { quizType: "DAILY_CHALLENGE", finishedAt: { gte: start, lt: end }, user: { deleted: false } },
+      include: { user: { select: { name: true, level: true } } },
+    }),
+  ]);
+
+  const durationOf = (match: (typeof matches)[number]) => (match.startedAt ? match.finishedAt.getTime() - match.startedAt.getTime() : Number.MAX_SAFE_INTEGER);
+  const ranked = matches
+    .sort((left, right) => right.correctAnswers - left.correctAnswers || durationOf(left) - durationOf(right) || left.id - right.id)
+    .map((match, index) => ({
+      position: index + 1,
+      userId: match.userId,
+      userName: match.user.name,
+      level: match.user.level,
+      correctAnswers: match.correctAnswers,
+      questionsAnswered: match.questionsAnswered,
+      seconds: Number.isFinite(durationOf(match)) ? Math.round(durationOf(match) / 1000) : null,
+    }));
+
+  const mine = ranked.find((entry) => entry.userId === userId) ?? null;
+  return {
+    ...pageOf(ranked.slice(page * size, page * size + size), ranked.length, page, size),
+    dayKey: dayKeyInTimeZone(now, env.timezone),
+    endsAt: end,
+    totalQuestions: Math.min(settings.dailyChallengeQuestions, activeQuestions),
+    // IN_PROGRESS: começou e não terminou; FINISHED/ABANDONED: tentativa do dia já usada.
+    attemptStatus: attempt?.status ?? null,
+    me: mine,
   };
 }

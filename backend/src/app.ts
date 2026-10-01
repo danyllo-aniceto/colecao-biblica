@@ -9,6 +9,8 @@ import { charactersRouter } from "./routes/characters";
 import { collectionRouter } from "./routes/collection";
 import { commentsRouter } from "./routes/comments";
 import { dailyRouter } from "./routes/daily";
+import { leagueRouter, missionsRouter } from "./routes/engagement";
+import { reportsRouter } from "./routes/reports";
 import { questionsRouter } from "./routes/questions";
 import { quizRouter } from "./routes/quiz";
 import { rankingRouter } from "./routes/ranking";
@@ -55,6 +57,9 @@ export function createApp() {
   app.use("/api/daily-reward", requireAuth, dailyRouter);
   app.use("/api/achievements", requireAuth, achievementsRouter);
   app.use("/api/admin", requireAuth, requireAdmin, adminRouter);
+  app.use("/api/missions", requireAuth, missionsRouter);
+  app.use("/api/league", requireAuth, leagueRouter);
+  app.use("/api/reports", requireAuth, reportsRouter);
 
   app.use("/api", notFoundHandler);
   app.use(errorHandler);

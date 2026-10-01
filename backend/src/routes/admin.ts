@@ -2,8 +2,9 @@ import { Router } from "express";
 import { prisma } from "../db/prisma";
 import { env } from "../lib/env";
 import { asyncHandler } from "../middleware/errorHandler";
-import { dayRangeInTimeZone } from "../services/game-rules";
+import { dayRangeInTimeZone, suggestedDifficulty } from "../services/game-rules";
 import { uploadsConfigured } from "../services/uploads";
+import { scheduledCharacter, visibleCharacter } from "../services/visibility";
 
 export const adminRouter = Router();
 
@@ -43,10 +44,20 @@ adminRouter.get(
       prisma.quizMatch.count({ where: { finishedAt: { gte: start } } }),
       prisma.quizMatch.count({ where: { finishedAt: { gte: weekAgo } } }),
       prisma.userSticker.count(),
-      prisma.biblicalCharacter.groupBy({ by: ["rarity"], where: { published: true }, _count: { _all: true } }),
+      prisma.biblicalCharacter.groupBy({ by: ["rarity"], where: visibleCharacter(), _count: { _all: true } }),
     ]);
 
-    const generalQuestions = await prisma.question.count({ where: { active: true, relatedCharacterId: null } });
+    const [generalQuestions, scheduled, openReports, needsCalibration] = await Promise.all([
+      prisma.question.count({ where: { active: true, relatedCharacterId: null } }),
+      prisma.biblicalCharacter.count({ where: scheduledCharacter() }),
+      prisma.questionReport.count({ where: { status: "OPEN" } }),
+      prisma.question
+        .findMany({ where: { timesAnswered: { gte: 20 } }, select: { difficulty: true, timesAnswered: true, timesCorrect: true } })
+        .then((rows) => rows.filter((row) => {
+          const suggested = suggestedDifficulty(row.timesAnswered, row.timesCorrect);
+          return suggested !== null && suggested !== row.difficulty;
+        }).length),
+    ]);
 
     res.json({
       users,
@@ -59,6 +70,9 @@ adminRouter.get(
       questions,
       inactiveQuestions,
       generalQuestions,
+      scheduled,
+      openReports,
+      needsCalibration,
       questionsByDifficulty: Object.fromEntries(byDifficulty.map((row) => [row.difficulty, row._count._all])),
       charactersByRarity: Object.fromEntries(byRarity.map((row) => [row.rarity, row._count._all])),
       matchesToday,

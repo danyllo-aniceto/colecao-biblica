@@ -1,4 +1,5 @@
 import type { BiblicalCharacter, Question, RewardDefinition, ShopItem, User } from "@prisma/client";
+import { suggestedDifficulty } from "./game-rules";
 
 /** Formato das respostas JSON (mesmos campos da API original, que o frontend já usa). */
 
@@ -13,6 +14,8 @@ export function toUserResponse(user: User) {
     extraTimeBoosts: user.extraTimeBoosts,
     doubleXpBoosts: user.doubleXpBoosts,
     hintBoosts: user.hintBoosts,
+    streakFreezes: user.streakFreezes,
+    stickerPity: user.stickerPity,
     dailyStreak: user.dailyStreak,
     lastDailyClaim: user.lastDailyClaim,
     name: user.name,
@@ -36,6 +39,7 @@ export function toCharacterResponse(character: BiblicalCharacter) {
     rarity: character.rarity,
     testament: character.testament,
     published: character.published,
+    publishAt: character.publishAt,
     shortSummary: character.shortSummary,
     fullDescription: character.fullDescription,
     bibleBooks: character.bibleBooks,
@@ -62,6 +66,7 @@ export function toCharacterSummary(character: BiblicalCharacter, questionCount =
     rarity: character.rarity,
     testament: character.testament,
     published: character.published,
+    publishAt: character.publishAt,
     bibleBooks: character.bibleBooks,
     historicalPeriod: character.historicalPeriod,
     narrativeRole: character.narrativeRole,
@@ -88,6 +93,9 @@ export function toQuestionResponse(question: QuestionWithCharacter) {
     explanation: question.explanation,
     bibleReference: question.bibleReference,
     active: question.active,
+    timesAnswered: question.timesAnswered,
+    timesCorrect: question.timesCorrect,
+    suggestedDifficulty: suggestedDifficulty(question.timesAnswered, question.timesCorrect),
   };
 }
 

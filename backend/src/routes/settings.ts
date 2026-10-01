@@ -36,6 +36,13 @@ const updateSchema = z.object({
   packOddsRare: int(0, 1000),
   packOddsEpic: int(0, 1000),
   packOddsLegendary: int(0, 1000),
+  maxStreakFreezes: int(1, 10),
+  pityThreshold: int(0, 50),
+  fuseCost: int(2, 10),
+  dailyChallengeQuestions: int(3, 30),
+  leagueFirstCoins: int(0, 100_000),
+  leagueSecondCoins: int(0, 100_000),
+  leagueThirdCoins: int(0, 100_000),
 });
 
 settingsRouter.get(
