@@ -8,6 +8,8 @@ export type UserSticker = {
   imageUrl: string | null;
   rarity: StickerRarity;
   acquiredAt?: string;
+  /** Cópias repetidas guardadas (vender ou fundir). */
+  duplicates: number;
 };
 
 export type CollectionProgress = {
@@ -67,7 +69,7 @@ export type CharacterDetail = {
   keywords?: string | null;
 };
 
-export type QuizType = 'GENERAL' | 'CHARACTER_STUDY';
+export type QuizType = 'GENERAL' | 'CHARACTER_STUDY' | 'DAILY_CHALLENGE';
 
 export type StartQuizSessionPayload = {
   quizType: QuizType;
@@ -131,7 +133,10 @@ export type QuizMatchResult = {
   rewardCharacterImageUrl?: string | null;
   rewardCharacterUnlocked?: boolean;
   coinsGained?: number;
-  duplicateCoins?: number;
+  rewardDuplicate?: boolean;
+  pityGuaranteed?: boolean;
+  /** Prêmios até a figurinha garantida (null quando a garantia está desligada). */
+  pityRemaining?: number | null;
   unlockedAchievements?: UnlockedAchievement[];
   userXp: number;
   userLevel: number;
@@ -205,6 +210,13 @@ export type GameRules = {
   packOddsRare: number;
   packOddsEpic: number;
   packOddsLegendary: number;
+  duplicateCoinsCommon: number;
+  duplicateCoinsRare: number;
+  duplicateCoinsEpic: number;
+  duplicateCoinsLegendary: number;
+  fuseCost: number;
+  dailyChallengeQuestions: number;
+  pityThreshold: number;
 };
 
 export type ShopItem = {
@@ -225,6 +237,9 @@ export type RankingPage = PaginatedResponse<RankingEntry> & { me: RankingEntry }
 export type DailyRewardStatus = {
   canClaim: boolean;
   streak: number;
+  streakFreezes: number;
+  /** Protetores que o próximo resgate vai gastar para salvar a sequência. */
+  freezesToUse: number;
   nextDay: number;
   todayDay: number | null;
   cycle: Array<{ day: number; coins: number; hints: number }>;
@@ -235,6 +250,7 @@ export type DailyClaimResult = {
   streak: number;
   coins: number;
   hints: number;
+  freezesUsed: number;
   unlockedAchievements: UnlockedAchievement[];
   userCoins: number;
   hintBoosts: number;
@@ -260,13 +276,14 @@ export type ShopPurchaseResult = {
   characterRarity?: StickerRarity | null;
   characterImageUrl?: string | null;
   characterUnlocked: boolean;
-  duplicateCoins?: number;
+  duplicate?: boolean;
   unlockedAchievements?: UnlockedAchievement[];
   userCoins: number;
   extraLifeBoosts: number;
   extraTimeBoosts: number;
   doubleXpBoosts: number;
   hintBoosts: number;
+  streakFreezes: number;
 };
 
 export async function getGameRules(): Promise<GameRules> {
@@ -389,4 +406,89 @@ export async function listAchievements(): Promise<Achievement[]> {
 
 export async function requestNextQuestion(sessionId: number): Promise<QuizSessionStatus> {
   return apiRequest<QuizSessionStatus>(`/quiz/sessions/${sessionId}/next`, { method: 'POST' }, 'Não foi possível abrir a próxima pergunta.');
+}
+
+export type Mission = {
+  code: string;
+  period: 'DAILY' | 'WEEKLY';
+  title: string;
+  coins: number;
+  hints: number;
+  current: number;
+  target: number;
+  completed: boolean;
+  claimed: boolean;
+  endsAt: string;
+};
+
+export type LeagueEntry = { position: number; userId: number; userName: string; level: number; score: number; matches: number; prize: number };
+
+export type LeaguePage = PaginatedResponse<LeagueEntry> & {
+  weekKey: string;
+  endsAt: string;
+  prizes: number[];
+  me: { position: number; score: number; matches: number } | null;
+  lastWeek: { weekKey: string; position: number | null; prize: number; claimed: boolean };
+};
+
+export type ChallengeEntry = { position: number; userId: number; userName: string; level: number; correctAnswers: number; questionsAnswered: number; seconds: number | null };
+
+export type DailyChallenge = PaginatedResponse<ChallengeEntry> & {
+  dayKey: string;
+  endsAt: string;
+  totalQuestions: number;
+  attemptStatus: 'IN_PROGRESS' | 'FINISHED' | 'ABANDONED' | null;
+  me: ChallengeEntry | null;
+};
+
+export type UpcomingSticker = { rarity: StickerRarity; publishAt: string; testament?: Testament | null };
+
+export type FuseResult = {
+  spent: number;
+  characterId: number;
+  characterName: string;
+  characterRarity: StickerRarity;
+  characterImageUrl?: string | null;
+  characterUnlocked: boolean;
+  duplicate: boolean;
+  unlockedAchievements: UnlockedAchievement[];
+  userCoins: number;
+};
+
+export type ReportReason = 'WRONG_ANSWER' | 'TYPO' | 'CONFUSING' | 'OTHER';
+
+export async function listMissions(): Promise<Mission[]> {
+  return apiRequest<Mission[]>('/missions', { method: 'GET' }, 'Não foi possível carregar as missões.');
+}
+
+export async function claimMission(code: string): Promise<{ code: string; coins: number; hints: number; userCoins: number; hintBoosts: number }> {
+  return apiRequest(`/missions/${code}/claim`, { method: 'POST' }, 'Não foi possível resgatar a missão.');
+}
+
+export async function getLeague(page = 0, size = 20): Promise<LeaguePage> {
+  return apiRequest<LeaguePage>(`/league?page=${page}&size=${size}`, { method: 'GET' }, 'Não foi possível carregar a liga.');
+}
+
+export async function claimLeague(): Promise<{ position: number; coins: number; userCoins: number }> {
+  return apiRequest('/league/claim', { method: 'POST' }, 'Não foi possível resgatar o prêmio da liga.');
+}
+
+export async function getDailyChallenge(page = 0, size = 10): Promise<DailyChallenge> {
+  return apiRequest<DailyChallenge>(`/quiz/daily-challenge?page=${page}&size=${size}`, { method: 'GET' }, 'Não foi possível carregar o desafio do dia.');
+}
+
+export async function listUpcoming(): Promise<UpcomingSticker[]> {
+  return apiRequest<UpcomingSticker[]>('/characters/upcoming', { method: 'GET' }, 'Não foi possível carregar as próximas figurinhas.');
+}
+
+export async function sellDuplicates(characterId: number, quantity: number): Promise<{ sold: number; coins: number; userCoins: number }> {
+  return apiRequest('/collection/sell', { method: 'POST', body: JSON.stringify({ characterId, quantity }) }, 'Não foi possível vender as repetidas.');
+}
+
+export async function fuseDuplicates(rarity: StickerRarity): Promise<FuseResult> {
+  return apiRequest<FuseResult>('/collection/fuse', { method: 'POST', body: JSON.stringify({ rarity }) }, 'Não foi possível fazer a fusão.');
+}
+
+export async function reportQuestion(payload: { questionId: number; reason: ReportReason; message?: string }): Promise<void> {
+  await apiRequest('/reports', { method: 'POST', body: JSON.stringify(payload) }, 'Não foi possível enviar o reporte.');
 }

@@ -6,6 +6,8 @@ import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import ToggleOffRoundedIcon from '@mui/icons-material/ToggleOffRounded';
 import ToggleOnRoundedIcon from '@mui/icons-material/ToggleOnRounded';
+import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
+import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useDialogs } from '@/components/ui/dialogs';
@@ -18,7 +20,9 @@ import { Select } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { errorMessage, useToast } from '@/components/ui/toast';
 import { cn } from '@/lib/cn';
+import { Tooltip } from '@/components/ui/tooltip';
 import {
+  applySuggestedDifficulty,
   createQuestion,
   deleteQuestion,
   listCharacterOptions,
@@ -29,7 +33,8 @@ import {
   type QuestionDifficulty,
   type QuestionPayload,
 } from '@/lib/admin-api';
-import { DIFFICULTY_LABELS, DIFFICULTY_TIME } from '@/lib/labels';
+import { DIFFICULTY_LABELS, DIFFICULTY_TIME, accuracy } from '@/lib/labels';
+import { ImportQuestionsModal } from './import-questions-modal';
 import { AdminPanel, Cell, DataTable, IconAction, Row, SearchInput, StatusBadge } from '../admin-ui';
 import { useDebouncedValue, usePagedList } from '../use-paged-list';
 
@@ -71,11 +76,42 @@ export function QuestionsScreen({ params }: { params: URLSearchParams }) {
   const [difficulty, setDifficulty] = useState(params.get('dificuldade') ?? '');
   const [characterId, setCharacterId] = useState(params.get('personagem') ?? '');
   const [status, setStatus] = useState(params.get('status') ?? '');
+  const [review, setReview] = useState(params.get('revisar') ?? '');
+  const [importing, setImporting] = useState(false);
+  const [applying, setApplying] = useState(false);
   const [editing, setEditing] = useState<{ question: AdminQuestion | null; duplicate?: boolean } | null>(null);
   const debouncedSearch = useDebouncedValue(search);
 
-  const list = usePagedList(listQuestions, { search: debouncedSearch, difficulty, characterId, status });
-  const hasFilters = Boolean(search || difficulty || characterId || status);
+  const list = usePagedList(listQuestions, {
+    search: debouncedSearch,
+    difficulty,
+    characterId,
+    status,
+    calibration: review === 'calibration' ? 'mismatch' : '',
+    reported: review === 'reported' ? 'open' : '',
+  });
+  const hasFilters = Boolean(search || difficulty || characterId || status || review);
+
+  async function applySuggestions() {
+    const ids = list.items.filter((question) => question.suggestedDifficulty && question.suggestedDifficulty !== question.difficulty).map((question) => question.id);
+    if (ids.length === 0) return;
+    const ok = await confirm({
+      title: `Ajustar ${ids.length} pergunta(s)?`,
+      message: 'A dificuldade (e o tempo padrão dela) passa a ser a sugerida pela taxa de acerto dos jogadores.',
+      confirmLabel: 'Aplicar sugestões',
+    });
+    if (!ok) return;
+    setApplying(true);
+    try {
+      const result = await applySuggestedDifficulty(ids);
+      toast.success(`${result.updated} pergunta(s) recalibrada(s).`);
+      list.reload();
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setApplying(false);
+    }
+  }
 
   async function toggleActive(question: AdminQuestion) {
     try {
@@ -107,13 +143,19 @@ export function QuestionsScreen({ params }: { params: URLSearchParams }) {
   return (
     <AdminPanel
       actions={
-        <Button onClick={() => setEditing({ question: null })}>
-          <AddRoundedIcon fontSize="small" />
-          Nova pergunta
-        </Button>
+        <>
+          <Button variant="secondary" onClick={() => setImporting(true)}>
+            <UploadFileRoundedIcon fontSize="small" />
+            Importar planilha
+          </Button>
+          <Button onClick={() => setEditing({ question: null })}>
+            <AddRoundedIcon fontSize="small" />
+            Nova pergunta
+          </Button>
+        </>
       }
     >
-      <div className="grid gap-3 md:grid-cols-[1.5fr_1fr_1.2fr_1fr]">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1.2fr_1fr_1.1fr]">
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar no enunciado ou alternativas" label="Buscar pergunta" />
         <Select
           aria-label="Dificuldade"
@@ -142,7 +184,26 @@ export function QuestionsScreen({ params }: { params: URLSearchParams }) {
             { value: 'inactive', label: 'Só inativas' },
           ]}
         />
+        <Select
+          aria-label="Revisão"
+          value={review}
+          onChange={setReview}
+          options={[
+            { value: '', label: 'Sem filtro de revisão' },
+            { value: 'calibration', label: 'Dificuldade a revisar', description: 'A taxa de acerto não bate com a dificuldade' },
+            { value: 'reported', label: 'Reportadas pelos jogadores' },
+          ]}
+        />
       </div>
+      {review === 'calibration' && list.items.length > 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-info/10 p-3 text-sm text-info-strong dark:text-info">
+          <span>Perguntas com 20+ respostas cuja taxa de acerto sugere outra dificuldade.</span>
+          <Button size="sm" onClick={() => void applySuggestions()} loading={applying}>
+            <TuneRoundedIcon fontSize="small" />
+            Aplicar sugestões desta página
+          </Button>
+        </div>
+      ) : null}
       {hasFilters ? (
         <button
           type="button"
@@ -152,6 +213,7 @@ export function QuestionsScreen({ params }: { params: URLSearchParams }) {
             setDifficulty('');
             setCharacterId('');
             setStatus('');
+            setReview('');
           }}
         >
           Limpar filtros
@@ -159,7 +221,8 @@ export function QuestionsScreen({ params }: { params: URLSearchParams }) {
       ) : null}
 
       <DataTable
-        columns={[{ label: 'Pergunta' }, { label: 'Personagem' }, { label: 'Dificuldade' }, { label: 'Status' }, { label: 'Ações', className: 'w-44 text-right' }]}
+        columns={[{ label: 'Pergunta' }, { label: 'Personagem' }, { label: 'Dificuldade' }, { label: 'Acerto' }, { label: 'Status' }, { label: 'Ações', className: 'w-44 text-right' }]}
+        minWidth={860}
         loading={list.loading}
         error={list.error}
         isEmpty={list.items.length === 0}
@@ -179,6 +242,9 @@ export function QuestionsScreen({ params }: { params: URLSearchParams }) {
               <Cell>
                 <Badge tone={difficultyTone[question.difficulty]}>{DIFFICULTY_LABELS[question.difficulty]}</Badge>
                 <span className="ml-1 text-xs text-muted">{question.timeLimitSeconds}s</span>
+              </Cell>
+              <Cell>
+                <AccuracyCell question={question} />
               </Cell>
               <Cell>
                 <StatusBadge active={question.active} on="Ativa" off="Inativa" />
@@ -214,6 +280,16 @@ export function QuestionsScreen({ params }: { params: URLSearchParams }) {
         itemLabel="perguntas"
       />
 
+      {importing ? (
+        <ImportQuestionsModal
+          onClose={() => setImporting(false)}
+          onImported={() => {
+            setImporting(false);
+            list.reload();
+          }}
+        />
+      ) : null}
+
       {editing ? (
         <QuestionEditorModal
           question={editing.question}
@@ -227,6 +303,26 @@ export function QuestionsScreen({ params }: { params: URLSearchParams }) {
         />
       ) : null}
     </AdminPanel>
+  );
+}
+
+/** Taxa de acerto da pergunta e, quando houver, a dificuldade sugerida. */
+function AccuracyCell({ question }: { question: AdminQuestion }) {
+  const rate = accuracy(question.timesAnswered, question.timesCorrect);
+  if (rate === null) return <span className="text-xs text-muted">Sem respostas</span>;
+  const suggestion = question.suggestedDifficulty && question.suggestedDifficulty !== question.difficulty ? question.suggestedDifficulty : null;
+  return (
+    <div className="space-y-1">
+      <span className="font-display font-bold text-ink">{rate}%</span>
+      <span className="ml-1 text-xs text-muted">de {question.timesAnswered}</span>
+      {suggestion ? (
+        <Tooltip content="Sugestão pela taxa de acerto (20+ respostas)">
+          <span tabIndex={0} className="block">
+            <Badge tone="violet">Sugerida: {DIFFICULTY_LABELS[suggestion]}</Badge>
+          </span>
+        </Tooltip>
+      ) : null}
+    </div>
   );
 }
 

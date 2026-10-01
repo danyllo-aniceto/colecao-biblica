@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import ContentCutRoundedIcon from '@mui/icons-material/ContentCutRounded';
+import ShieldRoundedIcon from '@mui/icons-material/ShieldRounded';
 import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
 import { Tooltip } from '@/components/ui/tooltip';
 
@@ -46,9 +47,10 @@ export function CoinChip({ value, className }: { value: number; className?: stri
   return <Chip icon={<CoinIcon />} value={value.toLocaleString('pt-BR')} label="Moedas" className={className} />;
 }
 
-export function BoostChips({ life, time, xp, hint = 0 }: { life: number; time: number; xp: number; hint?: number }) {
+export function BoostChips({ life, time, xp, hint = 0, freeze }: { life: number; time: number; xp: number; hint?: number; freeze?: number }) {
   return (
     <>
+      {freeze !== undefined ? <Chip icon={<ShieldRoundedIcon sx={{ fontSize: 18 }} className="text-info" />} value={freeze} label="Protetores de sequência" /> : null}
       <Chip icon={<ContentCutRoundedIcon sx={{ fontSize: 18 }} className="text-violet" />} value={hint} label="Dicas 50/50" />
       <Chip icon={<FavoriteRoundedIcon sx={{ fontSize: 20 }} className="text-danger" />} value={life} label="Vidas extras" />
       <Chip icon={<TimerRoundedIcon sx={{ fontSize: 20 }} className="text-info" />} value={time} label="Tempo extra" />

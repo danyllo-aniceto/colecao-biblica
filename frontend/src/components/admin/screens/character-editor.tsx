@@ -19,6 +19,7 @@ import { clearRichTextEditorDrafts, RichTextEditor } from '@/components/ui/rich-
 import { Segmented } from '@/components/ui/segmented';
 import { LoadingState } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { errorMessage, useToast } from '@/components/ui/toast';
 import { sanitizeMermaidCode, validateMermaidSyntax } from '@/components/ui/mermaid-diagram';
 import { Alert, ProgressBar } from '@/components/game/game-ui';
@@ -48,6 +49,7 @@ type FormState = {
   name: string;
   rarity: StickerRarity;
   published: boolean;
+  publishAt: string | null;
   testament: Testament | '';
   narrativeRole: string;
   historicalPeriod: string;
@@ -69,6 +71,7 @@ const EMPTY: FormState = {
   name: '',
   rarity: 'COMMON',
   published: false,
+  publishAt: null,
   testament: '',
   narrativeRole: '',
   historicalPeriod: '',
@@ -101,6 +104,7 @@ function fromCharacter(character: AdminCharacter): FormState {
     name: character.name,
     rarity: character.rarity,
     published: character.published,
+    publishAt: character.publishAt ?? null,
     testament: character.testament ?? '',
     // Antes eram campos de texto rico; agora são curtos (texto puro).
     narrativeRole: stripHtml(character.narrativeRole),
@@ -125,6 +129,7 @@ function toPayload(form: FormState): CharacterPayload {
     name: form.name.trim(),
     rarity: form.rarity,
     published: form.published,
+    publishAt: form.published ? form.publishAt : null,
     testament: form.testament || null,
     narrativeRole: orNull(form.narrativeRole),
     historicalPeriod: orNull(form.historicalPeriod),
@@ -265,6 +270,7 @@ export function CharacterEditor({ characterId, onClose, onNavigate }: { characte
   }
 
   const summaryLength = stripHtml(form.shortSummary).length;
+  const scheduledFor = form.publishAt && new Date(form.publishAt) > new Date() ? new Date(form.publishAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : null;
   const questionCount = questions?.total ?? 0;
   const checklist: Array<{ done: boolean; label: string; tab?: Tab }> = [
     { done: Boolean(form.imageUrl), label: 'Imagem da figurinha', tab: 'identidade' },
@@ -424,9 +430,21 @@ export function CharacterEditor({ characterId, onClose, onNavigate }: { characte
             <Switch
               checked={form.published}
               onChange={(value) => set('published', value)}
-              label={form.published ? 'Publicado no álbum' : 'Rascunho'}
-              description={form.published ? 'Jogadores já podem ver e conquistar.' : 'Só aparece no painel.'}
+              label={!form.published ? 'Rascunho' : scheduledFor ? 'Agendado' : 'Publicado no álbum'}
+              description={
+                !form.published
+                  ? 'Só aparece no painel.'
+                  : scheduledFor
+                    ? `Entra no álbum em ${scheduledFor}. Até lá aparece como "em breve".`
+                    : 'Jogadores já podem ver e conquistar.'
+              }
             />
+            {form.published ? (
+              <div className="space-y-1.5">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted">Agendar lançamento</span>
+                <DateTimePicker aria-label="Data de lançamento" value={form.publishAt} onChange={(value) => set('publishAt', value)} futureOnly placeholder="Publicar agora" />
+              </div>
+            ) : null}
           </div>
 
           <div className="panel space-y-3 p-4">

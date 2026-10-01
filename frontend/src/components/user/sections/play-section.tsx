@@ -8,6 +8,7 @@ import { fieldClassName } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Alert, BoostChips, ProgressBar, SectionHeading } from '@/components/game/game-ui';
 import { getRarityLabel } from '@/lib/rarity-theme';
+import { DailyChallengeCard } from '@/components/user/daily-challenge-card';
 import type { CharacterEntry, GameRules, QuizSessionStatus } from '@/lib/user-api';
 import type { UserProfile } from '@/types/auth';
 
@@ -36,6 +37,7 @@ type PlaySectionProps = {
   onStart: (event: FormEvent<HTMLFormElement>) => void;
   onResume: () => void;
   onAbandon: () => void;
+  onStartChallenge: () => void;
 };
 
 export function PlaySection({
@@ -51,6 +53,7 @@ export function PlaySection({
   onStart,
   onResume,
   onAbandon,
+  onStartChallenge,
 }: PlaySectionProps) {
   if (quizSession) {
     const answered = quizSession.currentQuestionIndex;
@@ -90,6 +93,8 @@ export function PlaySection({
   return (
     <form className="space-y-5" onSubmit={onStart}>
       <SectionHeading title="Escolha o desafio" subtitle="Quanto mais você acerta, mais XP e prêmios ganha." />
+
+      <DailyChallengeCard onStart={onStartChallenge} starting={submitting} currentUserId={profile?.id} />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <ModeCard

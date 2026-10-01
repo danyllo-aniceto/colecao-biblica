@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded';
 import { Pagination } from '@/components/ui/pagination';
+import { Segmented } from '@/components/ui/segmented';
+import { LeaguePanel } from '@/components/user/league-panel';
 import { LoadingState, Spinner } from '@/components/ui/spinner';
 import { Alert, EmptyState, LevelBadge, SectionHeading } from '@/components/game/game-ui';
 import { cn } from '@/lib/cn';
@@ -15,7 +17,27 @@ const PODIUM = [
 
 const PAGE_SIZE = 20;
 
-export function RankingSection({ currentUserId }: { currentUserId?: number }) {
+/** Ranking: liga da semana (zera toda segunda) e ranking geral de todos os tempos. */
+export function RankingSection({ currentUserId, onWallet }: { currentUserId?: number; onWallet: (wallet: { userCoins: number }) => void }) {
+  const [tab, setTab] = useState<'league' | 'general'>('league');
+  return (
+    <div className="space-y-5">
+      <SectionHeading title="Ranking" subtitle={tab === 'league' ? 'Liga da semana: todo mundo começa do zero na segunda.' : 'Pontos de todos os tempos (desempate por XP).'} />
+      <Segmented
+        aria-label="Tipo de ranking"
+        value={tab}
+        onChange={setTab}
+        options={[
+          { value: 'league', label: 'Liga da semana' },
+          { value: 'general', label: 'Geral' },
+        ]}
+      />
+      {tab === 'league' ? <LeaguePanel currentUserId={currentUserId} onClaimed={onWallet} /> : <GeneralRanking currentUserId={currentUserId} />}
+    </div>
+  );
+}
+
+function GeneralRanking({ currentUserId }: { currentUserId?: number }) {
   const [page, setPage] = useState(0);
   const [data, setData] = useState<RankingPage | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,17 +62,13 @@ export function RankingSection({ currentUserId }: { currentUserId?: number }) {
 
   if (!data) {
     return (
-      <div className="space-y-5">
-        <SectionHeading title="Ranking" />
-        {error ? <Alert tone="danger">{error}</Alert> : <LoadingState label="Carregando ranking..." />}
-      </div>
+      <div className="space-y-5">{error ? <Alert tone="danger">{error}</Alert> : <LoadingState label="Carregando ranking..." />}</div>
     );
   }
 
   if (data.totalElements === 0) {
     return (
       <div className="space-y-5">
-        <SectionHeading title="Ranking" />
         <EmptyState icon={<EmojiEventsRoundedIcon fontSize="large" />} title="Ninguém pontuou ainda">
           Jogue uma partida e seja o primeiro.
         </EmptyState>
@@ -63,7 +81,11 @@ export function RankingSection({ currentUserId }: { currentUserId?: number }) {
 
   return (
     <div className="space-y-5">
-      <SectionHeading title="Ranking" subtitle="Ordem por pontos (desempate por XP)." action={loading ? <Spinner /> : undefined} />
+      {loading ? (
+        <div className="flex justify-end">
+          <Spinner />
+        </div>
+      ) : null}
 
       {page === 0 ? (
         <section className="panel overflow-hidden px-4 pt-8">

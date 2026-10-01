@@ -1,4 +1,4 @@
-import type { QuestionDifficulty, RewardType, ShopItemType, Testament } from '@/lib/admin-api';
+import type { QuestionDifficulty, ReportReason, RewardType, ShopItemType, Testament } from '@/lib/admin-api';
 
 export const DIFFICULTY_LABELS: Record<QuestionDifficulty, string> = {
   EASY: 'Fácil',
@@ -17,8 +17,27 @@ export const REWARD_TYPE_LABELS: Record<RewardType, string> = {
   EXTRA_TIME: 'Tempo extra',
   XP_MULTIPLIER: 'XP em dobro',
   FIFTY_FIFTY: 'Dica 50/50',
+  STREAK_FREEZE: 'Protetor de sequência',
   COINS: 'Moedas',
 };
+
+export const REPORT_REASON_LABELS: Record<ReportReason, string> = {
+  WRONG_ANSWER: 'Resposta errada',
+  TYPO: 'Erro de digitação',
+  CONFUSING: 'Pergunta confusa',
+  OTHER: 'Outro motivo',
+};
+
+/** Data e hora curtas em português (ex.: 05/10/2026 09:00). */
+export function formatDateTime(value?: string | Date | null) {
+  if (!value) return '';
+  return new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+/** Taxa de acerto em % (null sem respostas). */
+export function accuracy(timesAnswered: number, timesCorrect: number) {
+  return timesAnswered > 0 ? Math.round((timesCorrect / timesAnswered) * 100) : null;
+}
 
 export const SHOP_TYPE_LABELS: Record<ShopItemType, string> = {
   STICKER: 'Figurinha',
@@ -56,3 +75,9 @@ export function stripHtml(value?: string | null) {
   element.innerHTML = value;
   return (element.textContent ?? '').replace(/\s+/g, ' ').trim();
 }
+
+export const QUIZ_TYPE_LABELS: Record<string, string> = {
+  GENERAL: 'Quiz geral',
+  CHARACTER_STUDY: 'Estudo de personagem',
+  DAILY_CHALLENGE: 'Desafio do dia',
+};

@@ -1,4 +1,5 @@
-import { useCallback, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import FlagRoundedIcon from '@mui/icons-material/FlagRounded';
 import { useSearchParams } from 'react-router-dom';
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
@@ -18,17 +19,20 @@ import { CharacterEditor } from './screens/character-editor';
 import { CharactersScreen } from './screens/characters-screen';
 import { OverviewScreen } from './screens/overview-screen';
 import { QuestionsScreen } from './screens/questions-screen';
+import { ReportsScreen } from './screens/reports-screen';
+import { countOpenReports } from '@/lib/admin-api';
 import { RewardsScreen } from './screens/rewards-screen';
 import { SettingsScreen } from './screens/settings-screen';
 import { ShopScreen } from './screens/shop-screen';
 import { UsersScreen } from './screens/users-screen';
 
-export type AdminScreen = 'visao-geral' | 'usuarios' | 'personagens' | 'perguntas' | 'recompensas' | 'loja' | 'configuracoes';
+export type AdminScreen = 'visao-geral' | 'usuarios' | 'personagens' | 'perguntas' | 'reportes' | 'recompensas' | 'loja' | 'configuracoes';
 
 const SCREENS: Array<{ id: AdminScreen; label: string; description: string; icon: ReactNode }> = [
   { id: 'visao-geral', label: 'Visão geral', description: 'Números do jogo e o que falta no conteúdo.', icon: <DashboardRoundedIcon fontSize="inherit" /> },
   { id: 'personagens', label: 'Personagens', description: 'Figurinhas do álbum: textos, imagens, diagramas e publicação.', icon: <ExtensionRoundedIcon fontSize="inherit" /> },
   { id: 'perguntas', label: 'Perguntas', description: 'Banco de perguntas das partidas, com explicação e referência.', icon: <QuizRoundedIcon fontSize="inherit" /> },
+  { id: 'reportes', label: 'Reportes', description: 'Perguntas que os jogadores marcaram como erradas ou confusas.', icon: <FlagRoundedIcon fontSize="inherit" /> },
   { id: 'recompensas', label: 'Recompensas', description: 'Prêmios sorteados no fim das partidas e usados pela loja.', icon: <EmojiEventsRoundedIcon fontSize="inherit" /> },
   { id: 'loja', label: 'Loja', description: 'Itens que os jogadores compram com moedas.', icon: <StorefrontRoundedIcon fontSize="inherit" /> },
   { id: 'usuarios', label: 'Usuários', description: 'Contas, papéis e ajustes de saldo.', icon: <PeopleAltRoundedIcon fontSize="inherit" /> },
@@ -53,6 +57,13 @@ export function AdminDashboard() {
   );
 
   const active = SCREENS.find((item) => item.id === screen) ?? SCREENS[0];
+  const [openReports, setOpenReports] = useState(0);
+  const refreshReports = useCallback(() => {
+    countOpenReports()
+      .then((result) => setOpenReports(result.open))
+      .catch(() => setOpenReports(0));
+  }, []);
+  useEffect(refreshReports, [refreshReports, screen]);
 
   return (
     <main className="min-h-dvh lg:grid lg:grid-cols-[264px_1fr]">
@@ -89,6 +100,11 @@ export function AdminDashboard() {
               >
                 <span className="inline-flex text-lg">{item.icon}</span>
                 {item.label}
+                {item.id === 'reportes' && openReports > 0 ? (
+                  <span className={cn('ml-auto rounded-full px-2 text-xs font-bold', current ? 'bg-on-primary/20' : 'bg-danger text-white')} aria-label={`${openReports} abertos`}>
+                    {openReports}
+                  </span>
+                ) : null}
               </button>
             );
           })}
@@ -126,6 +142,7 @@ export function AdminDashboard() {
             {screen === 'visao-geral' ? <OverviewScreen onNavigate={navigate} /> : null}
             {screen === 'personagens' ? <CharactersScreen params={params} onNavigate={navigate} /> : null}
             {screen === 'perguntas' ? <QuestionsScreen params={params} /> : null}
+            {screen === 'reportes' ? <ReportsScreen onChanged={refreshReports} /> : null}
             {screen === 'recompensas' ? <RewardsScreen /> : null}
             {screen === 'loja' ? <ShopScreen /> : null}
             {screen === 'usuarios' ? <UsersScreen /> : null}

@@ -1,3 +1,4 @@
+import { QUIZ_TYPE_LABELS } from '@/lib/labels';
 import { useEffect, useState } from 'react';
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
 import { Badge } from '@/components/ui/badge';
@@ -36,7 +37,7 @@ export function MatchHistoryPanel() {
             {data.content.map((match) => (
               <li key={match.matchId} className="flex flex-wrap items-center gap-3 rounded-2xl bg-surface-2 p-3">
                 <div className="min-w-0 flex-1">
-                  <p className="font-display font-semibold text-ink">{match.quizType === 'GENERAL' ? 'Quiz geral' : 'Estudo de personagem'}</p>
+                  <p className="font-display font-semibold text-ink">{QUIZ_TYPE_LABELS[match.quizType] ?? 'Partida'}</p>
                   <p className="text-xs font-semibold text-muted">
                     {match.finishedAt ? new Date(match.finishedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : ''} · {match.correctAnswers}/{match.questionsAnswered} acertos
                   </p>

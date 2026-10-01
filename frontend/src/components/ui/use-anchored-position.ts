@@ -26,7 +26,8 @@ export function useAnchoredPosition(
       const rect = anchor.getBoundingClientRect();
       const below = window.innerHeight - rect.bottom - gap - 8;
       const above = rect.top - gap - 8;
-      const side: Side = preferred === 'bottom' ? (below >= Math.min(estimatedHeight, 200) || below >= above ? 'bottom' : 'top') : above >= Math.min(estimatedHeight, 200) || above >= below ? 'top' : 'bottom';
+      // Abre do lado preferido se o balão cabe inteiro; senão, do lado com mais espaço.
+      const side: Side = preferred === 'bottom' ? (below >= estimatedHeight || below >= above ? 'bottom' : 'top') : above >= estimatedHeight || above >= below ? 'top' : 'bottom';
       setPosition({
         top: side === 'bottom' ? rect.bottom + gap : rect.top - gap,
         left: rect.left,

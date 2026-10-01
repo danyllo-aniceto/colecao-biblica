@@ -12,7 +12,7 @@ import { Pagination } from '@/components/ui/pagination';
 import { Select } from '@/components/ui/select';
 import { errorMessage, useToast } from '@/components/ui/toast';
 import { deleteCharacter, listCharactersPage, updateCharacter, type AdminCharacterSummary } from '@/lib/admin-api';
-import { TESTAMENT_LABELS } from '@/lib/labels';
+import { TESTAMENT_LABELS, formatDateTime } from '@/lib/labels';
 import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
 import { AdminPanel, Cell, DataTable, IconAction, RarityBadge, Row, SearchInput, StatusBadge, Thumb } from '../admin-ui';
 import { useDebouncedValue, usePagedList } from '../use-paged-list';
@@ -93,6 +93,7 @@ export function CharactersScreen({ params, onNavigate }: { params: URLSearchPara
           options={[
             { value: '', label: 'Publicados e rascunhos' },
             { value: 'published', label: 'Só publicados' },
+            { value: 'scheduled', label: 'Só agendados' },
             { value: 'draft', label: 'Só rascunhos' },
           ]}
         />
@@ -147,7 +148,11 @@ export function CharactersScreen({ params, onNavigate }: { params: URLSearchPara
             </Cell>
             <Cell>{character.questionCount > 0 ? <Badge tone="accent">{character.questionCount}</Badge> : <Badge tone="danger">Nenhuma</Badge>}</Cell>
             <Cell>
-              <StatusBadge active={character.published} on="Publicado" off="Rascunho" />
+              {character.published && character.publishAt && new Date(character.publishAt) > new Date() ? (
+                <Badge tone="violet">Agendado {formatDateTime(character.publishAt)}</Badge>
+              ) : (
+                <StatusBadge active={character.published} on="Publicado" off="Rascunho" />
+              )}
             </Cell>
             <Cell className="text-right">
               <div className="flex justify-end gap-1">

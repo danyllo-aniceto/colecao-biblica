@@ -146,7 +146,7 @@ describe("economia", () => {
     expect(calculateMatchCoins(0, 3, coins)).toBe(0);
   });
 
-  it("figurinha repetida vira moedas pela raridade", () => {
+  it("valor de venda da repetida pela raridade", () => {
     const rules = { duplicateCoinsCommon: 15, duplicateCoinsRare: 40, duplicateCoinsEpic: 90, duplicateCoinsLegendary: 200 };
     expect(duplicateStickerCoins("COMMON", rules)).toBe(15);
     expect(duplicateStickerCoins("LEGENDARY", rules)).toBe(200);

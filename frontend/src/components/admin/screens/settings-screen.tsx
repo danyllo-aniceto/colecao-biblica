@@ -33,10 +33,10 @@ const GROUPS: Array<{ title: string; description: string; fields: FieldDef[] }> 
       { key: 'coinsPerCorrectAnswer', label: 'Moedas por acerto', min: 0, max: 100 },
       { key: 'perfectMatchBonusCoins', label: 'Bônus de partida perfeita', min: 0, max: 1000, hint: 'Sem erros, com 5+ perguntas.' },
       { key: 'coinMatchLimitPerDay', label: 'Partidas que rendem moedas por dia', min: 0, max: 100 },
-      { key: 'duplicateCoinsCommon', label: 'Repetida comum vira', min: 0, max: 10000, suffix: 'moedas' },
-      { key: 'duplicateCoinsRare', label: 'Repetida rara vira', min: 0, max: 10000, suffix: 'moedas' },
-      { key: 'duplicateCoinsEpic', label: 'Repetida épica vira', min: 0, max: 10000, suffix: 'moedas' },
-      { key: 'duplicateCoinsLegendary', label: 'Repetida lendária vira', min: 0, max: 10000, suffix: 'moedas' },
+      { key: 'duplicateCoinsCommon', label: 'Venda de repetida comum', min: 0, max: 10000, suffix: 'moedas' },
+      { key: 'duplicateCoinsRare', label: 'Venda de repetida rara', min: 0, max: 10000, suffix: 'moedas' },
+      { key: 'duplicateCoinsEpic', label: 'Venda de repetida épica', min: 0, max: 10000, suffix: 'moedas' },
+      { key: 'duplicateCoinsLegendary', label: 'Venda de repetida lendária', min: 0, max: 10000, suffix: 'moedas' },
     ],
   },
   {
@@ -58,6 +58,25 @@ const GROUPS: Array<{ title: string; description: string; fields: FieldDef[] }> 
       { key: 'maxHintBoosts', label: 'Máximo de dicas 50/50 guardadas', min: 1, max: 20 },
       { key: 'extraTimeSeconds', label: 'Segundos do tempo extra', min: 1, max: 120, suffix: 's' },
       { key: 'doubleXpMultiplier', label: 'Multiplicador do XP em dobro', min: 1, max: 10, step: 0.1, suffix: '×' },
+    ],
+  },
+  {
+    title: 'Engajamento',
+    description: 'Protetor de sequência, garantia contra azar, fusão de repetidas e desafio do dia.',
+    fields: [
+      { key: 'maxStreakFreezes', label: 'Máximo de protetores guardados', min: 1, max: 10, hint: 'Cada protetor cobre um dia esquecido no prêmio diário.' },
+      { key: 'pityThreshold', label: 'Garantia de figurinha a cada', min: 0, max: 50, suffix: 'prêmios', hint: 'Depois de N prêmios sem figurinha, o próximo é figurinha (0 desliga).' },
+      { key: 'fuseCost', label: 'Repetidas para uma fusão', min: 2, max: 10, hint: 'Da mesma raridade, para ganhar uma da raridade acima.' },
+      { key: 'dailyChallengeQuestions', label: 'Perguntas do desafio do dia', min: 3, max: 30 },
+    ],
+  },
+  {
+    title: 'Liga semanal',
+    description: 'Ranking pelos pontos da semana (segunda a domingo). Os 3 primeiros resgatam o prêmio na semana seguinte.',
+    fields: [
+      { key: 'leagueFirstCoins', label: 'Prêmio do 1º lugar', min: 0, max: 100000, suffix: 'moedas' },
+      { key: 'leagueSecondCoins', label: 'Prêmio do 2º lugar', min: 0, max: 100000, suffix: 'moedas' },
+      { key: 'leagueThirdCoins', label: 'Prêmio do 3º lugar', min: 0, max: 100000, suffix: 'moedas' },
     ],
   },
   {

@@ -4,6 +4,9 @@ import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import CloudDoneRoundedIcon from '@mui/icons-material/CloudDoneRounded';
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
+import EventRoundedIcon from '@mui/icons-material/EventRounded';
+import FlagRoundedIcon from '@mui/icons-material/FlagRounded';
+import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import HideImageRoundedIcon from '@mui/icons-material/HideImageRounded';
 import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
 import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
@@ -33,6 +36,8 @@ export function OverviewScreen({ onNavigate }: { onNavigate: AdminNavigate }) {
   if (!stats) return <LoadingState label="Carregando a visão geral..." />;
 
   const pending = [
+    { count: stats.openReports, label: 'reportes de perguntas abertos', hint: 'Jogadores marcaram perguntas como erradas ou confusas.', icon: <FlagRoundedIcon />, go: () => onNavigate('reportes') },
+    { count: stats.needsCalibration, label: 'perguntas com dificuldade a revisar', hint: 'A taxa de acerto dos jogadores sugere outra dificuldade.', icon: <TuneRoundedIcon />, go: () => onNavigate('perguntas', { revisar: 'calibration' }) },
     { count: stats.withoutQuestions, label: 'personagens sem perguntas ativas', hint: 'Sem perguntas, o estudo de personagem não funciona para eles.', icon: <QuizRoundedIcon />, go: () => onNavigate('personagens', { pendencia: 'noQuestions' }) },
     { count: stats.withoutImage, label: 'personagens sem imagem', hint: 'A figurinha aparece só com o ícone de livro.', icon: <HideImageRoundedIcon />, go: () => onNavigate('personagens', { pendencia: 'noImage' }) },
     { count: stats.drafts, label: 'personagens em rascunho', hint: 'Rascunhos não aparecem no álbum dos jogadores.', icon: <EditNoteRoundedIcon />, go: () => onNavigate('personagens', { status: 'draft' }) },
@@ -83,6 +88,12 @@ export function OverviewScreen({ onNavigate }: { onNavigate: AdminNavigate }) {
               ))}
             </ul>
           )}
+          {stats.scheduled > 0 ? (
+            <button type="button" onClick={() => onNavigate('personagens', { status: 'scheduled' })} className="flex w-full items-center gap-2 rounded-2xl border border-violet/40 bg-violet/10 p-3 text-left text-sm">
+              <EventRoundedIcon className="text-violet" />
+              <span className="text-ink">{stats.scheduled} figurinha(s) com lançamento agendado. Os jogadores veem como “em breve”.</span>
+            </button>
+          ) : null}
           <div className="flex items-center gap-2 rounded-2xl border border-edge p-3 text-sm">
             {stats.uploads === 'blob' ? <CloudDoneRoundedIcon className="text-success" /> : <StorageRoundedIcon className="text-info" />}
             <span className="text-muted">

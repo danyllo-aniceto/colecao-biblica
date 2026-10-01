@@ -83,7 +83,7 @@ export function calculateMatchCoins(correctAnswers: number, wrongAnswers: number
 
 type DuplicateRules = { duplicateCoinsCommon: number; duplicateCoinsRare: number; duplicateCoinsEpic: number; duplicateCoinsLegendary: number };
 
-/** Figurinha repetida não é desperdício: vira moedas conforme a raridade. */
+/** Valor de venda de uma figurinha repetida, conforme a raridade. */
 export function duplicateStickerCoins(rarity: StickerRarity, rules: DuplicateRules): number {
   const value = {
     COMMON: rules.duplicateCoinsCommon,

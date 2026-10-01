@@ -45,6 +45,7 @@ const TYPE_HELP: Record<RewardType, string> = {
   EXTRA_TIME: 'Bônus guardado no inventário: soma segundos a uma pergunta.',
   XP_MULTIPLIER: 'Bônus guardado no inventário: multiplica o XP da partida (o valor do multiplicador fica em Configurações).',
   FIFTY_FIFTY: 'Bônus guardado no inventário: elimina duas alternativas erradas.',
+  STREAK_FREEZE: 'Guardado no inventário: salva a sequência do prêmio diário quando o jogador esquece um dia.',
   COINS: 'Moedas entregues na hora. Não pode ser vendida na loja.',
 };
 
@@ -62,6 +63,8 @@ export function rewardSummary(reward: AdminReward) {
       return `${reward.hintAmount ?? 1} dica(s) 50/50`;
     case 'XP_MULTIPLIER':
       return '1 bônus de XP em dobro';
+    case 'STREAK_FREEZE':
+      return '1 protetor de sequência';
     case 'COINS':
       return `${reward.coinAmount ?? 0} moedas`;
   }
@@ -118,7 +121,7 @@ export function RewardsScreen() {
     <div className="space-y-6">
       <Alert tone="info">
         No fim do <strong>quiz geral</strong>, quem acerta o mínimo configurado concorre a <strong>uma</strong> recompensa ativa, sorteada pelo peso (a coluna “Chance” já mostra o
-        resultado em %). Figurinha de raridade sem personagens publicados fica fora do sorteio automaticamente. Figurinha repetida vira moedas.
+        resultado em %). Figurinha de raridade sem personagens publicados fica fora do sorteio automaticamente. Figurinha repetida fica guardada: o jogador vende ou funde 3 em uma de raridade acima. Depois de alguns prêmios sem figurinha, o próximo é figurinha garantida (Configurações → Engajamento).
       </Alert>
       <AdminPanel
         actions={

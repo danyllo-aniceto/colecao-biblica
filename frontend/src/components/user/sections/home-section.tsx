@@ -1,3 +1,4 @@
+import { QUIZ_TYPE_LABELS } from '@/lib/labels';
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
@@ -10,6 +11,7 @@ import { EmptyState, ProgressBar, SectionHeading, StatTile } from '@/components/
 import { StickerCard } from '@/components/game/sticker-card';
 import type { SectionId } from '@/components/user/game-shell';
 import { DailyRewardCard } from '@/components/user/daily-reward-card';
+import { MissionsCard } from '@/components/user/missions-card';
 import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
 import type { CharacterEntry, DailyClaimResult, QuizHistory, QuizSessionStatus, UserSticker } from '@/lib/user-api';
 import type { UserProfile } from '@/types/auth';
@@ -25,9 +27,10 @@ type HomeSectionProps = {
   onResume: () => void;
   onOpenSticker: (id: number) => void;
   onDailyClaimed: (result: DailyClaimResult) => void;
+  onWallet: (wallet: { userCoins: number; hintBoosts?: number }) => void;
 };
 
-export function HomeSection({ profile, characters, collection, history, activeSession, commentsCount, onNavigate, onResume, onOpenSticker, onDailyClaimed }: HomeSectionProps) {
+export function HomeSection({ profile, characters, collection, history, activeSession, commentsCount, onNavigate, onResume, onOpenSticker, onDailyClaimed, onWallet }: HomeSectionProps) {
   const ownedIds = new Set(collection.map((item) => item.characterId));
   const firstName = profile?.name?.split(' ')[0] ?? 'jogador';
   const recentStickers = [...collection]
@@ -67,7 +70,10 @@ export function HomeSection({ profile, characters, collection, history, activeSe
         </div>
       </section>
 
-      <DailyRewardCard onClaimed={onDailyClaimed} />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <DailyRewardCard onClaimed={onDailyClaimed} />
+        <MissionsCard onClaimed={onWallet} />
+      </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile icon={<StarRoundedIcon />} label="Nível" value={profile?.level ?? 1} tone="violet" />
@@ -126,7 +132,7 @@ export function HomeSection({ profile, characters, collection, history, activeSe
                     <HistoryRoundedIcon />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-display font-semibold text-ink">{match.quizType === 'GENERAL' ? 'Quiz geral' : 'Estudo de personagem'}</p>
+                    <p className="truncate font-display font-semibold text-ink">{QUIZ_TYPE_LABELS[match.quizType] ?? 'Partida'}</p>
                     <p className="text-xs font-semibold text-muted">
                       {match.correctAnswers} acertos · +{match.xpGained} XP{match.coinsGained ? ` · +${match.coinsGained} moedas` : ''} · {match.scoreGained >= 0 ? '+' : ''}
                       {match.scoreGained} pts

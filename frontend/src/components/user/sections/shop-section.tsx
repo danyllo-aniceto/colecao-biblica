@@ -4,6 +4,7 @@ import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 import ContentCutRoundedIcon from '@mui/icons-material/ContentCutRounded';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import ShieldRoundedIcon from '@mui/icons-material/ShieldRounded';
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,8 @@ function describeItem(item: ShopItem): { rarity?: StickerRarity; icon: ReactNode
       return { icon: <TimerRoundedIcon sx={{ fontSize: 40 }} />, tint: 'bg-info/15 text-info' };
     case 'FIFTY_FIFTY':
       return { icon: <ContentCutRoundedIcon sx={{ fontSize: 40 }} />, tint: 'bg-violet/15 text-violet' };
+    case 'STREAK_FREEZE':
+      return { icon: <ShieldRoundedIcon sx={{ fontSize: 40 }} />, tint: 'bg-info/15 text-info' };
     default:
       return { icon: <BoltRoundedIcon sx={{ fontSize: 40 }} />, tint: 'bg-primary/20 text-primary-strong dark:text-primary' };
   }

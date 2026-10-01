@@ -102,22 +102,28 @@ loja continuam os mesmos e o admin pode ajustá-los.
 - Histórico de partidas paginado e conquistas no perfil; álbum com paginação e filtros por testamento e
   período, e ordem "da história bíblica".
 
-## 5. Próximos passos sugeridos (ainda não implementados)
+## 5. Segunda rodada: as 10 ideias (implementadas)
 
-Em ordem de impacto para o esforço:
+| # | Ideia | Como ficou |
+| --- | --- | --- |
+| 1 | **Protetor de sequência** | Item da loja (250 moedas) e prêmio do sorteio. Se o jogador esquece dias, um protetor por dia é gasto sozinho no próximo resgate e a sequência continua. Máximo guardado em Configurações. |
+| 2 | **Missões diárias e semanais** | 3 diárias sorteadas por jogador (mudam todo dia) entre 7 tipos (partidas, acertos, estudo, desafio do dia, partida perfeita, anotação, figurinha nova) e 3 semanais. Progresso calculado das partidas; resgate único por período. Card na tela inicial. |
+| 3 | **Garantia contra azar** | Depois de N prêmios seguidos sem figurinha (padrão 5), o próximo sorteio só tem figurinhas. O resultado da partida mostra quantos faltam. |
+| 4 | **Liga semanal** | Aba no Ranking: soma dos pontos da semana (segunda a domingo, fuso do Brasil). Top 3 resgata 500/300/150 moedas na semana seguinte. Ranking geral continua na outra aba. |
+| 5 | **Importação em lote + reportes** | Admin importa CSV (modelo para baixar, colunas em português, prévia com erro por linha, até 500 por vez). Jogador reporta pergunta no gabarito; admin tem a tela **Reportes** (contador no menu) para editar, desativar, resolver ou descartar. |
+| 6 | **Estatística por pergunta** | Cada resposta conta acerto/erro. A lista mostra a taxa de acerto e, com 20+ respostas, a dificuldade sugerida; filtro "Dificuldade a revisar" e botão para aplicar as sugestões. |
+| 7 | **Desafio do dia** | Mesmas perguntas para todos (sorteio fixo por dia), uma tentativa (abandonar conta), ranking do dia por acertos e tempo. Card na tela Jogar. |
+| 8 | **Fusão de repetidas** | Repetidas agora ficam guardadas (selo "x2" no álbum). O jogador vende pelo valor da raridade ou funde 3 da mesma raridade em uma da raridade acima, de preferência inédita. A **troca entre amigos** ficou de fora: depende de um sistema de amigos que o app ainda não tem. |
+| 9 | **Recorte da imagem** | Ao escolher a imagem da figurinha abre o enquadramento na moldura 3:4 (arrastar e zoom); sai em 900×1200. GIF vai direto para não perder a animação; dá para pular o recorte. |
+| 10 | **Publicação agendada** | No editor, "Agendar lançamento" com calendário próprio. Até a data o personagem não aparece para os jogadores; o álbum mostra a faixa "Em breve" (só raridade e data, sem revelar quem é). Filtro "Só agendados" no painel. |
 
-1. **Protetor de sequência** (item de loja que salva o prêmio diário se faltar um dia) — a mecânica de
-   retenção mais efetiva do Duolingo.
-2. **Missões diárias/semanais** ("acerte 15 perguntas", "faça um estudo de personagem") com recompensa;
-   dá motivo para variar os modos.
-3. **Garantia contra azar** no sorteio: depois de N partidas premiadas sem figurinha, a próxima é
-   figurinha garantida.
-4. **Liga semanal** (ranking que zera toda semana, com prêmio para o top 3) — o ranking geral desanima
-   quem começa agora.
-5. **Importação de perguntas em lote** (CSV/planilha) no painel e revisão de perguntas reportadas pelos
-   jogadores ("reportar pergunta errada").
-6. **Estatística por pergunta** (taxa de acerto) para calibrar a dificuldade automaticamente.
-7. **Modo "Desafio do dia"**: as mesmas 10 perguntas para todos, uma tentativa por dia, ranking próprio.
-8. **Troca de figurinhas repetidas** entre amigos ou "fusão" (3 repetidas → 1 de raridade acima).
-9. Recorte da imagem da figurinha no próprio upload (hoje ela é só reduzida).
-10. Agendar publicação de personagens (lançar uma figurinha nova por semana gera expectativa).
+Mudança de comportamento: antes a figurinha repetida virava moedas na hora; agora ela é guardada e
+o jogador escolhe vender (mesmo valor de antes) ou fundir.
+
+## 6. Ideias para depois
+
+1. Sistema de amigos (convidar, ver o álbum do amigo, **trocar repetidas**).
+2. Notificações do PWA (lembrete do prêmio diário e da liga acabando).
+3. Eventos temáticos com figurinhas por tempo limitado (Páscoa, Natal).
+4. Modo duelo: dois jogadores com as mesmas perguntas, ao vivo ou assíncrono.
+5. Trilhas de estudo (ex.: "Vida de Davi") liberando figurinhas em sequência.

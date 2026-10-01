@@ -52,6 +52,9 @@ import {
 } from '@/lib/user-api';
 import type { UserProfile } from '@/types/auth';
 
+/** Figurinha mostrada no modal depois de uma compra ou fusão. */
+type StickerReveal = Pick<ShopPurchaseResult, 'characterId' | 'characterName' | 'characterRarity' | 'characterImageUrl' | 'characterUnlocked' | 'duplicate'> & { title?: string };
+
 const emptyQuizForm: QuizFormState = {
   quizType: 'GENERAL',
   characterId: '',
@@ -86,7 +89,7 @@ export function UserDashboard() {
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [shopError, setShopError] = useState<string | null>(null);
   const [buyingItemId, setBuyingItemId] = useState<number | null>(null);
-  const [purchase, setPurchase] = useState<ShopPurchaseResult | null>(null);
+  const [purchase, setPurchase] = useState<StickerReveal | null>(null);
   const [accountForm, setAccountForm] = useState({ name: user?.name ?? '', email: user?.email ?? '', password: '' });
   const [accountSubmitting, setAccountSubmitting] = useState(false);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
@@ -153,6 +156,11 @@ export function UserDashboard() {
     };
   }, [accessToken]);
 
+  /** Atualiza moedas e bônus no topo depois de um resgate. */
+  function updateWallet(wallet: { userCoins: number; hintBoosts?: number }) {
+    setProfile((current) => (current ? { ...current, coins: wallet.userCoins, ...(wallet.hintBoosts !== undefined ? { hintBoosts: wallet.hintBoosts } : {}) } : current));
+  }
+
   const ownedIds = useMemo(() => new Set(collection.map((item) => item.characterId)), [collection]);
 
   function celebrate(achievements?: UnlockedAchievement[]) {
@@ -191,6 +199,22 @@ export function UserDashboard() {
       setShowQuizAnswer(true);
     } catch (error) {
       setQuizError(errorMessage(error, 'Não foi possível iniciar o quiz.'));
+    } finally {
+      setQuizSubmitting(false);
+    }
+  }
+
+  async function handleStartChallenge() {
+    setQuizSubmitting(true);
+    setQuizError(null);
+    try {
+      const session = await startQuizSession({ quizType: 'DAILY_CHALLENGE' });
+      setReveal(null);
+      setQuizAnswerError(null);
+      setQuizSession(session);
+      setShowQuizAnswer(true);
+    } catch (error) {
+      toast.error(errorMessage(error, 'Não foi possível iniciar o desafio.'));
     } finally {
       setQuizSubmitting(false);
     }
@@ -345,6 +369,7 @@ export function UserDashboard() {
               extraTimeBoosts: result.extraTimeBoosts,
               doubleXpBoosts: result.doubleXpBoosts,
               hintBoosts: result.hintBoosts,
+              streakFreezes: result.streakFreezes,
             }
           : current,
       );
@@ -458,6 +483,7 @@ export function UserDashboard() {
                 onNavigate={navigate}
                 onResume={handleResumeQuiz}
                 onOpenSticker={openSticker}
+                onWallet={updateWallet}
                 onDailyClaimed={(result) => {
                   setProfile((current) => (current ? { ...current, coins: result.userCoins, hintBoosts: result.hintBoosts, dailyStreak: result.streak } : current));
                   toast.success(`Prêmio do dia ${result.day} resgatado!`, {
@@ -469,7 +495,24 @@ export function UserDashboard() {
               />
             ) : null}
 
-            {section === 'stickers' ? <AlbumSection characters={characters} ownedIds={ownedIds} onOpenSticker={openSticker} /> : null}
+            {section === 'stickers' ? (
+              <AlbumSection
+                characters={characters}
+                ownedIds={ownedIds}
+                collection={collection}
+                gameRules={gameRules}
+                onOpenSticker={openSticker}
+                onWallet={(wallet) => {
+                  updateWallet(wallet);
+                  void refreshCollection();
+                }}
+                onFused={(result) => {
+                  void refreshCollection();
+                  setPurchase({ ...result, title: 'Fusão concluída!' });
+                  celebrate(result.unlockedAchievements);
+                }}
+              />
+            ) : null}
 
             {section === 'quiz' ? (
               <PlaySection
@@ -485,6 +528,7 @@ export function UserDashboard() {
                 onStart={handleStartQuiz}
                 onResume={handleResumeQuiz}
                 onAbandon={handleAbandonQuiz}
+                onStartChallenge={() => void handleStartChallenge()}
               />
             ) : null}
 
@@ -492,7 +536,7 @@ export function UserDashboard() {
               <ShopSection items={shopItems} coins={profile?.coins ?? 0} gameRules={gameRules} buyingItemId={buyingItemId} error={shopError} onBuy={handleBuyItem} />
             ) : null}
 
-            {section === 'ranking' ? <RankingSection currentUserId={profile?.id} /> : null}
+            {section === 'ranking' ? <RankingSection currentUserId={profile?.id} onWallet={updateWallet} /> : null}
 
             {section === 'settings' ? (
               <ProfileSection
@@ -551,7 +595,7 @@ export function UserDashboard() {
       <Modal
         open={purchase !== null}
         size="sm"
-        title={purchase?.characterUnlocked ? 'Nova figurinha!' : 'Figurinha repetida'}
+        title={purchase?.title ?? (purchase?.characterUnlocked ? 'Nova figurinha!' : 'Figurinha repetida')}
         onClose={() => setPurchase(null)}
         footer={
           <>
@@ -572,10 +616,8 @@ export function UserDashboard() {
             <p className="font-display text-lg font-semibold text-ink">
               {purchase.characterName} · {getRarityLabel(purchase.characterRarity ?? 'COMMON')}
             </p>
-            {purchase.duplicateCoins ? (
-              <p className="inline-flex items-center gap-1.5 rounded-full bg-primary/20 px-3 py-1 font-display font-bold text-ink">
-                <CoinIcon /> Repetida virou +{purchase.duplicateCoins} moedas
-              </p>
+            {purchase.duplicate ? (
+              <p className="text-sm text-muted">Você já tinha esta figurinha: a cópia foi guardada nas repetidas do álbum para vender ou fundir.</p>
             ) : null}
           </div>
         ) : null}

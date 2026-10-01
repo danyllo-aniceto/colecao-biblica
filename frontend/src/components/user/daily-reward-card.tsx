@@ -3,6 +3,8 @@ import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import ContentCutRoundedIcon from '@mui/icons-material/ContentCutRounded';
 import LocalFireDepartmentRoundedIcon from '@mui/icons-material/LocalFireDepartmentRounded';
+import ShieldRoundedIcon from '@mui/icons-material/ShieldRounded';
+import { Tooltip } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { errorMessage, useToast } from '@/components/ui/toast';
@@ -59,6 +61,13 @@ export function DailyRewardCard({ onClaimed }: { onClaimed: (result: DailyClaimR
               <LocalFireDepartmentRoundedIcon fontSize="small" className={status.streak > 0 ? 'text-danger' : ''} />
               {status.streak > 0 ? `${status.streak} dia(s) seguido(s)` : 'Volte todo dia para aumentar o prêmio'}
             </p>
+            {status.streakFreezes > 0 ? (
+              <Tooltip content="Protetor de sequência: se você esquecer um dia, ele é usado sozinho e a sequência continua.">
+                <span tabIndex={0} className="mt-1 inline-flex items-center gap-1 rounded-full bg-info/15 px-2 py-0.5 text-xs font-bold text-info-strong dark:text-info">
+                  <ShieldRoundedIcon sx={{ fontSize: 14 }} /> {status.streakFreezes} protetor(es)
+                </span>
+              </Tooltip>
+            ) : null}
           </div>
         </div>
         {status.canClaim ? (
@@ -69,6 +78,12 @@ export function DailyRewardCard({ onClaimed }: { onClaimed: (result: DailyClaimR
           <span className="rounded-full bg-success/15 px-3 py-1.5 font-display text-sm font-bold text-success-strong dark:text-success">Volte amanhã!</span>
         )}
       </div>
+      {status.canClaim && status.freezesToUse > 0 ? (
+        <p className="flex items-center gap-2 rounded-2xl bg-info/10 px-3 py-2 text-sm font-semibold text-info-strong dark:text-info">
+          <ShieldRoundedIcon fontSize="small" />
+          Você esqueceu {status.freezesToUse === 1 ? 'um dia' : `${status.freezesToUse} dias`}, mas seu protetor vai salvar a sequência.
+        </p>
+      ) : null}
       <ol className="grid grid-cols-7 gap-1.5 sm:gap-2">
         {status.cycle.map((reward) => {
           const done = reward.day <= doneUntil;

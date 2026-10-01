@@ -9,6 +9,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { errorMessage, useToast } from '@/components/ui/toast';
 import { cn } from '@/lib/cn';
 import { uploadImage } from '@/lib/uploads';
+import { ImageCropper } from './image-cropper';
 
 const ACCEPT = 'image/png,image/jpeg,image/webp,image/gif,image/avif';
 
@@ -23,6 +24,20 @@ export function CharacterImageField({ value, onChange }: { value: string; onChan
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [broken, setBroken] = useState(false);
+  const [cropping, setCropping] = useState<File | null>(null);
+
+  /** Antes de enviar, abre o recorte na moldura da figurinha (GIF vai direto para manter a animação). */
+  function choose(file: File) {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Selecione um arquivo de imagem (PNG, JPG, WEBP, GIF ou AVIF).');
+      return;
+    }
+    if (file.type === 'image/gif') {
+      void send(file);
+      return;
+    }
+    setCropping(file);
+  }
 
   async function send(file: File) {
     setUploading(true);
@@ -44,7 +59,7 @@ export function CharacterImageField({ value, onChange }: { value: string; onChan
     event.preventDefault();
     setDragging(false);
     const file = event.dataTransfer.files?.[0];
-    if (file) void send(file);
+    if (file) choose(file);
   }
 
   async function pasteLink() {
@@ -130,9 +145,19 @@ export function CharacterImageField({ value, onChange }: { value: string; onChan
         onChange={(event) => {
           const file = event.target.files?.[0];
           event.target.value = '';
-          if (file) void send(file);
+          if (file) choose(file);
         }}
       />
+      {cropping ? (
+        <ImageCropper
+          file={cropping}
+          onCancel={() => setCropping(null)}
+          onDone={(file) => {
+            setCropping(null);
+            void send(file);
+          }}
+        />
+      ) : null}
     </div>
   );
 }

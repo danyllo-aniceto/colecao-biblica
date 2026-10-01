@@ -268,7 +268,7 @@ export const FIXED_SHOP_ITEMS: FixedShopItem[] = [
   { name: "Dica 50/50", description: "Elimina duas alternativas erradas de uma pergunta", itemType: "GAME_BONUS", priceCoins: 140, rewardName: "Dica 50/50" },
   {
     name: "Pacote surpresa",
-    description: "Uma figurinha de raridade sorteada, que pode até ser lendária. Repetida vira moedas.",
+    description: "Uma figurinha de raridade sorteada, que pode até ser lendária. Repetida fica guardada para vender ou fundir.",
     itemType: "STICKER",
     priceCoins: 200,
     rewardName: "Pacote surpresa",
@@ -313,6 +313,8 @@ export async function ensureFixedRewards(db: Db) {
   }
 }
 
+const OUTDATED_DESCRIPTIONS = ["Uma figurinha de raridade sorteada, que pode até ser lendária. Repetida vira moedas."];
+
 /** Itens fixos da loja. Itens criados pelo admin (system = false) não são alterados. */
 export async function ensureFixedShopItems(db: Db) {
   const rewards = await db.rewardDefinition.findMany();
@@ -326,7 +328,9 @@ export async function ensureFixedShopItems(db: Db) {
     const current = items.find((item) => sameName(item.name, fixed.name));
     const identity = { itemType: fixed.itemType, rewardDefinitionId: reward?.id ?? null, system: true };
     if (current) {
-      await db.shopItem.update({ where: { id: current.id }, data: identity });
+      // Texto antigo do pacote (antes as repetidas viravam moedas na hora).
+      const outdated = OUTDATED_DESCRIPTIONS.includes(current.description) ? { description: fixed.description } : {};
+      await db.shopItem.update({ where: { id: current.id }, data: { ...identity, ...outdated } });
     } else {
       await db.shopItem.create({
         data: { name: fixed.name, description: fixed.description, priceCoins: fixed.priceCoins, active: true, ...identity },

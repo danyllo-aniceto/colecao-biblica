@@ -25,6 +25,8 @@ export type UserProfile = {
   extraTimeBoosts?: number;
   doubleXpBoosts?: number;
   hintBoosts?: number;
+  streakFreezes?: number;
+  stickerPity?: number;
   dailyStreak?: number;
   lastDailyClaim?: string | null;
   name: string;

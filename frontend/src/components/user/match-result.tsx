@@ -107,6 +107,7 @@ export function MatchResult({
           {wonSticker ? (
             <div className="space-y-3">
               <p className="font-display text-lg font-bold text-ink">{result.rewardCharacterUnlocked ? 'Nova figurinha!' : 'Figurinha repetida'}</p>
+              {result.pityGuaranteed ? <p className="text-xs font-bold uppercase tracking-wider text-violet-strong dark:text-violet">Figurinha garantida pela sorte acumulada</p> : null}
               <div className="mx-auto w-40">
                 <StickerCard
                   name={result.rewardCharacterName ?? ''}
@@ -117,7 +118,7 @@ export function MatchResult({
                 />
               </div>
               {!result.rewardCharacterUnlocked ? (
-                <p className="text-sm text-muted">{result.duplicateCoins ? `Você já tinha: virou +${result.duplicateCoins} moedas.` : 'Você já tinha essa figurinha.'}</p>
+                <p className="text-sm text-muted">Você já tinha: a cópia foi guardada nas repetidas do álbum (venda ou funda).</p>
               ) : null}
             </div>
           ) : result.rewardGranted ? (
@@ -136,6 +137,12 @@ export function MatchResult({
             </p>
           )}
         </div>
+
+        {result.rewardGranted && !wonSticker && result.pityRemaining ? (
+          <p className="relative mt-3 text-xs text-muted">
+            {result.pityRemaining === 1 ? 'O próximo prêmio é figurinha garantida!' : `Figurinha garantida em no máximo ${result.pityRemaining} prêmios.`}
+          </p>
+        ) : null}
 
         {result.rewardMatchesLimitPerDay > 0 ? (
           <p className="relative mt-4 text-xs font-bold uppercase tracking-wider text-muted">

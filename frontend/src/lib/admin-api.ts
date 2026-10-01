@@ -5,7 +5,9 @@ export type Role = 'ADMIN' | 'USER';
 export type StickerRarity = 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY';
 export type Testament = 'OLD' | 'NEW';
 export type QuestionDifficulty = 'EASY' | 'MEDIUM' | 'HARD' | 'VERY_HARD';
-export type RewardType = 'STICKER' | 'STICKER_PACK' | 'EXTRA_LIFE' | 'EXTRA_TIME' | 'XP_MULTIPLIER' | 'FIFTY_FIFTY' | 'COINS';
+export type RewardType = 'STICKER' | 'STICKER_PACK' | 'EXTRA_LIFE' | 'EXTRA_TIME' | 'XP_MULTIPLIER' | 'FIFTY_FIFTY' | 'STREAK_FREEZE' | 'COINS';
+export type ReportStatus = 'OPEN' | 'RESOLVED' | 'DISMISSED';
+export type ReportReason = 'WRONG_ANSWER' | 'TYPO' | 'CONFUSING' | 'OTHER';
 export type ShopItemType = 'STICKER' | 'GAME_BONUS' | 'ECONOMY';
 
 export type PaginatedResponse<T> = {
@@ -23,6 +25,7 @@ export type AdminCharacter = {
   rarity: StickerRarity;
   testament?: Testament | null;
   published: boolean;
+  publishAt?: string | null;
   shortSummary: string;
   fullDescription: string;
   bibleBooks?: string | null;
@@ -40,7 +43,7 @@ export type AdminCharacter = {
 };
 
 /** Linha da lista do painel (sem os textos longos). */
-export type AdminCharacterSummary = Pick<AdminCharacter, 'id' | 'name' | 'imageUrl' | 'rarity' | 'testament' | 'published' | 'bibleBooks' | 'historicalPeriod' | 'narrativeRole' | 'updatedAt'> & {
+export type AdminCharacterSummary = Pick<AdminCharacter, 'id' | 'name' | 'imageUrl' | 'rarity' | 'testament' | 'published' | 'publishAt' | 'bibleBooks' | 'historicalPeriod' | 'narrativeRole' | 'updatedAt'> & {
   questionCount: number;
 };
 
@@ -61,7 +64,30 @@ export type AdminQuestion = {
   explanation?: string | null;
   bibleReference?: string | null;
   active: boolean;
+  timesAnswered: number;
+  timesCorrect: number;
+  /** Dificuldade pela taxa de acerto (null com menos de 20 respostas). */
+  suggestedDifficulty: QuestionDifficulty | null;
 };
+
+export type AdminReport = {
+  id: number;
+  reason: ReportReason;
+  message?: string | null;
+  status: ReportStatus;
+  createdAt: string;
+  resolvedAt?: string | null;
+  resolvedBy?: string | null;
+  userName: string;
+  questionId: number;
+  questionText: string;
+  questionActive: boolean;
+  questionReports: number;
+};
+
+export type BulkQuestionRow = Partial<Record<'text' | 'optionA' | 'optionB' | 'optionC' | 'optionD' | 'correctOption' | 'difficulty' | 'timeLimitSeconds' | 'character' | 'explanation' | 'bibleReference', string>>;
+
+export type BulkImportResult = { valid: number; created: number; errors: Array<{ row: number; message: string }> };
 
 export type AdminReward = {
   id: number;
@@ -121,6 +147,13 @@ export type GameSettings = {
   packOddsRare: number;
   packOddsEpic: number;
   packOddsLegendary: number;
+  maxStreakFreezes: number;
+  pityThreshold: number;
+  fuseCost: number;
+  dailyChallengeQuestions: number;
+  leagueFirstCoins: number;
+  leagueSecondCoins: number;
+  leagueThirdCoins: number;
 };
 
 export type AdminStats = {
@@ -134,6 +167,9 @@ export type AdminStats = {
   questions: number;
   inactiveQuestions: number;
   generalQuestions: number;
+  scheduled: number;
+  openReports: number;
+  needsCalibration: number;
   questionsByDifficulty: Partial<Record<QuestionDifficulty, number>>;
   charactersByRarity: Partial<Record<StickerRarity, number>>;
   matchesToday: number;
@@ -151,6 +187,8 @@ export type CharacterPayload = {
   /** null limpa o campo. */
   imageUrl: string | null;
   testament: Testament | null;
+  /** ISO 8601; null = sem agendamento. */
+  publishAt: string | null;
   bibleBooks: string | null;
   bibleReferences: string | null;
   historicalPeriod: string | null;
@@ -286,10 +324,14 @@ export function deleteCharacter(id: number) {
 
 // Perguntas --------------------------------------------------------------
 
-export type QuestionFilters = { page: number; size: number; search?: string; difficulty?: string; characterId?: string; status?: string };
+export type QuestionFilters = { page: number; size: number; search?: string; difficulty?: string; characterId?: string; status?: string; calibration?: string; reported?: string };
 
 export function listQuestions(params: QuestionFilters) {
   return apiRequest<PaginatedResponse<AdminQuestion>>(withQuery('/questions', params), { method: 'GET' }, 'Não foi possível carregar as perguntas.');
+}
+
+export function getQuestion(id: number) {
+  return apiRequest<AdminQuestion>(`/questions/${id}`, { method: 'GET' }, 'Não foi possível carregar a pergunta.');
 }
 
 export function createQuestion(payload: QuestionPayload) {
@@ -302,6 +344,28 @@ export function updateQuestion(id: number, payload: Partial<QuestionPayload>) {
 
 export function deleteQuestion(id: number) {
   return apiRequestVoid(`/questions/admin/${id}`, { method: 'DELETE' }, 'Não foi possível excluir a pergunta.');
+}
+
+export function importQuestions(rows: BulkQuestionRow[], dryRun: boolean) {
+  return apiRequest<BulkImportResult>('/questions/admin/bulk', json('POST', { rows, dryRun }), 'Não foi possível importar as perguntas.');
+}
+
+export function applySuggestedDifficulty(ids: number[]) {
+  return apiRequest<{ updated: number }>('/questions/admin/apply-suggestions', json('POST', { ids }), 'Não foi possível aplicar as sugestões.');
+}
+
+// Reportes ---------------------------------------------------------------
+
+export function listReports(params: { page: number; size: number; status?: string }) {
+  return apiRequest<PaginatedResponse<AdminReport>>(withQuery('/reports/admin', params), { method: 'GET' }, 'Não foi possível carregar os reportes.');
+}
+
+export function countOpenReports() {
+  return apiRequest<{ open: number }>('/reports/admin/count', { method: 'GET' }, 'Não foi possível contar os reportes.');
+}
+
+export function updateReport(id: number, status: ReportStatus) {
+  return apiRequest<{ ok: boolean }>(`/reports/admin/${id}`, json('PUT', { status }), 'Não foi possível atualizar o reporte.');
 }
 
 // Recompensas e loja -----------------------------------------------------

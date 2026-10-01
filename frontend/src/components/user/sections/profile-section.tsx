@@ -52,7 +52,7 @@ export function ProfileSection({ profile, ownedCount, totalCount, form, onChange
         </div>
         <div className="relative mt-5 flex flex-wrap gap-2">
           <CoinChip value={profile?.coins ?? 0} />
-          <BoostChips life={profile?.extraLifeBoosts ?? 0} time={profile?.extraTimeBoosts ?? 0} xp={profile?.doubleXpBoosts ?? 0} hint={profile?.hintBoosts ?? 0} />
+          <BoostChips life={profile?.extraLifeBoosts ?? 0} time={profile?.extraTimeBoosts ?? 0} xp={profile?.doubleXpBoosts ?? 0} hint={profile?.hintBoosts ?? 0} freeze={profile?.streakFreezes ?? 0} />
         </div>
       </section>
 

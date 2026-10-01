@@ -1,4 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
+import HourglassTopRoundedIcon from '@mui/icons-material/HourglassTopRounded';
+import { DuplicatesModal } from '@/components/user/duplicates-modal';
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import { Button } from '@/components/ui/button';
@@ -11,7 +14,7 @@ import type { StickerRarity, Testament } from '@/lib/admin-api';
 import { sortBooks } from '@/lib/bible-books';
 import { HISTORICAL_PERIODS, TESTAMENT_LABELS } from '@/lib/labels';
 import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
-import type { CharacterEntry } from '@/lib/user-api';
+import { listUpcoming, type CharacterEntry, type FuseResult, type GameRules, type UpcomingSticker, type UserSticker } from '@/lib/user-api';
 
 type SortOption = 'alphabetical' | 'rarityAsc' | 'rarityDesc' | 'period';
 type OwnershipFilter = 'all' | 'owned' | 'missing';
@@ -36,10 +39,23 @@ function cn(...classes: Array<string | false | null | undefined>) {
 type AlbumSectionProps = {
   characters: CharacterEntry[];
   ownedIds: Set<number>;
+  collection: UserSticker[];
+  gameRules: GameRules | null;
   onOpenSticker: (id: number) => void;
+  onWallet: (wallet: { userCoins: number }) => void;
+  onFused: (result: FuseResult) => void;
 };
 
-export function AlbumSection({ characters, ownedIds, onOpenSticker }: AlbumSectionProps) {
+/** "em 3 dias", "amanhã", "hoje às 18:00". */
+function untilLabel(date: string) {
+  const target = new Date(date);
+  const days = Math.round((new Date(target).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 86_400_000);
+  if (days <= 0) return `hoje às ${target.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+  if (days === 1) return 'amanhã';
+  return `em ${days} dias`;
+}
+
+export function AlbumSection({ characters, ownedIds, collection, gameRules, onOpenSticker, onWallet, onFused }: AlbumSectionProps) {
   const [rarity, setRarity] = useState<StickerRarity | 'ALL'>('ALL');
   const [ownership, setOwnership] = useState<OwnershipFilter>('all');
   const [books, setBooks] = useState<string[]>([]);
@@ -47,6 +63,16 @@ export function AlbumSection({ characters, ownedIds, onOpenSticker }: AlbumSecti
   const [testament, setTestament] = useState<Testament | ''>('');
   const [period, setPeriod] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [duplicatesOpen, setDuplicatesOpen] = useState(false);
+  const [upcoming, setUpcoming] = useState<UpcomingSticker[]>([]);
+  const duplicatesById = useMemo(() => new Map(collection.map((sticker) => [sticker.characterId, sticker.duplicates])), [collection]);
+  const totalDuplicates = collection.reduce((sum, sticker) => sum + sticker.duplicates, 0);
+
+  useEffect(() => {
+    listUpcoming()
+      .then(setUpcoming)
+      .catch(() => setUpcoming([]));
+  }, []);
 
   const uniqueBooks = useMemo(() => sortBooks([...new Set(characters.flatMap((character) => booksOf(character.bibleBooks)))]), [characters]);
   const uniquePeriods = useMemo(
@@ -95,10 +121,16 @@ export function AlbumSection({ characters, ownedIds, onOpenSticker }: AlbumSecti
           title="Meu álbum"
           subtitle={`${ownedCount} de ${characters.length} figurinhas conquistadas`}
           action={
-            <Button variant="secondary" size="sm" onClick={() => setFiltersOpen(true)}>
-              <TuneRoundedIcon fontSize="small" />
-              Filtros{extraFilters ? ` (${extraFilters})` : ''}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" size="sm" onClick={() => setDuplicatesOpen(true)}>
+                <AutoAwesomeRoundedIcon fontSize="small" />
+                Repetidas{totalDuplicates ? ` (${totalDuplicates})` : ''}
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => setFiltersOpen(true)}>
+                <TuneRoundedIcon fontSize="small" />
+                Filtros{extraFilters ? ` (${extraFilters})` : ''}
+              </Button>
+            </div>
           }
         />
         <ProgressBar value={characters.length ? (ownedCount / characters.length) * 100 : 0} className="h-4" />
@@ -122,6 +154,23 @@ export function AlbumSection({ characters, ownedIds, onOpenSticker }: AlbumSecti
         </div>
       </section>
 
+      {upcoming.length > 0 ? (
+        <section className="panel space-y-3 p-5">
+          <h3 className="flex items-center gap-2 font-display text-lg font-bold text-ink">
+            <HourglassTopRoundedIcon className="text-violet" /> Em breve no álbum
+          </h3>
+          <div className="no-scrollbar -mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
+            {upcoming.map((item, index) => (
+              <div key={`${item.publishAt}-${index}`} data-rarity={item.rarity} className="rarity rarity-bg flex w-28 shrink-0 flex-col items-center gap-1 rounded-2xl border-2 border-dashed border-[var(--r)] p-3 text-center">
+                <span className="rarity-text font-display text-3xl font-bold">?</span>
+                <span className="rarity-text text-xs font-bold uppercase">{getRarityLabel(item.rarity)}</span>
+                <span className="text-xs font-semibold text-muted">{untilLabel(item.publishAt)}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {shown.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
           {shown.map((character, index) => (
@@ -131,6 +180,7 @@ export function AlbumSection({ characters, ownedIds, onOpenSticker }: AlbumSecti
                 rarity={character.rarity}
                 imageUrl={character.imageUrl}
                 owned={ownedIds.has(character.id)}
+                duplicates={duplicatesById.get(character.id) ?? 0}
                 onClick={() => onOpenSticker(character.id)}
               />
             </div>
@@ -154,6 +204,18 @@ export function AlbumSection({ characters, ownedIds, onOpenSticker }: AlbumSecti
           itemLabel="figurinhas"
         />
       ) : null}
+
+      <DuplicatesModal
+        open={duplicatesOpen}
+        onClose={() => setDuplicatesOpen(false)}
+        collection={collection}
+        rules={gameRules}
+        onChanged={onWallet}
+        onFused={(result) => {
+          setDuplicatesOpen(false);
+          onFused(result);
+        }}
+      />
 
       <Modal
         open={filtersOpen}

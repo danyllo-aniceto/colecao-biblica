@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { LoadingState } from '@/components/ui/spinner';
 import { Tooltip } from '@/components/ui/tooltip';
 import { Hearts } from '@/components/user/sections/play-section';
+import { ReportQuestionModal } from '@/components/user/report-question-modal';
+import FlagRoundedIcon from '@mui/icons-material/FlagRounded';
 import { cn } from '@/lib/cn';
 import type { QuizSessionStatus } from '@/lib/user-api';
 
@@ -101,6 +103,8 @@ export function QuizAnswerScreen({
   const [totalSeconds, setTotalSeconds] = useState(() => question?.timeLimitSeconds ?? 0);
   const [deadline, setDeadline] = useState(() => Date.now() + (question?.remainingSeconds ?? question?.timeLimitSeconds ?? 0) * 1000);
   const [now, setNow] = useState(() => Date.now());
+  const [reporting, setReporting] = useState(false);
+  const [reported, setReported] = useState(false);
 
   const submittingRef = useRef(false);
   const autoSubmittedRef = useRef(false);
@@ -304,7 +308,24 @@ export function QuizAnswerScreen({
         </div>
 
         {reveal ? (
-          <RevealPanel reveal={reveal} />
+          <>
+            <RevealPanel reveal={reveal} />
+            {question.id && !reported ? (
+              <button type="button" onClick={() => setReporting(true)} className="inline-flex items-center gap-1.5 self-center text-sm font-semibold text-muted underline-offset-4 hover:text-ink hover:underline">
+                <FlagRoundedIcon fontSize="small" /> Reportar problema nesta pergunta
+              </button>
+            ) : null}
+            {reporting && question.id ? (
+              <ReportQuestionModal
+                questionId={question.id}
+                onClose={() => setReporting(false)}
+                onSent={() => {
+                  setReporting(false);
+                  setReported(true);
+                }}
+              />
+            ) : null}
+          </>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <PowerUp
