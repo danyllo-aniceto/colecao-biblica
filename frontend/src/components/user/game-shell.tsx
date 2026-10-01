@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
+import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
@@ -9,7 +10,7 @@ import { InstallAppButton } from '@/components/pwa/install-app-button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import type { UserProfile } from '@/types/auth';
 
-export type SectionId = 'home' | 'stickers' | 'quiz' | 'shop' | 'ranking' | 'settings';
+export type SectionId = 'home' | 'stickers' | 'quiz' | 'shop' | 'ranking' | 'friends' | 'settings';
 
 function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ');
@@ -22,6 +23,16 @@ const NAV_ITEMS: Array<{ id: SectionId; label: string; icon: ReactNode }> = [
   { id: 'shop', label: 'Loja', icon: <StorefrontRoundedIcon /> },
   { id: 'ranking', label: 'Ranking', icon: <EmojiEventsRoundedIcon /> },
 ];
+
+/** Bolinha com o número de avisos (pedidos, propostas e mensagens não lidas). */
+function NoticeDot({ value, className }: { value: number; className?: string }) {
+  if (!value) return null;
+  return (
+    <span className={cn('flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 text-[11px] font-bold leading-none text-white', className)} aria-label={`${value} aviso(s)`}>
+      {value > 9 ? '9+' : value}
+    </span>
+  );
+}
 
 function initials(name?: string) {
   if (!name) {
@@ -36,10 +47,12 @@ export function PlayerHud({
   profile,
   section,
   onNavigate,
+  socialNotices = 0,
 }: {
   profile: UserProfile | null;
   section: SectionId;
   onNavigate: (id: SectionId) => void;
+  socialNotices?: number;
 }) {
   const xp = profile?.xp ?? 0;
   const progress = levelProgress(xp);
@@ -72,6 +85,19 @@ export function PlayerHud({
           </div>
           <button
             type="button"
+            onClick={() => onNavigate('friends')}
+            aria-label="Amigos"
+            aria-current={section === 'friends' ? 'page' : undefined}
+            className={cn(
+              'relative flex h-10 w-10 items-center justify-center rounded-2xl transition sm:hidden',
+              section === 'friends' ? 'bg-primary text-on-primary' : 'bg-surface-3 text-muted hover:text-ink',
+            )}
+          >
+            <GroupsRoundedIcon fontSize="small" />
+            <NoticeDot value={socialNotices} className="absolute -right-1 -top-1" />
+          </button>
+          <button
+            type="button"
             onClick={() => onNavigate('settings')}
             aria-label="Meu perfil"
             aria-current={section === 'settings' ? 'page' : undefined}
@@ -86,7 +112,7 @@ export function PlayerHud({
       </div>
 
       <nav className="mx-auto hidden max-w-6xl gap-1 px-4 pb-3 sm:flex sm:px-6" aria-label="Seções">
-        {NAV_ITEMS.map((item) => {
+        {[...NAV_ITEMS, { id: 'friends' as const, label: 'Amigos', icon: <GroupsRoundedIcon /> }].map((item) => {
           const active = section === item.id;
           return (
             <button
@@ -101,6 +127,7 @@ export function PlayerHud({
             >
               {item.icon}
               {item.label}
+              {item.id === 'friends' ? <NoticeDot value={socialNotices} /> : null}
             </button>
           );
         })}

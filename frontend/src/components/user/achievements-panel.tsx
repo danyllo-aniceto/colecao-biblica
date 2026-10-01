@@ -4,6 +4,8 @@ import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
+import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
+import SwapHorizRoundedIcon from '@mui/icons-material/SwapHorizRounded';
 import FlagRoundedIcon from '@mui/icons-material/FlagRounded';
 import LocalFireDepartmentRoundedIcon from '@mui/icons-material/LocalFireDepartmentRounded';
 import PersonSearchRoundedIcon from '@mui/icons-material/PersonSearchRounded';
@@ -29,6 +31,8 @@ const ICONS: Record<string, ReactNode> = {
   trophy: <EmojiEventsRoundedIcon />,
   calendar: <CalendarMonthRoundedIcon />,
   note: <EditNoteRoundedIcon />,
+  people: <GroupsRoundedIcon />,
+  swap: <SwapHorizRoundedIcon />,
 };
 
 /** Metas permanentes: cada uma paga moedas uma vez. */

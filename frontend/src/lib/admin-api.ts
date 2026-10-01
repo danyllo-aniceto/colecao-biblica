@@ -154,6 +154,10 @@ export type GameSettings = {
   leagueFirstCoins: number;
   leagueSecondCoins: number;
   leagueThirdCoins: number;
+  chatEnabled: number;
+  tradesPerDay: number;
+  maxPendingTrades: number;
+  tradeExpireDays: number;
 };
 
 export type AdminStats = {

@@ -28,6 +28,7 @@ export type UserProfile = {
   streakFreezes?: number;
   stickerPity?: number;
   dailyStreak?: number;
+  friendCode?: string | null;
   lastDailyClaim?: string | null;
   name: string;
   email: string;

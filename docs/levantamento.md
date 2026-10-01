@@ -113,17 +113,42 @@ loja continuam os mesmos e o admin pode ajustá-los.
 | 5 | **Importação em lote + reportes** | Admin importa CSV (modelo para baixar, colunas em português, prévia com erro por linha, até 500 por vez). Jogador reporta pergunta no gabarito; admin tem a tela **Reportes** (contador no menu) para editar, desativar, resolver ou descartar. |
 | 6 | **Estatística por pergunta** | Cada resposta conta acerto/erro. A lista mostra a taxa de acerto e, com 20+ respostas, a dificuldade sugerida; filtro "Dificuldade a revisar" e botão para aplicar as sugestões. |
 | 7 | **Desafio do dia** | Mesmas perguntas para todos (sorteio fixo por dia), uma tentativa (abandonar conta), ranking do dia por acertos e tempo. Card na tela Jogar. |
-| 8 | **Fusão de repetidas** | Repetidas agora ficam guardadas (selo "x2" no álbum). O jogador vende pelo valor da raridade ou funde 3 da mesma raridade em uma da raridade acima, de preferência inédita. A **troca entre amigos** ficou de fora: depende de um sistema de amigos que o app ainda não tem. |
+| 8 | **Fusão de repetidas** | Repetidas agora ficam guardadas (selo "x2" no álbum). O jogador vende pelo valor da raridade ou funde 3 da mesma raridade em uma da raridade acima, de preferência inédita. A troca entre amigos veio na rodada seguinte (seção 6). |
 | 9 | **Recorte da imagem** | Ao escolher a imagem da figurinha abre o enquadramento na moldura 3:4 (arrastar e zoom); sai em 900×1200. GIF vai direto para não perder a animação; dá para pular o recorte. |
 | 10 | **Publicação agendada** | No editor, "Agendar lançamento" com calendário próprio. Até a data o personagem não aparece para os jogadores; o álbum mostra a faixa "Em breve" (só raridade e data, sem revelar quem é). Filtro "Só agendados" no painel. |
 
 Mudança de comportamento: antes a figurinha repetida virava moedas na hora; agora ela é guardada e
 o jogador escolhe vender (mesmo valor de antes) ou fundir.
 
-## 6. Ideias para depois
+## 6. Terceira rodada: amigos, conversa e trocas (implementado)
 
-1. Sistema de amigos (convidar, ver o álbum do amigo, **trocar repetidas**).
-2. Notificações do PWA (lembrete do prêmio diário e da liga acabando).
-3. Eventos temáticos com figurinhas por tempo limitado (Páscoa, Natal).
-4. Modo duelo: dois jogadores com as mesmas perguntas, ao vivo ou assíncrono.
-5. Trilhas de estudo (ex.: "Vida de Davi") liberando figurinhas em sequência.
+- **Código de amigo**: cada jogador tem um código de 6 caracteres (sem letras ambíguas) na seção
+  **Amigos**, com botões de copiar e convidar (compartilhamento do celular). Adicionar pelo código
+  envia um pedido; se os dois pedirem um ao outro, a amizade é aceita na hora. Limite de 200 amigos.
+- **Pedidos**: recebidos (aceitar/recusar), enviados (cancelar) e bloqueados (desbloquear). Bloquear
+  desfaz a amizade, cancela as propostas abertas e impede novos pedidos, sem avisar a outra pessoa.
+- **Conversa**: abre por cima da tela, carrega 30 mensagens por vez ("Mensagens anteriores"),
+  busca novas a cada 5 s enquanto está aberta e marca como lida. Até 20 mensagens por minuto,
+  palavrões mascarados (`services/moderation.ts`). O admin pode desligar a conversa sem desligar as trocas.
+- **Trocas**: só cópias **repetidas** entram, então ninguém perde figurinha do álbum. Três formatos:
+  troca (dou uma e peço outra), pedido (só peço) e presente (só dou). O compositor marca o que
+  "falta pra você" e o que "falta pro amigo". A proposta aparece como cartão na conversa e na aba
+  **Trocas** (recebidas, enviadas, histórico, paginadas). Aceitar move as repetidas numa transação
+  com trava das duas contas (aceite duplo não duplica figurinha); figurinha inédita vai para o
+  álbum, a já obtida vira repetida.
+- **Limites** (Configurações → Social): trocas concluídas por dia (5), propostas abertas (10),
+  expiração da proposta (7 dias), conversa ligada/desligada.
+- **Avisos**: bolinha vermelha no botão Amigos com pedidos + propostas recebidas + mensagens não
+  lidas (consulta a cada 30 s com o app visível).
+- **Conquistas**: "Comunhão" (3 amigos) e "Partilha" (primeira troca).
+
+Sem websocket de propósito: o app roda em funções serverless (Vercel), então a conversa usa
+consultas curtas e leves. Se o uso crescer, dá para trocar por um serviço de tempo real.
+
+## 7. Ideias para depois
+
+1. Notificações do PWA (lembrete do prêmio diário, liga acabando, proposta de troca recebida).
+2. Eventos temáticos com figurinhas por tempo limitado (Páscoa, Natal).
+3. Modo duelo entre amigos: as mesmas perguntas, ao vivo ou assíncrono.
+4. Trilhas de estudo (ex.: "Vida de Davi") liberando figurinhas em sequência.
+5. Ver o álbum completo do amigo (hoje o compositor mostra só as repetidas).

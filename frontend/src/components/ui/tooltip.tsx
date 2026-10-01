@@ -59,7 +59,9 @@ export function Tooltip({ content, children, side = 'top', delay = 250 }: Toolti
       (childProps.onMouseLeave as ((event: unknown) => void) | undefined)?.(event);
     },
     onFocus: (event: unknown) => {
-      show(true);
+      // Só no foco por teclado: o foco devolvido ao botão depois de fechar um modal não reabre a dica.
+      const target = (event as { target?: Element }).target;
+      if (!target?.matches || target.matches(':focus-visible')) show(true);
       (childProps.onFocus as ((event: unknown) => void) | undefined)?.(event);
     },
     onBlur: (event: unknown) => {

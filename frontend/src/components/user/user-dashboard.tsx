@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -16,6 +16,7 @@ import { AlbumSection } from '@/components/user/sections/album-section';
 import { HomeSection } from '@/components/user/sections/home-section';
 import { PlaySection, type QuizFormState } from '@/components/user/sections/play-section';
 import { ProfileSection } from '@/components/user/sections/profile-section';
+import { FriendsSection } from '@/components/user/sections/friends-section';
 import { RankingSection } from '@/components/user/sections/ranking-section';
 import { ShopSection } from '@/components/user/sections/shop-section';
 import { getRarityLabel } from '@/lib/rarity-theme';
@@ -50,6 +51,7 @@ import {
   type UnlockedAchievement,
   type UserSticker,
 } from '@/lib/user-api';
+import { getSocialSummary, type SocialSummary, type TradeResponse } from '@/lib/social-api';
 import type { UserProfile } from '@/types/auth';
 
 /** Figurinha mostrada no modal depois de uma compra ou fusão. */
@@ -93,6 +95,28 @@ export function UserDashboard() {
   const [accountForm, setAccountForm] = useState({ name: user?.name ?? '', email: user?.email ?? '', password: '' });
   const [accountSubmitting, setAccountSubmitting] = useState(false);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const [socialSummary, setSocialSummary] = useState<SocialSummary | null>(null);
+
+  const refreshSocial = useCallback(() => {
+    getSocialSummary()
+      .then(setSocialSummary)
+      .catch(() => undefined);
+  }, []);
+
+  // Avisos de amigos (pedidos, propostas e mensagens): consulta leve a cada 30 s com o app visível.
+  useEffect(() => {
+    if (!accessToken) return;
+    refreshSocial();
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') refreshSocial();
+    }, 30000);
+    return () => window.clearInterval(timer);
+  }, [accessToken, refreshSocial]);
+
+  function handleTradeDone(result: TradeResponse) {
+    if (result.trade.status === 'ACCEPTED') void refreshCollection();
+    celebrate(result.unlockedAchievements);
+  }
 
   function navigate(next: SectionId) {
     setSection(next);
@@ -459,7 +483,7 @@ export function UserDashboard() {
 
   return (
     <div className="min-h-dvh pb-28 sm:pb-10">
-      <PlayerHud profile={profile} section={section} onNavigate={navigate} />
+      <PlayerHud profile={profile} section={section} onNavigate={navigate} socialNotices={socialSummary ? socialSummary.pendingRequests + socialSummary.pendingTrades + socialSummary.unreadMessages : 0} />
 
       <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
         {profileError ? (
@@ -537,6 +561,10 @@ export function UserDashboard() {
             ) : null}
 
             {section === 'ranking' ? <RankingSection currentUserId={profile?.id} onWallet={updateWallet} /> : null}
+
+            {section === 'friends' && profile ? (
+              <FriendsSection meId={profile.id} summary={socialSummary} onSummaryChange={refreshSocial} onTradeDone={handleTradeDone} onAchievements={celebrate} />
+            ) : null}
 
             {section === 'settings' ? (
               <ProfileSection

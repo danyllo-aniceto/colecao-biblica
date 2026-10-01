@@ -3,6 +3,7 @@ import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import { Button } from '@/components/ui/button';
 import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { LoadingState } from '@/components/ui/spinner';
 import { errorMessage, useToast } from '@/components/ui/toast';
 import { Alert } from '@/components/game/game-ui';
@@ -11,7 +12,7 @@ import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
 import { AdminPanel } from '../admin-ui';
 
 type Key = keyof GameSettings;
-type FieldDef = { key: Key; label: string; hint?: string; min: number; max: number; step?: number; suffix?: string };
+type FieldDef = { key: Key; label: string; hint?: string; min: number; max: number; step?: number; suffix?: string; toggle?: boolean };
 
 const GROUPS: Array<{ title: string; description: string; fields: FieldDef[] }> = [
   {
@@ -77,6 +78,16 @@ const GROUPS: Array<{ title: string; description: string; fields: FieldDef[] }> 
       { key: 'leagueFirstCoins', label: 'Prêmio do 1º lugar', min: 0, max: 100000, suffix: 'moedas' },
       { key: 'leagueSecondCoins', label: 'Prêmio do 2º lugar', min: 0, max: 100000, suffix: 'moedas' },
       { key: 'leagueThirdCoins', label: 'Prêmio do 3º lugar', min: 0, max: 100000, suffix: 'moedas' },
+    ],
+  },
+  {
+    title: 'Social',
+    description: 'Amigos, conversa e troca de figurinhas repetidas entre jogadores.',
+    fields: [
+      { key: 'chatEnabled', label: 'Conversa entre amigos', min: 0, max: 1, toggle: true, hint: 'Desligada, os amigos continuam trocando figurinhas, mas não mandam mensagens.' },
+      { key: 'tradesPerDay', label: 'Trocas concluídas por dia', min: 0, max: 100, hint: 'Por jogador (0 pausa as trocas).' },
+      { key: 'maxPendingTrades', label: 'Propostas abertas ao mesmo tempo', min: 1, max: 100 },
+      { key: 'tradeExpireDays', label: 'Proposta expira em', min: 1, max: 60, suffix: 'dias' },
     ],
   },
   {
@@ -152,18 +163,26 @@ export function SettingsScreen() {
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {group.fields.map((field) => (
               <Field key={field.key} label={field.label} hint={field.hint ?? `Entre ${field.min} e ${field.max}${field.suffix ? ` ${field.suffix}` : ''}.`}>
-                <div className="relative">
-                  <Input
-                    type="number"
-                    min={field.min}
-                    max={field.max}
-                    step={field.step ?? 1}
-                    value={form[field.key] ?? ''}
-                    onChange={(event) => setForm((current) => ({ ...current, [field.key]: event.target.value }))}
-                    className={field.suffix ? 'pr-20' : undefined}
+                {field.toggle ? (
+                  <Switch
+                    checked={form[field.key] === '1'}
+                    onChange={(checked) => setForm((current) => ({ ...current, [field.key]: checked ? '1' : '0' }))}
+                    label={form[field.key] === '1' ? 'Ligada' : 'Desligada'}
                   />
-                  {field.suffix ? <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted">{field.suffix}</span> : null}
-                </div>
+                ) : (
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min={field.min}
+                      max={field.max}
+                      step={field.step ?? 1}
+                      value={form[field.key] ?? ''}
+                      onChange={(event) => setForm((current) => ({ ...current, [field.key]: event.target.value }))}
+                      className={field.suffix ? 'pr-20' : undefined}
+                    />
+                    {field.suffix ? <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted">{field.suffix}</span> : null}
+                  </div>
+                )}
               </Field>
             ))}
           </div>
