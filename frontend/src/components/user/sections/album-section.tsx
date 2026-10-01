@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
 import HourglassTopRoundedIcon from '@mui/icons-material/HourglassTopRounded';
+import LockRoundedIcon from '@mui/icons-material/LockRounded';
+import { AlbumBook } from '@/components/user/album-book';
 import { DuplicatesModal } from '@/components/user/duplicates-modal';
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import { Button } from '@/components/ui/button';
 import { Pagination, usePagination } from '@/components/ui/pagination';
+import { Segmented } from '@/components/ui/segmented';
 import { Select } from '@/components/ui/select';
 import { EmptyState, ProgressBar, SectionHeading } from '@/components/game/game-ui';
 import { Modal } from '@/components/game/modal';
@@ -17,7 +20,7 @@ import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
 import { listUpcoming, type CharacterEntry, type FuseResult, type GameRules, type UpcomingSticker, type UserSticker } from '@/lib/user-api';
 
 type SortOption = 'alphabetical' | 'rarityAsc' | 'rarityDesc' | 'period';
-type OwnershipFilter = 'all' | 'owned' | 'missing';
+type AlbumTab = 'album' | 'locked';
 
 const PAGE_SIZE = 20;
 
@@ -57,7 +60,7 @@ function untilLabel(date: string) {
 
 export function AlbumSection({ characters, ownedIds, collection, gameRules, onOpenSticker, onWallet, onFused }: AlbumSectionProps) {
   const [rarity, setRarity] = useState<StickerRarity | 'ALL'>('ALL');
-  const [ownership, setOwnership] = useState<OwnershipFilter>('all');
+  const [tab, setTab] = useState<AlbumTab>('album');
   const [books, setBooks] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('rarityDesc');
   const [testament, setTestament] = useState<Testament | ''>('');
@@ -84,7 +87,6 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
     const order = (value: StickerRarity) => RARITY_ORDER.indexOf(value);
     return characters
       .filter((character) => rarity === 'ALL' || character.rarity === rarity)
-      .filter((character) => ownership === 'all' || (ownership === 'owned') === ownedIds.has(character.id))
       .filter((character) => books.length === 0 || booksOf(character.bibleBooks).some((book) => books.includes(book)))
       .filter((character) => !testament || character.testament === testament)
       .filter((character) => !period || character.historicalPeriod === period)
@@ -100,11 +102,15 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
         }
         return left.name.localeCompare(right.name, 'pt-BR', { sensitivity: 'base' });
       });
-  }, [characters, rarity, ownership, books, sortBy, ownedIds, testament, period]);
+  }, [characters, rarity, books, sortBy, testament, period]);
 
   const ownedCount = characters.filter((character) => ownedIds.has(character.id)).length;
-  const paging = usePagination(filtered, PAGE_SIZE);
+  const ownedFiltered = useMemo(() => filtered.filter((character) => ownedIds.has(character.id)), [filtered, ownedIds]);
+  const lockedFiltered = useMemo(() => filtered.filter((character) => !ownedIds.has(character.id)), [filtered, ownedIds]);
+  const lockedTotal = characters.length - ownedCount;
+  const paging = usePagination(lockedFiltered, PAGE_SIZE);
   const shown = paging.pageItems;
+  const resetKey = [rarity, sortBy, testament, period, books.join('|')].join(';');
   const extraFilters = books.length + (sortBy !== 'rarityDesc' ? 1 : 0) + (testament ? 1 : 0) + (period ? 1 : 0);
 
   function resetPaging<T>(setter: (value: T) => void) {
@@ -144,17 +150,24 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
               {getRarityLabel(item)}
             </FilterPill>
           ))}
-          <span className="mx-1 w-px shrink-0 bg-edge" />
-          <FilterPill active={ownership === 'owned'} onClick={() => resetPaging(setOwnership)(ownership === 'owned' ? 'all' : 'owned')}>
-            Conquistadas
-          </FilterPill>
-          <FilterPill active={ownership === 'missing'} onClick={() => resetPaging(setOwnership)(ownership === 'missing' ? 'all' : 'missing')}>
-            Faltando
-          </FilterPill>
         </div>
       </section>
 
-      {upcoming.length > 0 ? (
+      <Segmented
+        aria-label="Parte do álbum"
+        value={tab}
+        onChange={setTab}
+        options={[
+          { value: 'album', label: `Álbum (${ownedCount})`, icon: <CollectionsBookmarkRoundedIcon fontSize="small" /> },
+          { value: 'locked', label: `A desbloquear (${lockedTotal})`, icon: <LockRoundedIcon fontSize="small" /> },
+        ]}
+      />
+
+      {tab === 'album' ? (
+        <AlbumBook items={ownedFiltered} totalCharacters={characters.length} ownedCount={ownedCount} duplicatesById={duplicatesById} onOpenSticker={onOpenSticker} resetKey={resetKey} />
+      ) : null}
+
+      {tab === 'locked' && upcoming.length > 0 ? (
         <section className="panel space-y-3 p-5">
           <h3 className="flex items-center gap-2 font-display text-lg font-bold text-ink">
             <HourglassTopRoundedIcon className="text-violet" /> Em breve no álbum
@@ -171,28 +184,26 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
         </section>
       ) : null}
 
-      {shown.length > 0 ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
-          {shown.map((character, index) => (
-            <div key={character.id} className="animate-fade-up" style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}>
-              <StickerCard
-                name={character.name}
-                rarity={character.rarity}
-                imageUrl={character.imageUrl}
-                owned={ownedIds.has(character.id)}
-                duplicates={duplicatesById.get(character.id) ?? 0}
-                onClick={() => onOpenSticker(character.id)}
-              />
+      {tab === 'locked' ? (
+        shown.length > 0 ? (
+          <>
+            <p className="text-sm text-muted">Estas ainda não estão no seu álbum. Conquiste jogando, na loja ou trocando com amigos para ver a ficha completa.</p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+              {shown.map((character, index) => (
+                <div key={character.id} className="animate-fade-up" style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}>
+                  <StickerCard name={character.name} rarity={character.rarity} imageUrl={character.imageUrl} owned={false} />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      ) : (
-        <EmptyState icon={<CollectionsBookmarkRoundedIcon fontSize="large" />} title="Nenhuma figurinha aqui">
-          Tente outros filtros.
-        </EmptyState>
-      )}
+          </>
+        ) : (
+          <EmptyState icon={<CollectionsBookmarkRoundedIcon fontSize="large" />} title={lockedTotal === 0 ? 'Álbum completo!' : 'Nenhuma figurinha aqui'}>
+            {lockedTotal === 0 ? 'Você conquistou todas as figurinhas publicadas até agora.' : 'Tente outros filtros.'}
+          </EmptyState>
+        )
+      ) : null}
 
-      {filtered.length > 0 ? (
+      {tab === 'locked' && lockedFiltered.length > 0 ? (
         <Pagination
           page={paging.page}
           totalPages={paging.totalPages}

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../db/prisma";
-import { badRequest, notFound } from "../lib/errors";
+import { badRequest, forbidden, notFound } from "../lib/errors";
 import { pageOf, queryText, readPage } from "../lib/pagination";
 import { clearableText, parseId, requiredText, richText, z } from "../lib/validation";
 import { currentUser, requireAdmin } from "../middleware/auth";
@@ -218,9 +218,13 @@ charactersRouter.get(
   "/:id",
   asyncHandler(async (req, res) => {
     const character = await getCharacter(parseId(req.params.id));
-    // Rascunhos só aparecem para o admin.
-    if (!isCharacterVisible(character) && currentUser(req).role !== "ADMIN") {
-      throw notFound("Personagem não encontrado");
+    const user = currentUser(req);
+    if (user.role !== "ADMIN") {
+      // Rascunhos só aparecem para o admin.
+      if (!isCharacterVisible(character)) throw notFound("Personagem não encontrado");
+      // A ficha completa é o prêmio: só quem conquistou a figurinha pode abrir.
+      const owned = await prisma.userSticker.findUnique({ where: { userId_characterId: { userId: user.id, characterId: character.id } }, select: { id: true } });
+      if (!owned) throw forbidden("Conquiste esta figurinha para ver os detalhes");
     }
     res.json(toCharacterResponse(character));
   }),

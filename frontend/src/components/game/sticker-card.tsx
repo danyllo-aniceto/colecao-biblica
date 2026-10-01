@@ -20,8 +20,8 @@ type StickerCardProps = {
 };
 
 /**
- * Figurinha do álbum: moldura e brilho na cor da raridade. Bloqueada, aparece
- * escurecida com cadeado; a lendária ganha um brilho que atravessa a carta.
+ * Figurinha do álbum: moldura e brilho na cor da raridade. Bloqueada, fica toda
+ * cinza, desabilitada e com cadeado; a lendária ganha um brilho que atravessa a carta.
  */
 export function StickerCard({ name, rarity, imageUrl, owned, onClick, size = 'md', className, duplicates = 0 }: StickerCardProps) {
   const interactive = Boolean(onClick) && owned;
@@ -32,10 +32,11 @@ export function StickerCard({ name, rarity, imageUrl, owned, onClick, size = 'md
       type={interactive ? 'button' : undefined}
       onClick={interactive ? onClick : undefined}
       data-rarity={rarity}
+      aria-disabled={owned ? undefined : true}
       aria-label={owned ? `${name}, figurinha ${getRarityLabel(rarity)}` : `${name}, figurinha ${getRarityLabel(rarity)} bloqueada`}
       className={cn(
         'rarity group relative flex w-full flex-col overflow-hidden rounded-3xl text-left',
-        owned ? 'rarity-frame bg-surface' : 'border-2 border-dashed border-edge-strong bg-surface-2',
+        owned ? 'rarity-frame bg-surface' : 'cursor-not-allowed select-none border-2 border-edge bg-surface-3 grayscale',
         interactive && 'transition-transform duration-200 hover:-translate-y-1 hover:rotate-[-1deg] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/40',
         owned && rarity === 'LEGENDARY' && 'shine',
         className,
@@ -47,7 +48,8 @@ export function StickerCard({ name, rarity, imageUrl, owned, onClick, size = 'md
             src={imageUrl}
             alt=""
             loading="lazy"
-            className={cn('h-full w-full object-cover', !owned && 'scale-105 opacity-40 blur-[3px] grayscale')}
+            draggable={false}
+            className={cn('h-full w-full object-cover', !owned && 'opacity-45 grayscale')}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
@@ -57,7 +59,7 @@ export function StickerCard({ name, rarity, imageUrl, owned, onClick, size = 'md
 
         {!owned ? (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-bg/70 text-muted backdrop-blur">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-surface/80 text-muted shadow-sm">
               <LockRoundedIcon />
             </span>
           </div>

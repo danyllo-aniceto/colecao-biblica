@@ -145,7 +145,19 @@ o jogador escolhe vender (mesmo valor de antes) ou fundir.
 Sem websocket de propósito: o app roda em funções serverless (Vercel), então a conversa usa
 consultas curtas e leves. Se o uso crescer, dá para trocar por um serviço de tempo real.
 
-## 7. Ideias para depois
+## 7. Álbum em forma de livro (implementado)
+
+- A aba **Álbum** mostra só as figurinhas conquistadas, coladas em folhas de papel dentro de uma
+  capa: uma folha por vez no celular (2×2) e o álbum aberto em duas folhas no computador (3×2 cada).
+  A primeira folha é a abertura (total, % completo e contagem por raridade).
+- Trocar de página vira a folha com animação 3D: setas nas laterais, arrastar o dedo, setas do
+  teclado ou a paginação embaixo (respeita "reduzir movimento" do sistema).
+- A aba **A desbloquear** lista as que faltam, paginadas, com foto e cartão em cinza, cadeado e sem
+  clique. As figurinhas agendadas ("em breve") também aparecem ali.
+- A ficha completa só abre para quem tem a figurinha: o app mostra "Figurinha bloqueada" e a API
+  responde 403 para o jogador que não a conquistou (o admin continua vendo tudo).
+
+## 8. Ideias para depois
 
 1. Notificações do PWA (lembrete do prêmio diário, liga acabando, proposta de troca recebida).
 2. Eventos temáticos com figurinhas por tempo limitado (Páscoa, Natal).

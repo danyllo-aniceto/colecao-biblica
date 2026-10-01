@@ -240,6 +240,13 @@ describe.skipIf(!hasDatabase)("API", () => {
       const cleared = await api.put(`/api/characters/admin/${draft.body.id}`).set(bearer(admin)).send({ curiosities: "", testament: null, published: true });
       expect(cleared.body).toMatchObject({ curiosities: null, testament: null, published: true });
 
+      // Publicado, mas a ficha completa só abre para quem conquistou a figurinha.
+      expect((await api.get(`/api/characters/${draft.body.id}`).set(bearer(user))).status).toBe(403);
+      const player = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
+      await prisma.userSticker.create({ data: { userId: player.id, characterId: draft.body.id } });
+      expect((await api.get(`/api/characters/${draft.body.id}`).set(bearer(user))).body).toMatchObject({ name: "Noé" });
+      expect((await api.get(`/api/characters/${draft.body.id}`).set(bearer(admin))).status).toBe(200);
+
       const list = await api.get("/api/characters/admin/list?issue=noQuestions&size=50").set(bearer(admin));
       expect(list.body.content.map((character: { name: string }) => character.name)).toContain("Noé");
     });

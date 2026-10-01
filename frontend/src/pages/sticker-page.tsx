@@ -62,6 +62,7 @@ export function StickerPage() {
   const [error, setError] = useState<string | null>(null);
   const [character, setCharacter] = useState<CharacterDetail | null>(null);
   const [isOwned, setIsOwned] = useState(false);
+  const [locked, setLocked] = useState(false);
   const [comments, setComments] = useState<CommentEntry[]>([]);
   const [commentDraft, setCommentDraft] = useState('');
   const [commentSubmitting, setCommentSubmitting] = useState(false);
@@ -83,17 +84,23 @@ export function StickerPage() {
       setError(null);
 
       try {
-        const [selectedCharacter, collection, myComments] = await Promise.all([
-          getCharacterDetail(parsedCharacterId),
-          getCollection(),
-          getMyComments(),
-        ]);
+        // A ficha só abre para quem conquistou a figurinha (o servidor também bloqueia).
+        const collection = await getCollection();
+        if (ignore) {
+          return;
+        }
+        const owned = collection.some((item) => item.characterId === parsedCharacterId);
+        if (!owned) {
+          setLocked(true);
+          return;
+        }
+
+        const [selectedCharacter, myComments] = await Promise.all([getCharacterDetail(parsedCharacterId), getMyComments()]);
 
         if (ignore) {
           return;
         }
 
-        const owned = collection.some((item) => item.characterId === parsedCharacterId);
         const characterComments = myComments
           .filter((comment) => comment.characterId === parsedCharacterId)
           .sort((left, right) => {
@@ -165,6 +172,20 @@ export function StickerPage() {
         </Button>
 
         {loading ? <LoadingState label="Abrindo figurinha..." /> : null}
+
+        {locked ? (
+          <section className="panel mx-auto mt-6 flex max-w-md flex-col items-center gap-3 p-8 text-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-3 text-muted">
+              <LockRoundedIcon fontSize="large" />
+            </span>
+            <h1 className="font-display text-2xl font-bold text-ink">Figurinha bloqueada</h1>
+            <p className="text-muted">Conquiste esta figurinha jogando, na loja ou numa troca com amigos para abrir a ficha completa.</p>
+            <Button size="lg" onClick={() => navigate('/dashboard')}>
+              <PlayArrowRoundedIcon />
+              Jogar para conquistar
+            </Button>
+          </section>
+        ) : null}
 
         {error ? (
           <div className="mt-4">
