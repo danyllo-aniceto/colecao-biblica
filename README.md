@@ -56,7 +56,8 @@ Outros comandos:
 | `ADMIN_EMAIL` | recomendado | Seu e-mail; o deploy cria esse admin se ainda não existir |
 | `ADMIN_PASSWORD` | recomendado | Senha do admin (mínimo 8 caracteres) |
 | `ADMIN_NAME` | não | Nome exibido do admin (padrão: `Administrador`) |
-| `BLOB_READ_WRITE_TOKEN` | recomendado | Token do Blob store (passo 3) |
+| `BLOB_READ_WRITE_TOKEN` | recomendado | Token do Blob store (passo 3). Se o store foi ligado pelo botão **Connect**, a Vercel pode criar `BLOB_STORE_ID` no lugar: também funciona |
+| `BLOB_ACCESS` | não | `public` ou `private` para forçar o modo do store (sem ela o app descobre sozinho) |
 | `APP_TIMEZONE` | não | Fuso do limite diário de prêmios (padrão `America/Sao_Paulo`) |
 | `SEED_DEMO_DATA` | não | Não cadastre em produção (só `true` cria as contas de teste) |
 
@@ -74,10 +75,14 @@ Outros comandos:
 
 ### 3. Imagens (Vercel Blob)
 
-**Storage → Create Database → Blob**. Para cadastrar o token à mão, copie o
-`BLOB_READ_WRITE_TOKEN` (começa com `vercel_blob_rw_`) na página do store e salve como
-variável do projeto; ou clique em **Connect** e a Vercel cadastra sozinha. Depois,
-**Redeploy**: o build detecta o token e o painel admin passa a enviar as imagens para o Blob.
+**Storage → Create Database → Blob** (store público ou privado, os dois funcionam). Clique em
+**Connect** para a Vercel cadastrar as variáveis, ou copie o `BLOB_READ_WRITE_TOKEN` (começa com
+`vercel_blob_rw_`) e salve como variável do projeto. Depois, **Redeploy**.
+
+Como o upload funciona: o painel reduz a imagem no navegador (WebP de até 1200–1600 px) e envia para
+`POST /api/uploads`; o servidor confere o formato pelos bytes e grava no Blob. Em store público a URL
+do Blob é salva direto; em store privado a imagem é servida por `/api/uploads/file/...`. Sem Blob, a
+imagem (já reduzida) fica no banco. A **Visão geral** do painel mostra qual modo está ativo.
 
 ### O que acontece em cada deploy
 
@@ -92,6 +97,12 @@ variável do projeto; ou clique em **Connect** e a Vercel cadastra sozinha. Depo
 Depois do primeiro deploy, entre com o `ADMIN_EMAIL`/`ADMIN_PASSWORD` e cadastre
 personagens e perguntas pelo painel.
 
+## Regras do projeto e melhorias
+
+- `CLAUDE.md`: regras de interface (paginação em toda lista, componentes do app no lugar dos do
+  navegador, ícone de carregamento) e de backend.
+- `docs/levantamento.md`: auditoria do admin e da lógica do jogo, economia e próximos passos.
+
 ## Estrutura
 
 ```
@@ -99,13 +110,13 @@ api/index.ts              função serverless (chama createApp do backend)
 backend/
   prisma/                 schema e migrações
   src/app.ts              monta o Express com todas as rotas em /api
-  src/routes/             auth, users, characters, questions, rewards, shop,
-                          settings, quiz, collection, comments, ranking, uploads
-  src/services/           regras do jogo, quiz, recompensas, configurações, seed
+  src/routes/             auth, users, characters, questions, rewards, shop, settings,
+                          quiz, collection, comments, ranking, uploads, daily, achievements, admin
+  src/services/           regras do jogo, quiz, recompensas, conquistas, uploads, configurações, seed
   src/scripts/            seed e create-user
 frontend/
   src/pages/              início (login), painel e detalhe da figurinha
-  src/components/         telas do jogador (user/), do admin (admin/) e do jogo (game/)
+  src/components/         telas do jogador (user/), do admin (admin/), do jogo (game/) e kit de UI (ui/)
   src/sw.ts               service worker (cache offline e atualização)
   vite.config.ts          build, manifest do PWA e proxy /api no desenvolvimento
 vercel.json               build, rotas e cabeçalhos na Vercel
