@@ -48,6 +48,7 @@ export default defineConfig({
           "index.html",
           "assets/index-*.{js,css}",
           "assets/sticker-page-*.js",
+          "assets/logo-completa-*.webp",
           "assets/*-latin-[0-9]*-normal-*.woff2",
         ],
       },

@@ -8,7 +8,7 @@ import { LoginForm } from '@/components/auth/login-form';
 import { StickerCard } from '@/components/game/sticker-card';
 import { InstallAppButton } from '@/components/pwa/install-app-button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import logo from '@/assets/logo.png';
+import logo from '@/assets/logo-completa.webp';
 
 const features = [
   { icon: QuizRoundedIcon, title: 'Quizzes com tempo', text: 'Perguntas rápidas, vidas e bônus para virar o jogo.', tone: 'bg-danger/15 text-danger' },
@@ -42,7 +42,7 @@ export function HomePage() {
 
       <section className="grid items-center gap-10 py-8 lg:grid-cols-[1.1fr_0.9fr] lg:py-12">
         <div className="animate-fade-up text-center lg:text-left">
-          <img src={logo} alt="Coleção Bíblica" width={288} height={288} fetchPriority="high" className="animate-float mx-auto h-auto w-56 drop-shadow-[0_20px_30px_rgba(0,0,0,0.35)] sm:w-72 lg:mx-0" />
+          <img src={logo} alt="Coleção Bíblica" width={640} height={804} fetchPriority="high" className="animate-float mx-auto h-auto w-56 drop-shadow-[0_20px_30px_rgba(0,0,0,0.3)] sm:w-72 lg:mx-0" />
           <h1 className="mt-6 font-display text-4xl font-bold leading-tight text-ink sm:text-6xl">
             Aprenda a Bíblia{' '}
             <span className="bg-[linear-gradient(90deg,var(--primary),var(--accent))] bg-clip-text text-transparent">jogando</span>
