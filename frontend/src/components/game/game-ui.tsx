@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
+import ContentCutRoundedIcon from '@mui/icons-material/ContentCutRounded';
 import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
+import { Tooltip } from '@/components/ui/tooltip';
 
 function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ');
@@ -27,25 +29,27 @@ export function CoinIcon({ className }: { className?: string }) {
 
 /** Ficha arredondada com ícone e número (moedas, bônus, vidas...). */
 export function Chip({ icon, value, label, className }: { icon: ReactNode; value: ReactNode; label?: string; className?: string }) {
-  return (
+  const chip = (
     <span
+      tabIndex={label ? 0 : undefined}
       className={cn('inline-flex h-9 items-center gap-1.5 rounded-full border border-edge bg-surface-2 pl-1.5 pr-3 font-display text-sm font-semibold text-ink', className)}
-      title={label}
       aria-label={label ? `${label}: ${value}` : undefined}
     >
       <span className="flex h-6 w-6 items-center justify-center">{icon}</span>
       {value}
     </span>
   );
+  return label ? <Tooltip content={label}>{chip}</Tooltip> : chip;
 }
 
 export function CoinChip({ value, className }: { value: number; className?: string }) {
   return <Chip icon={<CoinIcon />} value={value.toLocaleString('pt-BR')} label="Moedas" className={className} />;
 }
 
-export function BoostChips({ life, time, xp }: { life: number; time: number; xp: number }) {
+export function BoostChips({ life, time, xp, hint = 0 }: { life: number; time: number; xp: number; hint?: number }) {
   return (
     <>
+      <Chip icon={<ContentCutRoundedIcon sx={{ fontSize: 18 }} className="text-violet" />} value={hint} label="Dicas 50/50" />
       <Chip icon={<FavoriteRoundedIcon sx={{ fontSize: 20 }} className="text-danger" />} value={life} label="Vidas extras" />
       <Chip icon={<TimerRoundedIcon sx={{ fontSize: 20 }} className="text-info" />} value={time} label="Tempo extra" />
       <Chip icon={<BoltRoundedIcon sx={{ fontSize: 20 }} className="text-primary" />} value={xp} label="XP em dobro" />

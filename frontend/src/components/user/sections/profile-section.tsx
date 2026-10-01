@@ -7,7 +7,9 @@ import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { InstallAppButton } from '@/components/pwa/install-app-button';
 import { APP_VERSION } from '@/lib/pwa';
-import { Alert, BoostChips, CoinChip, LevelBadge, ProgressBar, SectionHeading, StatTile, levelProgress } from '@/components/game/game-ui';
+import { BoostChips, CoinChip, LevelBadge, ProgressBar, SectionHeading, StatTile, levelProgress } from '@/components/game/game-ui';
+import { AchievementsPanel } from '@/components/user/achievements-panel';
+import { MatchHistoryPanel } from '@/components/user/match-history-panel';
 import type { UserProfile } from '@/types/auth';
 
 export type AccountFormState = { name: string; email: string; password: string };
@@ -19,13 +21,13 @@ type ProfileSectionProps = {
   form: AccountFormState;
   onChangeForm: (updater: (current: AccountFormState) => AccountFormState) => void;
   submitting: boolean;
-  feedback: { type: 'success' | 'error'; text: string } | null;
+  deleting: boolean;
   onSave: (event: FormEvent<HTMLFormElement>) => void;
   onAskDelete: () => void;
   onSignOut: () => void;
 };
 
-export function ProfileSection({ profile, ownedCount, totalCount, form, onChangeForm, submitting, feedback, onSave, onAskDelete, onSignOut }: ProfileSectionProps) {
+export function ProfileSection({ profile, ownedCount, totalCount, form, onChangeForm, submitting, deleting, onSave, onAskDelete, onSignOut }: ProfileSectionProps) {
   const progress = levelProgress(profile?.xp ?? 0);
 
   return (
@@ -50,7 +52,7 @@ export function ProfileSection({ profile, ownedCount, totalCount, form, onChange
         </div>
         <div className="relative mt-5 flex flex-wrap gap-2">
           <CoinChip value={profile?.coins ?? 0} />
-          <BoostChips life={profile?.extraLifeBoosts ?? 0} time={profile?.extraTimeBoosts ?? 0} xp={profile?.doubleXpBoosts ?? 0} />
+          <BoostChips life={profile?.extraLifeBoosts ?? 0} time={profile?.extraTimeBoosts ?? 0} xp={profile?.doubleXpBoosts ?? 0} hint={profile?.hintBoosts ?? 0} />
         </div>
       </section>
 
@@ -58,6 +60,10 @@ export function ProfileSection({ profile, ownedCount, totalCount, form, onChange
         <StatTile icon={<CollectionsBookmarkRoundedIcon />} label="Figurinhas" value={`${ownedCount}/${totalCount}`} tone="accent" />
         <StatTile icon={<EmojiEventsRoundedIcon />} label="Pontos" value={(profile?.totalScore ?? 0).toLocaleString('pt-BR')} />
       </div>
+
+      <AchievementsPanel />
+
+      <MatchHistoryPanel />
 
       <section className="panel space-y-4 p-5 sm:p-6">
         <SectionHeading title="Aparência e app" />
@@ -91,8 +97,7 @@ export function ProfileSection({ profile, ownedCount, totalCount, form, onChange
             autoComplete="new-password"
           />
         </label>
-        {feedback ? <Alert tone={feedback.type === 'success' ? 'success' : 'danger'}>{feedback.text}</Alert> : null}
-        <Button type="submit" disabled={submitting}>
+        <Button type="submit" loading={submitting}>
           {submitting ? 'Salvando...' : 'Salvar alterações'}
         </Button>
       </form>
@@ -100,7 +105,7 @@ export function ProfileSection({ profile, ownedCount, totalCount, form, onChange
       <section className="panel space-y-3 border-danger/40 p-5 sm:p-6">
         <h2 className="font-display text-xl font-bold text-danger">Zona de perigo</h2>
         <p className="text-sm text-muted">Excluir a conta remove seu acesso, sua coleção e seu lugar no ranking.</p>
-        <Button variant="danger" onClick={onAskDelete}>
+        <Button variant="danger" onClick={onAskDelete} loading={deleting}>
           Excluir minha conta
         </Button>
       </section>

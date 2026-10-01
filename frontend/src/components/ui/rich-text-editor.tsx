@@ -1,4 +1,5 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import AddPhotoAlternateRoundedIcon from '@mui/icons-material/AddPhotoAlternateRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import FormatAlignCenterRoundedIcon from '@mui/icons-material/FormatAlignCenterRounded';
 import FormatAlignJustifyRoundedIcon from '@mui/icons-material/FormatAlignJustifyRounded';
@@ -28,14 +29,18 @@ import Color from '@tiptap/extension-color';
 import Link from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
-import { uploadImage } from '@/lib/uploads';
 import Image from '@tiptap/extension-image';
+import { useDialogs } from '@/components/ui/dialogs';
+import { Select } from '@/components/ui/select';
+import { Spinner } from '@/components/ui/spinner';
+import { errorMessage, useToast } from '@/components/ui/toast';
+import { Tooltip } from '@/components/ui/tooltip';
+import { uploadImage } from '@/lib/uploads';
 
 const toolbarButtonClass =
-  'inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--border)] text-[var(--text-primary)] transition-colors hover:bg-[color-mix(in_srgb,var(--gold)_16%,transparent)] disabled:opacity-50';
+  'inline-flex h-9 w-9 items-center justify-center rounded-xl border border-edge text-ink transition-colors hover:bg-primary/15 disabled:opacity-40';
 
-const toolbarGroupClass =
-  'flex flex-wrap items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-2';
+const toolbarGroupClass = 'flex flex-wrap items-center gap-1.5 rounded-2xl border border-edge bg-surface-2 p-2';
 
 const draftCacheBySyncKey = new Map<string, string>();
 
@@ -64,9 +69,7 @@ type RichTextEditorProps = {
 };
 
 function isActiveButton(active: boolean) {
-  return active
-    ? 'bg-[linear-gradient(135deg,var(--gold),var(--gold-light))] text-[#2c1b10] border-transparent'
-    : '';
+  return active ? 'border-transparent bg-primary text-on-primary' : '';
 }
 
 function IconButton({
@@ -83,24 +86,26 @@ function IconButton({
   children: ReactNode;
 }) {
   return (
-    <button
-      type="button"
-      title={title}
-      aria-label={title}
-      className={`${toolbarButtonClass} ${isActiveButton(Boolean(active))}`}
-      onMouseDown={(event) => event.preventDefault()}
-      onClick={(event) => {
-        event.preventDefault();
-        onClick();
-      }}
-      disabled={disabled}
-    >
-      {children}
-    </button>
+    <Tooltip content={title}>
+      <button
+        type="button"
+        aria-label={title}
+        aria-pressed={active}
+        className={`${toolbarButtonClass} ${isActiveButton(Boolean(active))}`}
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={(event) => {
+          event.preventDefault();
+          onClick();
+        }}
+        disabled={disabled}
+      >
+        {children}
+      </button>
+    </Tooltip>
   );
 }
 
-const imageElementClass = 'h-auto max-w-full rounded-xl border border-[var(--border)] object-contain';
+const imageElementClass = 'h-auto max-w-full rounded-xl border border-edge object-contain';
 
 function RemovableImageNodeView({ node, deleteNode }: NodeViewProps) {
   const src = typeof node.attrs.src === 'string' ? node.attrs.src : '';
@@ -134,6 +139,9 @@ const RemovableImage = Image.extend({
 
 export function RichTextEditor({ value, onChange, placeholder, allowImages = false, syncKey }: RichTextEditorProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { prompt } = useDialogs();
+  const toast = useToast();
+  const [uploading, setUploading] = useState(false);
   const normalizedSyncKey = normalizeSyncKey(syncKey);
   const initialContent = draftCacheBySyncKey.get(normalizedSyncKey) ?? normalizeEditorContent(value);
   const lastSyncedValueRef = useRef(initialContent);
@@ -174,7 +182,7 @@ export function RichTextEditor({ value, onChange, placeholder, allowImages = fal
     editorProps: {
       attributes: {
         class:
-          'min-h-40 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none',
+          'rich-content min-h-40 rounded-2xl border-2 border-edge bg-surface-2 px-4 py-3 text-sm leading-6 text-ink outline-none transition-colors focus:border-primary',
       },
     },
     onUpdate: ({ editor: currentEditor }) => {
@@ -223,12 +231,25 @@ export function RichTextEditor({ value, onChange, placeholder, allowImages = fal
   }, [editor, value, syncKey]);
 
   if (!editor) {
-    return <div className="min-h-40 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)]" />;
+    return (
+      <div className="flex min-h-40 items-center justify-center rounded-2xl border-2 border-edge bg-surface-2">
+        <Spinner />
+      </div>
+    );
   }
 
-  const setLink = () => {
+  const isUrl = (text: string) => (/^(https?:\/\/|\/)/i.test(text.trim()) ? null : 'Informe um endereço começando com https://');
+
+  const setLink = async () => {
     const previousUrl = typeof editor.getAttributes('link').href === 'string' ? editor.getAttributes('link').href : '';
-    const url = window.prompt('Informe a URL do link:', previousUrl || 'https://');
+    const url = await prompt({
+      title: 'Inserir link',
+      label: 'Endereço',
+      inputType: 'url',
+      defaultValue: previousUrl || 'https://',
+      message: 'Deixe em branco para remover o link do texto selecionado.',
+      validate: (text) => (text.trim() ? isUrl(text) : null),
+    });
 
     if (url === null) {
       return;
@@ -248,8 +269,30 @@ export function RichTextEditor({ value, onChange, placeholder, allowImages = fal
       .run();
   };
 
+  async function insertImageFromUrl() {
+    const imageUrl = await prompt({ title: 'Imagem por link', label: 'Endereço da imagem', inputType: 'url', placeholder: 'https://...', validate: isUrl });
+    if (imageUrl?.trim()) {
+      editor?.chain().focus().setImage({ src: imageUrl.trim() }).run();
+    }
+  }
+
+  async function handleFile(file: File) {
+    setUploading(true);
+    try {
+      const { url } = await uploadImage(file, 'conteudo');
+      editor?.chain().focus().setImage({ src: url }).run();
+      toast.success('Imagem inserida no texto.');
+    } catch (error) {
+      toast.error(errorMessage(error, 'Não foi possível enviar a imagem.'));
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  const headingValue = editor.isActive('heading', { level: 2 }) ? 'h2' : editor.isActive('heading', { level: 3 }) ? 'h3' : 'p';
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div className={toolbarGroupClass}>
         <IconButton title="Desfazer" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().chain().focus().undo().run()}>
           <UndoRoundedIcon fontSize="small" />
@@ -258,7 +301,7 @@ export function RichTextEditor({ value, onChange, placeholder, allowImages = fal
           <RedoRoundedIcon fontSize="small" />
         </IconButton>
 
-        <div className="mx-1 h-6 w-px bg-[var(--border)]" />
+        <div className="mx-0.5 h-6 w-px bg-edge" />
 
         <IconButton title="Negrito" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
           <FormatBoldRoundedIcon fontSize="small" />
@@ -276,7 +319,7 @@ export function RichTextEditor({ value, onChange, placeholder, allowImages = fal
           <HighlightRoundedIcon fontSize="small" />
         </IconButton>
 
-        <div className="mx-1 h-6 w-px bg-[var(--border)]" />
+        <div className="mx-0.5 h-6 w-px bg-edge" />
 
         <IconButton title="Lista com marcadores" active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
           <FormatListBulletedRoundedIcon fontSize="small" />
@@ -288,7 +331,7 @@ export function RichTextEditor({ value, onChange, placeholder, allowImages = fal
           <FormatQuoteRoundedIcon fontSize="small" />
         </IconButton>
 
-        <div className="mx-1 h-6 w-px bg-[var(--border)]" />
+        <div className="mx-0.5 h-6 w-px bg-edge" />
 
         <IconButton title="Alinhar à esquerda" active={editor.isActive({ textAlign: 'left' })} onClick={() => editor.chain().focus().setTextAlign('left').run()}>
           <FormatAlignLeftRoundedIcon fontSize="small" />
@@ -303,49 +346,40 @@ export function RichTextEditor({ value, onChange, placeholder, allowImages = fal
           <FormatAlignJustifyRoundedIcon fontSize="small" />
         </IconButton>
 
-        <div className="mx-1 h-6 w-px bg-[var(--border)]" />
+        <div className="mx-0.5 h-6 w-px bg-edge" />
 
-        <IconButton title="Inserir ou editar link" active={editor.isActive('link')} onClick={setLink}>
+        <IconButton title="Inserir ou editar link" active={editor.isActive('link')} onClick={() => void setLink()}>
           <LinkRoundedIcon fontSize="small" />
         </IconButton>
         <IconButton title="Remover link" onClick={() => editor.chain().focus().unsetLink().run()} disabled={!editor.isActive('link')}>
           <LinkOffRoundedIcon fontSize="small" />
         </IconButton>
 
-        <div className="mx-1 h-6 w-px bg-[var(--border)]" />
+        <div className="mx-0.5 h-6 w-px bg-edge" />
 
-        <label title="Cor do texto" className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-[var(--border)] text-[var(--text-primary)] transition-colors hover:bg-[color-mix(in_srgb,var(--gold)_16%,transparent)]">
-          <FormatColorFillRoundedIcon fontSize="small" />
-          <input
-            type="color"
-            className="sr-only"
-            onChange={(event) => editor.chain().focus().setColor(event.target.value).run()}
-          />
-        </label>
+        <Tooltip content="Cor do texto">
+          <label className="relative inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-edge text-ink transition-colors hover:bg-primary/15">
+            <FormatColorFillRoundedIcon fontSize="small" />
+            <input type="color" className="absolute inset-0 cursor-pointer opacity-0" aria-label="Cor do texto" onChange={(event) => editor.chain().focus().setColor(event.target.value).run()} />
+          </label>
+        </Tooltip>
 
-        <div className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] px-2">
-          <TitleRoundedIcon fontSize="small" />
-          <select
-            aria-label="Estilo de título"
-            className="h-8 bg-transparent text-xs text-[var(--text-primary)] outline-none"
-            value={editor.isActive('heading', { level: 2 }) ? 'h2' : editor.isActive('heading', { level: 3 }) ? 'h3' : 'p'}
-            onChange={(event) => {
-              const next = event.target.value;
-              if (next === 'h2') {
-                editor.chain().focus().setHeading({ level: 2 }).run();
-                return;
-              }
-              if (next === 'h3') {
-                editor.chain().focus().setHeading({ level: 3 }).run();
-                return;
-              }
-              editor.chain().focus().setParagraph().run();
+        <div className="w-36">
+          <Select
+            size="sm"
+            aria-label="Estilo do texto"
+            value={headingValue}
+            options={[
+              { value: 'p', label: 'Parágrafo', icon: <TitleRoundedIcon fontSize="small" /> },
+              { value: 'h2', label: 'Título' },
+              { value: 'h3', label: 'Subtítulo' },
+            ]}
+            onChange={(next) => {
+              if (next === 'h2') editor.chain().focus().setHeading({ level: 2 }).run();
+              else if (next === 'h3') editor.chain().focus().setHeading({ level: 3 }).run();
+              else editor.chain().focus().setParagraph().run();
             }}
-          >
-            <option value="p">Parágrafo</option>
-            <option value="h2">Título H2</option>
-            <option value="h3">Título H3</option>
-          </select>
+          />
         </div>
 
         <IconButton title="Limpar formatação" onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}>
@@ -354,50 +388,33 @@ export function RichTextEditor({ value, onChange, placeholder, allowImages = fal
 
         {allowImages ? (
           <>
-            <div className="mx-1 h-6 w-px bg-[var(--border)]" />
-            <IconButton title="Inserir imagem por URL" onClick={() => {
-              const imageUrl = window.prompt('Cole a URL da imagem:');
-              if (imageUrl?.trim()) {
-                editor.chain().focus().setImage({ src: imageUrl.trim() }).run();
-              }
-            }}>
+            <div className="mx-0.5 h-6 w-px bg-edge" />
+            <IconButton title="Inserir imagem por link" onClick={() => void insertImageFromUrl()}>
               <ImageOutlinedIcon fontSize="small" />
             </IconButton>
-            <IconButton title="Upload de imagem" onClick={() => fileInputRef.current?.click()}>
-              <ImageOutlinedIcon fontSize="small" />
+            <IconButton title={uploading ? 'Enviando imagem...' : 'Enviar imagem do aparelho'} onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+              {uploading ? <Spinner size="sm" /> : <AddPhotoAlternateRoundedIcon fontSize="small" />}
             </IconButton>
           </>
         ) : null}
       </div>
 
       {allowImages ? (
-        <div className="hidden">
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            accept="image/*"
-            onChange={async (event) => {
-              const input = event.target;
-              const file = input.files?.[0];
-              if (!file) {
-                return;
-              }
-
-              try {
-                const src = await uploadImage(file, 'conteudo');
-                editor.chain().focus().setImage({ src }).run();
-              } catch (error) {
-                window.alert(error instanceof Error ? error.message : 'Não foi possível enviar a imagem.');
-              } finally {
-                input.value = '';
-              }
-            }}
-          />
-        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
+          onChange={(event) => {
+            const input = event.target;
+            const file = input.files?.[0];
+            input.value = '';
+            if (file) void handleFile(file);
+          }}
+        />
       ) : null}
 
-      {placeholder ? <p className="text-xs text-[var(--text-secondary)]">{placeholder}</p> : null}
+      {placeholder ? <p className="text-xs text-muted">{placeholder}</p> : null}
       <EditorContent editor={editor} />
     </div>
   );

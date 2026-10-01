@@ -9,8 +9,9 @@ import { Button } from '@/components/ui/button';
 import { EmptyState, ProgressBar, SectionHeading, StatTile } from '@/components/game/game-ui';
 import { StickerCard } from '@/components/game/sticker-card';
 import type { SectionId } from '@/components/user/game-shell';
+import { DailyRewardCard } from '@/components/user/daily-reward-card';
 import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
-import type { CharacterEntry, QuizHistory, QuizSessionStatus, UserSticker } from '@/lib/user-api';
+import type { CharacterEntry, DailyClaimResult, QuizHistory, QuizSessionStatus, UserSticker } from '@/lib/user-api';
 import type { UserProfile } from '@/types/auth';
 
 type HomeSectionProps = {
@@ -23,9 +24,10 @@ type HomeSectionProps = {
   onNavigate: (id: SectionId) => void;
   onResume: () => void;
   onOpenSticker: (id: number) => void;
+  onDailyClaimed: (result: DailyClaimResult) => void;
 };
 
-export function HomeSection({ profile, characters, collection, history, activeSession, commentsCount, onNavigate, onResume, onOpenSticker }: HomeSectionProps) {
+export function HomeSection({ profile, characters, collection, history, activeSession, commentsCount, onNavigate, onResume, onOpenSticker, onDailyClaimed }: HomeSectionProps) {
   const ownedIds = new Set(collection.map((item) => item.characterId));
   const firstName = profile?.name?.split(' ')[0] ?? 'jogador';
   const recentStickers = [...collection]
@@ -64,6 +66,8 @@ export function HomeSection({ profile, characters, collection, history, activeSe
           <img src="/icons/icon-512.png" alt="" width={176} height={176} className="animate-float hidden h-44 w-44 rounded-[2rem] shadow-[0_20px_40px_-12px_var(--shadow)] md:block" />
         </div>
       </section>
+
+      <DailyRewardCard onClaimed={onDailyClaimed} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile icon={<StarRoundedIcon />} label="Nível" value={profile?.level ?? 1} tone="violet" />
@@ -124,7 +128,7 @@ export function HomeSection({ profile, characters, collection, history, activeSe
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-display font-semibold text-ink">{match.quizType === 'GENERAL' ? 'Quiz geral' : 'Estudo de personagem'}</p>
                     <p className="text-xs font-semibold text-muted">
-                      {match.correctAnswers} acertos · +{match.xpGained} XP · {match.scoreGained >= 0 ? '+' : ''}
+                      {match.correctAnswers} acertos · +{match.xpGained} XP{match.coinsGained ? ` · +${match.coinsGained} moedas` : ''} · {match.scoreGained >= 0 ? '+' : ''}
                       {match.scoreGained} pts
                     </p>
                   </div>

@@ -21,9 +21,6 @@ function resolveBuildId() {
 export default defineConfig({
   define: {
     __BUILD_ID__: JSON.stringify(resolveBuildId()),
-    // Com o Vercel Blob configurado (mesma variável do backend) as imagens vão
-    // para o Blob; sem ele, ficam no banco como data URL (desenvolvimento).
-    __IMAGE_UPLOADS__: JSON.stringify(process.env.BLOB_READ_WRITE_TOKEN ? "blob" : "inline"),
   },
   resolve: {
     alias: { "@": path.resolve(__dirname, "src") },

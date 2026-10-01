@@ -1,11 +1,11 @@
+import { useEffect, useState } from 'react';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded';
-import { EmptyState, LevelBadge, SectionHeading } from '@/components/game/game-ui';
-import type { RankingEntry } from '@/lib/user-api';
-
-function cn(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(' ');
-}
+import { Pagination } from '@/components/ui/pagination';
+import { LoadingState, Spinner } from '@/components/ui/spinner';
+import { Alert, EmptyState, LevelBadge, SectionHeading } from '@/components/game/game-ui';
+import { cn } from '@/lib/cn';
+import { listRanking, type RankingPage } from '@/lib/user-api';
 
 const PODIUM = [
   { place: 2, height: 'h-24', color: 'bg-[#c7cedd] text-[#2b3040]', ring: 'ring-[#c7cedd]' },
@@ -13,8 +13,41 @@ const PODIUM = [
   { place: 3, height: 'h-20', color: 'bg-[#e39a5c] text-[#3a1f08]', ring: 'ring-[#e39a5c]' },
 ];
 
-export function RankingSection({ ranking, currentUserId }: { ranking: RankingEntry[]; currentUserId?: number }) {
-  if (ranking.length === 0) {
+const PAGE_SIZE = 20;
+
+export function RankingSection({ currentUserId }: { currentUserId?: number }) {
+  const [page, setPage] = useState(0);
+  const [data, setData] = useState<RankingPage | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let ignore = false;
+    setLoading(true);
+    listRanking(page, PAGE_SIZE)
+      .then((response) => {
+        if (!ignore) {
+          setData(response);
+          setError(null);
+        }
+      })
+      .catch((reason: unknown) => !ignore && setError(reason instanceof Error ? reason.message : 'Não foi possível carregar o ranking.'))
+      .finally(() => !ignore && setLoading(false));
+    return () => {
+      ignore = true;
+    };
+  }, [page]);
+
+  if (!data) {
+    return (
+      <div className="space-y-5">
+        <SectionHeading title="Ranking" />
+        {error ? <Alert tone="danger">{error}</Alert> : <LoadingState label="Carregando ranking..." />}
+      </div>
+    );
+  }
+
+  if (data.totalElements === 0) {
     return (
       <div className="space-y-5">
         <SectionHeading title="Ranking" />
@@ -25,53 +58,51 @@ export function RankingSection({ ranking, currentUserId }: { ranking: RankingEnt
     );
   }
 
-  const me = ranking.find((entry) => entry.userId === currentUserId);
-  const rest = ranking.slice(3);
+  const entries = data.content;
+  const list = page === 0 ? entries.filter((entry) => entry.position > 3) : entries;
 
   return (
     <div className="space-y-5">
-      <SectionHeading title="Ranking" subtitle="Os 50 melhores por pontos (desempate por XP)." />
+      <SectionHeading title="Ranking" subtitle="Ordem por pontos (desempate por XP)." action={loading ? <Spinner /> : undefined} />
 
-      <section className="panel overflow-hidden px-4 pt-8">
-        <div className="mx-auto grid max-w-lg grid-cols-3 items-end gap-3">
-          {PODIUM.map((slot) => {
-            const entry = ranking.find((item) => item.position === slot.place);
-            if (!entry) {
-              return <div key={slot.place} />;
-            }
-            const isMe = entry.userId === currentUserId;
-            return (
-              <div key={slot.place} className="animate-pop-in flex flex-col items-center gap-2 text-center" style={{ animationDelay: `${(3 - slot.place) * 120}ms` }}>
-                {slot.place === 1 ? <WorkspacePremiumRoundedIcon className="animate-float text-primary" sx={{ fontSize: 36 }} /> : null}
-                <span className={cn('flex h-14 w-14 items-center justify-center rounded-full bg-surface-3 font-display text-lg font-bold text-ink ring-4', slot.ring)}>
-                  {entry.userName.slice(0, 1).toUpperCase()}
-                </span>
-                <span className={cn('max-w-full truncate font-display text-sm font-semibold', isMe ? 'text-accent-strong dark:text-accent' : 'text-ink')}>
-                  {isMe ? 'Você' : entry.userName}
-                </span>
-                <span className="text-xs font-bold text-muted">{entry.totalScore.toLocaleString('pt-BR')} pts</span>
-                <div className={cn('flex w-full items-start justify-center rounded-t-2xl pt-2 font-display text-3xl font-bold', slot.height, slot.color)}>{slot.place}</div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {me && me.position > 3 ? (
-        <div className="panel flex items-center gap-3 border-2 border-accent p-4">
-          <span className="font-display text-2xl font-bold text-accent-strong dark:text-accent">#{me.position}</span>
-          <span className="flex-1 font-display font-semibold text-ink">Sua posição</span>
-          <span className="font-bold text-ink">{me.totalScore.toLocaleString('pt-BR')} pts</span>
-        </div>
+      {page === 0 ? (
+        <section className="panel overflow-hidden px-4 pt-8">
+          <div className="mx-auto grid max-w-lg grid-cols-3 items-end gap-3">
+            {PODIUM.map((slot) => {
+              const entry = entries.find((item) => item.position === slot.place);
+              if (!entry) {
+                return <div key={slot.place} />;
+              }
+              const isMe = entry.userId === currentUserId;
+              return (
+                <div key={slot.place} className="animate-pop-in flex flex-col items-center gap-2 text-center" style={{ animationDelay: `${(3 - slot.place) * 120}ms` }}>
+                  {slot.place === 1 ? <WorkspacePremiumRoundedIcon className="animate-float text-primary" sx={{ fontSize: 36 }} /> : null}
+                  <span className={cn('flex h-14 w-14 items-center justify-center rounded-full bg-surface-3 font-display text-lg font-bold text-ink ring-4', slot.ring)}>
+                    {entry.userName.slice(0, 1).toUpperCase()}
+                  </span>
+                  <span className={cn('max-w-full truncate font-display text-sm font-semibold', isMe ? 'text-accent-strong dark:text-accent' : 'text-ink')}>{isMe ? 'Você' : entry.userName}</span>
+                  <span className="text-xs font-bold text-muted">{entry.totalScore.toLocaleString('pt-BR')} pts</span>
+                  <div className={cn('flex w-full items-start justify-center rounded-t-2xl pt-2 font-display text-3xl font-bold', slot.height, slot.color)}>{slot.place}</div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
       ) : null}
 
-      {rest.length > 0 ? (
+      <div className="panel flex items-center gap-3 border-2 border-accent p-4">
+        <span className="font-display text-2xl font-bold text-accent-strong dark:text-accent">#{data.me.position}</span>
+        <span className="flex-1 font-display font-semibold text-ink">Sua posição</span>
+        <span className="font-bold text-ink">{data.me.totalScore.toLocaleString('pt-BR')} pts</span>
+      </div>
+
+      {list.length > 0 ? (
         <ol className="panel divide-y divide-edge overflow-hidden">
-          {rest.map((entry) => {
+          {list.map((entry) => {
             const isMe = entry.userId === currentUserId;
             return (
               <li key={entry.userId} className={cn('flex items-center gap-3 px-4 py-3', isMe && 'bg-accent/10')}>
-                <span className="w-8 text-center font-display text-lg font-bold text-muted">{entry.position}</span>
+                <span className="w-10 text-center font-display text-lg font-bold text-muted">{entry.position}</span>
                 <LevelBadge level={entry.level} size="sm" />
                 <div className="min-w-0 flex-1">
                   <p className={cn('truncate font-display font-semibold', isMe ? 'text-accent-strong dark:text-accent' : 'text-ink')}>{isMe ? `${entry.userName} (você)` : entry.userName}</p>
@@ -83,6 +114,8 @@ export function RankingSection({ ranking, currentUserId }: { ranking: RankingEnt
           })}
         </ol>
       ) : null}
+
+      <Pagination page={page} totalPages={data.totalPages} totalElements={data.totalElements} onPageChange={setPage} itemLabel="jogadores" />
     </div>
   );
 }

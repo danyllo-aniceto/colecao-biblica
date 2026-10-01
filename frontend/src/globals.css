@@ -206,6 +206,121 @@ a {
 }
 
 /* ------------------------------------------------------------------
+ * Elementos do navegador no visual do app
+ * ------------------------------------------------------------------ */
+
+/* Controles nativos que sobrarem (rádio, range, cor) usam a cor do tema. */
+:root {
+  accent-color: var(--primary);
+}
+
+/* Barras de rolagem finas e na cor do tema. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--edge-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: var(--edge-strong) padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--muted) padding-box;
+}
+
+/* Campos numéricos sem as setinhas do navegador. */
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+/* Busca sem o "x" nativo. */
+input[type='search']::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+/* Autopreenchimento do navegador sem fundo amarelo/azul. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink);
+  caret-color: var(--ink);
+  box-shadow: 0 0 0 1000px var(--surface-2) inset;
+  transition: background-color 9999s ease-out 0s;
+}
+
+/* Texto rico (descrições, curiosidades) com tipografia do app. */
+.rich-content :where(p, ul, ol, blockquote, figure) {
+  margin: 0 0 0.75em;
+}
+
+.rich-content :where(ul) {
+  list-style: disc;
+  padding-left: 1.4em;
+}
+
+.rich-content :where(ol) {
+  list-style: decimal;
+  padding-left: 1.4em;
+}
+
+.rich-content :where(h2) {
+  margin: 1em 0 0.4em;
+  font-size: 1.35em;
+  font-weight: 700;
+}
+
+.rich-content :where(h3) {
+  margin: 0.9em 0 0.35em;
+  font-size: 1.15em;
+  font-weight: 700;
+}
+
+.rich-content :where(blockquote) {
+  border-left: 4px solid var(--primary);
+  padding-left: 0.9em;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.rich-content :where(a) {
+  color: var(--info-strong);
+  text-decoration: underline;
+}
+
+.rich-content :where(img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.9rem;
+}
+
+.rich-content :where(mark) {
+  border-radius: 0.25em;
+  padding: 0 0.15em;
+}
+
+.rich-content > :last-child {
+  margin-bottom: 0;
+}
+
+/* ------------------------------------------------------------------
  * Blocos de interface de jogo
  * ------------------------------------------------------------------ */
 

@@ -5,7 +5,9 @@ import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
 import { Button } from '@/components/ui/button';
 import { fieldClassName } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 import { Alert, BoostChips, ProgressBar, SectionHeading } from '@/components/game/game-ui';
+import { getRarityLabel } from '@/lib/rarity-theme';
 import type { CharacterEntry, GameRules, QuizSessionStatus } from '@/lib/user-api';
 import type { UserProfile } from '@/types/auth';
 
@@ -24,13 +26,13 @@ function cn(...classes: Array<string | false | null | undefined>) {
 type PlaySectionProps = {
   profile: UserProfile | null;
   characters: CharacterEntry[];
+  ownedIds: Set<number>;
   gameRules: GameRules | null;
   quizForm: QuizFormState;
   onChangeForm: (updater: (current: QuizFormState) => QuizFormState) => void;
   quizSession: QuizSessionStatus | null;
   submitting: boolean;
   error: string | null;
-  feedback: string | null;
   onStart: (event: FormEvent<HTMLFormElement>) => void;
   onResume: () => void;
   onAbandon: () => void;
@@ -39,13 +41,13 @@ type PlaySectionProps = {
 export function PlaySection({
   profile,
   characters,
+  ownedIds,
   gameRules,
   quizForm,
   onChangeForm,
   quizSession,
   submitting,
   error,
-  feedback,
   onStart,
   onResume,
   onAbandon,
@@ -67,7 +69,7 @@ export function PlaySection({
             {quizSession.correctAnswers} acertos · {quizSession.wrongAnswers} erros
           </p>
           <div className="flex flex-wrap gap-3">
-            <Button size="xl" variant="accent" onClick={onResume} disabled={submitting}>
+            <Button size="xl" variant="accent" onClick={onResume} loading={submitting}>
               <PlayArrowRoundedIcon />
               Continuar
             </Button>
@@ -83,6 +85,7 @@ export function PlaySection({
 
   const isGeneral = quizForm.quizType === 'GENERAL';
   const limit = Number(quizForm.questionLimit);
+  const selectedCharacter = characters.find((character) => String(character.id) === quizForm.characterId);
 
   return (
     <form className="space-y-5" onSubmit={onStart}>
@@ -109,22 +112,30 @@ export function PlaySection({
 
       <section className="panel space-y-5 p-5 sm:p-6">
         {!isGeneral ? (
-          <label className="block space-y-2">
+          <div className="space-y-2">
             <span className="text-sm font-bold text-muted">Personagem</span>
-            <select
-              className={cn(fieldClassName, 'h-12 w-full')}
+            <Select
+              aria-label="Personagem"
+              searchable
               value={quizForm.characterId}
-              onChange={(event) => onChangeForm((current) => ({ ...current, characterId: event.target.value }))}
-              required
-            >
-              <option value="">Escolha um personagem</option>
-              {characters.map((character) => (
-                <option key={character.id} value={character.id}>
-                  {character.name}
-                </option>
-              ))}
-            </select>
-          </label>
+              placeholder="Escolha um personagem"
+              onChange={(value) => onChangeForm((current) => ({ ...current, characterId: value }))}
+              options={[...characters]
+                .sort((left, right) => Number(right.questionCount > 0) - Number(left.questionCount > 0) || left.name.localeCompare(right.name, 'pt-BR'))
+                .map((character) => ({
+                  value: String(character.id),
+                  label: character.name,
+                  disabled: character.questionCount === 0,
+                  description:
+                    character.questionCount === 0
+                      ? 'Ainda sem perguntas'
+                      : `${getRarityLabel(character.rarity)} · ${character.questionCount} pergunta(s)${ownedIds.has(character.id) ? ' · já conquistada' : ''}`,
+                }))}
+            />
+            {selectedCharacter && selectedCharacter.questionCount < limit ? (
+              <p className="text-xs font-semibold text-muted">Este personagem tem {selectedCharacter.questionCount} pergunta(s): a partida terá no máximo esse número.</p>
+            ) : null}
+          </div>
         ) : null}
 
         <fieldset className="space-y-2">
@@ -159,14 +170,19 @@ export function PlaySection({
 
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-bold text-muted">Seus bônus:</span>
-          <BoostChips life={profile?.extraLifeBoosts ?? 0} time={profile?.extraTimeBoosts ?? 0} xp={profile?.doubleXpBoosts ?? 0} />
+          <BoostChips life={profile?.extraLifeBoosts ?? 0} time={profile?.extraTimeBoosts ?? 0} xp={profile?.doubleXpBoosts ?? 0} hint={profile?.hintBoosts ?? 0} />
         </div>
 
-        {error ? <Alert tone="danger">{error}</Alert> : null}
-        {feedback ? <Alert tone="success">{feedback}</Alert> : null}
+        {gameRules ? (
+          <p className="text-sm text-muted">
+            Cada acerto vale {gameRules.coinsPerCorrectAnswer} moeda(s){isGeneral ? '' : ` (${gameRules.characterStudyXpPercent}% no estudo)`}; partida perfeita com 5+ perguntas dá +{gameRules.perfectMatchBonusCoins}.
+          </p>
+        ) : null}
 
-        <Button type="submit" size="xl" className="w-full sm:w-auto" disabled={submitting}>
-          <PlayArrowRoundedIcon />
+        {error ? <Alert tone="danger">{error}</Alert> : null}
+
+        <Button type="submit" size="xl" className="w-full sm:w-auto" loading={submitting} disabled={!isGeneral && !quizForm.characterId}>
+          {submitting ? null : <PlayArrowRoundedIcon />}
           {submitting ? 'Preparando...' : 'Começar partida'}
         </Button>
       </section>

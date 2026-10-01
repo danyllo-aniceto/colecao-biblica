@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Spinner } from '@/components/ui/spinner';
 
 function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ');
@@ -10,6 +11,8 @@ type ButtonSize = 'sm' | 'md' | 'lg' | 'xl';
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  /** Mostra o ícone de carregamento e bloqueia o botão. */
+  loading?: boolean;
 }
 
 // Cada variante "3D" define a cor da borda inferior (--btn-edge), que afunda ao pressionar.
@@ -29,11 +32,13 @@ const sizeClasses: Record<ButtonSize, string> = {
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', type = 'button', ...props }, ref) => {
+  ({ className, variant = 'primary', size = 'md', type = 'button', loading = false, disabled, children, ...props }, ref) => {
     return (
       <button
         ref={ref}
         type={type}
+        disabled={disabled || loading}
+        aria-busy={loading || undefined}
         className={cn(
           'inline-flex select-none items-center justify-center gap-2 rounded-2xl font-display font-semibold tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-50',
           variantClasses[variant],
@@ -41,7 +46,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           className,
         )}
         {...props}
-      />
+      >
+        {loading ? <Spinner size="sm" className="text-current dark:text-current" /> : null}
+        {children}
+      </button>
     );
   },
 );

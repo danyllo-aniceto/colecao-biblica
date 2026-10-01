@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import CloudOffRoundedIcon from '@mui/icons-material/CloudOffRounded';
 import SystemUpdateAltRoundedIcon from '@mui/icons-material/SystemUpdateAltRounded';
+import { Button } from '@/components/ui/button';
 import {
   getIsIos,
   getIsStandalone,
@@ -178,9 +179,9 @@ function OfflineBanner() {
   return (
     <div
       role="status"
-      className="sticky top-0 z-[60] flex items-center justify-center gap-2 border-b border-[var(--border)] bg-[var(--bg-secondary)] px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] text-center text-xs font-medium text-[var(--text-primary)] sm:text-sm"
+      className="sticky top-0 z-[60] flex items-center justify-center gap-2 border-b border-edge bg-surface px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] text-center text-xs font-semibold text-ink sm:text-sm"
     >
-      <CloudOffRoundedIcon fontSize="small" className="text-[var(--accent)]" />
+      <CloudOffRoundedIcon fontSize="small" className="text-accent" />
       <span>Você está offline. Mostrando os dados salvos; quiz e compras voltam quando a conexão retornar.</span>
     </div>
   );
@@ -188,22 +189,15 @@ function OfflineBanner() {
 
 function UpdateToast({ onUpdate, onDismiss }: { onUpdate: () => void; onDismiss: () => void }) {
   return (
-    <div
-      role="status"
-      className="fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-[70] mx-auto flex max-w-md items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 shadow-[0_20px_60px_rgba(0,0,0,0.25)]"
-    >
-      <SystemUpdateAltRoundedIcon className="text-[var(--accent)]" />
-      <p className="flex-1 text-sm text-[var(--text-primary)]">Uma nova versão do app está disponível.</p>
-      <button type="button" onClick={onDismiss} className="rounded-full px-3 py-1.5 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]">
+    <div role="status" className="panel animate-pop-in fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-[90] mx-auto flex max-w-md items-center gap-3 p-4">
+      <SystemUpdateAltRoundedIcon className="text-accent" />
+      <p className="flex-1 font-display text-sm font-semibold text-ink">Uma nova versão do app está disponível.</p>
+      <Button variant="ghost" size="sm" onClick={onDismiss}>
         Depois
-      </button>
-      <button
-        type="button"
-        onClick={onUpdate}
-        className="rounded-full bg-[var(--gold)] px-4 py-1.5 text-sm font-semibold text-[#2C1B10] hover:brightness-105"
-      >
+      </Button>
+      <Button size="sm" onClick={onUpdate}>
         Atualizar
-      </button>
+      </Button>
     </div>
   );
 }

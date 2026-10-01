@@ -1,4 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
+import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
+import { Select } from '@/components/ui/select';
+import { Spinner } from '@/components/ui/spinner';
+import { Tooltip } from '@/components/ui/tooltip';
 
 type MermaidDiagramProps = {
   code: string;
@@ -71,6 +77,7 @@ export async function validateMermaidSyntax(code: string) {
 export function MermaidDiagram({ code, className, initialTheme = 'neutral' }: MermaidDiagramProps) {
   const [svg, setSvg] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [rendering, setRendering] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [theme, setTheme] = useState<'default' | 'neutral' | 'forest' | 'dark'>(initialTheme);
   const svgHostRef = useRef<HTMLDivElement | null>(null);
@@ -91,6 +98,7 @@ export function MermaidDiagram({ code, className, initialTheme = 'neutral' }: Me
       }
 
       const id = `mermaid-${Math.random().toString(36).slice(2)}`;
+      setRendering(true);
       try {
         const mermaid = await loadMermaid();
         mermaid.initialize({ startOnLoad: false, theme, securityLevel: 'strict' });
@@ -112,6 +120,8 @@ export function MermaidDiagram({ code, className, initialTheme = 'neutral' }: Me
 
         setSvg('');
         setError(extractMermaidErrorMessage(renderError));
+      } finally {
+        if (isMounted) setRendering(false);
       }
     }
 
@@ -144,43 +154,57 @@ export function MermaidDiagram({ code, className, initialTheme = 'neutral' }: Me
   }, [svg, zoom]);
 
   if (error) {
-    return <p className="text-sm text-danger">{error}</p>;
+    return <p className="rounded-xl bg-danger/10 px-3 py-2 text-sm font-semibold text-danger-strong dark:text-danger">Erro no diagrama: {error}</p>;
   }
 
   if (!svg) {
-    return null;
+    return rendering ? (
+      <div className="flex items-center justify-center gap-2 py-6 text-sm font-semibold text-muted">
+        <Spinner size="sm" /> Desenhando diagrama...
+      </div>
+    ) : null;
   }
+
+  const zoomButton = 'flex h-8 w-8 items-center justify-center rounded-lg border border-edge text-ink transition hover:bg-surface-3';
 
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
-        <label className="text-xs text-[var(--text-secondary)]">
-          Tema
-          <select
-            className="ml-2 h-8 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-2 text-xs text-[var(--text-primary)]"
+        <div className="w-32">
+          <Select
+            size="sm"
+            aria-label="Tema do diagrama"
             value={theme}
-            onChange={(event) => setTheme(event.target.value as 'default' | 'neutral' | 'forest' | 'dark')}
-          >
-            <option value="neutral">Neutro</option>
-            <option value="default">Padrão</option>
-            <option value="forest">Floresta</option>
-            <option value="dark">Escuro</option>
-          </select>
-        </label>
-        <button type="button" className="h-8 rounded-lg border border-[var(--border)] px-2 text-xs" onClick={() => changeZoomBy(-0.15)}>
-          - Zoom
-        </button>
-        <button type="button" className="h-8 rounded-lg border border-[var(--border)] px-2 text-xs" onClick={() => setZoom(1)}>
-          Reset
-        </button>
-        <button type="button" className="h-8 rounded-lg border border-[var(--border)] px-2 text-xs" onClick={() => changeZoomBy(0.15)}>
-          + Zoom
-        </button>
-        <span className="text-xs text-[var(--text-secondary)]">{Math.round(zoom * 100)}%</span>
-        <span className="text-xs text-[var(--text-secondary)]">Ctrl + scroll para zoom</span>
+            onChange={(value) => setTheme(value)}
+            options={[
+              { value: 'neutral', label: 'Neutro' },
+              { value: 'default', label: 'Padrão' },
+              { value: 'forest', label: 'Floresta' },
+              { value: 'dark', label: 'Escuro' },
+            ]}
+          />
+        </div>
+        <Tooltip content="Diminuir">
+          <button type="button" className={zoomButton} onClick={() => changeZoomBy(-0.15)} aria-label="Diminuir zoom">
+            <RemoveRoundedIcon fontSize="small" />
+          </button>
+        </Tooltip>
+        <Tooltip content="Tamanho original">
+          <button type="button" className={zoomButton} onClick={() => setZoom(1)} aria-label="Zoom original">
+            <RestartAltRoundedIcon fontSize="small" />
+          </button>
+        </Tooltip>
+        <Tooltip content="Aumentar">
+          <button type="button" className={zoomButton} onClick={() => changeZoomBy(0.15)} aria-label="Aumentar zoom">
+            <AddRoundedIcon fontSize="small" />
+          </button>
+        </Tooltip>
+        <span className="text-xs font-semibold text-muted">{Math.round(zoom * 100)}%</span>
+        <span className="hidden text-xs text-muted sm:inline">Ctrl + rolagem para zoom</span>
+        {rendering ? <Spinner size="sm" /> : null}
       </div>
       <div
-        className="max-h-[26rem] overflow-auto rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-2"
+        className="max-h-[26rem] overflow-auto rounded-xl border border-edge bg-white p-2"
         onWheel={(event) => {
           if (!event.ctrlKey && !event.metaKey) {
             return;

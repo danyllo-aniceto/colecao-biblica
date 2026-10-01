@@ -15,13 +15,17 @@ import { StickerCard } from '@/components/game/sticker-card';
 import { fieldClassName } from '@/components/ui/input';
 import { MermaidDiagram, looksLikeMermaid } from '@/components/ui/mermaid-diagram';
 import { RichContent } from '@/components/ui/rich-content';
+import { LoadingState } from '@/components/ui/spinner';
+import { errorMessage, useToast } from '@/components/ui/toast';
+import { CoinIcon } from '@/components/game/game-ui';
+import { TESTAMENT_LABELS } from '@/lib/labels';
 import {
   createComment,
+  getCharacterDetail,
   getCollection,
   getMyComments,
-  listCharacters,
   updateComment,
-  type CharacterEntry,
+  type CharacterDetail,
   type CommentEntry,
 } from '@/lib/user-api';
 import { getRarityLabel } from '@/lib/rarity-theme';
@@ -52,14 +56,14 @@ export function StickerPage() {
   const navigate = useNavigate();
   const params = useParams<{ characterId: string }>();
   const { accessToken } = useAuth();
+  const toast = useToast();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [character, setCharacter] = useState<CharacterEntry | null>(null);
+  const [character, setCharacter] = useState<CharacterDetail | null>(null);
   const [isOwned, setIsOwned] = useState(false);
   const [comments, setComments] = useState<CommentEntry[]>([]);
   const [commentDraft, setCommentDraft] = useState('');
-  const [commentError, setCommentError] = useState<string | null>(null);
   const [commentSubmitting, setCommentSubmitting] = useState(false);
   const [commentEditingId, setCommentEditingId] = useState<number | null>(null);
 
@@ -79,22 +83,13 @@ export function StickerPage() {
       setError(null);
 
       try {
-        const [characters, collection, myComments] = await Promise.all([
-          listCharacters(),
+        const [selectedCharacter, collection, myComments] = await Promise.all([
+          getCharacterDetail(parsedCharacterId),
           getCollection(),
           getMyComments(),
         ]);
 
         if (ignore) {
-          return;
-        }
-
-        const selectedCharacter = characters.find((item) => item.id === parsedCharacterId) ?? null;
-
-        if (!selectedCharacter) {
-          setError('Figurinha não encontrada.');
-          setCharacter(null);
-          setLoading(false);
           return;
         }
 
@@ -135,7 +130,6 @@ export function StickerPage() {
     }
 
     setCommentSubmitting(true);
-    setCommentError(null);
 
     try {
       if (commentEditingId === null) {
@@ -146,12 +140,17 @@ export function StickerPage() {
 
         setComments((current) => [created, ...current]);
         setCommentEditingId(created.id);
+        toast.success('Anotação salva.');
+        created.unlockedAchievements?.forEach((achievement) =>
+          toast.success(`Conquista: ${achievement.title}!`, { description: `+${achievement.coins} moedas`, icon: <CoinIcon /> }),
+        );
       } else {
         const updated = await updateComment(commentEditingId, { text: commentDraft.trim() });
         setComments((current) => current.map((item) => (item.id === updated.id ? updated : item)));
+        toast.success('Anotação atualizada.');
       }
     } catch (saveError) {
-      setCommentError(saveError instanceof Error ? saveError.message : 'Não foi possível salvar o comentário.');
+      toast.error(errorMessage(saveError, 'Não foi possível salvar a anotação.'));
     } finally {
       setCommentSubmitting(false);
     }
@@ -165,12 +164,7 @@ export function StickerPage() {
           Voltar
         </Button>
 
-        {loading ? (
-          <div className="mt-4 grid gap-6 md:grid-cols-[280px_1fr]" aria-busy="true">
-            <div className="panel aspect-[3/4] animate-pulse" />
-            <div className="panel h-64 animate-pulse" />
-          </div>
-        ) : null}
+        {loading ? <LoadingState label="Abrindo figurinha..." /> : null}
 
         {error ? (
           <div className="mt-4">
@@ -191,6 +185,11 @@ export function StickerPage() {
                     Figurinha {getRarityLabel(character.rarity)}
                   </span>
                   <h1 className="mt-3 font-display text-4xl font-bold text-ink sm:text-5xl">{character.name}</h1>
+                  {character.narrativeRole ? <p className="mt-1 font-display text-lg font-semibold text-muted">{character.narrativeRole}</p> : null}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {character.testament ? <Badge tone="accent">{TESTAMENT_LABELS[character.testament]}</Badge> : null}
+                    {character.historicalPeriod ? <Badge tone="neutral">{character.historicalPeriod}</Badge> : null}
+                  </div>
                   {isOwned ? (
                     <>
                       <div className="mt-4 text-lg text-muted">
@@ -209,7 +208,10 @@ export function StickerPage() {
                     </>
                   ) : (
                     <div className="mt-4 space-y-4">
-                      <p className="flex items-center gap-2 text-lg text-muted">
+                      <div className="text-lg text-muted">
+                        <RichContent value={character.shortSummary} />
+                      </div>
+                      <p className="flex items-center gap-2 font-semibold text-muted">
                         <LockRoundedIcon /> Conquiste esta figurinha para ler a história completa.
                       </p>
                       <Button size="lg" onClick={() => navigate('/dashboard')}>
@@ -229,16 +231,6 @@ export function StickerPage() {
                 </InfoPanel>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                  {character.narrativeRole ? (
-                    <InfoPanel title="Papel na história">
-                      <RichContent value={character.narrativeRole} />
-                    </InfoPanel>
-                  ) : null}
-                  {character.historicalPeriod ? (
-                    <InfoPanel title="Período histórico">
-                      <RichContent value={character.historicalPeriod} />
-                    </InfoPanel>
-                  ) : null}
                   {character.curiosities ? (
                     <InfoPanel title="Curiosidades">
                       <RichContent value={character.curiosities} />
@@ -312,8 +304,7 @@ export function StickerPage() {
                       onChange={(event) => setCommentDraft(event.target.value)}
                       placeholder="O que você aprendeu com este personagem?"
                     />
-                    {commentError ? <Alert tone="danger">{commentError}</Alert> : null}
-                    <Button type="submit" disabled={commentSubmitting || !commentDraft.trim()}>
+                    <Button type="submit" loading={commentSubmitting} disabled={!commentDraft.trim()}>
                       {commentSubmitting ? 'Salvando...' : commentEditingId ? 'Atualizar anotação' : 'Salvar anotação'}
                     </Button>
                   </form>

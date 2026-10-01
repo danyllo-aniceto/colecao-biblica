@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/providers/auth-provider';
+import { LoadingState } from '@/components/ui/spinner';
 
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
@@ -17,11 +18,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated, isHydrated, navigate]);
 
   if (!isHydrated) {
-    return (
-      <div className="m-4 rounded-3xl border border-[var(--border)] bg-[var(--bg-secondary)] p-6 text-sm text-[var(--text-secondary)]">
-        Carregando sessão...
-      </div>
-    );
+    return <LoadingState fullScreen label="Carregando sessão..." />;
   }
 
   if (!isAuthenticated) {

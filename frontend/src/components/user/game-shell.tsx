@@ -65,7 +65,7 @@ export function PlayerHud({
         <div className="flex items-center gap-2">
           <CoinChip value={profile?.coins ?? 0} />
           <div className="hidden items-center gap-2 lg:flex">
-            <BoostChips life={profile?.extraLifeBoosts ?? 0} time={profile?.extraTimeBoosts ?? 0} xp={profile?.doubleXpBoosts ?? 0} />
+            <BoostChips life={profile?.extraLifeBoosts ?? 0} time={profile?.extraTimeBoosts ?? 0} xp={profile?.doubleXpBoosts ?? 0} hint={profile?.hintBoosts ?? 0} />
           </div>
           <div className="hidden sm:block">
             <ThemeToggle compact />

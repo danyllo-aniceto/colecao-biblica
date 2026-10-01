@@ -1,4 +1,5 @@
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
+import ContentCutRoundedIcon from '@mui/icons-material/ContentCutRounded';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
@@ -33,7 +34,17 @@ function starsFor(correct: number, answered: number) {
 
 const HEADLINES = ['Continue tentando!', 'Boa!', 'Muito bem!', 'Incrível!'];
 
-export function MatchResult({ summary, minCorrectForReward, onContinue }: { summary: MatchSummary | null; minCorrectForReward: number | null; onContinue: () => void }) {
+export function MatchResult({
+  summary,
+  minCorrectForReward,
+  onContinue,
+  onOpenSticker,
+}: {
+  summary: MatchSummary | null;
+  minCorrectForReward: number | null;
+  onContinue: () => void;
+  onOpenSticker?: (id: number) => void;
+}) {
   if (!summary) {
     return null;
   }
@@ -41,7 +52,7 @@ export function MatchResult({ summary, minCorrectForReward, onContinue }: { summ
   const { result, correct, answered, previousLevel } = summary;
   const stars = starsFor(correct, answered);
   const leveledUp = result.userLevel > previousLevel;
-  const wonSticker = result.rewardType === 'STICKER' && result.rewardCharacterName;
+  const wonSticker = (result.rewardType === 'STICKER' || result.rewardType === 'STICKER_PACK') && result.rewardCharacterName;
   const dailyLimitReached = !result.rewardGranted && result.rewardMatchesLimitPerDay > 0 && result.rewardMatchesUsedToday >= result.rewardMatchesLimitPerDay;
 
   return (
@@ -65,7 +76,7 @@ export function MatchResult({ summary, minCorrectForReward, onContinue }: { summ
           {correct} de {answered} {answered === 1 ? 'acerto' : 'acertos'}
         </p>
 
-        <div className="relative mt-5 grid grid-cols-2 gap-3">
+        <div className="relative mt-5 grid grid-cols-3 gap-3">
           <div className="rounded-2xl bg-violet/15 p-3">
             <div className="font-display text-2xl font-bold text-violet-strong dark:text-violet">+{result.xpGained}</div>
             <div className="text-xs font-bold uppercase tracking-wider text-muted">XP</div>
@@ -76,6 +87,12 @@ export function MatchResult({ summary, minCorrectForReward, onContinue }: { summ
               {result.scoreGained}
             </div>
             <div className="text-xs font-bold uppercase tracking-wider text-muted">Pontos</div>
+          </div>
+          <div className="rounded-2xl bg-primary/15 p-3">
+            <div className="flex items-center justify-center gap-1 font-display text-2xl font-bold text-primary-strong dark:text-primary">
+              <CoinIcon className="h-5 w-5" />+{result.coinsGained ?? 0}
+            </div>
+            <div className="text-xs font-bold uppercase tracking-wider text-muted">Moedas</div>
           </div>
         </div>
 
@@ -91,9 +108,17 @@ export function MatchResult({ summary, minCorrectForReward, onContinue }: { summ
             <div className="space-y-3">
               <p className="font-display text-lg font-bold text-ink">{result.rewardCharacterUnlocked ? 'Nova figurinha!' : 'Figurinha repetida'}</p>
               <div className="mx-auto w-40">
-                <StickerCard name={result.rewardCharacterName ?? ''} rarity={(result.rewardCharacterRarity ?? 'COMMON') as StickerRarity} owned />
+                <StickerCard
+                  name={result.rewardCharacterName ?? ''}
+                  rarity={(result.rewardCharacterRarity ?? 'COMMON') as StickerRarity}
+                  imageUrl={result.rewardCharacterImageUrl}
+                  owned
+                  onClick={onOpenSticker && result.rewardCharacterId ? () => onOpenSticker(result.rewardCharacterId!) : undefined}
+                />
               </div>
-              {!result.rewardCharacterUnlocked ? <p className="text-sm text-muted">Você já tinha essa figurinha.</p> : null}
+              {!result.rewardCharacterUnlocked ? (
+                <p className="text-sm text-muted">{result.duplicateCoins ? `Você já tinha: virou +${result.duplicateCoins} moedas.` : 'Você já tinha essa figurinha.'}</p>
+              ) : null}
             </div>
           ) : result.rewardGranted ? (
             <div className="flex flex-col items-center gap-2">
@@ -128,6 +153,7 @@ export function MatchResult({ summary, minCorrectForReward, onContinue }: { summ
 
 function RewardIcon({ type }: { type?: string | null }) {
   if (type === 'COINS') return <CoinIcon className="h-12 w-12" />;
+  if (type === 'FIFTY_FIFTY') return <ContentCutRoundedIcon className="text-violet" sx={{ fontSize: 48 }} />;
   if (type === 'EXTRA_LIFE') return <FavoriteRoundedIcon className="text-danger" sx={{ fontSize: 48 }} />;
   if (type === 'EXTRA_TIME') return <TimerRoundedIcon className="text-info" sx={{ fontSize: 48 }} />;
   return <BoltRoundedIcon className="text-primary" sx={{ fontSize: 48 }} />;

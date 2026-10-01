@@ -1,6 +1,6 @@
 import { apiRequest, apiRequestVoid } from '@/lib/http';
 import type { UserProfile } from '@/types/auth';
-import type { StickerRarity } from '@/lib/admin-api';
+import type { PaginatedResponse, StickerRarity, Testament } from '@/lib/admin-api';
 
 export type UserSticker = {
   characterId: number;
@@ -33,11 +33,27 @@ export type CommentEntry = {
   updatedAt?: string;
 };
 
+/** Personagem do álbum (versão leve, sem os textos longos). */
 export type CharacterEntry = {
   id: number;
   name: string;
   imageUrl?: string | null;
   rarity: StickerRarity;
+  testament?: Testament | null;
+  bibleBooks?: string | null;
+  historicalPeriod?: string | null;
+  narrativeRole?: string | null;
+  /** Perguntas ativas: sem elas o estudo do personagem não abre. */
+  questionCount: number;
+};
+
+/** Personagem completo (página da figurinha). */
+export type CharacterDetail = {
+  id: number;
+  name: string;
+  imageUrl?: string | null;
+  rarity: StickerRarity;
+  testament?: Testament | null;
   shortSummary: string;
   fullDescription: string;
   bibleBooks?: string | null;
@@ -70,6 +86,8 @@ export type QuizQuestionView = {
   optionB: string;
   optionC: string;
   optionD: string;
+  /** Alternativas eliminadas pela dica 50/50. */
+  removedOptions?: string[];
 };
 
 export type QuizSessionStatus = {
@@ -85,8 +103,12 @@ export type QuizSessionStatus = {
   extraTimeUsed: boolean;
   extraLifeUsed: boolean;
   xpMultiplierUsed: boolean;
+  fiftyFiftyUsed?: boolean;
+  characterId?: number | null;
   currentQuestion?: QuizQuestionView | null;
 };
+
+export type UnlockedAchievement = { code: string; title: string; coins: number };
 
 export type AnswerQuizQuestionPayload = {
   questionId: number;
@@ -106,7 +128,11 @@ export type QuizMatchResult = {
   rewardCharacterId?: number | null;
   rewardCharacterName?: string | null;
   rewardCharacterRarity?: StickerRarity | null;
+  rewardCharacterImageUrl?: string | null;
   rewardCharacterUnlocked?: boolean;
+  coinsGained?: number;
+  duplicateCoins?: number;
+  unlockedAchievements?: UnlockedAchievement[];
   userXp: number;
   userLevel: number;
   userCoins: number;
@@ -124,7 +150,12 @@ export type AnswerQuizQuestionResult = {
   extraTimeUsed: boolean;
   extraLifeUsed: boolean;
   xpMultiplierUsed: boolean;
-  nextQuestion?: QuizQuestionView | null;
+  fiftyFiftyUsed?: boolean;
+  correctOption?: string;
+  explanation?: string | null;
+  bibleReference?: string | null;
+  /** Há outra pergunta: ela é aberta (e o tempo começa) com requestNextQuestion. */
+  hasNextQuestion?: boolean;
   matchResult?: QuizMatchResult | null;
 };
 
@@ -150,10 +181,13 @@ export type QuizHistory = {
     wrongAnswers: number;
     xpGained: number;
     scoreGained: number;
+    coinsGained?: number;
     rewardGranted: boolean;
     rewardGrantedName?: string | null;
   }>;
 };
+
+export type MatchEntry = QuizHistory['matches'][number];
 
 export type GameRules = {
   maxQuestionsPerMatch: number;
@@ -163,17 +197,59 @@ export type GameRules = {
   extraTimeSeconds: number;
   rewardMinCorrectAnswers: number;
   characterStickerMinAccuracyPercent: number;
+  coinsPerCorrectAnswer: number;
+  perfectMatchBonusCoins: number;
+  coinMatchLimitPerDay: number;
+  maxHintBoosts: number;
+  packOddsCommon: number;
+  packOddsRare: number;
+  packOddsEpic: number;
+  packOddsLegendary: number;
 };
 
 export type ShopItem = {
   id: number;
   name: string;
   description: string;
-  itemType: 'STICKER' | 'GAME_BONUS';
+  itemType: 'STICKER' | 'GAME_BONUS' | 'ECONOMY';
   priceCoins: number;
   rewardDefinitionId?: number | null;
   rewardName?: string | null;
+  rewardType?: string | null;
+  rewardRarity?: StickerRarity | null;
   active: boolean;
+};
+
+export type RankingPage = PaginatedResponse<RankingEntry> & { me: RankingEntry };
+
+export type DailyRewardStatus = {
+  canClaim: boolean;
+  streak: number;
+  nextDay: number;
+  todayDay: number | null;
+  cycle: Array<{ day: number; coins: number; hints: number }>;
+};
+
+export type DailyClaimResult = {
+  day: number;
+  streak: number;
+  coins: number;
+  hints: number;
+  unlockedAchievements: UnlockedAchievement[];
+  userCoins: number;
+  hintBoosts: number;
+};
+
+export type Achievement = {
+  code: string;
+  title: string;
+  description: string;
+  icon: string;
+  coins: number;
+  current: number;
+  target: number;
+  unlocked: boolean;
+  unlockedAt: string | null;
 };
 
 export type ShopPurchaseResult = {
@@ -182,11 +258,15 @@ export type ShopPurchaseResult = {
   characterId?: number | null;
   characterName?: string | null;
   characterRarity?: StickerRarity | null;
+  characterImageUrl?: string | null;
   characterUnlocked: boolean;
+  duplicateCoins?: number;
+  unlockedAchievements?: UnlockedAchievement[];
   userCoins: number;
   extraLifeBoosts: number;
   extraTimeBoosts: number;
   doubleXpBoosts: number;
+  hintBoosts: number;
 };
 
 export async function getGameRules(): Promise<GameRules> {
@@ -209,16 +289,16 @@ export async function getCollectionProgress(): Promise<CollectionProgress> {
   return apiRequest<CollectionProgress>('/collection/my/progress', { method: 'GET' }, 'Não foi possível carregar o progresso da coleção.');
 }
 
-export async function listRanking(): Promise<RankingEntry[]> {
-  return apiRequest<RankingEntry[]>('/ranking', { method: 'GET' }, 'Não foi possível carregar o ranking.');
+export async function listRanking(page = 0, size = 20): Promise<RankingPage> {
+  return apiRequest<RankingPage>(`/ranking?page=${page}&size=${size}`, { method: 'GET' }, 'Não foi possível carregar o ranking.');
 }
 
 export async function getMyComments(): Promise<CommentEntry[]> {
   return apiRequest<CommentEntry[]>('/comments/my', { method: 'GET' }, 'Não foi possível carregar os comentários.');
 }
 
-export async function createComment(payload: { characterId: number; text: string }): Promise<CommentEntry> {
-  return apiRequest<CommentEntry>('/comments', {
+export async function createComment(payload: { characterId: number; text: string }): Promise<CommentEntry & { unlockedAchievements?: UnlockedAchievement[] }> {
+  return apiRequest<CommentEntry & { unlockedAchievements?: UnlockedAchievement[] }>('/comments', {
     method: 'POST',
     body: JSON.stringify(payload),
   }, 'Não foi possível salvar o comentário.');
@@ -233,6 +313,10 @@ export async function updateComment(id: number, payload: { text: string }): Prom
 
 export async function listCharacters(): Promise<CharacterEntry[]> {
   return apiRequest<CharacterEntry[]>('/characters', { method: 'GET' }, 'Não foi possível carregar os personagens.');
+}
+
+export async function getCharacterDetail(id: number): Promise<CharacterDetail> {
+  return apiRequest<CharacterDetail>(`/characters/${id}`, { method: 'GET' }, 'Não foi possível carregar a figurinha.');
 }
 
 export async function getCurrentUser(): Promise<UserProfile> {
@@ -282,4 +366,27 @@ export async function abandonQuizSession(sessionId: number): Promise<QuizSession
 
 export async function getQuizHistory(limit = 5): Promise<QuizHistory> {
   return apiRequest<QuizHistory>(`/quiz/history?limit=${limit}`, { method: 'GET' }, 'Não foi possível carregar o histórico do quiz.');
+}
+export async function getQuizMatches(page = 0, size = 10): Promise<PaginatedResponse<MatchEntry>> {
+  return apiRequest<PaginatedResponse<MatchEntry>>(`/quiz/matches?page=${page}&size=${size}`, { method: 'GET' }, 'Não foi possível carregar o histórico.');
+}
+
+export async function requestFiftyFifty(sessionId: number): Promise<QuizSessionStatus> {
+  return apiRequest<QuizSessionStatus>(`/quiz/sessions/${sessionId}/fifty-fifty`, { method: 'POST' }, 'Não foi possível usar a dica 50/50.');
+}
+
+export async function getDailyReward(): Promise<DailyRewardStatus> {
+  return apiRequest<DailyRewardStatus>('/daily-reward', { method: 'GET' }, 'Não foi possível carregar o prêmio diário.');
+}
+
+export async function claimDailyReward(): Promise<DailyClaimResult> {
+  return apiRequest<DailyClaimResult>('/daily-reward/claim', { method: 'POST' }, 'Não foi possível resgatar o prêmio diário.');
+}
+
+export async function listAchievements(): Promise<Achievement[]> {
+  return apiRequest<Achievement[]>('/achievements', { method: 'GET' }, 'Não foi possível carregar as conquistas.');
+}
+
+export async function requestNextQuestion(sessionId: number): Promise<QuizSessionStatus> {
+  return apiRequest<QuizSessionStatus>(`/quiz/sessions/${sessionId}/next`, { method: 'POST' }, 'Não foi possível abrir a próxima pergunta.');
 }

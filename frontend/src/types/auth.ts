@@ -24,6 +24,9 @@ export type UserProfile = {
   extraLifeBoosts?: number;
   extraTimeBoosts?: number;
   doubleXpBoosts?: number;
+  hintBoosts?: number;
+  dailyStreak?: number;
+  lastDailyClaim?: string | null;
   name: string;
   email: string;
   role: 'ADMIN' | 'USER';
