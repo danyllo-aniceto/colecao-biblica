@@ -85,3 +85,17 @@ export function parseIntQuery(value: unknown, fallback: number): number {
 }
 
 export { z };
+
+/**
+ * Endereço de imagem salvo no cadastro: link normal (até 2048 caracteres) ou, quando o
+ * armazenamento em nuvem não está configurado, a própria imagem embutida (data URL, até ~5 MB).
+ * Vazio ou null limpa o campo; ausente não altera.
+ */
+export const imageRef = () =>
+  z
+    .union([z.string(), z.null()])
+    .optional()
+    .transform((value) => (value === undefined ? undefined : (value?.trim() || null)))
+    .refine((value) => value === undefined || value === null || (value.startsWith("data:image/") ? value.length <= 5_500_000 : value.length <= 2048), {
+      message: "Endereço da imagem muito longo",
+    });

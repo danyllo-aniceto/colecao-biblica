@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "../db/prisma";
 import { badRequest, notFound } from "../lib/errors";
 import { pageOf, queryText, readPage } from "../lib/pagination";
-import { clearableText, parseId, requiredText, z } from "../lib/validation";
+import { clearableText, imageRef, parseId, requiredText, z } from "../lib/validation";
 import { currentUser, requireAdmin } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
 import {
@@ -123,7 +123,7 @@ const baseSchema = {
   name: requiredText(60),
   description: clearableText(200),
   rarity: z.enum(["COMMON", "RARE", "EPIC", "LEGENDARY"]).optional(),
-  imageUrl: clearableText(1000),
+  imageUrl: imageRef(),
   color,
   style: clearableText(20),
   unlock: z.enum(["FREE", "SHOP", "REQUIREMENT", "REWARD"]),

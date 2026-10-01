@@ -601,6 +601,8 @@ model GameEvent {
   xpMultiplier   Float    @default(1) @map("xp_multiplier")
   coinMultiplier Float    @default(1) @map("coin_multiplier")
   color          String?
+  /// Imagem do banner do evento (aparece na faixa da tela inicial no lugar do degradê).
+  imageUrl       String?  @map("image_url")
   active         Boolean  @default(true)
   createdAt      DateTime @default(now()) @map("created_at")
 

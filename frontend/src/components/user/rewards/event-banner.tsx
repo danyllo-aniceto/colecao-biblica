@@ -23,8 +23,19 @@ export function EventBanner({ onOpenShop }: { onOpenShop: () => void }) {
   const color = event.color ?? 'var(--violet)';
 
   return (
-    <section className="relative overflow-hidden rounded-3xl p-5 text-white shadow-lg" style={{ background: `linear-gradient(135deg, ${color}, color-mix(in srgb, ${color} 55%, #000))` }}>
-      <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/20 blur-2xl" />
+    <section
+      className="relative overflow-hidden rounded-3xl p-5 text-white shadow-lg"
+      style={{ background: `linear-gradient(135deg, ${color}, color-mix(in srgb, ${color} 55%, #000))` }}
+    >
+      {event.imageUrl ? (
+        <>
+          <img src={event.imageUrl} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
+          {/* Escurece da esquerda (texto) para a direita (imagem aparece) para o texto continuar legível. */}
+          <div className="pointer-events-none absolute inset-0" style={{ background: `linear-gradient(90deg, color-mix(in srgb, ${color} 85%, #000) 0%, color-mix(in srgb, ${color} 55%, transparent) 55%, transparent 100%)` }} />
+        </>
+      ) : (
+        <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/20 blur-2xl" />
+      )}
       <div className="relative flex flex-wrap items-center gap-4">
         <CelebrationRoundedIcon sx={{ fontSize: 40 }} />
         <div className="min-w-0 flex-1">

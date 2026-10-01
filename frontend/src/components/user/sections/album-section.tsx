@@ -63,7 +63,7 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
   const [rarity, setRarity] = useState<StickerRarity | 'ALL'>('ALL');
   const [tab, setTab] = useState<AlbumTab>('album');
   const [books, setBooks] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<SortOption>('rarityDesc');
+  const [sortBy, setSortBy] = useState<SortOption>('rarityAsc');
   const [testament, setTestament] = useState<Testament | ''>('');
   const [period, setPeriod] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -112,7 +112,7 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
   const paging = usePagination(lockedFiltered, PAGE_SIZE);
   const shown = paging.pageItems;
   const resetKey = [rarity, sortBy, testament, period, books.join('|')].join(';');
-  const extraFilters = books.length + (sortBy !== 'rarityDesc' ? 1 : 0) + (testament ? 1 : 0) + (period ? 1 : 0);
+  const extraFilters = books.length + (sortBy !== 'rarityAsc' ? 1 : 0) + (testament ? 1 : 0) + (period ? 1 : 0);
 
   function resetPaging<T>(setter: (value: T) => void) {
     return (value: T) => {
@@ -242,7 +242,7 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
               variant="secondary"
               onClick={() => {
                 setBooks([]);
-                setSortBy('rarityDesc');
+                setSortBy('rarityAsc');
                 setTestament('');
                 setPeriod('');
                 paging.reset();
@@ -262,8 +262,8 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
               value={sortBy}
               onChange={(value) => resetPaging(setSortBy)(value)}
               options={[
-                { value: 'rarityDesc', label: 'Mais raras primeiro' },
                 { value: 'rarityAsc', label: 'Mais comuns primeiro' },
+                { value: 'rarityDesc', label: 'Mais raras primeiro' },
                 { value: 'period', label: 'Ordem da história bíblica' },
                 { value: 'alphabetical', label: 'Nome (A–Z)' },
               ]}

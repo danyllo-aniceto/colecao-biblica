@@ -7,7 +7,7 @@ import { errorMessage, useToast } from '@/components/ui/toast';
 import { uploadImage } from '@/lib/uploads';
 
 /** Imagem pequena (ícone, reação, moldura): enviar arquivo, colar link ou remover. */
-export function ImageUploadField({ value, onChange, round = false }: { value: string; onChange: (url: string) => void; round?: boolean }) {
+export function ImageUploadField({ value, onChange, round = false, wide = false }: { value: string; onChange: (url: string) => void; round?: boolean; wide?: boolean }) {
   const toast = useToast();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -29,8 +29,8 @@ export function ImageUploadField({ value, onChange, round = false }: { value: st
 
   return (
     <div className="flex items-center gap-3">
-      <span className={`flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden border-2 border-dashed border-edge bg-surface-2 ${round ? 'rounded-full' : 'rounded-2xl'}`}>
-        {value ? <img src={value} alt="" className="h-full w-full object-contain" /> : <UploadRoundedIcon className="text-muted" />}
+      <span className={`flex shrink-0 items-center justify-center overflow-hidden border-2 border-dashed border-edge bg-surface-2 ${wide ? 'h-20 w-36' : 'h-20 w-20'} ${round ? 'rounded-full' : 'rounded-2xl'}`}>
+        {value ? <img src={value} alt="" className={`h-full w-full ${wide ? 'object-cover' : 'object-contain'}`} /> : <UploadRoundedIcon className="text-muted" />}
       </span>
       <div className="min-w-0 flex-1 space-y-2">
         <div className="flex flex-wrap gap-2">

@@ -83,7 +83,17 @@ export const updatePassTier = (id: number, payload: PassTierPayload) => apiReque
 export const deletePassTier = (id: number) => apiRequestVoid(`/pass/admin/tiers/${id}`, { method: 'DELETE' }, 'Não foi possível excluir o degrau.');
 
 export type AdminEvent = GameEvent & { cosmetics: number };
-export type EventPayload = { name: string; description?: string | null; startsAt: string; endsAt: string; xpMultiplier: number; coinMultiplier: number; color?: string | null; active: boolean };
+export type EventPayload = {
+  name: string;
+  description?: string | null;
+  startsAt: string;
+  endsAt: string;
+  xpMultiplier: number;
+  coinMultiplier: number;
+  color?: string | null;
+  imageUrl?: string | null;
+  active: boolean;
+};
 
 export const listEventsAdmin = (params: { page: number; size: number }) =>
   apiRequest<PaginatedResponse<AdminEvent>>(`/events/admin/list?${query(params)}`, { method: 'GET' }, 'Não foi possível carregar os eventos.');

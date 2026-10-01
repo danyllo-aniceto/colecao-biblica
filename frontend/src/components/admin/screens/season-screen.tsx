@@ -29,6 +29,7 @@ import {
 } from '@/lib/admin-rewards-api';
 import { AdminPanel, Cell, DataTable, IconAction, Row, StatusBadge } from '../admin-ui';
 import { usePagedList } from '../use-paged-list';
+import { ImageUploadField } from '../image-upload-field';
 import { useCosmeticOptions } from './collections-screen';
 
 const formatDate = (iso: string) => new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
@@ -310,6 +311,7 @@ function EventModal({ event, onClose, onSaved }: { event: AdminEvent | null; onC
   const [xp, setXp] = useState(String(event?.xpMultiplier ?? 1.5));
   const [coins, setCoins] = useState(String(event?.coinMultiplier ?? 1));
   const [color, setColor] = useState(event?.color ?? '#7c4dff');
+  const [imageUrl, setImageUrl] = useState(event?.imageUrl ?? '');
   const [active, setActive] = useState(event?.active ?? true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -320,7 +322,7 @@ function EventModal({ event, onClose, onSaved }: { event: AdminEvent | null; onC
     if (new Date(endsAt) <= new Date(startsAt)) return setError('O fim precisa ser depois do início.');
     setError(null);
     setSaving(true);
-    const payload = { name: name.trim(), description: description.trim() || null, startsAt, endsAt, xpMultiplier: Number(xp) || 1, coinMultiplier: Number(coins) || 1, color, active };
+    const payload = { name: name.trim(), description: description.trim() || null, startsAt, endsAt, xpMultiplier: Number(xp) || 1, coinMultiplier: Number(coins) || 1, color, imageUrl: imageUrl || null, active };
     try {
       if (event) await updateEvent(event.id, payload);
       else await createEvent(payload);
@@ -359,7 +361,10 @@ function EventModal({ event, onClose, onSaved }: { event: AdminEvent | null; onC
             <Input type="number" min={1} max={2} step={0.1} value={coins} onChange={(changeEvent) => setCoins(changeEvent.target.value)} />
           </Field>
         </div>
-        <Field label="Cor da faixa">
+        <Field label="Imagem da faixa (opcional)" hint="Aparece no lugar do degradê, com um escurecido por cima para o texto continuar legível. Use uma imagem larga, tipo 1200×400.">
+          <ImageUploadField value={imageUrl} onChange={setImageUrl} wide />
+        </Field>
+        <Field label={imageUrl ? 'Cor de apoio (sombra e selo)' : 'Cor da faixa'}>
           <ColorField value={color} onChange={setColor} />
         </Field>
         <Switch checked={active} onChange={setActive} label="Ligado" />

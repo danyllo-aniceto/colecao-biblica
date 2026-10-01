@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "../db/prisma";
 import { badRequest, forbidden, notFound } from "../lib/errors";
 import { pageOf, queryText, readPage } from "../lib/pagination";
-import { clearableText, parseId, requiredText, richText, z } from "../lib/validation";
+import { clearableText, imageRef, parseId, requiredText, richText, z } from "../lib/validation";
 import { currentUser, requireAdmin } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
 import { toCharacterResponse, toCharacterSummary } from "../services/mappers";
@@ -16,7 +16,7 @@ const testament = z.enum(["OLD", "NEW"]);
 
 // Campos opcionais: ausente não altera; null ou vazio limpa.
 const optionalFields = {
-  imageUrl: clearableText(2048),
+  imageUrl: imageRef(),
   testament: testament.nullish(),
   bibleBooks: clearableText(),
   bibleReferences: clearableText(),

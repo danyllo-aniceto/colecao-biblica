@@ -112,6 +112,7 @@ export type GameEvent = {
   xpMultiplier: number;
   coinMultiplier: number;
   color?: string | null;
+  imageUrl?: string | null;
   active: boolean;
   cosmetics?: Cosmetic[];
 };

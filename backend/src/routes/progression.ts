@@ -2,7 +2,7 @@ import { Router } from "express";
 import { prisma } from "../db/prisma";
 import { badRequest, notFound } from "../lib/errors";
 import { pageOf, readPage } from "../lib/pagination";
-import { clearableText, parseId, requiredText, z } from "../lib/validation";
+import { clearableText, imageRef, parseId, requiredText, z } from "../lib/validation";
 import { currentUser, requireAdmin } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
 import { toCosmeticResponse } from "../services/cosmetics";
@@ -241,6 +241,7 @@ const eventSchema = z
       .string()
       .regex(/^#[0-9a-fA-F]{6}$/, "Use uma cor no formato #rrggbb")
       .nullish(),
+    imageUrl: imageRef(),
     active: z.boolean().optional(),
   })
   .refine((input) => input.endsAt > input.startsAt, { message: "O fim precisa ser depois do início", path: ["endsAt"] });
@@ -263,7 +264,7 @@ eventsRouter.post(
   requireAdmin,
   asyncHandler(async (req, res) => {
     const input = eventSchema.parse(req.body);
-    res.status(201).json(await prisma.gameEvent.create({ data: { ...input, description: input.description ?? null, color: input.color ?? null } }));
+    res.status(201).json(await prisma.gameEvent.create({ data: { ...input, description: input.description ?? null, color: input.color ?? null, imageUrl: input.imageUrl ?? null } }));
   }),
 );
 
@@ -274,7 +275,7 @@ eventsRouter.put(
     const id = parseId(req.params.id);
     if (!(await prisma.gameEvent.findUnique({ where: { id }, select: { id: true } }))) throw notFound("Evento não encontrado");
     const input = eventSchema.parse(req.body);
-    res.json(await prisma.gameEvent.update({ where: { id }, data: { ...input, description: input.description ?? null, color: input.color ?? null } }));
+    res.json(await prisma.gameEvent.update({ where: { id }, data: { ...input, description: input.description ?? null, color: input.color ?? null, imageUrl: input.imageUrl } }));
   }),
 );
 
