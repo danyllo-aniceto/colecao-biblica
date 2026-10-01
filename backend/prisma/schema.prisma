@@ -55,6 +55,20 @@ enum QuizType {
   DAILY_CHALLENGE
 }
 
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+}
+
+enum TradeStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED
+  EXPIRED
+}
+
 enum ReportStatus {
   OPEN
   RESOLVED
@@ -85,6 +99,8 @@ model User {
   lastDailyClaim  DateTime? @map("last_daily_claim")
   streakFreezes   Int       @default(0) @map("streak_freezes")
   stickerPity     Int       @default(0) @map("sticker_pity")
+  /// Código para adicionar como amigo (gerado no primeiro acesso à tela de amigos).
+  friendCode      String?   @unique @map("friend_code")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
   createdBy       String    @map("created_by")
@@ -100,6 +116,13 @@ model User {
   achievements UserAchievement[]
   claims       UserClaim[]
   reports      QuestionReport[]
+
+  friendRequestsSent     Friendship[] @relation("FriendshipRequester")
+  friendRequestsReceived Friendship[] @relation("FriendshipAddressee")
+  messagesSent           Message[]    @relation("MessageSender")
+  messagesReceived       Message[]    @relation("MessageReceiver")
+  tradesProposed         Trade[]      @relation("TradeProposer")
+  tradesReceived         Trade[]      @relation("TradeReceiver")
 
   @@index([totalScore, xp])
   @@map("users")
@@ -131,6 +154,8 @@ model BiblicalCharacter {
 
   questions     Question[]
   stickers      UserSticker[]
+  tradesOffered   Trade[] @relation("TradeOffered")
+  tradesRequested Trade[] @relation("TradeRequested")
   comments      UserComment[]
   quizSessions  QuizSession[]
   stickerReward RewardDefinition[]
@@ -334,4 +359,63 @@ model GameSetting {
   description  String?
 
   @@map("game_settings")
+}
+
+/// Amizade: pedido de requester para addressee. BLOCKED: requester bloqueou addressee.
+model Friendship {
+  id          Int              @id @default(autoincrement())
+  requesterId Int              @map("requester_id")
+  addresseeId Int              @map("addressee_id")
+  status      FriendshipStatus @default(PENDING)
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  requester User @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId, status])
+  @@map("friendships")
+}
+
+/// Mensagem entre amigos. Com tradeId, é o aviso de uma proposta de troca.
+model Message {
+  id         Int       @id @default(autoincrement())
+  senderId   Int       @map("sender_id")
+  receiverId Int       @map("receiver_id")
+  text       String
+  tradeId    Int?      @map("trade_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  readAt     DateTime? @map("read_at")
+
+  sender   User   @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User   @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  trade    Trade? @relation(fields: [tradeId], references: [id], onDelete: SetNull)
+
+  @@index([senderId, receiverId, id])
+  @@index([receiverId, readAt])
+  @@map("messages")
+}
+
+/// Troca de figurinhas repetidas: oferece uma, pede outra (ou só uma das duas: presente/pedido).
+model Trade {
+  id                   Int         @id @default(autoincrement())
+  proposerId           Int         @map("proposer_id")
+  receiverId           Int         @map("receiver_id")
+  offeredCharacterId   Int?        @map("offered_character_id")
+  requestedCharacterId Int?        @map("requested_character_id")
+  message              String?
+  status               TradeStatus @default(PENDING)
+  createdAt            DateTime    @default(now()) @map("created_at")
+  respondedAt          DateTime?   @map("responded_at")
+
+  proposer           User               @relation("TradeProposer", fields: [proposerId], references: [id], onDelete: Cascade)
+  receiver           User               @relation("TradeReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  offeredCharacter   BiblicalCharacter? @relation("TradeOffered", fields: [offeredCharacterId], references: [id], onDelete: Cascade)
+  requestedCharacter BiblicalCharacter? @relation("TradeRequested", fields: [requestedCharacterId], references: [id], onDelete: Cascade)
+  messages           Message[]
+
+  @@index([receiverId, status])
+  @@index([proposerId, status])
+  @@map("trades")
 }

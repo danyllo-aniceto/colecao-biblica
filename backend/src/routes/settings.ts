@@ -43,6 +43,10 @@ const updateSchema = z.object({
   leagueFirstCoins: int(0, 100_000),
   leagueSecondCoins: int(0, 100_000),
   leagueThirdCoins: int(0, 100_000),
+  chatEnabled: int(0, 1),
+  tradesPerDay: int(0, 100),
+  maxPendingTrades: int(1, 100),
+  tradeExpireDays: int(1, 60),
 });
 
 settingsRouter.get(

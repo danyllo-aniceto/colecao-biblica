@@ -9,7 +9,7 @@ export const api = request(app);
 export async function resetDatabase() {
   await prisma.$executeRawUnsafe(
     `TRUNCATE users, biblical_characters, questions, reward_definitions, shop_items, user_stickers,
-     user_comments, quiz_matches, quiz_sessions, game_settings, user_achievements, user_claims, question_reports RESTART IDENTITY CASCADE`,
+     user_comments, quiz_matches, quiz_sessions, game_settings, user_achievements, user_claims, question_reports, friendships, messages, trades RESTART IDENTITY CASCADE`,
   );
   await runSeed(prisma, { demoData: true });
 }

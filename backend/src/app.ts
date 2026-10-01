@@ -11,6 +11,7 @@ import { commentsRouter } from "./routes/comments";
 import { dailyRouter } from "./routes/daily";
 import { leagueRouter, missionsRouter } from "./routes/engagement";
 import { reportsRouter } from "./routes/reports";
+import { socialRouter } from "./routes/social";
 import { questionsRouter } from "./routes/questions";
 import { quizRouter } from "./routes/quiz";
 import { rankingRouter } from "./routes/ranking";
@@ -60,6 +61,7 @@ export function createApp() {
   app.use("/api/missions", requireAuth, missionsRouter);
   app.use("/api/league", requireAuth, leagueRouter);
   app.use("/api/reports", requireAuth, reportsRouter);
+  app.use("/api/social", requireAuth, socialRouter);
 
   app.use("/api", notFoundHandler);
   app.use(errorHandler);

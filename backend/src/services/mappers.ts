@@ -16,6 +16,7 @@ export function toUserResponse(user: User) {
     hintBoosts: user.hintBoosts,
     streakFreezes: user.streakFreezes,
     stickerPity: user.stickerPity,
+    friendCode: user.friendCode,
     dailyStreak: user.dailyStreak,
     lastDailyClaim: user.lastDailyClaim,
     name: user.name,

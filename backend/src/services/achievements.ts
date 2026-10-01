@@ -18,6 +18,8 @@ type AchievementStats = {
   legendaryStickers: number;
   dailyStreak: number;
   notes: number;
+  friends: number;
+  trades: number;
 };
 
 type AchievementDefinition = {
@@ -57,11 +59,13 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     progress: (s) => ({ current: s.stickers, target: s.totalStickers > 0 ? s.totalStickers : Number.POSITIVE_INFINITY }),
   },
   { code: "STREAK_7", title: "Fiel", description: "Resgate o prêmio diário 7 dias seguidos.", icon: "calendar", coins: 200, progress: (s) => ({ current: s.dailyStreak, target: 7 }) },
+  { code: "FRIENDS_3", title: "Comunhão", description: "Tenha 3 amigos no app.", icon: "people", coins: 60, progress: (s) => ({ current: s.friends, target: 3 }) },
+  { code: "FIRST_TRADE", title: "Partilha", description: "Conclua sua primeira troca ou presente com um amigo.", icon: "swap", coins: 50, progress: (s) => ({ current: s.trades, target: 1 }) },
   { code: "NOTES_5", title: "Estudioso", description: "Escreva anotações em 5 figurinhas.", icon: "note", coins: 80, progress: (s) => ({ current: s.notes, target: 5 }) },
 ];
 
 async function loadStats(db: Db, userId: number): Promise<AchievementStats> {
-  const [user, matches, characterStudyMatches, perfectMatches, stickers, totalStickers, legendaryStickers, notes] = await Promise.all([
+  const [user, matches, characterStudyMatches, perfectMatches, stickers, totalStickers, legendaryStickers, notes, friends, trades] = await Promise.all([
     db.user.findUniqueOrThrow({ where: { id: userId }, select: { level: true, dailyStreak: true } }),
     db.quizMatch.count({ where: { userId } }),
     db.quizMatch.count({ where: { userId, quizType: "CHARACTER_STUDY" } }),
@@ -70,8 +74,10 @@ async function loadStats(db: Db, userId: number): Promise<AchievementStats> {
     db.biblicalCharacter.count({ where: visibleCharacter() }),
     db.userSticker.count({ where: { userId, character: { rarity: "LEGENDARY" } } }),
     db.userComment.groupBy({ by: ["characterId"], where: { userId } }).then((groups) => groups.length),
+    db.friendship.count({ where: { status: "ACCEPTED", OR: [{ requesterId: userId }, { addresseeId: userId }] } }),
+    db.trade.count({ where: { status: "ACCEPTED", OR: [{ proposerId: userId }, { receiverId: userId }] } }),
   ]);
-  return { matches, characterStudyMatches, perfectMatches, level: user.level, stickers, totalStickers, legendaryStickers, dailyStreak: user.dailyStreak, notes };
+  return { matches, characterStudyMatches, perfectMatches, level: user.level, stickers, totalStickers, legendaryStickers, dailyStreak: user.dailyStreak, notes, friends, trades };
 }
 
 export type UnlockedAchievement = { code: string; title: string; coins: number };

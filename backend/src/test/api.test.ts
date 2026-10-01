@@ -724,6 +724,107 @@ describe.skipIf(!hasDatabase)("API", () => {
     });
   });
 
+  describe("amigos, conversa e trocas", () => {
+    async function befriend() {
+      const user = await login("user@email.com");
+      const admin = await login("admin2@email.com");
+      const code = (await api.get("/api/social/me").set(bearer(admin))).body.friendCode;
+      expect(code).toMatch(/^[A-Z2-9]{6}$/);
+      const sent = await api.post("/api/social/friends/request").set(bearer(user)).send({ code: code.toLowerCase() });
+      expect(sent.body).toMatchObject({ status: "PENDING" });
+      const requests = await api.get("/api/social/friends/requests").set(bearer(admin));
+      expect((await api.get("/api/social/summary").set(bearer(admin))).body.pendingRequests).toBe(1);
+      await api.post(`/api/social/friends/requests/${requests.body.incoming[0].id}/accept`).set(bearer(admin));
+      const userRow = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
+      const adminRow = await prisma.user.findUniqueOrThrow({ where: { email: "admin2@email.com" } });
+      return { user, admin, userId: userRow.id, adminId: adminRow.id };
+    }
+
+    it("amizade por código com aceite; conversa só entre amigos e com palavrões mascarados", async () => {
+      const user = await login("user@email.com");
+      const userRow = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
+      const adminRow = await prisma.user.findUniqueOrThrow({ where: { email: "admin2@email.com" } });
+      expect((await api.post(`/api/social/chat/${adminRow.id}`).set(bearer(user)).send({ text: "oi" })).status).toBe(403);
+      expect((await api.post("/api/social/friends/request").set(bearer(user)).send({ code: "ZZZZZZ" })).status).toBe(404);
+
+      const { admin } = await befriend();
+      const friends = await api.get("/api/social/friends").set(bearer(user));
+      expect(friends.body.content).toEqual([expect.objectContaining({ userId: adminRow.id, name: "Admin Teste" })]);
+
+      const sent = await api.post(`/api/social/chat/${adminRow.id}`).set(bearer(user)).send({ text: "Que merda de pergunta kkk" });
+      expect(sent.body.text).toBe("Que ***** de pergunta kkk");
+      expect((await api.get("/api/social/summary").set(bearer(admin))).body.unreadMessages).toBe(1);
+      const chat = await api.get(`/api/social/chat/${userRow.id}`).set(bearer(admin));
+      expect(chat.body.messages).toHaveLength(1);
+      expect((await api.get("/api/social/summary").set(bearer(admin))).body.unreadMessages).toBe(0);
+
+      await prisma.gameSetting.updateMany({ where: { settingKey: "social.chatEnabled" }, data: { settingValue: "0" } });
+      expect((await api.post(`/api/social/chat/${adminRow.id}`).set(bearer(user)).send({ text: "oi" })).body.message).toMatch(/desligada/);
+    });
+
+    it("troca de repetidas: só repetidas, aceite move as cópias e não troca duas vezes", async () => {
+      const { user, admin, userId, adminId } = await befriend();
+      const davi = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Davi" } });
+      const ester = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Ester" } });
+      await prisma.userSticker.createMany({
+        data: [
+          { userId, characterId: davi.id, duplicates: 1 },
+          { userId: adminId, characterId: ester.id, duplicates: 0 },
+        ],
+      });
+
+      // Ester do admin não é repetida: não pode ser pedida.
+      const invalid = await api.post("/api/social/trades").set(bearer(user)).send({ toUserId: adminId, offeredCharacterId: davi.id, requestedCharacterId: ester.id });
+      expect(invalid.body.message).toBe("Seu amigo não tem essa figurinha repetida");
+      await prisma.userSticker.update({ where: { userId_characterId: { userId: adminId, characterId: ester.id } }, data: { duplicates: 2 } });
+
+      const trade = await api.post("/api/social/trades").set(bearer(user)).send({ toUserId: adminId, offeredCharacterId: davi.id, requestedCharacterId: ester.id, message: "bora?" });
+      expect(trade.status).toBe(201);
+      expect((await api.get("/api/social/summary").set(bearer(admin))).body.pendingTrades).toBe(1);
+      const chat = await api.get(`/api/social/chat/${userId}`).set(bearer(admin));
+      expect(chat.body.messages.at(-1).trade).toMatchObject({ id: trade.body.id, status: "PENDING" });
+
+      expect((await api.post(`/api/social/trades/${trade.body.id}/accept`).set(bearer(user))).status).toBe(403);
+      const [first, second] = await Promise.all([
+        api.post(`/api/social/trades/${trade.body.id}/accept`).set(bearer(admin)),
+        api.post(`/api/social/trades/${trade.body.id}/accept`).set(bearer(admin)),
+      ]);
+      expect([first.status, second.status].sort()).toEqual([200, 400]);
+      const accepted = first.status === 200 ? first : second;
+      expect(accepted.body.received).toMatchObject({ name: "Davi", unlocked: true });
+      expect(accepted.body.unlockedAchievements).toEqual(expect.arrayContaining([expect.objectContaining({ code: "FIRST_TRADE" })]));
+
+      const userStickers = await prisma.userSticker.findMany({ where: { userId }, orderBy: { characterId: "asc" } });
+      expect(userStickers.map((sticker) => [sticker.characterId, sticker.duplicates])).toEqual([
+        [davi.id, 0],
+        [ester.id, 0],
+      ]);
+      expect((await prisma.userSticker.findUniqueOrThrow({ where: { userId_characterId: { userId: adminId, characterId: ester.id } } })).duplicates).toBe(1);
+
+      const history = await api.get("/api/social/trades?box=history").set(bearer(user));
+      expect(history.body.content[0]).toMatchObject({ status: "ACCEPTED" });
+    });
+
+    it("limite diário de trocas e bloqueio cancela propostas e corta a conversa", async () => {
+      const { user, admin, userId, adminId } = await befriend();
+      const davi = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Davi" } });
+      await prisma.userSticker.create({ data: { userId, characterId: davi.id, duplicates: 5 } });
+      await prisma.gameSetting.updateMany({ where: { settingKey: "social.tradesPerDay" }, data: { settingValue: "1" } });
+
+      const gift1 = await api.post("/api/social/trades").set(bearer(user)).send({ toUserId: adminId, offeredCharacterId: davi.id });
+      const gift2 = await api.post("/api/social/trades").set(bearer(user)).send({ toUserId: adminId, offeredCharacterId: davi.id });
+      expect((await api.post(`/api/social/trades/${gift1.body.id}/accept`).set(bearer(admin))).status).toBe(200);
+      expect((await api.post(`/api/social/trades/${gift2.body.id}/accept`).set(bearer(admin))).body.message).toMatch(/trocas hoje/);
+
+      await api.post(`/api/social/friends/${userId}/block`).set(bearer(admin));
+      expect((await prisma.trade.findUniqueOrThrow({ where: { id: gift2.body.id } })).status).toBe("CANCELLED");
+      expect((await api.post(`/api/social/chat/${adminId}`).set(bearer(user)).send({ text: "oi" })).status).toBe(403);
+      const code = (await api.get("/api/social/me").set(bearer(admin))).body.friendCode;
+      expect((await api.post("/api/social/friends/request").set(bearer(user)).send({ code })).body.message).toBe("Não foi possível adicionar este jogador");
+      expect((await api.get("/api/social/friends/requests").set(bearer(admin))).body.blocked).toHaveLength(1);
+    });
+  });
+
   describe("anotações e ranking", () => {
     it("cria e edita anotações próprias", async () => {
       const token = await login("user@email.com");

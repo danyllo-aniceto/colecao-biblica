@@ -47,6 +47,10 @@ export const SETTINGS = {
   leagueFirstCoins: { key: "league.firstCoins", defaultValue: 500, description: "Moedas do 1º lugar da liga semanal", kind: "int" },
   leagueSecondCoins: { key: "league.secondCoins", defaultValue: 300, description: "Moedas do 2º lugar da liga semanal", kind: "int" },
   leagueThirdCoins: { key: "league.thirdCoins", defaultValue: 150, description: "Moedas do 3º lugar da liga semanal", kind: "int" },
+  chatEnabled: { key: "social.chatEnabled", defaultValue: 1, description: "Conversa entre amigos ligada (1) ou desligada (0)", kind: "int" },
+  tradesPerDay: { key: "social.tradesPerDay", defaultValue: 5, description: "Trocas/presentes concluídos por jogador por dia", kind: "int" },
+  maxPendingTrades: { key: "social.maxPendingTrades", defaultValue: 10, description: "Propostas de troca abertas por jogador", kind: "int" },
+  tradeExpireDays: { key: "social.tradeExpireDays", defaultValue: 7, description: "Dias até uma proposta de troca expirar", kind: "int" },
 } satisfies Record<string, SettingDefinition>;
 
 export type SettingName = keyof typeof SETTINGS;
