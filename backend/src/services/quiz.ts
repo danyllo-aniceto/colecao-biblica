@@ -6,18 +6,22 @@ import {
   applyCharacterStudyPercent,
   availableSeconds,
   calculateLevel,
+  calculateMatchCoins,
   calculateScore,
   calculateXp,
   dayRangeInTimeZone,
   isTimeExpired,
+  pickFiftyFiftyRemovals,
   reachedStickerAccuracy,
   remainingSeconds,
   requiredCorrectAnswersForReward,
   shuffle,
   weightedPick,
 } from "./game-rules";
+import { checkAchievements } from "./achievements";
 import { applyReward, availableRewards, grantStickerIfMissing, walletData } from "./rewards";
 import { getSettings, type GameSettings } from "./settings";
+import { pageOf } from "../lib/pagination";
 
 type Tx = Prisma.TransactionClient;
 
@@ -45,6 +49,8 @@ function toQuestionView(session: QuizSession, question: Question) {
     optionB: question.optionB,
     optionC: question.optionC,
     optionD: question.optionD,
+    // Alternativas eliminadas pela dica 50/50 nesta pergunta.
+    removedOptions: session.fiftyFiftyQuestionId === question.id && session.fiftyFiftyRemoved ? session.fiftyFiftyRemoved.split("") : [],
   };
 }
 
@@ -62,6 +68,8 @@ function toStatusResponse(session: QuizSession, currentQuestion: Question | null
     extraTimeUsed: session.extraTimeUsed,
     extraLifeUsed: session.extraLifeUsed,
     xpMultiplierUsed: session.xpMultiplierUsed,
+    fiftyFiftyUsed: session.fiftyFiftyUsed,
+    characterId: session.characterId,
     currentQuestion: currentQuestion ? toQuestionView(session, currentQuestion) : null,
   };
 }
@@ -99,6 +107,17 @@ async function getCurrentQuestion(db: Db, session: QuizSession): Promise<Questio
   return question;
 }
 
+/**
+ * O cronômetro de cada pergunta só começa quando ela é mostrada: depois de
+ * responder, o jogador vê o gabarito com calma e pede a próxima.
+ */
+async function ensureQuestionStarted(db: Db, session: QuizSession): Promise<QuizSession> {
+  if (session.status !== "IN_PROGRESS" || session.currentQuestionStartedAt) {
+    return session;
+  }
+  return db.quizSession.update({ where: { id: session.id }, data: { currentQuestionStartedAt: new Date() } });
+}
+
 function ensureInProgress(session: QuizSession) {
   if (session.status !== "IN_PROGRESS") {
     throw badRequest("Sessão de quiz já finalizada");
@@ -118,7 +137,7 @@ export async function startSession(user: User, input: StartInput) {
     if (!input.characterId) {
       throw badRequest("characterId é obrigatório no quiz de personagem");
     }
-    const character = await prisma.biblicalCharacter.findUnique({ where: { id: input.characterId }, select: { id: true } });
+    const character = await prisma.biblicalCharacter.findFirst({ where: { id: input.characterId, published: true }, select: { id: true } });
     if (!character) {
       throw notFound("Personagem não encontrado");
     }
@@ -130,7 +149,7 @@ export async function startSession(user: User, input: StartInput) {
     select: { id: true },
   });
   if (available.length === 0) {
-    throw badRequest("Não há perguntas disponíveis para iniciar a sessão");
+    throw badRequest(characterId ? "Este personagem ainda não tem perguntas. Escolha outro." : "Não há perguntas disponíveis para iniciar a sessão");
   }
 
   const selected = shuffle(available.map((question) => question.id)).slice(0, questionLimit);
@@ -171,7 +190,7 @@ export async function startSession(user: User, input: StartInput) {
 }
 
 export async function getSessionStatus(user: User, sessionId: number) {
-  const session = await getOwnedSession(prisma, sessionId, user.id);
+  const session = await ensureQuestionStarted(prisma, await getOwnedSession(prisma, sessionId, user.id));
   const question = session.status === "IN_PROGRESS" ? await getCurrentQuestion(prisma, session) : null;
   return toStatusResponse(session, question);
 }
@@ -184,7 +203,8 @@ export async function getActiveSession(user: User) {
   if (!session) {
     throw notFound("Nenhuma sessão ativa encontrada");
   }
-  return toStatusResponse(session, await getCurrentQuestion(prisma, session));
+  const started = await ensureQuestionStarted(prisma, session);
+  return toStatusResponse(started, await getCurrentQuestion(prisma, started));
 }
 
 type AnswerInput = {
@@ -241,7 +261,8 @@ export async function answerQuestion(userId: number, sessionId: number, input: A
     }
 
     session.currentQuestionIndex += 1;
-    session.currentQuestionStartedAt = new Date();
+    // A próxima pergunta só começa a contar quando for pedida (POST /next).
+    session.currentQuestionStartedAt = null;
     session.currentQuestionExtraSeconds = 0;
 
     const finished = session.livesRemaining <= 0 || session.currentQuestionIndex >= session.totalQuestions;
@@ -280,8 +301,6 @@ export async function answerQuestion(userId: number, sessionId: number, input: A
         })
       : null;
 
-    const nextQuestion = finished ? null : toQuestionView(saved, await getCurrentQuestion(tx, saved));
-
     return {
       correct,
       timedOut,
@@ -292,9 +311,53 @@ export async function answerQuestion(userId: number, sessionId: number, input: A
       extraTimeUsed: saved.extraTimeUsed,
       extraLifeUsed: saved.extraLifeUsed,
       xpMultiplierUsed: saved.xpMultiplierUsed,
-      nextQuestion,
+      // A resposta já foi registrada: pode mostrar o gabarito e a explicação.
+      correctOption: question.correctOption,
+      explanation: question.explanation,
+      bibleReference: question.bibleReference,
+      fiftyFiftyUsed: saved.fiftyFiftyUsed,
+      hasNextQuestion: !finished,
       matchResult,
     };
+  });
+}
+
+/** Mostra a próxima pergunta e inicia o cronômetro dela. */
+export async function nextQuestion(userId: number, sessionId: number) {
+  return transaction(async (tx) => {
+    const session = await getOwnedSession(tx, sessionId, userId, true);
+    ensureInProgress(session);
+    const started = await ensureQuestionStarted(tx, session);
+    return toStatusResponse(started, await getCurrentQuestion(tx, started));
+  });
+}
+
+/** Consome uma dica 50/50 e elimina duas alternativas erradas da pergunta atual. */
+export async function useFiftyFifty(userId: number, sessionId: number) {
+  return transaction(async (tx) => {
+    const session = await getOwnedSession(tx, sessionId, userId, true);
+    ensureInProgress(session);
+    if (session.fiftyFiftyUsed) {
+      throw badRequest("A dica 50/50 já foi usada nesta partida");
+    }
+
+    await lockUser(tx, userId);
+    const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
+    if (user.hintBoosts <= 0) {
+      throw badRequest("Você não possui dicas 50/50");
+    }
+
+    const question = await getCurrentQuestion(tx, session);
+    if (isTimeExpired(timerOf(session, question))) {
+      throw badRequest("O tempo desta pergunta já acabou");
+    }
+
+    await tx.user.update({ where: { id: userId }, data: { hintBoosts: user.hintBoosts - 1 } });
+    const saved = await tx.quizSession.update({
+      where: { id: session.id },
+      data: { fiftyFiftyUsed: true, fiftyFiftyQuestionId: question.id, fiftyFiftyRemoved: pickFiftyFiftyRemovals(question.correctOption).join("") },
+    });
+    return toStatusResponse(saved, question);
   });
 }
 
@@ -343,6 +406,35 @@ export async function abandonSession(userId: number, sessionId: number) {
   });
 }
 
+/** Histórico paginado das partidas terminadas. */
+export async function getMatchesPage(userId: number, page: number, size: number) {
+  const take = Math.max(1, Math.min(size, 50));
+  const skip = Math.max(0, page) * take;
+  const [matches, total] = await Promise.all([
+    prisma.quizMatch.findMany({ where: { userId }, orderBy: { finishedAt: "desc" }, skip, take }),
+    prisma.quizMatch.count({ where: { userId } }),
+  ]);
+  return pageOf(
+    matches.map((match) => ({
+      matchId: match.id,
+      quizType: match.quizType,
+      startedAt: match.startedAt,
+      finishedAt: match.finishedAt,
+      questionsAnswered: match.questionsAnswered,
+      correctAnswers: match.correctAnswers,
+      wrongAnswers: match.wrongAnswers,
+      xpGained: match.xpGained,
+      scoreGained: match.scoreGained,
+      coinsGained: match.coinsGained,
+      rewardGranted: match.rewardGranted,
+      rewardGrantedName: match.rewardGrantedName,
+    })),
+    total,
+    Math.max(0, page),
+    take,
+  );
+}
+
 export async function getHistory(userId: number, limit: number) {
   const take = Math.max(1, Math.min(limit, 100));
   const [sessions, matches] = await Promise.all([
@@ -372,6 +464,7 @@ export async function getHistory(userId: number, limit: number) {
       wrongAnswers: match.wrongAnswers,
       xpGained: match.xpGained,
       scoreGained: match.scoreGained,
+      coinsGained: match.coinsGained,
       rewardGranted: match.rewardGranted,
       rewardGrantedName: match.rewardGrantedName,
     })),
@@ -399,6 +492,11 @@ async function rewardedMatchesToday(tx: Tx, userId: number) {
   });
 }
 
+async function coinMatchesToday(tx: Tx, userId: number) {
+  const { start, end } = dayRangeInTimeZone(new Date(), env.timezone);
+  return tx.quizMatch.count({ where: { userId, coinsGained: { gt: 0 }, finishedAt: { gte: start, lt: end } } });
+}
+
 export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, stats: MatchStats, random: () => number = Math.random) {
   let xp = calculateXp(stats.correctAnswers, stats.questionsAnswered, stats.xpMultiplier);
   const score = calculateScore(stats.correctAnswers, stats.wrongAnswers);
@@ -409,7 +507,9 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
   let rewardCharacterId: number | null = null;
   let rewardCharacterName: string | null = null;
   let rewardCharacterRarity: string | null = null;
+  let rewardCharacterImageUrl: string | null = null;
   let rewardCharacterUnlocked = false;
+  let duplicateCoins = 0;
 
   if (stats.quizType === "CHARACTER_STUDY") {
     xp = applyCharacterStudyPercent(xp, settings.characterStudyXpPercent);
@@ -422,6 +522,7 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
         rewardCharacterId = character.id;
         rewardCharacterName = character.name;
         rewardCharacterRarity = character.rarity;
+        rewardCharacterImageUrl = character.imageUrl;
         rewardCharacterUnlocked = await grantStickerIfMissing(tx, user.id, character.id);
       }
     }
@@ -433,8 +534,19 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
     extraLifeBoosts: user.extraLifeBoosts,
     extraTimeBoosts: user.extraTimeBoosts,
     doubleXpBoosts: user.doubleXpBoosts,
+    hintBoosts: user.hintBoosts,
   };
   const totalXp = user.xp + xp;
+
+  // Moedas por acerto: toda partida conta, até o limite diário (evita "farmar" o mesmo quiz).
+  let coinsGained = 0;
+  if (stats.correctAnswers > 0 && (await coinMatchesToday(tx, user.id)) < settings.coinMatchLimitPerDay) {
+    coinsGained = calculateMatchCoins(stats.correctAnswers, stats.wrongAnswers, settings);
+    if (stats.quizType === "CHARACTER_STUDY") {
+      coinsGained = applyCharacterStudyPercent(coinsGained, settings.characterStudyXpPercent);
+    }
+    wallet.coins += coinsGained;
+  }
 
   const dailyLimit = settings.rewardMatchLimitPerDay;
   if (stats.quizType === "GENERAL") {
@@ -451,7 +563,9 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
         rewardCharacterId = applied.characterId;
         rewardCharacterName = applied.characterName;
         rewardCharacterRarity = applied.characterRarity;
+        rewardCharacterImageUrl = applied.characterImageUrl;
         rewardCharacterUnlocked = applied.characterUnlocked;
+        duplicateCoins = applied.duplicateCoins;
       }
     }
   }
@@ -477,10 +591,14 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
       wrongAnswers: stats.wrongAnswers,
       xpGained: xp,
       scoreGained: score,
+      coinsGained,
       rewardGranted,
       rewardGrantedName: rewardName,
     },
   });
+
+  const unlockedAchievements = await checkAchievements(tx, user.id);
+  const achievementCoins = unlockedAchievements.reduce((sum, achievement) => sum + achievement.coins, 0);
 
   return {
     matchId: match.id,
@@ -492,10 +610,14 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
     rewardCharacterId,
     rewardCharacterName,
     rewardCharacterRarity,
+    rewardCharacterImageUrl,
     rewardCharacterUnlocked,
+    coinsGained,
+    duplicateCoins,
+    unlockedAchievements,
     userXp: updated.xp,
     userLevel: updated.level,
-    userCoins: updated.coins,
+    userCoins: updated.coins + achievementCoins,
     rewardMatchesUsedToday: await rewardedMatchesToday(tx, user.id),
     rewardMatchesLimitPerDay: dailyLimit,
   };

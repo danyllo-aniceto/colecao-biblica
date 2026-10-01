@@ -25,6 +25,21 @@ export const SETTINGS = {
     description: "Aproveitamento mínimo (%) no quiz de personagem para ganhar a figurinha",
     kind: "int",
   },
+  maxHintBoosts: { key: "reward.boost.maxHint", defaultValue: 5, description: "Máximo de dicas 50/50 acumuladas por usuário", kind: "int" },
+  coinsPerCorrectAnswer: { key: "economy.coinsPerCorrectAnswer", defaultValue: 2, description: "Moedas por acerto ao terminar uma partida", kind: "int" },
+  perfectMatchBonusCoins: { key: "economy.perfectMatchBonusCoins", defaultValue: 15, description: "Moedas extras por partida sem erros (mínimo de 5 perguntas)", kind: "int" },
+  coinMatchLimitPerDay: { key: "economy.coinMatchLimitPerDay", defaultValue: 10, description: "Partidas por dia que rendem moedas por acerto", kind: "int" },
+  duplicateCoinsCommon: { key: "economy.duplicateCoins.common", defaultValue: 15, description: "Moedas por figurinha comum repetida", kind: "int" },
+  duplicateCoinsRare: { key: "economy.duplicateCoins.rare", defaultValue: 40, description: "Moedas por figurinha rara repetida", kind: "int" },
+  duplicateCoinsEpic: { key: "economy.duplicateCoins.epic", defaultValue: 90, description: "Moedas por figurinha épica repetida", kind: "int" },
+  duplicateCoinsLegendary: { key: "economy.duplicateCoins.legendary", defaultValue: 200, description: "Moedas por figurinha lendária repetida", kind: "int" },
+  dailyRewardBaseCoins: { key: "daily.baseCoins", defaultValue: 20, description: "Moedas do prêmio diário no 1º dia da sequência", kind: "int" },
+  dailyRewardStepCoins: { key: "daily.stepCoins", defaultValue: 10, description: "Moedas a mais por dia seguido (dias 2 a 6)", kind: "int" },
+  dailyRewardDay7Coins: { key: "daily.day7Coins", defaultValue: 120, description: "Moedas do 7º dia seguido (também dá 1 dica 50/50)", kind: "int" },
+  packOddsCommon: { key: "pack.odds.common", defaultValue: 60, description: "Peso da raridade comum no pacote surpresa", kind: "int" },
+  packOddsRare: { key: "pack.odds.rare", defaultValue: 28, description: "Peso da raridade rara no pacote surpresa", kind: "int" },
+  packOddsEpic: { key: "pack.odds.epic", defaultValue: 10, description: "Peso da raridade épica no pacote surpresa", kind: "int" },
+  packOddsLegendary: { key: "pack.odds.legendary", defaultValue: 2, description: "Peso da raridade lendária no pacote surpresa", kind: "int" },
 } satisfies Record<string, SettingDefinition>;
 
 export type SettingName = keyof typeof SETTINGS;

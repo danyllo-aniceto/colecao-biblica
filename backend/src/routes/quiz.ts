@@ -2,7 +2,19 @@ import { Router } from "express";
 import { optionLetter, parseId, parseIntQuery, z } from "../lib/validation";
 import { currentUser } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
-import { abandonSession, answerQuestion, getActiveSession, getHistory, getSessionStatus, startSession, useExtraTime } from "../services/quiz";
+import { readPage } from "../lib/pagination";
+import {
+  abandonSession,
+  answerQuestion,
+  getActiveSession,
+  getHistory,
+  getMatchesPage,
+  getSessionStatus,
+  nextQuestion,
+  startSession,
+  useExtraTime,
+  useFiftyFifty,
+} from "../services/quiz";
 
 export const quizRouter = Router();
 
@@ -49,9 +61,23 @@ quizRouter.post(
 );
 
 quizRouter.post(
+  "/sessions/:id/next",
+  asyncHandler(async (req, res) => {
+    res.json(await nextQuestion(currentUser(req).id, parseId(req.params.id)));
+  }),
+);
+
+quizRouter.post(
   "/sessions/:id/extra-time",
   asyncHandler(async (req, res) => {
     res.json(await useExtraTime(currentUser(req).id, parseId(req.params.id)));
+  }),
+);
+
+quizRouter.post(
+  "/sessions/:id/fifty-fifty",
+  asyncHandler(async (req, res) => {
+    res.json(await useFiftyFifty(currentUser(req).id, parseId(req.params.id)));
   }),
 );
 
@@ -66,5 +92,13 @@ quizRouter.get(
   "/history",
   asyncHandler(async (req, res) => {
     res.json(await getHistory(currentUser(req).id, parseIntQuery(req.query.limit, 20)));
+  }),
+);
+
+quizRouter.get(
+  "/matches",
+  asyncHandler(async (req, res) => {
+    const { page, size } = readPage(req, 10, 50);
+    res.json(await getMatchesPage(currentUser(req).id, page, size));
   }),
 );

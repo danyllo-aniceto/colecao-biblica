@@ -2,10 +2,13 @@ import express from "express";
 import cors from "cors";
 import { requireAdmin, requireAuth } from "./middleware/auth";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
+import { achievementsRouter } from "./routes/achievements";
+import { adminRouter } from "./routes/admin";
 import { authRouter } from "./routes/auth";
 import { charactersRouter } from "./routes/characters";
 import { collectionRouter } from "./routes/collection";
 import { commentsRouter } from "./routes/comments";
+import { dailyRouter } from "./routes/daily";
 import { questionsRouter } from "./routes/questions";
 import { quizRouter } from "./routes/quiz";
 import { rankingRouter } from "./routes/ranking";
@@ -21,8 +24,8 @@ export function createApp() {
   app.set("trust proxy", 1);
   app.disable("x-powered-by");
   app.use(cors());
-  // Imagens sem Vercel Blob vão como data URL no corpo: limite folgado.
-  app.use(express.json({ limit: "8mb" }));
+  // Textos ricos podem trazer imagens antigas em data URL: limite folgado.
+  app.use(express.json({ limit: "4mb" }));
 
   // Respostas da API nunca ficam em cache de CDN (o service worker cuida do offline).
   app.use("/api", (_req, res, next) => {
@@ -49,6 +52,9 @@ export function createApp() {
   app.use("/api/collection", requireAuth, collectionRouter);
   app.use("/api/comments", requireAuth, commentsRouter);
   app.use("/api/ranking", requireAuth, rankingRouter);
+  app.use("/api/daily-reward", requireAuth, dailyRouter);
+  app.use("/api/achievements", requireAuth, achievementsRouter);
+  app.use("/api/admin", requireAuth, requireAdmin, adminRouter);
 
   app.use("/api", notFoundHandler);
   app.use(errorHandler);

@@ -2,38 +2,48 @@ import { Router } from "express";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../db/prisma";
 import { badRequest, notFound } from "../lib/errors";
-import { parseId, requiredText, z } from "../lib/validation";
+import { pageOf, queryText, readPage } from "../lib/pagination";
+import { clearableText, parseId, requiredText, richText, z } from "../lib/validation";
 import { currentUser, requireAdmin } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
-import { toCharacterResponse } from "../services/mappers";
+import { toCharacterResponse, toCharacterSummary } from "../services/mappers";
 
 export const charactersRouter = Router();
 
 const rarity = z.enum(["COMMON", "RARE", "EPIC", "LEGENDARY"]);
-const freeText = z.string().nullish();
+const testament = z.enum(["OLD", "NEW"]);
+
+// Campos opcionais: ausente não altera; null ou vazio limpa.
+const optionalFields = {
+  imageUrl: clearableText(2048),
+  testament: testament.nullish(),
+  bibleBooks: clearableText(),
+  bibleReferences: clearableText(),
+  historicalPeriod: clearableText(200),
+  narrativeRole: clearableText(200),
+  genealogy: clearableText(),
+  curiosities: clearableText(),
+  importantEvents: clearableText(),
+  keyVerses: clearableText(1000),
+  keywords: clearableText(1000),
+};
 
 const createSchema = z.object({
   name: requiredText(150),
-  imageUrl: z.string().nullish(),
   rarity,
-  shortSummary: requiredText(),
-  fullDescription: requiredText(),
-  bibleBooks: freeText,
-  bibleReferences: freeText,
-  historicalPeriod: freeText,
-  narrativeRole: freeText,
-  genealogy: freeText,
-  curiosities: freeText,
-  importantEvents: freeText,
-  keyVerses: freeText,
-  keywords: freeText,
+  published: z.boolean().optional(),
+  shortSummary: richText(),
+  fullDescription: richText(),
+  ...optionalFields,
 });
 
-const updateSchema = createSchema.partial().extend({
+const updateSchema = z.object({
   name: requiredText(150).optional(),
-  imageUrl: z.string().min(1).optional(),
-  shortSummary: requiredText().optional(),
-  fullDescription: requiredText().optional(),
+  rarity: rarity.optional(),
+  published: z.boolean().optional(),
+  shortSummary: richText().optional(),
+  fullDescription: richText().optional(),
+  ...optionalFields,
 });
 
 async function ensureNameAvailable(name: string, exceptId?: number) {
@@ -54,21 +64,69 @@ async function getCharacter(id: number) {
   return character;
 }
 
-/** Campos opcionais: `null`/ausente não altera (mesma regra da API antiga). */
-function definedOnly<T extends Record<string, unknown>>(input: T) {
-  return Object.fromEntries(Object.entries(input).filter(([, value]) => value !== undefined && value !== null)) as Partial<T>;
+/** Remove só os campos ausentes (undefined); null significa "limpar". */
+function withoutUndefined<T extends Record<string, unknown>>(input: T) {
+  return Object.fromEntries(Object.entries(input).filter(([, value]) => value !== undefined)) as Partial<T>;
 }
 
+/** Quantidade de perguntas ativas por personagem. */
+async function activeQuestionCounts(characterIds?: number[]) {
+  const groups = await prisma.question.groupBy({
+    by: ["relatedCharacterId"],
+    where: { active: true, relatedCharacterId: characterIds ? { in: characterIds } : { not: null } },
+    _count: { _all: true },
+  });
+  return new Map(groups.map((group) => [group.relatedCharacterId, group._count._all]));
+}
+
+// ---------------------------------------------------------------------------
+// Admin (antes de "/:id" para não colidir)
+// ---------------------------------------------------------------------------
+
+/** Lista paginada do painel, com filtros e contagem de perguntas. */
 charactersRouter.get(
-  "/",
+  "/admin/list",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const { page, size, skip, take } = readPage(req, 10, 100);
+    const search = queryText(req.query.search);
+    const rarityFilter = queryText(req.query.rarity)?.toUpperCase();
+    const status = queryText(req.query.status);
+    const issue = queryText(req.query.issue);
+
+    const where: Prisma.BiblicalCharacterWhereInput = {
+      ...(search ? { name: { contains: search, mode: "insensitive" } } : {}),
+      ...(rarityFilter ? { rarity: rarity.parse(rarityFilter) } : {}),
+      ...(status === "published" ? { published: true } : status === "draft" ? { published: false } : {}),
+      ...(issue === "noImage" ? { OR: [{ imageUrl: null }, { imageUrl: "" }] } : {}),
+      ...(issue === "noQuestions" ? { questions: { none: { active: true } } } : {}),
+    };
+
+    const [characters, total] = await Promise.all([
+      prisma.biblicalCharacter.findMany({ where, orderBy: [{ name: "asc" }, { id: "asc" }], skip, take }),
+      prisma.biblicalCharacter.count({ where }),
+    ]);
+    const counts = await activeQuestionCounts(characters.map((character) => character.id));
+    res.json(pageOf(characters.map((character) => toCharacterSummary(character, counts.get(character.id) ?? 0)), total, page, size));
+  }),
+);
+
+/** Todos os personagens (id, nome, raridade) para os seletores do painel. */
+charactersRouter.get(
+  "/admin/options",
+  requireAdmin,
   asyncHandler(async (_req, res) => {
-    const characters = await prisma.biblicalCharacter.findMany({ orderBy: { id: "asc" } });
-    res.json(characters.map(toCharacterResponse));
+    const characters = await prisma.biblicalCharacter.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, rarity: true, published: true },
+    });
+    res.json(characters);
   }),
 );
 
 charactersRouter.get(
-  "/:id",
+  "/admin/:id",
+  requireAdmin,
   asyncHandler(async (req, res) => {
     res.json(toCharacterResponse(await getCharacter(parseId(req.params.id))));
   }),
@@ -81,7 +139,7 @@ charactersRouter.post(
     const input = createSchema.parse(req.body);
     await ensureNameAvailable(input.name);
     const character = await prisma.biblicalCharacter.create({
-      data: { ...input, createdBy: currentUser(req).email } as Prisma.BiblicalCharacterCreateInput,
+      data: { ...withoutUndefined(input), createdBy: currentUser(req).email } as Prisma.BiblicalCharacterCreateInput,
     });
     res.status(201).json(toCharacterResponse(character));
   }),
@@ -98,7 +156,7 @@ charactersRouter.put(
     }
     const updated = await prisma.biblicalCharacter.update({
       where: { id: character.id },
-      data: definedOnly(input) as Prisma.BiblicalCharacterUpdateInput,
+      data: withoutUndefined(input) as Prisma.BiblicalCharacterUpdateInput,
     });
     res.json(toCharacterResponse(updated));
   }),
@@ -112,5 +170,31 @@ charactersRouter.delete(
     // Perguntas do personagem passam a ser gerais; figurinhas e anotações dele são removidas.
     await prisma.biblicalCharacter.delete({ where: { id: character.id } });
     res.status(204).end();
+  }),
+);
+
+// ---------------------------------------------------------------------------
+// Jogador
+// ---------------------------------------------------------------------------
+
+/** Álbum: só os publicados, em versão leve (os textos longos vêm no detalhe). */
+charactersRouter.get(
+  "/",
+  asyncHandler(async (_req, res) => {
+    const characters = await prisma.biblicalCharacter.findMany({ where: { published: true }, orderBy: [{ name: "asc" }, { id: "asc" }] });
+    const counts = await activeQuestionCounts();
+    res.json(characters.map((character) => toCharacterSummary(character, counts.get(character.id) ?? 0)));
+  }),
+);
+
+charactersRouter.get(
+  "/:id",
+  asyncHandler(async (req, res) => {
+    const character = await getCharacter(parseId(req.params.id));
+    // Rascunhos só aparecem para o admin.
+    if (!character.published && currentUser(req).role !== "ADMIN") {
+      throw notFound("Personagem não encontrado");
+    }
+    res.json(toCharacterResponse(character));
   }),
 );

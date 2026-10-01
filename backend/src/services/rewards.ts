@@ -1,6 +1,7 @@
 import type { BiblicalCharacter, Prisma, RewardDefinition, RewardType, ShopItemType, StickerRarity, User } from "@prisma/client";
 import type { Db } from "../db/prisma";
 import { badRequest } from "../lib/errors";
+import { duplicateStickerCoins, pickPackRarity } from "./game-rules";
 import type { GameSettings } from "./settings";
 
 export type RewardApplication = {
@@ -9,11 +10,17 @@ export type RewardApplication = {
   characterId: number | null;
   characterName: string | null;
   characterRarity: StickerRarity | null;
+  characterImageUrl: string | null;
   characterUnlocked: boolean;
+  /** Moedas recebidas porque a figurinha sorteada já era do jogador. */
+  duplicateCoins: number;
 };
 
 /** Campos do usuário que as recompensas alteram. */
-export type UserWallet = Pick<User, "id" | "coins" | "extraLifeBoosts" | "extraTimeBoosts" | "doubleXpBoosts">;
+export type UserWallet = Pick<User, "id" | "coins" | "extraLifeBoosts" | "extraTimeBoosts" | "doubleXpBoosts" | "hintBoosts">;
+
+/** Só figurinhas publicadas entram no jogo (rascunhos ficam no painel). */
+const PUBLISHED = { published: true } as const;
 
 async function ownedCharacterIds(db: Db, userId: number): Promise<Set<number>> {
   const stickers = await db.userSticker.findMany({ where: { userId }, select: { characterId: true } });
@@ -26,22 +33,50 @@ export async function grantStickerIfMissing(db: Db, userId: number, characterId:
   return result.count > 0;
 }
 
-async function pickStickerCharacter(db: Db, userId: number, reward: RewardDefinition, random: () => number): Promise<BiblicalCharacter> {
+async function randomCharacterOfRarity(db: Db, userId: number, rarity: StickerRarity, random: () => number): Promise<BiblicalCharacter | null> {
+  const byRarity = await db.biblicalCharacter.findMany({ where: { rarity, ...PUBLISHED }, orderBy: { id: "asc" } });
+  if (byRarity.length === 0) {
+    return null;
+  }
+  // Prefere figurinhas que o usuário ainda não tem.
+  const owned = await ownedCharacterIds(db, userId);
+  const missing = byRarity.filter((character) => !owned.has(character.id));
+  const pool = missing.length > 0 ? missing : byRarity;
+  return pool[Math.floor(random() * pool.length)];
+}
+
+async function publishedRarities(db: Db): Promise<Set<StickerRarity>> {
+  const byRarity = await db.biblicalCharacter.groupBy({ by: ["rarity"], where: PUBLISHED, _count: { _all: true } });
+  return new Set(byRarity.filter((group) => group._count._all > 0).map((group) => group.rarity));
+}
+
+async function pickStickerCharacter(
+  db: Db,
+  userId: number,
+  reward: RewardDefinition,
+  settings: GameSettings,
+  random: () => number,
+): Promise<BiblicalCharacter> {
+  if (reward.rewardType === "STICKER_PACK") {
+    const rarity = pickPackRarity(settings, await publishedRarities(db), random);
+    const character = rarity ? await randomCharacterOfRarity(db, userId, rarity, random) : null;
+    if (character) {
+      return character;
+    }
+    throw badRequest("Ainda não há figurinhas para o pacote surpresa");
+  }
+
   if (reward.stickerCharacterId) {
-    const character = await db.biblicalCharacter.findUnique({ where: { id: reward.stickerCharacterId } });
+    const character = await db.biblicalCharacter.findFirst({ where: { id: reward.stickerCharacterId, ...PUBLISHED } });
     if (character) {
       return character;
     }
   }
 
   if (reward.stickerRarity) {
-    const byRarity = await db.biblicalCharacter.findMany({ where: { rarity: reward.stickerRarity }, orderBy: { id: "asc" } });
-    if (byRarity.length > 0) {
-      // Prefere figurinhas que o usuário ainda não tem.
-      const owned = await ownedCharacterIds(db, userId);
-      const missing = byRarity.filter((character) => !owned.has(character.id));
-      const pool = missing.length > 0 ? missing : byRarity;
-      return pool[Math.floor(random() * pool.length)];
+    const character = await randomCharacterOfRarity(db, userId, reward.stickerRarity, random);
+    if (character) {
+      return character;
     }
   }
 
@@ -65,7 +100,9 @@ export async function applyReward(
     characterId: null,
     characterName: null,
     characterRarity: null,
+    characterImageUrl: null,
     characterUnlocked: false,
+    duplicateCoins: 0,
   };
 
   switch (reward.rewardType) {
@@ -81,15 +118,23 @@ export async function applyReward(
     case "XP_MULTIPLIER":
       wallet.doubleXpBoosts = Math.min(wallet.doubleXpBoosts + 1, settings.maxDoubleXpBoosts);
       return base;
-    case "STICKER": {
-      const character = await pickStickerCharacter(db, wallet.id, reward, random);
+    case "FIFTY_FIFTY":
+      wallet.hintBoosts = Math.min(wallet.hintBoosts + Math.max(reward.hintAmount ?? 0, 1), settings.maxHintBoosts);
+      return base;
+    case "STICKER":
+    case "STICKER_PACK": {
+      const character = await pickStickerCharacter(db, wallet.id, reward, settings, random);
       const unlocked = await grantStickerIfMissing(db, wallet.id, character.id);
+      const duplicateCoins = unlocked ? 0 : duplicateStickerCoins(character.rarity, settings);
+      wallet.coins += duplicateCoins;
       return {
         ...base,
         characterId: character.id,
         characterName: character.name,
         characterRarity: character.rarity,
+        characterImageUrl: character.imageUrl,
         characterUnlocked: unlocked,
+        duplicateCoins,
       };
     }
   }
@@ -101,17 +146,18 @@ export function walletData(wallet: UserWallet): Prisma.UserUpdateInput {
     extraLifeBoosts: wallet.extraLifeBoosts,
     extraTimeBoosts: wallet.extraTimeBoosts,
     doubleXpBoosts: wallet.doubleXpBoosts,
+    hintBoosts: wallet.hintBoosts,
   };
 }
 
 /**
  * Recompensas que podem sair no sorteio agora: figurinha de uma raridade sem
- * nenhum personagem cadastrado fica de fora (senão a partida terminaria em erro).
+ * nenhum personagem publicado fica de fora (senão a partida terminaria em erro).
  */
 export async function availableRewards(db: Db, rewards: RewardDefinition[]): Promise<RewardDefinition[]> {
-  const byRarity = await db.biblicalCharacter.groupBy({ by: ["rarity"], _count: { _all: true } });
-  const rarities = new Set(byRarity.filter((group) => group._count._all > 0).map((group) => group.rarity));
+  const rarities = await publishedRarities(db);
   return rewards.filter((reward) => {
+    if (reward.rewardType === "STICKER_PACK") return rarities.size > 0;
     if (reward.rewardType !== "STICKER") return true;
     if (reward.stickerCharacterId) return true;
     return reward.stickerRarity !== null && rarities.has(reward.stickerRarity);
@@ -130,6 +176,12 @@ export async function ensureRewardIsUseful(db: Db, wallet: UserWallet, reward: R
     case "XP_MULTIPLIER":
       if (wallet.doubleXpBoosts >= settings.maxDoubleXpBoosts) throw badRequest("Você já atingiu o limite de bônus de XP em dobro");
       return;
+    case "FIFTY_FIFTY":
+      if (wallet.hintBoosts >= settings.maxHintBoosts) throw badRequest("Você já atingiu o limite de dicas 50/50");
+      return;
+    case "STICKER_PACK":
+      if ((await publishedRarities(db)).size === 0) throw badRequest("Ainda não há figurinhas para o pacote surpresa");
+      return;
     case "STICKER": {
       if (reward.stickerCharacterId) {
         const owned = await db.userSticker.findUnique({
@@ -139,7 +191,7 @@ export async function ensureRewardIsUseful(db: Db, wallet: UserWallet, reward: R
         return;
       }
       if (reward.stickerRarity) {
-        const byRarity = await db.biblicalCharacter.findMany({ where: { rarity: reward.stickerRarity }, select: { id: true } });
+        const byRarity = await db.biblicalCharacter.findMany({ where: { rarity: reward.stickerRarity, ...PUBLISHED }, select: { id: true } });
         if (byRarity.length === 0) throw badRequest("Ainda não há figurinhas desta raridade");
         const owned = await ownedCharacterIds(db, wallet.id);
         if (byRarity.every((character) => owned.has(character.id))) {
@@ -153,7 +205,7 @@ export async function ensureRewardIsUseful(db: Db, wallet: UserWallet, reward: R
   }
 }
 
-/** Loja não vende moedas nem figurinha lendária (essa só sai no sorteio). */
+/** Loja não vende moedas nem figurinha lendária direta (essa só sai no sorteio ou no pacote). */
 export function validateShopReward(reward: Pick<RewardDefinition, "rewardType" | "stickerRarity">) {
   if (reward.rewardType === "COINS") {
     throw badRequest("Itens de loja não podem conceder moedas");
@@ -171,6 +223,7 @@ type FixedReward = {
   extraLives: number;
   extraTimeSeconds: number;
   xpMultiplier: number;
+  hintAmount?: number;
   dropChance: number;
 };
 
@@ -183,6 +236,8 @@ export const FIXED_REWARDS: FixedReward[] = [
   { name: "XP em dobro", rewardType: "XP_MULTIPLIER", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 2, dropChance: 5 },
   { name: "Vida extra", rewardType: "EXTRA_LIFE", stickerRarity: null, coinAmount: 0, extraLives: 1, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 3 },
   { name: "Tempo extra", rewardType: "EXTRA_TIME", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 1, xpMultiplier: 1, dropChance: 2 },
+  { name: "Dica 50/50", rewardType: "FIFTY_FIFTY", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, hintAmount: 1, dropChance: 4 },
+  { name: "Pacote surpresa", rewardType: "STICKER_PACK", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 3 },
 ];
 
 type FixedShopItem = { name: string; description: string; itemType: ShopItemType; priceCoins: number; rewardName: string };
@@ -194,6 +249,14 @@ export const FIXED_SHOP_ITEMS: FixedShopItem[] = [
   { name: "XP em dobro", description: "Ativa um multiplicador de XP para a próxima partida", itemType: "GAME_BONUS", priceCoins: 220, rewardName: "XP em dobro" },
   { name: "Vida extra", description: "Adiciona uma vida extra consumível", itemType: "GAME_BONUS", priceCoins: 180, rewardName: "Vida extra" },
   { name: "Tempo extra", description: "Adiciona tempo extra consumível", itemType: "GAME_BONUS", priceCoins: 150, rewardName: "Tempo extra" },
+  { name: "Dica 50/50", description: "Elimina duas alternativas erradas de uma pergunta", itemType: "GAME_BONUS", priceCoins: 140, rewardName: "Dica 50/50" },
+  {
+    name: "Pacote surpresa",
+    description: "Uma figurinha de raridade sorteada, que pode até ser lendária. Repetida vira moedas.",
+    itemType: "STICKER",
+    priceCoins: 200,
+    rewardName: "Pacote surpresa",
+  },
 ];
 
 const sameName = (left: string, right: string) => left.localeCompare(right, "pt-BR", { sensitivity: "accent" }) === 0;
@@ -206,7 +269,7 @@ export async function ensureFixedRewards(db: Db) {
   const existing = await db.rewardDefinition.findMany();
   for (const fixed of FIXED_REWARDS) {
     const current = existing.find((reward) => sameName(reward.name, fixed.name));
-    const identity = { rewardType: fixed.rewardType, stickerRarity: fixed.stickerRarity, stickerCharacterId: null };
+    const identity = { rewardType: fixed.rewardType, stickerRarity: fixed.stickerRarity, stickerCharacterId: null, system: true };
     if (current) {
       await db.rewardDefinition.update({ where: { id: current.id }, data: identity });
     } else {
@@ -218,6 +281,7 @@ export async function ensureFixedRewards(db: Db) {
           extraLives: fixed.extraLives,
           extraTimeSeconds: fixed.extraTimeSeconds,
           xpMultiplier: fixed.xpMultiplier,
+          hintAmount: fixed.hintAmount ?? null,
           dropChance: fixed.dropChance,
           active: true,
         },
@@ -226,7 +290,7 @@ export async function ensureFixedRewards(db: Db) {
   }
 }
 
-/** Itens fixos da loja; itens com outros nomes ficam inativos. */
+/** Itens fixos da loja. Itens criados pelo admin (system = false) não são alterados. */
 export async function ensureFixedShopItems(db: Db) {
   const rewards = await db.rewardDefinition.findMany();
   const items = await db.shopItem.findMany();
@@ -237,7 +301,7 @@ export async function ensureFixedShopItems(db: Db) {
       validateShopReward(reward);
     }
     const current = items.find((item) => sameName(item.name, fixed.name));
-    const identity = { itemType: fixed.itemType, rewardDefinitionId: reward?.id ?? null };
+    const identity = { itemType: fixed.itemType, rewardDefinitionId: reward?.id ?? null, system: true };
     if (current) {
       await db.shopItem.update({ where: { id: current.id }, data: identity });
     } else {
@@ -245,10 +309,5 @@ export async function ensureFixedShopItems(db: Db) {
         data: { name: fixed.name, description: fixed.description, priceCoins: fixed.priceCoins, active: true, ...identity },
       });
     }
-  }
-
-  const extra = items.filter((item) => !FIXED_SHOP_ITEMS.some((fixed) => sameName(fixed.name, item.name)) && item.active);
-  if (extra.length > 0) {
-    await db.shopItem.updateMany({ where: { id: { in: extra.map((item) => item.id) } }, data: { active: false } });
   }
 }

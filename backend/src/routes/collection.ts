@@ -9,7 +9,8 @@ collectionRouter.get(
   "/my",
   asyncHandler(async (req, res) => {
     const stickers = await prisma.userSticker.findMany({
-      where: { userId: currentUser(req).id },
+      // Figurinha de personagem que voltou a ser rascunho some do álbum até ser republicada.
+      where: { userId: currentUser(req).id, character: { published: true } },
       include: { character: { select: { id: true, name: true, imageUrl: true, rarity: true } } },
       orderBy: { acquiredAt: "asc" },
     });
@@ -28,7 +29,10 @@ collectionRouter.get(
 collectionRouter.get(
   "/my/progress",
   asyncHandler(async (req, res) => {
-    const [owned, total] = await Promise.all([prisma.userSticker.count({ where: { userId: currentUser(req).id } }), prisma.biblicalCharacter.count()]);
+    const [owned, total] = await Promise.all([
+      prisma.userSticker.count({ where: { userId: currentUser(req).id, character: { published: true } } }),
+      prisma.biblicalCharacter.count({ where: { published: true } }),
+    ]);
     res.json({ owned, total });
   }),
 );

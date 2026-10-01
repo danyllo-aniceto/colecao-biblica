@@ -29,10 +29,17 @@ enum QuestionDifficulty {
 
 enum RewardType {
   STICKER
+  STICKER_PACK
   EXTRA_LIFE
   EXTRA_TIME
   XP_MULTIPLIER
+  FIFTY_FIFTY
   COINS
+}
+
+enum Testament {
+  OLD
+  NEW
 }
 
 enum ShopItemType {
@@ -65,6 +72,9 @@ model User {
   extraLifeBoosts Int       @default(0) @map("extra_life_boosts")
   extraTimeBoosts Int       @default(0) @map("extra_time_boosts")
   doubleXpBoosts  Int       @default(0) @map("double_xp_boosts")
+  hintBoosts      Int       @default(0) @map("hint_boosts")
+  dailyStreak     Int       @default(0) @map("daily_streak")
+  lastDailyClaim  DateTime? @map("last_daily_claim")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
   createdBy       String    @map("created_by")
@@ -77,6 +87,7 @@ model User {
   comments     UserComment[]
   quizMatches  QuizMatch[]
   quizSessions QuizSession[]
+  achievements UserAchievement[]
 
   @@index([totalScore, xp])
   @@map("users")
@@ -87,6 +98,8 @@ model BiblicalCharacter {
   name             String        @unique
   imageUrl         String?       @map("image_url")
   rarity           StickerRarity
+  testament        Testament?
+  published        Boolean       @default(true)
   shortSummary     String        @map("short_summary")
   fullDescription  String        @map("full_description")
   bibleBooks       String?       @map("bible_books")
@@ -122,6 +135,8 @@ model Question {
   optionD            String             @map("option_d")
   correctOption      String             @map("correct_option") @db.Char(1)
   relatedCharacterId Int?               @map("character_id")
+  explanation        String?
+  bibleReference     String?            @map("bible_reference")
   active             Boolean            @default(true)
 
   relatedCharacter BiblicalCharacter? @relation(fields: [relatedCharacterId], references: [id], onDelete: SetNull)
@@ -140,8 +155,10 @@ model RewardDefinition {
   extraLives         Int?           @map("extra_lives")
   extraTimeSeconds   Int?           @map("extra_time_seconds")
   xpMultiplier       Float?         @map("xp_multiplier")
+  hintAmount         Int?           @map("hint_amount")
   dropChance         Float          @map("drop_chance")
   active             Boolean        @default(true)
+  system             Boolean        @default(false)
 
   stickerCharacter BiblicalCharacter? @relation(fields: [stickerCharacterId], references: [id], onDelete: SetNull)
   shopItems        ShopItem[]
@@ -157,6 +174,7 @@ model ShopItem {
   priceCoins         Int          @map("price_coins")
   rewardDefinitionId Int?         @map("reward_definition_id")
   active             Boolean      @default(true)
+  system             Boolean      @default(false)
 
   rewardDefinition RewardDefinition? @relation(fields: [rewardDefinitionId], references: [id], onDelete: SetNull)
 
@@ -202,6 +220,7 @@ model QuizMatch {
   wrongAnswers      Int       @map("wrong_answers")
   xpGained          Int       @map("xp_gained")
   scoreGained       Int       @map("score_gained")
+  coinsGained       Int       @default(0) @map("coins_gained")
   rewardGranted     Boolean   @default(false) @map("reward_granted")
   rewardGrantedName String?   @map("reward_granted_name")
 
@@ -228,6 +247,9 @@ model QuizSession {
   extraTimeUsed               Boolean           @default(false) @map("extra_time_used")
   extraLifeUsed               Boolean           @default(false) @map("extra_life_used")
   xpMultiplierUsed            Boolean           @default(false) @map("xp_multiplier_used")
+  fiftyFiftyUsed              Boolean           @default(false) @map("fifty_fifty_used")
+  fiftyFiftyQuestionId        Int?              @map("fifty_fifty_question_id")
+  fiftyFiftyRemoved           String?           @map("fifty_fifty_removed")
   questionIds                 Int[]             @map("question_ids")
   currentQuestionStartedAt    DateTime?         @map("current_question_started_at")
   currentQuestionExtraSeconds Int               @default(0) @map("current_question_extra_seconds")
@@ -237,6 +259,18 @@ model QuizSession {
 
   @@index([userId, status])
   @@map("quiz_sessions")
+}
+
+model UserAchievement {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  code       String
+  unlockedAt DateTime @default(now()) @map("unlocked_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, code])
+  @@map("user_achievements")
 }
 
 model GameSetting {

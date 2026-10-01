@@ -12,6 +12,9 @@ export function toUserResponse(user: User) {
     extraLifeBoosts: user.extraLifeBoosts,
     extraTimeBoosts: user.extraTimeBoosts,
     doubleXpBoosts: user.doubleXpBoosts,
+    hintBoosts: user.hintBoosts,
+    dailyStreak: user.dailyStreak,
+    lastDailyClaim: user.lastDailyClaim,
     name: user.name,
     email: user.email,
     role: user.role,
@@ -31,6 +34,8 @@ export function toCharacterResponse(character: BiblicalCharacter) {
     name: character.name,
     imageUrl: character.imageUrl,
     rarity: character.rarity,
+    testament: character.testament,
+    published: character.published,
     shortSummary: character.shortSummary,
     fullDescription: character.fullDescription,
     bibleBooks: character.bibleBooks,
@@ -44,6 +49,23 @@ export function toCharacterResponse(character: BiblicalCharacter) {
     keywords: character.keywords,
     createdAt: character.createdAt,
     createdBy: character.createdBy,
+    updatedAt: character.updatedAt,
+  };
+}
+
+/** Versão leve para o álbum e listas (sem os textos longos). */
+export function toCharacterSummary(character: BiblicalCharacter, questionCount = 0) {
+  return {
+    id: character.id,
+    name: character.name,
+    imageUrl: character.imageUrl,
+    rarity: character.rarity,
+    testament: character.testament,
+    published: character.published,
+    bibleBooks: character.bibleBooks,
+    historicalPeriod: character.historicalPeriod,
+    narrativeRole: character.narrativeRole,
+    questionCount,
     updatedAt: character.updatedAt,
   };
 }
@@ -63,6 +85,8 @@ export function toQuestionResponse(question: QuestionWithCharacter) {
     correctOption: question.correctOption,
     relatedCharacterId: question.relatedCharacter?.id ?? null,
     relatedCharacterName: question.relatedCharacter?.name ?? null,
+    explanation: question.explanation,
+    bibleReference: question.bibleReference,
     active: question.active,
   };
 }
@@ -81,12 +105,14 @@ export function toRewardResponse(reward: RewardWithCharacter) {
     extraLives: reward.extraLives,
     extraTimeSeconds: reward.extraTimeSeconds,
     xpMultiplier: reward.xpMultiplier,
+    hintAmount: reward.hintAmount,
     dropChance: reward.dropChance,
     active: reward.active,
+    system: reward.system,
   };
 }
 
-export type ShopItemWithReward = ShopItem & { rewardDefinition: Pick<RewardDefinition, "id" | "name"> | null };
+export type ShopItemWithReward = ShopItem & { rewardDefinition: Pick<RewardDefinition, "id" | "name" | "rewardType" | "stickerRarity"> | null };
 
 export function toShopItemResponse(item: ShopItemWithReward) {
   return {
@@ -97,9 +123,12 @@ export function toShopItemResponse(item: ShopItemWithReward) {
     priceCoins: item.priceCoins,
     rewardDefinitionId: item.rewardDefinition?.id ?? null,
     rewardName: item.rewardDefinition?.name ?? null,
+    rewardType: item.rewardDefinition?.rewardType ?? null,
+    rewardRarity: item.rewardDefinition?.stickerRarity ?? null,
     active: item.active,
+    system: item.system,
   };
 }
 
 export const characterRef = { select: { id: true, name: true } } as const;
-export const rewardRef = { select: { id: true, name: true } } as const;
+export const rewardRef = { select: { id: true, name: true, rewardType: true, stickerRarity: true } } as const;

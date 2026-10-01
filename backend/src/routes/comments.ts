@@ -5,6 +5,7 @@ import { notFound } from "../lib/errors";
 import { parseId, requiredText, z } from "../lib/validation";
 import { currentUser } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
+import { checkAchievements } from "../services/achievements";
 
 export const commentsRouter = Router();
 
@@ -40,11 +41,13 @@ commentsRouter.post(
     if (!character) {
       throw notFound("Personagem não encontrado");
     }
+    const userId = currentUser(req).id;
     const comment = await prisma.userComment.create({
-      data: { userId: currentUser(req).id, characterId: character.id, text: input.text },
+      data: { userId, characterId: character.id, text: input.text },
       include,
     });
-    res.status(201).json(toCommentResponse(comment));
+    const unlockedAchievements = await checkAchievements(prisma, userId);
+    res.status(201).json({ ...toCommentResponse(comment), unlockedAchievements });
   }),
 );
 

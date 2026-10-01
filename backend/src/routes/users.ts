@@ -176,6 +176,37 @@ usersRouter.put(
   }),
 );
 
+const grantSchema = z.object({
+  coins: z.number().int().min(-1_000_000).max(1_000_000).optional(),
+  extraLifeBoosts: z.number().int().min(-100).max(100).optional(),
+  extraTimeBoosts: z.number().int().min(-100).max(100).optional(),
+  doubleXpBoosts: z.number().int().min(-100).max(100).optional(),
+  hintBoosts: z.number().int().min(-100).max(100).optional(),
+});
+
+/** Admin ajusta o saldo de um jogador (valores somados; nada fica negativo). Útil para suporte e eventos. */
+usersRouter.post(
+  "/:id/grant",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const input = grantSchema.parse(req.body);
+    const target = await getActiveUser(parseId(req.params.id));
+    const add = (current: number, delta?: number) => Math.max(0, current + (delta ?? 0));
+    const updated = await prisma.user.update({
+      where: { id: target.id },
+      data: {
+        coins: add(target.coins, input.coins),
+        extraLifeBoosts: add(target.extraLifeBoosts, input.extraLifeBoosts),
+        extraTimeBoosts: add(target.extraTimeBoosts, input.extraTimeBoosts),
+        doubleXpBoosts: add(target.doubleXpBoosts, input.doubleXpBoosts),
+        hintBoosts: add(target.hintBoosts, input.hintBoosts),
+        updatedBy: currentUser(req).email,
+      },
+    });
+    res.json(toUserResponse(updated));
+  }),
+);
+
 usersRouter.delete(
   "/:id",
   asyncHandler(async (req, res) => {

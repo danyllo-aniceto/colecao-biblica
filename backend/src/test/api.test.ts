@@ -24,7 +24,13 @@ async function playSession(token: string, start: Record<string, unknown>, pick: 
       .set(bearer(token))
       .send({ questionId: question.id, selectedOption: pick(correct, index) });
     expect(last.status).toBe(200);
-    question = last.body.nextQuestion;
+    expect(last.body).not.toHaveProperty("nextQuestion");
+    question = null;
+    if (last.body.hasNextQuestion) {
+      const next = await api.post(`/api/quiz/sessions/${started.body.sessionId}/next`).set(bearer(token));
+      expect(next.status).toBe(200);
+      question = next.body.currentQuestion;
+    }
   }
   return { sessionId: started.body.sessionId as number, last: last!.body };
 }
@@ -128,8 +134,13 @@ describe.skipIf(!hasDatabase)("API", () => {
       expect((await api.get("/api/questions").set(bearer(user))).status).toBe(403);
       const admin = await login("admin2@email.com");
       const questions = await api.get("/api/questions").set(bearer(admin));
-      expect(questions.body).toHaveLength(3);
-      expect(questions.body[0]).toHaveProperty("correctOption");
+      expect(questions.body).toMatchObject({ totalElements: 3, number: 0 });
+      expect(questions.body.content[0]).toHaveProperty("correctOption");
+
+      const filtered = await api.get("/api/questions?search=golias&difficulty=easy&size=1").set(bearer(admin));
+      expect(filtered.body.totalElements).toBe(1);
+      expect(filtered.body.content[0].text).toBe("Quem derrotou Golias?");
+      expect((await api.get("/api/questions?characterId=none").set(bearer(admin))).body.totalElements).toBe(0);
     });
 
     it("cria personagem e pergunta com tempo padrão pela dificuldade", async () => {
@@ -162,13 +173,15 @@ describe.skipIf(!hasDatabase)("API", () => {
       expect(forbidden.status).toBe(403);
     });
 
-    it("recompensas e itens da loja são fixos, mas ajustáveis", async () => {
+    it("recompensas e itens fixos são ajustáveis; os criados pelo admin podem ser removidos", async () => {
       const admin = await login("admin2@email.com");
       expect((await api.post("/api/rewards/admin").set(bearer(admin)).send({})).status).toBe(400);
       expect((await api.delete("/api/shop/admin/1").set(bearer(admin))).status).toBe(400);
+      expect((await api.delete("/api/rewards/admin/1").set(bearer(admin))).status).toBe(400);
 
       const rewards = await api.get("/api/rewards").set(bearer(admin));
-      expect(rewards.body).toHaveLength(8);
+      expect(rewards.body).toHaveLength(10);
+      expect(rewards.body.every((reward: { system: boolean }) => reward.system)).toBe(true);
       const coins = rewards.body.find((reward: { rewardType: string }) => reward.rewardType === "COINS");
       const zero = await api.put(`/api/rewards/admin/${coins.id}`).set(bearer(admin)).send({ dropChance: 0 });
       expect(zero.body.message).toBe("Chance de drop deve ser maior que zero");
@@ -179,6 +192,56 @@ describe.skipIf(!hasDatabase)("API", () => {
       await resetDatabaseKeepingRewards();
       const again = await api.get("/api/rewards").set(bearer(admin));
       expect(again.body.find((reward: { id: number }) => reward.id === coins.id).coinAmount).toBe(80);
+
+      // Recompensa e item criados pelo admin sobrevivem ao seed e podem ser excluídos.
+      const custom = await api
+        .post("/api/rewards/admin")
+        .set(bearer(admin))
+        .send({ name: "Saco de moedas", rewardType: "COINS", amount: 300, dropChance: 1 });
+      expect(custom.status).toBe(201);
+      expect(custom.body).toMatchObject({ coinAmount: 300, system: false });
+      const coinItem = await api
+        .post("/api/shop/admin")
+        .set(bearer(admin))
+        .send({ name: "Moedas", description: "x", itemType: "ECONOMY", priceCoins: 10, rewardDefinitionId: custom.body.id });
+      expect(coinItem.body.message).toBe("Itens de loja não podem conceder moedas");
+
+      const fifty = rewards.body.find((reward: { rewardType: string }) => reward.rewardType === "FIFTY_FIFTY");
+      const item = await api
+        .post("/api/shop/admin")
+        .set(bearer(admin))
+        .send({ name: "Combo de dicas", description: "Promoção", itemType: "GAME_BONUS", priceCoins: 99, rewardDefinitionId: fifty.id, active: false });
+      expect(item.status).toBe(201);
+      await resetDatabaseKeepingRewards();
+      const adminShop = await api.get("/api/shop/admin").set(bearer(admin));
+      expect(adminShop.body.find((entry: { id: number }) => entry.id === item.body.id)).toMatchObject({ active: false, system: false });
+      expect((await api.get("/api/shop").set(bearer(admin))).body.some((entry: { id: number }) => entry.id === item.body.id)).toBe(false);
+      expect((await api.delete(`/api/shop/admin/${item.body.id}`).set(bearer(admin))).status).toBe(204);
+      expect((await api.delete(`/api/rewards/admin/${custom.body.id}`).set(bearer(admin))).status).toBe(204);
+    });
+
+    it("personagem: rascunho não aparece para o jogador e campos opcionais podem ser limpos", async () => {
+      const admin = await login("admin2@email.com");
+      const empty = await api.post("/api/characters/admin").set(bearer(admin)).send({ name: "Noé", rarity: "COMMON", shortSummary: "<p></p>", fullDescription: "x" });
+      expect(empty.body.fields.shortSummary).toBeTruthy();
+
+      const draft = await api
+        .post("/api/characters/admin")
+        .set(bearer(admin))
+        .send({ name: "Noé", rarity: "COMMON", published: false, shortSummary: "<p>Construiu a arca</p>", fullDescription: "x", curiosities: "Viveu 950 anos", testament: "OLD" });
+      expect(draft.status).toBe(201);
+
+      const user = await login("user@email.com");
+      const album = await api.get("/api/characters").set(bearer(user));
+      expect(album.body.map((character: { name: string }) => character.name)).not.toContain("Noé");
+      expect(album.body[0]).not.toHaveProperty("fullDescription");
+      expect((await api.get(`/api/characters/${draft.body.id}`).set(bearer(user))).status).toBe(404);
+
+      const cleared = await api.put(`/api/characters/admin/${draft.body.id}`).set(bearer(admin)).send({ curiosities: "", testament: null, published: true });
+      expect(cleared.body).toMatchObject({ curiosities: null, testament: null, published: true });
+
+      const list = await api.get("/api/characters/admin/list?issue=noQuestions&size=50").set(bearer(admin));
+      expect(list.body.content.map((character: { name: string }) => character.name)).toContain("Noé");
     });
 
     it("valida e salva as configurações do jogo", async () => {
@@ -205,9 +268,17 @@ describe.skipIf(!hasDatabase)("API", () => {
       expect(result.rewardName).toBeTruthy();
       expect(result.rewardMatchesUsedToday).toBe(1);
       expect(result.rewardMatchesLimitPerDay).toBe(4);
+      expect(result.coinsGained).toBe(6); // 3 acertos × 2 (bônus de perfeita só com 5+ perguntas)
+      expect(result.unlockedAchievements).toEqual(expect.arrayContaining([expect.objectContaining({ code: "FIRST_MATCH", coins: 30 })]));
+      expect(last.correctOption).toMatch(/^[ABCD]$/);
 
       const me = await api.get("/api/users/me").set(bearer(token));
       expect(me.body).toMatchObject({ xp: 66, totalScore: 300, level: 1 });
+      expect(me.body.coins).toBe(result.userCoins);
+
+      const matches = await api.get("/api/quiz/matches?size=5").set(bearer(token));
+      expect(matches.body).toMatchObject({ totalElements: 1 });
+      expect(matches.body.content[0].coinsGained).toBe(6);
 
       const history = await api.get("/api/quiz/history").set(bearer(token));
       expect(history.body.sessions[0].status).toBe("FINISHED");
@@ -298,12 +369,19 @@ describe.skipIf(!hasDatabase)("API", () => {
         .post(`/api/quiz/sessions/${sessionId}/answer`)
         .set(bearer(token))
         .send({ questionId: first.id, selectedOption: wrongOption(await correctOptionOf(first.id)), useExtraLife: true, useXpMultiplier: true });
-      expect(saved.body).toMatchObject({ correct: false, livesRemaining: 3, extraLifeUsed: true, xpMultiplierUsed: true });
+      expect(saved.body).toMatchObject({ correct: false, livesRemaining: 3, extraLifeUsed: true, xpMultiplierUsed: true, hasNextQuestion: true });
+      expect(saved.body.correctOption).toBe(await correctOptionOf(first.id));
+
+      // O tempo da próxima só conta depois que ela é pedida: ler o gabarito não gasta tempo.
+      const waiting = await prisma.quizSession.findUniqueOrThrow({ where: { id: sessionId } });
+      expect(waiting.currentQuestionStartedAt).toBeNull();
+      const next = await api.post(`/api/quiz/sessions/${sessionId}/next`).set(bearer(token));
+      expect(next.body.currentQuestion.remainingSeconds).toBe(next.body.currentQuestion.timeLimitSeconds);
 
       const repeat = await api
         .post(`/api/quiz/sessions/${sessionId}/answer`)
         .set(bearer(token))
-        .send({ questionId: saved.body.nextQuestion.id, selectedOption: "A", useXpMultiplier: true });
+        .send({ questionId: next.body.currentQuestion.id, selectedOption: "A", useXpMultiplier: true });
       expect(repeat.body.message).toBe("Bônus de XP em dobro já foi usado nesta partida");
 
       const after = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
@@ -340,7 +418,7 @@ describe.skipIf(!hasDatabase)("API", () => {
     it("compra com moedas, respeita limites e não vende o que já tem", async () => {
       const token = await login("user@email.com");
       const shop = await api.get("/api/shop").set(bearer(token));
-      expect(shop.body.map((item: { priceCoins: number }) => item.priceCoins)).toEqual([120, 150, 180, 220, 260, 450]);
+      expect(shop.body.map((item: { priceCoins: number }) => item.priceCoins)).toEqual([120, 140, 150, 180, 200, 220, 260, 450]);
       const life = shop.body.find((item: { name: string }) => item.name === "Vida extra");
       const rare = shop.body.find((item: { name: string }) => item.name === "Figurinha Rara");
 
@@ -373,6 +451,92 @@ describe.skipIf(!hasDatabase)("API", () => {
     });
   });
 
+  describe("novas recompensas", () => {
+    it("prêmio diário: resgata uma vez por dia e monta a sequência", async () => {
+      const token = await login("user@email.com");
+      const status = await api.get("/api/daily-reward").set(bearer(token));
+      expect(status.body).toMatchObject({ canClaim: true, streak: 0, nextDay: 1 });
+      expect(status.body.cycle).toHaveLength(7);
+
+      const claimed = await api.post("/api/daily-reward/claim").set(bearer(token));
+      expect(claimed.body).toMatchObject({ day: 1, streak: 1, coins: 20, userCoins: 20 });
+      expect((await api.post("/api/daily-reward/claim").set(bearer(token))).status).toBe(400);
+
+      // Último resgate "ontem" no 6º dia: hoje é o 7º, com dica 50/50 e a conquista de 7 dias.
+      await prisma.user.update({
+        where: { email: "user@email.com" },
+        data: { dailyStreak: 6, lastDailyClaim: new Date(Date.now() - 86_400_000) },
+      });
+      const seventh = await api.post("/api/daily-reward/claim").set(bearer(token));
+      expect(seventh.body).toMatchObject({ day: 7, streak: 7, coins: 120, hints: 1 });
+      expect(seventh.body.unlockedAchievements).toEqual([expect.objectContaining({ code: "STREAK_7" })]);
+
+      const achievements = await api.get("/api/achievements").set(bearer(token));
+      expect(achievements.body.find((item: { code: string }) => item.code === "STREAK_7")).toMatchObject({ unlocked: true });
+      expect(achievements.body.find((item: { code: string }) => item.code === "MATCHES_10")).toMatchObject({ unlocked: false, current: 0, target: 10 });
+    });
+
+    it("dica 50/50 elimina duas erradas uma vez por partida", async () => {
+      const token = await login("user@email.com");
+      const started = await api.post("/api/quiz/sessions/start").set(bearer(token)).send({ quizType: "GENERAL" });
+      const sessionId = started.body.sessionId;
+      expect((await api.post(`/api/quiz/sessions/${sessionId}/fifty-fifty`).set(bearer(token))).body.message).toBe("Você não possui dicas 50/50");
+
+      await prisma.user.update({ where: { email: "user@email.com" }, data: { hintBoosts: 2 } });
+      const used = await api.post(`/api/quiz/sessions/${sessionId}/fifty-fifty`).set(bearer(token));
+      const correct = await correctOptionOf(used.body.currentQuestion.id);
+      expect(used.body.fiftyFiftyUsed).toBe(true);
+      expect(used.body.currentQuestion.removedOptions).toHaveLength(2);
+      expect(used.body.currentQuestion.removedOptions).not.toContain(correct);
+      expect((await api.post(`/api/quiz/sessions/${sessionId}/fifty-fifty`).set(bearer(token))).status).toBe(400);
+      expect((await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } })).hintBoosts).toBe(1);
+    });
+
+    it("pacote surpresa dá figurinha e a repetida vira moedas", async () => {
+      const token = await login("user@email.com");
+      const pack = (await api.get("/api/shop").set(bearer(token))).body.find((item: { name: string }) => item.name === "Pacote surpresa");
+      expect(pack).toMatchObject({ rewardType: "STICKER_PACK", priceCoins: 200 });
+      const characters = await prisma.biblicalCharacter.findMany();
+      const user = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
+      await prisma.userSticker.createMany({ data: characters.map((character) => ({ userId: user.id, characterId: character.id })) });
+      await prisma.user.update({ where: { id: user.id }, data: { coins: 200 } });
+
+      const bought = await api.post(`/api/shop/buy/${pack.id}`).set(bearer(token));
+      expect(bought.body.characterUnlocked).toBe(false);
+      expect(bought.body.duplicateCoins).toBeGreaterThan(0);
+      expect(bought.body.userCoins).toBeGreaterThanOrEqual(bought.body.duplicateCoins);
+    });
+
+    it("admin vê estatísticas e ajusta o saldo de um jogador", async () => {
+      const admin = await login("admin2@email.com");
+      const stats = await api.get("/api/admin/stats").set(bearer(admin));
+      expect(stats.body).toMatchObject({ users: 1, characters: 3, questions: 3, uploads: "inline" });
+
+      const target = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
+      const granted = await api.post(`/api/users/${target.id}/grant`).set(bearer(admin)).send({ coins: 500, hintBoosts: 2, extraLifeBoosts: -3 });
+      expect(granted.body).toMatchObject({ coins: 500, hintBoosts: 2, extraLifeBoosts: 0 });
+
+      const user = await login("user@email.com");
+      expect((await api.get("/api/admin/stats").set(bearer(user))).status).toBe(403);
+    });
+
+    it("upload sem Blob guarda a imagem no banco e recusa o que não é imagem", async () => {
+      const admin = await login("admin2@email.com");
+      const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+      const saved = await api.post("/api/uploads?folder=personagens&name=davi.png").set(bearer(admin)).set("Content-Type", "image/png").send(png);
+      expect(saved.status).toBe(201);
+      expect(saved.body.url).toMatch(/^data:image\/png;base64,/);
+
+      const fake = await api.post("/api/uploads?folder=personagens").set(bearer(admin)).set("Content-Type", "image/png").send(Buffer.from("nao sou imagem"));
+      expect(fake.status).toBe(400);
+      const wrongFolder = await api.post("/api/uploads?folder=outra").set(bearer(admin)).set("Content-Type", "image/png").send(png);
+      expect(wrongFolder.status).toBe(400);
+
+      const user = await login("user@email.com");
+      expect((await api.post("/api/uploads?folder=personagens").set(bearer(user)).set("Content-Type", "image/png").send(png)).status).toBe(403);
+    });
+  });
+
   describe("anotações e ranking", () => {
     it("cria e edita anotações próprias", async () => {
       const token = await login("user@email.com");
@@ -392,7 +556,8 @@ describe.skipIf(!hasDatabase)("API", () => {
       await prisma.user.update({ where: { email: "admin2@email.com" }, data: { totalScore: 900, deleted: true } });
       const token = await login("user@email.com");
       const ranking = await api.get("/api/ranking").set(bearer(token));
-      expect(ranking.body).toEqual([expect.objectContaining({ position: 1, userName: "Usuário Teste", totalScore: 500 })]);
+      expect(ranking.body.content).toEqual([expect.objectContaining({ position: 1, userName: "Usuário Teste", totalScore: 500 })]);
+      expect(ranking.body.me).toMatchObject({ position: 1, totalScore: 500 });
     });
   });
 

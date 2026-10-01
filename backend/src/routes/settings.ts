@@ -21,6 +21,21 @@ const updateSchema = z.object({
   extraTimeSeconds: int(1, 120),
   rewardMinCorrectAnswers: int(1, 100),
   characterStickerMinAccuracyPercent: int(0, 100),
+  maxHintBoosts: int(1, 20),
+  coinsPerCorrectAnswer: int(0, 100),
+  perfectMatchBonusCoins: int(0, 1000),
+  coinMatchLimitPerDay: int(0, 100),
+  duplicateCoinsCommon: int(0, 10_000),
+  duplicateCoinsRare: int(0, 10_000),
+  duplicateCoinsEpic: int(0, 10_000),
+  duplicateCoinsLegendary: int(0, 10_000),
+  dailyRewardBaseCoins: int(0, 10_000),
+  dailyRewardStepCoins: int(0, 10_000),
+  dailyRewardDay7Coins: int(0, 10_000),
+  packOddsCommon: int(0, 1000),
+  packOddsRare: int(0, 1000),
+  packOddsEpic: int(0, 1000),
+  packOddsLegendary: int(0, 1000),
 });
 
 settingsRouter.get(

@@ -1,4 +1,4 @@
-import type { QuestionDifficulty } from "@prisma/client";
+import type { QuestionDifficulty, StickerRarity } from "@prisma/client";
 
 /**
  * Regras puras do jogo (sem banco), para ficarem fáceis de testar e de ajustar.
@@ -67,6 +67,113 @@ export function reachedStickerAccuracy(correctAnswers: number, questionsAnswered
 export function requiredCorrectAnswersForReward(configured: number, activeQuestionCount: number): number {
   const minimum = Math.max(1, configured);
   return activeQuestionCount > 0 ? Math.min(minimum, activeQuestionCount) : minimum;
+}
+
+/** Partida "perfeita" para o bônus de moedas: sem erros e com um mínimo de perguntas. */
+export const PERFECT_MATCH_MIN_QUESTIONS = 5;
+
+type CoinRules = { coinsPerCorrectAnswer: number; perfectMatchBonusCoins: number };
+
+/** Moedas ganhas ao terminar uma partida: por acerto, mais o bônus de partida perfeita. */
+export function calculateMatchCoins(correctAnswers: number, wrongAnswers: number, rules: CoinRules): number {
+  const perCorrect = Math.max(0, correctAnswers) * Math.max(0, rules.coinsPerCorrectAnswer);
+  const perfect = wrongAnswers === 0 && correctAnswers >= PERFECT_MATCH_MIN_QUESTIONS ? Math.max(0, rules.perfectMatchBonusCoins) : 0;
+  return perCorrect + perfect;
+}
+
+type DuplicateRules = { duplicateCoinsCommon: number; duplicateCoinsRare: number; duplicateCoinsEpic: number; duplicateCoinsLegendary: number };
+
+/** Figurinha repetida não é desperdício: vira moedas conforme a raridade. */
+export function duplicateStickerCoins(rarity: StickerRarity, rules: DuplicateRules): number {
+  const value = {
+    COMMON: rules.duplicateCoinsCommon,
+    RARE: rules.duplicateCoinsRare,
+    EPIC: rules.duplicateCoinsEpic,
+    LEGENDARY: rules.duplicateCoinsLegendary,
+  }[rarity];
+  return Math.max(0, value);
+}
+
+type PackRules = { packOddsCommon: number; packOddsRare: number; packOddsEpic: number; packOddsLegendary: number };
+
+/** Chances (em %) de cada raridade no pacote surpresa, a partir dos pesos configurados. */
+export function packOdds(rules: PackRules): Record<StickerRarity, number> {
+  const weights: Record<StickerRarity, number> = {
+    COMMON: Math.max(0, rules.packOddsCommon),
+    RARE: Math.max(0, rules.packOddsRare),
+    EPIC: Math.max(0, rules.packOddsEpic),
+    LEGENDARY: Math.max(0, rules.packOddsLegendary),
+  };
+  const total = Object.values(weights).reduce((sum, value) => sum + value, 0);
+  if (total <= 0) {
+    return { COMMON: 100, RARE: 0, EPIC: 0, LEGENDARY: 0 };
+  }
+  return {
+    COMMON: (weights.COMMON / total) * 100,
+    RARE: (weights.RARE / total) * 100,
+    EPIC: (weights.EPIC / total) * 100,
+    LEGENDARY: (weights.LEGENDARY / total) * 100,
+  };
+}
+
+/** Sorteia a raridade do pacote, só entre as raridades que têm figurinha cadastrada. */
+export function pickPackRarity(rules: PackRules, available: Set<StickerRarity>, random = Math.random): StickerRarity | null {
+  const odds = packOdds(rules);
+  const options = (Object.keys(odds) as StickerRarity[]).filter((rarity) => available.has(rarity));
+  return weightedPick(options, (rarity) => odds[rarity], random);
+}
+
+export const DAILY_CYCLE_DAYS = 7;
+
+type DailyRules = { dailyRewardBaseCoins: number; dailyRewardStepCoins: number; dailyRewardDay7Coins: number };
+
+/** Prêmio do dia `day` (1 a 7) da sequência: cresce a cada dia e o 7º vale mais e dá uma dica. */
+export function dailyRewardFor(day: number, rules: DailyRules): { coins: number; hints: number } {
+  if (day >= DAILY_CYCLE_DAYS) {
+    return { coins: Math.max(0, rules.dailyRewardDay7Coins), hints: 1 };
+  }
+  return { coins: Math.max(0, rules.dailyRewardBaseCoins + rules.dailyRewardStepCoins * (Math.max(day, 1) - 1)), hints: 0 };
+}
+
+/** Dia do ciclo (1 a 7) correspondente a uma sequência de N dias seguidos. */
+export function cycleDay(streak: number): number {
+  return ((Math.max(streak, 1) - 1) % DAILY_CYCLE_DAYS) + 1;
+}
+
+/** Data local (AAAA-MM-DD) no fuso informado. */
+export function dayKeyInTimeZone(date: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+}
+
+/** Diferença em dias entre duas datas locais AAAA-MM-DD. */
+export function daysBetweenKeys(from: string, to: string): number {
+  const toUtc = (key: string) => {
+    const [year, month, day] = key.split("-").map(Number);
+    return Date.UTC(year, month - 1, day);
+  };
+  return Math.round((toUtc(to) - toUtc(from)) / 86_400_000);
+}
+
+/**
+ * Situação do prêmio diário: já resgatado hoje, sequência que continua
+ * (resgate ontem) ou que recomeça.
+ */
+export function dailyStatus(lastClaim: Date | null, currentStreak: number, now: Date, timeZone: string) {
+  const today = dayKeyInTimeZone(now, timeZone);
+  if (!lastClaim) {
+    return { claimedToday: false, nextStreak: 1 };
+  }
+  const gap = daysBetweenKeys(dayKeyInTimeZone(lastClaim, timeZone), today);
+  if (gap <= 0) {
+    return { claimedToday: true, nextStreak: currentStreak };
+  }
+  return { claimedToday: false, nextStreak: gap === 1 ? currentStreak + 1 : 1 };
+}
+
+/** Escolhe duas alternativas erradas para a dica 50/50. */
+export function pickFiftyFiftyRemovals(correctOption: string, random = Math.random): string[] {
+  const wrong = ["A", "B", "C", "D"].filter((option) => option !== correctOption.toUpperCase());
+  return shuffle(wrong, random).slice(0, 2).sort();
 }
 
 type Timer = { startedAt: Date | null; timeLimitSeconds: number; extraSeconds: number };
