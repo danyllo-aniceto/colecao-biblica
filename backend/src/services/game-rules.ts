@@ -10,7 +10,9 @@ export const ANSWER_GRACE_SECONDS = 3;
 const XP_PER_CORRECT = 10;
 const POINTS_PER_CORRECT = 100;
 const POINTS_PER_WRONG = 30;
-const XP_PER_LEVEL = 200;
+/** XP para sair do nível 1; cada nível seguinte pede mais LEVEL_XP_STEP. */
+const LEVEL_BASE_XP = 200;
+const LEVEL_XP_STEP = 50;
 
 export function defaultTimeByDifficulty(difficulty: QuestionDifficulty): number {
   switch (difficulty) {
@@ -51,8 +53,16 @@ export function calculateScore(correctAnswers: number, wrongAnswers: number): nu
   return correctAnswers * POINTS_PER_CORRECT - wrongAnswers * POINTS_PER_WRONG;
 }
 
+/** XP total para chegar ao nível (curva progressiva: cada nível pede 50 XP a mais que o anterior). */
+export function xpForLevel(level: number): number {
+  const steps = Math.max(0, level - 1);
+  return LEVEL_BASE_XP * steps + (LEVEL_XP_STEP * steps * (steps - 1)) / 2;
+}
+
 export function calculateLevel(xp: number): number {
-  return Math.floor(xp / XP_PER_LEVEL) + 1;
+  let level = 1;
+  while (xpForLevel(level + 1) <= xp) level += 1;
+  return level;
 }
 
 /** A figurinha do estudo de personagem exige aproveitamento mínimo e ao menos um acerto. */
@@ -432,9 +442,10 @@ export function monthRangeInTimeZone(monthKey: string, timeZone: string): { star
   return { start: zonedMidnight(year, month, 1, timeZone), end: zonedMidnight(year, month + 1, 1, timeZone) };
 }
 
-type ChestRules = { chestBaseCoins: number; chestCoinsPerLevel: number };
+type ChestRules = { chestBaseCoins: number; chestCoinsPerLevel: number; chestMaxCoins?: number };
 
-/** Moedas do baú do nível alcançado: cresce com o nível. */
+/** Moedas do baú do nível alcançado: cresce com o nível, até o teto (0 = sem teto). */
 export function chestCoins(level: number, rules: ChestRules): number {
-  return Math.max(0, rules.chestBaseCoins + rules.chestCoinsPerLevel * Math.max(level, 1));
+  const coins = Math.max(0, rules.chestBaseCoins + rules.chestCoinsPerLevel * Math.max(level, 1));
+  return rules.chestMaxCoins && rules.chestMaxCoins > 0 ? Math.min(coins, rules.chestMaxCoins) : coins;
 }

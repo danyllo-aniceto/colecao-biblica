@@ -10,12 +10,19 @@ function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ');
 }
 
-export const XP_PER_LEVEL = 200;
+/** Mesma curva do backend: sair do nível 1 custa 200 XP e cada nível seguinte pede 50 XP a mais. */
+export function xpForLevel(level: number) {
+  const steps = Math.max(0, level - 1);
+  return 200 * steps + (50 * steps * (steps - 1)) / 2;
+}
 
-/** Progresso dentro do nível atual (mesma regra do backend: nível = XP / 200 + 1). */
+/** Progresso dentro do nível atual. */
 export function levelProgress(xp: number) {
-  const current = xp % XP_PER_LEVEL;
-  return { current, needed: XP_PER_LEVEL, percent: (current / XP_PER_LEVEL) * 100 };
+  let level = 1;
+  while (xpForLevel(level + 1) <= xp) level += 1;
+  const current = xp - xpForLevel(level);
+  const needed = xpForLevel(level + 1) - xpForLevel(level);
+  return { level, current, needed, percent: (current / needed) * 100 };
 }
 
 export function CoinIcon({ className }: { className?: string }) {

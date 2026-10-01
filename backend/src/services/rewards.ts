@@ -285,17 +285,17 @@ type FixedReward = {
 };
 
 export const FIXED_REWARDS: FixedReward[] = [
-  { name: "Figurinha Comum", rewardType: "STICKER", stickerRarity: "COMMON", coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 35 },
-  { name: "Figurinha Rara", rewardType: "STICKER", stickerRarity: "RARE", coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 20 },
-  { name: "Figurinha Épica", rewardType: "STICKER", stickerRarity: "EPIC", coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 10 },
-  { name: "Figurinha Lendária", rewardType: "STICKER", stickerRarity: "LEGENDARY", coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 5 },
-  { name: "Moedas", rewardType: "COINS", stickerRarity: null, coinAmount: 50, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 20 },
-  { name: "XP em dobro", rewardType: "XP_MULTIPLIER", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 2, dropChance: 5 },
-  { name: "Vida extra", rewardType: "EXTRA_LIFE", stickerRarity: null, coinAmount: 0, extraLives: 1, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 3 },
-  { name: "Tempo extra", rewardType: "EXTRA_TIME", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 1, xpMultiplier: 1, dropChance: 2 },
-  { name: "Dica 50/50", rewardType: "FIFTY_FIFTY", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, hintAmount: 1, dropChance: 4 },
-  { name: "Pacote surpresa", rewardType: "STICKER_PACK", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 3 },
-  { name: "Protetor de sequência", rewardType: "STREAK_FREEZE", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 2 },
+  { name: "Figurinha Comum", rewardType: "STICKER", stickerRarity: "COMMON", coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 20 },
+  { name: "Figurinha Rara", rewardType: "STICKER", stickerRarity: "RARE", coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 8 },
+  { name: "Figurinha Épica", rewardType: "STICKER", stickerRarity: "EPIC", coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 3 },
+  { name: "Figurinha Lendária", rewardType: "STICKER", stickerRarity: "LEGENDARY", coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 1 },
+  { name: "Moedas", rewardType: "COINS", stickerRarity: null, coinAmount: 50, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 30 },
+  { name: "XP em dobro", rewardType: "XP_MULTIPLIER", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 2, dropChance: 6 },
+  { name: "Vida extra", rewardType: "EXTRA_LIFE", stickerRarity: null, coinAmount: 0, extraLives: 1, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 5 },
+  { name: "Tempo extra", rewardType: "EXTRA_TIME", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 1, xpMultiplier: 1, dropChance: 4 },
+  { name: "Dica 50/50", rewardType: "FIFTY_FIFTY", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, hintAmount: 1, dropChance: 5 },
+  { name: "Pacote surpresa", rewardType: "STICKER_PACK", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 2 },
+  { name: "Protetor de sequência", rewardType: "STREAK_FREEZE", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 3 },
   ...HELPERS.map((helper) => ({
     name: helper.name,
     rewardType: helper.rewardType,
@@ -305,16 +305,16 @@ export const FIXED_REWARDS: FixedReward[] = [
     extraTimeSeconds: 0,
     xpMultiplier: 1,
     boostAmount: 1,
-    dropChance: 2,
+    dropChance: 3,
   })),
 ];
 
 type FixedShopItem = { name: string; description: string; itemType: ShopItemType; priceCoins: number; rewardName: string };
 
 export const FIXED_SHOP_ITEMS: FixedShopItem[] = [
-  { name: "Figurinha Comum", description: "Compra uma figurinha comum aleatória", itemType: "STICKER", priceCoins: 120, rewardName: "Figurinha Comum" },
-  { name: "Figurinha Rara", description: "Compra uma figurinha rara aleatória", itemType: "STICKER", priceCoins: 260, rewardName: "Figurinha Rara" },
-  { name: "Figurinha Épica", description: "Compra uma figurinha épica aleatória", itemType: "STICKER", priceCoins: 450, rewardName: "Figurinha Épica" },
+  { name: "Figurinha Comum", description: "Compra uma figurinha comum aleatória", itemType: "STICKER", priceCoins: 200, rewardName: "Figurinha Comum" },
+  { name: "Figurinha Rara", description: "Compra uma figurinha rara aleatória", itemType: "STICKER", priceCoins: 450, rewardName: "Figurinha Rara" },
+  { name: "Figurinha Épica", description: "Compra uma figurinha épica aleatória", itemType: "STICKER", priceCoins: 900, rewardName: "Figurinha Épica" },
   { name: "XP em dobro", description: "Ativa um multiplicador de XP para a próxima partida", itemType: "GAME_BONUS", priceCoins: 220, rewardName: "XP em dobro" },
   { name: "Vida extra", description: "Adiciona uma vida extra consumível", itemType: "GAME_BONUS", priceCoins: 180, rewardName: "Vida extra" },
   { name: "Tempo extra", description: "Adiciona tempo extra consumível", itemType: "GAME_BONUS", priceCoins: 150, rewardName: "Tempo extra" },
@@ -323,7 +323,7 @@ export const FIXED_SHOP_ITEMS: FixedShopItem[] = [
     name: "Pacote surpresa",
     description: "Uma figurinha de raridade sorteada, que pode até ser lendária. Repetida fica guardada para vender ou fundir.",
     itemType: "STICKER",
-    priceCoins: 200,
+    priceCoins: 300,
     rewardName: "Pacote surpresa",
   },
   {

@@ -10,6 +10,7 @@ import {
   accuracyBonus,
   applyCharacterStudyPercent,
   calculateLevel,
+  xpForLevel,
   calculateMatchCoins,
   cycleDay,
   dailyRewardFor,
@@ -67,7 +68,11 @@ describe("XP, pontos e nível", () => {
     expect(calculateLevel(0)).toBe(1);
     expect(calculateLevel(199)).toBe(1);
     expect(calculateLevel(200)).toBe(2);
-    expect(calculateLevel(650)).toBe(4);
+    // Curva progressiva: 200, 250, 300... XP por nível.
+    expect(calculateLevel(449)).toBe(2);
+    expect(calculateLevel(450)).toBe(3);
+    expect(calculateLevel(750)).toBe(4);
+    expect(xpForLevel(10)).toBe(3600);
   });
 });
 
@@ -266,6 +271,8 @@ describe("ajudas novas", () => {
 describe("baú e passe", () => {
   it("moedas do baú crescem com o nível e o mês do passe vira na meia-noite local", () => {
     expect(chestCoins(5, { chestBaseCoins: 40, chestCoinsPerLevel: 10 })).toBe(90);
+    expect(chestCoins(40, { chestBaseCoins: 30, chestCoinsPerLevel: 5, chestMaxCoins: 150 })).toBe(150);
+    expect(chestCoins(40, { chestBaseCoins: 30, chestCoinsPerLevel: 5, chestMaxCoins: 0 })).toBe(230);
     expect(monthKeyInTimeZone(new Date("2026-11-01T02:00:00Z"), "America/Sao_Paulo")).toBe("2026-10");
     const range = monthRangeInTimeZone("2026-12", "America/Sao_Paulo");
     expect(range.start.toISOString()).toBe("2026-12-01T03:00:00.000Z");

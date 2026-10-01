@@ -234,8 +234,9 @@ const eventSchema = z
     description: clearableText(300),
     startsAt: z.coerce.date(),
     endsAt: z.coerce.date(),
-    xpMultiplier: z.number().min(1).max(5),
-    coinMultiplier: z.number().min(1).max(5),
+    // Acima de x2 o evento desequilibra o resto do mês.
+    xpMultiplier: z.number().min(1).max(2),
+    coinMultiplier: z.number().min(1).max(2),
     color: z
       .string()
       .regex(/^#[0-9a-fA-F]{6}$/, "Use uma cor no formato #rrggbb")

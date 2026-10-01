@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Segmented } from '@/components/ui/segmented';
 import { CosmeticShop } from '@/components/user/rewards/cosmetic-shop';
 import type { UserProfile } from '@/types/auth';
@@ -9,7 +9,7 @@ import { cn } from '@/lib/cn';
 import { rewardVisual } from '@/lib/reward-visual';
 import type { StickerRarity } from '@/lib/admin-api';
 import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
-import type { GameRules, ShopItem } from '@/lib/user-api';
+import { getShopLimits, type GameRules, type ShopItem } from '@/lib/user-api';
 
 /** Visual de cada item a partir da recompensa que ele entrega. */
 function describeItem(item: ShopItem): { rarity?: StickerRarity; icon: ReactNode; tint: string } {
@@ -37,9 +37,28 @@ type ShopSectionProps = {
 
 export function ShopSection({ items, coins, gameRules, buyingItemId, error, onBuy, profile, onCoins }: ShopSectionProps) {
   const [tab, setTab] = useState<'items' | 'visual'>('items');
+  const [limits, setLimits] = useState<{ stickerLimitPerDay: number; stickersBoughtToday: number } | null>(null);
+
+  // Recarrega o limite diário de figurinhas ao abrir e depois de cada compra.
+  useEffect(() => {
+    if (buyingItemId !== null) return;
+    getShopLimits()
+      .then(setLimits)
+      .catch(() => setLimits(null));
+  }, [buyingItemId]);
+  const stickersLeft = limits && limits.stickerLimitPerDay > 0 ? Math.max(0, limits.stickerLimitPerDay - limits.stickersBoughtToday) : null;
   const odds = packOdds(gameRules);
   const groups = [
-    { title: 'Figurinhas', description: 'Sorteia uma figurinha que você ainda não tem.', items: items.filter((item) => item.itemType === 'STICKER') },
+    {
+      title: 'Figurinhas',
+      description:
+        stickersLeft === null
+          ? 'Sorteia uma figurinha que você ainda não tem.'
+          : stickersLeft > 0
+            ? `Sorteia uma figurinha que você ainda não tem. Você pode comprar mais ${stickersLeft} hoje.`
+            : 'Você já comprou as figurinhas de hoje. Jogue para ganhar mais ou volte amanhã!',
+      items: items.filter((item) => item.itemType === 'STICKER'),
+    },
     { title: 'Ajudas para as partidas', description: 'Ficam guardadas; use uma de cada por partida.', items: items.filter((item) => item.itemType !== 'STICKER') },
   ].filter((group) => group.items.length > 0);
 
@@ -103,7 +122,7 @@ export function ShopSection({ items, coins, gameRules, buyingItemId, error, onBu
                       className="mt-auto w-full"
                       variant={canAfford ? 'primary' : 'secondary'}
                       onClick={() => onBuy(item)}
-                      disabled={!canAfford || (buyingItemId !== null && !buying)}
+                      disabled={!canAfford || (buyingItemId !== null && !buying) || (item.itemType === 'STICKER' && stickersLeft === 0)}
                       loading={buying}
                     >
                       {buying ? null : <CoinIcon />}

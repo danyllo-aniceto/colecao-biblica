@@ -274,7 +274,7 @@ describe.skipIf(!hasDatabase)("API", () => {
       expect(result.rewardGranted).toBe(true);
       expect(result.rewardName).toBeTruthy();
       expect(result.rewardMatchesUsedToday).toBe(1);
-      expect(result.rewardMatchesLimitPerDay).toBe(4);
+      expect(result.rewardMatchesLimitPerDay).toBe(3);
       expect(result.coinsGained).toBe(7); // 1 da sequência + 3 acertos × 2 (bônus de perfeita só com 5+ perguntas)
       expect(result.unlockedAchievements).toEqual(expect.arrayContaining([expect.objectContaining({ code: "FIRST_MATCH", coins: 30 })]));
       expect(last.correctOption).toMatch(/^[ABCD]$/);
@@ -425,27 +425,27 @@ describe.skipIf(!hasDatabase)("API", () => {
     it("compra com moedas, respeita limites e não vende o que já tem", async () => {
       const token = await login("user@email.com");
       const shop = await api.get("/api/shop").set(bearer(token));
-      expect(shop.body.map((item: { priceCoins: number }) => item.priceCoins)).toEqual([120, 130, 140, 150, 150, 150, 160, 170, 180, 200, 200, 220, 240, 250, 260, 450]);
+      expect(shop.body.map((item: { priceCoins: number }) => item.priceCoins)).toEqual([130, 140, 150, 150, 150, 160, 170, 180, 200, 200, 220, 240, 250, 300, 450, 900]);
       const life = shop.body.find((item: { name: string }) => item.name === "Vida extra");
       const rare = shop.body.find((item: { name: string }) => item.name === "Figurinha Rara");
 
       const poor = await api.post(`/api/shop/buy/${life.id}`).set(bearer(token));
       expect(poor.body.message).toBe("Moedas insuficientes");
 
-      await prisma.user.update({ where: { email: "user@email.com" }, data: { coins: 1000, extraLifeBoosts: 4 } });
+      await prisma.user.update({ where: { email: "user@email.com" }, data: { coins: 1500, extraLifeBoosts: 4 } });
       const bought = await api.post(`/api/shop/buy/${life.id}`).set(bearer(token));
-      expect(bought.body).toMatchObject({ rewardType: "EXTRA_LIFE", userCoins: 820, extraLifeBoosts: 5 });
+      expect(bought.body).toMatchObject({ rewardType: "EXTRA_LIFE", userCoins: 1320, extraLifeBoosts: 5 });
 
       const capped = await api.post(`/api/shop/buy/${life.id}`).set(bearer(token));
       expect(capped.body.message).toBe("Você já atingiu o limite de vidas extras");
 
       const sticker = await api.post(`/api/shop/buy/${rare.id}`).set(bearer(token));
-      expect(sticker.body).toMatchObject({ rewardType: "STICKER", characterName: "Davi", characterUnlocked: true, userCoins: 560 });
+      expect(sticker.body).toMatchObject({ rewardType: "STICKER", characterName: "Davi", characterUnlocked: true, userCoins: 870 });
       const allOwned = await api.post(`/api/shop/buy/${rare.id}`).set(bearer(token));
       expect(allOwned.body.message).toBe("Você já possui todas as figurinhas desta raridade");
 
       const me = await api.get("/api/users/me").set(bearer(token));
-      expect(me.body.coins).toBe(560);
+      expect(me.body.coins).toBe(870);
     });
 
     it("compras simultâneas não gastam moedas que o jogador não tem", async () => {
@@ -502,11 +502,11 @@ describe.skipIf(!hasDatabase)("API", () => {
     it("pacote surpresa dá figurinha e a repetida fica guardada para vender ou fundir", async () => {
       const token = await login("user@email.com");
       const pack = (await api.get("/api/shop").set(bearer(token))).body.find((item: { name: string }) => item.name === "Pacote surpresa");
-      expect(pack).toMatchObject({ rewardType: "STICKER_PACK", priceCoins: 200 });
+      expect(pack).toMatchObject({ rewardType: "STICKER_PACK", priceCoins: 300 });
       const characters = await prisma.biblicalCharacter.findMany();
       const user = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
       await prisma.userSticker.createMany({ data: characters.map((character) => ({ userId: user.id, characterId: character.id })) });
-      await prisma.user.update({ where: { id: user.id }, data: { coins: 200 } });
+      await prisma.user.update({ where: { id: user.id }, data: { coins: 300 } });
 
       const bought = await api.post(`/api/shop/buy/${pack.id}`).set(bearer(token));
       // A compra também libera conquistas (álbum completo, lenda), que pagam moedas.
@@ -642,8 +642,8 @@ describe.skipIf(!hasDatabase)("API", () => {
       expect((await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } })).streakFreezes).toBe(0);
     });
 
-    it("garantia contra azar: depois de 4 prêmios sem figurinha, o 5º é figurinha", async () => {
-      await prisma.user.update({ where: { email: "user@email.com" }, data: { stickerPity: 4 } });
+    it("garantia contra azar: depois de 5 prêmios sem figurinha, o 6º é figurinha", async () => {
+      await prisma.user.update({ where: { email: "user@email.com" }, data: { stickerPity: 5 } });
       const token = await login("user@email.com");
       const { last } = await playSession(token, { quizType: "GENERAL" }, (correct) => correct);
       expect(last.matchResult.pityGuaranteed).toBe(true);

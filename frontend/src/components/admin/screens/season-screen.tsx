@@ -352,11 +352,11 @@ function EventModal({ event, onClose, onSaved }: { event: AdminEvent | null; onC
           </Field>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Multiplicador de XP" hint="1 = sem bônus. Máximo 5.">
-            <Input type="number" min={1} max={5} step={0.1} value={xp} onChange={(changeEvent) => setXp(changeEvent.target.value)} />
+          <Field label="Multiplicador de XP" hint="1 = sem bônus. Máximo 2 para não desequilibrar o mês.">
+            <Input type="number" min={1} max={2} step={0.1} value={xp} onChange={(changeEvent) => setXp(changeEvent.target.value)} />
           </Field>
-          <Field label="Multiplicador de moedas" hint="1 = sem bônus. Máximo 5.">
-            <Input type="number" min={1} max={5} step={0.1} value={coins} onChange={(changeEvent) => setCoins(changeEvent.target.value)} />
+          <Field label="Multiplicador de moedas" hint="1 = sem bônus. Máximo 2 para não desequilibrar o mês.">
+            <Input type="number" min={1} max={2} step={0.1} value={coins} onChange={(changeEvent) => setCoins(changeEvent.target.value)} />
           </Field>
         </div>
         <Field label="Cor da faixa">

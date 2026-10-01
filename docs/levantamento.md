@@ -197,7 +197,38 @@ em Configurações → Ajudas novas, à venda na loja, no sorteio, no baú e no 
 - **Eventos**: período com XP e/ou moedas multiplicados, faixa na tela inicial e itens visuais à
   venda só durante o evento.
 
-## 9. Ideias para depois
+## 9. Equilíbrio da economia (implementado)
+
+Diagnóstico com os valores antigos (jogador ativo, 6 partidas/dia, ~75% de acerto): ~870 moedas e
+~6 figurinhas por dia; um álbum de 60 figurinhas acabava em ~10 dias. A maior fonte era o baú de
+nível: todo nível custava 200 XP (≈ 4 níveis por dia) e o baú crescia com o nível.
+
+Regras novas:
+
+- **Curva de nível progressiva**: sair do nível 1 custa 200 XP e cada nível seguinte pede 50 a mais
+  (nível 10 = 3.600 XP no total). O XP de cada jogador foi mantido e o nível recalculado; baús já
+  abertos não se repetem.
+- **Limite de figurinhas compradas por dia** (padrão 2, inclui o pacote; ajudas e visual não contam).
+- **Teto de moedas do baú** (padrão 150) e multiplicador de evento limitado a x2.
+
+Novos padrões (a migração só trocou o que ainda estava no padrão antigo):
+
+| O quê | Antes | Agora |
+| --- | --- | --- |
+| Prêmios sorteados por dia | 4 | 3 |
+| Partidas que rendem moedas por dia | 10 | 6 |
+| Bônus de partida perfeita | 15 | 20 |
+| Baú: moedas fixas / por nível / chance de item | 40 / 10 / 20% | 30 / 5 / 15% |
+| Garantia de figurinha a cada | 5 prêmios | 6 prêmios |
+| Pacote: pesos comum/rara/épica/lendária | 60/28/10/2 | 62/28/9/1 |
+| Loja: comum / rara / épica / pacote | 120 / 260 / 450 / 200 | 200 / 450 / 900 / 300 |
+| Sorteio: chance de figurinha | ~51% | ~31% |
+| Passe: último degrau | 7.200 XP | 18.000 XP |
+
+Resultado esperado: ~350–400 moedas e 2–3 figurinhas por dia no começo, caindo com as repetidas;
+um álbum de 60 figurinhas leva 5–7 semanas de jogo diário.
+
+## 10. Ideias para depois
 
 1. Notificações do PWA (lembrete do prêmio diário, liga acabando, proposta de troca recebida).
 2. Eventos temáticos com figurinhas por tempo limitado (Páscoa, Natal).

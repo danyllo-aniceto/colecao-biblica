@@ -1,4 +1,9 @@
 import { Router } from "express";
+import { env } from "../lib/env";
+import { dayKeyInTimeZone } from "../services/game-rules";
+
+const STICKER_PURCHASE = "SHOP_STICKER";
+const isStickerReward = (type: string) => type === "STICKER" || type === "STICKER_PACK";
 import { helperCounts } from "../services/helpers";
 import type { Prisma } from "@prisma/client";
 import { lockUser, prisma, transaction } from "../db/prisma";
@@ -136,6 +141,18 @@ shopRouter.delete(
   }),
 );
 
+/** Quantas figurinhas o jogador ainda pode comprar hoje. */
+shopRouter.get(
+  "/limits",
+  asyncHandler(async (req, res) => {
+    const settings = await getSettings(prisma);
+    const bought = await prisma.userClaim.count({
+      where: { userId: currentUser(req).id, kind: STICKER_PURCHASE, periodKey: dayKeyInTimeZone(new Date(), env.timezone) },
+    });
+    res.json({ stickerLimitPerDay: settings.shopStickerLimitPerDay, stickersBoughtToday: bought });
+  }),
+);
+
 shopRouter.post(
   "/buy/:id",
   asyncHandler(async (req, res) => {
@@ -158,6 +175,16 @@ shopRouter.post(
 
       const settings = await getSettings(tx);
       await ensureRewardIsUseful(tx, user, reward, settings);
+
+      // Limite diário de figurinhas compradas: a loja complementa, não substitui o jogo.
+      if (isStickerReward(reward.rewardType) && settings.shopStickerLimitPerDay > 0) {
+        const dayKey = dayKeyInTimeZone(new Date(), env.timezone);
+        const bought = await tx.userClaim.count({ where: { userId, kind: STICKER_PURCHASE, periodKey: dayKey } });
+        if (bought >= settings.shopStickerLimitPerDay) {
+          throw badRequest(`Você já comprou ${settings.shopStickerLimitPerDay} figurinha(s) hoje. Jogue para ganhar mais ou volte amanhã!`);
+        }
+        await tx.userClaim.create({ data: { userId, kind: STICKER_PURCHASE, code: `n${bought + 1}`, periodKey: dayKey } });
+      }
 
       const wallet = { ...user, coins: user.coins - item.priceCoins };
       const applied = await applyReward(tx, wallet, reward, settings);

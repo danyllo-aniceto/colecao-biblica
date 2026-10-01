@@ -34,6 +34,7 @@ const GROUPS: Array<{ title: string; description: string; fields: FieldDef[] }> 
       { key: 'coinsPerCorrectAnswer', label: 'Moedas por acerto', min: 0, max: 100 },
       { key: 'perfectMatchBonusCoins', label: 'Bônus de partida perfeita', min: 0, max: 1000, hint: 'Sem erros, com 5+ perguntas.' },
       { key: 'coinMatchLimitPerDay', label: 'Partidas que rendem moedas por dia', min: 0, max: 100 },
+      { key: 'shopStickerLimitPerDay', label: 'Figurinhas compradas por dia', min: 0, max: 50, hint: 'Inclui o pacote surpresa. 0 = sem limite. Ajudas e itens visuais não contam.' },
       { key: 'duplicateCoinsCommon', label: 'Venda de repetida comum', min: 0, max: 10000, suffix: 'moedas' },
       { key: 'duplicateCoinsRare', label: 'Venda de repetida rara', min: 0, max: 10000, suffix: 'moedas' },
       { key: 'duplicateCoinsEpic', label: 'Venda de repetida épica', min: 0, max: 10000, suffix: 'moedas' },
@@ -109,6 +110,7 @@ const GROUPS: Array<{ title: string; description: string; fields: FieldDef[] }> 
     fields: [
       { key: 'chestBaseCoins', label: 'Moedas fixas', min: 0, max: 10000 },
       { key: 'chestCoinsPerLevel', label: 'Moedas a mais por nível', min: 0, max: 1000 },
+      { key: 'chestMaxCoins', label: 'Teto de moedas por baú', min: 0, max: 100000, hint: 'Evita baús enormes em níveis altos. 0 = sem teto.' },
       { key: 'chestCosmeticChance', label: 'Chance de item visual', min: 0, max: 100, suffix: '%' },
     ],
   },

@@ -126,6 +126,33 @@ describe.skipIf(!hasDatabase)("recompensas novas", () => {
     });
   });
 
+  describe("equilíbrio", () => {
+    it("loja limita figurinhas compradas por dia; ajudas não contam no limite", async () => {
+      await prisma.user.update({ where: { email: "user@email.com" }, data: { coins: 10_000 } });
+      const token = await login("user@email.com");
+      const shop = await api.get("/api/shop").set(bearer(token));
+      const pack = shop.body.find((item: { name: string }) => item.name === "Pacote surpresa");
+      const crowd = shop.body.find((item: { name: string }) => item.name === "Voz da multidão");
+      expect((await api.post(`/api/shop/buy/${pack.id}`).set(bearer(token))).status).toBe(200);
+      expect((await api.post(`/api/shop/buy/${pack.id}`).set(bearer(token))).status).toBe(200);
+      const third = await api.post(`/api/shop/buy/${pack.id}`).set(bearer(token));
+      expect(third.status).toBe(400);
+      expect(third.body.message).toContain("2 figurinha(s) hoje");
+      expect((await api.post(`/api/shop/buy/${crowd.id}`).set(bearer(token))).status).toBe(200);
+      expect((await api.get("/api/shop/limits").set(bearer(token))).body).toEqual({ stickerLimitPerDay: 2, stickersBoughtToday: 2 });
+    });
+
+    it("nível sobe por curva progressiva", async () => {
+      const player = await prisma.user.update({ where: { email: "user@email.com" }, data: { xp: 430 } });
+      const token = await login("user@email.com");
+      const session = await start(token, 1);
+      // 1 acerto em 1 pergunta = 10 + 12 de bônus = 22 XP → 452 XP = nível 3 (450).
+      const result = await answer(token, session.sessionId, session.currentQuestion.id, await correctOf(session.currentQuestion.id));
+      expect(result.body.matchResult.userLevel).toBe(3);
+      expect((await prisma.user.findUniqueOrThrow({ where: { id: player.id } })).level).toBe(3);
+    });
+  });
+
   describe("visual do jogador", () => {
     it("itens grátis entram sozinhos, meta libera, loja vende e só equipa o que tem", async () => {
       const token = await login("user@email.com");
@@ -192,14 +219,14 @@ describe.skipIf(!hasDatabase)("recompensas novas", () => {
       const player = await prisma.user.update({ where: { email: "user@email.com" }, data: { level: 3, chestLevel: 1, coins: 0 } });
       const token = await login("user@email.com");
       const first = await api.post("/api/chests/open").set(bearer(token));
-      expect(first.body).toMatchObject({ level: 2, coins: 60, chestsPending: 1 });
+      expect(first.body).toMatchObject({ level: 2, coins: 40, chestsPending: 1 });
       expect(first.body.boost).not.toBeNull();
       await api.post("/api/chests/open").set(bearer(token));
       const none = await api.post("/api/chests/open").set(bearer(token));
       expect(none.status).toBe(400);
       const after = await prisma.user.findUniqueOrThrow({ where: { id: player.id } });
       expect(after.chestLevel).toBe(3);
-      expect(after.coins).toBe(130);
+      expect(after.coins).toBe(85);
     });
 
     it("coleção temática: esconde as que faltam e paga uma vez ao completar", async () => {
@@ -234,7 +261,7 @@ describe.skipIf(!hasDatabase)("recompensas novas", () => {
       expect((await api.post(`/api/pass/tiers/${firstTier.id}/claim`).set(bearer(token))).status).toBe(400);
 
       await prisma.quizMatch.create({
-        data: { userId: player.id, quizType: "GENERAL", finishedAt: new Date(), questionsAnswered: 10, correctAnswers: 10, wrongAnswers: 0, xpGained: 700, scoreGained: 100 },
+        data: { userId: player.id, quizType: "GENERAL", finishedAt: new Date(), questionsAnswered: 10, correctAnswers: 10, wrongAnswers: 0, xpGained: 1600, scoreGained: 100 },
       });
       const second = pass.body.tiers[1];
       const claimed = await api.post(`/api/pass/tiers/${second.id}/claim`).set(bearer(token));

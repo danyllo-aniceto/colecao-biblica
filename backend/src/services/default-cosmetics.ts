@@ -93,14 +93,14 @@ export async function ensureDefaultPassTiers(db: Db) {
   const reward = async (name: string) => (await db.rewardDefinition.findFirst({ where: { name }, select: { id: true } }))?.id ?? null;
   const title = await db.cosmetic.findFirst({ where: { type: "TITLE", name: "Peregrino da temporada" }, select: { id: true } });
   const tiers = [
-    { level: 1, requiredXp: 200, rewardCoins: 50 },
-    { level: 2, requiredXp: 600, rewardCoins: 0, rewardDefinitionId: await reward("Dica 50/50") },
-    { level: 3, requiredXp: 1200, rewardCoins: 100 },
-    { level: 4, requiredXp: 2000, rewardCoins: 0, rewardDefinitionId: await reward("Pular pergunta") },
-    { level: 5, requiredXp: 3000, rewardCoins: 0, rewardDefinitionId: await reward("Pacote surpresa") },
-    { level: 6, requiredXp: 4200, rewardCoins: 200 },
-    { level: 7, requiredXp: 5600, rewardCoins: 0, rewardDefinitionId: await reward("Bênção dobrada") },
-    { level: 8, requiredXp: 7200, rewardCoins: 300, rewardCosmeticId: title?.id ?? null },
+    { level: 1, requiredXp: 500, rewardCoins: 50 },
+    { level: 2, requiredXp: 1500, rewardCoins: 0, rewardDefinitionId: await reward("Dica 50/50") },
+    { level: 3, requiredXp: 3000, rewardCoins: 100 },
+    { level: 4, requiredXp: 5000, rewardCoins: 0, rewardDefinitionId: await reward("Pular pergunta") },
+    { level: 5, requiredXp: 7500, rewardCoins: 0, rewardDefinitionId: await reward("Pacote surpresa") },
+    { level: 6, requiredXp: 10500, rewardCoins: 200 },
+    { level: 7, requiredXp: 14000, rewardCoins: 0, rewardDefinitionId: await reward("Bênção dobrada") },
+    { level: 8, requiredXp: 18000, rewardCoins: 300, rewardCosmeticId: title?.id ?? null },
   ];
   await db.passTier.createMany({ data: tiers.map((tier) => ({ ...tier, rewardCoins: tier.rewardCoins || (tier.rewardDefinitionId ? 0 : 50) })) });
 }
