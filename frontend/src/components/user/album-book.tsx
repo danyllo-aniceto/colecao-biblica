@@ -232,7 +232,7 @@ function AlbumIntro({ items, ownedCount, totalCharacters }: { items: CharacterEn
   const percent = totalCharacters ? Math.round((ownedCount / totalCharacters) * 100) : 0;
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-      <img src="/icons/icon-192.png" alt="" width={72} height={72} className="h-18 w-18 rounded-2xl shadow-md" />
+      <img src="/icons/icon-192.png" alt="" width={72} height={72} className="h-18 w-18 drop-shadow-md" />
       <div>
         <p className="text-xs font-bold uppercase tracking-[0.3em] text-muted">Coleção Bíblica</p>
         <h3 className="font-display text-3xl font-bold text-ink">Meu álbum</h3>
