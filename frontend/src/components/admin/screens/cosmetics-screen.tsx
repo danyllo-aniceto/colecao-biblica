@@ -61,6 +61,18 @@ const STYLE_LABELS: Record<string, string> = {
   silver: 'Prata girando',
   gold: 'Ouro girando',
   fire: 'Fogo girando',
+  shimmer: 'Reflexo dourado',
+  wave: 'Ondulando',
+  copper: 'Cobre',
+  ice: 'Gelo girando',
+  sunset: 'Entardecer girando',
+  laurel: 'Louros',
+  aurora: 'Aurora girando',
+  neon: 'Neon pulsando',
+  royal: 'Realeza girando',
+  galaxy: 'Céu estrelado girando',
+  pearl: 'Pérola girando',
+  pentecost: 'Língua de fogo girando',
 };
 
 export function CosmeticsScreen() {
@@ -234,7 +246,7 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
       .catch(() => setEvents([]));
   }, []);
 
-  const styles = type === 'TITLE' ? (meta?.titleStyles ?? ['plain', 'glow', 'rainbow', 'pulse']) : type === 'FRAME' ? (meta?.frameStyles ?? ['solid']) : [];
+  const styles = type === 'TITLE' ? (meta?.titleStyles ?? ['plain', 'glow', 'rainbow', 'pulse', 'shimmer', 'wave']) : type === 'FRAME' ? (meta?.frameStyles ?? ['solid']) : [];
   const currentRequirement = meta?.requirements.find((entry) => entry.code === requirement);
   const effectiveStyle = style || (type === 'TITLE' ? 'glow' : type === 'FRAME' ? 'solid' : '');
 

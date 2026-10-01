@@ -52,8 +52,8 @@ export const REQUIREMENTS: RequirementDefinition[] = [
 
 export const requirementByCode = (code: string | null) => REQUIREMENTS.find((requirement) => requirement.code === code);
 
-export const TITLE_STYLES = ["plain", "glow", "rainbow", "pulse"] as const;
-export const FRAME_STYLES = ["solid", "wood", "silver", "gold", "fire", "rainbow"] as const;
+export const TITLE_STYLES = ["plain", "glow", "rainbow", "pulse", "shimmer", "wave"] as const;
+export const FRAME_STYLES = ["solid", "wood", "silver", "gold", "fire", "rainbow", "copper", "ice", "sunset", "laurel", "aurora", "neon", "royal", "galaxy", "pearl", "pentecost"] as const;
 
 /** Campo do usuário que guarda o item equipado de cada tipo (reações não se equipam). */
 const EQUIP_FIELD: Partial<Record<CosmeticType, "avatarId" | "frameId" | "titleId" | "nameColorId">> = {

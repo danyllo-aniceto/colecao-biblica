@@ -636,6 +636,60 @@ input:-webkit-autofill:focus {
   --frame-speed: 4s;
 }
 
+.frame-copper {
+  --frame-bg: conic-gradient(#f2b48a, #b0643a, #e8a070, #8f4a26, #f2b48a);
+  --frame-speed: 10s;
+}
+
+.frame-ice {
+  --frame-bg: conic-gradient(#e6fbff, #7fd6ff, #ffffff, #4fb3f0, #d5f3ff, #7fd6ff, #e6fbff);
+  --frame-speed: 7s;
+}
+
+.frame-sunset {
+  --frame-bg: conic-gradient(#ffd166, #ff7e5f, #c2439c, #6a4cff, #ff7e5f, #ffd166);
+  --frame-speed: 6s;
+}
+
+.frame-laurel {
+  --frame-bg: repeating-conic-gradient(#3f8f3a 0 18deg, #9ad06a 18deg 36deg);
+  --frame-speed: 12s;
+}
+
+.frame-aurora {
+  --frame-bg: conic-gradient(#3dffb0, #2f8cff, #a64dff, #3dffb0, #2f8cff, #3dffb0);
+  --frame-speed: 5s;
+}
+
+.frame-neon {
+  --frame-bg: conic-gradient(#ff2fd2, #2fe6ff, #ff2fd2, #2fe6ff, #ff2fd2);
+  --frame-speed: 3s;
+  filter: drop-shadow(0 0 5px #ff2fd2aa);
+}
+
+.frame-royal {
+  --frame-bg: conic-gradient(#ffe08a, #7c4dff, #d98f00, #5a36d6, #ffe08a, #7c4dff, #ffe08a);
+  --frame-speed: 6s;
+}
+
+.frame-galaxy {
+  --frame-bg:
+    radial-gradient(circle at 20% 25%, #fff 0 1px, transparent 2px), radial-gradient(circle at 75% 60%, #fff 0 1px, transparent 2px),
+    radial-gradient(circle at 45% 85%, #fff 0 1.5px, transparent 2.5px), conic-gradient(#1a1c5a, #5b2a9e, #0e1240, #2f4bd6, #1a1c5a);
+  --frame-speed: 9s;
+}
+
+.frame-pearl {
+  --frame-bg: conic-gradient(#ffffff, #ffd6f0, #d6e8ff, #fff6d6, #d6ffe9, #ffd6f0, #ffffff);
+  --frame-speed: 8s;
+}
+
+.frame-pentecost {
+  --frame-bg: conic-gradient(#fff3b0, #ff8c42, #ff3d2e, #ffd23f, #ff8c42, #fff3b0);
+  --frame-speed: 1.8s;
+  filter: drop-shadow(0 0 5px #ff6a3d99);
+}
+
 .player-title {
   display: inline-block;
   font-family: var(--font-heading);
@@ -662,6 +716,33 @@ input:-webkit-autofill:focus {
 
 .title-pulse {
   animation: title-pulse 1.8s ease-in-out infinite;
+}
+
+.title-shimmer {
+  background: linear-gradient(100deg, var(--title-color) 30%, #ffffff 50%, var(--title-color) 70%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: title-shimmer 2.6s linear infinite;
+}
+
+.title-wave {
+  background: linear-gradient(90deg, var(--title-color), color-mix(in srgb, var(--title-color) 35%, #2f8cff), var(--title-color));
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: title-rainbow 4s linear infinite;
+}
+
+@keyframes title-shimmer {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
 }
 
 @keyframes title-rainbow {
