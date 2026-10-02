@@ -179,6 +179,39 @@ campaignAdminRouter.post(
   }),
 );
 
+const positionsSchema = z.object({
+  positions: z
+    .array(
+      z.object({
+        id: z.number().int().positive(),
+        // Os dois vazios voltam para a posição automática (zigue-zague).
+        posX: z.number().int().min(0).max(100).nullable(),
+        posY: z.number().int().min(0).max(100).nullable(),
+      }),
+    )
+    .min(1)
+    .max(200),
+});
+
+/** Salva de uma vez a posição de várias paradas do cenário (editor visual do mapa). */
+campaignAdminRouter.put(
+  "/scenarios/:id/positions",
+  asyncHandler(async (req, res) => {
+    const id = parseId(req.params.id);
+    if (!(await prisma.scenario.findUnique({ where: { id }, select: { id: true } }))) throw notFound("Cenário não encontrado");
+    const { positions } = positionsSchema.parse(req.body);
+    for (const position of positions) {
+      if ((position.posX === null) !== (position.posY === null)) throw badRequest("Informe x e y juntos, ou deixe os dois vazios");
+    }
+    const ids = positions.map((position) => position.id);
+    if (new Set(ids).size !== ids.length) throw badRequest("Parada repetida na lista");
+    const own = await prisma.scenarioNode.count({ where: { scenarioId: id, id: { in: ids } } });
+    if (own !== ids.length) throw badRequest("Alguma parada não pertence a este cenário");
+    await prisma.$transaction(positions.map((position) => prisma.scenarioNode.update({ where: { id: position.id }, data: { posX: position.posX, posY: position.posY } })));
+    res.json({ saved: positions.length });
+  }),
+);
+
 campaignAdminRouter.put(
   "/nodes/:id",
   asyncHandler(async (req, res) => {

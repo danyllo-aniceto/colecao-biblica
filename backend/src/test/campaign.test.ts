@@ -140,6 +140,18 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     expect(updated.status).toBe(200);
     expect((await prisma.cosmetic.findUniqueOrThrow({ where: { id: created.body.avatarCosmeticId } })).imageUrl).toBe(icon);
 
+    // Editor de posições: salva em lote, valida o cenário e permite voltar ao automático.
+    const nodeIds = [made.body.id as number];
+    const saved = await api.put(`/api/campaign/admin/scenarios/${created.body.id}/positions`).set(bearer(admin)).send({ positions: [{ id: nodeIds[0], posX: 40, posY: 55 }] });
+    expect(saved.status).toBe(200);
+    expect(await prisma.scenarioNode.findUniqueOrThrow({ where: { id: nodeIds[0] } })).toMatchObject({ posX: 40, posY: 55 });
+    const foreign = await prisma.scenarioNode.findFirstOrThrow({ where: { scenarioId: { not: created.body.id } } });
+    expect((await api.put(`/api/campaign/admin/scenarios/${created.body.id}/positions`).set(bearer(admin)).send({ positions: [{ id: foreign.id, posX: 1, posY: 1 }] })).status).toBe(400);
+    expect((await api.put(`/api/campaign/admin/scenarios/${created.body.id}/positions`).set(bearer(admin)).send({ positions: [{ id: nodeIds[0], posX: 10, posY: null }] })).status).toBe(400);
+    expect((await api.put(`/api/campaign/admin/scenarios/${created.body.id}/positions`).set(bearer(admin)).send({ positions: [{ id: nodeIds[0], posX: 101, posY: 5 }] })).status).toBe(400);
+    await api.put(`/api/campaign/admin/scenarios/${created.body.id}/positions`).set(bearer(admin)).send({ positions: [{ id: nodeIds[0], posX: null, posY: null }] });
+    expect((await prisma.scenarioNode.findUniqueOrThrow({ where: { id: nodeIds[0] } })).posX).toBeNull();
+
     const system = await prisma.scenario.findFirstOrThrow({ where: { system: true } });
     expect((await api.delete(`/api/campaign/admin/scenarios/${system.id}`).set(bearer(admin))).status).toBe(400);
     expect((await api.delete(`/api/campaign/admin/scenarios/${created.body.id}`).set(bearer(admin))).status).toBe(204);

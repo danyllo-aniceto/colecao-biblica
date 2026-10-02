@@ -80,3 +80,27 @@ export const listNodesAdmin = (scenarioId: number, params: { page: number; size:
 export const createNode = (scenarioId: number, payload: NodePayload) => apiRequest(`/campaign/admin/scenarios/${scenarioId}/nodes`, json('POST', payload), 'Não foi possível criar a parada.');
 export const updateNode = (id: number, payload: NodePayload) => apiRequest(`/campaign/admin/nodes/${id}`, json('PUT', payload), 'Não foi possível salvar a parada.');
 export const deleteNode = (id: number) => apiRequestVoid(`/campaign/admin/nodes/${id}`, { method: 'DELETE' }, 'Não foi possível excluir a parada.');
+
+export type NodePosition = { id: number; posX: number | null; posY: number | null };
+
+/** Salva de uma vez a posição das paradas (editor visual); x e y nulos voltam ao zigue-zague automático. */
+export const saveNodePositions = (scenarioId: number, positions: NodePosition[]) =>
+  apiRequest<{ saved: number }>(`/campaign/admin/scenarios/${scenarioId}/positions`, json('PUT', { positions }), 'Não foi possível salvar as posições.');
+
+/** Todas as paradas do cenário (busca página a página). */
+export async function listAllNodes(scenarioId: number): Promise<AdminNode[]> {
+  const nodes: AdminNode[] = [];
+  for (let page = 0; page < 20; page += 1) {
+    const response = await listNodesAdmin(scenarioId, { page, size: 50 });
+    nodes.push(...response.content);
+    if (page + 1 >= response.totalPages) break;
+  }
+  return nodes;
+}
+
+/** Mesma regra do servidor: posição automática (zigue-zague de baixo para cima) quando o admin não definiu. */
+export function defaultNodePosition(index: number, total: number): { x: number; y: number } {
+  const columns = [22, 62, 30, 70, 38, 78];
+  const span = Math.max(total - 1, 1);
+  return { x: columns[index % columns.length], y: Math.round(90 - (index / span) * 78) };
+}

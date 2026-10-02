@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import OpenWithRoundedIcon from '@mui/icons-material/OpenWithRounded';
 import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
 import { Button } from '@/components/ui/button';
 import { ColorField } from '@/components/ui/color-field';
@@ -32,6 +33,7 @@ import { listCosmeticsAdmin } from '@/lib/admin-rewards-api';
 import { COSMETIC_TYPE_LABELS } from '@/components/user/rewards/cosmetic-preview';
 import { AdminPanel, Cell, DataTable, IconAction, Row, StatusBadge } from '../admin-ui';
 import { ImageUploadField } from '../image-upload-field';
+import { MapPositionEditor } from './map-position-editor';
 import { usePagedList } from '../use-paged-list';
 
 /** Todos os itens visuais (a lista do painel é paginada em 100, então busca página a página). */
@@ -61,6 +63,7 @@ export function CampaignScreen() {
   const list = usePagedList(listScenariosAdmin, {}, 10);
   const [editing, setEditing] = useState<AdminScenario | 'new' | null>(null);
   const [managing, setManaging] = useState<AdminScenario | null>(null);
+  const [positioning, setPositioning] = useState<AdminScenario | null>(null);
 
   async function remove(scenario: AdminScenario) {
     const ok = await confirm({ title: `Excluir o cenário "${scenario.name}"?`, message: 'As paradas dele também são excluídas. Quem já resgatou os prêmios continua com eles.', confirmLabel: 'Excluir', tone: 'danger' });
@@ -85,7 +88,7 @@ export function CampaignScreen() {
       }
     >
       <DataTable
-        columns={[{ label: 'Cenário' }, { label: 'Ordem' }, { label: 'Paradas' }, { label: 'Perguntas' }, { label: 'Carta especial' }, { label: 'Status' }, { label: '', className: 'w-36' }]}
+        columns={[{ label: 'Cenário' }, { label: 'Ordem' }, { label: 'Paradas' }, { label: 'Perguntas' }, { label: 'Carta especial' }, { label: 'Status' }, { label: '', className: 'w-44' }]}
         loading={list.loading}
         error={list.error}
         isEmpty={list.items.length === 0}
@@ -115,6 +118,9 @@ export function CampaignScreen() {
                 <IconAction label="Paradas e recompensas" onClick={() => setManaging(scenario)}>
                   <RouteRoundedIcon fontSize="small" />
                 </IconAction>
+                <IconAction label="Posicionar paradas no mapa" onClick={() => setPositioning(scenario)}>
+                  <OpenWithRoundedIcon fontSize="small" />
+                </IconAction>
                 <IconAction label="Editar" onClick={() => setEditing(scenario)}>
                   <EditRoundedIcon fontSize="small" />
                 </IconAction>
@@ -136,6 +142,16 @@ export function CampaignScreen() {
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
+            list.reload();
+          }}
+        />
+      ) : null}
+      {positioning ? (
+        <MapPositionEditor
+          scenario={positioning}
+          onClose={() => setPositioning(null)}
+          onSaved={() => {
+            setPositioning(null);
             list.reload();
           }}
         />
