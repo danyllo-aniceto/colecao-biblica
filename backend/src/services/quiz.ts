@@ -17,6 +17,7 @@ import {
   dayRangeInTimeZone,
   isCampaignOnlyRarity,
   multiplyCoins,
+  pickGeneralQuestionIds,
   nextCombo,
   isTimeExpired,
   pickFiftyFiftyRemovals,
@@ -26,6 +27,7 @@ import {
   shuffle,
   weightedPick,
 } from "./game-rules";
+import { currentScenarioIdFor } from "./campaign";
 import { checkAchievements } from "./achievements";
 import { applyReward, availableRewards, grantStickerIfMissing, walletData } from "./rewards";
 import { getSettings, type GameSettings } from "./settings";
@@ -209,7 +211,13 @@ export async function startSession(user: User, input: StartInput) {
       settings.dailyChallengeQuestions,
     );
   } else {
-    selected = shuffle(available.map((question) => question.id)).slice(0, questionLimit);
+    const scenarioId = input.quizType === "GENERAL" ? await currentScenarioIdFor(prisma, user.id) : null;
+    const scenarioIds = scenarioId ? new Set((await prisma.question.findMany({ where: { active: true, scenarioId }, select: { id: true } })).map((question) => question.id)) : new Set<number>();
+    selected = pickGeneralQuestionIds(
+      available.filter((question) => scenarioIds.has(question.id)).map((question) => question.id),
+      available.filter((question) => !scenarioIds.has(question.id)).map((question) => question.id),
+      questionLimit,
+    );
   }
 
   const existing = await prisma.quizSession.findFirst({ where: { userId: user.id, status: "IN_PROGRESS" }, select: { id: true } });

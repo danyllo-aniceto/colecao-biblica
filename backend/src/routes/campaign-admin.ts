@@ -66,11 +66,11 @@ campaignAdminRouter.get(
         orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
         skip,
         take,
-        include: { fragmentCharacter: { select: { id: true, name: true } }, _count: { select: { nodes: true } } },
+        include: { fragmentCharacter: { select: { id: true, name: true } }, _count: { select: { nodes: true, questions: true } } },
       }),
       prisma.scenario.count(),
     ]);
-    res.json(pageOf(items.map(({ _count, ...scenario }) => ({ ...scenario, nodeCount: _count.nodes })), total, page, size));
+    res.json(pageOf(items.map(({ _count, ...scenario }) => ({ ...scenario, nodeCount: _count.nodes, questionCount: _count.questions })), total, page, size));
   }),
 );
 

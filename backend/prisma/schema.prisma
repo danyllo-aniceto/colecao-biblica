@@ -226,6 +226,8 @@ model Question {
   optionD            String             @map("option_d")
   correctOption      String             @map("correct_option") @db.Char(1)
   relatedCharacterId Int?               @map("character_id")
+  /// Pergunta ligada a um cenário da campanha (entra com prioridade nas partidas de quem está nele).
+  scenarioId         Int?               @map("scenario_id")
   explanation        String?
   bibleReference     String?            @map("bible_reference")
   active             Boolean            @default(true)
@@ -238,9 +240,11 @@ model Question {
   answersD           Int                @default(0) @map("answers_d")
 
   relatedCharacter BiblicalCharacter? @relation(fields: [relatedCharacterId], references: [id], onDelete: SetNull)
+  scenario         Scenario?          @relation(fields: [scenarioId], references: [id], onDelete: SetNull)
   reports          QuestionReport[]
 
   @@index([active, relatedCharacterId])
+  @@index([active, scenarioId])
   @@map("questions")
 }
 
@@ -642,6 +646,7 @@ model Scenario {
 
   fragmentCharacter BiblicalCharacter? @relation("ScenarioFragmentCharacter", fields: [fragmentCharacterId], references: [id], onDelete: SetNull)
   nodes             ScenarioNode[]
+  questions         Question[]
 
   @@index([sortOrder])
   @@map("scenarios")

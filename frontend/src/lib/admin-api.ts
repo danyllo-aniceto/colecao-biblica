@@ -77,6 +77,8 @@ export type AdminQuestion = {
   correctOption: string;
   relatedCharacterId?: number | null;
   relatedCharacterName?: string | null;
+  scenarioId?: number | null;
+  scenarioName?: string | null;
   explanation?: string | null;
   bibleReference?: string | null;
   active: boolean;
@@ -248,6 +250,7 @@ export type QuestionPayload = {
   optionD: string;
   correctOption: string;
   relatedCharacterId: number | null;
+  scenarioId?: number | null;
   explanation: string | null;
   bibleReference: string | null;
   active: boolean;
@@ -382,7 +385,7 @@ export function deleteCharacter(id: number) {
 
 // Perguntas --------------------------------------------------------------
 
-export type QuestionFilters = { page: number; size: number; search?: string; difficulty?: string; characterId?: string; status?: string; calibration?: string; reported?: string };
+export type QuestionFilters = { page: number; size: number; search?: string; difficulty?: string; characterId?: string; scenarioId?: string; status?: string; calibration?: string; reported?: string };
 
 export function listQuestions(params: QuestionFilters) {
   return apiRequest<PaginatedResponse<AdminQuestion>>(withQuery('/questions', params), { method: 'GET' }, 'Não foi possível carregar as perguntas.');

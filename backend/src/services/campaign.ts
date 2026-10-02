@@ -1,4 +1,4 @@
-import { lockUser, prisma, transaction } from "../db/prisma";
+import { lockUser, prisma, transaction, type Db } from "../db/prisma";
 import { badRequest, notFound } from "../lib/errors";
 import { checkAchievements } from "./achievements";
 import { campaignNodeState, currentScenarioId, defaultNodePosition, fragmentsComplete } from "./game-rules";
@@ -84,6 +84,18 @@ export async function getCampaign(userId: number) {
       };
     }),
   };
+}
+
+/** Cenário em que o jogador está (o primeiro com parada ainda não resgatada); null sem campanha. */
+export async function currentScenarioIdFor(db: Db, userId: number): Promise<number | null> {
+  const [scenarios, claims] = await Promise.all([
+    db.scenario.findMany({ where: { active: true }, orderBy: [{ sortOrder: "asc" }, { id: "asc" }], select: { id: true, nodes: { select: { id: true, level: true } } } }),
+    db.userClaim.findMany({ where: { userId, kind: KIND }, select: { code: true } }),
+  ]);
+  const claimed = new Set(claims.map((claim) => Number(claim.code)));
+  const nodes = scenarios.flatMap((scenario) => scenario.nodes.map((node) => ({ level: node.level, scenarioId: scenario.id, id: node.id })));
+  const claimedLevels = new Set(nodes.filter((node) => claimed.has(node.id)).map((node) => node.level));
+  return currentScenarioId(scenarios, nodes, claimedLevels);
 }
 
 /** Resgata a parada (precisa ter chegado ao nível): moedas, ajuda, item visual e fragmento da carta especial. */

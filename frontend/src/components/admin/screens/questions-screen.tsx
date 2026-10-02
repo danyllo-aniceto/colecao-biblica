@@ -36,6 +36,7 @@ import {
 import { DIFFICULTY_LABELS, DIFFICULTY_TIME, accuracy } from '@/lib/labels';
 import { ImportQuestionsModal } from './import-questions-modal';
 import { AdminPanel, Cell, DataTable, IconAction, Row, SearchInput, StatusBadge } from '../admin-ui';
+import { useScenarioOptions } from '../use-scenario-options';
 import { useDebouncedValue, usePagedList } from '../use-paged-list';
 
 const LETTERS = ['A', 'B', 'C', 'D'] as const;
@@ -72,9 +73,11 @@ export function QuestionsScreen({ params }: { params: URLSearchParams }) {
   const { confirm } = useDialogs();
   const toast = useToast();
   const characters = useCharacterOptions();
+  const scenarios = useScenarioOptions();
   const [search, setSearch] = useState('');
   const [difficulty, setDifficulty] = useState(params.get('dificuldade') ?? '');
   const [characterId, setCharacterId] = useState(params.get('personagem') ?? '');
+  const [scenarioId, setScenarioId] = useState('');
   const [status, setStatus] = useState(params.get('status') ?? '');
   const [review, setReview] = useState(params.get('revisar') ?? '');
   const [importing, setImporting] = useState(false);
@@ -86,11 +89,12 @@ export function QuestionsScreen({ params }: { params: URLSearchParams }) {
     search: debouncedSearch,
     difficulty,
     characterId,
+    scenarioId,
     status,
     calibration: review === 'calibration' ? 'mismatch' : '',
     reported: review === 'reported' ? 'open' : '',
   });
-  const hasFilters = Boolean(search || difficulty || characterId || status || review);
+  const hasFilters = Boolean(search || difficulty || characterId || scenarioId || status || review);
 
   async function applySuggestions() {
     const ids = list.items.filter((question) => question.suggestedDifficulty && question.suggestedDifficulty !== question.difficulty).map((question) => question.id);
@@ -175,6 +179,13 @@ export function QuestionsScreen({ params }: { params: URLSearchParams }) {
           ]}
         />
         <Select
+          aria-label="Cenário"
+          searchable
+          value={scenarioId}
+          onChange={setScenarioId}
+          options={[{ value: '', label: 'Todos os cenários' }, { value: 'none', label: 'Sem cenário' }, ...scenarios]}
+        />
+        <Select
           aria-label="Status"
           value={status}
           onChange={setStatus}
@@ -238,7 +249,10 @@ export function QuestionsScreen({ params }: { params: URLSearchParams }) {
                   <CheckRoundedIcon sx={{ fontSize: 14 }} /> {question.correctOption}) {correct}
                 </p>
               </Cell>
-              <Cell>{question.relatedCharacterName ?? <span className="text-muted">Geral</span>}</Cell>
+              <Cell>
+                {question.relatedCharacterName ?? <span className="text-muted">Geral</span>}
+                {question.scenarioName ? <span className="block text-xs font-semibold text-violet-strong dark:text-violet">{question.scenarioName}</span> : null}
+              </Cell>
               <Cell>
                 <Badge tone={difficultyTone[question.difficulty]}>{DIFFICULTY_LABELS[question.difficulty]}</Badge>
                 <span className="ml-1 text-xs text-muted">{question.timeLimitSeconds}s</span>
@@ -333,6 +347,7 @@ type QuestionForm = {
   options: Record<Letter, string>;
   correctOption: Letter;
   relatedCharacterId: string;
+  scenarioId: string;
   explanation: string;
   bibleReference: string;
   active: boolean;
@@ -347,6 +362,7 @@ function initialForm(question: AdminQuestion | null, defaultCharacterId?: number
       options: { A: '', B: '', C: '', D: '' },
       correctOption: 'A',
       relatedCharacterId: defaultCharacterId ? String(defaultCharacterId) : '',
+      scenarioId: '',
       explanation: '',
       bibleReference: '',
       active: true,
@@ -359,6 +375,7 @@ function initialForm(question: AdminQuestion | null, defaultCharacterId?: number
     options: { A: question.optionA, B: question.optionB, C: question.optionC, D: question.optionD },
     correctOption: (question.correctOption as Letter) ?? 'A',
     relatedCharacterId: question.relatedCharacterId ? String(question.relatedCharacterId) : '',
+    scenarioId: question.scenarioId ? String(question.scenarioId) : '',
     explanation: question.explanation ?? '',
     bibleReference: question.bibleReference ?? '',
     active: question.active,
@@ -381,6 +398,7 @@ export function QuestionEditorModal({
 }) {
   const toast = useToast();
   const characters = useCharacterOptions();
+  const scenarios = useScenarioOptions();
   const [form, setForm] = useState<QuestionForm>(() => initialForm(question, defaultCharacterId));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -419,6 +437,7 @@ export function QuestionEditorModal({
       optionD: form.options.D.trim(),
       correctOption: form.correctOption,
       relatedCharacterId: form.relatedCharacterId ? Number(form.relatedCharacterId) : null,
+      scenarioId: form.scenarioId ? Number(form.scenarioId) : null,
       explanation: form.explanation.trim() || null,
       bibleReference: form.bibleReference.trim() || null,
       active: form.active,
@@ -529,6 +548,10 @@ export function QuestionEditorModal({
             onChange={(value) => update('relatedCharacterId', value)}
             options={[{ value: '', label: 'Pergunta geral (sem personagem)' }, ...characters.map((character) => ({ value: String(character.id), label: character.name, description: character.published ? undefined : 'Rascunho' }))]}
           />
+        </Field>
+
+        <Field label="Cenário da campanha" hint="Quem está neste cenário recebe parte das perguntas dele no quiz geral.">
+          <Select aria-label="Cenário" searchable value={form.scenarioId} onChange={(value) => update('scenarioId', value)} options={[{ value: '', label: 'Sem cenário' }, ...scenarios]} />
         </Field>
 
         <div className="grid gap-5 md:grid-cols-2">

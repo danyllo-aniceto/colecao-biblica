@@ -85,12 +85,12 @@ export function CampaignScreen() {
       }
     >
       <DataTable
-        columns={[{ label: 'Cenário' }, { label: 'Ordem' }, { label: 'Paradas' }, { label: 'Carta especial' }, { label: 'Status' }, { label: '', className: 'w-36' }]}
+        columns={[{ label: 'Cenário' }, { label: 'Ordem' }, { label: 'Paradas' }, { label: 'Perguntas' }, { label: 'Carta especial' }, { label: 'Status' }, { label: '', className: 'w-36' }]}
         loading={list.loading}
         error={list.error}
         isEmpty={list.items.length === 0}
         empty="Nenhum cenário cadastrado."
-        minWidth={720}
+        minWidth={780}
       >
         {list.items.map((scenario) => (
           <Row key={scenario.id}>
@@ -105,6 +105,7 @@ export function CampaignScreen() {
             </Cell>
             <Cell>{scenario.sortOrder}</Cell>
             <Cell>{scenario.nodeCount}</Cell>
+            <Cell>{scenario.questionCount}</Cell>
             <Cell className="text-sm">{scenario.fragmentCharacter?.name ?? '—'}</Cell>
             <Cell>
               <StatusBadge active={scenario.active} on="Ligado" off="Desligado" />

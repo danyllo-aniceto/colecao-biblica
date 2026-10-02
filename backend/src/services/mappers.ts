@@ -85,7 +85,7 @@ export function toCharacterSummary(character: BiblicalCharacter, questionCount =
   };
 }
 
-export type QuestionWithCharacter = Question & { relatedCharacter: Pick<BiblicalCharacter, "id" | "name"> | null };
+export type QuestionWithCharacter = Question & { relatedCharacter: Pick<BiblicalCharacter, "id" | "name"> | null; scenario?: { id: number; name: string } | null };
 
 export function toQuestionResponse(question: QuestionWithCharacter) {
   return {
@@ -100,6 +100,8 @@ export function toQuestionResponse(question: QuestionWithCharacter) {
     correctOption: question.correctOption,
     relatedCharacterId: question.relatedCharacter?.id ?? null,
     relatedCharacterName: question.relatedCharacter?.name ?? null,
+    scenarioId: question.scenarioId,
+    scenarioName: question.scenario?.name ?? null,
     explanation: question.explanation,
     bibleReference: question.bibleReference,
     active: question.active,

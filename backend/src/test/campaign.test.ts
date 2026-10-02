@@ -133,4 +133,33 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     expect((await api.delete(`/api/campaign/admin/scenarios/${system.id}`).set(bearer(admin))).status).toBe(400);
     expect((await api.delete(`/api/campaign/admin/scenarios/${created.body.id}`).set(bearer(admin))).status).toBe(204);
   });
+
+  it("perguntas do cenário entram com prioridade na partida geral de quem está nele", async () => {
+    const eden = await prisma.scenario.findUniqueOrThrow({ where: { slug: "eden" } });
+    const base = await prisma.question.findFirstOrThrow();
+    const created = [];
+    for (let index = 0; index < 8; index += 1) {
+      created.push(
+        await prisma.question.create({
+          data: { text: `Pergunta do Éden ${index}`, difficulty: "EASY", timeLimitSeconds: 30, optionA: "a", optionB: "b", optionC: "c", optionD: "d", correctOption: "A", scenarioId: eden.id },
+        }),
+      );
+    }
+    expect(base.scenarioId).toBeNull();
+    const token = await login("user@email.com");
+    const started = await api.post("/api/quiz/sessions/start").set(bearer(token)).send({ quizType: "GENERAL", questionLimit: 6 });
+    expect(started.status).toBe(200);
+    const session = await prisma.quizSession.findUniqueOrThrow({ where: { id: started.body.sessionId } });
+    const ids = session.questionIds as number[];
+    expect(ids).toHaveLength(6);
+    const fromScenario = ids.filter((id) => created.some((question) => question.id === id));
+    expect(fromScenario.length).toBeGreaterThanOrEqual(3);
+
+    // O painel liga e desliga a pergunta de um cenário.
+    const admin = await login("admin2@email.com");
+    const linked = await api.put(`/api/questions/admin/${base.id}`).set(bearer(admin)).send({ scenarioId: eden.id });
+    expect(linked.body.scenarioName).toBe("Jardim do Éden");
+    expect((await api.put(`/api/questions/admin/${base.id}`).set(bearer(admin)).send({ scenarioId: null })).body.scenarioId).toBeNull();
+    expect((await api.put(`/api/questions/admin/${base.id}`).set(bearer(admin)).send({ scenarioId: 9999 })).status).toBe(404);
+  });
 });

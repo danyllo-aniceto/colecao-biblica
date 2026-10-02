@@ -24,6 +24,7 @@ export type AdminScenario = {
   active: boolean;
   system: boolean;
   nodeCount: number;
+  questionCount: number;
 };
 
 export type ScenarioPayload = {

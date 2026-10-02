@@ -4,6 +4,7 @@ import {
   currentScenarioId,
   defaultNodePosition,
   fragmentsComplete,
+  pickGeneralQuestionIds,
   isCampaignOnlyRarity,
   chestCoins,
   comboBonus,
@@ -333,5 +334,22 @@ describe("campanha e carta especial", () => {
     expect(positions.every((point) => point.x >= 10 && point.x <= 90 && point.y >= 10 && point.y <= 90)).toBe(true);
     expect(positions[0].x).not.toBe(positions[1].x);
     expect(defaultNodePosition(0, 1)).toEqual({ x: 22, y: 90 });
+  });
+
+  it("a partida geral dá prioridade às perguntas do cenário atual, sem faltar pergunta", () => {
+    const scenario = [1, 2, 3, 4, 5, 6];
+    const others = [10, 11, 12, 13, 14, 15, 16, 17];
+    const picked = pickGeneralQuestionIds(scenario, others, 10);
+    expect(picked).toHaveLength(10);
+    expect(new Set(picked).size).toBe(10);
+    expect(picked.filter((id) => scenario.includes(id)).length).toBeGreaterThanOrEqual(5);
+    // Poucas do cenário: as outras completam. Nenhuma do cenário: tudo vem das gerais.
+    const few = pickGeneralQuestionIds([1], others, 10);
+    expect(few).toHaveLength(9);
+    expect(few).toContain(1);
+    expect(pickGeneralQuestionIds([], others, 4)).toHaveLength(4);
+    // Poucas gerais: o cenário cobre o resto.
+    expect(pickGeneralQuestionIds(scenario, [10], 6)).toHaveLength(6);
+    expect(pickGeneralQuestionIds(scenario, others, 2)).toHaveLength(2);
   });
 });

@@ -11,7 +11,7 @@ import { characterRef, toQuestionResponse } from "../services/mappers";
 
 export const questionsRouter = Router();
 
-const include = { relatedCharacter: characterRef } as const;
+const include = { relatedCharacter: characterRef, scenario: { select: { id: true, name: true } } } as const;
 const difficulty = z.enum(["EASY", "MEDIUM", "HARD", "VERY_HARD"]);
 const timeLimit = z.number().int().min(5).max(120);
 
@@ -25,6 +25,7 @@ const createSchema = z.object({
   optionD: requiredText(),
   correctOption: optionLetter,
   relatedCharacterId: z.number().int().positive().nullish(),
+  scenarioId: z.number().int().positive().nullish(),
   explanation: clearableText(2000),
   bibleReference: clearableText(200),
   active: z.boolean().nullish(),
@@ -41,6 +42,8 @@ const updateSchema = z.object({
   correctOption: optionLetter.nullish(),
   // null transforma a pergunta em geral (sem personagem).
   relatedCharacterId: z.number().int().positive().nullish(),
+  // null tira a pergunta do cenário.
+  scenarioId: z.number().int().positive().nullish(),
   explanation: clearableText(2000),
   bibleReference: clearableText(200),
   active: z.boolean().nullish(),
@@ -51,6 +54,13 @@ function ensureDistinctOptions(options: Array<string | undefined>) {
   const filled = options.filter((option): option is string => Boolean(option)).map((option) => option.trim().toLowerCase());
   if (new Set(filled).size !== filled.length) {
     throw badRequest("As alternativas precisam ser diferentes entre si");
+  }
+}
+
+async function ensureScenario(id?: number | null) {
+  if (!id) return;
+  if (!(await prisma.scenario.findUnique({ where: { id }, select: { id: true } }))) {
+    throw notFound("Cenário não encontrado");
   }
 }
 
@@ -82,6 +92,7 @@ questionsRouter.get(
     const search = queryText(req.query.search);
     const difficultyFilter = queryText(req.query.difficulty)?.toUpperCase();
     const character = queryText(req.query.characterId);
+    const scenario = queryText(req.query.scenarioId);
     const status = queryText(req.query.status);
     const calibration = queryText(req.query.calibration);
     const reported = queryText(req.query.reported);
@@ -100,6 +111,7 @@ questionsRouter.get(
         : {}),
       ...(difficultyFilter ? { difficulty: difficulty.parse(difficultyFilter) } : {}),
       ...(character === "none" ? { relatedCharacterId: null } : character ? { relatedCharacterId: parseId(character, "Personagem") } : {}),
+      ...(scenario === "none" ? { scenarioId: null } : scenario ? { scenarioId: parseId(scenario, "Cenário") } : {}),
       ...(status === "active" ? { active: true } : status === "inactive" ? { active: false } : {}),
       ...(reported === "open" ? { reports: { some: { status: "OPEN" } } } : {}),
     };
@@ -155,6 +167,7 @@ questionsRouter.post(
     if (input.relatedCharacterId) {
       await ensureCharacter(input.relatedCharacterId);
     }
+    await ensureScenario(input.scenarioId);
     const question = await prisma.question.create({
       data: {
         text: input.text,
@@ -166,6 +179,7 @@ questionsRouter.post(
         optionD: input.optionD,
         correctOption: input.correctOption,
         relatedCharacterId: input.relatedCharacterId ?? null,
+        scenarioId: input.scenarioId ?? null,
         explanation: input.explanation ?? null,
         bibleReference: input.bibleReference ?? null,
         active: input.active ?? true,
@@ -322,6 +336,7 @@ questionsRouter.put(
     if (input.relatedCharacterId) {
       await ensureCharacter(input.relatedCharacterId);
     }
+    await ensureScenario(input.scenarioId);
 
     const data: Prisma.QuestionUncheckedUpdateInput = {};
     if (input.text !== undefined) data.text = input.text;
@@ -333,6 +348,7 @@ questionsRouter.put(
     if (input.optionD !== undefined) data.optionD = input.optionD;
     if (input.correctOption != null) data.correctOption = input.correctOption;
     if (input.relatedCharacterId !== undefined) data.relatedCharacterId = input.relatedCharacterId;
+    if (input.scenarioId !== undefined) data.scenarioId = input.scenarioId;
     if (input.explanation !== undefined) data.explanation = input.explanation;
     if (input.bibleReference !== undefined) data.bibleReference = input.bibleReference;
     if (input.active != null) data.active = input.active;

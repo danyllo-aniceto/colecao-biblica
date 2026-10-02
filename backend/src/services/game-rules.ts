@@ -508,3 +508,22 @@ export function defaultNodePosition(index: number, total: number): { x: number; 
   const y = 90 - (index / span) * 78;
   return { x, y: Math.round(y) };
 }
+
+/** Parte (0 a 1) das perguntas de uma partida geral que vem do cenário atual da campanha, quando há. */
+export const SCENARIO_QUESTION_SHARE = 0.5;
+
+/**
+ * Perguntas da partida geral: dá prioridade às do cenário em que o jogador está (até `share` da
+ * partida) e completa com as demais; se faltar pergunta de um lado, o outro cobre. Tudo embaralhado.
+ */
+export function pickGeneralQuestionIds(
+  scenarioIds: number[],
+  otherIds: number[],
+  limit: number,
+  share = SCENARIO_QUESTION_SHARE,
+  random: () => number = Math.random,
+): number[] {
+  const fromScenario = shuffle(scenarioIds, random).slice(0, Math.min(Math.ceil(limit * share), limit));
+  const rest = shuffle([...otherIds, ...scenarioIds.filter((id) => !fromScenario.includes(id))], random);
+  return shuffle([...fromScenario, ...rest.slice(0, limit - fromScenario.length)], random);
+}
