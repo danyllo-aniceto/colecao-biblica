@@ -1,12 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
+import KeyboardArrowUpRoundedIcon from '@mui/icons-material/KeyboardArrowUpRounded';
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
-import { Pagination, usePagination } from '@/components/ui/pagination';
 import { LoadingState } from '@/components/ui/spinner';
+import { Tooltip } from '@/components/ui/tooltip';
 import { errorMessage, useToast } from '@/components/ui/toast';
 import { Alert, CoinIcon, EmptyState, ProgressBar } from '@/components/game/game-ui';
 import { StickerCard } from '@/components/game/sticker-card';
@@ -63,12 +66,15 @@ function NodeButton({ node, onOpen }: { node: CampaignNode; onOpen: (node: Campa
 
 function ScenarioMap({ scenario, onOpenNode }: { scenario: CampaignScenario; onOpenNode: (node: CampaignNode) => void }) {
   const [mapFailed, setMapFailed] = useState(false);
-  useEffect(() => setMapFailed(false), [scenario.id]);
   const ordered = [...scenario.nodes].sort((a, b) => a.level - b.level);
   const reached = ordered.filter((node) => node.state !== 'locked');
 
   return (
-    <div className="relative mx-auto aspect-[3/4] w-full max-w-md overflow-hidden rounded-3xl border-4 border-edge-strong shadow-lg" style={{ background: scenarioFallbackBackground(scenario.color) }}>
+    // O mapa mantém a proporção 3:4 e cabe inteiro na altura que sobra na tela (unidades de container).
+    <div
+      className="relative aspect-[3/4] overflow-hidden rounded-3xl border-4 border-edge-strong shadow-lg"
+      style={{ width: 'min(100cqw, 75cqh)', background: scenarioFallbackBackground(scenario.color) }}
+    >
       {!mapFailed ? <img src={scenarioMapSrc(scenario)} alt="" draggable={false} className="absolute inset-0 h-full w-full object-cover" onError={() => setMapFailed(true)} /> : null}
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full" aria-hidden="true">
         <path d={pathBetween(ordered)} fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth="2.6" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
@@ -126,32 +132,83 @@ type CampaignModalProps = {
   onUserUpdate: (user: UserProfile, achievements: UnlockedAchievement[]) => void;
 };
 
-/** Mapa da campanha: um cenário por página, com o caminho e as paradas liberadas pelo nível. */
+const prefersReducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/**
+ * Campanha em tela cheia: cada cenário ocupa a tela inteira e o jogador sobe e desce arrastando
+ * (ou pelos botões ▲ ▼). A rolagem encaixa em cada mapa e a cor da tela acompanha o cenário.
+ */
 export function CampaignModal({ open, campaign, playerName, onClose, onChanged, onUserUpdate }: CampaignModalProps) {
   const toast = useToast();
   const scenarios = campaign?.scenarios ?? [];
-  const paging = usePagination(scenarios, 1);
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
   const positioned = useRef(false);
+  const frame = useRef(0);
+  const [active, setActive] = useState(0);
   const [selected, setSelected] = useState<CampaignNode | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [unlocked, setUnlocked] = useState<ClaimNodeResult | null>(null);
 
-  // Ao abrir, vai direto para o cenário atual.
+  const special = campaign?.special ?? null;
+  const scenario = scenarios[active] ?? null;
+  const selectedScenario = selected ? (scenarios.find((item) => item.nodes.some((node) => node.id === selected.id)) ?? null) : null;
+  const liveSelected = selected && selectedScenario ? (selectedScenario.nodes.find((node) => node.id === selected.id) ?? selected) : selected;
+
+  // Trava a rolagem da página de trás enquanto a campanha está aberta.
   useEffect(() => {
-    if (!open) {
-      positioned.current = false;
-      return;
-    }
-    if (positioned.current || !campaign) return;
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) positioned.current = false;
+  }, [open]);
+
+  // Ao abrir, vai direto (sem animação) para o cenário atual.
+  useLayoutEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!open || !campaign || !scroller || positioned.current) return;
     positioned.current = true;
-    const index = campaign.scenarios.findIndex((scenario) => scenario.id === campaign.currentScenarioId);
-    paging.setPage(Math.max(0, index));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const index = Math.max(0, campaign.scenarios.findIndex((item) => item.id === campaign.currentScenarioId));
+    scroller.scrollTo({ top: index * scroller.clientHeight, behavior: 'auto' });
+    setActive(index);
   }, [open, campaign]);
 
-  const scenario = paging.pageItems[0] ?? null;
-  const special = campaign?.special ?? null;
-  const liveSelected = selected && scenario ? (scenario.nodes.find((node) => node.id === selected.id) ?? selected) : selected;
+  const goTo = useCallback((index: number) => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    const target = Math.max(0, Math.min(index, scenarios.length - 1));
+    scroller.scrollTo({ top: target * scroller.clientHeight, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+  }, [scenarios.length]);
+
+  function handleScroll() {
+    cancelAnimationFrame(frame.current);
+    frame.current = requestAnimationFrame(() => {
+      const scroller = scrollerRef.current;
+      if (scroller && scroller.clientHeight > 0) setActive(Math.round(scroller.scrollTop / scroller.clientHeight));
+    });
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    function onKey(event: KeyboardEvent) {
+      if (selected || unlocked) return;
+      if (event.key === 'Escape') onClose();
+      else if (event.key === 'ArrowDown' || event.key === 'PageDown') {
+        event.preventDefault();
+        goTo(active + 1);
+      } else if (event.key === 'ArrowUp' || event.key === 'PageUp') {
+        event.preventDefault();
+        goTo(active - 1);
+      }
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open, selected, unlocked, active, goTo, onClose]);
 
   async function claim(node: CampaignNode) {
     setClaiming(true);
@@ -181,74 +238,114 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
     }
   }
 
+  const arrow = 'flex h-12 w-12 items-center justify-center rounded-full bg-primary text-on-primary shadow-[0_4px_0_var(--primary-strong)] transition active:translate-y-0.5 active:shadow-none disabled:opacity-40 disabled:shadow-none';
+
   return (
     <>
-      <Modal open={open} size="lg" title="Campanha" description="Suba de nível para abrir o caminho e ganhar as recompensas de cada cenário." onClose={onClose}>
-        {!campaign ? (
-          <LoadingState label="Carregando o caminho..." />
-        ) : scenarios.length === 0 ? (
-          <EmptyState icon={<StarRoundedIcon />} title="A campanha ainda não começou">
-            Em breve os cenários estarão disponíveis.
-          </EmptyState>
-        ) : (
-          <div className="space-y-4">
+      {open ? (
+        <div role="dialog" aria-modal="true" aria-label="Campanha" style={scenario ? scenarioThemeVars(scenario.color) : undefined} className="fixed inset-0 z-[60] flex flex-col bg-bg transition-colors duration-700">
+          <header className="flex shrink-0 items-center gap-3 border-b border-edge bg-surface/80 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl transition-colors duration-700">
+            <Tooltip content="Fechar a campanha" side="bottom">
+              <button type="button" onClick={onClose} aria-label="Fechar a campanha" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-surface-3 text-muted transition hover:text-ink">
+                <CloseRoundedIcon />
+              </button>
+            </Tooltip>
+            <h2 className="font-display text-xl font-bold text-ink">Campanha</h2>
             {special ? (
-              <section data-rarity={special.character.rarity} className="rarity flex items-center gap-4 rounded-3xl border-2 border-r-special/50 bg-r-special/10 p-3">
-                <div className="w-16 shrink-0">
-                  <StickerCard name={special.character.name} rarity={special.character.rarity} imageUrl={special.character.imageUrl} owned={special.owned} size="sm" />
+              <div data-rarity={special.character.rarity} className="rarity ml-auto flex min-w-0 max-w-[55%] items-center gap-2 rounded-2xl border-2 border-r-special/50 bg-r-special/10 px-3 py-1.5">
+                <StarRoundedIcon className="shrink-0 text-r-special" fontSize="small" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-bold text-ink">{special.owned ? `${special.character.name} conquistado!` : `Carta ${special.character.name}`}</p>
+                  {special.owned ? null : <ProgressBar className="mt-1 h-1.5" value={(special.fragments / Math.max(special.totalFragments, 1)) * 100} color="var(--r-special)" />}
                 </div>
-                <div className="min-w-0 flex-1 space-y-1.5">
-                  <h3 className="font-display text-base font-bold text-ink">Carta especial: {special.character.name}</h3>
-                  {special.owned ? (
-                    <p className="text-sm font-semibold text-success-strong dark:text-success">Conquistada! Única e intransferível.</p>
-                  ) : (
-                    <>
-                      <ProgressBar value={(special.fragments / Math.max(special.totalFragments, 1)) * 100} color="var(--r-special)" />
-                      <p className="text-xs font-semibold text-muted">
-                        {special.fragments}/{special.totalFragments} fragmentos · um por relíquia de cenário
-                      </p>
-                    </>
-                  )}
-                </div>
-              </section>
+                {special.owned ? null : (
+                  <span className="shrink-0 text-xs font-bold text-muted">
+                    {special.fragments}/{special.totalFragments}
+                  </span>
+                )}
+              </div>
             ) : null}
+          </header>
 
-            {scenario ? (
-              <section style={scenarioThemeVars(scenario.color)} className="space-y-4 rounded-3xl bg-bg p-3 sm:p-4">
-                <header className="flex items-center gap-3">
-                  <ScenarioIcon scenario={scenario} size={56} />
-                  <div className="min-w-0 flex-1">
-                    <h3 className="truncate font-display text-xl font-bold text-ink">{scenario.name}</h3>
-                    <p className="text-xs font-semibold text-muted">
-                      {scenario.startLevel && scenario.endLevel ? `Níveis ${scenario.startLevel} a ${scenario.endLevel} · ` : ''}
-                      {scenario.claimed}/{scenario.total} paradas
-                    </p>
-                    <ProgressBar className="mt-1 h-2" value={(scenario.claimed / Math.max(scenario.total, 1)) * 100} />
-                  </div>
-                </header>
-                {scenario.description ? <p className="text-sm text-muted">{scenario.description}</p> : null}
+          {!campaign ? (
+            <div className="flex flex-1 items-center justify-center">
+              <LoadingState label="Carregando o caminho..." />
+            </div>
+          ) : scenarios.length === 0 ? (
+            <div className="flex flex-1 items-center justify-center p-6">
+              <EmptyState icon={<StarRoundedIcon />} title="A campanha ainda não começou">
+                Em breve os cenários estarão disponíveis.
+              </EmptyState>
+            </div>
+          ) : (
+            <div className="relative min-h-0 flex-1">
+              <div ref={scrollerRef} onScroll={handleScroll} tabIndex={0} aria-label="Cenários da campanha" className="h-full snap-y snap-mandatory overflow-y-auto overscroll-contain scroll-smooth outline-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {scenarios.map((item, index) => (
+                  <section
+                    key={item.id}
+                    style={scenarioThemeVars(item.color)}
+                    aria-label={item.name}
+                    aria-hidden={index === active ? undefined : true}
+                    className="flex h-full snap-start snap-always flex-col gap-3 bg-bg px-4 pb-4 pt-3"
+                  >
+                    <div className={cn('flex shrink-0 items-center gap-3 transition-all duration-500 ease-out', index === active ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0')}>
+                      <ScenarioIcon scenario={item} size={52} />
+                      <div className="min-w-0 flex-1">
+                        <h3 className="truncate font-display text-lg font-bold text-ink">{item.name}</h3>
+                        <p className="truncate text-xs font-semibold text-muted">
+                          {item.completed && item.verse ? `“${item.verse}”${item.verseReference ? ` — ${item.verseReference}` : ''}` : (item.description ?? '')}
+                        </p>
+                        <div className="mt-1 flex items-center gap-2">
+                          <ProgressBar className="h-2 flex-1" value={(item.claimed / Math.max(item.total, 1)) * 100} />
+                          <span className="shrink-0 text-[11px] font-bold text-muted">
+                            {item.claimed}/{item.total}
+                            {item.startLevel && item.endLevel ? ` · Nv ${item.startLevel}–${item.endLevel}` : ''}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className={cn('flex min-h-0 flex-1 items-center justify-center transition-all duration-700 ease-out [container-type:size]', index === active ? 'scale-100 opacity-100' : 'scale-95 opacity-40')}>
+                      <ScenarioMap scenario={item} onOpenNode={setSelected} />
+                    </div>
+                  </section>
+                ))}
+              </div>
 
-                <ScenarioMap scenario={scenario} onOpenNode={setSelected} />
-
-                {scenario.completed && scenario.verse ? (
-                  <Alert tone="success">
-                    <span className="font-semibold">“{scenario.verse}”</span>
-                    {scenario.verseReference ? <span className="ml-1">— {scenario.verseReference}</span> : null}
-                  </Alert>
-                ) : null}
-              </section>
-            ) : null}
-
-            <Pagination page={paging.page} totalPages={paging.totalPages} totalElements={paging.totalElements} pageSize={1} onPageChange={paging.setPage} itemLabel="cenários" />
-          </div>
-        )}
-      </Modal>
+              <nav aria-label="Navegar entre cenários" className="pointer-events-none absolute inset-y-0 right-3 flex flex-col items-center justify-center gap-3">
+                <Tooltip content="Cenário anterior" side="bottom">
+                  <button type="button" onClick={() => goTo(active - 1)} disabled={active <= 0} aria-label="Cenário anterior" className={cn(arrow, 'pointer-events-auto')}>
+                    <KeyboardArrowUpRoundedIcon />
+                  </button>
+                </Tooltip>
+                <ol className="pointer-events-auto flex flex-col items-center gap-1.5 rounded-full bg-surface/80 px-1.5 py-2 backdrop-blur">
+                  {scenarios.map((item, index) => (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        onClick={() => goTo(index)}
+                        aria-label={`Ir para ${item.name}`}
+                        aria-current={index === active ? 'true' : undefined}
+                        className={cn('block rounded-full transition-all duration-300', index === active ? 'h-5 w-2.5 bg-primary' : item.completed ? 'h-2.5 w-2.5 bg-success' : 'h-2.5 w-2.5 bg-edge-strong')}
+                      />
+                    </li>
+                  ))}
+                </ol>
+                <Tooltip content="Próximo cenário" side="top">
+                  <button type="button" onClick={() => goTo(active + 1)} disabled={active >= scenarios.length - 1} aria-label="Próximo cenário" className={cn(arrow, 'pointer-events-auto')}>
+                    <KeyboardArrowDownRoundedIcon />
+                  </button>
+                </Tooltip>
+              </nav>
+            </div>
+          )}
+        </div>
+      ) : null}
 
       <Modal
         open={liveSelected !== null}
         size="sm"
         title={liveSelected ? nodeTitle(liveSelected) : ''}
-        description={liveSelected ? `Nível ${liveSelected.level}${scenario ? ` · ${scenario.name}` : ''}` : undefined}
+        description={liveSelected ? `Nível ${liveSelected.level}${selectedScenario ? ` · ${selectedScenario.name}` : ''}` : undefined}
         onClose={() => (claiming ? undefined : setSelected(null))}
         footer={
           liveSelected ? (
@@ -265,7 +362,7 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
         }
       >
         {liveSelected ? (
-          <div className="space-y-3" style={scenario ? scenarioThemeVars(scenario.color) : undefined}>
+          <div className="space-y-3">
             {liveSelected.state === 'locked' ? <Alert tone="info">Chegue ao nível {liveSelected.level} para abrir esta parada.</Alert> : null}
             {liveSelected.state === 'claimed' ? <Alert tone="success">Você já resgatou esta parada.</Alert> : null}
             <RewardLines node={liveSelected} playerName={playerName} />
