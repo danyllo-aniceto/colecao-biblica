@@ -11,7 +11,7 @@ import { isCharacterVisible, scheduledCharacter, visibleCharacter } from "../ser
 
 export const charactersRouter = Router();
 
-const rarity = z.enum(["COMMON", "RARE", "EPIC", "LEGENDARY"]);
+const rarity = z.enum(["COMMON", "RARE", "EPIC", "LEGENDARY", "SPECIAL"]);
 const testament = z.enum(["OLD", "NEW"]);
 
 // Campos opcionais: ausente não altera; null ou vazio limpa.

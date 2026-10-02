@@ -5,7 +5,7 @@ import { HttpError, badRequest, forbidden, notFound } from "../lib/errors";
 import { env } from "../lib/env";
 import { pageOf } from "../lib/pagination";
 import { checkAchievements } from "./achievements";
-import { dayRangeInTimeZone } from "./game-rules";
+import { dayRangeInTimeZone, isCampaignOnlyRarity } from "./game-rules";
 import { moderateText } from "./moderation";
 import { grantStickerOrDuplicate } from "./rewards";
 import { getSettings } from "./settings";
@@ -392,7 +392,7 @@ async function expireTrades(db: Db) {
 }
 
 async function duplicateOf(db: Db, userId: number, characterId: number) {
-  return db.userSticker.findFirst({ where: { userId, characterId, character: visibleCharacter() }, include: { character: { select: { name: true } } } });
+  return db.userSticker.findFirst({ where: { userId, characterId, character: visibleCharacter() }, include: { character: { select: { name: true, rarity: true } } } });
 }
 
 type TradeInput = { toUserId: number; offeredCharacterId?: number | null; requestedCharacterId?: number | null; message?: string | null };
@@ -419,11 +419,13 @@ export async function createTrade(userId: number, input: TradeInput) {
   let requestedName: string | null = null;
   if (offeredId) {
     const mine = await duplicateOf(prisma, userId, offeredId);
+    if (mine && isCampaignOnlyRarity(mine.character.rarity)) throw badRequest("A figurinha especial é intransferível");
     if (!mine || mine.duplicates <= 0) throw badRequest("Você só pode oferecer figurinhas repetidas");
     offeredName = mine.character.name;
   }
   if (requestedId) {
     const theirs = await duplicateOf(prisma, input.toUserId, requestedId);
+    if (theirs && isCampaignOnlyRarity(theirs.character.rarity)) throw badRequest("A figurinha especial é intransferível");
     if (!theirs || theirs.duplicates <= 0) throw badRequest("Seu amigo não tem essa figurinha repetida");
     requestedName = theirs.character.name;
   }

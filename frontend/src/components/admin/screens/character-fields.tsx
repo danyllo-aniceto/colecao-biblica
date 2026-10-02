@@ -17,6 +17,7 @@ const RARITY_HINTS: Record<StickerRarity, string> = {
   RARE: 'Aparecem menos nos sorteios.',
   EPIC: 'Figuras centrais de uma história.',
   LEGENDARY: 'Só no sorteio ou no pacote surpresa.',
+  SPECIAL: 'Única e intransferível: só se ganha na campanha.',
 };
 
 /** Escolha da raridade em cartões coloridos. */

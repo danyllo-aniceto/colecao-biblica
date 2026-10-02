@@ -8,7 +8,7 @@ import { Alert, CoinChip, CoinIcon, EmptyState, SectionHeading } from '@/compone
 import { cn } from '@/lib/cn';
 import { rewardVisual } from '@/lib/reward-visual';
 import type { StickerRarity } from '@/lib/admin-api';
-import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
+import { DROP_RARITIES, getRarityLabel } from '@/lib/rarity-theme';
 import { getShopLimits, type GameRules, type ShopItem } from '@/lib/user-api';
 
 /** Visual de cada item a partir da recompensa que ele entrega. */
@@ -19,9 +19,9 @@ function describeItem(item: ShopItem): { rarity?: StickerRarity; icon: ReactNode
 
 function packOdds(rules: GameRules | null) {
   if (!rules) return null;
-  const weights: Record<StickerRarity, number> = { COMMON: rules.packOddsCommon, RARE: rules.packOddsRare, EPIC: rules.packOddsEpic, LEGENDARY: rules.packOddsLegendary };
+  const weights: Partial<Record<StickerRarity, number>> = { COMMON: rules.packOddsCommon, RARE: rules.packOddsRare, EPIC: rules.packOddsEpic, LEGENDARY: rules.packOddsLegendary };
   const total = Object.values(weights).reduce((sum, value) => sum + Math.max(0, value), 0);
-  return total > 0 ? RARITY_ORDER.map((rarity) => ({ rarity, percent: (Math.max(0, weights[rarity]) / total) * 100 })) : null;
+  return total > 0 ? DROP_RARITIES.map((rarity) => ({ rarity, percent: (Math.max(0, weights[rarity] ?? 0) / total) * 100 })) : null;
 }
 
 type ShopSectionProps = {

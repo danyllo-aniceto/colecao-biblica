@@ -30,7 +30,7 @@ import { REWARD_TYPE_LABELS } from '@/lib/labels';
 import { listCosmeticsAdmin } from '@/lib/admin-rewards-api';
 import type { CosmeticType } from '@/lib/rewards-api';
 import { COSMETIC_TYPE_LABELS } from '@/components/user/rewards/cosmetic-preview';
-import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
+import { DROP_RARITIES, getRarityLabel } from '@/lib/rarity-theme';
 import { AdminPanel, Cell, DataTable, IconAction, Row, StatusBadge } from '../admin-ui';
 
 /** Campo de quantidade de cada tipo (os outros tipos não têm quantidade). */
@@ -332,7 +332,7 @@ function RewardModal({ reward, totalWeight, onClose, onSaved }: { reward: AdminR
             aria-label="Raridade"
             value={rarity}
             onChange={setRarity}
-            options={[{ value: '', label: 'Nenhuma (usar personagem)' }, ...RARITY_ORDER.map((item) => ({ value: item, label: getRarityLabel(item) }))]}
+            options={[{ value: '', label: 'Nenhuma (usar personagem)' }, ...DROP_RARITIES.map((item) => ({ value: item, label: getRarityLabel(item) }))]}
           />
         </Field>
         <Field label="Ou um personagem específico" hint="Tem prioridade sobre a raridade.">

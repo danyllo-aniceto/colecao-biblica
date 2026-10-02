@@ -1,7 +1,7 @@
 import type { BiblicalCharacter, Prisma, RewardDefinition, RewardType, ShopItemType, StickerRarity, User } from "@prisma/client";
 import type { Db } from "../db/prisma";
 import { badRequest } from "../lib/errors";
-import { pickPackRarity } from "./game-rules";
+import { isCampaignOnlyRarity, pickPackRarity } from "./game-rules";
 import { HELPERS, helperByReward, type HelperField } from "./helpers";
 import type { GameSettings } from "./settings";
 import { visibleCharacter } from "./visibility";
@@ -49,6 +49,11 @@ export async function grantStickerOrDuplicate(db: Db, userId: number, characterI
   if (await grantStickerIfMissing(db, userId, characterId)) {
     return true;
   }
+  // A carta especial é única: não acumula repetidas (não dá para trocar, vender nem fundir).
+  const character = await db.biblicalCharacter.findUnique({ where: { id: characterId }, select: { rarity: true } });
+  if (character && isCampaignOnlyRarity(character.rarity)) {
+    return false;
+  }
   await db.userSticker.update({ where: { userId_characterId: { userId, characterId } }, data: { duplicates: { increment: 1 } } });
   return false;
 }
@@ -87,7 +92,7 @@ async function pickStickerCharacter(
   }
 
   if (reward.stickerCharacterId) {
-    const character = await db.biblicalCharacter.findFirst({ where: { id: reward.stickerCharacterId, ...visible() } });
+    const character = await db.biblicalCharacter.findFirst({ where: { id: reward.stickerCharacterId, rarity: { not: "SPECIAL" }, ...visible() } });
     if (character) {
       return character;
     }

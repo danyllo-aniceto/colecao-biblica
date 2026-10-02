@@ -1,12 +1,16 @@
 import type { StickerRarity } from './admin-api';
 
-export const RARITY_ORDER: StickerRarity[] = ['COMMON', 'RARE', 'EPIC', 'LEGENDARY'];
+export const RARITY_ORDER: StickerRarity[] = ['COMMON', 'RARE', 'EPIC', 'LEGENDARY', 'SPECIAL'];
+
+/** Raridades que podem sair em sorteio, pacote ou prêmio do painel (a especial só vem da campanha). */
+export const DROP_RARITIES: StickerRarity[] = RARITY_ORDER.filter((rarity) => rarity !== 'SPECIAL');
 
 const labels: Record<StickerRarity, string> = {
   COMMON: 'Comum',
   RARE: 'Rara',
   EPIC: 'Épica',
   LEGENDARY: 'Lendária',
+  SPECIAL: 'Especial',
 };
 
 export function getRarityLabel(rarity: StickerRarity): string {
@@ -22,4 +26,5 @@ export const rarityConfig: Record<StickerRarity, { label: string; background: st
   RARE: { label: labels.RARE, background: 'rarity-bg', border: 'rarity-frame', badge: 'rarity-chip', text: 'rarity-text' },
   EPIC: { label: labels.EPIC, background: 'rarity-bg', border: 'rarity-frame', badge: 'rarity-chip', text: 'rarity-text' },
   LEGENDARY: { label: labels.LEGENDARY, background: 'rarity-bg', border: 'rarity-frame', badge: 'rarity-chip', text: 'rarity-text' },
+  SPECIAL: { label: labels.SPECIAL, background: 'rarity-bg', border: 'rarity-frame', badge: 'rarity-chip', text: 'rarity-text' },
 };

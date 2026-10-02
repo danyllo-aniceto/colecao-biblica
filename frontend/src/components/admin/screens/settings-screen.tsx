@@ -8,7 +8,7 @@ import { LoadingState } from '@/components/ui/spinner';
 import { errorMessage, useToast } from '@/components/ui/toast';
 import { Alert } from '@/components/game/game-ui';
 import { getSettings, updateSettings, type GameSettings } from '@/lib/admin-api';
-import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
+import { DROP_RARITIES, getRarityLabel } from '@/lib/rarity-theme';
 import { AdminPanel } from '../admin-ui';
 
 type Key = keyof GameSettings;
@@ -161,7 +161,7 @@ export function SettingsScreen() {
   const packOdds = useMemo(() => {
     const weights = { COMMON: Number(form.packOddsCommon) || 0, RARE: Number(form.packOddsRare) || 0, EPIC: Number(form.packOddsEpic) || 0, LEGENDARY: Number(form.packOddsLegendary) || 0 };
     const total = Object.values(weights).reduce((sum, value) => sum + value, 0);
-    return RARITY_ORDER.map((rarity) => ({ rarity, percent: total > 0 ? (weights[rarity] / total) * 100 : 0 }));
+    return DROP_RARITIES.map((rarity) => ({ rarity, percent: total > 0 ? (weights[rarity as keyof typeof weights] / total) * 100 : 0 }));
   }, [form]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {

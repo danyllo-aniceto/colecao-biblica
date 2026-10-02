@@ -414,7 +414,7 @@ describe.skipIf(!hasDatabase)("API", () => {
       const collection = await api.get("/api/collection/my").set(bearer(token));
       expect(collection.body).toEqual([expect.objectContaining({ characterId: davi.id, characterName: "Davi", rarity: "RARE" })]);
       const progress = await api.get("/api/collection/my/progress").set(bearer(token));
-      expect(progress.body).toEqual({ owned: 1, total: 3 });
+      expect(progress.body).toEqual({ owned: 1, total: 4 });
 
       const missing = await api.post("/api/quiz/sessions/start").set(bearer(token)).send({ quizType: "CHARACTER_STUDY" });
       expect(missing.status).toBe(400);
@@ -525,7 +525,7 @@ describe.skipIf(!hasDatabase)("API", () => {
     it("admin vê estatísticas e ajusta o saldo de um jogador", async () => {
       const admin = await login("admin2@email.com");
       const stats = await api.get("/api/admin/stats").set(bearer(admin));
-      expect(stats.body).toMatchObject({ users: 1, characters: 3, questions: 3, uploads: "inline" });
+      expect(stats.body).toMatchObject({ users: 1, characters: 4, questions: 3, uploads: "inline" });
 
       const target = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
       const granted = await api.post(`/api/users/${target.id}/grant`).set(bearer(admin)).send({ coins: 500, hintBoosts: 2, extraLifeBoosts: -3 });

@@ -55,6 +55,8 @@ import {
 } from '@/lib/user-api';
 import { getPlayerProfile, type PlayerLook } from '@/lib/rewards-api';
 import { PlayerProfileProvider } from '@/components/user/rewards/player-profile-modal';
+import { CampaignProvider } from '@/components/user/campaign/campaign-provider';
+import { QuizThemeFrame } from '@/components/user/campaign/quiz-theme-frame';
 import { getSocialSummary, type SocialSummary, type TradeResponse } from '@/lib/social-api';
 import type { UserProfile } from '@/types/auth';
 import { QUIZ_HELPERS, helperCounts, spentHelpers } from '@/lib/quiz-helpers';
@@ -525,6 +527,15 @@ export function UserDashboard() {
 
   return (
     <PlayerProfileProvider>
+    <CampaignProvider
+      level={profile?.level ?? 1}
+      playerName={profile?.name ?? 'Você'}
+      onUserUpdate={(updated, achievements) => {
+        setProfile((current) => (current ? { ...current, ...updated } : updated));
+        celebrate(achievements);
+        void refreshCollection();
+      }}
+    >
     <div className="min-h-dvh pb-28 sm:pb-10">
       <PlayerHud look={myLook} profile={profile} section={section} onNavigate={navigate} socialNotices={socialSummary ? socialSummary.pendingRequests + socialSummary.pendingTrades + socialSummary.unreadMessages : 0} />
 
@@ -640,6 +651,7 @@ export function UserDashboard() {
       <BottomNav section={section} onNavigate={navigate} />
 
       {quizSession && showQuizAnswer ? (
+        <QuizThemeFrame>
         <QuizAnswerScreen
           key={`${quizSession.sessionId}-${quizSession.currentQuestion?.id ?? 'none'}-${quizSession.currentQuestionIndex}`}
           session={quizSession}
@@ -663,6 +675,7 @@ export function UserDashboard() {
             hint: profile?.hintBoosts ?? 0,
           }}
         />
+        </QuizThemeFrame>
       ) : null}
 
       <MatchResult
@@ -706,6 +719,7 @@ export function UserDashboard() {
         ) : null}
       </Modal>
     </div>
+    </CampaignProvider>
     </PlayerProfileProvider>
   );
 }

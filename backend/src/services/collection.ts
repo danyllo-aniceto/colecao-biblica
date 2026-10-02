@@ -2,7 +2,7 @@ import type { StickerRarity } from "@prisma/client";
 import { lockUser, transaction } from "../db/prisma";
 import { badRequest, notFound } from "../lib/errors";
 import { checkAchievements } from "./achievements";
-import { duplicateStickerCoins } from "./game-rules";
+import { duplicateStickerCoins, isCampaignOnlyRarity } from "./game-rules";
 import { grantStickerOrDuplicate } from "./rewards";
 import { getSettings } from "./settings";
 import { visibleCharacter } from "./visibility";
@@ -17,6 +17,9 @@ export async function sellDuplicates(userId: number, characterId: number, quanti
     const sticker = await tx.userSticker.findUnique({ where: { userId_characterId: { userId, characterId } }, include: { character: true } });
     if (!sticker || sticker.duplicates <= 0) {
       throw notFound("Você não tem repetidas desta figurinha");
+    }
+    if (isCampaignOnlyRarity(sticker.character.rarity)) {
+      throw badRequest("A figurinha especial não pode ser vendida");
     }
     const amount = Math.min(Math.max(1, quantity), sticker.duplicates);
     const settings = await getSettings(tx);

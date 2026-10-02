@@ -10,7 +10,7 @@ export async function resetDatabase() {
   await prisma.$executeRawUnsafe(
     `TRUNCATE users, biblical_characters, questions, reward_definitions, shop_items, user_stickers,
      user_comments, quiz_matches, quiz_sessions, game_settings, user_achievements, user_claims, question_reports, friendships, messages, trades,
-     cosmetics, user_cosmetics, character_collections, pass_tiers, game_events RESTART IDENTITY CASCADE`,
+     cosmetics, user_cosmetics, character_collections, pass_tiers, game_events, scenarios, scenario_nodes RESTART IDENTITY CASCADE`,
   );
   await runSeed(prisma, { demoData: true });
 }

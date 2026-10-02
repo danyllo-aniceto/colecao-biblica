@@ -11,7 +11,7 @@ import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
 import { fuseDuplicates, sellDuplicates, type FuseResult, type GameRules, type UserSticker } from '@/lib/user-api';
 
 const NEXT: Partial<Record<StickerRarity, StickerRarity>> = { COMMON: 'RARE', RARE: 'EPIC', EPIC: 'LEGENDARY' };
-const PLURAL: Record<StickerRarity, string> = { COMMON: 'comuns', RARE: 'raras', EPIC: 'épicas', LEGENDARY: 'lendárias' };
+const PLURAL: Record<StickerRarity, string> = { COMMON: 'comuns', RARE: 'raras', EPIC: 'épicas', LEGENDARY: 'lendárias', SPECIAL: 'especiais' };
 
 type Props = {
   open: boolean;
@@ -31,7 +31,7 @@ export function DuplicatesModal({ open, onClose, collection, rules, onChanged, o
   const fuseCost = rules?.fuseCost ?? 3;
 
   const sellValue = (rarity: StickerRarity) =>
-    rules ? { COMMON: rules.duplicateCoinsCommon, RARE: rules.duplicateCoinsRare, EPIC: rules.duplicateCoinsEpic, LEGENDARY: rules.duplicateCoinsLegendary }[rarity] : 0;
+    rules ? { COMMON: rules.duplicateCoinsCommon, RARE: rules.duplicateCoinsRare, EPIC: rules.duplicateCoinsEpic, LEGENDARY: rules.duplicateCoinsLegendary, SPECIAL: 0 }[rarity] : 0;
   const byRarity = (rarity: StickerRarity) => withDuplicates.filter((sticker) => sticker.rarity === rarity).reduce((sum, sticker) => sum + sticker.duplicates, 0);
 
   async function sell(sticker: UserSticker, quantity: number) {

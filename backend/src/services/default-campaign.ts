@@ -1,0 +1,136 @@
+import type { Db } from "../db/prisma";
+
+type DefaultScenario = {
+  slug: string;
+  name: string;
+  description: string;
+  verse: string;
+  verseReference: string;
+  /** Cor de destaque (#rrggbb) e do título de relíquia. */
+  color: string;
+  /** Primeiro e último nível do cenário: uma parada por nível; a última é a relíquia. */
+  startLevel: number;
+  endLevel: number;
+  relicTitle: string;
+};
+
+/**
+ * Caminho de lançamento: 10 cenários e 50 níveis. O XP por nível cresce (200 + 50 por nível),
+ * então os cenários começam curtos e ficam maiores; o 10º entrega a carta especial (Jesus).
+ */
+export const DEFAULT_SCENARIOS: DefaultScenario[] = [
+  { slug: "eden", name: "Jardim do Éden", description: "O começo de tudo: o jardim que Deus plantou.", verse: "Deus viu tudo o que havia feito, e tudo havia ficado muito bom.", verseReference: "Gênesis 1:31", color: "#3fa34d", startLevel: 1, endLevel: 4, relicTitle: "Guardião do Éden" },
+  { slug: "arca", name: "Arca de Noé", description: "A aliança de Deus depois do dilúvio, no Monte Ararate.", verse: "Porei meu arco-íris nas nuvens, e ele será o sinal da minha aliança com a terra.", verseReference: "Gênesis 9:13", color: "#3b8fb8", startLevel: 5, endLevel: 8, relicTitle: "Construtor da Arca" },
+  { slug: "canaa", name: "Terra de Canaã", description: "A jornada de Abraão, de Ur até a terra prometida.", verse: "Farei de você um grande povo, e o abençoarei; engrandecerei o seu nome, e você será uma bênção.", verseReference: "Gênesis 12:2", color: "#c49a3c", startLevel: 9, endLevel: 13, relicTitle: "Filho de Abraão" },
+  { slug: "egito", name: "Egito", description: "Do faraó às pragas e à travessia do Mar Vermelho.", verse: "O Senhor lutará por vocês; tão somente acalmem-se.", verseReference: "Êxodo 14:14", color: "#d6a540", startLevel: 14, endLevel: 18, relicTitle: "Libertado do Egito" },
+  { slug: "sinai", name: "Deserto do Sinai", description: "Quarenta anos de caminhada, o maná e a lei no monte.", verse: "Não terás outros deuses além de mim.", verseReference: "Êxodo 20:3", color: "#c8693a", startLevel: 19, endLevel: 23, relicTitle: "Peregrino do Deserto" },
+  { slug: "jerico", name: "Jericó", description: "Os muros que caíram diante da fé do povo.", verse: "Pela fé caíram os muros de Jericó, depois de serem rodeados durante sete dias.", verseReference: "Hebreus 11:30", color: "#b5543c", startLevel: 24, endLevel: 28, relicTitle: "Trombeta de Jericó" },
+  { slug: "templo", name: "Templo de Salomão", description: "A casa do Senhor em Jerusalém, com ouro, cedro e a Arca.", verse: "Alegrei-me quando me disseram: Vamos à casa do Senhor!", verseReference: "Salmo 122:1", color: "#e0b43a", startLevel: 29, endLevel: 33, relicTitle: "Sábio como Salomão" },
+  { slug: "babilonia", name: "Babilônia", description: "O exílio, a fornalha e a cova dos leões.", verse: "Ele livra e salva; faz sinais e maravilhas nos céus e na terra. Ele livrou Daniel do poder dos leões.", verseReference: "Daniel 6:27", color: "#2f5fb3", startLevel: 34, endLevel: 38, relicTitle: "Fiel na Babilônia" },
+  { slug: "galileia", name: "Mar da Galileia", description: "Barcos, redes e os primeiros discípulos de Jesus.", verse: "Venham, sigam-me, e eu os farei pescadores de homens.", verseReference: "Mateus 4:19", color: "#2aa1c4", startLevel: 39, endLevel: 44, relicTitle: "Pescador de Homens" },
+  { slug: "jerusalem", name: "Jerusalém", description: "Do Monte das Oliveiras ao túmulo vazio.", verse: "Ele não está aqui; ressuscitou, como tinha dito.", verseReference: "Mateus 28:6", color: "#8e6bd1", startLevel: 45, endLevel: 50, relicTitle: "Testemunha da Ressurreição" },
+];
+
+/** Nome da carta especial entregue pelos fragmentos. */
+export const SPECIAL_CHARACTER_NAME = "Jesus";
+
+/** Recompensas de ajuda que entram de vez em quando no caminho (se existirem no catálogo). */
+const HELPER_REWARDS = ["Dica 50/50", "Pular pergunta", "Pacote surpresa", "Bênção dobrada"];
+
+/** Moedas da parada: sobem com o nível; a relíquia paga em dobro. */
+export function nodeCoins(level: number, relic: boolean): number {
+  const base = Math.round((20 + level * 2) / 5) * 5;
+  return relic ? base * 2 : base;
+}
+
+async function ensureSpecialCharacter(db: Db) {
+  const existing = await db.biblicalCharacter.findUnique({ where: { name: SPECIAL_CHARACTER_NAME } });
+  if (existing) {
+    return existing.rarity === "SPECIAL" ? existing : db.biblicalCharacter.update({ where: { id: existing.id }, data: { rarity: "SPECIAL" } });
+  }
+  return db.biblicalCharacter.create({
+    data: {
+      name: SPECIAL_CHARACTER_NAME,
+      rarity: "SPECIAL",
+      testament: "NEW",
+      shortSummary: "O Filho de Deus, Salvador do mundo",
+      fullDescription: "Jesus Cristo, o Filho de Deus, nasceu em Belém, pregou o Reino de Deus, morreu na cruz e ressuscitou ao terceiro dia.",
+      bibleBooks: "Mateus, Marcos, Lucas e João",
+      bibleReferences: "Mt 1-28; Mc 1-16; Lc 1-24; Jo 1-21",
+      historicalPeriod: "Século I",
+      narrativeRole: "Messias e Salvador",
+      keyVerses: "Jo 3:16; Jo 14:6",
+      keywords: "salvação, graça, amor, ressurreição",
+      createdBy: "SYSTEM",
+    },
+  });
+}
+
+/**
+ * Cria a campanha de lançamento. Só mexe nos cenários que ainda não existem (por `slug`):
+ * mapas, textos e recompensas ajustados pelo admin nunca são sobrescritos.
+ */
+export async function ensureDefaultCampaign(db: Db) {
+  const existing = new Set((await db.scenario.findMany({ select: { slug: true } })).map((scenario) => scenario.slug));
+  if (DEFAULT_SCENARIOS.every((scenario) => existing.has(scenario.slug))) return;
+
+  const special = await ensureSpecialCharacter(db);
+  const helpers = new Map(
+    (await db.rewardDefinition.findMany({ where: { name: { in: HELPER_REWARDS } }, select: { id: true, name: true } })).map((reward) => [reward.name, reward.id]),
+  );
+
+  for (const [index, scenario] of DEFAULT_SCENARIOS.entries()) {
+    if (existing.has(scenario.slug)) continue;
+    const title = await db.cosmetic.findFirst({ where: { type: "TITLE", name: scenario.relicTitle }, select: { id: true } });
+    const relicTitleId =
+      title?.id ??
+      (
+        await db.cosmetic.create({
+          data: {
+            type: "TITLE",
+            name: scenario.relicTitle,
+            description: `Relíquia do cenário ${scenario.name}.`,
+            rarity: "EPIC",
+            color: scenario.color,
+            style: "glow",
+            unlock: "REWARD",
+            system: true,
+            sortOrder: 900 + index,
+          },
+        })
+      ).id;
+
+    const created = await db.scenario.create({
+      data: {
+        slug: scenario.slug,
+        name: scenario.name,
+        description: scenario.description,
+        verse: scenario.verse,
+        verseReference: scenario.verseReference,
+        color: scenario.color,
+        sortOrder: (index + 1) * 10,
+        fragmentCharacterId: special.id,
+        system: true,
+      },
+    });
+
+    const levels = Array.from({ length: scenario.endLevel - scenario.startLevel + 1 }, (_, step) => scenario.startLevel + step);
+    await db.scenarioNode.createMany({
+      data: levels.map((level, step) => {
+        const relic = level === scenario.endLevel;
+        const helperName = !relic && step % 3 === 2 ? HELPER_REWARDS[(index + step) % HELPER_REWARDS.length] : null;
+        return {
+          scenarioId: created.id,
+          level,
+          relic,
+          fragment: relic,
+          title: relic ? `Relíquia: ${scenario.relicTitle}` : null,
+          rewardCoins: nodeCoins(level, relic),
+          rewardDefinitionId: helperName ? (helpers.get(helperName) ?? null) : null,
+          rewardCosmeticId: relic ? relicTitleId : null,
+        };
+      }),
+      skipDuplicates: true,
+    });
+  }
+}

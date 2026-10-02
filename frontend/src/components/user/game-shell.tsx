@@ -8,6 +8,8 @@ import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import { BoostChips, CoinChip, LevelBadge, ProgressBar, levelProgress } from '@/components/game/game-ui';
 import { InstallAppButton } from '@/components/pwa/install-app-button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { Tooltip } from '@/components/ui/tooltip';
+import { useCampaign } from '@/components/user/campaign/campaign-provider';
 import type { UserProfile } from '@/types/auth';
 import { PlayerAvatar } from '@/components/game/player-look';
 import type { PlayerLook } from '@/lib/rewards-api';
@@ -52,6 +54,7 @@ export function PlayerHud({
 }) {
   const xp = profile?.xp ?? 0;
   const progress = levelProgress(xp);
+  const campaign = useCampaign();
 
   return (
     <header className="sticky top-0 z-40 border-b border-edge bg-bg/85 backdrop-blur-xl">
@@ -59,7 +62,12 @@ export function PlayerHud({
         <img src="/icons/icon-192.png" alt="Coleção Bíblica" width={40} height={40} className="hidden h-10 w-10 rounded-xl sm:block" />
 
         <div className="flex min-w-0 flex-1 items-center gap-3">
-          <LevelBadge level={profile?.level ?? 1} />
+          <Tooltip content="Abrir a campanha" side="bottom">
+            <button type="button" onClick={campaign.open} aria-label="Abrir a campanha" className="relative rounded-2xl transition hover:scale-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/50">
+              <LevelBadge level={profile?.level ?? 1} />
+              <NoticeDot value={campaign.claimable} className="absolute -right-1 -top-1" />
+            </button>
+          </Tooltip>
           <div className="min-w-0 flex-1 sm:max-w-xs">
             <div className="flex items-baseline justify-between gap-2">
               <span className="truncate font-display text-base font-semibold text-ink" style={look?.nameColor ? { color: look.nameColor } : undefined}>

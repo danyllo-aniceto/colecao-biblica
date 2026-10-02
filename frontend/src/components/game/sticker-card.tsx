@@ -38,7 +38,7 @@ export function StickerCard({ name, rarity, imageUrl, owned, onClick, size = 'md
         'rarity group relative flex w-full flex-col overflow-hidden rounded-3xl text-left',
         owned ? 'rarity-frame bg-surface' : 'cursor-not-allowed select-none border-2 border-edge bg-surface-3 grayscale',
         interactive && 'transition-transform duration-200 hover:-translate-y-1 hover:rotate-[-1deg] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/40',
-        owned && rarity === 'LEGENDARY' && 'shine',
+        owned && (rarity === 'LEGENDARY' || rarity === 'SPECIAL') && 'shine',
         className,
       )}
     >

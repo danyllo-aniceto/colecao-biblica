@@ -15,6 +15,7 @@ import {
   comboBonus,
   crowdPercentages,
   dayRangeInTimeZone,
+  isCampaignOnlyRarity,
   multiplyCoins,
   nextCombo,
   isTimeExpired,
@@ -753,7 +754,7 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
     // A figurinha do personagem só é liberada com aproveitamento mínimo.
     if (stats.characterId && reachedStickerAccuracy(stats.correctAnswers, stats.questionsAnswered, settings.characterStickerMinAccuracyPercent)) {
       const character = await tx.biblicalCharacter.findUnique({ where: { id: stats.characterId } });
-      if (character) {
+      if (character && !isCampaignOnlyRarity(character.rarity)) {
         rewardType = "STICKER";
         rewardCharacterId = character.id;
         rewardCharacterName = character.name;

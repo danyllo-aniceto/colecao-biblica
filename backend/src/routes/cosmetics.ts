@@ -122,7 +122,7 @@ cosmeticsRouter.get(
 const baseSchema = {
   name: requiredText(60),
   description: clearableText(200),
-  rarity: z.enum(["COMMON", "RARE", "EPIC", "LEGENDARY"]).optional(),
+  rarity: z.enum(["COMMON", "RARE", "EPIC", "LEGENDARY", "SPECIAL"]).optional(),
   imageUrl: imageRef(),
   color,
   style: clearableText(20),

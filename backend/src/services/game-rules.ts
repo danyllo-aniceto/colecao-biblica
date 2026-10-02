@@ -100,6 +100,7 @@ export function duplicateStickerCoins(rarity: StickerRarity, rules: DuplicateRul
     RARE: rules.duplicateCoinsRare,
     EPIC: rules.duplicateCoinsEpic,
     LEGENDARY: rules.duplicateCoinsLegendary,
+    SPECIAL: 0,
   }[rarity];
   return Math.max(0, value);
 }
@@ -113,23 +114,33 @@ export function packOdds(rules: PackRules): Record<StickerRarity, number> {
     RARE: Math.max(0, rules.packOddsRare),
     EPIC: Math.max(0, rules.packOddsEpic),
     LEGENDARY: Math.max(0, rules.packOddsLegendary),
+    SPECIAL: 0,
   };
   const total = Object.values(weights).reduce((sum, value) => sum + value, 0);
   if (total <= 0) {
-    return { COMMON: 100, RARE: 0, EPIC: 0, LEGENDARY: 0 };
+    return { COMMON: 100, RARE: 0, EPIC: 0, LEGENDARY: 0, SPECIAL: 0 };
   }
   return {
     COMMON: (weights.COMMON / total) * 100,
     RARE: (weights.RARE / total) * 100,
     EPIC: (weights.EPIC / total) * 100,
     LEGENDARY: (weights.LEGENDARY / total) * 100,
+    SPECIAL: 0,
   };
+}
+
+/**
+ * Figurinha especial (ex.: Jesus) é única e intransferível: só a campanha concede.
+ * Não entra em pacote, sorteio, troca, venda de repetida nem fusão.
+ */
+export function isCampaignOnlyRarity(rarity: StickerRarity): boolean {
+  return rarity === "SPECIAL";
 }
 
 /** Sorteia a raridade do pacote, só entre as raridades que têm figurinha cadastrada. */
 export function pickPackRarity(rules: PackRules, available: Set<StickerRarity>, random = Math.random): StickerRarity | null {
   const odds = packOdds(rules);
-  const options = (Object.keys(odds) as StickerRarity[]).filter((rarity) => available.has(rarity));
+  const options = (Object.keys(odds) as StickerRarity[]).filter((rarity) => !isCampaignOnlyRarity(rarity) && available.has(rarity));
   return weightedPick(options, (rarity) => odds[rarity], random);
 }
 
@@ -448,4 +459,52 @@ type ChestRules = { chestBaseCoins: number; chestCoinsPerLevel: number; chestMax
 export function chestCoins(level: number, rules: ChestRules): number {
   const coins = Math.max(0, rules.chestBaseCoins + rules.chestCoinsPerLevel * Math.max(level, 1));
   return rules.chestMaxCoins && rules.chestMaxCoins > 0 ? Math.min(coins, rules.chestMaxCoins) : coins;
+}
+
+// ---------------------------------------------------------------------------
+// Campanha
+// ---------------------------------------------------------------------------
+
+export type CampaignNodeState = "claimed" | "available" | "locked";
+
+/** Situação de uma parada: resgatada, liberada (nível alcançado) ou bloqueada. */
+export function campaignNodeState(userLevel: number, nodeLevel: number, claimed: boolean): CampaignNodeState {
+  if (claimed) return "claimed";
+  return userLevel >= nodeLevel ? "available" : "locked";
+}
+
+type CampaignNode = { level: number; scenarioId: number };
+
+/**
+ * Cenário atual: o primeiro (na ordem do caminho) que ainda tem parada não
+ * resgatada. Se tudo foi resgatado, é o último. `scenarios` já vem ordenado.
+ */
+export function currentScenarioId(
+  scenarios: Array<{ id: number }>,
+  nodes: CampaignNode[],
+  claimedLevels: Set<number>,
+): number | null {
+  if (scenarios.length === 0) return null;
+  for (const scenario of scenarios) {
+    const own = nodes.filter((node) => node.scenarioId === scenario.id);
+    if (own.some((node) => !claimedLevels.has(node.level))) return scenario.id;
+  }
+  return scenarios[scenarios.length - 1].id;
+}
+
+/** A carta especial é entregue quando todos os fragmentos do caminho foram resgatados. */
+export function fragmentsComplete(claimedFragments: number, totalFragments: number): boolean {
+  return totalFragments > 0 && claimedFragments >= totalFragments;
+}
+
+/**
+ * Posição padrão (em %) de uma parada no mapa quando o admin não definiu:
+ * sobe em zigue-zague, da base do mapa para o topo.
+ */
+export function defaultNodePosition(index: number, total: number): { x: number; y: number } {
+  const columns = [22, 62, 30, 70, 38, 78];
+  const x = columns[index % columns.length];
+  const span = Math.max(total - 1, 1);
+  const y = 90 - (index / span) * 78;
+  return { x, y: Math.round(y) };
 }

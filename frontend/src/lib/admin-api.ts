@@ -2,7 +2,7 @@ import { apiRequest, apiRequestVoid } from '@/lib/http';
 import type { UserProfile } from '@/types/auth';
 
 export type Role = 'ADMIN' | 'USER';
-export type StickerRarity = 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY';
+export type StickerRarity = 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY' | 'SPECIAL';
 export type Testament = 'OLD' | 'NEW';
 export type QuestionDifficulty = 'EASY' | 'MEDIUM' | 'HARD' | 'VERY_HARD';
 export type RewardType =

@@ -18,6 +18,8 @@ enum StickerRarity {
   RARE
   EPIC
   LEGENDARY
+  /// Única e intransferível (ex.: Jesus): só vem da campanha, nunca em pacote, troca, loja ou venda.
+  SPECIAL
 }
 
 enum QuestionDifficulty {
@@ -200,14 +202,15 @@ model BiblicalCharacter {
   createdBy        String        @map("created_by")
   updatedAt        DateTime      @updatedAt @map("updated_at")
 
-  questions       Question[]
-  stickers        UserSticker[]
-  tradesOffered   Trade[]               @relation("TradeOffered")
-  tradesRequested Trade[]               @relation("TradeRequested")
-  comments        UserComment[]
-  quizSessions    QuizSession[]
-  stickerReward   RewardDefinition[]
-  collections     CharacterCollection[] @relation("CollectionCharacters")
+  questions         Question[]
+  stickers          UserSticker[]
+  tradesOffered     Trade[]               @relation("TradeOffered")
+  tradesRequested   Trade[]               @relation("TradeRequested")
+  comments          UserComment[]
+  quizSessions      QuizSession[]
+  stickerReward     RewardDefinition[]
+  collections       CharacterCollection[] @relation("CollectionCharacters")
+  campaignScenarios Scenario[]            @relation("ScenarioFragmentCharacter")
 
   @@map("biblical_characters")
 }
@@ -263,6 +266,7 @@ model RewardDefinition {
   cosmetic         Cosmetic?          @relation(fields: [cosmeticId], references: [id], onDelete: SetNull)
   shopItems        ShopItem[]
   passTiers        PassTier[]
+  scenarioNodes    ScenarioNode[]
 
   @@map("reward_definitions")
 }
@@ -528,16 +532,17 @@ model Cosmetic {
   /// Itens padrão do sistema (criados no deploy; o admin pode desativar, não excluir).
   system           Boolean        @default(false)
 
-  event       GameEvent?            @relation(fields: [eventId], references: [id], onDelete: SetNull)
-  owners      UserCosmetic[]
-  avatarOf    User[]                @relation("UserAvatar")
-  frameOf     User[]                @relation("UserFrame")
-  titleOf     User[]                @relation("UserTitle")
-  nameColorOf User[]                @relation("UserNameColor")
-  messages    Message[]
-  rewards     RewardDefinition[]
-  collections CharacterCollection[]
-  passTiers   PassTier[]
+  event         GameEvent?            @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  owners        UserCosmetic[]
+  avatarOf      User[]                @relation("UserAvatar")
+  frameOf       User[]                @relation("UserFrame")
+  titleOf       User[]                @relation("UserTitle")
+  nameColorOf   User[]                @relation("UserNameColor")
+  messages      Message[]
+  rewards       RewardDefinition[]
+  collections   CharacterCollection[]
+  passTiers     PassTier[]
+  scenarioNodes ScenarioNode[]
 
   @@unique([type, name])
   @@index([type, active])
@@ -610,4 +615,59 @@ model GameEvent {
 
   @@index([startsAt, endsAt])
   @@map("game_events")
+}
+
+/// Cenário da campanha (Jardim do Éden, Egito...): um trecho do caminho com tema, mapa e recompensas próprios.
+model Scenario {
+  id                  Int      @id @default(autoincrement())
+  /// Identificador estável (eden, egito...); também escolhe o tema visual pronto do app.
+  slug                String   @unique
+  name                String
+  description         String?
+  /// Versículo exibido ao concluir o cenário.
+  verse               String?
+  verseReference      String?  @map("verse_reference")
+  /// Cor de destaque do cenário, em #rrggbb (substitui a do tema pronto).
+  color               String?
+  /// Arte do mapa-caminho (proporção 3:4) e ícone do cenário (quadrado).
+  mapImageUrl         String?  @map("map_image_url")
+  iconImageUrl        String?  @map("icon_image_url")
+  /// Personagem cujos fragmentos este cenário dá (a carta especial).
+  fragmentCharacterId Int?     @map("fragment_character_id")
+  sortOrder           Int      @default(0) @map("sort_order")
+  active              Boolean  @default(true)
+  /// Criado no deploy (não excluível; o admin pode editar e desativar).
+  system              Boolean  @default(false)
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  fragmentCharacter BiblicalCharacter? @relation("ScenarioFragmentCharacter", fields: [fragmentCharacterId], references: [id], onDelete: SetNull)
+  nodes             ScenarioNode[]
+
+  @@index([sortOrder])
+  @@map("scenarios")
+}
+
+/// Parada do caminho: abre quando o jogador chega ao nível; só existe um nó por nível na campanha toda.
+model ScenarioNode {
+  id                 Int     @id @default(autoincrement())
+  scenarioId         Int     @map("scenario_id")
+  level              Int     @unique
+  title              String?
+  /// Última parada do cenário: a relíquia (recompensa maior).
+  relic              Boolean @default(false)
+  /// Dá um fragmento da carta especial do cenário.
+  fragment           Boolean @default(false)
+  rewardCoins        Int     @default(0) @map("reward_coins")
+  rewardDefinitionId Int?    @map("reward_definition_id")
+  rewardCosmeticId   Int?    @map("reward_cosmetic_id")
+  /// Posição no mapa em % (0 a 100); vazio, o app distribui em zigue-zague.
+  posX               Int?    @map("pos_x")
+  posY               Int?    @map("pos_y")
+
+  scenario         Scenario          @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  rewardDefinition RewardDefinition? @relation(fields: [rewardDefinitionId], references: [id], onDelete: SetNull)
+  rewardCosmetic   Cosmetic?         @relation(fields: [rewardCosmeticId], references: [id], onDelete: SetNull)
+
+  @@index([scenarioId])
+  @@map("scenario_nodes")
 }

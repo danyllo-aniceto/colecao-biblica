@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  campaignNodeState,
+  currentScenarioId,
+  defaultNodePosition,
+  fragmentsComplete,
+  isCampaignOnlyRarity,
   chestCoins,
   comboBonus,
   monthKeyInTimeZone,
@@ -277,5 +282,56 @@ describe("baú e passe", () => {
     const range = monthRangeInTimeZone("2026-12", "America/Sao_Paulo");
     expect(range.start.toISOString()).toBe("2026-12-01T03:00:00.000Z");
     expect(range.end.toISOString()).toBe("2027-01-01T03:00:00.000Z");
+  });
+});
+
+describe("campanha e carta especial", () => {
+  const rules = { packOddsCommon: 60, packOddsRare: 25, packOddsEpic: 12, packOddsLegendary: 3 };
+
+  it("a raridade especial nunca sai em pacote nem vale moedas de repetida", () => {
+    expect(isCampaignOnlyRarity("SPECIAL")).toBe(true);
+    expect(isCampaignOnlyRarity("LEGENDARY")).toBe(false);
+    expect(packOdds(rules).SPECIAL).toBe(0);
+    expect(duplicateStickerCoins("SPECIAL", { duplicateCoinsCommon: 5, duplicateCoinsRare: 10, duplicateCoinsEpic: 20, duplicateCoinsLegendary: 40 })).toBe(0);
+    // Mesmo que só exista figurinha especial publicada, o pacote não a entrega.
+    expect(pickPackRarity(rules, new Set(["SPECIAL"]), () => 0.5)).toBeNull();
+    expect(pickPackRarity(rules, new Set(["SPECIAL", "COMMON"]), () => 0.99)).toBe("COMMON");
+  });
+
+  it("a parada abre quando o jogador chega ao nível e fica resgatada depois", () => {
+    expect(campaignNodeState(3, 4, false)).toBe("locked");
+    expect(campaignNodeState(4, 4, false)).toBe("available");
+    expect(campaignNodeState(9, 4, false)).toBe("available");
+    expect(campaignNodeState(1, 4, true)).toBe("claimed");
+  });
+
+  it("o cenário atual é o primeiro com parada ainda não resgatada", () => {
+    const scenarios = [{ id: 1 }, { id: 2 }, { id: 3 }];
+    const nodes = [
+      { level: 1, scenarioId: 1 },
+      { level: 2, scenarioId: 1 },
+      { level: 3, scenarioId: 2 },
+      { level: 4, scenarioId: 3 },
+    ];
+    expect(currentScenarioId(scenarios, nodes, new Set())).toBe(1);
+    expect(currentScenarioId(scenarios, nodes, new Set([1, 2]))).toBe(2);
+    expect(currentScenarioId(scenarios, nodes, new Set([1, 2, 3]))).toBe(3);
+    expect(currentScenarioId(scenarios, nodes, new Set([1, 2, 3, 4]))).toBe(3);
+    expect(currentScenarioId([], nodes, new Set())).toBeNull();
+  });
+
+  it("a carta especial só é entregue com todos os fragmentos", () => {
+    expect(fragmentsComplete(9, 10)).toBe(false);
+    expect(fragmentsComplete(10, 10)).toBe(true);
+    expect(fragmentsComplete(0, 0)).toBe(false);
+  });
+
+  it("a posição padrão do mapa sobe em zigue-zague dentro da tela", () => {
+    const positions = Array.from({ length: 6 }, (_, index) => defaultNodePosition(index, 6));
+    expect(positions[0].y).toBe(90);
+    expect(positions[5].y).toBe(12);
+    expect(positions.every((point) => point.x >= 10 && point.x <= 90 && point.y >= 10 && point.y <= 90)).toBe(true);
+    expect(positions[0].x).not.toBe(positions[1].x);
+    expect(defaultNodePosition(0, 1)).toEqual({ x: 22, y: 90 });
   });
 });

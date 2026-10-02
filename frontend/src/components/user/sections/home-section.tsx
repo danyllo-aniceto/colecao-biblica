@@ -15,6 +15,7 @@ import { MissionsCard } from '@/components/user/missions-card';
 import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
 import type { CharacterEntry, DailyClaimResult, QuizHistory, QuizSessionStatus, UnlockedAchievement, UserSticker } from '@/lib/user-api';
 import { EventBanner } from '@/components/user/rewards/event-banner';
+import { CampaignCard } from '@/components/user/campaign/campaign-card';
 import { LevelChestCard } from '@/components/user/rewards/level-chest';
 import { SeasonPassCard } from '@/components/user/rewards/season-pass';
 import type { UserProfile } from '@/types/auth';
@@ -77,6 +78,8 @@ export function HomeSection({ profile, characters, collection, history, activeSe
       <EventBanner onOpenShop={() => onNavigate('shop')} />
 
       <LevelChestCard profile={profile} onOpened={(user) => onUserUpdate(user)} />
+
+      <CampaignCard />
 
       <SeasonPassCard profile={profile} onClaimed={onUserUpdate} />
 

@@ -51,6 +51,7 @@
   --r-rare: #2f8cff;
   --r-epic: #a64dff;
   --r-legendary: #ffae00;
+  --r-special: #14b8a6;
 
   /* Álbum: capa de couro e folhas de papel. */
   --album-cover: #5a2fd6;
@@ -114,6 +115,7 @@
   --r-rare: #4da3ff;
   --r-epic: #c07bff;
   --r-legendary: #ffc23d;
+  --r-special: #2dd4bf;
 
   --album-cover: #3a2591;
   --album-cover-strong: #1f1260;
@@ -152,6 +154,7 @@
   --color-r-rare: var(--r-rare);
   --color-r-epic: var(--r-epic);
   --color-r-legendary: var(--r-legendary);
+  --color-r-special: var(--r-special);
 
   --font-display: var(--font-heading), 'Trebuchet MS', sans-serif;
   --font-sans: var(--font-body), system-ui, sans-serif;
@@ -433,6 +436,10 @@ input:-webkit-autofill:focus {
 
   .rarity[data-rarity='LEGENDARY'] {
     --r: var(--r-legendary);
+  }
+
+  .rarity[data-rarity='SPECIAL'] {
+    --r: var(--r-special);
   }
 
   .rarity-frame {

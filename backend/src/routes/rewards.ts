@@ -5,6 +5,7 @@ import { badRequest, notFound } from "../lib/errors";
 import { parseId, requiredText, z } from "../lib/validation";
 import { requireAdmin } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
+import { isCampaignOnlyRarity } from "../services/game-rules";
 import { characterRef, toRewardResponse } from "../services/mappers";
 
 export const rewardsRouter = Router();
@@ -89,8 +90,9 @@ async function ensureStickerTarget(type: string, stickerRarity?: string | null, 
     throw badRequest("Figurinha precisa de uma raridade ou de um personagem");
   }
   if (characterId) {
-    const character = await prisma.biblicalCharacter.findUnique({ where: { id: characterId }, select: { id: true } });
+    const character = await prisma.biblicalCharacter.findUnique({ where: { id: characterId }, select: { id: true, rarity: true } });
     if (!character) throw notFound("Personagem não encontrado");
+    if (isCampaignOnlyRarity(character.rarity)) throw badRequest("A figurinha especial só pode ser ganha na campanha");
   }
 }
 
