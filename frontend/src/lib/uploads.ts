@@ -1,10 +1,10 @@
 import { authorizedFetch, extractErrorMessage, safeParseJson } from '@/lib/http';
 import type { ApiErrorResponse } from '@/types/auth';
 
-export type UploadFolder = 'personagens' | 'conteudo';
+export type UploadFolder = 'personagens' | 'conteudo' | 'musicas';
 
 /** Maior lado da imagem depois de reduzida (figurinha e imagens dos textos). */
-const MAX_SIDE: Record<UploadFolder, number> = { personagens: 1200, conteudo: 1600 };
+const MAX_SIDE: Record<'personagens' | 'conteudo', number> = { personagens: 1200, conteudo: 1600 };
 
 /** Fotos de celular passam de 5 MB; antes de reduzir aceitamos até 25 MB. */
 const MAX_ORIGINAL_BYTES = 25 * 1024 * 1024;
@@ -61,7 +61,7 @@ export async function compressImage(file: File, maxSide: number): Promise<Blob> 
 export type UploadResult = { url: string; storage: 'public' | 'private' | 'inline' };
 
 /** Reduz e envia uma imagem; devolve a URL a salvar (Blob público, rota da API ou data URL). */
-export async function uploadImage(file: File, folder: UploadFolder): Promise<UploadResult> {
+export async function uploadImage(file: File, folder: 'personagens' | 'conteudo'): Promise<UploadResult> {
   if (!file.type.startsWith('image/')) {
     throw new Error('Selecione um arquivo de imagem (PNG, JPG, WEBP, GIF ou AVIF).');
   }
@@ -89,6 +89,31 @@ export async function uploadImage(file: File, folder: UploadFolder): Promise<Upl
       throw new Error('Imagem grande demais para o servidor. Use uma imagem menor.');
     }
     throw new Error(extractErrorMessage(payload, 'Não foi possível enviar a imagem.'));
+  }
+  return payload;
+}
+
+/** Limite do servidor (funções da Vercel aceitam ~4,5 MB por envio). */
+const MAX_AUDIO_BYTES = 4 * 1024 * 1024;
+
+/** Envia a música do cenário (MP3, M4A, OGG ou WAV de até 4 MB); devolve a URL a salvar. */
+export async function uploadAudio(file: File): Promise<UploadResult> {
+  if (!file.type.startsWith('audio/') && !/\.(mp3|m4a|ogg|wav)$/i.test(file.name)) {
+    throw new Error('Selecione um arquivo de áudio (MP3, M4A, OGG ou WAV).');
+  }
+  if (file.size > MAX_AUDIO_BYTES) {
+    throw new Error('Música grande demais (máximo de 4 MB). Use um MP3 de 128 kbps ou mais curto.');
+  }
+  const query = new URLSearchParams({ folder: 'musicas', name: file.name });
+  const response = await authorizedFetch(`/uploads?${query.toString()}`, {
+    method: 'POST',
+    headers: { 'Content-Type': file.type.startsWith('audio/') ? file.type : 'audio/mpeg' },
+    body: file,
+  });
+  const payload = await safeParseJson<UploadResult & ApiErrorResponse>(response);
+  if (!response.ok || !payload?.url) {
+    if (response.status === 413) throw new Error('Música grande demais para o servidor. Use um arquivo menor.');
+    throw new Error(extractErrorMessage(payload, 'Não foi possível enviar a música.'));
   }
   return payload;
 }

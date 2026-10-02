@@ -18,6 +18,7 @@ export type AdminScenario = {
   color: string | null;
   mapImageUrl: string | null;
   iconImageUrl: string | null;
+  musicUrl: string | null;
   fragmentCharacterId: number | null;
   fragmentCharacter: { id: number; name: string } | null;
   sortOrder: number;
@@ -36,6 +37,7 @@ export type ScenarioPayload = {
   color: string | null;
   mapImageUrl: string | null;
   iconImageUrl: string | null;
+  musicUrl: string | null;
   fragmentCharacterId: number | null;
   sortOrder: number;
   active: boolean;

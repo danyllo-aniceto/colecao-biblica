@@ -637,6 +637,8 @@ model Scenario {
   /// Arte do mapa-caminho (proporção 3:4) e ícone do cenário (quadrado).
   mapImageUrl         String?  @map("map_image_url")
   iconImageUrl        String?  @map("icon_image_url")
+  /// Música do tema do cenário (liberada quando o jogador chega ao primeiro nível dele).
+  musicUrl            String?  @map("music_url")
   /// Personagem cujos fragmentos este cenário dá (a carta especial).
   fragmentCharacterId Int?     @map("fragment_character_id")
   /// Ícone de perfil (avatar) com a arte do cenário, entregue junto com a relíquia.

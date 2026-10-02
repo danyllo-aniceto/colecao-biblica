@@ -933,3 +933,58 @@ input:-webkit-autofill:focus {
     user-select: none;
   }
 }
+
+/* Barra de ajuste (volume): trilho preenchido até o valor e botão arredondado. */
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 2rem;
+  background: transparent;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+.slider:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.slider:focus-visible {
+  outline: none;
+}
+.slider::-webkit-slider-runnable-track {
+  height: 0.625rem;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--primary) var(--fill, 0%), var(--surface-3) var(--fill, 0%));
+  border: 1px solid var(--edge);
+}
+.slider::-moz-range-track {
+  height: 0.625rem;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--primary) var(--fill, 0%), var(--surface-3) var(--fill, 0%));
+  border: 1px solid var(--edge);
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.625rem;
+  height: 1.625rem;
+  margin-top: -0.6875rem;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 3px solid var(--primary-strong);
+  box-shadow: 0 2px 0 var(--edge-strong);
+}
+.slider::-moz-range-thumb {
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 3px solid var(--primary-strong);
+  box-shadow: 0 2px 0 var(--edge-strong);
+}
+.slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 35%, transparent);
+}
+.slider:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 35%, transparent);
+}

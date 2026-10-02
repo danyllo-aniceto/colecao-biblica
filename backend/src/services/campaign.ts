@@ -48,7 +48,7 @@ export async function getCampaign(userId: number) {
           owned,
         }
       : null,
-    scenarios: scenarios.map((scenario) => {
+    scenarios: scenarios.map((scenario, scenarioIndex) => {
       const positions = scenario.nodes.map((_, index) => defaultNodePosition(index, scenario.nodes.length));
       const nodes = scenario.nodes.map((node, index) => ({
         id: node.id,
@@ -66,6 +66,9 @@ export async function getCampaign(userId: number) {
         state: campaignNodeState(user.level, node.level, claimed.has(node.id)),
       }));
       const claimedCount = nodes.filter((node) => node.state === "claimed").length;
+      // A música do tema é liberada ao chegar ao primeiro nível do cenário (o primeiro cenário já nasce liberado).
+      const startLevel = nodes[0]?.level ?? null;
+      const musicUnlocked = startLevel === null ? scenarioIndex === 0 : user.level >= startLevel;
       return {
         id: scenario.id,
         slug: scenario.slug,
@@ -76,7 +79,9 @@ export async function getCampaign(userId: number) {
         color: scenario.color,
         mapImageUrl: scenario.mapImageUrl,
         iconImageUrl: scenario.iconImageUrl,
-        startLevel: nodes[0]?.level ?? null,
+        musicUnlocked,
+        musicUrl: musicUnlocked ? scenario.musicUrl : null,
+        startLevel,
         endLevel: nodes[nodes.length - 1]?.level ?? null,
         total: nodes.length,
         claimed: claimedCount,

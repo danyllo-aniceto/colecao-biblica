@@ -25,6 +25,27 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     }
   });
 
+  it("música do tema: o admin cadastra e só chega ao jogador no nível do cenário", async () => {
+    const admin = await login("admin2@email.com");
+    const scenarios = await prisma.scenario.findMany({ orderBy: { sortOrder: "asc" }, include: { nodes: { orderBy: { level: "asc" } } } });
+    const [first, second] = scenarios;
+    const saved = await api.put(`/api/campaign/admin/scenarios/${first.id}`).set(bearer(admin)).send({ name: first.name, color: first.color, sortOrder: first.sortOrder, active: true, musicUrl: "https://exemplo.com/tema-eden.mp3" });
+    expect(saved.status).toBe(200);
+    expect(saved.body.musicUrl).toBe("https://exemplo.com/tema-eden.mp3");
+    await api.put(`/api/campaign/admin/scenarios/${second.id}`).set(bearer(admin)).send({ name: second.name, color: second.color, sortOrder: second.sortOrder, active: true, musicUrl: "/api/uploads/file/musicas/tema-arca.mp3" });
+    // Endereço que não é áudio do app nem link é recusado.
+    expect((await api.put(`/api/campaign/admin/scenarios/${first.id}`).set(bearer(admin)).send({ name: first.name, sortOrder: first.sortOrder, active: true, musicUrl: "javascript:alert(1)" })).status).toBe(400);
+
+    const token = await login("user@email.com");
+    const before = await api.get("/api/campaign").set(bearer(token));
+    expect(before.body.scenarios[0]).toMatchObject({ musicUnlocked: true, musicUrl: "https://exemplo.com/tema-eden.mp3" });
+    expect(before.body.scenarios[1]).toMatchObject({ musicUnlocked: false, musicUrl: null });
+
+    await prisma.user.update({ where: { email: "user@email.com" }, data: { level: second.nodes[0].level } });
+    const after = await api.get("/api/campaign").set(bearer(token));
+    expect(after.body.scenarios[1]).toMatchObject({ musicUnlocked: true, musicUrl: "/api/uploads/file/musicas/tema-arca.mp3" });
+  });
+
   it("só libera a parada no nível certo e não deixa resgatar duas vezes", async () => {
     const token = await login("user@email.com");
     const before = await api.get("/api/campaign").set(bearer(token));

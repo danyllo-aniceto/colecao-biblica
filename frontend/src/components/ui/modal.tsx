@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { cn } from '@/lib/cn';
+import { playSfx } from '@/lib/sound/sfx';
 
 type ModalProps = {
   open: boolean;
@@ -35,6 +36,7 @@ export function Modal({ open, title, description, children, onClose, footer, siz
       return;
     }
     const previouslyFocused = document.activeElement as HTMLElement | null;
+    playSfx('open');
     openModals += 1;
     document.body.style.overflow = 'hidden';
 
@@ -72,6 +74,7 @@ export function Modal({ open, title, description, children, onClose, footer, siz
         document.body.style.overflow = '';
       }
       previouslyFocused?.focus?.({ preventScroll: true });
+      playSfx('close');
     };
   }, [open]);
 

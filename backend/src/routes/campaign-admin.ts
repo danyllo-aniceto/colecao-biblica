@@ -16,6 +16,16 @@ const color = z
   .regex(/^#[0-9a-fA-F]{6}$/, "Use uma cor no formato #rrggbb")
   .nullish();
 
+/** Música: link http(s), arquivo enviado ao painel ou arquivo da pasta public. Vazio limpa; ausente não altera. */
+const musicRef = () =>
+  z
+    .union([z.string(), z.null()])
+    .optional()
+    .transform((value) => (value === undefined ? undefined : value?.trim() || null))
+    .refine((value) => value === undefined || value === null || (value.length <= 2048 && /^(https?:\/\/|\/api\/uploads\/file\/|\/campaign\/)/.test(value)), {
+      message: "Use o link de um arquivo de áudio ou envie o arquivo",
+    });
+
 const scenarioSchema = z.object({
   slug: z
     .string()
@@ -29,6 +39,7 @@ const scenarioSchema = z.object({
   color,
   mapImageUrl: imageRef(),
   iconImageUrl: imageRef(),
+  musicUrl: musicRef(),
   fragmentCharacterId: z.number().int().positive().nullish(),
   sortOrder: z.number().int().min(0).max(100_000),
   active: z.boolean(),
@@ -90,6 +101,7 @@ campaignAdminRouter.post(
         color: input.color ?? null,
         mapImageUrl: input.mapImageUrl ?? null,
         iconImageUrl: input.iconImageUrl ?? null,
+        musicUrl: input.musicUrl ?? null,
         fragmentCharacterId: input.fragmentCharacterId ?? null,
       },
     });
@@ -117,6 +129,7 @@ campaignAdminRouter.put(
         // Ausente mantém a imagem; vazio limpa (volta para a padrão).
         mapImageUrl: input.mapImageUrl,
         iconImageUrl: input.iconImageUrl,
+        musicUrl: input.musicUrl,
       },
     });
     // O ícone de perfil acompanha a arte do ícone do cenário.

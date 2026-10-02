@@ -35,6 +35,9 @@ export type CampaignScenario = {
   color: string | null;
   mapImageUrl: string | null;
   iconImageUrl: string | null;
+  /** Música do tema: liberada ao chegar ao primeiro nível do cenário. */
+  musicUnlocked: boolean;
+  musicUrl: string | null;
   startLevel: number | null;
   endLevel: number | null;
   total: number;

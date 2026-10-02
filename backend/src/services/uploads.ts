@@ -14,7 +14,7 @@ import { badRequest } from "../lib/errors";
  * - Sem Blob, vira data URL e fica no próprio banco (desenvolvimento).
  */
 
-export const UPLOAD_FOLDERS = ["personagens", "conteudo"] as const;
+export const UPLOAD_FOLDERS = ["personagens", "conteudo", "musicas"] as const;
 export type UploadFolder = (typeof UPLOAD_FOLDERS)[number];
 
 export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
@@ -30,6 +30,19 @@ const SIGNATURES: Array<{ type: string; ext: string; test: (bytes: Buffer) => bo
 /** Tipo real da imagem pelos primeiros bytes (não confia no que o navegador diz). */
 export function detectImageType(bytes: Buffer) {
   return SIGNATURES.find((signature) => signature.test(bytes)) ?? null;
+}
+
+const AUDIO_SIGNATURES: Array<{ type: string; ext: string; test: (bytes: Buffer) => boolean }> = [
+  // MP3: com etiqueta ID3 ou direto no quadro de áudio (sincronia 0xFFEx).
+  { type: "audio/mpeg", ext: "mp3", test: (b) => b.subarray(0, 3).toString("ascii") === "ID3" || (b[0] === 0xff && (b[1] & 0xe0) === 0xe0) },
+  { type: "audio/ogg", ext: "ogg", test: (b) => b.subarray(0, 4).toString("ascii") === "OggS" },
+  { type: "audio/mp4", ext: "m4a", test: (b) => b.subarray(4, 8).toString("ascii") === "ftyp" },
+  { type: "audio/wav", ext: "wav", test: (b) => b.subarray(0, 4).toString("ascii") === "RIFF" && b.subarray(8, 12).toString("ascii") === "WAVE" },
+];
+
+/** Tipo real do áudio pelos primeiros bytes. */
+export function detectAudioType(bytes: Buffer) {
+  return AUDIO_SIGNATURES.find((signature) => signature.test(bytes)) ?? null;
 }
 
 export function uploadsConfigured() {
@@ -65,7 +78,7 @@ function safeName(name: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
-  return base || "imagem";
+  return base || "arquivo";
 }
 
 async function putWithAccess(pathname: string, body: Buffer, contentType: string, access: Access) {
@@ -94,7 +107,28 @@ export async function saveImage(body: Buffer, folder: UploadFolder, fileName: st
   if (!uploadsConfigured()) {
     return { url: `data:${kind.type};base64,${body.toString("base64")}`, storage: "inline" as const };
   }
+  return storeInBlob(body, folder, fileName, kind);
+}
 
+/** Guarda a música do cenário. Áudio é grande demais para o banco: exige o Vercel Blob. */
+export async function saveAudio(body: Buffer, fileName: string) {
+  if (body.length === 0) {
+    throw badRequest("Arquivo vazio.");
+  }
+  if (body.length > MAX_UPLOAD_BYTES) {
+    throw badRequest("Música grande demais (máximo de 4 MB). Use um MP3 mais curto ou com taxa menor (128 kbps).");
+  }
+  const kind = detectAudioType(body);
+  if (!kind) {
+    throw badRequest("Formato não suportado. Use MP3, M4A, OGG ou WAV.");
+  }
+  if (!uploadsConfigured()) {
+    throw badRequest("Enviar músicas exige o Vercel Blob configurado. Enquanto isso, cole o link de um arquivo de áudio.");
+  }
+  return storeInBlob(body, "musicas", fileName, kind);
+}
+
+async function storeInBlob(body: Buffer, folder: UploadFolder, fileName: string, kind: { type: string; ext: string }) {
   // O Blob acrescenta um sufixo aleatório: nomes iguais nunca colidem.
   const pathname = `${folder}/${safeName(fileName)}.${kind.ext}`;
   const preferred = configuredAccess() ?? detectedAccess ?? "public";
@@ -129,7 +163,7 @@ function uploadError(error: unknown) {
   return badRequest(`Não foi possível salvar a imagem no Vercel Blob: ${detail}`);
 }
 
-/** Lê uma imagem de store privado para servir pela API. */
+/** Lê um arquivo (imagem ou música) de store privado para servir pela API. */
 export async function readPrivateImage(pathname: string) {
   return get(pathname, { access: "private", ...credentials() });
 }

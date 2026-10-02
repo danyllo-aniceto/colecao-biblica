@@ -3,6 +3,7 @@ import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
 import { Pagination } from '@/components/ui/pagination';
+import { playSfx } from '@/lib/sound/sfx';
 import { StickerCard } from '@/components/game/sticker-card';
 import type { StickerRarity } from '@/lib/admin-api';
 import { cn } from '@/lib/cn';
@@ -89,6 +90,7 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
 
   function go(to: number) {
     if (flip || to === view || to < 0 || to > viewCount - 1) return;
+    playSfx('flip');
     setFlip({ from: view, to });
     // Garantia caso o navegador não dispare o fim da animação (aba em segundo plano).
     fallback.current = window.setTimeout(() => finish(to), FLIP_MS + 200);
@@ -217,7 +219,10 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
         <TurnButton side="right" disabled={current >= viewCount - 1 || flip !== null} onClick={() => go(view + 1)} />
       </div>
 
-      <Pagination page={current} totalPages={viewCount} onPageChange={go} itemLabel={wide ? 'páginas duplas' : 'páginas'} />
+      {/* A virada da folha já tem o próprio som. */}
+      <div data-sound="off">
+        <Pagination page={current} totalPages={viewCount} onPageChange={go} itemLabel={wide ? 'páginas duplas' : 'páginas'} />
+      </div>
     </div>
   );
 }
@@ -229,6 +234,7 @@ function TurnButton({ side, disabled, onClick }: { side: 'left' | 'right'; disab
       onClick={onClick}
       disabled={disabled}
       aria-label={side === 'left' ? 'Voltar a folha' : 'Virar a folha'}
+      data-sound="off"
       className={cn(
         'absolute top-1/2 z-40 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-edge bg-surface text-ink shadow-lg transition hover:scale-105 disabled:pointer-events-none disabled:opacity-0',
         side === 'left' ? '-left-2 sm:-left-5' : '-right-2 sm:-right-5',

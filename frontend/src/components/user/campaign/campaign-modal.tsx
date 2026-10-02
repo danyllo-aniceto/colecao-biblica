@@ -18,6 +18,7 @@ import { ScenarioIcon } from '@/components/user/campaign/scenario-art';
 import { cn } from '@/lib/cn';
 import { claimCampaignNode, type Campaign, type CampaignNode, type CampaignScenario, type ClaimNodeResult } from '@/lib/campaign-api';
 import { scenarioFallbackBackground, scenarioMapSrc, scenarioThemeVars } from '@/lib/campaign-theme';
+import { playSfx } from '@/lib/sound/sfx';
 import { rewardVisual } from '@/lib/reward-visual';
 import type { UnlockedAchievement } from '@/lib/user-api';
 import type { UserProfile } from '@/types/auth';
@@ -185,6 +186,13 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
     scroller.scrollTo({ top: index * scroller.clientHeight, behavior: 'instant' });
     setActive(index);
   }, [open, campaign, scenarios]);
+
+  // Whoosh a cada cenário que passa (arrastando ou pelas setas).
+  const previousActive = useRef(active);
+  useEffect(() => {
+    if (open && previousActive.current !== active) playSfx('swipe');
+    previousActive.current = active;
+  }, [active, open]);
 
   const goTo = useCallback((index: number) => {
     const scroller = scrollerRef.current;

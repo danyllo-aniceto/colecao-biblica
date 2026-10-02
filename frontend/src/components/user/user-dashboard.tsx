@@ -10,6 +10,8 @@ import { errorMessage, useToast } from '@/components/ui/toast';
 import { Alert, CoinIcon } from '@/components/game/game-ui';
 import { StickerCard } from '@/components/game/sticker-card';
 import { BottomNav, PlayerHud, type SectionId } from '@/components/user/game-shell';
+import { MusicController } from '@/components/sound/music-controller';
+import { playSfx } from '@/lib/sound/sfx';
 import { clearStickerReturn, saveStickerReturn, takeReturnSection } from '@/lib/sticker-return';
 import { MatchResult, type MatchSummary } from '@/components/user/match-result';
 import { QuizAnswerScreen, type AnswerReveal, type QuizAnswerPayload } from '@/components/user/quiz-answer-screen';
@@ -312,6 +314,7 @@ export function UserDashboard() {
         comboShieldArmed: result.comboShieldSpent ? false : quizSession.comboShieldArmed,
       });
       if (result.comboShieldSpent) toast.info('O escudo segurou sua sequência de acertos!');
+      playSfx(result.correct ? 'correct' : 'wrong');
       setReveal({
         selected: payload.selectedOption,
         correctOption: result.correctOption ?? '',
@@ -544,6 +547,7 @@ export function UserDashboard() {
         void refreshCollection();
       }}
     >
+    <MusicController inQuiz={Boolean(quizSession && showQuizAnswer)} />
     <div className="min-h-dvh pb-28 sm:pb-10">
       <PlayerHud look={myLook} profile={profile} section={section} onNavigate={navigate} socialNotices={socialSummary ? socialSummary.pendingRequests + socialSummary.pendingTrades + socialSummary.unreadMessages : 0} onSignOut={signOut} />
 

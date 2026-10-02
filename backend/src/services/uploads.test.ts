@@ -73,4 +73,28 @@ describe("upload de imagens", () => {
     expect(isValidUploadPath("../segredo")).toBe(false);
     expect(isValidUploadPath("outra/coisa.png")).toBe(false);
   });
+
+  it("reconhece áudio pelos bytes e recusa o que não é áudio", async () => {
+    const { detectAudioType } = await freshModule();
+    expect(detectAudioType(Buffer.from("ID3\x04\x00\x00\x00\x00\x00\x00", "binary"))?.type).toBe("audio/mpeg");
+    expect(detectAudioType(Buffer.from([0xff, 0xfb, 0x90, 0x00]))?.type).toBe("audio/mpeg");
+    expect(detectAudioType(Buffer.from("OggS\x00\x02", "binary"))?.type).toBe("audio/ogg");
+    expect(detectAudioType(PNG)).toBeNull();
+  });
+
+  it("música vai para o Blob na pasta própria", async () => {
+    put.mockResolvedValue({ url: "https://store.public.blob.vercel-storage.com/musicas/tema-abc.mp3", pathname: "musicas/tema-abc.mp3" });
+    const { saveAudio } = await freshModule();
+    const result = await saveAudio(Buffer.from("ID3\x04\x00\x00\x00\x00\x00\x00", "binary"), "Tema do Éden.mp3");
+    expect(result.url).toContain("musicas/tema-abc.mp3");
+    expect(put.mock.calls[0][0]).toBe("musicas/tema-do-eden.mp3");
+    await expect(saveAudio(PNG, "foto.png")).rejects.toThrow(/Formato não suportado/);
+  });
+
+  it("música sem Blob configurado pede o link", async () => {
+    vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
+    vi.stubEnv("BLOB_STORE_ID", "");
+    const { saveAudio } = await freshModule();
+    await expect(saveAudio(Buffer.from("ID3\x04\x00\x00\x00\x00\x00\x00", "binary"), "a.mp3")).rejects.toThrow(/Vercel Blob/);
+  });
 });

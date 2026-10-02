@@ -5,6 +5,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
 import { cn } from '@/lib/cn';
+import { playSfx } from '@/lib/sound/sfx';
 
 type ToastTone = 'success' | 'error' | 'info';
 
@@ -47,6 +48,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const push = useCallback(
     (tone: ToastTone, message: ReactNode, options: ToastOptions = {}) => {
       const id = nextId.current++;
+      if (tone !== 'info') playSfx(tone === 'success' ? 'success' : 'error');
       // No máximo 4 avisos ao mesmo tempo: os mais antigos saem.
       setToasts((current) => [...current.slice(-3), { id, tone, message, ...options }]);
       window.setTimeout(() => dismiss(id), options.duration ?? (tone === 'error' ? 7000 : 4500));

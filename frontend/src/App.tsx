@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from '@/components/providers/auth-provider';
 import { PwaProvider } from '@/components/pwa/pwa-provider';
+import { SoundEffects } from '@/components/sound/sound-effects';
 import { DialogProvider } from '@/components/ui/dialogs';
 import { ToastProvider } from '@/components/ui/toast';
 import { DashboardPage, PageLoading } from '@/pages/dashboard-page';
@@ -16,6 +17,7 @@ export function App() {
       <DialogProvider>
         <AuthProvider>
           <PwaProvider>
+            <SoundEffects />
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/dashboard" element={<DashboardPage />} />

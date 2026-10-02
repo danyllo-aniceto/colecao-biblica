@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
+import VolumeUpRoundedIcon from '@mui/icons-material/VolumeUpRounded';
+import { SoundSettingsModal } from '@/components/sound/sound-settings-modal';
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
@@ -184,6 +186,7 @@ export function BottomNav({ section, onNavigate }: { section: SectionId; onNavig
 /** Avatar do jogador com o menu de perfil, tema e sair (sempre à mão, inclusive no celular). */
 function UserMenu({ look, name, active, onProfile, onSignOut }: { look: PlayerLook | null; name?: string; active: boolean; onProfile: () => void; onSignOut?: () => void }) {
   const [open, setOpen] = useState(false);
+  const [soundOpen, setSoundOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -229,6 +232,18 @@ function UserMenu({ look, name, active, onProfile, onSignOut }: { look: PlayerLo
             <PersonRoundedIcon fontSize="small" className="text-primary" />
             Meu perfil
           </button>
+          <button
+            type="button"
+            role="menuitem"
+            className={item}
+            onClick={() => {
+              setOpen(false);
+              setSoundOpen(true);
+            }}
+          >
+            <VolumeUpRoundedIcon fontSize="small" className="text-primary" />
+            Sons e música
+          </button>
           <ThemeToggle menuItem />
           {onSignOut ? (
             <button
@@ -246,6 +261,7 @@ function UserMenu({ look, name, active, onProfile, onSignOut }: { look: PlayerLo
           ) : null}
         </div>
       ) : null}
+      <SoundSettingsModal open={soundOpen} onClose={() => setSoundOpen(false)} />
     </div>
   );
 }

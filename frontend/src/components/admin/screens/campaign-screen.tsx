@@ -32,6 +32,7 @@ import {
 import { listCosmeticsAdmin } from '@/lib/admin-rewards-api';
 import { COSMETIC_TYPE_LABELS } from '@/components/user/rewards/cosmetic-preview';
 import { AdminPanel, Cell, DataTable, IconAction, Row, StatusBadge } from '../admin-ui';
+import { AudioUploadField } from '@/components/admin/audio-upload-field';
 import { ImageUploadField } from '../image-upload-field';
 import { MapPositionEditor } from './map-position-editor';
 import { usePagedList } from '../use-paged-list';
@@ -179,6 +180,7 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
   const [color, setColor] = useState(scenario?.color ?? '#7c4dff');
   const [mapImageUrl, setMapImageUrl] = useState(scenario?.mapImageUrl ?? '');
   const [iconImageUrl, setIconImageUrl] = useState(scenario?.iconImageUrl ?? '');
+  const [musicUrl, setMusicUrl] = useState(scenario?.musicUrl ?? '');
   const [characterId, setCharacterId] = useState(scenario?.fragmentCharacterId ? String(scenario.fragmentCharacterId) : '');
   const [sortOrder, setSortOrder] = useState(String(scenario?.sortOrder ?? nextOrder));
   const [active, setActive] = useState(scenario?.active ?? true);
@@ -208,6 +210,7 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
       color,
       mapImageUrl: mapImageUrl || null,
       iconImageUrl: iconImageUrl || null,
+      musicUrl: musicUrl || null,
       fragmentCharacterId: characterId ? Number(characterId) : null,
       sortOrder: Number(sortOrder) || 0,
       active,
@@ -254,6 +257,9 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
             <ImageUploadField value={iconImageUrl} onChange={setIconImageUrl} />
           </Field>
         </div>
+        <Field label="Música do tema" hint="MP3, M4A, OGG ou WAV de até 4 MB (128 kbps rende ~4 min). Toca no quiz e é liberada ao jogador quando ele chega ao primeiro nível deste cenário. Vazio = cenário sem música.">
+          <AudioUploadField value={musicUrl} onChange={setMusicUrl} />
+        </Field>
         <div className="grid gap-4 md:grid-cols-3">
           <Field label="Cor do cenário" hint="Vira a cor de botões, bordas e destaques.">
             <ColorField value={color} onChange={setColor} />
