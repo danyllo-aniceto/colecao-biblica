@@ -62,6 +62,9 @@ async function relationRows(db: Db, a: number, b: number) {
 }
 
 export async function areFriends(db: Db, a: number, b: number) {
+  // Administradores não fazem parte da vida social dos jogadores: nunca são amigos.
+  const admins = await db.user.count({ where: { id: { in: [a, b] }, role: "ADMIN" } });
+  if (admins > 0) return false;
   return (await relationRows(db, a, b)).some((row) => row.status === "ACCEPTED");
 }
 
@@ -73,7 +76,7 @@ async function requireFriends(db: Db, a: number, b: number) {
 
 async function friendIds(db: Db, userId: number): Promise<number[]> {
   const rows = await db.friendship.findMany({
-    where: { status: "ACCEPTED", OR: [{ requesterId: userId }, { addresseeId: userId }] },
+    where: { status: "ACCEPTED", OR: [{ requesterId: userId }, { addresseeId: userId }], requester: { role: "USER" }, addressee: { role: "USER" } },
     select: { requesterId: true, addresseeId: true },
   });
   return rows.map((row) => (row.requesterId === userId ? row.addresseeId : row.requesterId));
@@ -99,7 +102,10 @@ async function cancelPendingTrades(db: Db, a: number, b: number) {
 
 export async function sendFriendRequest(userId: number, rawCode: string) {
   const code = rawCode.trim().toUpperCase();
-  const target = await prisma.user.findFirst({ where: { friendCode: code, deleted: false }, select: { id: true, name: true } });
+  const actor = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { role: true } });
+  if (actor.role === "ADMIN") throw badRequest("Administradores não adicionam amigos");
+  // Administradores não aparecem como jogadores: o código deles não vale.
+  const target = await prisma.user.findFirst({ where: { friendCode: code, deleted: false, role: "USER" }, select: { id: true, name: true } });
   if (!target) throw notFound("Nenhum jogador com esse código");
   if (target.id === userId) throw badRequest("Esse é o seu próprio código");
 
@@ -180,7 +186,7 @@ export async function listFriends(userId: number, page: number, size: number) {
   if (ids.length === 0) return pageOf([], 0, page, size);
 
   const [users, unread, stickers, lastMessages] = await Promise.all([
-    prisma.user.findMany({ where: { id: { in: ids }, deleted: false }, select: { id: true, name: true, level: true } }),
+    prisma.user.findMany({ where: { id: { in: ids }, deleted: false, role: "USER" }, select: { id: true, name: true, level: true } }),
     prisma.message.groupBy({ by: ["senderId"], where: { receiverId: userId, readAt: null, senderId: { in: ids } }, _count: { _all: true } }),
     prisma.userSticker.groupBy({ by: ["userId"], where: { userId: { in: ids }, character: visibleCharacter() }, _count: { _all: true }, _sum: { duplicates: true } }),
     Promise.all(
@@ -230,8 +236,8 @@ export async function listFriends(userId: number, page: number, size: number) {
 
 export async function listFriendRequests(userId: number) {
   const [incoming, outgoing, blocked] = await Promise.all([
-    prisma.friendship.findMany({ where: { addresseeId: userId, status: "PENDING" }, include: { requester: userCard }, orderBy: { createdAt: "desc" } }),
-    prisma.friendship.findMany({ where: { requesterId: userId, status: "PENDING" }, include: { addressee: userCard }, orderBy: { createdAt: "desc" } }),
+    prisma.friendship.findMany({ where: { addresseeId: userId, status: "PENDING", requester: { role: "USER" } }, include: { requester: userCard }, orderBy: { createdAt: "desc" } }),
+    prisma.friendship.findMany({ where: { requesterId: userId, status: "PENDING", addressee: { role: "USER" } }, include: { addressee: userCard }, orderBy: { createdAt: "desc" } }),
     prisma.friendship.findMany({ where: { requesterId: userId, status: "BLOCKED" }, include: { addressee: userCard }, orderBy: { createdAt: "desc" } }),
   ]);
   return {
@@ -246,7 +252,7 @@ export async function socialSummary(userId: number) {
   await expireTrades(prisma);
   const ids = await friendIds(prisma, userId);
   const [pendingRequests, pendingTrades, unreadMessages] = await Promise.all([
-    prisma.friendship.count({ where: { addresseeId: userId, status: "PENDING" } }),
+    prisma.friendship.count({ where: { addresseeId: userId, status: "PENDING", requester: { role: "USER" } } }),
     prisma.trade.count({ where: { receiverId: userId, status: "PENDING" } }),
     prisma.message.count({ where: { receiverId: userId, readAt: null, senderId: { in: ids } } }),
   ]);

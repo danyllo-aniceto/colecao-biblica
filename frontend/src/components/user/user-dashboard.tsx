@@ -10,6 +10,7 @@ import { errorMessage, useToast } from '@/components/ui/toast';
 import { Alert, CoinIcon } from '@/components/game/game-ui';
 import { StickerCard } from '@/components/game/sticker-card';
 import { BottomNav, PlayerHud, type SectionId } from '@/components/user/game-shell';
+import { clearStickerReturn, saveStickerReturn, takeReturnSection } from '@/lib/sticker-return';
 import { MatchResult, type MatchSummary } from '@/components/user/match-result';
 import { QuizAnswerScreen, type AnswerReveal, type QuizAnswerPayload } from '@/components/user/quiz-answer-screen';
 import { AlbumSection } from '@/components/user/sections/album-section';
@@ -76,7 +77,7 @@ export function UserDashboard() {
   const toast = useToast();
   const { confirm } = useDialogs();
 
-  const [section, setSection] = useState<SectionId>('home');
+  const [section, setSection] = useState<SectionId>(() => takeReturnSection());
   const [profile, setProfile] = useState<UserProfile | null>(user);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -104,6 +105,9 @@ export function UserDashboard() {
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [socialSummary, setSocialSummary] = useState<SocialSummary | null>(null);
   const [myLook, setMyLook] = useState<PlayerLook | null>(null);
+
+  // O retorno da ficha já foi aplicado na montagem; limpa para não repetir.
+  useEffect(() => clearStickerReturn(), []);
 
   const refreshSocial = useCallback(() => {
     getSocialSummary()
@@ -523,7 +527,11 @@ export function UserDashboard() {
     }
   }
 
-  const openSticker = (id: number) => navigateTo(`/dashboard/figurinhas/${id}`);
+  const openSticker = (id: number) => {
+    // Guarda de onde veio para o "voltar" da ficha cair no mesmo lugar.
+    saveStickerReturn({ section, characterId: id });
+    navigateTo(`/dashboard/figurinhas/${id}`);
+  };
 
   return (
     <PlayerProfileProvider>
@@ -537,7 +545,7 @@ export function UserDashboard() {
       }}
     >
     <div className="min-h-dvh pb-28 sm:pb-10">
-      <PlayerHud look={myLook} profile={profile} section={section} onNavigate={navigate} socialNotices={socialSummary ? socialSummary.pendingRequests + socialSummary.pendingTrades + socialSummary.unreadMessages : 0} />
+      <PlayerHud look={myLook} profile={profile} section={section} onNavigate={navigate} socialNotices={socialSummary ? socialSummary.pendingRequests + socialSummary.pendingTrades + socialSummary.unreadMessages : 0} onSignOut={signOut} />
 
       <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
         {profileError ? (

@@ -14,7 +14,8 @@ rankingRouter.get(
   "/",
   asyncHandler(async (req, res) => {
     const { page, size, skip, take } = readPage(req, 20, 100);
-    const where = { deleted: false };
+    // Administradores não competem: ficam fora do ranking.
+    const where = { deleted: false, role: "USER" as const };
     const [users, total] = await Promise.all([
       prisma.user.findMany({ where, orderBy: ORDER, skip, take, select: { id: true, name: true, level: true, totalScore: true, xp: true } }),
       prisma.user.count({ where }),
@@ -25,6 +26,7 @@ rankingRouter.get(
     const ahead = await prisma.user.count({
       where: {
         deleted: false,
+        role: "USER",
         OR: [
           { totalScore: { gt: me.totalScore } },
           { totalScore: me.totalScore, xp: { gt: me.xp } },

@@ -39,7 +39,8 @@ import {
 } from '@/lib/admin-api';
 import { DIFFICULTY_LABELS, stripHtml } from '@/lib/labels';
 import type { AdminNavigate } from '../admin-dashboard';
-import { BibleBooksPicker, GENEALOGY_TEMPLATES, MermaidField, PeriodField, RarityPicker, TIMELINE_TEMPLATES } from './character-fields';
+import { BibleBooksPicker, PeriodField, RarityPicker } from './character-fields';
+import { GenealogyEditor, TimelineEditor } from './diagram-editors';
 import { CharacterImageField } from './character-image-field';
 import { invalidateCharacterOptions, QuestionEditorModal } from './questions-screen';
 
@@ -406,11 +407,11 @@ export function CharacterEditor({ characterId, onClose, onNavigate }: { characte
 
           {tab === 'diagramas' ? (
             <section className="panel space-y-6 p-5 sm:p-6">
-              <Field label="Árvore genealógica" error={errors.genealogy} hint="Diagrama Mermaid (graph TD). Use um modelo e troque os nomes.">
-                <MermaidField value={form.genealogy} onChange={(value) => set('genealogy', value)} templates={GENEALOGY_TEMPLATES} placeholder={'graph TD\n  Abraao[Abraão] --> Isaque[Isaque]'} />
+              <Field label="Árvore genealógica" error={errors.genealogy} hint="Cadastre as pessoas e quem é pai, mãe ou cônjuge de quem: o desenho é montado sozinho.">
+                <GenealogyEditor key={`${draftKey}genealogy`} value={form.genealogy} onChange={(value) => set('genealogy', value)} />
               </Field>
-              <Field label="Linha do tempo" error={errors.importantEvents} hint="Diagrama Mermaid (timeline): cada linha é 'referência : acontecimento'.">
-                <MermaidField value={form.importantEvents} onChange={(value) => set('importantEvents', value)} templates={TIMELINE_TEMPLATES} placeholder={'timeline\n  title Eventos importantes\n  Gênesis 12 : Chamado de Abraão'} />
+              <Field label="Linha do tempo" error={errors.importantEvents} hint="Adicione os acontecimentos na ordem em que aconteceram.">
+                <TimelineEditor key={`${draftKey}events`} value={form.importantEvents} onChange={(value) => set('importantEvents', value)} />
               </Field>
             </section>
           ) : null}

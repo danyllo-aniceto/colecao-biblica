@@ -1,4 +1,6 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
+import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
@@ -45,7 +47,9 @@ export function PlayerHud({
   onNavigate,
   socialNotices = 0,
   look = null,
+  onSignOut,
 }: {
+  onSignOut?: () => void;
   look?: PlayerLook | null;
   profile: UserProfile | null;
   section: SectionId;
@@ -102,15 +106,7 @@ export function PlayerHud({
             <GroupsRoundedIcon fontSize="small" />
             <NoticeDot value={socialNotices} className="absolute -right-1 -top-1" />
           </button>
-          <button
-            type="button"
-            onClick={() => onNavigate('settings')}
-            aria-label="Meu perfil"
-            aria-current={section === 'settings' ? 'page' : undefined}
-            className={cn('flex items-center justify-center rounded-full transition', section === 'settings' && 'ring-4 ring-primary/50')}
-          >
-            <PlayerAvatar look={look} name={profile?.name} size="md" />
-          </button>
+          <UserMenu look={look} name={profile?.name} active={section === 'settings'} onProfile={() => onNavigate('settings')} onSignOut={onSignOut} />
         </div>
       </div>
 
@@ -182,5 +178,74 @@ export function BottomNav({ section, onNavigate }: { section: SectionId; onNavig
         })}
       </ul>
     </nav>
+  );
+}
+
+/** Avatar do jogador com o menu de perfil, tema e sair (sempre à mão, inclusive no celular). */
+function UserMenu({ look, name, active, onProfile, onSignOut }: { look: PlayerLook | null; name?: string; active: boolean; onProfile: () => void; onSignOut?: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (event: PointerEvent) => {
+      if (!ref.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && setOpen(false);
+    document.addEventListener('pointerdown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const item = 'flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left font-display text-sm font-semibold text-ink transition hover:bg-surface-3';
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        aria-label="Menu da conta"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className={cn('flex items-center justify-center rounded-full transition', (open || active) && 'ring-4 ring-primary/50')}
+      >
+        <PlayerAvatar look={look} name={name} size="md" />
+      </button>
+      {open ? (
+        <div role="menu" className="absolute right-0 top-full z-50 mt-2 w-56 animate-fade-up rounded-2xl border border-edge bg-surface p-1.5 shadow-xl">
+          <p className="truncate px-3 py-2 text-xs font-bold uppercase tracking-wider text-muted">{name ?? 'Jogador'}</p>
+          <button
+            type="button"
+            role="menuitem"
+            className={item}
+            onClick={() => {
+              setOpen(false);
+              onProfile();
+            }}
+          >
+            <PersonRoundedIcon fontSize="small" className="text-primary" />
+            Meu perfil
+          </button>
+          <ThemeToggle menuItem />
+          {onSignOut ? (
+            <button
+              type="button"
+              role="menuitem"
+              className={cn(item, 'text-danger')}
+              onClick={() => {
+                setOpen(false);
+                onSignOut();
+              }}
+            >
+              <LogoutRoundedIcon fontSize="small" />
+              Sair
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
   );
 }

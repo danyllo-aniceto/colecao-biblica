@@ -38,13 +38,16 @@ type AlbumBookProps = {
   onOpenSticker: (id: number) => void;
   /** Muda quando os filtros mudam: o álbum volta para a primeira folha. */
   resetKey: string;
+  /** Figurinha a mostrar ao abrir (volta da ficha): o álbum abre na folha dela. */
+  focusId?: number | null;
+  onFocused?: () => void;
 };
 
 /**
  * Álbum de verdade: capa, folhas de papel e a folha virando ao trocar de página
  * (setas, arrastar no celular, setas do teclado ou a paginação embaixo).
  */
-export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, onOpenSticker, resetKey }: AlbumBookProps) {
+export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, onOpenSticker, resetKey, focusId = null, onFocused }: AlbumBookProps) {
   const wide = useWide();
   const perPage = wide ? PER_PAGE_WIDE : PER_PAGE_NARROW;
   const [view, setView] = useState(0);
@@ -60,7 +63,16 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
 
   useEffect(() => {
     setFlip(null);
-    setView(0);
+    const index = focusId === null ? -1 : items.findIndex((item) => item.id === focusId);
+    if (index === -1) {
+      setView(0);
+      return;
+    }
+    // Folha 0 é a abertura; a figurinha está na folha 1 + posição / por folha.
+    const sheet = 1 + Math.floor(index / perPage);
+    setView(wide ? Math.floor(sheet / 2) : sheet);
+    onFocused?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetKey, wide]);
 
   useEffect(() => {

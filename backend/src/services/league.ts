@@ -18,7 +18,7 @@ async function standings(db: Db, weekKey: string): Promise<Standing[]> {
   const { start, end } = weekRangeInTimeZone(weekKey, env.timezone);
   const groups = await db.quizMatch.groupBy({
     by: ["userId"],
-    where: { finishedAt: { gte: start, lt: end }, user: { deleted: false } },
+    where: { finishedAt: { gte: start, lt: end }, user: { deleted: false, role: "USER" } },
     _sum: { scoreGained: true },
     _count: { _all: true },
   });

@@ -8,7 +8,7 @@ function getServerTheme(): Theme {
   return 'light';
 }
 
-export function ThemeToggle({ compact = false }: { compact?: boolean }) {
+export function ThemeToggle({ compact = false, menuItem = false }: { compact?: boolean; menuItem?: boolean }) {
   // O tema é aplicado no <html> pelo script inline do layout; aqui só refletimos e alternamos.
   const theme = useSyncExternalStore(subscribeTheme, readTheme, getServerTheme);
 
@@ -22,8 +22,11 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
     <button
       type="button"
       onClick={handleToggle}
+      role={menuItem ? 'menuitem' : undefined}
       className={
-        compact
+        menuItem
+          ? 'flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left font-display text-sm font-semibold text-ink transition hover:bg-surface-3'
+          : compact
           ? 'inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-edge bg-surface-2 text-primary transition hover:bg-surface-3'
           : 'inline-flex h-10 items-center gap-2 rounded-2xl border border-edge bg-surface-2 px-4 font-display text-sm font-semibold text-ink transition hover:bg-surface-3'
       }

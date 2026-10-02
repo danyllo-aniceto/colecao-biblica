@@ -894,7 +894,7 @@ export async function getDailyChallenge(userId: number, page: number, size: numb
     prisma.question.count({ where: { active: true } }),
     prisma.quizSession.findFirst({ where: { userId, quizType: "DAILY_CHALLENGE", startedAt: { gte: start, lt: end } }, orderBy: { startedAt: "desc" } }),
     prisma.quizMatch.findMany({
-      where: { quizType: "DAILY_CHALLENGE", finishedAt: { gte: start, lt: end }, user: { deleted: false } },
+      where: { quizType: "DAILY_CHALLENGE", finishedAt: { gte: start, lt: end }, user: { deleted: false, role: "USER" } },
       include: { user: { select: { name: true, level: true } } },
     }),
   ]);

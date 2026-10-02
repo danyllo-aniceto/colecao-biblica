@@ -28,6 +28,7 @@ import {
   type CharacterDetail,
   type CommentEntry,
 } from '@/lib/user-api';
+import { markStickerReturn } from '@/lib/sticker-return';
 import { getRarityLabel } from '@/lib/rarity-theme';
 
 function formatDate(value?: string | null) {
@@ -69,6 +70,14 @@ export function StickerPage() {
   const [commentEditingId, setCommentEditingId] = useState<number | null>(null);
 
   const parsedCharacterId = Number(params.characterId);
+
+  // "Voltar" leva ao lugar de onde a ficha foi aberta (álbum na folha dela, início etc.).
+  function backToDashboard() {
+    navigate('/dashboard');
+  }
+
+  // Também vale para o voltar do navegador/celular.
+  useEffect(() => markStickerReturn, []);
 
   useEffect(() => {
     if (!accessToken || !Number.isFinite(parsedCharacterId)) {
@@ -166,7 +175,7 @@ export function StickerPage() {
   return (
     <RequireAuth>
       <main className="mx-auto w-full max-w-5xl px-4 pb-16 pt-4 sm:px-6">
-        <Button type="button" variant="ghost" onClick={() => navigate('/dashboard')} className="-ml-2">
+        <Button type="button" variant="ghost" onClick={() => backToDashboard()} className="-ml-2">
           <ArrowBackRoundedIcon />
           Voltar
         </Button>
@@ -180,7 +189,7 @@ export function StickerPage() {
             </span>
             <h1 className="font-display text-2xl font-bold text-ink">Figurinha bloqueada</h1>
             <p className="text-muted">Conquiste esta figurinha jogando, na loja ou numa troca com amigos para abrir a ficha completa.</p>
-            <Button size="lg" onClick={() => navigate('/dashboard')}>
+            <Button size="lg" onClick={() => backToDashboard()}>
               <PlayArrowRoundedIcon />
               Jogar para conquistar
             </Button>
@@ -235,7 +244,7 @@ export function StickerPage() {
                       <p className="flex items-center gap-2 font-semibold text-muted">
                         <LockRoundedIcon /> Conquiste esta figurinha para ler a história completa.
                       </p>
-                      <Button size="lg" onClick={() => navigate('/dashboard')}>
+                      <Button size="lg" onClick={() => backToDashboard()}>
                         <PlayArrowRoundedIcon />
                         Jogar para conquistar
                       </Button>

@@ -247,7 +247,7 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
     }
   }
 
-  const arrow = 'flex h-12 w-12 items-center justify-center rounded-full bg-primary text-on-primary shadow-[0_4px_0_var(--primary-strong)] transition active:translate-y-0.5 active:shadow-none disabled:opacity-40 disabled:shadow-none';
+  const arrow = 'flex h-9 w-9 items-center justify-center rounded-full bg-primary text-on-primary shadow-[0_3px_0_var(--primary-strong)] transition active:translate-y-0.5 active:shadow-none disabled:opacity-40 disabled:shadow-none';
 
   return (
     <>
@@ -295,7 +295,7 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
                     style={scenarioThemeVars(item.color)}
                     aria-label={item.name}
                     aria-hidden={index === active ? undefined : true}
-                    className="flex h-full snap-start snap-always flex-col gap-3 bg-bg px-4 pb-4 pt-3"
+                    className="flex h-full snap-start snap-always flex-col gap-3 bg-bg px-3 pb-4 pt-3"
                   >
                     <div className={cn('flex shrink-0 items-center gap-3 transition-all duration-500 ease-out', index === active ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0')}>
                       <ScenarioIcon scenario={item} size={52} />
@@ -313,20 +313,20 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
                         </div>
                       </div>
                     </div>
-                    <div className={cn('flex min-h-0 flex-1 items-center justify-center transition-all duration-700 ease-out [container-type:size]', index === active ? 'scale-100 opacity-100' : 'scale-95 opacity-40')}>
+                    <div className={cn('flex min-h-0 flex-1 items-center justify-center px-9 transition-all duration-700 ease-out [container-type:size]', index === active ? 'scale-100 opacity-100' : 'scale-95 opacity-40')}>
                       <ScenarioMap scenario={item} onOpenNode={setSelected} />
                     </div>
                   </section>
                 ))}
               </div>
 
-              <nav aria-label="Navegar entre cenários" className="pointer-events-none absolute inset-y-0 right-3 flex flex-col items-center justify-center gap-3">
+              <nav aria-label="Navegar entre cenários" className="pointer-events-none absolute inset-y-0 right-1 flex flex-col items-center justify-center gap-2">
                 <Tooltip content="Próximo cenário" side="bottom">
                   <button type="button" onClick={() => goTo(active - 1)} disabled={active <= 0} aria-label="Próximo cenário (para cima)" className={cn(arrow, 'pointer-events-auto')}>
-                    <KeyboardArrowUpRoundedIcon />
+                    <KeyboardArrowUpRoundedIcon fontSize="small" />
                   </button>
                 </Tooltip>
-                <ol className="pointer-events-auto flex flex-col items-center gap-1.5 rounded-full bg-surface/80 px-1.5 py-2 backdrop-blur">
+                <ol className="pointer-events-auto flex flex-col items-center gap-1 rounded-full bg-surface/80 px-1 py-1.5 backdrop-blur">
                   {scenarios.map((item, index) => (
                     <li key={item.id}>
                       <button
@@ -334,14 +334,14 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
                         onClick={() => goTo(index)}
                         aria-label={`Ir para ${item.name}`}
                         aria-current={index === active ? 'true' : undefined}
-                        className={cn('block rounded-full transition-all duration-300', index === active ? 'h-5 w-2.5 bg-primary' : item.completed ? 'h-2.5 w-2.5 bg-success' : 'h-2.5 w-2.5 bg-edge-strong')}
+                        className={cn('block rounded-full transition-all duration-300', index === active ? 'h-4 w-2 bg-primary' : item.completed ? 'h-2 w-2 bg-success' : 'h-2 w-2 bg-edge-strong')}
                       />
                     </li>
                   ))}
                 </ol>
                 <Tooltip content="Cenário anterior" side="top">
                   <button type="button" onClick={() => goTo(active + 1)} disabled={active >= scenarios.length - 1} aria-label="Cenário anterior (para baixo)" className={cn(arrow, 'pointer-events-auto')}>
-                    <KeyboardArrowDownRoundedIcon />
+                    <KeyboardArrowDownRoundedIcon fontSize="small" />
                   </button>
                 </Tooltip>
               </nav>

@@ -83,7 +83,7 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     await prisma.userSticker.update({ where: { id: sticker.id }, data: { duplicates: 2 } });
     const sold = await api.post("/api/collection/sell").set(bearer(token)).send({ characterId: jesus.id, quantity: 1 });
     expect(sold.status).toBe(400);
-    const friend = await prisma.user.findFirstOrThrow({ where: { email: "admin2@email.com" } });
+    const friend = await prisma.user.findFirstOrThrow({ where: { email: "outro@email.com" } });
     await prisma.friendship.create({ data: { requesterId: user.id, addresseeId: friend.id, status: "ACCEPTED" } });
     const trade = await api.post("/api/social/trades").set(bearer(token)).send({ toUserId: friend.id, offeredCharacterId: jesus.id });
     expect(trade.status).toBe(400);

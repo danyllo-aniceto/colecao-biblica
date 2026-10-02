@@ -123,7 +123,7 @@ describe.skipIf(!hasDatabase)("API", () => {
       const admin = await login("admin2@email.com");
       const page = await api.get("/api/users?page=0&size=1&role=user").set(bearer(admin));
       expect(page.status).toBe(200);
-      expect(page.body).toMatchObject({ totalElements: 1, totalPages: 1, number: 0, size: 1 });
+      expect(page.body).toMatchObject({ totalElements: 2, totalPages: 2, number: 0, size: 1 });
       expect(page.body.content[0].email).toBe("user@email.com");
     });
   });
@@ -525,7 +525,7 @@ describe.skipIf(!hasDatabase)("API", () => {
     it("admin vê estatísticas e ajusta o saldo de um jogador", async () => {
       const admin = await login("admin2@email.com");
       const stats = await api.get("/api/admin/stats").set(bearer(admin));
-      expect(stats.body).toMatchObject({ users: 1, characters: 4, questions: 3, uploads: "inline" });
+      expect(stats.body).toMatchObject({ users: 2, characters: 4, questions: 3, uploads: "inline" });
 
       const target = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
       const granted = await api.post(`/api/users/${target.id}/grant`).set(bearer(admin)).send({ coins: 500, hintBoosts: 2, extraLifeBoosts: -3 });
@@ -653,7 +653,7 @@ describe.skipIf(!hasDatabase)("API", () => {
 
     it("desafio do dia: mesmas perguntas para todos, uma tentativa e ranking do dia", async () => {
       const token = await login("user@email.com");
-      const admin = await login("admin2@email.com");
+      const admin = await login("outro@email.com");
       const mine = await api.post("/api/quiz/sessions/start").set(bearer(token)).send({ quizType: "DAILY_CHALLENGE" });
       const other = await api.post("/api/quiz/sessions/start").set(bearer(admin)).send({ quizType: "DAILY_CHALLENGE" });
       const idsOf = async (sessionId: number) => (await prisma.quizSession.findUniqueOrThrow({ where: { id: sessionId } })).questionIds;
@@ -673,7 +673,7 @@ describe.skipIf(!hasDatabase)("API", () => {
       }
       const challenge = await api.get("/api/quiz/daily-challenge").set(bearer(token));
       expect(challenge.body).toMatchObject({ attemptStatus: "ABANDONED", totalQuestions: 3, totalElements: 1, me: null });
-      expect(challenge.body.content[0]).toMatchObject({ position: 1, userName: "Admin Teste", correctAnswers: 3 });
+      expect(challenge.body.content[0]).toMatchObject({ position: 1, userName: "Jogador Dois", correctAnswers: 3 });
     });
 
     it("reportar pergunta e o admin resolve", async () => {
@@ -734,7 +734,7 @@ describe.skipIf(!hasDatabase)("API", () => {
   describe("amigos, conversa e trocas", () => {
     async function befriend() {
       const user = await login("user@email.com");
-      const admin = await login("admin2@email.com");
+      const admin = await login("outro@email.com");
       const code = (await api.get("/api/social/me").set(bearer(admin))).body.friendCode;
       expect(code).toMatch(/^[A-Z2-9]{6}$/);
       const sent = await api.post("/api/social/friends/request").set(bearer(user)).send({ code: code.toLowerCase() });
@@ -743,20 +743,20 @@ describe.skipIf(!hasDatabase)("API", () => {
       expect((await api.get("/api/social/summary").set(bearer(admin))).body.pendingRequests).toBe(1);
       await api.post(`/api/social/friends/requests/${requests.body.incoming[0].id}/accept`).set(bearer(admin));
       const userRow = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
-      const adminRow = await prisma.user.findUniqueOrThrow({ where: { email: "admin2@email.com" } });
+      const adminRow = await prisma.user.findUniqueOrThrow({ where: { email: "outro@email.com" } });
       return { user, admin, userId: userRow.id, adminId: adminRow.id };
     }
 
     it("amizade por código com aceite; conversa só entre amigos e com palavrões mascarados", async () => {
       const user = await login("user@email.com");
       const userRow = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
-      const adminRow = await prisma.user.findUniqueOrThrow({ where: { email: "admin2@email.com" } });
+      const adminRow = await prisma.user.findUniqueOrThrow({ where: { email: "outro@email.com" } });
       expect((await api.post(`/api/social/chat/${adminRow.id}`).set(bearer(user)).send({ text: "oi" })).status).toBe(403);
       expect((await api.post("/api/social/friends/request").set(bearer(user)).send({ code: "ZZZZZZ" })).status).toBe(404);
 
       const { admin } = await befriend();
       const friends = await api.get("/api/social/friends").set(bearer(user));
-      expect(friends.body.content).toEqual([expect.objectContaining({ userId: adminRow.id, name: "Admin Teste" })]);
+      expect(friends.body.content).toEqual([expect.objectContaining({ userId: adminRow.id, name: "Jogador Dois" })]);
 
       const sent = await api.post(`/api/social/chat/${adminRow.id}`).set(bearer(user)).send({ text: "Que merda de pergunta kkk" });
       expect(sent.body.text).toBe("Que ***** de pergunta kkk");
@@ -767,6 +767,15 @@ describe.skipIf(!hasDatabase)("API", () => {
 
       await prisma.gameSetting.updateMany({ where: { settingKey: "social.chatEnabled" }, data: { settingValue: "0" } });
       expect((await api.post(`/api/social/chat/${adminRow.id}`).set(bearer(user)).send({ text: "oi" })).body.message).toMatch(/desligada/);
+    });
+
+    it("administrador não é amigo de jogador: código não vale e não pode adicionar", async () => {
+      const user = await login("user@email.com");
+      const admin = await login("admin2@email.com");
+      const adminCode = (await api.get("/api/social/me").set(bearer(admin))).body.friendCode;
+      expect((await api.post("/api/social/friends/request").set(bearer(user)).send({ code: adminCode })).status).toBe(404);
+      const userCode = (await api.get("/api/social/me").set(bearer(user))).body.friendCode;
+      expect((await api.post("/api/social/friends/request").set(bearer(admin)).send({ code: userCode })).status).toBe(400);
     });
 
     it("troca de repetidas: só repetidas, aceite move as cópias e não troca duas vezes", async () => {
@@ -848,7 +857,9 @@ describe.skipIf(!hasDatabase)("API", () => {
 
     it("ranking ordena por pontos e ignora contas excluídas", async () => {
       await prisma.user.update({ where: { email: "user@email.com" }, data: { totalScore: 500 } });
-      await prisma.user.update({ where: { email: "admin2@email.com" }, data: { totalScore: 900, deleted: true } });
+      await prisma.user.update({ where: { email: "outro@email.com" }, data: { totalScore: 900, deleted: true } });
+      // Administradores nunca entram no ranking, mesmo com muitos pontos.
+      await prisma.user.update({ where: { email: "admin2@email.com" }, data: { totalScore: 800 } });
       const token = await login("user@email.com");
       const ranking = await api.get("/api/ranking").set(bearer(token));
       expect(ranking.body.content).toEqual([expect.objectContaining({ position: 1, userName: "Usuário Teste", totalScore: 500 })]);

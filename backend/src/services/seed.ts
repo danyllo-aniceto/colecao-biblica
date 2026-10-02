@@ -111,6 +111,7 @@ export async function runSeed(db: Db, options: SeedOptions) {
   if (options.demoData) {
     await ensureUser(db, "Admin Teste", "admin2@email.com", "123456", "ADMIN", log);
     await ensureUser(db, "Usuário Teste", "user@email.com", "123456", "USER", log);
+    await ensureUser(db, "Jogador Dois", "outro@email.com", "123456", "USER", log);
     await seedDemoContent(db, log);
   }
 

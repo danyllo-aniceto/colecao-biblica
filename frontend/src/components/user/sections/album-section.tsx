@@ -17,6 +17,7 @@ import type { StickerRarity, Testament } from '@/lib/admin-api';
 import { sortBooks } from '@/lib/bible-books';
 import { HISTORICAL_PERIODS, TESTAMENT_LABELS } from '@/lib/labels';
 import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
+import { saveAlbumView, takeAlbumReturn } from '@/lib/sticker-return';
 import { listUpcoming, type CharacterEntry, type FuseResult, type GameRules, type UpcomingSticker, type UserSticker } from '@/lib/user-api';
 
 type SortOption = 'alphabetical' | 'rarityAsc' | 'rarityDesc' | 'period';
@@ -60,12 +61,16 @@ function untilLabel(date: string) {
 }
 
 export function AlbumSection({ characters, ownedIds, collection, gameRules, onOpenSticker, onWallet, onFused, playerName }: AlbumSectionProps) {
-  const [rarity, setRarity] = useState<StickerRarity | 'ALL'>('ALL');
-  const [tab, setTab] = useState<AlbumTab>('album');
-  const [books, setBooks] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<SortOption>('rarityAsc');
-  const [testament, setTestament] = useState<Testament | ''>('');
-  const [period, setPeriod] = useState('');
+  // Ao voltar da ficha de uma figurinha, o álbum reabre com os mesmos filtros e na folha dela.
+  const [restored] = useState(() => takeAlbumReturn());
+  const [focusId, setFocusId] = useState<number | null>(restored?.characterId ?? null);
+  const [rarity, setRarity] = useState<StickerRarity | 'ALL'>((restored?.view.rarity as StickerRarity | 'ALL' | undefined) ?? 'ALL');
+  const [tab, setTab] = useState<AlbumTab>((restored?.view.tab as AlbumTab | undefined) ?? 'album');
+  const [books, setBooks] = useState<string[]>(restored?.view.books ?? []);
+  const [sortBy, setSortBy] = useState<SortOption>((restored?.view.sortBy as SortOption | undefined) ?? 'rarityAsc');
+  const [testament, setTestament] = useState<Testament | ''>((restored?.view.testament as Testament | '' | undefined) ?? '');
+  const [period, setPeriod] = useState(restored?.view.period ?? '');
+  const albumView = { tab, rarity, books, sortBy, testament, period };
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [duplicatesOpen, setDuplicatesOpen] = useState(false);
   const [upcoming, setUpcoming] = useState<UpcomingSticker[]>([]);
@@ -168,7 +173,10 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
       {tab === 'collections' ? <ThemeCollections playerName={playerName} onCoins={(coins) => onWallet({ userCoins: coins })} refreshKey={collection.length} /> : null}
 
       {tab === 'album' ? (
-        <AlbumBook items={ownedFiltered} totalCharacters={characters.length} ownedCount={ownedCount} duplicatesById={duplicatesById} onOpenSticker={onOpenSticker} resetKey={resetKey} />
+        <AlbumBook items={ownedFiltered} totalCharacters={characters.length} ownedCount={ownedCount} duplicatesById={duplicatesById} onOpenSticker={(id) => {
+            saveAlbumView(albumView);
+            onOpenSticker(id);
+          }} resetKey={resetKey} focusId={focusId} onFocused={() => setFocusId(null)} />
       ) : null}
 
       {tab === 'locked' && upcoming.length > 0 ? (
