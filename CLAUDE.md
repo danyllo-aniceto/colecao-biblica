@@ -34,6 +34,9 @@ código em **português do Brasil**.
 - Dinheiro e bônus do jogador sempre dentro de `transaction` + `lockUser`.
 - Recompensas/itens da loja com `system = true` são do seed (não excluíveis); os criados no painel têm
   `system = false`.
+- Raridade `SPECIAL` (Jesus) é única e só vem da campanha: nunca em pacote, sorteio, loja, troca, venda ou fusão
+  (`isCampaignOnlyRarity` em `game-rules.ts`). Cenários/paradas da campanha: `services/campaign.ts` e seed em
+  `default-campaign.ts`; guia de arte em `docs/campanha-prompts-de-arte.md`.
 - Toda mudança de schema vira migração em `backend/prisma/migrations` (o deploy roda `migrate deploy`).
 
 ## Comandos
