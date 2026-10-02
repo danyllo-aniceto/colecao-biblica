@@ -295,9 +295,11 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
                     style={scenarioThemeVars(item.color)}
                     aria-label={item.name}
                     aria-hidden={index === active ? undefined : true}
-                    className="flex h-full snap-start snap-always flex-col gap-3 bg-bg px-3 pb-4 pt-3"
+                    className="relative flex h-full snap-start snap-always flex-col gap-2 overflow-hidden bg-bg px-2 pb-2 pt-2"
                   >
-                    <div className={cn('flex shrink-0 items-center gap-3 transition-all duration-500 ease-out', index === active ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0')}>
+                    {/* O próprio mapa, desfocado, preenche as laterais quando a tela é mais larga que o mapa. */}
+                    <img src={scenarioMapSrc(item)} alt="" aria-hidden="true" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full scale-125 object-cover opacity-30 blur-2xl" onError={(event) => (event.currentTarget.style.display = 'none')} />
+                    <div className={cn('relative flex shrink-0 items-center gap-3 px-1 transition-all duration-500 ease-out', index === active ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0')}>
                       <ScenarioIcon scenario={item} size={52} />
                       <div className="min-w-0 flex-1">
                         <h3 className="truncate font-display text-lg font-bold text-ink">{item.name}</h3>
@@ -313,7 +315,7 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
                         </div>
                       </div>
                     </div>
-                    <div className={cn('flex min-h-0 flex-1 items-center justify-center px-9 transition-all duration-700 ease-out [container-type:size]', index === active ? 'scale-100 opacity-100' : 'scale-95 opacity-40')}>
+                    <div className={cn('relative flex min-h-0 flex-1 items-center justify-center transition-all duration-700 ease-out [container-type:size]', index === active ? 'scale-100 opacity-100' : 'scale-95 opacity-40')}>
                       <ScenarioMap scenario={item} onOpenNode={setSelected} />
                     </div>
                   </section>
