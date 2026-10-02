@@ -30,8 +30,7 @@ export async function getCampaign(userId: number) {
   ]);
 
   const allNodes = scenarios.flatMap((scenario) => scenario.nodes.map((node) => ({ level: node.level, scenarioId: scenario.id, id: node.id })));
-  const claimedLevels = new Set(allNodes.filter((node) => claimed.has(node.id)).map((node) => node.level));
-  const currentId = currentScenarioId(scenarios, allNodes, claimedLevels);
+  const currentId = currentScenarioId(scenarios, allNodes, user.level);
 
   // A carta especial: um fragmento por parada marcada, de qualquer cenário que aponte para ela.
   const fragmentNodes = scenarios.flatMap((scenario) => (scenario.fragmentCharacterId ? scenario.nodes.filter((node) => node.fragment) : []));
@@ -88,16 +87,14 @@ export async function getCampaign(userId: number) {
   };
 }
 
-/** Cenário em que o jogador está (o primeiro com parada ainda não resgatada); null sem campanha. */
+/** Cenário em que o jogador está (pelo nível); null sem campanha. */
 export async function currentScenarioIdFor(db: Db, userId: number): Promise<number | null> {
-  const [scenarios, claims] = await Promise.all([
-    db.scenario.findMany({ where: { active: true }, orderBy: [{ sortOrder: "asc" }, { id: "asc" }], select: { id: true, nodes: { select: { id: true, level: true } } } }),
-    db.userClaim.findMany({ where: { userId, kind: KIND }, select: { code: true } }),
+  const [scenarios, user] = await Promise.all([
+    db.scenario.findMany({ where: { active: true }, orderBy: [{ sortOrder: "asc" }, { id: "asc" }], select: { id: true, nodes: { select: { level: true } } } }),
+    db.user.findUniqueOrThrow({ where: { id: userId }, select: { level: true } }),
   ]);
-  const claimed = new Set(claims.map((claim) => Number(claim.code)));
-  const nodes = scenarios.flatMap((scenario) => scenario.nodes.map((node) => ({ level: node.level, scenarioId: scenario.id, id: node.id })));
-  const claimedLevels = new Set(nodes.filter((node) => claimed.has(node.id)).map((node) => node.level));
-  return currentScenarioId(scenarios, nodes, claimedLevels);
+  const nodes = scenarios.flatMap((scenario) => scenario.nodes.map((node) => ({ level: node.level, scenarioId: scenario.id })));
+  return currentScenarioId(scenarios, nodes, user.level);
 }
 
 /** Resgata a parada (precisa ter chegado ao nível): moedas, ajuda, item visual e fragmento da carta especial. */

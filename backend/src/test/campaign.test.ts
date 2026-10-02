@@ -32,6 +32,7 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     expect(before.body.level).toBe(1);
     const first = before.body.scenarios[0].nodes[0];
     const second = before.body.scenarios[0].nodes[1];
+    expect(before.body.currentScenarioId).toBe(before.body.scenarios[0].id);
     expect(first.state).toBe("available");
     expect(second.state).toBe("locked");
 
@@ -47,6 +48,11 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     const after = await api.get("/api/campaign").set(bearer(token));
     expect(after.body.scenarios[0].nodes[0].state).toBe("claimed");
     expect(after.body.special.fragments).toBe(0);
+
+    // O cenário atual segue o nível: no nível 15 é o Egito, mesmo sem ter resgatado o Éden inteiro.
+    await prisma.user.update({ where: { email: "user@email.com" }, data: { level: 15 } });
+    const egypt = await api.get("/api/campaign").set(bearer(token));
+    expect(egypt.body.scenarios.find((scenario: { id: number; slug: string }) => scenario.id === egypt.body.currentScenarioId).slug).toBe("egito");
   });
 
   it("juntar todos os fragmentos entrega Jesus, que é intransferível e não vira repetida", async () => {

@@ -181,7 +181,8 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
     if (!open || !campaign || !scroller || positioned.current) return;
     positioned.current = true;
     const index = Math.max(0, scenarios.findIndex((item) => item.id === campaign.currentScenarioId));
-    scroller.scrollTo({ top: index * scroller.clientHeight, behavior: 'auto' });
+    // 'instant' ignora o scroll-smooth do CSS; com 'auto' a abertura rolaria do topo até o cenário.
+    scroller.scrollTo({ top: index * scroller.clientHeight, behavior: 'instant' });
     setActive(index);
   }, [open, campaign, scenarios]);
 

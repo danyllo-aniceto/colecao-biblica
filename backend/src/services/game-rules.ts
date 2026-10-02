@@ -476,20 +476,18 @@ export function campaignNodeState(userLevel: number, nodeLevel: number, claimed:
 type CampaignNode = { level: number; scenarioId: number };
 
 /**
- * Cenário atual: o primeiro (na ordem do caminho) que ainda tem parada não
- * resgatada. Se tudo foi resgatado, é o último. `scenarios` já vem ordenado.
+ * Cenário atual: o do nível do jogador, ou seja, o último (na ordem do caminho) cuja primeira
+ * parada já foi alcançada. Abaixo do primeiro cenário, é o primeiro. `scenarios` já vem ordenado.
+ * Paradas antigas ainda não resgatadas continuam disponíveis nos cenários de baixo.
  */
-export function currentScenarioId(
-  scenarios: Array<{ id: number }>,
-  nodes: CampaignNode[],
-  claimedLevels: Set<number>,
-): number | null {
+export function currentScenarioId(scenarios: Array<{ id: number }>, nodes: CampaignNode[], userLevel: number): number | null {
   if (scenarios.length === 0) return null;
+  let current = scenarios[0].id;
   for (const scenario of scenarios) {
-    const own = nodes.filter((node) => node.scenarioId === scenario.id);
-    if (own.some((node) => !claimedLevels.has(node.level))) return scenario.id;
+    const levels = nodes.filter((node) => node.scenarioId === scenario.id).map((node) => node.level);
+    if (levels.length > 0 && Math.min(...levels) <= userLevel) current = scenario.id;
   }
-  return scenarios[scenarios.length - 1].id;
+  return current;
 }
 
 /** A carta especial é entregue quando todos os fragmentos do caminho foram resgatados. */

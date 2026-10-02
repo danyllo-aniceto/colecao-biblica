@@ -306,19 +306,23 @@ describe("campanha e carta especial", () => {
     expect(campaignNodeState(1, 4, true)).toBe("claimed");
   });
 
-  it("o cenário atual é o primeiro com parada ainda não resgatada", () => {
+  it("o cenário atual segue o nível do jogador, mesmo com paradas antigas sem resgatar", () => {
     const scenarios = [{ id: 1 }, { id: 2 }, { id: 3 }];
     const nodes = [
       { level: 1, scenarioId: 1 },
       { level: 2, scenarioId: 1 },
-      { level: 3, scenarioId: 2 },
-      { level: 4, scenarioId: 3 },
+      { level: 5, scenarioId: 2 },
+      { level: 6, scenarioId: 2 },
+      { level: 14, scenarioId: 3 },
     ];
-    expect(currentScenarioId(scenarios, nodes, new Set())).toBe(1);
-    expect(currentScenarioId(scenarios, nodes, new Set([1, 2]))).toBe(2);
-    expect(currentScenarioId(scenarios, nodes, new Set([1, 2, 3]))).toBe(3);
-    expect(currentScenarioId(scenarios, nodes, new Set([1, 2, 3, 4]))).toBe(3);
-    expect(currentScenarioId([], nodes, new Set())).toBeNull();
+    expect(currentScenarioId(scenarios, nodes, 1)).toBe(1);
+    expect(currentScenarioId(scenarios, nodes, 4)).toBe(1);
+    expect(currentScenarioId(scenarios, nodes, 5)).toBe(2);
+    expect(currentScenarioId(scenarios, nodes, 13)).toBe(2);
+    expect(currentScenarioId(scenarios, nodes, 14)).toBe(3);
+    expect(currentScenarioId(scenarios, nodes, 99)).toBe(3);
+    expect(currentScenarioId(scenarios, nodes, 0)).toBe(1);
+    expect(currentScenarioId([], nodes, 5)).toBeNull();
   });
 
   it("a carta especial só é entregue com todos os fragmentos", () => {
