@@ -4,6 +4,7 @@ import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownR
 import KeyboardArrowUpRoundedIcon from '@mui/icons-material/KeyboardArrowUpRounded';
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import MusicNoteRoundedIcon from '@mui/icons-material/MusicNoteRounded';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import { Button } from '@/components/ui/button';
@@ -89,7 +90,7 @@ function ScenarioMap({ scenario, onOpenNode }: { scenario: CampaignScenario; onO
   );
 }
 
-function RewardLines({ node, playerName }: { node: CampaignNode; playerName: string }) {
+function RewardLines({ node, playerName, music }: { node: CampaignNode; playerName: string; music?: string | null }) {
   return (
     <ul className="space-y-2">
       {node.rewardCoins > 0 ? (
@@ -116,6 +117,17 @@ function RewardLines({ node, playerName }: { node: CampaignNode; playerName: str
         <li data-rarity={node.avatar.rarity} className="rarity rarity-bg flex items-center gap-3 rounded-2xl p-3">
           <CosmeticPreview item={node.avatar} playerName={playerName} size="md" />
           <span className="font-display font-bold text-ink">Ícone de perfil do cenário</span>
+        </li>
+      ) : null}
+      {music ? (
+        <li className="flex items-center gap-3 rounded-2xl bg-violet/10 p-3">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet text-white">
+            <MusicNoteRoundedIcon />
+          </span>
+          <span className="min-w-0">
+            <span className="block font-display font-bold text-ink">Música do tema</span>
+            <span className="block text-xs font-semibold text-muted">{music}: toca no quiz e no jogo quando você chega aqui</span>
+          </span>
         </li>
       ) : null}
       {node.fragment ? (
@@ -384,7 +396,7 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
           <div className="space-y-3">
             {liveSelected.state === 'locked' ? <Alert tone="info">Chegue ao nível {liveSelected.level} para abrir esta parada.</Alert> : null}
             {liveSelected.state === 'claimed' ? <Alert tone="success">Você já resgatou esta parada.</Alert> : null}
-            <RewardLines node={liveSelected} playerName={playerName} />
+            <RewardLines node={liveSelected} playerName={playerName} music={selectedScenario?.hasMusic && liveSelected.level === selectedScenario.startLevel ? selectedScenario.name : null} />
           </div>
         ) : null}
       </Modal>
