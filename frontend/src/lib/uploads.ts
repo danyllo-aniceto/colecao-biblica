@@ -123,30 +123,44 @@ export async function uploadAudio(file: File, onProgress?: (percent: number) => 
     throw new Error('Enviar músicas exige o Vercel Blob configurado. Enquanto isso, cole o link de um arquivo de áudio.');
   }
 
+  if (!config.access) {
+    throw new Error('Não foi possível descobrir o tipo do Vercel Blob (público ou privado). Tente de novo.');
+  }
+  const access = config.access;
+
+  // Se o Blob não responde mais (sem progresso por 45 s), cancela em vez de ficar parado para sempre.
+  const controller = new AbortController();
+  let stalled = false;
+  let timer = 0;
+  const touch = () => {
+    window.clearTimeout(timer);
+    timer = window.setTimeout(() => {
+      stalled = true;
+      controller.abort();
+    }, 45_000);
+  };
+
   const { upload } = await import('@vercel/blob/client');
-  const send = (access: 'public' | 'private') =>
-    upload(`musicas/${file.name}`, file, {
+  touch();
+  try {
+    const blob = await upload(`musicas/${file.name}`, file, {
       access,
       contentType,
-      multipart: file.size > 5 * 1024 * 1024,
       handleUploadUrl: buildApiUrl('/uploads/music-token'),
       headers: { Authorization: `Bearer ${getAccessToken() ?? ''}` },
-      onUploadProgress: ({ percentage }) => onProgress?.(Math.round(percentage)),
+      abortSignal: controller.signal,
+      onUploadProgress: ({ percentage }) => {
+        touch();
+        onProgress?.(Math.round(percentage));
+      },
     });
-
-  const first = config.access ?? 'public';
-  let access = first;
-  let blob;
-  try {
-    blob = await send(first);
+    return access === 'public' ? { url: blob.url, storage: 'public' } : { url: `/api/uploads/file/${blob.pathname}`, storage: 'private' };
   } catch (error) {
-    // Store criado no outro modo (público/privado): tenta o outro uma vez, como no envio de imagens.
-    const message = error instanceof Error ? error.message.toLowerCase() : '';
-    if (config.access || !(message.includes('private') || message.includes('public') || message.includes('access'))) {
-      throw new Error(error instanceof Error ? error.message : 'Não foi possível enviar a música.');
+    if (stalled) {
+      throw new Error('O Vercel Blob não respondeu ao envio. Confira se o Blob está conectado ao projeto na Vercel e tente de novo.');
     }
-    access = first === 'public' ? 'private' : 'public';
-    blob = await send(access);
+    throw new Error(error instanceof Error && error.message ? error.message : 'Não foi possível enviar a música.');
+  } finally {
+    window.clearTimeout(timer);
   }
-  return access === 'public' ? { url: blob.url, storage: 'public' } : { url: `/api/uploads/file/${blob.pathname}`, storage: 'private' };
 }

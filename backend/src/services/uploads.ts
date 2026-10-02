@@ -44,6 +44,31 @@ export function knownBlobAccess(): Access | null {
   return configuredAccess() ?? detectedAccess;
 }
 
+/**
+ * Descobre se o store é público ou privado com um arquivo de 1 byte (sobrescrito sempre).
+ * O navegador precisa saber: enviar no modo errado não devolve erro legível (o Blob responde sem
+ * CORS) e o envio ficaria tentando de novo sem fim.
+ */
+export async function resolveBlobAccess(): Promise<Access> {
+  const known = knownBlobAccess();
+  if (known) return known;
+  const probe = async (access: Access) =>
+    put("musicas/.teste-de-acesso", Buffer.from("ok"), { access, contentType: "text/plain", addRandomSuffix: false, allowOverwrite: true, ...credentials() });
+  try {
+    await probe("public");
+    detectedAccess = "public";
+  } catch (error) {
+    if (!isAccessMismatch(error)) throw uploadError(error);
+    try {
+      await probe("private");
+      detectedAccess = "private";
+    } catch (retryError) {
+      throw uploadError(retryError);
+    }
+  }
+  return detectedAccess!;
+}
+
 export function blobCredentials() {
   return credentials();
 }

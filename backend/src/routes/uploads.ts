@@ -4,7 +4,7 @@ import express, { Router } from "express";
 import { badRequest, notFound } from "../lib/errors";
 import { requireAdmin, requireAuth } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
-import { MAX_MUSIC_BYTES, MAX_UPLOAD_BYTES, MUSIC_CONTENT_TYPES, UPLOAD_FOLDERS, blobCredentials, isValidUploadPath, knownBlobAccess, readPrivateImage, saveImage, uploadsConfigured, type UploadFolder } from "../services/uploads";
+import { MAX_MUSIC_BYTES, MAX_UPLOAD_BYTES, MUSIC_CONTENT_TYPES, UPLOAD_FOLDERS, blobCredentials, isValidUploadPath, readPrivateImage, resolveBlobAccess, saveImage, uploadsConfigured, type UploadFolder } from "../services/uploads";
 
 export const uploadsRouter = Router();
 
@@ -51,9 +51,13 @@ uploadsRouter.get(
 uploadsRouter.use(requireAuth, requireAdmin);
 
 /** Diz ao painel para onde as imagens vão (Blob ou banco). */
-uploadsRouter.get("/config", (_req, res) => {
-  res.json({ storage: uploadsConfigured() ? "blob" : "inline", maxBytes: MAX_UPLOAD_BYTES, maxMusicBytes: MAX_MUSIC_BYTES, access: knownBlobAccess() });
-});
+uploadsRouter.get(
+  "/config",
+  asyncHandler(async (_req, res) => {
+    const blob = uploadsConfigured();
+    res.json({ storage: blob ? "blob" : "inline", maxBytes: MAX_UPLOAD_BYTES, maxMusicBytes: MAX_MUSIC_BYTES, access: blob ? await resolveBlobAccess() : null });
+  }),
+);
 
 /**
  * Token para o navegador enviar a música direto ao Blob (sem passar pelo limite de 4,5 MB do servidor).
