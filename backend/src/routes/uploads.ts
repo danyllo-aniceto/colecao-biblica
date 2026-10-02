@@ -1,9 +1,10 @@
 import { Readable } from "node:stream";
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import express, { Router } from "express";
 import { badRequest, notFound } from "../lib/errors";
 import { requireAdmin, requireAuth } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
-import { MAX_UPLOAD_BYTES, UPLOAD_FOLDERS, isValidUploadPath, readPrivateImage, saveAudio, saveImage, uploadsConfigured, type UploadFolder } from "../services/uploads";
+import { MAX_MUSIC_BYTES, MAX_UPLOAD_BYTES, MUSIC_CONTENT_TYPES, UPLOAD_FOLDERS, blobCredentials, isValidUploadPath, knownBlobAccess, readPrivateImage, saveImage, uploadsConfigured, type UploadFolder } from "../services/uploads";
 
 export const uploadsRouter = Router();
 
@@ -31,7 +32,8 @@ uploadsRouter.get(
       res.setHeader("Accept-Ranges", "bytes");
       if (range && (range[1] || range[2])) {
         const start = range[1] ? Number(range[1]) : Math.max(file.length - Number(range[2]), 0);
-        const end = range[1] && range[2] ? Math.min(Number(range[2]), file.length - 1) : file.length - 1;
+        // Cada resposta da função da Vercel pode ter ~4,5 MB: devolve em pedaços de até 3 MB (o navegador pede o resto).
+        const end = Math.min(range[1] && range[2] ? Number(range[2]) : file.length - 1, file.length - 1, start + 3 * 1024 * 1024 - 1);
         if (start > end || start >= file.length) {
           res.status(416).setHeader("Content-Range", `bytes */${file.length}`).end();
           return;
@@ -50,8 +52,33 @@ uploadsRouter.use(requireAuth, requireAdmin);
 
 /** Diz ao painel para onde as imagens vão (Blob ou banco). */
 uploadsRouter.get("/config", (_req, res) => {
-  res.json({ storage: uploadsConfigured() ? "blob" : "inline", maxBytes: MAX_UPLOAD_BYTES });
+  res.json({ storage: uploadsConfigured() ? "blob" : "inline", maxBytes: MAX_UPLOAD_BYTES, maxMusicBytes: MAX_MUSIC_BYTES, access: knownBlobAccess() });
 });
+
+/**
+ * Token para o navegador enviar a música direto ao Blob (sem passar pelo limite de 4,5 MB do servidor).
+ * Só o admin chega aqui; o token vale para a pasta de músicas, só áudio e até MAX_MUSIC_BYTES.
+ */
+uploadsRouter.post(
+  "/music-token",
+  asyncHandler(async (req, res) => {
+    if (!uploadsConfigured()) {
+      throw badRequest("Enviar músicas exige o Vercel Blob configurado. Enquanto isso, cole o link de um arquivo de áudio.");
+    }
+    const json = await handleUpload({
+      body: req.body as HandleUploadBody,
+      request: req,
+      ...blobCredentials(),
+      onBeforeGenerateToken: async (pathname) => {
+        if (!pathname.startsWith("musicas/") || pathname.includes("..")) {
+          throw badRequest("Destino de upload inválido.");
+        }
+        return { allowedContentTypes: MUSIC_CONTENT_TYPES, maximumSizeInBytes: MAX_MUSIC_BYTES, addRandomSuffix: true, cacheControlMaxAge: 60 * 60 * 24 * 365 };
+      },
+    });
+    res.json(json);
+  }),
+);
 
 /**
  * Recebe a imagem crua no corpo (Content-Type: image/...).
@@ -59,21 +86,17 @@ uploadsRouter.get("/config", (_req, res) => {
  */
 uploadsRouter.post(
   "/",
-  express.raw({ type: ["image/*", "audio/*"], limit: MAX_UPLOAD_BYTES }),
+  express.raw({ type: "image/*", limit: MAX_UPLOAD_BYTES }),
   asyncHandler(async (req, res) => {
     const folder = String(req.query.folder ?? "");
-    if (!UPLOAD_FOLDERS.includes(folder as UploadFolder)) {
+    // "musicas" não passa por aqui: vai direto ao Blob (ver /music-token).
+    if (folder === "musicas" || !UPLOAD_FOLDERS.includes(folder as UploadFolder)) {
       throw badRequest("Destino de upload inválido.");
     }
     if (!Buffer.isBuffer(req.body)) {
       throw badRequest("Envie a imagem no corpo da requisição.");
     }
-    const name = typeof req.query.name === "string" ? req.query.name : "arquivo";
-    // Músicas só vão para a pasta própria, e imagens nunca para ela.
-    const isAudio = String(req.headers["content-type"] ?? "").startsWith("audio/");
-    if (isAudio !== (folder === "musicas")) {
-      throw badRequest(isAudio ? "Músicas só podem ser enviadas para a pasta de músicas." : "Destino de upload inválido.");
-    }
-    res.status(201).json(isAudio ? await saveAudio(req.body, name) : await saveImage(req.body, folder as UploadFolder, name));
+    const name = typeof req.query.name === "string" ? req.query.name : "imagem";
+    res.status(201).json(await saveImage(req.body, folder as UploadFolder, name));
   }),
 );

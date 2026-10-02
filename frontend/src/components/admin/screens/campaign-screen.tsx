@@ -257,7 +257,7 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
             <ImageUploadField value={iconImageUrl} onChange={setIconImageUrl} />
           </Field>
         </div>
-        <Field label="Música do tema" hint="MP3, M4A, OGG ou WAV de até 4 MB (128 kbps rende ~4 min). Toca no quiz e é liberada ao jogador quando ele chega ao primeiro nível deste cenário. Vazio = cenário sem música.">
+        <Field label="Música do tema" hint="MP3, M4A, OGG ou WAV de até 12 MB (um MP3 de 3 min em 192 kbps tem ~4,5 MB). Toca no quiz e é liberada ao jogador quando ele chega ao primeiro nível deste cenário. Vazio = cenário sem música.">
           <AudioUploadField value={musicUrl} onChange={setMusicUrl} />
         </Field>
         <div className="grid gap-4 md:grid-cols-3">

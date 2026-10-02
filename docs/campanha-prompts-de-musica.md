@@ -7,7 +7,8 @@ ouvir por muito tempo.
 ## Formato
 
 - **Instrumental, sem voz** (a voz atrapalha a leitura das perguntas).
-- **2 a 3 minutos**, MP3 de **128 kbps**, até **4 MB** (limite do envio no painel). Se passar, exporte em 96 kbps.
+- **2 a 3 minutos**, MP3 de **128 a 192 kbps**, até **12 MB** (limite do envio no painel; 3 min em 192 kbps ≈ 4,5 MB).
+  Quanto mais leve, mais rápido o jogador baixa no celular: prefira até ~5 MB.
 - **Em loop:** o app repete a faixa sozinho; ao terminar, ela volta ao começo. Por isso peça uma música que comece e termine
   suave, no mesmo clima, e corte o silêncio do início e do fim antes de enviar.
 - Volume moderado e sem picos fortes (o jogador ouve por cima de sons de botões).

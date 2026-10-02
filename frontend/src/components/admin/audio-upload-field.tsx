@@ -9,19 +9,21 @@ import { Input } from '@/components/ui/input';
 import { errorMessage, useToast } from '@/components/ui/toast';
 import { uploadAudio } from '@/lib/uploads';
 
-/** Música: enviar arquivo (até 4 MB), colar link, ouvir a prévia ou remover. */
+/** Música: enviar arquivo (até 12 MB), colar link, ouvir a prévia ou remover. */
 export function AudioUploadField({ value, onChange }: { value: string; onChange: (url: string) => void }) {
   const toast = useToast();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [playing, setPlaying] = useState(false);
 
   async function pick(file: File | undefined) {
     if (!file) return;
     setUploading(true);
+    setProgress(0);
     try {
-      const result = await uploadAudio(file);
+      const result = await uploadAudio(file, setProgress);
       onChange(result.url);
       toast.success('Música enviada.');
     } catch (reason) {
@@ -57,7 +59,7 @@ export function AudioUploadField({ value, onChange }: { value: string; onChange:
         <div className="flex flex-wrap gap-2">
           <Button type="button" size="sm" variant="secondary" onClick={() => inputRef.current?.click()} loading={uploading}>
             {uploading ? null : <UploadRoundedIcon fontSize="small" />}
-            {value ? 'Trocar música' : 'Enviar música'}
+            {uploading ? `Enviando ${progress}%` : value ? 'Trocar música' : 'Enviar música'}
           </Button>
           {value ? (
             <Button type="button" size="sm" variant="ghost" onClick={() => onChange('')} disabled={uploading}>

@@ -32,17 +32,20 @@ export function detectImageType(bytes: Buffer) {
   return SIGNATURES.find((signature) => signature.test(bytes)) ?? null;
 }
 
-const AUDIO_SIGNATURES: Array<{ type: string; ext: string; test: (bytes: Buffer) => boolean }> = [
-  // MP3: com etiqueta ID3 ou direto no quadro de áudio (sincronia 0xFFEx).
-  { type: "audio/mpeg", ext: "mp3", test: (b) => b.subarray(0, 3).toString("ascii") === "ID3" || (b[0] === 0xff && (b[1] & 0xe0) === 0xe0) },
-  { type: "audio/ogg", ext: "ogg", test: (b) => b.subarray(0, 4).toString("ascii") === "OggS" },
-  { type: "audio/mp4", ext: "m4a", test: (b) => b.subarray(4, 8).toString("ascii") === "ftyp" },
-  { type: "audio/wav", ext: "wav", test: (b) => b.subarray(0, 4).toString("ascii") === "RIFF" && b.subarray(8, 12).toString("ascii") === "WAVE" },
-];
+/**
+ * Músicas passam de 4,5 MB (limite do corpo das funções da Vercel), então vão direto do navegador
+ * para o Blob com um token de curta duração gerado aqui, e não pelo servidor.
+ */
+export const MAX_MUSIC_BYTES = 12 * 1024 * 1024;
+export const MUSIC_CONTENT_TYPES = ["audio/mpeg", "audio/mp3", "audio/mp4", "audio/x-m4a", "audio/aac", "audio/ogg", "audio/wav", "audio/x-wav"];
 
-/** Tipo real do áudio pelos primeiros bytes. */
-export function detectAudioType(bytes: Buffer) {
-  return AUDIO_SIGNATURES.find((signature) => signature.test(bytes)) ?? null;
+/** Modo do store, quando já se sabe (BLOB_ACCESS ou descoberto num envio anterior). */
+export function knownBlobAccess(): Access | null {
+  return configuredAccess() ?? detectedAccess;
+}
+
+export function blobCredentials() {
+  return credentials();
 }
 
 export function uploadsConfigured() {
@@ -69,7 +72,7 @@ function isAccessMismatch(error: unknown) {
   return message.includes("private") || message.includes("public") || message.includes("access");
 }
 
-function safeName(name: string) {
+export function safeName(name: string) {
   const base = name
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -108,24 +111,6 @@ export async function saveImage(body: Buffer, folder: UploadFolder, fileName: st
     return { url: `data:${kind.type};base64,${body.toString("base64")}`, storage: "inline" as const };
   }
   return storeInBlob(body, folder, fileName, kind);
-}
-
-/** Guarda a música do cenário. Áudio é grande demais para o banco: exige o Vercel Blob. */
-export async function saveAudio(body: Buffer, fileName: string) {
-  if (body.length === 0) {
-    throw badRequest("Arquivo vazio.");
-  }
-  if (body.length > MAX_UPLOAD_BYTES) {
-    throw badRequest("Música grande demais (máximo de 4 MB). Use um MP3 mais curto ou com taxa menor (128 kbps).");
-  }
-  const kind = detectAudioType(body);
-  if (!kind) {
-    throw badRequest("Formato não suportado. Use MP3, M4A, OGG ou WAV.");
-  }
-  if (!uploadsConfigured()) {
-    throw badRequest("Enviar músicas exige o Vercel Blob configurado. Enquanto isso, cole o link de um arquivo de áudio.");
-  }
-  return storeInBlob(body, "musicas", fileName, kind);
 }
 
 async function storeInBlob(body: Buffer, folder: UploadFolder, fileName: string, kind: { type: string; ext: string }) {

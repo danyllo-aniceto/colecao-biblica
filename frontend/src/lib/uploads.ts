@@ -1,3 +1,5 @@
+import { buildApiUrl } from '@/lib/api';
+import { getAccessToken } from '@/lib/auth-storage';
 import { authorizedFetch, extractErrorMessage, safeParseJson } from '@/lib/http';
 import type { ApiErrorResponse } from '@/types/auth';
 
@@ -93,27 +95,58 @@ export async function uploadImage(file: File, folder: 'personagens' | 'conteudo'
   return payload;
 }
 
-/** Limite do servidor (funções da Vercel aceitam ~4,5 MB por envio). */
-const MAX_AUDIO_BYTES = 4 * 1024 * 1024;
+/** Música: até 12 MB (3 min em MP3 de 256 kbps cabe). O envio vai direto ao Blob, sem o limite de 4,5 MB do servidor. */
+const MAX_AUDIO_BYTES = 12 * 1024 * 1024;
 
-/** Envia a música do cenário (MP3, M4A, OGG ou WAV de até 4 MB); devolve a URL a salvar. */
-export async function uploadAudio(file: File): Promise<UploadResult> {
-  if (!file.type.startsWith('audio/') && !/\.(mp3|m4a|ogg|wav)$/i.test(file.name)) {
+const AUDIO_TYPES: Record<string, string> = { mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac', ogg: 'audio/ogg', wav: 'audio/wav' };
+
+type UploadConfig = { storage: 'blob' | 'inline'; access: 'public' | 'private' | null };
+
+/** Envia a música do cenário (MP3, M4A, OGG ou WAV de até 12 MB); devolve a URL a salvar. */
+export async function uploadAudio(file: File, onProgress?: (percent: number) => void): Promise<UploadResult> {
+  const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+  const contentType = file.type.startsWith('audio/') ? file.type : AUDIO_TYPES[extension];
+  if (!contentType) {
     throw new Error('Selecione um arquivo de áudio (MP3, M4A, OGG ou WAV).');
   }
   if (file.size > MAX_AUDIO_BYTES) {
-    throw new Error('Música grande demais (máximo de 4 MB). Use um MP3 de 128 kbps ou mais curto.');
+    throw new Error('Música grande demais (máximo de 12 MB). Exporte em MP3 de 192 kbps ou corte o silêncio do começo e do fim.');
   }
-  const query = new URLSearchParams({ folder: 'musicas', name: file.name });
-  const response = await authorizedFetch(`/uploads?${query.toString()}`, {
-    method: 'POST',
-    headers: { 'Content-Type': file.type.startsWith('audio/') ? file.type : 'audio/mpeg' },
-    body: file,
-  });
-  const payload = await safeParseJson<UploadResult & ApiErrorResponse>(response);
-  if (!response.ok || !payload?.url) {
-    if (response.status === 413) throw new Error('Música grande demais para o servidor. Use um arquivo menor.');
-    throw new Error(extractErrorMessage(payload, 'Não foi possível enviar a música.'));
+
+  // Também renova a sessão, se preciso, antes de pedir o token ao servidor.
+  const configResponse = await authorizedFetch('/uploads/config', { method: 'GET' });
+  const config = await safeParseJson<UploadConfig & ApiErrorResponse>(configResponse);
+  if (!configResponse.ok || !config) {
+    throw new Error(extractErrorMessage(config, 'Não foi possível preparar o envio da música.'));
   }
-  return payload;
+  if (config.storage !== 'blob') {
+    throw new Error('Enviar músicas exige o Vercel Blob configurado. Enquanto isso, cole o link de um arquivo de áudio.');
+  }
+
+  const { upload } = await import('@vercel/blob/client');
+  const send = (access: 'public' | 'private') =>
+    upload(`musicas/${file.name}`, file, {
+      access,
+      contentType,
+      multipart: file.size > 5 * 1024 * 1024,
+      handleUploadUrl: buildApiUrl('/uploads/music-token'),
+      headers: { Authorization: `Bearer ${getAccessToken() ?? ''}` },
+      onUploadProgress: ({ percentage }) => onProgress?.(Math.round(percentage)),
+    });
+
+  const first = config.access ?? 'public';
+  let access = first;
+  let blob;
+  try {
+    blob = await send(first);
+  } catch (error) {
+    // Store criado no outro modo (público/privado): tenta o outro uma vez, como no envio de imagens.
+    const message = error instanceof Error ? error.message.toLowerCase() : '';
+    if (config.access || !(message.includes('private') || message.includes('public') || message.includes('access'))) {
+      throw new Error(error instanceof Error ? error.message : 'Não foi possível enviar a música.');
+    }
+    access = first === 'public' ? 'private' : 'public';
+    blob = await send(access);
+  }
+  return access === 'public' ? { url: blob.url, storage: 'public' } : { url: `/api/uploads/file/${blob.pathname}`, storage: 'private' };
 }
