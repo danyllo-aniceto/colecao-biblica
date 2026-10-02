@@ -27,12 +27,14 @@ import { ShopScreen } from './screens/shop-screen';
 import { CosmeticsScreen } from './screens/cosmetics-screen';
 import { CollectionsScreen } from './screens/collections-screen';
 import { SeasonScreen } from './screens/season-screen';
+import { CampaignScreen } from './screens/campaign-screen';
+import MapRoundedIcon from '@mui/icons-material/MapRounded';
 import PaletteRoundedIcon from '@mui/icons-material/PaletteRounded';
 import WorkspacesRoundedIcon from '@mui/icons-material/WorkspacesRounded';
 import MilitaryTechRoundedIcon from '@mui/icons-material/MilitaryTechRounded';
 import { UsersScreen } from './screens/users-screen';
 
-export type AdminScreen = 'visao-geral' | 'usuarios' | 'personagens' | 'perguntas' | 'reportes' | 'recompensas' | 'loja' | 'visual' | 'colecoes' | 'temporada' | 'configuracoes';
+export type AdminScreen = 'visao-geral' | 'usuarios' | 'personagens' | 'perguntas' | 'reportes' | 'recompensas' | 'loja' | 'visual' | 'colecoes' | 'temporada' | 'campanha' | 'configuracoes';
 
 const SCREENS: Array<{ id: AdminScreen; label: string; description: string; icon: ReactNode }> = [
   { id: 'visao-geral', label: 'Visão geral', description: 'Números do jogo e o que falta no conteúdo.', icon: <DashboardRoundedIcon fontSize="inherit" /> },
@@ -44,6 +46,7 @@ const SCREENS: Array<{ id: AdminScreen; label: string; description: string; icon
   { id: 'visual', label: 'Visual', description: 'Ícones, molduras, títulos, cores do nome e reações dos jogadores.', icon: <PaletteRoundedIcon fontSize="inherit" /> },
   { id: 'colecoes', label: 'Coleções', description: 'Grupos de figurinhas com prêmio para quem completar.', icon: <WorkspacesRoundedIcon fontSize="inherit" /> },
   { id: 'temporada', label: 'Passe e eventos', description: 'Trilha mensal de prêmios e eventos com bônus por tempo limitado.', icon: <MilitaryTechRoundedIcon fontSize="inherit" /> },
+  { id: 'campanha', label: 'Campanha', description: 'Cenários do caminho, paradas por nível, mapas e recompensas.', icon: <MapRoundedIcon fontSize="inherit" /> },
   { id: 'usuarios', label: 'Usuários', description: 'Contas, papéis e ajustes de saldo.', icon: <PeopleAltRoundedIcon fontSize="inherit" /> },
   { id: 'configuracoes', label: 'Configurações', description: 'Regras do jogo, economia e prêmio diário.', icon: <SettingsRoundedIcon fontSize="inherit" /> },
 ];
@@ -157,6 +160,7 @@ export function AdminDashboard() {
             {screen === 'visual' ? <CosmeticsScreen /> : null}
             {screen === 'colecoes' ? <CollectionsScreen /> : null}
             {screen === 'temporada' ? <SeasonScreen /> : null}
+            {screen === 'campanha' ? <CampaignScreen /> : null}
             {screen === 'usuarios' ? <UsersScreen /> : null}
             {screen === 'configuracoes' ? <SettingsScreen /> : null}
           </>

@@ -3,6 +3,7 @@ import { parseId } from "../lib/validation";
 import { currentUser } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
 import { claimNode, getCampaign } from "../services/campaign";
+import { campaignAdminRouter } from "./campaign-admin";
 
 export const campaignRouter = Router();
 
@@ -19,3 +20,5 @@ campaignRouter.post(
     res.json(await claimNode(currentUser(req).id, parseId(req.params.id)));
   }),
 );
+
+campaignRouter.use("/admin", campaignAdminRouter);

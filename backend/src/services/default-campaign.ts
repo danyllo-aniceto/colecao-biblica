@@ -12,6 +12,9 @@ type DefaultScenario = {
   startLevel: number;
   endLevel: number;
   relicTitle: string;
+  /** Estilo da moldura e emoji da reação exclusivos do cenário. */
+  frameStyle: string;
+  reaction: string;
 };
 
 /**
@@ -19,16 +22,16 @@ type DefaultScenario = {
  * então os cenários começam curtos e ficam maiores; o 10º entrega a carta especial (Jesus).
  */
 export const DEFAULT_SCENARIOS: DefaultScenario[] = [
-  { slug: "eden", name: "Jardim do Éden", description: "O começo de tudo: o jardim que Deus plantou.", verse: "Deus viu tudo o que havia feito, e tudo havia ficado muito bom.", verseReference: "Gênesis 1:31", color: "#3fa34d", startLevel: 1, endLevel: 4, relicTitle: "Guardião do Éden" },
-  { slug: "arca", name: "Arca de Noé", description: "A aliança de Deus depois do dilúvio, no Monte Ararate.", verse: "Porei meu arco-íris nas nuvens, e ele será o sinal da minha aliança com a terra.", verseReference: "Gênesis 9:13", color: "#3b8fb8", startLevel: 5, endLevel: 8, relicTitle: "Construtor da Arca" },
-  { slug: "canaa", name: "Terra de Canaã", description: "A jornada de Abraão, de Ur até a terra prometida.", verse: "Farei de você um grande povo, e o abençoarei; engrandecerei o seu nome, e você será uma bênção.", verseReference: "Gênesis 12:2", color: "#c49a3c", startLevel: 9, endLevel: 13, relicTitle: "Filho de Abraão" },
-  { slug: "egito", name: "Egito", description: "Do faraó às pragas e à travessia do Mar Vermelho.", verse: "O Senhor lutará por vocês; tão somente acalmem-se.", verseReference: "Êxodo 14:14", color: "#d6a540", startLevel: 14, endLevel: 18, relicTitle: "Libertado do Egito" },
-  { slug: "sinai", name: "Deserto do Sinai", description: "Quarenta anos de caminhada, o maná e a lei no monte.", verse: "Não terás outros deuses além de mim.", verseReference: "Êxodo 20:3", color: "#c8693a", startLevel: 19, endLevel: 23, relicTitle: "Peregrino do Deserto" },
-  { slug: "jerico", name: "Jericó", description: "Os muros que caíram diante da fé do povo.", verse: "Pela fé caíram os muros de Jericó, depois de serem rodeados durante sete dias.", verseReference: "Hebreus 11:30", color: "#b5543c", startLevel: 24, endLevel: 28, relicTitle: "Trombeta de Jericó" },
-  { slug: "templo", name: "Templo de Salomão", description: "A casa do Senhor em Jerusalém, com ouro, cedro e a Arca.", verse: "Alegrei-me quando me disseram: Vamos à casa do Senhor!", verseReference: "Salmo 122:1", color: "#e0b43a", startLevel: 29, endLevel: 33, relicTitle: "Sábio como Salomão" },
-  { slug: "babilonia", name: "Babilônia", description: "O exílio, a fornalha e a cova dos leões.", verse: "Ele livra e salva; faz sinais e maravilhas nos céus e na terra. Ele livrou Daniel do poder dos leões.", verseReference: "Daniel 6:27", color: "#2f5fb3", startLevel: 34, endLevel: 38, relicTitle: "Fiel na Babilônia" },
-  { slug: "galileia", name: "Mar da Galileia", description: "Barcos, redes e os primeiros discípulos de Jesus.", verse: "Venham, sigam-me, e eu os farei pescadores de homens.", verseReference: "Mateus 4:19", color: "#2aa1c4", startLevel: 39, endLevel: 44, relicTitle: "Pescador de Homens" },
-  { slug: "jerusalem", name: "Jerusalém", description: "Do Monte das Oliveiras ao túmulo vazio.", verse: "Ele não está aqui; ressuscitou, como tinha dito.", verseReference: "Mateus 28:6", color: "#8e6bd1", startLevel: 45, endLevel: 50, relicTitle: "Testemunha da Ressurreição" },
+  { slug: "eden", name: "Jardim do Éden", description: "O começo de tudo: o jardim que Deus plantou.", verse: "Deus viu tudo o que havia feito, e tudo havia ficado muito bom.", verseReference: "Gênesis 1:31", color: "#3fa34d", startLevel: 1, endLevel: 4, relicTitle: "Guardião do Éden", frameStyle: "laurel", reaction: "🍎" },
+  { slug: "arca", name: "Arca de Noé", description: "A aliança de Deus depois do dilúvio, no Monte Ararate.", verse: "Porei meu arco-íris nas nuvens, e ele será o sinal da minha aliança com a terra.", verseReference: "Gênesis 9:13", color: "#3b8fb8", startLevel: 5, endLevel: 8, relicTitle: "Construtor da Arca", frameStyle: "ice", reaction: "🌈" },
+  { slug: "canaa", name: "Terra de Canaã", description: "A jornada de Abraão, de Ur até a terra prometida.", verse: "Farei de você um grande povo, e o abençoarei; engrandecerei o seu nome, e você será uma bênção.", verseReference: "Gênesis 12:2", color: "#c49a3c", startLevel: 9, endLevel: 13, relicTitle: "Filho de Abraão", frameStyle: "wood", reaction: "⛺" },
+  { slug: "egito", name: "Egito", description: "Do faraó às pragas e à travessia do Mar Vermelho.", verse: "O Senhor lutará por vocês; tão somente acalmem-se.", verseReference: "Êxodo 14:14", color: "#d6a540", startLevel: 14, endLevel: 18, relicTitle: "Libertado do Egito", frameStyle: "gold", reaction: "🐫" },
+  { slug: "sinai", name: "Deserto do Sinai", description: "Quarenta anos de caminhada, o maná e a lei no monte.", verse: "Não terás outros deuses além de mim.", verseReference: "Êxodo 20:3", color: "#c8693a", startLevel: 19, endLevel: 23, relicTitle: "Peregrino do Deserto", frameStyle: "fire", reaction: "⛰️" },
+  { slug: "jerico", name: "Jericó", description: "Os muros que caíram diante da fé do povo.", verse: "Pela fé caíram os muros de Jericó, depois de serem rodeados durante sete dias.", verseReference: "Hebreus 11:30", color: "#b5543c", startLevel: 24, endLevel: 28, relicTitle: "Trombeta de Jericó", frameStyle: "copper", reaction: "📯" },
+  { slug: "templo", name: "Templo de Salomão", description: "A casa do Senhor em Jerusalém, com ouro, cedro e a Arca.", verse: "Alegrei-me quando me disseram: Vamos à casa do Senhor!", verseReference: "Salmo 122:1", color: "#e0b43a", startLevel: 29, endLevel: 33, relicTitle: "Sábio como Salomão", frameStyle: "royal", reaction: "🕎" },
+  { slug: "babilonia", name: "Babilônia", description: "O exílio, a fornalha e a cova dos leões.", verse: "Ele livra e salva; faz sinais e maravilhas nos céus e na terra. Ele livrou Daniel do poder dos leões.", verseReference: "Daniel 6:27", color: "#2f5fb3", startLevel: 34, endLevel: 38, relicTitle: "Fiel na Babilônia", frameStyle: "silver", reaction: "🦁" },
+  { slug: "galileia", name: "Mar da Galileia", description: "Barcos, redes e os primeiros discípulos de Jesus.", verse: "Venham, sigam-me, e eu os farei pescadores de homens.", verseReference: "Mateus 4:19", color: "#2aa1c4", startLevel: 39, endLevel: 44, relicTitle: "Pescador de Homens", frameStyle: "aurora", reaction: "⛵" },
+  { slug: "jerusalem", name: "Jerusalém", description: "Do Monte das Oliveiras ao túmulo vazio.", verse: "Ele não está aqui; ressuscitou, como tinha dito.", verseReference: "Mateus 28:6", color: "#8e6bd1", startLevel: 45, endLevel: 50, relicTitle: "Testemunha da Ressurreição", frameStyle: "pearl", reaction: "🕊️" },
 ];
 
 /** Nome da carta especial entregue pelos fragmentos. */
@@ -36,6 +39,18 @@ export const SPECIAL_CHARACTER_NAME = "Jesus";
 
 /** Recompensas de ajuda que entram de vez em quando no caminho (se existirem no catálogo). */
 const HELPER_REWARDS = ["Dica 50/50", "Pular pergunta", "Pacote surpresa", "Bênção dobrada"];
+
+/**
+ * Itens exclusivos do cenário, ganhos ao longo do caminho (nesta ordem, nas paradas antes da relíquia):
+ * reação, cor do nome e moldura. A relíquia dá o título.
+ */
+function scenarioCosmetics(scenario: DefaultScenario, index: number) {
+  return [
+    { type: "REACTION" as const, name: `Reação: ${scenario.name}`, rarity: "COMMON" as const, style: scenario.reaction },
+    { type: "NAME_COLOR" as const, name: `Cor: ${scenario.name}`, rarity: "RARE" as const, color: scenario.color },
+    { type: "FRAME" as const, name: `Moldura: ${scenario.name}`, rarity: "EPIC" as const, color: scenario.color, style: scenario.frameStyle },
+  ].map((item, step) => ({ ...item, description: `Exclusivo do cenário ${scenario.name}.`, unlock: "REWARD" as const, system: true, sortOrder: 800 + index * 10 + step }));
+}
 
 /** Moedas da parada: sobem com o nível; a relíquia paga em dobro. */
 export function nodeCoins(level: number, relic: boolean): number {
@@ -100,6 +115,12 @@ export async function ensureDefaultCampaign(db: Db) {
         })
       ).id;
 
+    const itemIds: number[] = [];
+    for (const item of scenarioCosmetics(scenario, index)) {
+      const found = await db.cosmetic.findFirst({ where: { type: item.type, name: item.name }, select: { id: true } });
+      itemIds.push(found?.id ?? (await db.cosmetic.create({ data: item })).id);
+    }
+
     const created = await db.scenario.create({
       data: {
         slug: scenario.slug,
@@ -127,7 +148,7 @@ export async function ensureDefaultCampaign(db: Db) {
           title: relic ? `Relíquia: ${scenario.relicTitle}` : null,
           rewardCoins: nodeCoins(level, relic),
           rewardDefinitionId: helperName ? (helpers.get(helperName) ?? null) : null,
-          rewardCosmeticId: relic ? relicTitleId : null,
+          rewardCosmeticId: relic ? relicTitleId : (itemIds[step] ?? null),
         };
       }),
       skipDuplicates: true,

@@ -90,4 +90,47 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     const byRarity = await api.post("/api/rewards/admin").set(bearer(admin)).send({ name: "Especial", rewardType: "STICKER", stickerRarity: "SPECIAL", dropChance: 1 });
     expect(byRarity.status).toBe(400);
   });
+
+  it("cada cenário dá itens visuais exclusivos ao longo do caminho", async () => {
+    const scenarios = await prisma.scenario.findMany({ include: { nodes: { include: { rewardCosmetic: true } } } });
+    for (const scenario of scenarios) {
+      const types = scenario.nodes.map((node) => node.rewardCosmetic?.type).filter(Boolean);
+      expect(types).toEqual(expect.arrayContaining(["REACTION", "NAME_COLOR", "FRAME", "TITLE"]));
+    }
+    // Quem resgata a primeira parada (reação) passa a ter o item.
+    const token = await login("user@email.com");
+    const campaign = await api.get("/api/campaign").set(bearer(token));
+    const first = campaign.body.scenarios[0].nodes[0];
+    expect(first.cosmetic.type).toBe("REACTION");
+    const claimed = await api.post(`/api/campaign/nodes/${first.id}/claim`).set(bearer(token));
+    expect(claimed.body.cosmeticGranted).toBe(true);
+    expect(claimed.body.cosmeticName).toContain("Reação");
+  });
+
+  it("o painel cria cenários e paradas, com as validações", async () => {
+    const admin = await login("admin2@email.com");
+    const user = await login("user@email.com");
+    expect((await api.get("/api/campaign/admin/scenarios").set(bearer(user))).status).toBe(403);
+
+    const created = await api.post("/api/campaign/admin/scenarios").set(bearer(admin)).send({
+      slug: "mar-vermelho", name: "Mar Vermelho", description: null, verse: null, verseReference: null, color: "#2288cc",
+      mapImageUrl: null, iconImageUrl: null, fragmentCharacterId: null, sortOrder: 500, active: true,
+    });
+    expect(created.status).toBe(201);
+    const repeated = await api.post("/api/campaign/admin/scenarios").set(bearer(admin)).send({ ...created.body, slug: "mar-vermelho" });
+    expect(repeated.status).toBe(400);
+
+    const node = { level: 51, title: "Travessia", relic: false, fragment: false, rewardCoins: 100, rewardDefinitionId: null, rewardCosmeticId: null, posX: null, posY: null };
+    const made = await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send(node);
+    expect(made.status).toBe(201);
+    // Nível já usado (em qualquer cenário), fragmento sem carta e parada vazia são recusados.
+    expect((await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send(node)).status).toBe(400);
+    expect((await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send({ ...node, level: 52, fragment: true })).status).toBe(400);
+    expect((await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send({ ...node, level: 53, rewardCoins: 0 })).status).toBe(400);
+    expect((await api.put(`/api/campaign/admin/nodes/${made.body.id}`).set(bearer(admin)).send({ ...node, rewardCoins: 150 })).body.rewardCoins).toBe(150);
+
+    const system = await prisma.scenario.findFirstOrThrow({ where: { system: true } });
+    expect((await api.delete(`/api/campaign/admin/scenarios/${system.id}`).set(bearer(admin))).status).toBe(400);
+    expect((await api.delete(`/api/campaign/admin/scenarios/${created.body.id}`).set(bearer(admin))).status).toBe(204);
+  });
 });
