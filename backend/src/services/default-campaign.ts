@@ -1,4 +1,5 @@
 import type { Db } from "../db/prisma";
+import { ensureScenarioAvatar } from "./scenario-avatar";
 
 type DefaultScenario = {
   slug: string;
@@ -81,13 +82,23 @@ async function ensureSpecialCharacter(db: Db) {
   });
 }
 
+/** Todo cenário tem seu ícone de perfil (também os criados antes desse recurso). */
+async function ensureAllScenarioAvatars(db: Db) {
+  for (const scenario of await db.scenario.findMany({ where: { avatarCosmeticId: null } })) {
+    await ensureScenarioAvatar(db, scenario);
+  }
+}
+
 /**
  * Cria a campanha de lançamento. Só mexe nos cenários que ainda não existem (por `slug`):
  * mapas, textos e recompensas ajustados pelo admin nunca são sobrescritos.
  */
 export async function ensureDefaultCampaign(db: Db) {
   const existing = new Set((await db.scenario.findMany({ select: { slug: true } })).map((scenario) => scenario.slug));
-  if (DEFAULT_SCENARIOS.every((scenario) => existing.has(scenario.slug))) return;
+  if (DEFAULT_SCENARIOS.every((scenario) => existing.has(scenario.slug))) {
+    await ensureAllScenarioAvatars(db);
+    return;
+  }
 
   const special = await ensureSpecialCharacter(db);
   const helpers = new Map(
@@ -153,5 +164,5 @@ export async function ensureDefaultCampaign(db: Db) {
       }),
       skipDuplicates: true,
     });
-  }
+  }  await ensureAllScenarioAvatars(db);
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import KeyboardArrowUpRoundedIcon from '@mui/icons-material/KeyboardArrowUpRounded';
@@ -111,6 +111,12 @@ function RewardLines({ node, playerName }: { node: CampaignNode; playerName: str
           {node.cosmetic.type === 'TITLE' ? <span className="text-xs font-semibold text-muted">Título exclusivo</span> : <span className="font-display font-bold text-ink">{node.cosmetic.name}</span>}
         </li>
       ) : null}
+      {node.avatar ? (
+        <li data-rarity={node.avatar.rarity} className="rarity rarity-bg flex items-center gap-3 rounded-2xl p-3">
+          <CosmeticPreview item={node.avatar} playerName={playerName} size="md" />
+          <span className="font-display font-bold text-ink">Ícone de perfil do cenário</span>
+        </li>
+      ) : null}
       {node.fragment ? (
         <li className="flex items-center gap-3 rounded-2xl bg-r-special/15 p-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-r-special text-white">
@@ -136,11 +142,12 @@ const prefersReducedMotion = () => typeof window !== 'undefined' && window.match
 
 /**
  * Campanha em tela cheia: cada cenário ocupa a tela inteira e o jogador sobe e desce arrastando
- * (ou pelos botões ▲ ▼). A rolagem encaixa em cada mapa e a cor da tela acompanha o cenário.
+ * (ou pelos botões ▲ ▼), do primeiro cenário embaixo ao último em cima. A rolagem encaixa em cada mapa e a cor da tela acompanha o cenário.
  */
 export function CampaignModal({ open, campaign, playerName, onClose, onChanged, onUserUpdate }: CampaignModalProps) {
   const toast = useToast();
-  const scenarios = campaign?.scenarios ?? [];
+  // Subida: o primeiro cenário fica embaixo e os seguintes vão aparecendo para cima.
+  const scenarios = useMemo(() => [...(campaign?.scenarios ?? [])].reverse(), [campaign]);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const positioned = useRef(false);
   const frame = useRef(0);
@@ -173,10 +180,10 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
     const scroller = scrollerRef.current;
     if (!open || !campaign || !scroller || positioned.current) return;
     positioned.current = true;
-    const index = Math.max(0, campaign.scenarios.findIndex((item) => item.id === campaign.currentScenarioId));
+    const index = Math.max(0, scenarios.findIndex((item) => item.id === campaign.currentScenarioId));
     scroller.scrollTo({ top: index * scroller.clientHeight, behavior: 'auto' });
     setActive(index);
-  }, [open, campaign]);
+  }, [open, campaign, scenarios]);
 
   const goTo = useCallback((index: number) => {
     const scroller = scrollerRef.current;
@@ -225,6 +232,7 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
             result.coins ? `+${result.coins} moedas` : null,
             result.reward?.characterName ?? result.reward?.rewardName,
             result.cosmeticGranted ? result.cosmeticName : null,
+            result.avatarGranted ? 'Ícone de perfil novo' : null,
             result.fragments ? `Fragmentos: ${result.fragments.claimed}/${result.fragments.total}` : null,
           ]
             .filter(Boolean)
@@ -312,8 +320,8 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
               </div>
 
               <nav aria-label="Navegar entre cenários" className="pointer-events-none absolute inset-y-0 right-3 flex flex-col items-center justify-center gap-3">
-                <Tooltip content="Cenário anterior" side="bottom">
-                  <button type="button" onClick={() => goTo(active - 1)} disabled={active <= 0} aria-label="Cenário anterior" className={cn(arrow, 'pointer-events-auto')}>
+                <Tooltip content="Próximo cenário" side="bottom">
+                  <button type="button" onClick={() => goTo(active - 1)} disabled={active <= 0} aria-label="Próximo cenário (para cima)" className={cn(arrow, 'pointer-events-auto')}>
                     <KeyboardArrowUpRoundedIcon />
                   </button>
                 </Tooltip>
@@ -330,8 +338,8 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
                     </li>
                   ))}
                 </ol>
-                <Tooltip content="Próximo cenário" side="top">
-                  <button type="button" onClick={() => goTo(active + 1)} disabled={active >= scenarios.length - 1} aria-label="Próximo cenário" className={cn(arrow, 'pointer-events-auto')}>
+                <Tooltip content="Cenário anterior" side="top">
+                  <button type="button" onClick={() => goTo(active + 1)} disabled={active >= scenarios.length - 1} aria-label="Cenário anterior (para baixo)" className={cn(arrow, 'pointer-events-auto')}>
                     <KeyboardArrowDownRoundedIcon />
                   </button>
                 </Tooltip>

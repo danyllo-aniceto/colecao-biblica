@@ -38,7 +38,9 @@ entregando aos poucos. Mais tarde o painel poderá trocar as imagens por upload.
 | Texto na imagem | **nenhum** | **nenhum** |
 | Fundo | cena completa, sem transparência | cor sólida do cenário (sem transparência) |
 
-**Zona segura do ícone:** o app arredonda os cantos e corta um pouco. Mantenha o desenho no centro
+**O ícone também vira prêmio:** o mesmo arquivo é o **ícone de perfil** (avatar redondo) que o jogador ganha ao resgatar a relíquia do cenário. Trocar o ícone no painel atualiza o avatar sozinho. Como ele é recortado em círculo, o emblema precisa caber no centro.
+
+**Zona segura do ícone:** o app arredonda os cantos (e, como avatar, corta em círculo) e corta um pouco. Mantenha o desenho no centro
 (cerca de 70% da área); as bordas ficam só com a cor de fundo.
 
 ## 3. O caminho no mapa (importante)

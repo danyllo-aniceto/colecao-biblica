@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { cn } from '@/lib/cn';
 import type { PlayerLook } from '@/lib/rewards-api';
 
@@ -9,6 +9,16 @@ export function initials(name?: string | null) {
   if (!name) return '?';
   const parts = name.trim().split(/\s+/);
   return (parts[0][0] + (parts.length > 1 ? parts.at(-1)![0] : '')).toUpperCase();
+}
+
+/** Rosto do ícone: se a imagem não carregar (ainda não enviada), volta para as iniciais. */
+function AvatarFace({ url, name }: { url?: string | null; name?: string | null }) {
+  const [failed, setFailed] = useState(false);
+  return url && !failed ? (
+    <img src={url} alt="" draggable={false} className="h-full w-full rounded-full object-cover" onError={() => setFailed(true)} />
+  ) : (
+    <span className="flex h-full w-full items-center justify-center rounded-full bg-accent/20 font-display font-bold text-accent-strong dark:text-accent">{initials(name)}</span>
+  );
 }
 
 /** Ícone do jogador com a moldura equipada (sem ícone, mostra as iniciais). */
@@ -24,11 +34,7 @@ export function PlayerAvatar({
   className?: string;
 }) {
   const frame = look?.frame;
-  const face = look?.avatarUrl ? (
-    <img src={look.avatarUrl} alt="" draggable={false} className="h-full w-full rounded-full object-cover" />
-  ) : (
-    <span className="flex h-full w-full items-center justify-center rounded-full bg-accent/20 font-display font-bold text-accent-strong dark:text-accent">{initials(name)}</span>
-  );
+  const face = <AvatarFace key={look?.avatarUrl ?? 'none'} url={look?.avatarUrl} name={name} />;
   if (!frame) {
     return <span className={cn('inline-flex shrink-0 overflow-hidden rounded-full', SIZES[size], className)}>{face}</span>;
   }

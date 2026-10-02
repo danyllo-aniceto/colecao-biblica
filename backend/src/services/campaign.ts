@@ -24,7 +24,7 @@ export async function getCampaign(userId: number) {
     prisma.scenario.findMany({
       where: { active: true },
       orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
-      include: { nodes: { orderBy: { level: "asc" }, include: nodeInclude }, fragmentCharacter: { select: { id: true, name: true, imageUrl: true, rarity: true } } },
+      include: { avatarCosmetic: true, nodes: { orderBy: { level: "asc" }, include: nodeInclude }, fragmentCharacter: { select: { id: true, name: true, imageUrl: true, rarity: true } } },
     }),
     claimedNodeIds(userId),
   ]);
@@ -60,6 +60,8 @@ export async function getCampaign(userId: number) {
         rewardCoins: node.rewardCoins,
         reward: node.rewardDefinition,
         cosmetic: node.rewardCosmetic ? toCosmeticResponse(node.rewardCosmetic) : null,
+        // A relíquia também entrega o ícone de perfil do cenário.
+        avatar: node.relic && scenario.avatarCosmetic ? toCosmeticResponse(scenario.avatarCosmetic) : null,
         x: node.posX ?? positions[index].x,
         y: node.posY ?? positions[index].y,
         state: campaignNodeState(user.level, node.level, claimed.has(node.id)),
@@ -114,6 +116,8 @@ export async function claimNode(userId: number, nodeId: number) {
     const applied = node.rewardDefinition ? await applyReward(tx, wallet, node.rewardDefinition, settings) : null;
     await tx.user.update({ where: { id: userId }, data: walletData(wallet) });
     const cosmeticGranted = node.rewardCosmeticId ? await grantCosmetic(tx, userId, node.rewardCosmeticId, "CAMPAIGN") : false;
+    const avatarId = node.relic ? node.scenario.avatarCosmeticId : null;
+    const avatarGranted = avatarId ? await grantCosmetic(tx, userId, avatarId, "CAMPAIGN") : false;
 
     // Fragmento: ao juntar todos, a carta especial é entregue (uma única vez).
     let fragments: { claimed: number; total: number } | null = null;
@@ -139,6 +143,7 @@ export async function claimNode(userId: number, nodeId: number) {
       reward: applied,
       cosmeticGranted,
       cosmeticName: node.rewardCosmeticId ? (await tx.cosmetic.findUnique({ where: { id: node.rewardCosmeticId }, select: { name: true } }))?.name ?? null : null,
+      avatarGranted,
       fragments,
       specialUnlocked,
       special: specialUnlocked ? special : null,

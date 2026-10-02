@@ -5,6 +5,7 @@ import { pageOf, readPage } from "../lib/pagination";
 import { clearableText, imageRef, parseId, requiredText, z } from "../lib/validation";
 import { requireAdmin } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
+import { ensureScenarioAvatar } from "../services/scenario-avatar";
 
 /** Painel da campanha: cenários e paradas. */
 export const campaignAdminRouter = Router();
@@ -92,7 +93,8 @@ campaignAdminRouter.post(
         fragmentCharacterId: input.fragmentCharacterId ?? null,
       },
     });
-    res.status(201).json(scenario);
+    await ensureScenarioAvatar(prisma, scenario);
+    res.status(201).json(await prisma.scenario.findUniqueOrThrow({ where: { id: scenario.id } }));
   }),
 );
 
@@ -117,6 +119,8 @@ campaignAdminRouter.put(
         iconImageUrl: input.iconImageUrl,
       },
     });
+    // O ícone de perfil acompanha a arte do ícone do cenário.
+    await ensureScenarioAvatar(prisma, scenario);
     res.json(scenario);
   }),
 );

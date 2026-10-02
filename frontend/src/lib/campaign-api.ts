@@ -17,6 +17,8 @@ export type CampaignNode = {
   rewardCoins: number;
   reward: { id: number; name: string; rewardType: string } | null;
   cosmetic: Cosmetic | null;
+  /** Ícone de perfil do cenário, entregue com a relíquia. */
+  avatar: Cosmetic | null;
   /** Posição no mapa, em %. */
   x: number;
   y: number;
@@ -61,6 +63,7 @@ export type ClaimNodeResult = {
   reward: { rewardName: string; characterName: string | null } | null;
   cosmeticGranted: boolean;
   cosmeticName: string | null;
+  avatarGranted: boolean;
   fragments: { claimed: number; total: number } | null;
   specialUnlocked: boolean;
   special: { id: number; name: string; imageUrl: string | null } | null;

@@ -65,6 +65,10 @@ describe.skipIf(!hasDatabase)("campanha", () => {
       expect(Boolean(owned)).toBe(node.id === lastFragment.id || (owned !== null && node.id > lastFragment.id));
     }
     expect(last!.body.user.coins).toBeGreaterThan(0);
+    // Cada relíquia entrega também o ícone de perfil do cenário.
+    const avatars = await prisma.userCosmetic.findMany({ where: { userId: user.id, cosmetic: { type: "AVATAR", name: { startsWith: "Ícone: " } } }, include: { cosmetic: true } });
+    expect(avatars).toHaveLength(10);
+    expect(avatars.every((item) => item.cosmetic.imageUrl?.startsWith("/campaign/"))).toBe(true);
 
     const sticker = await prisma.userSticker.findUniqueOrThrow({ where: { userId_characterId: { userId: user.id, characterId: jesus.id } } });
     expect(sticker.duplicates).toBe(0);
@@ -117,6 +121,7 @@ describe.skipIf(!hasDatabase)("campanha", () => {
       mapImageUrl: null, iconImageUrl: null, fragmentCharacterId: null, sortOrder: 500, active: true,
     });
     expect(created.status).toBe(201);
+    expect(created.body.avatarCosmeticId).not.toBeNull();
     const repeated = await api.post("/api/campaign/admin/scenarios").set(bearer(admin)).send({ ...created.body, slug: "mar-vermelho" });
     expect(repeated.status).toBe(400);
 
@@ -128,6 +133,12 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     expect((await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send({ ...node, level: 52, fragment: true })).status).toBe(400);
     expect((await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send({ ...node, level: 53, rewardCoins: 0 })).status).toBe(400);
     expect((await api.put(`/api/campaign/admin/nodes/${made.body.id}`).set(bearer(admin)).send({ ...node, rewardCoins: 150 })).body.rewardCoins).toBe(150);
+
+    // Trocar o ícone do cenário troca a arte do ícone de perfil.
+    const icon = "https://exemplo.com/icone.png";
+    const updated = await api.put(`/api/campaign/admin/scenarios/${created.body.id}`).set(bearer(admin)).send({ ...created.body, slug: undefined, iconImageUrl: icon });
+    expect(updated.status).toBe(200);
+    expect((await prisma.cosmetic.findUniqueOrThrow({ where: { id: created.body.avatarCosmeticId } })).imageUrl).toBe(icon);
 
     const system = await prisma.scenario.findFirstOrThrow({ where: { system: true } });
     expect((await api.delete(`/api/campaign/admin/scenarios/${system.id}`).set(bearer(admin))).status).toBe(400);

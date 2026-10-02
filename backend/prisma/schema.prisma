@@ -536,17 +536,18 @@ model Cosmetic {
   /// Itens padrão do sistema (criados no deploy; o admin pode desativar, não excluir).
   system           Boolean        @default(false)
 
-  event         GameEvent?            @relation(fields: [eventId], references: [id], onDelete: SetNull)
-  owners        UserCosmetic[]
-  avatarOf      User[]                @relation("UserAvatar")
-  frameOf       User[]                @relation("UserFrame")
-  titleOf       User[]                @relation("UserTitle")
-  nameColorOf   User[]                @relation("UserNameColor")
-  messages      Message[]
-  rewards       RewardDefinition[]
-  collections   CharacterCollection[]
-  passTiers     PassTier[]
-  scenarioNodes ScenarioNode[]
+  event             GameEvent?            @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  owners            UserCosmetic[]
+  avatarOf          User[]                @relation("UserAvatar")
+  frameOf           User[]                @relation("UserFrame")
+  titleOf           User[]                @relation("UserTitle")
+  nameColorOf       User[]                @relation("UserNameColor")
+  messages          Message[]
+  rewards           RewardDefinition[]
+  collections       CharacterCollection[]
+  passTiers         PassTier[]
+  scenarioNodes     ScenarioNode[]
+  avatarOfScenarios Scenario[]            @relation("ScenarioAvatar")
 
   @@unique([type, name])
   @@index([type, active])
@@ -638,6 +639,8 @@ model Scenario {
   iconImageUrl        String?  @map("icon_image_url")
   /// Personagem cujos fragmentos este cenário dá (a carta especial).
   fragmentCharacterId Int?     @map("fragment_character_id")
+  /// Ícone de perfil (avatar) com a arte do cenário, entregue junto com a relíquia.
+  avatarCosmeticId    Int?     @map("avatar_cosmetic_id")
   sortOrder           Int      @default(0) @map("sort_order")
   active              Boolean  @default(true)
   /// Criado no deploy (não excluível; o admin pode editar e desativar).
@@ -645,6 +648,7 @@ model Scenario {
   createdAt           DateTime @default(now()) @map("created_at")
 
   fragmentCharacter BiblicalCharacter? @relation("ScenarioFragmentCharacter", fields: [fragmentCharacterId], references: [id], onDelete: SetNull)
+  avatarCosmetic    Cosmetic?          @relation("ScenarioAvatar", fields: [avatarCosmeticId], references: [id], onDelete: SetNull)
   nodes             ScenarioNode[]
   questions         Question[]
 
