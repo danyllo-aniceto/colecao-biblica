@@ -10,6 +10,7 @@ import type { StickerRarity } from '@/lib/admin-api';
 import { cn } from '@/lib/cn';
 import { getRarityLabel } from '@/lib/rarity-theme';
 import { playSfx } from '@/lib/sound/sfx';
+import { useChestDesigns, type ChestDesign } from '@/lib/chest-designs';
 import type { ChestPrize, ChestTierName } from '@/lib/user-api';
 
 export const CHEST_TIERS: Record<ChestTierName, { label: string; color: string; dark: string }> = {
@@ -18,6 +19,20 @@ export const CHEST_TIERS: Record<ChestTierName, { label: string; color: string; 
   GOLD: { label: 'Baú de Ouro', color: '#fbbf24', dark: '#b45309' },
   DIAMOND: { label: 'Baú de Diamante', color: '#5ad1ff', dark: '#0e7bb0' },
 };
+
+type ChestLook = { label: string; color: string; dark: string; imageUrl: string | null };
+
+/** Nome, cor e arte de um baú: o que o admin cadastrou, com o desenho padrão no que estiver vazio. */
+export function chestLook(tier: ChestTierName, design?: Pick<ChestDesign, 'imageUrl' | 'name' | 'color'> | null): ChestLook {
+  const base = CHEST_TIERS[tier];
+  return { label: design?.name?.trim() || base.label, color: design?.color || base.color, dark: base.dark, imageUrl: design?.imageUrl || null };
+}
+
+/** Visual cadastrado de um baú (hook: acompanha o que o admin salvar). */
+export function useChestLook(tier: ChestTierName, override?: Pick<ChestDesign, 'imageUrl' | 'name' | 'color'> | null): ChestLook {
+  const designs = useChestDesigns();
+  return chestLook(tier, override ?? designs[tier]);
+}
 
 const RARITY_RANK: Record<string, number> = { COMMON: 0, RARE: 1, EPIC: 2, LEGENDARY: 3, SPECIAL: 4 };
 const rank = (prize: ChestPrize) => (prize.kind === 'STICKER' ? RARITY_RANK[prize.rarity ?? 'COMMON'] ?? 0 : -1);
@@ -36,8 +51,9 @@ function ordered(prizes: ChestPrize[]) {
   return [...prizes].sort((left, right) => rank(left) - rank(right));
 }
 
-export function ChestIcon({ tier, className }: { tier: ChestTierName; className?: string }) {
-  const { color, dark } = CHEST_TIERS[tier];
+export function ChestIcon({ tier, className, design }: { tier: ChestTierName; className?: string; design?: Pick<ChestDesign, 'imageUrl' | 'name' | 'color'> | null }) {
+  const { color, dark, imageUrl } = useChestLook(tier, design);
+  if (imageUrl) return <img src={imageUrl} alt="" draggable={false} className={cn('object-contain', className)} />;
   return (
     <svg viewBox="0 0 160 140" className={className} aria-hidden="true">
       <defs>
@@ -81,11 +97,11 @@ function Burst({ count, color }: { count: number; color: string }) {
   );
 }
 
-function PrizeFace({ prize, large = false }: { prize: ChestPrize; large?: boolean }) {
+function PrizeFace({ prize, large = false, mask = false }: { prize: ChestPrize; large?: boolean; mask?: boolean }) {
   if (prize.kind === 'STICKER') {
     return (
       <div className={cn('mx-auto', large ? 'w-44' : 'w-24')}>
-        <StickerCard name={prize.name ?? 'Figurinha'} rarity={(prize.rarity ?? 'COMMON') as StickerRarity} imageUrl={prize.imageUrl} owned size={large ? 'lg' : 'sm'} />
+        <StickerCard name={prize.name ?? 'Figurinha'} rarity={(prize.rarity ?? 'COMMON') as StickerRarity} imageUrl={prize.imageUrl} owned size={large ? 'lg' : 'sm'} maskName={mask} />
       </div>
     );
   }
@@ -149,7 +165,7 @@ function Reel({ prize, durationMs, onStop }: { prize: ChestPrize; durationMs: nu
         {tiles.map((tile) => (
           <div key={tile.index} className="flex shrink-0 items-center justify-center" style={{ width: `${TILE_REM}rem`, height: '8.5rem' }}>
             {tile.index === finalIndex ? (
-              <PrizeFace prize={prize} />
+              <PrizeFace prize={prize} mask />
             ) : (
               <div className={cn('flex h-24 w-20 items-center justify-center rounded-2xl border border-edge', tint(tile.tint))}>{DECOYS[tile.decoy]()}</div>
             )}
@@ -168,7 +184,7 @@ type Phase = 'closed' | 'shaking' | 'reel' | 'suspense' | 'reveal' | 'summary';
  * Abertura do baú em tela cheia: o baú treme, os prêmios passam num carretel e cada um aparece com uma
  * animação; antes de abrir uma figurinha rara há um suspense que cresce com a raridade (lendária é o máximo).
  */
-export function ChestOpening({ tier, prizes, onDone, preview = false }: { tier: ChestTierName; prizes: ChestPrize[]; onDone: () => void; preview?: boolean }) {
+export function ChestOpening({ tier, prizes, onDone, preview = false, design }: { tier: ChestTierName; prizes: ChestPrize[]; onDone: () => void; preview?: boolean; design?: Pick<ChestDesign, 'imageUrl' | 'name' | 'color'> | null }) {
   const list = useMemo(() => ordered(prizes), [prizes]);
   const [phase, setPhase] = useState<Phase>('closed');
   const [index, setIndex] = useState(0);
@@ -178,7 +194,7 @@ export function ChestOpening({ tier, prizes, onDone, preview = false }: { tier: 
   const prize = list[index];
   const level = prize ? Math.max(0, rank(prize)) : 0;
   const isSticker = prize?.kind === 'STICKER';
-  const info = CHEST_TIERS[tier];
+  const info = useChestLook(tier, design);
   const rarityColor = ['#9ca3af', '#3b82f6', '#a855f7', '#fbbf24'][Math.min(level, 3)];
 
   const later = (callback: () => void, ms: number) => {
@@ -250,7 +266,7 @@ export function ChestOpening({ tier, prizes, onDone, preview = false }: { tier: 
           <>
             <button type="button" onClick={open} disabled={phase === 'shaking'} className="group relative" aria-label="Abrir o baú">
               <span className="absolute inset-0 -z-10 rounded-full blur-3xl" style={{ background: `${info.color}66` }} />
-              <ChestIcon tier={tier} className={cn('h-52 w-60 drop-shadow-2xl', phase === 'shaking' ? 'animate-chest-shake' : 'animate-chest-idle')} />
+              <ChestIcon tier={tier} design={design} className={cn('h-52 w-60 drop-shadow-2xl', phase === 'shaking' ? 'animate-chest-shake' : 'animate-chest-idle')} />
             </button>
             <Button size="xl" onClick={open} disabled={phase === 'shaking'}>
               {phase === 'shaking' ? 'Abrindo...' : 'Toque para abrir'}

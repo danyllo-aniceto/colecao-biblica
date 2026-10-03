@@ -46,6 +46,10 @@ enum RewardType {
   DOUBLE_COINS
   COMBO_SHIELD
   COSMETIC
+  /// Baús vendidos na loja (o de diamante nunca é vendido).
+  CHEST_BRONZE
+  CHEST_SILVER
+  CHEST_GOLD
 }
 
 /// Item visual do jogador.
@@ -666,6 +670,8 @@ model Scenario {
   iconImageUrl        String?  @map("icon_image_url")
   /// Música do tema do cenário (liberada quando o jogador chega ao primeiro nível dele).
   musicUrl            String?  @map("music_url")
+  /// Imagem de fundo da tela do quiz neste cenário (vertical, sem texto).
+  quizBackgroundUrl   String?  @map("quiz_background_url")
   /// Personagem cujos fragmentos este cenário dá (a carta especial).
   fragmentCharacterId Int?     @map("fragment_character_id")
   /// Ícone de perfil (avatar) com a arte do cenário, entregue junto com a relíquia.
@@ -708,4 +714,18 @@ model ScenarioNode {
 
   @@index([scenarioId])
   @@map("scenario_nodes")
+}
+
+/// Visual de cada baú da partida (BRONZE, SILVER, GOLD, DIAMOND), cadastrado no painel.
+model ChestDesign {
+  id        Int      @id @default(autoincrement())
+  tier      String   @unique
+  /// Arte do baú fechado (quadrada, fundo transparente fica melhor).
+  imageUrl  String?  @map("image_url")
+  /// Nome exibido (vazio usa o padrão) e cor de destaque do brilho.
+  name      String?
+  color     String?
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("chest_designs")
 }

@@ -131,25 +131,52 @@ describe("baús da partida", () => {
   it("o baú traz moedas, ajudas sem repetir e figurinha conforme o nível", () => {
     const always = () => 0; // sempre "sorte"
     const never = () => 0.999;
-    const bronze = planChest("BRONZE", { stickerRewards: stickers, helperPool, forceSticker: false, cosmeticAvailable: true }, always);
+    const bronze = planChest("BRONZE", { stickerRewards: stickers, helperPool, forceSticker: false, cosmeticRarities: ["RARE", "EPIC", "LEGENDARY"] }, always);
     expect(bronze.coins).toBe(CHEST_BONUS_COINS.BRONZE);
     expect(bronze.helpers).toHaveLength(1);
     expect(bronze.stickers).toHaveLength(1);
-    expect(planChest("BRONZE", { stickerRewards: stickers, helperPool, forceSticker: false, cosmeticAvailable: true }, never).stickers).toHaveLength(0);
+    expect(planChest("BRONZE", { stickerRewards: stickers, helperPool, forceSticker: false, cosmeticRarities: ["RARE", "EPIC", "LEGENDARY"] }, never).stickers).toHaveLength(0);
     // A garantia contra azar força a figurinha mesmo no azar.
-    expect(planChest("BRONZE", { stickerRewards: stickers, helperPool, forceSticker: true, cosmeticAvailable: false }, never).stickers).toHaveLength(1);
+    expect(planChest("BRONZE", { stickerRewards: stickers, helperPool, forceSticker: true, cosmeticRarities: [] }, never).stickers).toHaveLength(1);
 
-    const diamond = planChest("DIAMOND", { stickerRewards: stickers, helperPool, forceSticker: false, cosmeticAvailable: true }, always);
+    const diamond = planChest("DIAMOND", { stickerRewards: stickers, helperPool, forceSticker: false, cosmeticRarities: ["RARE", "EPIC", "LEGENDARY"] }, always);
     expect(diamond.helpers).toHaveLength(3);
     expect(new Set(diamond.helpers.map((helper) => helper.name)).size).toBe(3);
     // Diamante: sempre figurinha épica ou lendária, nunca a comum.
     expect(diamond.stickers.every((picked) => picked.rewardId !== 1)).toBe(true);
     expect(diamond.stickers.length).toBeGreaterThanOrEqual(1);
-    expect(diamond.cosmetic).toBe(true);
+    // Diamante com sorte traz item visual de raridade alta (nunca comum).
+    expect(diamond.cosmeticRarity).not.toBeNull();
+    expect(diamond.cosmeticRarity).not.toBe("COMMON");
+  });
+
+  it("item visual no baú: nada no bronze; a prata traz comum e rara; só o diamante chega ao lendário com folga", () => {
+    const base = { stickerRewards: stickers, helperPool, forceSticker: false, cosmeticRarities: ["COMMON", "RARE", "EPIC", "LEGENDARY"] as Array<"COMMON" | "RARE" | "EPIC" | "LEGENDARY"> };
+    // Com "sorte" máxima: bronze nunca traz item visual; prata e acima sim.
+    expect(planChest("BRONZE", base, () => 0).cosmeticRarity).toBeNull();
+    expect(planChest("SILVER", base, () => 0).cosmeticRarity).not.toBeNull();
+    const counts = (tier: "SILVER" | "GOLD" | "DIAMOND") => {
+      const found: Record<string, number> = {};
+      let seed = 7;
+      const random = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      for (let index = 0; index < 4000; index += 1) {
+        const rarity = planChest(tier, base, random).cosmeticRarity;
+        if (rarity) found[rarity] = (found[rarity] ?? 0) + 1;
+      }
+      return found;
+    };
+    const silver = counts("SILVER");
+    const diamond = counts("DIAMOND");
+    expect(silver.COMMON).toBeGreaterThan(silver.RARE ?? 0);
+    expect(silver.LEGENDARY ?? 0).toBe(0);
+    expect(diamond.COMMON ?? 0).toBe(0);
+    expect(diamond.LEGENDARY ?? 0).toBeGreaterThan(0);
+    // Se o jogador já tem todos os itens de uma raridade, ela sai do sorteio.
+    expect(planChest("SILVER", { ...base, cosmeticRarities: [] }, () => 0).cosmeticRarity).toBeNull();
   });
 
   it("ajuda que não cabe mais vira moedas e sem figurinha disponível o baú vem sem figurinha", () => {
-    const full = planChest("SILVER", { stickerRewards: [], helperPool: [], forceSticker: true, cosmeticAvailable: false }, () => 0);
+    const full = planChest("SILVER", { stickerRewards: [], helperPool: [], forceSticker: true, cosmeticRarities: [] }, () => 0);
     expect(full.helpers).toHaveLength(0);
     expect(full.stickers).toHaveLength(0);
     expect(full.coins).toBe(CHEST_BONUS_COINS.SILVER + 2 * CHEST_HELPER_FALLBACK_COINS);

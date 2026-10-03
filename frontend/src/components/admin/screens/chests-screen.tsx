@@ -7,8 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { LoadingState } from '@/components/ui/spinner';
 import { errorMessage, useToast } from '@/components/ui/toast';
+import { ColorField } from '@/components/ui/color-field';
 import { Alert, CoinIcon } from '@/components/game/game-ui';
-import { CHEST_TIERS, ChestIcon, ChestOpening } from '@/components/user/chest-opening';
+import { ImageUploadField } from '../image-upload-field';
+import { saveChestDesign, setChestDesign, useChestDesigns } from '@/lib/chest-designs';
+import { CHEST_TIERS, ChestIcon, ChestOpening, chestLook } from '@/components/user/chest-opening';
 import { simulateChests, type ChestSimulation, type SimulatedChestTier } from '@/lib/admin-api';
 import type { ChestPrize, ChestTierName } from '@/lib/user-api';
 import { getRarityLabel } from '@/lib/rarity-theme';
@@ -36,7 +39,8 @@ function chanceAtLeast(correct: number, accuracy: number, lives: number) {
 }
 
 function TierCard({ tier, data, minCorrect, onTest }: { tier: ChestTierName; data: SimulatedChestTier; minCorrect: number; onTest: () => void }) {
-  const info = CHEST_TIERS[tier];
+  const designs = useChestDesigns();
+  const info = chestLook(tier, designs[tier]);
   const helpers = Object.entries(data.helpers).sort((left, right) => right[1] - left[1]);
   return (
     <article className="space-y-3 rounded-3xl border-2 bg-surface p-4" style={{ borderColor: `${info.color}99` }}>
@@ -82,7 +86,9 @@ function TierCard({ tier, data, minCorrect, onTest }: { tier: ChestTierName; dat
       </div>
       <p className="text-xs text-muted">
         Duas figurinhas: {percent(data.chanceTwoStickers, 1)}
-        {data.chanceCosmetic > 0 ? ` · item visual raro: ${percent(data.chanceCosmetic, 1)}` : ''}
+        {data.spec.cosmetic.chance > 0
+          ? ` · item visual: ${percent(data.chanceCosmetic, 1)}${Object.keys(data.cosmeticByRarity).length > 0 ? ` (${RARITIES.filter((rarity) => data.cosmeticByRarity[rarity]).map((rarity) => `${getRarityLabel(rarity)} ${percent(data.cosmeticByRarity[rarity], 1)}`).join(', ')})` : ''}`
+          : ' · sem item visual'}
       </p>
       {helpers.length > 0 ? (
         <p className="text-xs text-muted">
@@ -97,13 +103,87 @@ function TierCard({ tier, data, minCorrect, onTest }: { tier: ChestTierName; dat
   );
 }
 
+type DesignDraft = { imageUrl: string; name: string; color: string };
+
+/** Visual de cada baú: arte, nome e cor de brilho. O que ficar vazio usa o desenho padrão do app. */
+function ChestDesignPanel({ samples, onPreview }: { samples: Partial<Record<ChestTierName, ChestPrize[][]>>; onPreview: (tier: ChestTierName, prizes: ChestPrize[], design: DesignDraft) => void }) {
+  const toast = useToast();
+  const designs = useChestDesigns();
+  const [drafts, setDrafts] = useState<Partial<Record<ChestTierName, DesignDraft>>>({});
+  const [saving, setSaving] = useState<ChestTierName | null>(null);
+
+  const draftOf = (tier: ChestTierName): DesignDraft => drafts[tier] ?? { imageUrl: designs[tier]?.imageUrl ?? '', name: designs[tier]?.name ?? '', color: designs[tier]?.color ?? CHEST_TIERS[tier].color };
+  const change = (tier: ChestTierName, patch: Partial<DesignDraft>) => setDrafts((current) => ({ ...current, [tier]: { ...draftOf(tier), ...patch } }));
+
+  async function save(tier: ChestTierName) {
+    const draft = draftOf(tier);
+    setSaving(tier);
+    try {
+      // A cor só é salva se mudou do padrão (assim a cor padrão acompanha o app).
+      const color = draft.color.toLowerCase() === CHEST_TIERS[tier].color.toLowerCase() ? null : draft.color;
+      const saved = await saveChestDesign(tier, { imageUrl: draft.imageUrl || null, name: draft.name.trim() || null, color });
+      setChestDesign(saved);
+      setDrafts((current) => {
+        const next = { ...current };
+        delete next[tier];
+        return next;
+      });
+      toast.success(`${CHEST_TIERS[tier].label} salvo.`);
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  return (
+    <AdminPanel title="Visual dos baús" description="Suba a arte de cada baú (imagem quadrada, de preferência com fundo transparente), escolha o nome e a cor do brilho. Vale para o resultado da partida, a loja e a abertura. Vazio usa o desenho padrão.">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {TIER_ORDER.map((tier) => {
+          const draft = draftOf(tier);
+          const look = chestLook(tier, draft);
+          return (
+            <article key={tier} className="space-y-3 rounded-3xl border-2 border-edge bg-surface p-4">
+              <div className="flex h-32 items-center justify-center rounded-2xl" style={{ background: `radial-gradient(circle, ${look.color}44, transparent 70%)` }}>
+                <ChestIcon tier={tier} design={draft} className="h-28 w-32" />
+              </div>
+              <Field label="Arte do baú">
+                <ImageUploadField value={draft.imageUrl} onChange={(url) => change(tier, { imageUrl: url })} />
+              </Field>
+              <Field label="Nome" hint={`Padrão: ${CHEST_TIERS[tier].label}`}>
+                <Input value={draft.name} maxLength={40} onChange={(event) => change(tier, { name: event.target.value })} placeholder={CHEST_TIERS[tier].label} />
+              </Field>
+              <Field label="Cor do brilho">
+                <ColorField value={draft.color} onChange={(value) => change(tier, { color: value })} />
+              </Field>
+              <div className="flex gap-2">
+                <Button size="sm" className="flex-1" onClick={() => void save(tier)} loading={saving === tier}>
+                  Salvar
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => onPreview(tier, (samples[tier] ?? [])[0] ?? [{ kind: 'COINS', amount: 10 }], draft)}
+                >
+                  <PlayArrowRoundedIcon fontSize="small" />
+                  Testar
+                </Button>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </AdminPanel>
+  );
+}
+
 /** Simulador dos baús: abre milhares de baús em memória, com as regras e os dados reais, e mostra o que cada um entrega. */
 export function ChestsScreen() {
   const toast = useToast();
   const [runs, setRuns] = useState('5000');
   const [data, setData] = useState<ChestSimulation | null>(null);
   const [loading, setLoading] = useState(true);
-  const [preview, setPreview] = useState<{ tier: ChestTierName; prizes: ChestPrize[] } | null>(null);
+  const [preview, setPreview] = useState<{ tier: ChestTierName; prizes: ChestPrize[]; design?: DesignDraft } | null>(null);
   const [marathons, setMarathons] = useState('4');
 
   async function run() {
@@ -184,11 +264,20 @@ export function ChestsScreen() {
               ))}
             </div>
             <p className="text-xs text-muted">
+              Itens visuais que podem sair em baús (marcados em "entra em baús" na tela Visual): {RARITIES.map((rarity) => `${data.cosmeticsInChestPool[rarity] ?? 0} ${getRarityLabel(rarity).toLowerCase()}s`).join(' · ')}
+              {Object.values(data.cosmeticsInChestPool).every((count) => !count) ? '. Nenhum ainda: os baús de prata para cima só trazem item visual quando houver itens marcados.' : '.'} A raridade do item sorteado respeita o baú: comum e rara a partir da prata, épica no ouro, lendária no ouro e no diamante.
+            </p>
+            <p className="text-xs text-muted">
               Figurinhas publicadas: {RARITIES.map((rarity) => `${data.publishedByRarity[rarity] ?? 0} ${getRarityLabel(rarity).toLowerCase()}s`).join(' · ')}. A raridade vem das chances de cada recompensa de figurinha (tela Recompensas) e do pacote surpresa.
             </p>
           </>
         ) : null}
       </AdminPanel>
+
+      <ChestDesignPanel
+        samples={data ? Object.fromEntries(TIER_ORDER.map((tier) => [tier, data.tiers[tier].samples])) : {}}
+        onPreview={(tier, prizes, design) => setPreview({ tier, prizes, design })}
+      />
 
       {data ? (
         <AdminPanel title="Quanto um jogador ganha por dia" description="Estimativa pela taxa de acerto: a chance de cada nível de baú numa maratona (até as vidas acabarem), os limites diários e o que cada baú entrega. Não inclui a garantia contra azar nem a loja.">
@@ -234,7 +323,7 @@ export function ChestsScreen() {
         </AdminPanel>
       ) : null}
 
-      {preview ? <ChestOpening tier={preview.tier} prizes={preview.prizes} preview onDone={() => setPreview(null)} /> : null}
+      {preview ? <ChestOpening tier={preview.tier} prizes={preview.prizes} design={preview.design ? { imageUrl: preview.design.imageUrl || null, name: preview.design.name || null, color: preview.design.color } : undefined} preview onDone={() => setPreview(null)} /> : null}
     </>
   );
 }

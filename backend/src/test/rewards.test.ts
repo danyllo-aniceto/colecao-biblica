@@ -297,6 +297,46 @@ describe.skipIf(!hasDatabase)("recompensas novas", () => {
       expect((await api.post("/api/collection/upgrade").set(bearer(token)).send({ characterId: davi.id })).body.message).toMatch(/nível máximo/);
     });
 
+    it("loja vende baús (nunca o de diamante), abre na hora e conta no limite diário de figurinhas", async () => {
+      const token = await login("user@email.com");
+      await prisma.user.update({ where: { email: "user@email.com" }, data: { coins: 10_000 } });
+      const shop = (await api.get("/api/shop").set(bearer(token))).body as Array<{ id: number; name: string; rewardType: string; priceCoins: number; itemType: string }>;
+      const chests = shop.filter((item) => item.rewardType.startsWith("CHEST_"));
+      expect(chests.map((item) => item.name)).toEqual(["Baú de Bronze", "Baú de Prata", "Baú de Ouro"]);
+      expect(chests.map((item) => item.priceCoins)).toEqual([600, 1100, 2000]);
+      expect(chests.every((item) => item.itemType === "STICKER")).toBe(true);
+      expect(shop.some((item) => /diamante/i.test(item.name))).toBe(false);
+
+      const bought = await api.post(`/api/shop/buy/${chests[1].id}`).set(bearer(token));
+      expect(bought.status).toBe(200);
+      expect(bought.body.chestTier).toBe("SILVER");
+      expect(bought.body.chestPrizes[0]).toEqual({ kind: "COINS", amount: 25 });
+      expect(bought.body.chestPrizes.filter((prize: { kind: string }) => prize.kind === "HELPER")).toHaveLength(2);
+      // Pagou 1.100 e recebeu as moedas do baú.
+      expect(bought.body.userCoins).toBeGreaterThanOrEqual(10_000 - 1100 + 25);
+
+      // Baú conta no limite de 1 figurinha comprada por dia.
+      const second = await api.post(`/api/shop/buy/${chests[0].id}`).set(bearer(token));
+      expect(second.status).toBe(400);
+      expect(second.body.message).toContain("1 figurinha(s) hoje");
+    });
+
+    it("visual dos baús: admin cadastra imagem, nome e cor; todos leem; cor inválida é recusada", async () => {
+      const admin = await login("admin2@email.com");
+      const player = await login("user@email.com");
+      expect((await api.get("/api/chests/designs").set(bearer(player))).body).toEqual([]);
+      expect((await api.put("/api/chests/admin/designs/gold").set(bearer(player)).send({ name: "x" })).status).toBe(403);
+      expect((await api.put("/api/chests/admin/designs/gold").set(bearer(admin)).send({ color: "azul" })).status).toBe(400);
+
+      const saved = await api.put("/api/chests/admin/designs/gold").set(bearer(admin)).send({ imageUrl: "https://exemplo.com/ouro.png", name: "Tesouro de Ouro", color: "#ffcc00" });
+      expect(saved.body).toEqual({ tier: "GOLD", imageUrl: "https://exemplo.com/ouro.png", name: "Tesouro de Ouro", color: "#ffcc00" });
+      expect((await api.get("/api/chests/designs").set(bearer(player))).body).toEqual([saved.body]);
+      expect((await api.put("/api/chests/admin/designs/rubi").set(bearer(admin)).send({})).status).toBe(400);
+      // Limpar os campos volta ao desenho padrão.
+      const cleared = await api.put("/api/chests/admin/designs/gold").set(bearer(admin)).send({ imageUrl: null, name: "", color: null });
+      expect(cleared.body).toEqual({ tier: "GOLD", imageUrl: null, name: null, color: null });
+    });
+
     it("simulador de baús do painel: só admin, números coerentes e nada é gravado", async () => {
       const admin = await login("admin2@email.com");
       const player = await login("user@email.com");

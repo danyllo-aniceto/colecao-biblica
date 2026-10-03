@@ -21,6 +21,8 @@ import { ReportQuestionModal } from '@/components/user/report-question-modal';
 import FlagRoundedIcon from '@mui/icons-material/FlagRounded';
 import { cn } from '@/lib/cn';
 import { QUIZ_HELPERS, type HelperField } from '@/lib/quiz-helpers';
+import { quizBackgroundStyle } from '@/lib/quiz-background';
+import { useCampaign } from '@/components/user/campaign/campaign-provider';
 import type { QuizHelperAction, QuizSessionStatus } from '@/lib/user-api';
 
 type AnswerOption = 'A' | 'B' | 'C' | 'D';
@@ -117,6 +119,9 @@ export function QuizAnswerScreen({
   boosts,
 }: QuizAnswerScreenProps) {
   const question = session.currentQuestion ?? null;
+  // Cada cenário da campanha pode ter a própria imagem de fundo no quiz.
+  const { current: scenario } = useCampaign();
+  const backgroundStyle = quizBackgroundStyle(session.quizType === 'DAILY_CHALLENGE' ? null : scenario?.quizBackgroundUrl);
 
   const [selected, setSelected] = useState<AnswerOption | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -265,7 +270,7 @@ export function QuizAnswerScreen({
   const answeredCount = session.currentQuestionIndex + (reveal ? 1 : 0);
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-bg" role="dialog" aria-modal="true" aria-label="Pergunta do quiz">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-bg" style={backgroundStyle} role="dialog" aria-modal="true" aria-label="Pergunta do quiz">
       <form className="mx-auto flex min-h-full max-w-3xl flex-col gap-4 px-4 pb-36 pt-[max(1rem,env(safe-area-inset-top))] sm:pb-10" onSubmit={handleSubmit}>
         <div className="flex items-center gap-3">
           <Tooltip content="Voltar ao painel (o tempo continua correndo)" side="bottom">

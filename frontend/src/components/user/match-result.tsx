@@ -11,7 +11,7 @@ import PaletteRoundedIcon from '@mui/icons-material/PaletteRounded';
 import { StickerCard } from '@/components/game/sticker-card';
 import type { StickerRarity } from '@/lib/admin-api';
 import type { ChestPrize, QuizMatchResult } from '@/lib/user-api';
-import { CHEST_TIERS, ChestIcon, ChestOpening } from '@/components/user/chest-opening';
+import { ChestIcon, ChestOpening, useChestLook } from '@/components/user/chest-opening';
 
 function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ');
@@ -58,6 +58,7 @@ export function MatchResult({
   const [opening, setOpening] = useState(false);
   const [opened, setOpened] = useState(false);
   const matchId = summary?.result.matchId;
+  const chestLook = useChestLook(summary?.result.chestTier ?? 'BRONZE');
   useEffect(() => {
     setOpening(false);
     setOpened(false);
@@ -194,7 +195,7 @@ export function MatchResult({
             opened ? (
               <div className="space-y-3">
                 <p className={cn('inline-flex items-center gap-2 rounded-full px-4 py-1.5 font-display text-sm font-bold', CHEST_LABELS[result.chestTier].tone)}>
-                  <Inventory2RoundedIcon fontSize="small" /> {CHEST_LABELS[result.chestTier].label}
+                  <Inventory2RoundedIcon fontSize="small" /> {chestLook.label}
                 </p>
                 {result.pityGuaranteed ? <p className="text-xs font-bold uppercase tracking-wider text-violet-strong dark:text-violet">Figurinha garantida pela sorte acumulada</p> : null}
                 <ul className="space-y-1 text-sm font-semibold text-ink">
@@ -235,9 +236,9 @@ export function MatchResult({
                 </div>
               </div>
             ) : (
-              <button type="button" onClick={() => setOpening(true)} className="group mx-auto flex flex-col items-center gap-2" aria-label={`Abrir ${CHEST_TIERS[result.chestTier].label}`}>
+              <button type="button" onClick={() => setOpening(true)} className="group mx-auto flex flex-col items-center gap-2" aria-label={`Abrir ${chestLook.label}`}>
                 <ChestIcon tier={result.chestTier} className="animate-chest-idle h-28 w-32 drop-shadow-xl transition group-hover:scale-105" />
-                <span className="font-display text-lg font-bold text-ink">{CHEST_LABELS[result.chestTier].label}</span>
+                <span className="font-display text-lg font-bold text-ink">{chestLook.label}</span>
                 <span className="rounded-full bg-primary px-5 py-2 font-display text-sm font-bold text-on-primary">Toque para abrir</span>
               </button>
             )

@@ -3,9 +3,12 @@ import { env } from "../lib/env";
 import { dayKeyInTimeZone } from "../services/game-rules";
 
 const STICKER_PURCHASE = "SHOP_STICKER";
-const isStickerReward = (type: string) => type === "STICKER" || type === "STICKER_PACK";
+const CHEST_TIER_BY_REWARD = { CHEST_BRONZE: "BRONZE", CHEST_SILVER: "SILVER", CHEST_GOLD: "GOLD" } as const;
+const chestTierOf = (type: string) => CHEST_TIER_BY_REWARD[type as keyof typeof CHEST_TIER_BY_REWARD] ?? null;
+/** Figurinha, pacote e baú contam no limite diário de compras de figurinhas. */
+const isStickerReward = (type: string) => type === "STICKER" || type === "STICKER_PACK" || chestTierOf(type) !== null;
 import { helperCounts } from "../services/helpers";
-import type { Prisma } from "@prisma/client";
+import type { Prisma, StickerRarity } from "@prisma/client";
 import { lockUser, prisma, transaction } from "../db/prisma";
 import { badRequest, notFound } from "../lib/errors";
 import { parseId, requiredText, z } from "../lib/validation";
@@ -13,6 +16,7 @@ import { currentUser, requireAdmin } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
 import { rewardRef, toShopItemResponse } from "../services/mappers";
 import { checkAchievements } from "../services/achievements";
+import { openChestRewards } from "../services/chests";
 import { applyReward, ensureRewardIsUseful, validateShopReward, walletData } from "../services/rewards";
 import { getSettings } from "../services/settings";
 
@@ -187,7 +191,23 @@ shopRouter.post(
       }
 
       const wallet = { ...user, coins: user.coins - item.priceCoins };
-      const applied = await applyReward(tx, wallet, reward, settings);
+      // Baú comprado: abre na hora, com o mesmo conteúdo do baú da partida (o de diamante nunca é vendido).
+      const chestTier = chestTierOf(reward.rewardType);
+      const chest = chestTier ? await openChestRewards(tx, wallet, chestTier, settings, Math.random) : null;
+      const bestSticker = chest?.prizes.filter((prize): prize is Extract<(typeof chest.prizes)[number], { kind: "STICKER" }> => prize.kind === "STICKER").at(-1) ?? null;
+      const applied = chest
+        ? {
+            rewardType: reward.rewardType,
+            characterId: bestSticker?.characterId ?? null,
+            characterName: bestSticker?.name ?? null,
+            characterRarity: (bestSticker?.rarity ?? null) as StickerRarity | null,
+            characterImageUrl: bestSticker?.imageUrl ?? null,
+            characterUnlocked: bestSticker?.unlocked ?? false,
+            duplicate: bestSticker?.duplicate ?? false,
+            cosmeticId: null,
+            cosmeticName: null,
+          }
+        : await applyReward(tx, wallet, reward, settings);
       await tx.user.update({ where: { id: userId }, data: walletData(wallet) });
       const unlockedAchievements = await checkAchievements(tx, userId);
       const saved = await tx.user.findUniqueOrThrow({ where: { id: userId } });
@@ -211,6 +231,8 @@ shopRouter.post(
         ...helperCounts(saved),
         cosmeticId: applied.cosmeticId,
         cosmeticName: applied.cosmeticName,
+        chestTier: chest?.tier ?? null,
+        chestPrizes: chest?.prizes ?? [],
       };
     });
 

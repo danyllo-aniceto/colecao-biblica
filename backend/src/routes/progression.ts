@@ -21,6 +21,38 @@ async function ensureCosmetic(id?: number | null) {
 
 export const chestsRouter = Router();
 
+const CHEST_TIERS = ["BRONZE", "SILVER", "GOLD", "DIAMOND"] as const;
+
+/** Visual cadastrado de cada baú da partida (o app usa o desenho padrão para o que estiver vazio). */
+chestsRouter.get(
+  "/designs",
+  asyncHandler(async (_req, res) => {
+    res.json(await prisma.chestDesign.findMany({ select: { tier: true, imageUrl: true, name: true, color: true } }));
+  }),
+);
+
+const designSchema = z.object({
+  imageUrl: imageRef(),
+  name: clearableText(40),
+  color: z
+    .string()
+    .trim()
+    .regex(/^#[0-9a-fA-F]{6}$/, "use o formato #rrggbb")
+    .nullish(),
+});
+
+chestsRouter.put(
+  "/admin/designs/:tier",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const tier = z.enum(CHEST_TIERS).parse(String(req.params.tier).toUpperCase());
+    const input = designSchema.parse(req.body);
+    const data = { imageUrl: input.imageUrl ?? null, name: input.name ?? null, color: input.color ?? null };
+    const saved = await prisma.chestDesign.upsert({ where: { tier }, create: { tier, ...data }, update: data, select: { tier: true, imageUrl: true, name: true, color: true } });
+    res.json(saved);
+  }),
+);
+
 chestsRouter.post(
   "/open",
   asyncHandler(async (req, res) => {

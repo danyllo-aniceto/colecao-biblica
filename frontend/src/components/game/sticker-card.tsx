@@ -19,13 +19,15 @@ type StickerCardProps = {
   duplicates?: number;
   /** Nível da figurinha (1 a 5): aparece como selo a partir do nível 2. */
   level?: number;
+  /** Esconde o nome (animação do baú: o nome só aparece quando a figurinha é revelada). */
+  maskName?: boolean;
 };
 
 /**
  * Figurinha do álbum: moldura e brilho na cor da raridade. Bloqueada, fica toda
  * cinza, desabilitada e com cadeado; a lendária ganha um brilho que atravessa a carta.
  */
-export function StickerCard({ name, rarity, imageUrl, owned, onClick, size = 'md', className, duplicates = 0, level = 1 }: StickerCardProps) {
+export function StickerCard({ name, rarity, imageUrl, owned, onClick, size = 'md', className, duplicates = 0, level = 1, maskName = false }: StickerCardProps) {
   const interactive = Boolean(onClick) && owned;
   const Tag = interactive ? 'button' : 'div';
 
@@ -35,7 +37,7 @@ export function StickerCard({ name, rarity, imageUrl, owned, onClick, size = 'md
       onClick={interactive ? onClick : undefined}
       data-rarity={rarity}
       aria-disabled={owned ? undefined : true}
-      aria-label={owned ? `${name}, figurinha ${getRarityLabel(rarity)}` : `${name}, figurinha ${getRarityLabel(rarity)} bloqueada`}
+      aria-label={maskName ? `Figurinha ${getRarityLabel(rarity)}` : owned ? `${name}, figurinha ${getRarityLabel(rarity)}` : `${name}, figurinha ${getRarityLabel(rarity)} bloqueada`}
       className={cn(
         'rarity group relative flex w-full flex-col overflow-hidden rounded-3xl text-left',
         owned ? 'rarity-frame bg-surface' : 'cursor-not-allowed select-none border-2 border-edge bg-surface-3 grayscale',
@@ -89,7 +91,7 @@ export function StickerCard({ name, rarity, imageUrl, owned, onClick, size = 'md
       </div>
 
       <div className={cn('flex items-center justify-between gap-2 px-3', size === 'sm' ? 'py-2' : 'py-3')}>
-        <span className={cn('truncate font-display font-semibold', owned ? 'text-ink' : 'text-muted', size === 'lg' ? 'text-xl' : 'text-sm')}>{name}</span>
+        <span className={cn('truncate font-display font-semibold', owned ? 'text-ink' : 'text-muted', size === 'lg' ? 'text-xl' : 'text-sm')}>{maskName ? '???' : name}</span>
       </div>
     </Tag>
   );

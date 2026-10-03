@@ -40,6 +40,9 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     const before = await api.get("/api/campaign").set(bearer(token));
     expect(before.body.scenarios[0]).toMatchObject({ musicUnlocked: true, musicUrl: "https://exemplo.com/tema-eden.mp3" });
     expect(before.body.scenarios[1]).toMatchObject({ musicUnlocked: false, musicUrl: null });
+    // Fundo do quiz de cada cenário: o admin cadastra e o jogador recebe na campanha.
+    await api.put(`/api/campaign/admin/scenarios/${first.id}`).set(bearer(admin)).send({ name: first.name, color: first.color, sortOrder: first.sortOrder, active: true, musicUrl: "https://exemplo.com/tema-eden.mp3", quizBackgroundUrl: "https://exemplo.com/fundo-eden.jpg" });
+    expect((await api.get("/api/campaign").set(bearer(token))).body.scenarios[0].quizBackgroundUrl).toBe("https://exemplo.com/fundo-eden.jpg");
 
     await prisma.user.update({ where: { email: "user@email.com" }, data: { level: second.nodes[0].level } });
     const after = await api.get("/api/campaign").set(bearer(token));

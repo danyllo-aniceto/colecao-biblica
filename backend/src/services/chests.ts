@@ -1,0 +1,83 @@
+import type { Prisma, StickerRarity } from "@prisma/client";
+import type { Db } from "../db/prisma";
+import { CHEST_SPECS, chestStickerWeight, pityActive, planChest, type ChestTier } from "./game-rules";
+import { grantCosmetic } from "./cosmetics";
+import type { HelperField } from "./helpers";
+import { CHEST_BOOSTS } from "./progression";
+import { applyReward, availableRewards, type UserWallet } from "./rewards";
+import type { GameSettings } from "./settings";
+
+/** O que o baú trouxe, na ordem em que aparece na animação (as figurinhas por último). */
+export type ChestPrizeView =
+  | { kind: "COINS"; amount: number }
+  | { kind: "HELPER"; name: string; amount: number }
+  | { kind: "STICKER"; characterId: number | null; name: string | null; rarity: string | null; imageUrl: string | null; unlocked: boolean; duplicate: boolean }
+  | { kind: "COSMETIC"; name: string; rarity: string };
+
+export type ChestOpening = {
+  tier: ChestTier;
+  coins: number;
+  prizes: ChestPrizeView[];
+  gotSticker: boolean;
+  /** Garantia contra azar usada neste baú. */
+  pityUsed: boolean;
+};
+
+export const RARITY_RANK: Record<string, number> = { COMMON: 0, RARE: 1, EPIC: 2, LEGENDARY: 3, SPECIAL: 4 };
+
+type Tx = Db | Prisma.TransactionClient;
+
+/**
+ * Abre um baú de verdade: sorteia o conteúdo (`planChest`) e entrega ao jogador. Altera `wallet` em memória
+ * (moedas e ajudas; o chamador salva o usuário) e grava figurinhas e itens visuais. Serve para o baú da partida
+ * e para os baús vendidos na loja. `stickerPity`: baús seguidos sem figurinha (garantia contra azar); omita na loja.
+ */
+export async function openChestRewards(
+  tx: Tx,
+  wallet: UserWallet,
+  requested: ChestTier,
+  settings: GameSettings,
+  random: () => number,
+  options: { stickerPity?: number } = {},
+): Promise<ChestOpening> {
+  let tier = requested;
+  const rewards = await availableRewards(tx as Db, await tx.rewardDefinition.findMany({ where: { active: true }, orderBy: { id: "asc" } }));
+  const stickerRewards = rewards.filter((reward) => reward.rewardType === "STICKER" || reward.rewardType === "STICKER_PACK");
+  // Sem figurinha épica/lendária publicada, o diamante vira ouro.
+  if (tier === "DIAMOND" && !stickerRewards.some((reward) => chestStickerWeight("DIAMOND", reward) > 0)) tier = "GOLD";
+
+  // Itens visuais que o jogador ainda não tem, agrupados por raridade (só se o baú pode trazer item).
+  const cosmeticOptions = CHEST_SPECS[tier].cosmetic.chance > 0 ? await tx.cosmetic.findMany({ where: { active: true, inChestPool: true, owners: { none: { userId: wallet.id } } } }) : [];
+  const cosmeticRarities = [...new Set(cosmeticOptions.map((cosmetic) => cosmetic.rarity))] as StickerRarity[];
+
+  const pityUsed = options.stickerPity !== undefined && pityActive(options.stickerPity, settings.pityThreshold) && stickerRewards.length > 0;
+  const plan = planChest(
+    tier,
+    {
+      stickerRewards,
+      helperPool: CHEST_BOOSTS.filter((helper) => wallet[helper.field] < settings[helper.maxSetting]).map((helper) => ({ field: helper.field, name: helper.name })),
+      forceSticker: pityUsed,
+      cosmeticRarities,
+    },
+    random,
+  );
+
+  const prizes: ChestPrizeView[] = [{ kind: "COINS", amount: plan.coins }];
+  wallet.coins += plan.coins;
+  for (const helper of plan.helpers) {
+    wallet[helper.field as HelperField] += 1;
+    prizes.push({ kind: "HELPER", name: helper.name, amount: 1 });
+  }
+  for (const picked of plan.stickers) {
+    const reward = stickerRewards.find((item) => item.id === picked.rewardId);
+    if (!reward) continue;
+    const applied = await applyReward(tx as Db, wallet, reward, settings, random, { newStickerPercent: settings.chestNewStickerPercent });
+    prizes.push({ kind: "STICKER", characterId: applied.characterId, name: applied.characterName, rarity: applied.characterRarity, imageUrl: applied.characterImageUrl, unlocked: applied.characterUnlocked, duplicate: applied.duplicate });
+  }
+  if (plan.cosmeticRarity) {
+    const matching = cosmeticOptions.filter((cosmetic) => cosmetic.rarity === plan.cosmeticRarity);
+    const cosmetic = matching.length > 0 ? matching[Math.floor(random() * matching.length)] : null;
+    if (cosmetic && (await grantCosmetic(tx as Db, wallet.id, cosmetic.id, "CHEST"))) prizes.push({ kind: "COSMETIC", name: cosmetic.name, rarity: cosmetic.rarity });
+  }
+  return { tier, coins: plan.coins, prizes, gotSticker: plan.stickers.length > 0, pityUsed };
+}

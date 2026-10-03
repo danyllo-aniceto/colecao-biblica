@@ -14,9 +14,6 @@ import {
   comboBonus,
   crowdPercentages,
   applyDailyXpLimit,
-  CHEST_SPECS,
-  chestStickerWeight,
-  planChest,
   chestTierFor,
   type ChestTier,
   dayRangeInTimeZone,
@@ -40,17 +37,10 @@ import { pageOf } from "../lib/pagination";
 import { visibleCharacter } from "./visibility";
 import { activeEvent } from "./events";
 import { checkCosmetics, grantCosmetic, playerLooks } from "./cosmetics";
-import { CHEST_BOOSTS as CHEST_HELPERS } from "./progression";
+import { RARITY_RANK, openChestRewards, type ChestPrizeView } from "./chests";
 import type { HelperField } from "./helpers";
 
-/** O que o baú trouxe, na ordem em que aparece na animação (as figurinhas por último). */
-export type ChestPrizeView =
-  | { kind: "COINS"; amount: number }
-  | { kind: "HELPER"; name: string; amount: number }
-  | { kind: "STICKER"; characterId: number | null; name: string | null; rarity: string | null; imageUrl: string | null; unlocked: boolean; duplicate: boolean }
-  | { kind: "COSMETIC"; name: string };
 
-const RARITY_RANK: Record<string, number> = { COMMON: 0, RARE: 1, EPIC: 2, LEGENDARY: 3, SPECIAL: 4 };
 
 type Tx = Prisma.TransactionClient;
 
@@ -840,59 +830,18 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
     // Diamante tem limite próprio por dia; acima dele, vira ouro.
     if (tier === "DIAMOND" && (settings.chestDiamondLimitPerDay <= 0 || (await diamondChestsToday(tx, user.id)) >= settings.chestDiamondLimitPerDay)) tier = "GOLD";
     if (tier && (await rewardedMatchesToday(tx, user.id)) < dailyLimit) {
-      const rewards = await availableRewards(tx, await tx.rewardDefinition.findMany({ where: { active: true }, orderBy: { id: "asc" } }));
-      const stickerRewards = rewards.filter((reward) => reward.rewardType === "STICKER" || reward.rewardType === "STICKER_PACK");
-      // Sem figurinha épica/lendária publicada, o diamante vira ouro.
-      if (tier === "DIAMOND" && !stickerRewards.some((reward) => chestStickerWeight("DIAMOND", reward) > 0)) tier = "GOLD";
-      const cosmeticOptions =
-        CHEST_SPECS[tier].cosmeticChance > 0
-          ? await tx.cosmetic.findMany({ where: { active: true, inChestPool: true, rarity: { in: ["RARE", "EPIC"] }, owners: { none: { userId: user.id } } } })
-          : [];
-      pityGuaranteed = pityActive(stickerPity, settings.pityThreshold) && stickerRewards.length > 0;
-      const plan = planChest(
-        tier,
-        {
-          stickerRewards,
-          helperPool: CHEST_HELPERS.filter((helper) => wallet[helper.field] < settings[helper.maxSetting]).map((helper) => ({ field: helper.field, name: helper.name })),
-          forceSticker: pityGuaranteed,
-          cosmeticAvailable: cosmeticOptions.length > 0,
-        },
-        random,
-      );
-
-      chestTier = tier;
-      chestCoins = plan.coins;
-      wallet.coins += plan.coins;
-      chestPrizes.push({ kind: "COINS", amount: plan.coins });
-      for (const helper of plan.helpers) {
-        wallet[helper.field as HelperField] += 1;
-        chestPrizes.push({ kind: "HELPER", name: helper.name, amount: 1 });
-      }
-      for (const picked of plan.stickers) {
-        const reward = stickerRewards.find((item) => item.id === picked.rewardId);
-        if (!reward) continue;
-        const applied = await applyReward(tx, wallet, reward, settings, random, { newStickerPercent: settings.chestNewStickerPercent });
-        chestPrizes.push({
-          kind: "STICKER",
-          characterId: applied.characterId,
-          name: applied.characterName,
-          rarity: applied.characterRarity,
-          imageUrl: applied.characterImageUrl,
-          unlocked: applied.characterUnlocked,
-          duplicate: applied.duplicate,
-        });
-      }
-      if (plan.cosmetic && cosmeticOptions.length > 0) {
-        const cosmetic = cosmeticOptions[Math.floor(random() * cosmeticOptions.length)];
-        if (await grantCosmetic(tx, user.id, cosmetic.id, "CHEST")) chestPrizes.push({ kind: "COSMETIC", name: cosmetic.name });
-      }
+      const opened = await openChestRewards(tx, wallet, tier, settings, random, { stickerPity });
+      chestTier = opened.tier;
+      chestCoins = opened.coins;
+      chestPrizes.push(...opened.prizes);
+      pityGuaranteed = opened.pityUsed;
 
       // Compatibilidade com a tela antiga: a melhor figurinha do baú vira o "prêmio" da partida.
       const best = chestPrizes
         .filter((prize): prize is Extract<ChestPrizeView, { kind: "STICKER" }> => prize.kind === "STICKER")
         .sort((left, right) => RARITY_RANK[right.rarity ?? "COMMON"] - RARITY_RANK[left.rarity ?? "COMMON"])[0];
       rewardGranted = true;
-      rewardName = `Baú ${tier}`;
+      rewardName = `Baú ${opened.tier}`;
       rewardType = best ? "STICKER" : "CHEST";
       if (best) {
         rewardCharacterId = best.characterId;
@@ -902,7 +851,7 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
         rewardCharacterUnlocked = best.unlocked;
         rewardDuplicate = best.duplicate;
       }
-      stickerPity = plan.stickers.length > 0 ? 0 : stickerPity + 1;
+      stickerPity = opened.gotSticker ? 0 : stickerPity + 1;
     }
   }
 

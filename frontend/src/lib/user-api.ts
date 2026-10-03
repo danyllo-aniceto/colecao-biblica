@@ -172,7 +172,7 @@ export type ChestPrize =
   | { kind: 'COINS'; amount: number }
   | { kind: 'HELPER'; name: string; amount: number }
   | { kind: 'STICKER'; characterId: number | null; name: string | null; rarity: StickerRarity | string | null; imageUrl: string | null; unlocked: boolean; duplicate: boolean }
-  | { kind: 'COSMETIC'; name: string };
+  | { kind: 'COSMETIC'; name: string; rarity?: string };
 
 export type ChestTierName = 'BRONZE' | 'SILVER' | 'GOLD' | 'DIAMOND';
 
@@ -362,6 +362,9 @@ export type ShopPurchaseResult = {
   doubleXpBoosts: number;
   hintBoosts: number;
   streakFreezes: number;
+  /** Baú comprado: o nível e tudo que ele trouxe (abre com a animação). */
+  chestTier?: ChestTierName | null;
+  chestPrizes?: ChestPrize[];
   skipBoosts?: number;
   secondChanceBoosts?: number;
   crowdBoosts?: number;

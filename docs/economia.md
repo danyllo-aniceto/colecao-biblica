@@ -67,9 +67,9 @@ figurinha (no ouro e no diamante ela é garantida).
 | Acertos | Baú | Moedas | Ajudas | Figurinha | Extras |
 |---|---|---|---|---|---|
 | 7 a 14 | Bronze | 10 | 1 | 45% de chance | |
-| 15 a 39 | Prata | 25 | 2 | 65% de chance, raras e épicas favorecidas | |
-| 40 a 69 | Ouro | 50 | 2 | garantida (10% de uma segunda), mais raras | |
-| 70 ou mais | Diamante | 100 | 3 | garantida épica (75%) ou lendária (25%) (20% de uma segunda) | 30% de item visual raro |
+| 15 a 39 | Prata | 25 | 2 | 65% de chance, raras e épicas favorecidas | 12% de item visual (comum ou raro) |
+| 40 a 69 | Ouro | 50 | 2 | garantida (10% de uma segunda), mais raras | 22% de item visual (até épico, lendário raro) |
+| 70 ou mais | Diamante | 100 | 3 | garantida épica (75%) ou lendária (25%) (20% de uma segunda) | 35% de item visual (raro, épico ou lendário) |
 
 O diamante é só para quem acerta muito (por volta de 90% de acerto chega a 70 em cerca de 1 partida a cada 40) e tem
 limite de 1 por dia, dentro dos 5 baús; acima disso vira ouro. A garantia de figurinha (a cada 10 baús sem figurinha)
@@ -84,6 +84,24 @@ o limite de partidas com moedas por dia caiu de 5 para 3 e o de XP cheio de 6 pa
 
 Figurinhas por dia vindas dos baús (simulação): casual ~0,4, regular ~1,4 e dedicado ~2,9. Somam-se à compra na loja
 (1 por dia) e às repetidas, que alimentam o nível das figurinhas.
+
+### Itens visuais nos baús
+
+Do baú de prata para cima também podem vir itens visuais (os marcados como "entra em baús" na tela Visual do painel e
+que o jogador ainda não tem). A raridade do item sorteado respeita o nível do baú: prata traz comum (60%), rara (35%) e
+épica (5%); ouro traz comum, rara, épica e, raramente, lendária; diamante só rara, épica e lendária. O bronze não traz item
+visual. Se o jogador já tem todos os itens de uma raridade, ela sai do sorteio.
+
+### Baús na loja
+
+A loja vende baús de bronze (600), prata (1.100) e ouro (2.000), que abrem na hora com a mesma animação. O de diamante
+nunca é vendido. Baús, pacotes e figurinhas dividem o limite diário de compras (1 por dia). A loja tem três abas:
+Figurinhas (baús, pacote e figurinha por raridade), Poderes e Cosméticos.
+
+### Visual dos baús e fundo do quiz
+
+No painel, o Simulador de baús permite subir a arte, o nome e a cor de cada baú (vale no resultado da partida, na loja e
+na abertura). Em Campanha, cada cenário pode ter uma imagem de fundo para a tela do quiz, com prévia ao vivo.
 
 ## Repetidas: vender a amigos e nível da figurinha
 

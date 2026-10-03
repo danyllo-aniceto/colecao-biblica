@@ -27,6 +27,9 @@ export const REWARD_TYPE_LABELS: Record<RewardType, string> = {
   DOUBLE_COINS: 'Bênção dobrada',
   COMBO_SHIELD: 'Escudo de sequência',
   COSMETIC: 'Item visual',
+  CHEST_BRONZE: 'Baú de Bronze',
+  CHEST_SILVER: 'Baú de Prata',
+  CHEST_GOLD: 'Baú de Ouro',
 };
 
 export const REPORT_REASON_LABELS: Record<ReportReason, string> = {

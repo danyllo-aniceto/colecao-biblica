@@ -13,7 +13,7 @@ export type SimulatedPrize =
   | { kind: "COINS"; amount: number }
   | { kind: "HELPER"; name: string; amount: number }
   | { kind: "STICKER"; characterId: number | null; name: string | null; rarity: string | null; imageUrl: string | null; unlocked: boolean; duplicate: boolean }
-  | { kind: "COSMETIC"; name: string };
+  | { kind: "COSMETIC"; name: string; rarity: string };
 
 /**
  * Simula a abertura dos baús com as regras e os dados de verdade (recompensas, personagens publicados e
@@ -28,7 +28,8 @@ export async function simulateChests(runs: number) {
   const available = await availableRewards(prisma, rewards);
   const stickerRewards = available.filter((reward) => reward.rewardType === "STICKER" || reward.rewardType === "STICKER_PACK");
   const publishedRarities = new Set(characters.map((character) => character.rarity));
-  const raresAndEpics = await prisma.cosmetic.findMany({ where: { active: true, inChestPool: true, rarity: { in: ["RARE", "EPIC"] } }, select: { name: true } });
+  const chestCosmetics = await prisma.cosmetic.findMany({ where: { active: true, inChestPool: true }, select: { name: true, rarity: true } });
+  const cosmeticRarities = [...new Set(chestCosmetics.map((cosmetic) => cosmetic.rarity))] as StickerRarity[];
 
   const rarityOf = (rewardId: number): StickerRarity | null => {
     const reward = stickerRewards.find((item) => item.id === rewardId);
@@ -42,7 +43,7 @@ export async function simulateChests(runs: number) {
   };
   const helperPool = CHEST_BOOSTS.map((boost) => ({ field: boost.field as string, name: boost.name }));
 
-  const roll = (tier: ChestTier) => planChest(tier, { stickerRewards, helperPool, forceSticker: false, cosmeticAvailable: raresAndEpics.length > 0 }, Math.random);
+  const roll = (tier: ChestTier) => planChest(tier, { stickerRewards, helperPool, forceSticker: false, cosmeticRarities }, Math.random);
 
   const tiers = Object.fromEntries(
     TIERS.map((tier) => {
@@ -53,6 +54,7 @@ export async function simulateChests(runs: number) {
       let withSticker = 0;
       let withTwo = 0;
       let cosmetic = 0;
+      const cosmeticByRarity: Record<string, number> = {};
       let helpers = 0;
       const rarity: Record<string, number> = Object.fromEntries(RARITIES.map((item) => [item, 0]));
       const helperCount: Record<string, number> = {};
@@ -62,7 +64,10 @@ export async function simulateChests(runs: number) {
         stickers += plan.stickers.length;
         if (plan.stickers.length >= 1) withSticker += 1;
         if (plan.stickers.length >= 2) withTwo += 1;
-        if (plan.cosmetic) cosmetic += 1;
+        if (plan.cosmeticRarity) {
+          cosmetic += 1;
+          cosmeticByRarity[plan.cosmeticRarity] = (cosmeticByRarity[plan.cosmeticRarity] ?? 0) + 1;
+        }
         helpers += plan.helpers.length;
         for (const helper of plan.helpers) helperCount[helper.name] = (helperCount[helper.name] ?? 0) + 1;
         for (const sticker of plan.stickers) {
@@ -79,7 +84,10 @@ export async function simulateChests(runs: number) {
           const character = characterOf(resolved);
           prizes.push({ kind: "STICKER", characterId: character?.id ?? null, name: character?.name ?? "Figurinha", rarity: resolved, imageUrl: character?.imageUrl ?? null, unlocked: true, duplicate: false });
         }
-        if (plan.cosmetic) prizes.push({ kind: "COSMETIC", name: raresAndEpics[Math.floor(Math.random() * raresAndEpics.length)]?.name ?? "Item visual raro" });
+        if (plan.cosmeticRarity) {
+          const matching = chestCosmetics.filter((item) => item.rarity === plan.cosmeticRarity);
+          prizes.push({ kind: "COSMETIC", name: matching[Math.floor(Math.random() * matching.length)]?.name ?? "Item visual", rarity: plan.cosmeticRarity });
+        }
         return prizes;
       });
       return [
@@ -93,6 +101,7 @@ export async function simulateChests(runs: number) {
           chanceSticker: withSticker / runs,
           chanceTwoStickers: withTwo / runs,
           chanceCosmetic: cosmetic / runs,
+          cosmeticByRarity: Object.fromEntries(Object.entries(cosmeticByRarity).map(([rarity, count]) => [rarity, count / runs])),
           rarityPerChest: Object.fromEntries(RARITIES.map((item) => [item, rarity[item] / runs])),
           helpers: Object.fromEntries(Object.entries(helperCount).map(([name, count]) => [name, count / runs])),
           samples,
@@ -103,6 +112,7 @@ export async function simulateChests(runs: number) {
 
   return {
     runs,
+    cosmeticsInChestPool: Object.fromEntries(RARITIES.map((item) => [item, chestCosmetics.filter((cosmetic) => cosmetic.rarity === item).length])),
     publishedByRarity: Object.fromEntries(RARITIES.map((item) => [item, characters.filter((character) => character.rarity === item).length])),
     thresholds: {
       bronze: settings.rewardMinCorrectAnswers,

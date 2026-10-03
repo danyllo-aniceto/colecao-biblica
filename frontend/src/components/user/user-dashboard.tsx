@@ -14,6 +14,7 @@ import { MusicController } from '@/components/sound/music-controller';
 import { playSfx } from '@/lib/sound/sfx';
 import { clearStickerReturn, saveStickerReturn, takeReturnSection } from '@/lib/sticker-return';
 import { MatchResult, type MatchSummary } from '@/components/user/match-result';
+import { ChestOpening } from '@/components/user/chest-opening';
 import { QuizAnswerScreen, type AnswerReveal, type QuizAnswerPayload } from '@/components/user/quiz-answer-screen';
 import { AlbumSection } from '@/components/user/sections/album-section';
 import { HomeSection } from '@/components/user/sections/home-section';
@@ -43,6 +44,8 @@ import {
   startQuizSession,
   updateCurrentUser,
   type AnswerQuizQuestionResult,
+  type ChestPrize,
+  type ChestTierName,
   type CharacterEntry,
   type CollectionProgress,
   type GameRules,
@@ -102,6 +105,8 @@ export function UserDashboard() {
   const [shopError, setShopError] = useState<string | null>(null);
   const [buyingItemId, setBuyingItemId] = useState<number | null>(null);
   const [purchase, setPurchase] = useState<StickerReveal | null>(null);
+  // Baú comprado na loja: abre com a mesma animação do baú da partida.
+  const [shopChest, setShopChest] = useState<{ tier: ChestTierName; prizes: ChestPrize[] } | null>(null);
   const [accountForm, setAccountForm] = useState({ name: user?.name ?? '', email: user?.email ?? '', password: '' });
   const [accountSubmitting, setAccountSubmitting] = useState(false);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
@@ -451,7 +456,10 @@ export function UserDashboard() {
           : current,
       );
 
-      if (result.characterName) {
+      if (result.chestTier && result.chestPrizes?.length) {
+        setShopChest({ tier: result.chestTier, prizes: result.chestPrizes });
+        void refreshCollection();
+      } else if (result.characterName) {
         setPurchase(result);
         void refreshCollection();
       } else {
@@ -692,6 +700,17 @@ export function UserDashboard() {
           }}
         />
         </QuizThemeFrame>
+      ) : null}
+
+      {shopChest ? (
+        <ChestOpening
+          tier={shopChest.tier}
+          prizes={shopChest.prizes}
+          onDone={() => {
+            setShopChest(null);
+            void refreshCollection();
+          }}
+        />
       ) : null}
 
       <MatchResult

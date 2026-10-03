@@ -303,6 +303,10 @@ export const FIXED_REWARDS: FixedReward[] = [
   { name: "Vida extra", rewardType: "EXTRA_LIFE", stickerRarity: null, coinAmount: 0, extraLives: 1, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 5 },
   { name: "Tempo extra", rewardType: "EXTRA_TIME", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 1, xpMultiplier: 1, dropChance: 4 },
   { name: "Dica 50/50", rewardType: "FIFTY_FIFTY", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, hintAmount: 1, dropChance: 5 },
+  // Baús vendidos na loja (não entram em sorteio nenhum: dropChance 0).
+  { name: "Baú de Bronze", rewardType: "CHEST_BRONZE", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 0 },
+  { name: "Baú de Prata", rewardType: "CHEST_SILVER", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 0 },
+  { name: "Baú de Ouro", rewardType: "CHEST_GOLD", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 0 },
   { name: "Pacote surpresa", rewardType: "STICKER_PACK", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 1.5 },
   { name: "Protetor de sequência", rewardType: "STREAK_FREEZE", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 3 },
   ...HELPERS.map((helper) => ({
@@ -328,6 +332,9 @@ export const FIXED_SHOP_ITEMS: FixedShopItem[] = [
   { name: "Vida extra", description: "Adiciona uma vida extra consumível", itemType: "GAME_BONUS", priceCoins: 250, rewardName: "Vida extra" },
   { name: "Tempo extra", description: "Adiciona tempo extra consumível", itemType: "GAME_BONUS", priceCoins: 200, rewardName: "Tempo extra" },
   { name: "Dica 50/50", description: "Elimina duas alternativas erradas de uma pergunta", itemType: "GAME_BONUS", priceCoins: 190, rewardName: "Dica 50/50" },
+  { name: "Baú de Bronze", description: "Moedas, uma ajuda e, com sorte, uma figurinha. Abre na hora.", itemType: "STICKER", priceCoins: 600, rewardName: "Baú de Bronze" },
+  { name: "Baú de Prata", description: "Moedas, duas ajudas, boa chance de figurinha e, às vezes, um item visual.", itemType: "STICKER", priceCoins: 1100, rewardName: "Baú de Prata" },
+  { name: "Baú de Ouro", description: "Moedas, ajudas, figurinha garantida (com chance de rara ou épica) e chance de item visual.", itemType: "STICKER", priceCoins: 2000, rewardName: "Baú de Ouro" },
   {
     name: "Pacote surpresa",
     description: "Uma figurinha de raridade sorteada, que pode até ser lendária. Repetida fica guardada para vender ou fundir.",

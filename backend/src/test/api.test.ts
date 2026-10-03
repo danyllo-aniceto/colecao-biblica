@@ -180,7 +180,7 @@ describe.skipIf(!hasDatabase)("API", () => {
       expect((await api.delete("/api/rewards/admin/1").set(bearer(admin))).status).toBe(400);
 
       const rewards = await api.get("/api/rewards").set(bearer(admin));
-      expect(rewards.body).toHaveLength(18);
+      expect(rewards.body).toHaveLength(21);
       expect(rewards.body.every((reward: { system: boolean }) => reward.system)).toBe(true);
       const coins = rewards.body.find((reward: { rewardType: string }) => reward.rewardType === "COINS");
       const zero = await api.put(`/api/rewards/admin/${coins.id}`).set(bearer(admin)).send({ dropChance: 0 });
@@ -455,7 +455,7 @@ describe.skipIf(!hasDatabase)("API", () => {
     it("compra com moedas, respeita limites e não vende o que já tem", async () => {
       const token = await login("user@email.com");
       const shop = await api.get("/api/shop").set(bearer(token));
-      expect(shop.body.map((item: { priceCoins: number }) => item.priceCoins)).toEqual([180, 190, 200, 200, 200, 220, 230, 250, 270, 300, 330, 350, 450, 750, 1100, 2800]);
+      expect(shop.body.map((item: { priceCoins: number }) => item.priceCoins)).toEqual([180, 190, 200, 200, 200, 220, 230, 250, 270, 300, 330, 350, 450, 600, 750, 1100, 1100, 2000, 2800]);
       const life = shop.body.find((item: { name: string }) => item.name === "Vida extra");
       const rare = shop.body.find((item: { name: string }) => item.name === "Figurinha Rara");
 

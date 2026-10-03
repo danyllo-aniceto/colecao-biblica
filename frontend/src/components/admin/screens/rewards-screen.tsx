@@ -67,6 +67,9 @@ const TYPE_HELP: Record<RewardType, string> = {
   DOUBLE_COINS: 'Ajuda guardada: a partida rende moedas multiplicadas (multiplicador em Configurações).',
   COMBO_SHIELD: 'Ajuda guardada: um erro não zera a sequência de acertos.',
   COSMETIC: 'Item visual (ícone, moldura, título, cor do nome ou reação). Se o jogador já tiver, vira 50 moedas.',
+  CHEST_BRONZE: 'Baú vendido na loja: abre na hora com o conteúdo do baú de bronze (veja o Simulador de baús).',
+  CHEST_SILVER: 'Baú vendido na loja: abre na hora com o conteúdo do baú de prata (veja o Simulador de baús).',
+  CHEST_GOLD: 'Baú vendido na loja: abre na hora com o conteúdo do baú de ouro (veja o Simulador de baús).',
 };
 
 export function rewardSummary(reward: AdminReward) {
@@ -89,6 +92,10 @@ export function rewardSummary(reward: AdminReward) {
       return `${reward.coinAmount ?? 0} moedas`;
     case 'COSMETIC':
       return 'Item visual';
+    case 'CHEST_BRONZE':
+    case 'CHEST_SILVER':
+    case 'CHEST_GOLD':
+      return 'Abre um baú na hora';
     default:
       return `${reward.boostAmount ?? 1}x ${REWARD_TYPE_LABELS[reward.rewardType].toLowerCase()}`;
   }

@@ -35,6 +35,8 @@ export type CampaignScenario = {
   color: string | null;
   mapImageUrl: string | null;
   iconImageUrl: string | null;
+  /** Imagem de fundo da tela do quiz neste cenário. */
+  quizBackgroundUrl?: string | null;
   /** Música do tema: liberada ao chegar ao primeiro nível do cenário. */
   /** Tem música cadastrada (mesmo bloqueada). */
   hasMusic: boolean;

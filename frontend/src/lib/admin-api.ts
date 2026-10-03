@@ -22,7 +22,10 @@ export type RewardType =
   | 'FREEZE_TIME'
   | 'DOUBLE_COINS'
   | 'COMBO_SHIELD'
-  | 'COSMETIC';
+  | 'COSMETIC'
+  | 'CHEST_BRONZE'
+  | 'CHEST_SILVER'
+  | 'CHEST_GOLD';
 export type ReportStatus = 'OPEN' | 'RESOLVED' | 'DISMISSED';
 export type ReportReason = 'WRONG_ANSWER' | 'TYPO' | 'CONFUSING' | 'OTHER';
 export type ShopItemType = 'STICKER' | 'GAME_BONUS' | 'ECONOMY';
@@ -509,13 +512,14 @@ export function getAdminStats() {
 
 export type SimulatedChestTier = {
   possible: boolean;
-  spec: { coins: number; helpers: number; stickerChance: number; extraStickerChance: number; cosmeticChance: number };
+  spec: { coins: number; helpers: number; stickerChance: number; extraStickerChance: number; cosmetic: { chance: number; weights: Record<string, number> } };
   avgCoins: number;
   avgHelpers: number;
   avgStickers: number;
   chanceSticker: number;
   chanceTwoStickers: number;
   chanceCosmetic: number;
+  cosmeticByRarity: Record<string, number>;
   rarityPerChest: Record<'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY', number>;
   helpers: Record<string, number>;
   samples: ChestPrize[][];
@@ -524,6 +528,7 @@ export type SimulatedChestTier = {
 export type ChestSimulation = {
   runs: number;
   publishedByRarity: Record<string, number>;
+  cosmeticsInChestPool: Record<string, number>;
   thresholds: {
     bronze: number;
     silver: number;

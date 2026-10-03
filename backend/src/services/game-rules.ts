@@ -124,15 +124,16 @@ export type ChestSpec = {
   stickerChance: number;
   /** Chance (0 a 1) de vir uma segunda figurinha, quando a primeira veio. */
   extraStickerChance: number;
-  /** Chance (0 a 1) de vir também um item visual raro. */
-  cosmeticChance: number;
+  /** Item visual: chance (0 a 1) de vir e peso de cada raridade (a raridade sorteada precisa ter item disponível). */
+  cosmetic: { chance: number; weights: Partial<Record<StickerRarity, number>> };
 };
 
 export const CHEST_SPECS: Record<ChestTier, ChestSpec> = {
-  BRONZE: { coins: 10, helpers: 1, stickerChance: 0.45, extraStickerChance: 0, cosmeticChance: 0 },
-  SILVER: { coins: 25, helpers: 2, stickerChance: 0.65, extraStickerChance: 0, cosmeticChance: 0 },
-  GOLD: { coins: 50, helpers: 2, stickerChance: 1, extraStickerChance: 0.1, cosmeticChance: 0 },
-  DIAMOND: { coins: 100, helpers: 3, stickerChance: 1, extraStickerChance: 0.2, cosmeticChance: 0.3 },
+  // Itens visuais só a partir da prata; quanto melhor o baú, mais raro o item que pode vir.
+  BRONZE: { coins: 10, helpers: 1, stickerChance: 0.45, extraStickerChance: 0, cosmetic: { chance: 0, weights: {} } },
+  SILVER: { coins: 25, helpers: 2, stickerChance: 0.65, extraStickerChance: 0, cosmetic: { chance: 0.12, weights: { COMMON: 60, RARE: 35, EPIC: 5 } } },
+  GOLD: { coins: 50, helpers: 2, stickerChance: 1, extraStickerChance: 0.1, cosmetic: { chance: 0.22, weights: { COMMON: 30, RARE: 45, EPIC: 22, LEGENDARY: 3 } } },
+  DIAMOND: { coins: 100, helpers: 3, stickerChance: 1, extraStickerChance: 0.2, cosmetic: { chance: 0.35, weights: { RARE: 40, EPIC: 45, LEGENDARY: 15 } } },
 };
 
 /** Moedas garantidas de cada baú, além do restante. */
@@ -167,16 +168,22 @@ export type ChestRollContext = {
   helperPool: Array<{ field: string; name: string }>;
   /** Garantia contra azar: depois de N baús sem figurinha, este traz uma. */
   forceSticker: boolean;
-  /** Existe algum item visual raro que o jogador ainda não tem. */
-  cosmeticAvailable: boolean;
+  /** Raridades de item visual que o jogador ainda pode ganhar (as que têm algum item no baú que ele não tem). */
+  cosmeticRarities: StickerRarity[];
 };
 
 export type ChestPlan = {
   coins: number;
   helpers: Array<{ field: string; name: string }>;
   stickers: Array<{ rewardId: number; rewardName: string }>;
-  cosmetic: boolean;
+  /** Raridade do item visual que vem no baú (null: nenhum). */
+  cosmeticRarity: StickerRarity | null;
 };
+
+function pickChestCosmeticRarity(spec: ChestSpec, available: StickerRarity[], random: () => number): StickerRarity | null {
+  if (spec.cosmetic.chance <= 0 || available.length === 0 || random() >= spec.cosmetic.chance) return null;
+  return weightedPick(available, (rarity) => spec.cosmetic.weights[rarity] ?? 0, random);
+}
 
 /** Sorteia o conteúdo de um baú. Pura: o jogo e o simulador do painel usam esta mesma função. */
 export function planChest(tier: ChestTier, context: ChestRollContext, random: () => number = Math.random): ChestPlan {
@@ -207,7 +214,7 @@ export function planChest(tier: ChestTier, context: ChestRollContext, random: ()
     coins: spec.coins + Math.max(0, missingHelpers) * CHEST_HELPER_FALLBACK_COINS,
     helpers,
     stickers,
-    cosmetic: spec.cosmeticChance > 0 && context.cosmeticAvailable && random() < spec.cosmeticChance,
+    cosmeticRarity: pickChestCosmeticRarity(spec, context.cosmeticRarities, random),
   };
 }
 
