@@ -59,6 +59,8 @@ enum CosmeticType {
   TITLE
   NAME_COLOR
   REACTION
+  PROFILE_BG
+  ALBUM_COVER
 }
 
 /// Como o item é obtido: grátis para todos, comprado, por meta ou só como prêmio (admin, baú, coleção, passe).
@@ -147,6 +149,8 @@ model User {
   frameId            Int?      @map("frame_id")
   titleId            Int?      @map("title_id")
   nameColorId        Int?      @map("name_color_id")
+  profileBgId        Int?      @map("profile_bg_id")
+  albumCoverId       Int?      @map("album_cover_id")
   /// Figurinhas escolhidas para a vitrine do perfil (até 3).
   showcase           Int[]     @default([])
   createdAt          DateTime  @default(now()) @map("created_at")
@@ -167,10 +171,12 @@ model User {
   reports      QuestionReport[]
   cosmetics    UserCosmetic[]
 
-  avatar    Cosmetic? @relation("UserAvatar", fields: [avatarId], references: [id], onDelete: SetNull)
-  frame     Cosmetic? @relation("UserFrame", fields: [frameId], references: [id], onDelete: SetNull)
-  title     Cosmetic? @relation("UserTitle", fields: [titleId], references: [id], onDelete: SetNull)
-  nameColor Cosmetic? @relation("UserNameColor", fields: [nameColorId], references: [id], onDelete: SetNull)
+  avatar     Cosmetic? @relation("UserAvatar", fields: [avatarId], references: [id], onDelete: SetNull)
+  frame      Cosmetic? @relation("UserFrame", fields: [frameId], references: [id], onDelete: SetNull)
+  title      Cosmetic? @relation("UserTitle", fields: [titleId], references: [id], onDelete: SetNull)
+  nameColor  Cosmetic? @relation("UserNameColor", fields: [nameColorId], references: [id], onDelete: SetNull)
+  profileBg  Cosmetic? @relation("UserProfileBg", fields: [profileBgId], references: [id], onDelete: SetNull)
+  albumCover Cosmetic? @relation("UserAlbumCover", fields: [albumCoverId], references: [id], onDelete: SetNull)
 
   friendRequestsSent     Friendship[] @relation("FriendshipRequester")
   friendRequestsReceived Friendship[] @relation("FriendshipAddressee")
@@ -272,12 +278,13 @@ model RewardDefinition {
   active             Boolean        @default(true)
   system             Boolean        @default(false)
 
-  stickerCharacter BiblicalCharacter? @relation(fields: [stickerCharacterId], references: [id], onDelete: SetNull)
-  cosmetic         Cosmetic?          @relation(fields: [cosmeticId], references: [id], onDelete: SetNull)
-  shopItems        ShopItem[]
-  passTiers        PassTier[]
-  scenarioNodes    ScenarioNode[]
-  missions         Mission[]
+  stickerCharacter   BiblicalCharacter? @relation(fields: [stickerCharacterId], references: [id], onDelete: SetNull)
+  cosmetic           Cosmetic?          @relation(fields: [cosmeticId], references: [id], onDelete: SetNull)
+  shopItems          ShopItem[]
+  passTiers          PassTier[]
+  passTierDuplicates PassTier[]         @relation("PassTierDuplicate")
+  scenarioNodes      ScenarioNode[]
+  missions           Mission[]
 
   @@map("reward_definitions")
 }
@@ -578,6 +585,8 @@ model Cosmetic {
   frameOf           User[]                @relation("UserFrame")
   titleOf           User[]                @relation("UserTitle")
   nameColorOf       User[]                @relation("UserNameColor")
+  profileBgOf       User[]                @relation("UserProfileBg")
+  albumCoverOf      User[]                @relation("UserAlbumCover")
   messages          Message[]
   rewards           RewardDefinition[]
   collections       CharacterCollection[]
@@ -621,19 +630,46 @@ model CharacterCollection {
   @@map("character_collections")
 }
 
-/// Degrau do passe da temporada (a trilha recomeça todo mês; o progresso é o XP do mês).
+/// Passe temático (Natal, Páscoa...). Um passe vale por mês: o fixado naquele mês ou, senão, o sorteado em rodízio entre os ativos.
+model Pass {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  /// Cor do tema, em #rrggbb.
+  color       String?
+  imageUrl    String?  @map("image_url")
+  /// Fixa o passe num mês ("AAAA-MM"), ex.: Natal em dezembro.
+  pinnedMonth String?  @map("pinned_month")
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  tiers PassTier[]
+
+  @@map("passes")
+}
+
+/// Degrau de um passe (a trilha recomeça todo mês; o progresso é o XP do mês).
 model PassTier {
-  id                 Int     @id @default(autoincrement())
-  level              Int     @unique
-  requiredXp         Int     @map("required_xp")
-  rewardCoins        Int     @default(0) @map("reward_coins")
-  rewardDefinitionId Int?    @map("reward_definition_id")
-  rewardCosmeticId   Int?    @map("reward_cosmetic_id")
-  active             Boolean @default(true)
+  id                          Int     @id @default(autoincrement())
+  passId                      Int     @map("pass_id")
+  level                       Int
+  requiredXp                  Int     @map("required_xp")
+  rewardCoins                 Int     @default(0) @map("reward_coins")
+  rewardDefinitionId          Int?    @map("reward_definition_id")
+  rewardCosmeticId            Int?    @map("reward_cosmetic_id")
+  /// Moedas quando o jogador já tem o item visual do degrau (vazio = valor padrão da raridade).
+  duplicateCoins              Int?    @map("duplicate_coins")
+  /// Recompensa extra quando o item visual já é do jogador (ajuda, pacote...).
+  duplicateRewardDefinitionId Int?    @map("duplicate_reward_definition_id")
+  active                      Boolean @default(true)
 
-  rewardDefinition RewardDefinition? @relation(fields: [rewardDefinitionId], references: [id], onDelete: SetNull)
-  rewardCosmetic   Cosmetic?         @relation(fields: [rewardCosmeticId], references: [id], onDelete: SetNull)
+  pass                      Pass              @relation(fields: [passId], references: [id], onDelete: Cascade)
+  rewardDefinition          RewardDefinition? @relation(fields: [rewardDefinitionId], references: [id], onDelete: SetNull)
+  rewardCosmetic            Cosmetic?         @relation(fields: [rewardCosmeticId], references: [id], onDelete: SetNull)
+  duplicateRewardDefinition RewardDefinition? @relation("PassTierDuplicate", fields: [duplicateRewardDefinitionId], references: [id], onDelete: SetNull)
 
+  @@unique([passId, level])
   @@map("pass_tiers")
 }
 
@@ -744,16 +780,16 @@ model ScenarioNode {
 
 /// Visual de cada baú da partida (BRONZE, SILVER, GOLD, DIAMOND), cadastrado no painel.
 model ChestDesign {
-  id        Int      @id @default(autoincrement())
-  tier      String   @unique
+  id           Int      @id @default(autoincrement())
+  tier         String   @unique
   /// Arte do baú fechado (quadrada, fundo transparente fica melhor).
-  imageUrl  String?  @map("image_url")
+  imageUrl     String?  @map("image_url")
   /// Arte do baú aberto (mesmo enquadramento do fechado): aparece no instante em que ele abre.
-  openImageUrl String? @map("open_image_url")
+  openImageUrl String?  @map("open_image_url")
   /// Nome exibido (vazio usa o padrão) e cor de destaque do brilho.
-  name      String?
-  color     String?
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  name         String?
+  color        String?
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("chest_designs")
 }

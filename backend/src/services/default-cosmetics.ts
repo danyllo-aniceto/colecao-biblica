@@ -158,7 +158,9 @@ export async function ensureDefaultCosmetics(db: Db) {
 
 /** Trilha padrão do passe (só criada quando ainda não existe nenhum degrau). */
 export async function ensureDefaultPassTiers(db: Db) {
+  if ((await db.pass.count()) === 0) await db.pass.create({ data: { name: "Passe da temporada", description: "A trilha mensal de prêmios." } });
   if ((await db.passTier.count()) > 0) return;
+  const pass = await db.pass.findFirstOrThrow({ orderBy: { id: "asc" } });
   const reward = async (name: string) => (await db.rewardDefinition.findFirst({ where: { name }, select: { id: true } }))?.id ?? null;
   const title = await db.cosmetic.findFirst({ where: { type: "TITLE", name: "Peregrino da temporada" }, select: { id: true } });
   const tiers = [
@@ -171,5 +173,5 @@ export async function ensureDefaultPassTiers(db: Db) {
     { level: 7, requiredXp: 14000, rewardCoins: 0, rewardDefinitionId: await reward("Bênção dobrada") },
     { level: 8, requiredXp: 18000, rewardCoins: 300, rewardCosmeticId: title?.id ?? null },
   ];
-  await db.passTier.createMany({ data: tiers.map((tier) => ({ ...tier, rewardCoins: tier.rewardCoins || (tier.rewardDefinitionId ? 0 : 50) })) });
+  await db.passTier.createMany({ data: tiers.map((tier) => ({ ...tier, passId: pass.id, rewardCoins: tier.rewardCoins || (tier.rewardDefinitionId ? 0 : 50) })) });
 }

@@ -7,6 +7,9 @@ import {
   pickGeneralQuestionIds,
   isCampaignOnlyRarity,
   chestCoins,
+  duplicateCosmeticCoins,
+  nextMonthKey,
+  passForMonth,
   comboBonus,
   monthKeyInTimeZone,
   monthRangeInTimeZone,
@@ -490,5 +493,48 @@ describe("campanha e figurinha especial", () => {
     // Poucas gerais: o cenário cobre o resto.
     expect(pickGeneralQuestionIds(scenario, [10], 6)).toHaveLength(6);
     expect(pickGeneralQuestionIds(scenario, others, 2)).toHaveLength(2);
+  });
+});
+
+describe("passes temáticos", () => {
+  const passes = [{ id: 1 }, { id: 2 }, { id: 3 }];
+  const months = Array.from({ length: 36 }, (_, index) => `${2026 + Math.floor((index + 9) / 12)}-${String(((index + 9) % 12) + 1).padStart(2, "0")}`);
+
+  it("sem passes não há passe no mês", () => {
+    expect(passForMonth([], "2026-10")).toBeNull();
+  });
+
+  it("um passe só vale em todos os meses", () => {
+    expect(passForMonth([{ id: 7 }], "2027-02")?.id).toBe(7);
+  });
+
+  it("o passe fixado num mês vence o rodízio", () => {
+    const withNatal = [...passes, { id: 9, pinnedMonth: "2026-12" }];
+    expect(passForMonth(withNatal, "2026-12")?.id).toBe(9);
+    expect(passForMonth(withNatal, "2026-11")?.id).not.toBe(9);
+  });
+
+  it("o rodízio é estável e passa por todos antes de repetir", () => {
+    const chosen = months.map((month) => passForMonth(passes, month)!.id);
+    expect(chosen).toEqual(months.map((month) => passForMonth(passes, month)!.id));
+    // Outubro de 2026 abre uma volta de 3 meses: cada volta tem os 3 passes.
+    for (let start = 0; start + 3 <= chosen.length; start += 3) expect(new Set(chosen.slice(start, start + 3)).size).toBe(3);
+  });
+
+  it("nunca repete o mesmo passe em dois meses seguidos", () => {
+    const chosen = months.map((month) => passForMonth(passes, month)!.id);
+    for (let index = 1; index < chosen.length; index += 1) expect(chosen[index]).not.toBe(chosen[index - 1]);
+    const two = months.map((month) => passForMonth([{ id: 1 }, { id: 2 }], month)!.id);
+    for (let index = 1; index < two.length; index += 1) expect(two[index]).not.toBe(two[index - 1]);
+  });
+
+  it("passa o ano ao pedir o mês seguinte", () => {
+    expect(nextMonthKey("2026-12")).toBe("2027-01");
+    expect(nextMonthKey("2026-03")).toBe("2026-04");
+  });
+
+  it("item repetido vira mais moedas quanto mais raro", () => {
+    expect(duplicateCosmeticCoins("COMMON")).toBeLessThan(duplicateCosmeticCoins("EPIC"));
+    expect(duplicateCosmeticCoins("LEGENDARY")).toBe(400);
   });
 });

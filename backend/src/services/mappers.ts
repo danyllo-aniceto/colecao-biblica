@@ -25,6 +25,8 @@ export function toUserResponse(user: User) {
     frameId: user.frameId,
     titleId: user.titleId,
     nameColorId: user.nameColorId,
+    profileBgId: user.profileBgId,
+    albumCoverId: user.albumCoverId,
     showcase: user.showcase,
     dailyStreak: user.dailyStreak,
     lastDailyClaim: user.lastDailyClaim,

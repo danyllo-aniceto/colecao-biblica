@@ -58,11 +58,13 @@ export const REACTION_ANIMATIONS = ["pop", "bounce", "shake", "spin", "rise", "p
 export const FRAME_STYLES = ["solid", "wood", "silver", "gold", "fire", "rainbow", "copper", "ice", "sunset", "laurel", "aurora", "neon", "royal", "galaxy", "pearl", "pentecost"] as const;
 
 /** Campo do usuário que guarda o item equipado de cada tipo (reações não se equipam). */
-const EQUIP_FIELD: Partial<Record<CosmeticType, "avatarId" | "frameId" | "titleId" | "nameColorId">> = {
+const EQUIP_FIELD: Partial<Record<CosmeticType, "avatarId" | "frameId" | "titleId" | "nameColorId" | "profileBgId" | "albumCoverId">> = {
   AVATAR: "avatarId",
   FRAME: "frameId",
   TITLE: "titleId",
   NAME_COLOR: "nameColorId",
+  PROFILE_BG: "profileBgId",
+  ALBUM_COVER: "albumCoverId",
 };
 
 export async function loadCosmeticStats(db: Db, userId: number): Promise<CosmeticStats> {
@@ -164,13 +166,13 @@ export async function getInventory(userId: number) {
   const [cosmetics, owned, user, stats] = await Promise.all([
     prisma.cosmetic.findMany({ where: { active: true }, include: { event: true }, orderBy: [{ type: "asc" }, { sortOrder: "asc" }, { id: "asc" }] }),
     prisma.userCosmetic.findMany({ where: { userId }, select: { cosmeticId: true, acquiredAt: true } }),
-    prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { avatarId: true, frameId: true, titleId: true, nameColorId: true, coins: true } }),
+    prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { avatarId: true, frameId: true, titleId: true, nameColorId: true, profileBgId: true, albumCoverId: true, coins: true } }),
     loadCosmeticStats(prisma, userId),
   ]);
   const ownedAt = new Map(owned.map((row) => [row.cosmeticId, row.acquiredAt]));
   return {
     unlocked,
-    equipped: { avatarId: user.avatarId, frameId: user.frameId, titleId: user.titleId, nameColorId: user.nameColorId },
+    equipped: { avatarId: user.avatarId, frameId: user.frameId, titleId: user.titleId, nameColorId: user.nameColorId, profileBgId: user.profileBgId, albumCoverId: user.albumCoverId },
     coins: user.coins,
     items: cosmetics
       // Itens de evento fora do período só aparecem para quem já tem.
@@ -229,6 +231,8 @@ const lookSelect = {
   frame: { select: { imageUrl: true, color: true, style: true } },
   title: { select: { name: true, color: true, style: true, rarity: true } },
   nameColor: { select: { color: true } },
+  profileBg: { select: { imageUrl: true, color: true, style: true } },
+  albumCover: { select: { imageUrl: true, color: true, style: true } },
 } satisfies Prisma.UserSelect;
 
 type LookRow = Prisma.UserGetPayload<{ select: typeof lookSelect }>;
@@ -238,6 +242,9 @@ export type PlayerLook = {
   frame: { imageUrl: string | null; color: string | null; style: string | null } | null;
   title: { name: string; color: string | null; style: string | null; rarity: string } | null;
   nameColor: string | null;
+  /** Fundo do cartão de perfil e capa do álbum (imagem e/ou cor). */
+  profileBg: { imageUrl: string | null; color: string | null; style: string | null } | null;
+  albumCover: { imageUrl: string | null; color: string | null; style: string | null } | null;
 };
 
 function toLook(row: LookRow | undefined): PlayerLook {
@@ -246,6 +253,8 @@ function toLook(row: LookRow | undefined): PlayerLook {
     frame: row?.frame ?? null,
     title: row?.title ?? null,
     nameColor: row?.nameColor?.color ?? null,
+    profileBg: row?.profileBg ?? null,
+    albumCover: row?.albumCover ?? null,
   };
 }
 

@@ -691,3 +691,50 @@ export function pickGeneralQuestionIds(
   const rest = shuffle([...otherIds, ...scenarioIds.filter((id) => !fromScenario.includes(id))], random);
   return shuffle([...fromScenario, ...rest.slice(0, limit - fromScenario.length)], random);
 }
+
+// ---------------------------------------------------------------------------
+// Passes temáticos
+// ---------------------------------------------------------------------------
+
+/** Moedas dadas no lugar de um item visual que o jogador já tem, por raridade. */
+export const DUPLICATE_COSMETIC_COINS_BY_RARITY: Record<StickerRarity, number> = { COMMON: 50, RARE: 100, EPIC: 200, LEGENDARY: 400, SPECIAL: 400 };
+
+export function duplicateCosmeticCoins(rarity: StickerRarity): number {
+  return DUPLICATE_COSMETIC_COINS_BY_RARITY[rarity] ?? 50;
+}
+
+/** Índice absoluto do mês ("AAAA-MM"): janeiro de 2000 = 0. */
+function monthNumber(monthKey: string): number {
+  const [year, month] = monthKey.split("-").map(Number);
+  return (year - 2000) * 12 + (month - 1);
+}
+
+/** Próximo mês ("AAAA-MM") depois de `monthKey`. */
+export function nextMonthKey(monthKey: string): string {
+  const [year, month] = monthKey.split("-").map(Number);
+  return month >= 12 ? `${year + 1}-01` : `${year}-${String(month + 1).padStart(2, "0")}`;
+}
+
+/**
+ * Qual passe vale no mês. O passe fixado naquele mês ("pinnedMonth") vence; senão os passes livres entram em
+ * rodízio: cada "volta" sorteia a ordem de todos (estável, pelo número da volta) e nunca repete o último da volta
+ * anterior no começo da seguinte. Com mais passes cadastrados, cada um volta mais raramente.
+ */
+export function passForMonth<T extends { id: number; pinnedMonth?: string | null }>(passes: T[], monthKey: string): T | null {
+  const pinned = passes.find((pass) => pass.pinnedMonth === monthKey);
+  if (pinned) return pinned;
+  const pool = passes.filter((pass) => !pass.pinnedMonth).sort((left, right) => left.id - right.id);
+  if (pool.length === 0) return null;
+  if (pool.length === 1) return pool[0];
+
+  const index = monthNumber(monthKey);
+  const round = Math.floor(index / pool.length);
+  let last: T | null = null;
+  let order = pool;
+  for (let current = 0; current <= round; current += 1) {
+    order = shuffle(pool, seededRandom(hashString(`passes:${current}`)));
+    if (last && order[0].id === last.id) [order[0], order[1]] = [order[1], order[0]];
+    last = order[order.length - 1];
+  }
+  return order[index % pool.length];
+}

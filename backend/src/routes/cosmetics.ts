@@ -23,7 +23,7 @@ import {
 
 export const cosmeticsRouter = Router();
 
-const cosmeticType = z.enum(["AVATAR", "FRAME", "TITLE", "NAME_COLOR", "REACTION"]);
+const cosmeticType = z.enum(["AVATAR", "FRAME", "TITLE", "NAME_COLOR", "REACTION", "PROFILE_BG", "ALBUM_COVER"]);
 const color = z
   .string()
   .regex(/^#[0-9a-fA-F]{6}$/, "Use uma cor no formato #rrggbb")
@@ -149,6 +149,9 @@ type CosmeticInput = z.infer<typeof updateSchema> & { type?: z.infer<typeof cosm
 async function validate(type: z.infer<typeof cosmeticType>, input: CosmeticInput) {
   if ((type === "AVATAR" || type === "REACTION") && !input.imageUrl && !(type === "REACTION" && input.style)) {
     throw badRequest(type === "AVATAR" ? "O ícone precisa de uma imagem" : "A reação precisa de uma imagem ou de um emoji");
+  }
+  if ((type === "PROFILE_BG" || type === "ALBUM_COVER") && !input.imageUrl && !input.color) {
+    throw badRequest(type === "PROFILE_BG" ? "O fundo de perfil precisa de uma imagem ou de uma cor" : "A capa do álbum precisa de uma imagem ou de uma cor");
   }
   if ((type === "TITLE" || type === "NAME_COLOR") && !input.color) {
     throw badRequest("Escolha a cor");
