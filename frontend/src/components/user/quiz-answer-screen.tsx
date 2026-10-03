@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
@@ -78,6 +78,18 @@ const optionStyles: Record<AnswerOption, { tile: string; letter: string }> = {
   C: { tile: 'bg-primary text-on-primary [--btn-edge:var(--primary-strong)]', letter: 'bg-black/10' },
   D: { tile: 'bg-success text-white [--btn-edge:var(--success-strong)]', letter: 'bg-white/25' },
 };
+
+const SLOT_LETTERS: AnswerOption[] = ['A', 'B', 'C', 'D'];
+
+/** Embaralha (Fisher-Yates) sem alterar o array original. */
+function shuffled<T>(items: readonly T[]): T[] {
+  const copy = [...items];
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const other = Math.floor(Math.random() * (index + 1));
+    [copy[index], copy[other]] = [copy[other], copy[index]];
+  }
+  return copy;
+}
 
 function secondsUntil(deadline: number, now: number) {
   return Math.max(0, Math.ceil((deadline - now) / 1000));
@@ -226,6 +238,11 @@ export function QuizAnswerScreen({
     }
   }
 
+  // Ordem das alternativas sorteada a cada pergunta, para ninguém decorar "a resposta é a letra X".
+  // O id real (A-D) continua sendo o que vai para a API; a letra exibida segue a posição na tela.
+  const questionId = question?.id;
+  const order = useMemo(() => shuffled<AnswerOption>(SLOT_LETTERS), [questionId]);
+
   if (!question) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg p-4">
@@ -235,12 +252,9 @@ export function QuizAnswerScreen({
   }
 
   const busy = isLoading || submitting;
-  const options = [
-    { id: 'A', text: question.optionA },
-    { id: 'B', text: question.optionB },
-    { id: 'C', text: question.optionC },
-    { id: 'D', text: question.optionD },
-  ] as const;
+  const textById: Record<AnswerOption, string> = { A: question.optionA, B: question.optionB, C: question.optionC, D: question.optionD };
+  const options = order.map((id, index) => ({ id, text: textById[id], slot: SLOT_LETTERS[index] }));
+  const correctSlot = reveal ? (options.find((option) => option.id === reveal.correctOption)?.slot ?? reveal.correctOption) : '';
 
   const locked = busy || Boolean(reveal);
   const extraTimeDisabled = session.extraTimeUsed || boosts.extraTime <= 0 || timeLeft === 0 || locked || usingBoost !== null;
@@ -355,10 +369,10 @@ export function QuizAnswerScreen({
                 onClick={() => setSelected(option.id)}
                 disabled={locked || isRemoved}
                 aria-pressed={isSelected}
-                aria-label={isRemoved ? `${option.id}: eliminada pela dica` : undefined}
+                aria-label={isRemoved ? `${option.slot}: eliminada pela dica` : undefined}
                 className={cn(
                   'btn-3d animate-fade-up relative flex min-h-16 items-center gap-3 rounded-3xl p-3 text-left font-display text-lg font-semibold transition sm:min-h-20 sm:p-4',
-                  optionStyles[option.id].tile,
+                  optionStyles[option.slot].tile,
                   isRemoved && 'opacity-25 line-through grayscale',
                   !reveal && isSelected && 'ring-4 ring-ink/80 ring-offset-2 ring-offset-bg',
                   !reveal && selected && !isSelected && !isRemoved && 'opacity-60',
@@ -368,7 +382,7 @@ export function QuizAnswerScreen({
                 )}
                 style={{ animationDelay: reveal ? undefined : `${index * 60}ms` }}
               >
-                <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-xl font-bold', optionStyles[option.id].letter)}>{option.id}</span>
+                <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-xl font-bold', optionStyles[option.slot].letter)}>{option.slot}</span>
                 <span className="flex-1 leading-snug">{option.text}</span>
                 {question.crowd && !reveal && !isRemoved ? (
                   <span className="flex shrink-0 flex-col items-end gap-1" aria-label={`${question.crowd[option.id]}% dos jogadores`}>
@@ -387,7 +401,7 @@ export function QuizAnswerScreen({
 
         {reveal ? (
           <>
-            <RevealPanel reveal={reveal} />
+            <RevealPanel reveal={reveal} correctLetter={correctSlot} />
             {question.id && !reported ? (
               <button type="button" onClick={() => setReporting(true)} className="inline-flex items-center gap-1.5 self-center text-sm font-semibold text-muted underline-offset-4 hover:text-ink hover:underline">
                 <FlagRoundedIcon fontSize="small" /> Reportar problema nesta pergunta
@@ -504,7 +518,7 @@ export function QuizAnswerScreen({
   );
 }
 
-function RevealPanel({ reveal }: { reveal: AnswerReveal }) {
+function RevealPanel({ reveal, correctLetter }: { reveal: AnswerReveal; correctLetter: string }) {
   const headline = reveal.correct ? 'Resposta certa!' : reveal.timedOut ? 'O tempo acabou' : 'Não foi dessa vez';
   return (
     <div
@@ -520,7 +534,7 @@ function RevealPanel({ reveal }: { reveal: AnswerReveal }) {
       </p>
       {!reveal.correct ? (
         <p className="text-sm font-semibold text-ink">
-          A resposta certa é a letra <strong>{reveal.correctOption}</strong>.{reveal.extraLifeSaved ? ' Sua vida extra te protegeu.' : ''}
+          A resposta certa é a letra <strong>{correctLetter}</strong>.{reveal.extraLifeSaved ? ' Sua vida extra te protegeu.' : ''}
         </p>
       ) : null}
       {reveal.explanation ? <p className="text-sm leading-6 text-ink">{reveal.explanation}</p> : null}
