@@ -178,6 +178,26 @@ export function toRichHtml(value: string) {
     .join("");
 }
 
+/** Mesma limpeza do painel: o desenho "timeline" do Mermaid não aceita classDef/class. */
+function cleanDiagram(code: string) {
+  const source = code.trim();
+  if (!/^timeline\b/i.test(source)) return source;
+  return source
+    .split(/\r?\n/)
+    .filter((line) => !/^\s*(classDef|class)\b/i.test(line.trim()))
+    .join("\n")
+    .trim();
+}
+
+/** Aceita "25/12/2026", "25/12/2026 18:30" (horário de Brasília) ou ISO 8601. */
+function parsePublishAt(value: string): Date | null {
+  const br = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/);
+  const date = br
+    ? new Date(`${br[3]}-${br[2].padStart(2, "0")}-${br[1].padStart(2, "0")}T${(br[4] ?? "00").padStart(2, "0")}:${br[5] ?? "00"}:00-03:00`)
+    : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 const bulkRow = z.object({
   name: requiredText(150),
   rarity: z.string().trim().optional(),
@@ -192,6 +212,10 @@ const bulkRow = z.object({
   keyVerses: z.string().trim().max(1000).optional(),
   keywords: z.string().trim().max(1000).optional(),
   published: z.string().trim().optional(),
+  imageUrl: z.string().trim().max(2048).optional(),
+  publishAt: z.string().trim().optional(),
+  genealogy: z.string().trim().optional(),
+  importantEvents: z.string().trim().optional(),
 });
 
 const bulkSchema = z.object({ rows: z.array(z.unknown()).min(1).max(300), dryRun: z.boolean().optional() });
@@ -259,6 +283,25 @@ charactersRouter.post(
           errors.push({ row, message: `publicado "${input.published}" inválido (use Sim ou Não)` });
           return;
         }
+      }
+      if (input.imageUrl) data.imageUrl = input.imageUrl;
+      if (input.publishAt) {
+        const when = parsePublishAt(input.publishAt);
+        if (!when) {
+          errors.push({ row, message: `data de publicação "${input.publishAt}" inválida (use 25/12/2026 ou 25/12/2026 18:30)` });
+          return;
+        }
+        data.publishAt = when;
+      }
+      for (const field of ["genealogy", "importantEvents"] as const) {
+        const code = input[field] ? cleanDiagram(input[field]) : "";
+        if (!code) continue;
+        const expected = field === "genealogy" ? /^(graph|flowchart)\b/i : /^timeline\b/i;
+        if (!expected.test(code)) {
+          errors.push({ row, message: `${field === "genealogy" ? "árvore genealógica" : "linha do tempo"} deve começar com ${field === "genealogy" ? "graph TD" : "timeline"} (código Mermaid)` });
+          return;
+        }
+        data[field] = code;
       }
       for (const field of ["shortSummary", "fullDescription", "curiosities", "bibleReferences"] as const) {
         if (input[field]) data[field] = toRichHtml(input[field]);

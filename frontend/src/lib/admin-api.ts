@@ -412,7 +412,7 @@ export function importQuestions(rows: BulkQuestionRow[], dryRun: boolean) {
 }
 
 export type BulkCharacterRow = Partial<
-  Record<'name' | 'rarity' | 'testament' | 'shortSummary' | 'fullDescription' | 'curiosities' | 'bibleReferences' | 'narrativeRole' | 'historicalPeriod' | 'bibleBooks' | 'keyVerses' | 'keywords' | 'published', string>
+  Record<'name' | 'rarity' | 'testament' | 'shortSummary' | 'fullDescription' | 'curiosities' | 'bibleReferences' | 'narrativeRole' | 'historicalPeriod' | 'bibleBooks' | 'keyVerses' | 'keywords' | 'published' | 'imageUrl' | 'publishAt' | 'genealogy' | 'importantEvents', string>
 >;
 
 export type BulkCharacterResult = BulkImportResult & { updated: number; willCreate: number; willUpdate: number };

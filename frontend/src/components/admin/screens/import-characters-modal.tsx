@@ -10,6 +10,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { errorMessage, useToast } from '@/components/ui/toast';
 import { Alert } from '@/components/game/game-ui';
 import { cn } from '@/lib/cn';
+import { sanitizeMermaidCode, validateMermaidSyntax } from '@/components/ui/mermaid-diagram';
 import { importCharacters, type BulkCharacterResult, type BulkCharacterRow } from '@/lib/admin-api';
 import { downloadText, parseCsv, toCsv } from '@/lib/csv';
 
@@ -40,11 +41,17 @@ const HEADER_ALIASES: Record<string, Column> = {
   'palavras-chave': 'keywords',
   'palavras chave': 'keywords',
   publicado: 'published',
+  imagem: 'imageUrl',
+  'imagem (url)': 'imageUrl',
+  'publicar em': 'publishAt',
+  'data de publicacao': 'publishAt',
+  'arvore genealogica': 'genealogy',
+  'linha do tempo': 'importantEvents',
 };
 
-const TEMPLATE_HEADER = ['Nome', 'Raridade', 'Testamento', 'Resumo curto', 'História completa', 'Curiosidades', 'Onde ler', 'Papel na história', 'Período', 'Livros', 'Versículos-chave', 'Palavras-chave', 'Publicado'];
+const TEMPLATE_HEADER = ['Nome', 'Raridade', 'Testamento', 'Resumo curto', 'História completa', 'Curiosidades', 'Onde ler', 'Papel na história', 'Período', 'Livros', 'Versículos-chave', 'Palavras-chave', 'Publicado', 'Publicar em', 'Imagem (URL)', 'Árvore genealógica', 'Linha do tempo'];
 const TEMPLATE_ROWS = [
-  ['Davi', 'Épica', 'Antigo', 'Pastor que virou rei de Israel.', 'Davi era o caçula de Jessé...\nDepois foi ungido por Samuel.', 'Escreveu muitos salmos.', '1 Samuel 16-17', 'Rei e salmista', 'Reino Unido', '1 Samuel, 2 Samuel, Salmos', 'Salmo 23; 1Sm 17', 'fé, coragem', 'Não'],
+  ['Davi', 'Épica', 'Antigo', 'Pastor que virou rei de Israel.', 'Davi era o caçula de Jessé...\nDepois foi ungido por Samuel.', 'Escreveu muitos salmos.', '1 Samuel 16-17', 'Rei e salmista', 'Reino Unido', '1 Samuel, 2 Samuel, Salmos', 'Salmo 23; 1Sm 17', 'fé, coragem', 'Não', '', '', 'graph TD\n  Jesse[Jessé] --> Davi[Davi]\n  Davi --> Salomao[Salomão]', 'timeline\n  1 Samuel 16 : Davi é ungido rei\n  1 Samuel 17 : Davi enfrenta Golias'],
 ];
 
 const normalize = (value: string) =>
@@ -77,7 +84,9 @@ export function ImportCharactersModal({ onClose, onImported }: { onClose: () => 
   const toast = useToast();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  // rows: todas as linhas lidas (para mostrar o nome no erro); sendRows: as que seguem para o servidor.
   const [rows, setRows] = useState<BulkCharacterRow[]>([]);
+  const [sendRows, setSendRows] = useState<BulkCharacterRow[]>([]);
   const [preview, setPreview] = useState<BulkCharacterResult | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState<'reading' | 'importing' | null>(null);
@@ -103,8 +112,33 @@ export function ImportCharactersModal({ onClose, onImported }: { onClose: () => 
         setProblem(`A planilha tem ${parsed.length} personagens; importe no máximo 300 por vez.`);
         return;
       }
+      // O Mermaid só existe no navegador: valida os diagramas aqui e separa as linhas com código quebrado.
+      const diagramErrors: Array<{ row: number; message: string }> = [];
+      const sendable: BulkCharacterRow[] = [];
+      const originalRow: number[] = [];
+      for (const [index, row] of parsed.entries()) {
+        let message: string | null = null;
+        for (const [field, label] of [['genealogy', 'Árvore genealógica'], ['importantEvents', 'Linha do tempo']] as const) {
+          const code = row[field] ? sanitizeMermaidCode(row[field]) : '';
+          if (!code) continue;
+          const result = await validateMermaidSyntax(code);
+          if (!result.valid) {
+            message = `${label} com erro: ${result.error}`;
+            break;
+          }
+        }
+        if (message) {
+          diagramErrors.push({ row: index + 1, message });
+        } else {
+          sendable.push(row);
+          originalRow.push(index + 1);
+        }
+      }
       setRows(parsed);
-      setPreview(await importCharacters(parsed, true));
+      setSendRows(sendable);
+      const result = sendable.length > 0 ? await importCharacters(sendable, true) : { valid: 0, created: 0, updated: 0, willCreate: 0, willUpdate: 0, errors: [] };
+      const serverErrors = result.errors.map((error) => ({ ...error, row: originalRow[error.row - 1] ?? error.row }));
+      setPreview({ ...result, errors: [...diagramErrors, ...serverErrors].sort((a, b) => a.row - b.row) });
     } catch (error) {
       setProblem(errorMessage(error, 'Não foi possível ler a planilha.'));
     } finally {
@@ -115,7 +149,7 @@ export function ImportCharactersModal({ onClose, onImported }: { onClose: () => 
   async function confirm() {
     setBusy('importing');
     try {
-      const result = await importCharacters(rows, false);
+      const result = await importCharacters(sendRows, false);
       toast.success(`${result.created} criado(s) e ${result.updated} atualizado(s).`, result.errors.length ? { description: `${result.errors.length} linha(s) com erro foram ignoradas.` } : undefined);
       onImported();
     } catch (error) {
@@ -172,7 +206,7 @@ export function ImportCharactersModal({ onClose, onImported }: { onClose: () => 
             </Button>
           </div>
           <p className="text-xs text-muted">
-            Só Nome é obrigatório para atualizar. Para criar, preencha também Raridade (Comum, Rara, Épica, Lendária), Resumo curto e História completa. Opcionais: Testamento (Antigo/Novo), Curiosidades, Onde ler, Papel na história, Período, Livros, Versículos-chave, Palavras-chave e Publicado (Sim/Não). Quebra de linha no texto vira parágrafo.
+            Só Nome é obrigatório para atualizar. Para criar, preencha também Raridade (Comum, Rara, Épica, Lendária), Resumo curto e História completa. Opcionais: Testamento (Antigo/Novo), Curiosidades, Onde ler, Papel na história, Período, Livros, Versículos-chave, Palavras-chave, Publicado (Sim/Não), Publicar em (25/12/2026 18:30), Imagem (URL) e os diagramas em código Mermaid (Árvore genealógica começa com graph TD; Linha do tempo começa com timeline). Quebra de linha no texto vira parágrafo.
           </p>
           <input
             ref={inputRef}
