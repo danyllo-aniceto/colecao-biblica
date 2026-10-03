@@ -18,7 +18,7 @@ type DefaultCosmetic = {
 
 const avatar = (file: string) => `/avatars/${file}.svg`;
 
-/** Conjunto exclusivo do Baú de Esmeralda (entregue ao juntar todos os fragmentos da carta especial). */
+/** Conjunto exclusivo do Baú de Esmeralda (entregue ao juntar todos os fragmentos da figurinha especial). */
 export const EMERALD_SET_NAMES = ["Pastor das ovelhas", "Luz esmeralda", "Ovelha do Bom Pastor", "Verde celestial", "Luz da manhã"] as const;
 
 /**
@@ -26,7 +26,7 @@ export const EMERALD_SET_NAMES = ["Pastor das ovelhas", "Luz esmeralda", "Ovelha
  * outros; no deploy só são criados os que faltam (nada é sobrescrito).
  */
 export const DEFAULT_COSMETICS: DefaultCosmetic[] = [
-  // Conjunto exclusivo do Baú de Esmeralda (carta especial): só vem dele
+  // Conjunto exclusivo do Baú de Esmeralda (figurinha especial): só vem dele
   { type: "AVATAR", name: "Pastor das ovelhas", description: "Exclusivo do Baú de Esmeralda", rarity: "LEGENDARY", imageUrl: avatar("pastor"), unlock: "REWARD" },
   { type: "FRAME", name: "Luz esmeralda", description: "Exclusivo do Baú de Esmeralda", rarity: "LEGENDARY", style: "emerald", color: "#14b8a6", unlock: "REWARD" },
   { type: "TITLE", name: "Ovelha do Bom Pastor", description: "Exclusivo do Baú de Esmeralda", rarity: "LEGENDARY", color: "#14b8a6", style: "shimmer", unlock: "REWARD" },

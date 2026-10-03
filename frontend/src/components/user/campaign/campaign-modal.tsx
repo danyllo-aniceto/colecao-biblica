@@ -136,7 +136,7 @@ function RewardLines({ node, playerName, music }: { node: CampaignNode; playerNa
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-r-special text-white">
             <StarRoundedIcon />
           </span>
-          <span className="font-display font-bold text-ink">1 fragmento da carta especial</span>
+          <span className="font-display font-bold text-ink">1 fragmento da figurinha especial</span>
         </li>
       ) : null}
     </ul>
@@ -169,7 +169,7 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
   const [selected, setSelected] = useState<CampaignNode | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [unlocked, setUnlocked] = useState<ClaimNodeResult | null>(null);
-  // Baú de Esmeralda: abre primeiro; depois aparece o aviso da carta especial.
+  // Baú de Esmeralda: abre primeiro; depois aparece o aviso da figurinha especial.
   const [emerald, setEmerald] = useState<ClaimNodeResult | null>(null);
 
   const special = campaign?.special ?? null;
@@ -288,7 +288,7 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
               <div data-rarity={special.character.rarity} className="rarity ml-auto flex min-w-0 max-w-[55%] items-center gap-2 rounded-2xl border-2 border-r-special/50 bg-r-special/10 px-3 py-1.5">
                 <StarRoundedIcon className="shrink-0 text-r-special" fontSize="small" />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-bold text-ink">{special.owned ? `${special.character.name} conquistado!` : `Carta ${special.character.name}`}</p>
+                  <p className="truncate text-xs font-bold text-ink">{special.owned ? `${special.character.name} conquistado!` : `Figurinha ${special.character.name}`}</p>
                   {special.owned ? null : <ProgressBar className="mt-1 h-1.5" value={(special.fragments / Math.max(special.totalFragments, 1)) * 100} color="var(--r-special)" />}
                 </div>
                 {special.owned ? null : (
@@ -419,7 +419,7 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
       <Modal
         open={unlocked !== null}
         size="sm"
-        title="Carta especial conquistada!"
+        title="Figurinha especial conquistada!"
         onClose={() => setUnlocked(null)}
         footer={<Button onClick={() => setUnlocked(null)}>Continuar</Button>}
       >
@@ -429,7 +429,7 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
               <StickerCard name={unlocked.special.name} rarity={special.character.rarity} imageUrl={unlocked.special.imageUrl} owned size="lg" />
             </div>
             <p className="font-display text-lg font-semibold text-ink">Você juntou todos os fragmentos de {unlocked.special.name}!</p>
-            <p className="text-sm text-muted">Esta carta é única: não pode ser trocada nem vendida.</p>
+            <p className="text-sm text-muted">Esta figurinha é única: não pode ser trocada nem vendida.</p>
           </div>
         ) : null}
       </Modal>

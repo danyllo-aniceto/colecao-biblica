@@ -90,7 +90,7 @@ export function CampaignScreen() {
       }
     >
       <DataTable
-        columns={[{ label: 'Cenário' }, { label: 'Ordem' }, { label: 'Paradas' }, { label: 'Perguntas' }, { label: 'Carta especial' }, { label: 'Status' }, { label: '', className: 'w-44' }]}
+        columns={[{ label: 'Cenário' }, { label: 'Ordem' }, { label: 'Paradas' }, { label: 'Perguntas' }, { label: 'Figurinha especial' }, { label: 'Status' }, { label: '', className: 'w-44' }]}
         loading={list.loading}
         error={list.error}
         isEmpty={list.items.length === 0}
@@ -273,9 +273,9 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
           <Field label="Cor do cenário" hint="Vira a cor de botões, bordas e destaques.">
             <ColorField value={color} onChange={setColor} />
           </Field>
-          <Field label="Carta especial do cenário" hint="Quem recebe os fragmentos das paradas marcadas.">
+          <Field label="Figurinha especial do cenário" hint="Quem recebe os fragmentos das paradas marcadas.">
             <Select
-              aria-label="Carta especial"
+              aria-label="Figurinha especial"
               value={characterId}
               onChange={setCharacterId}
               searchable
@@ -469,7 +469,7 @@ function NodeModal({ scenario, node, nextLevel, onClose, onSaved }: { scenario: 
         </div>
         <div className="grid gap-3 md:grid-cols-2">
           <Switch checked={relic} onChange={setRelic} label="É a relíquia do cenário" />
-          <Switch checked={fragment} onChange={setFragment} label="Dá um fragmento da carta especial" />
+          <Switch checked={fragment} onChange={setFragment} label="Dá um fragmento da figurinha especial" />
         </div>
         <Field label="Posição no mapa (opcional)" error={errors.position} hint="Em % a partir do canto superior esquerdo. Vazio usa o zigue-zague automático.">
           <div className="grid grid-cols-2 gap-3">

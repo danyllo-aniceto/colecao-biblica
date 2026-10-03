@@ -9,7 +9,7 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     await resetDatabase();
   });
 
-  it("o seed cria os cenários e a carta especial Jesus", async () => {
+  it("o seed cria os cenários e a figurinha especial Jesus", async () => {
     const jesus = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Jesus" } });
     expect(jesus.rarity).toBe("SPECIAL");
     const scenarios = await prisma.scenario.findMany({ include: { nodes: true }, orderBy: { sortOrder: "asc" } });
@@ -98,7 +98,7 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     }
     expect(last!.body.user.coins).toBeGreaterThan(0);
 
-    // Ao conquistar a carta especial abre o Baú de Esmeralda (uma única vez) com prêmios muito bons.
+    // Ao conquistar a figurinha especial abre o Baú de Esmeralda (uma única vez) com prêmios muito bons.
     expect(emeralds).toHaveLength(1);
     const [emerald] = emeralds;
     expect(emerald.tier).toBe("EMERALD");
@@ -106,7 +106,7 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     expect(emerald.prizes.filter((prize) => prize.kind === "HELPER")).toHaveLength(4);
     expect(emerald.prizes.filter((prize) => prize.kind === "COSMETIC").map((prize) => prize.name).sort()).toEqual(["Luz da manhã", "Luz esmeralda", "Ovelha do Bom Pastor", "Pastor das ovelhas", "Verde celestial"]);
     const stickerPrizes = emerald.prizes.filter((prize) => prize.kind === "STICKER");
-    // A carta especial vem por último; antes dela, uma épica e uma lendária.
+    // A figurinha especial vem por último; antes dela, uma épica e uma lendária.
     expect(stickerPrizes.at(-1)).toMatchObject({ name: "Jesus", rarity: "SPECIAL" });
     expect(emerald.prizes.at(-1)).toMatchObject({ kind: "STICKER", rarity: "SPECIAL" });
     expect(await prisma.userCosmetic.count({ where: { userId: user.id, cosmetic: { name: { in: ["Pastor das ovelhas", "Luz esmeralda", "Ovelha do Bom Pastor", "Verde celestial", "Luz da manhã"] } } } })).toBe(5);
@@ -128,7 +128,7 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     expect(trade.status).toBe(400);
   });
 
-  it("pacote surpresa e recompensa do painel nunca entregam a carta especial", async () => {
+  it("pacote surpresa e recompensa do painel nunca entregam a figurinha especial", async () => {
     const admin = await login("admin2@email.com");
     const jesus = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Jesus" } });
     const reward = await api

@@ -49,7 +49,7 @@ export async function grantStickerOrDuplicate(db: Db, userId: number, characterI
   if (await grantStickerIfMissing(db, userId, characterId)) {
     return true;
   }
-  // A carta especial é única: não acumula repetidas (não dá para trocar, vender nem fundir).
+  // A figurinha especial é única: não acumula repetidas (não dá para trocar, vender nem fundir).
   const character = await db.biblicalCharacter.findUnique({ where: { id: characterId }, select: { rarity: true } });
   if (character && isCampaignOnlyRarity(character.rarity)) {
     return false;

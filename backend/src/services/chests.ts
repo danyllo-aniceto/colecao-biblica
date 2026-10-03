@@ -15,7 +15,7 @@ export type ChestPrizeView =
   | { kind: "STICKER"; characterId: number | null; name: string | null; rarity: string | null; imageUrl: string | null; unlocked: boolean; duplicate: boolean }
   | { kind: "COSMETIC"; name: string; rarity: string };
 
-/** Baú de Esmeralda: não é da partida, vem da campanha ao conquistar a carta especial. */
+/** Baú de Esmeralda: não é da partida, vem da campanha ao conquistar a figurinha especial. */
 export type SpecialChestTier = ChestTier | "EMERALD";
 
 export type ChestOpening = {
@@ -86,12 +86,12 @@ export async function openChestRewards(
   return { tier, coins: plan.coins, prizes, gotSticker: plan.stickers.length > 0, pityUsed };
 }
 
-/** O que o Baú de Esmeralda traz (fixo, é o prêmio da carta especial): moedas, ajudas, 2 figurinhas, o conjunto exclusivo e a carta. */
+/** O que o Baú de Esmeralda traz (fixo, é o prêmio da figurinha especial): moedas, ajudas, 2 figurinhas, o conjunto exclusivo e a carta. */
 export const EMERALD_CHEST = { coins: 1000, helpers: 4 } as const;
 
 /**
- * Abre o Baú de Esmeralda ao conquistar a carta especial: 1.000 moedas, 4 ajudas, uma figurinha épica e uma lendária,
- * o conjunto de itens visuais exclusivo (os que o jogador ainda não tem) e, por último, a própria carta especial.
+ * Abre o Baú de Esmeralda ao conquistar a figurinha especial: 1.000 moedas, 4 ajudas, uma figurinha épica e uma lendária,
+ * o conjunto de itens visuais exclusivo (os que o jogador ainda não tem) e, por último, a própria figurinha especial.
  * Altera `wallet` em memória (o chamador salva o usuário).
  */
 export async function openEmeraldChest(
@@ -124,7 +124,7 @@ export async function openEmeraldChest(
     prizes.push({ kind: "STICKER", characterId: applied.characterId, name: applied.characterName, rarity: applied.characterRarity, imageUrl: applied.characterImageUrl, unlocked: applied.characterUnlocked, duplicate: applied.duplicate });
   }
 
-  // A carta especial por último: é o grande momento.
+  // A figurinha especial por último: é o grande momento.
   prizes.push({ kind: "STICKER", characterId: special.id, name: special.name, rarity: "SPECIAL", imageUrl: special.imageUrl, unlocked: true, duplicate: false });
   return { tier: "EMERALD", prizes };
 }

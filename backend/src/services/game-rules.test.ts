@@ -421,7 +421,7 @@ describe("baú e passe", () => {
   });
 });
 
-describe("campanha e carta especial", () => {
+describe("campanha e figurinha especial", () => {
   const rules = { packOddsCommon: 60, packOddsRare: 25, packOddsEpic: 12, packOddsLegendary: 3 };
 
   it("a raridade especial nunca sai em pacote nem vale moedas de repetida", () => {
@@ -460,7 +460,7 @@ describe("campanha e carta especial", () => {
     expect(currentScenarioId([], nodes, 5)).toBeNull();
   });
 
-  it("a carta especial só é entregue com todos os fragmentos", () => {
+  it("a figurinha especial só é entregue com todos os fragmentos", () => {
     expect(fragmentsComplete(9, 10)).toBe(false);
     expect(fragmentsComplete(10, 10)).toBe(true);
     expect(fragmentsComplete(0, 0)).toBe(false);

@@ -98,12 +98,12 @@ A loja vende baús de bronze (600), prata (1.100) e ouro (2.000), que abrem na h
 nunca é vendido. Baús, pacotes e figurinhas dividem o limite diário de compras (1 por dia). A loja tem três abas:
 Figurinhas (baús, pacote e figurinha por raridade), Poderes e Cosméticos.
 
-### Baú de Esmeralda (carta especial)
+### Baú de Esmeralda (figurinha especial)
 
-Quando o jogador junta todos os fragmentos e conquista a carta especial na campanha, abre sozinho o **Baú de Esmeralda**
+Quando o jogador junta todos os fragmentos e conquista a figurinha especial na campanha, abre sozinho o **Baú de Esmeralda**
 (uma única vez). Ele traz 1.000 moedas, 4 ajudas, uma figurinha épica e uma lendária (de preferência novas), o conjunto de
 itens visuais exclusivo (ícone "Pastor das ovelhas", moldura "Luz esmeralda", título "Ovelha do Bom Pastor", cor do nome
-"Verde celestial" e reação "Luz da manhã") e, por último, a própria carta especial. Não é vendido nem sai em partida.
+"Verde celestial" e reação "Luz da manhã") e, por último, a própria figurinha especial. Não é vendido nem sai em partida.
 
 ### Visual dos baús e fundo do quiz
 

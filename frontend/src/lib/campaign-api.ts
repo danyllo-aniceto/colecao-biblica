@@ -13,7 +13,7 @@ export type CampaignNode = {
   title: string | null;
   /** Última parada do cenário: a relíquia. */
   relic: boolean;
-  /** Dá um fragmento da carta especial. */
+  /** Dá um fragmento da figurinha especial. */
   fragment: boolean;
   rewardCoins: number;
   reward: { id: number; name: string; rewardType: string } | null;
@@ -75,7 +75,7 @@ export type ClaimNodeResult = {
   fragments: { claimed: number; total: number } | null;
   specialUnlocked: boolean;
   special: { id: number; name: string; imageUrl: string | null } | null;
-  /** Ao conquistar a carta especial: o Baú de Esmeralda e tudo que ele trouxe. */
+  /** Ao conquistar a figurinha especial: o Baú de Esmeralda e tudo que ele trouxe. */
   emeraldChest?: { tier: 'EMERALD'; prizes: ChestPrize[] } | null;
   unlockedAchievements: UnlockedAchievement[];
   user: UserProfile;

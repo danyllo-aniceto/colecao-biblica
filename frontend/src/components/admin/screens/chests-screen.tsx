@@ -35,7 +35,7 @@ const EMERALD_SAMPLE: ChestPrize[] = [
   { kind: 'COSMETIC', name: 'Pastor das ovelhas', rarity: 'LEGENDARY' },
   { kind: 'STICKER', characterId: null, name: 'Figurinha épica', rarity: 'EPIC', imageUrl: null, unlocked: true, duplicate: false },
   { kind: 'STICKER', characterId: null, name: 'Figurinha lendária', rarity: 'LEGENDARY', imageUrl: null, unlocked: true, duplicate: false },
-  { kind: 'STICKER', characterId: null, name: 'Carta especial', rarity: 'SPECIAL', imageUrl: null, unlocked: true, duplicate: false },
+  { kind: 'STICKER', characterId: null, name: 'Figurinha especial', rarity: 'SPECIAL', imageUrl: null, unlocked: true, duplicate: false },
 ];
 /** Troca as figurinhas do exemplo por personagens reais (nome e foto) tirados das amostras do simulador. */
 function emeraldSample(samples: Partial<Record<MatchTier, ChestPrize[][]>>): ChestPrize[] {
@@ -171,7 +171,7 @@ function ChestDesignPanel({ samples, onPreview }: { samples: Partial<Record<Matc
   }
 
   return (
-    <AdminPanel title="Visual dos baús" description="O baú de esmeralda é o prêmio de conquistar a carta especial na campanha. Suba a arte de cada baú (imagem quadrada, de preferência com fundo transparente), escolha o nome e a cor do brilho. Vale para o resultado da partida, a loja e a abertura. Vazio usa o desenho padrão.">
+    <AdminPanel title="Visual dos baús" description="O baú de esmeralda é o prêmio de conquistar a figurinha especial na campanha. Suba a arte de cada baú (imagem quadrada, de preferência com fundo transparente), escolha o nome e a cor do brilho. Vale para o resultado da partida, a loja e a abertura. Vazio usa o desenho padrão.">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {DESIGN_ORDER.map((tier) => {
           const draft = draftOf(tier);
@@ -236,7 +236,7 @@ const SOUND_TESTS: Array<{ title: string; sounds: Array<{ name: SfxName; label: 
       { name: 'stickerRare', label: 'Figurinha rara' },
       { name: 'stickerEpic', label: 'Figurinha épica' },
       { name: 'stickerLegendary', label: 'Figurinha lendária' },
-      { name: 'stickerSpecial', label: 'Carta especial' },
+      { name: 'stickerSpecial', label: 'Figurinha especial' },
     ],
   },
 ];

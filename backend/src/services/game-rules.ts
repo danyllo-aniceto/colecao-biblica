@@ -656,7 +656,7 @@ export function currentScenarioId(scenarios: Array<{ id: number }>, nodes: Campa
   return current;
 }
 
-/** A carta especial é entregue quando todos os fragmentos do caminho foram resgatados. */
+/** A figurinha especial é entregue quando todos os fragmentos do caminho foram resgatados. */
 export function fragmentsComplete(claimedFragments: number, totalFragments: number): boolean {
   return totalFragments > 0 && claimedFragments >= totalFragments;
 }

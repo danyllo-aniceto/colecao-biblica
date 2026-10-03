@@ -81,7 +81,7 @@ ABERTO: tampa de cristal levantada para trás (cerca de 110°), um feixe de luz 
 dentro, com raios em leque, cristais de gelo brilhando e muitas estrelinhas. Interior luminoso e vazio. Fundo
 transparente, sem texto.
 
-### Esmeralda (o baú da carta especial)
+### Esmeralda (o baú da figurinha especial)
 **Fechado:** `[ESTILO BASE]` Imagem 1:1 (1024x1024), fundo transparente. Um baú de tesouro sagrado e majestoso de madeira muito escura, revestido de esmeralda
 verde-água (#14b8a6, sombras #047857) e detalhes de ouro claro, com uma grande gema esmeralda lapidada no centro da tampa, um
 ornamento de cajado de pastor e folhas de oliveira em relevo nas laterais, fechadura com gemas verdes. Um brilho verde-água suave em
@@ -92,7 +92,7 @@ trás (cerca de 110°), uma luz verde-água e dourada solene subindo de dentro c
 muitas estrelinhas. Interior luminoso e vazio. Fundo transparente, sem texto.
 
 O baú de esmeralda não tem imagem pronta: sem a arte enviada, o app usa o desenho padrão (verde-água com uma joia). Ele é aberto sozinho,
-uma única vez, quando o jogador conquista a carta especial na campanha.
+uma única vez, quando o jogador conquista a figurinha especial na campanha.
 
 ## Sons
 

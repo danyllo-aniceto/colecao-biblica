@@ -161,7 +161,7 @@ const RECIPES: Record<SfxName, (o: Out) => void> = {
     notes(o, 'triangle', [523, 659, 784, 1047], 0, 1.0, 0.18, 0.4); // acorde final
     whoosh(o, 3500, 9000, 0.3, 0.8, 0.16, 2.5);
   },
-  // Esmeralda (carta especial): o mais solene e longo de todos, com coral de acordes que sobem.
+  // Esmeralda (figurinha especial): o mais solene e longo de todos, com coral de acordes que sobem.
   chestEmerald: (o) => {
     tone(o, 'sine', 50, 38, 0, 1.2, 0.5);
     thud(o, 0.05, 160, 45, 0.6);
