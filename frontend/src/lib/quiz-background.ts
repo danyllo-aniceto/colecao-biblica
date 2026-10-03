@@ -8,7 +8,7 @@ export function quizBackgroundStyle(url?: string | null): CSSProperties | undefi
   if (!url) return undefined;
   const safe = url.replace(/["\\()]/g, (char) => encodeURIComponent(char));
   return {
-    backgroundImage: `linear-gradient(color-mix(in srgb, var(--bg) 62%, transparent), color-mix(in srgb, var(--bg) 80%, transparent)), url("${safe}")`,
+    backgroundImage: `linear-gradient(color-mix(in srgb, var(--bg) 40%, transparent), color-mix(in srgb, var(--bg) 60%, transparent)), url("${safe}")`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat',
