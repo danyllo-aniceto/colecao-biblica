@@ -9,7 +9,7 @@ import { StickerCard } from '@/components/game/sticker-card';
 import type { StickerRarity } from '@/lib/admin-api';
 import { cn } from '@/lib/cn';
 import { getRarityLabel } from '@/lib/rarity-theme';
-import { playSfx } from '@/lib/sound/sfx';
+import { playSfx, type SfxName } from '@/lib/sound/sfx';
 import { useChestDesigns, type ChestDesign } from '@/lib/chest-designs';
 import type { ChestPrize, ChestTierName } from '@/lib/user-api';
 
@@ -20,16 +20,29 @@ export const CHEST_TIERS: Record<ChestTierName, { label: string; color: string; 
   DIAMOND: { label: 'Baú de Diamante', color: '#5ad1ff', dark: '#0e7bb0' },
 };
 
-type ChestLook = { label: string; color: string; dark: string; imageUrl: string | null };
+type ChestLook = { label: string; color: string; dark: string; imageUrl: string | null; openImageUrl: string | null };
+
+/** Som de cada nível de baú e de cada tipo de prêmio (também usados no teste de sons do painel). */
+export const CHEST_SFX: Record<ChestTierName, SfxName> = { BRONZE: 'chestBronze', SILVER: 'chestSilver', GOLD: 'chestGold', DIAMOND: 'chestDiamond' };
+const STICKER_SFX: SfxName[] = ['stickerCommon', 'stickerRare', 'stickerEpic', 'stickerLegendary'];
+const SUSPENSE_SFX: SfxName[] = ['stickerCommon', 'suspenseRare', 'suspenseEpic', 'suspenseLegendary'];
+
+function prizeSfx(prize: ChestPrize | undefined, level: number): SfxName {
+  if (!prize) return 'success';
+  if (prize.kind === 'COINS') return 'prizeCoins';
+  if (prize.kind === 'HELPER') return 'prizeHelper';
+  if (prize.kind === 'COSMETIC') return 'prizeCosmetic';
+  return STICKER_SFX[Math.min(level, 3)];
+}
 
 /** Nome, cor e arte de um baú: o que o admin cadastrou, com o desenho padrão no que estiver vazio. */
-export function chestLook(tier: ChestTierName, design?: Pick<ChestDesign, 'imageUrl' | 'name' | 'color'> | null): ChestLook {
+export function chestLook(tier: ChestTierName, design?: Pick<ChestDesign, 'imageUrl' | 'openImageUrl' | 'name' | 'color'> | null): ChestLook {
   const base = CHEST_TIERS[tier];
-  return { label: design?.name?.trim() || base.label, color: design?.color || base.color, dark: base.dark, imageUrl: design?.imageUrl || null };
+  return { label: design?.name?.trim() || base.label, color: design?.color || base.color, dark: base.dark, imageUrl: design?.imageUrl || null, openImageUrl: design?.openImageUrl || null };
 }
 
 /** Visual cadastrado de um baú (hook: acompanha o que o admin salvar). */
-export function useChestLook(tier: ChestTierName, override?: Pick<ChestDesign, 'imageUrl' | 'name' | 'color'> | null): ChestLook {
+export function useChestLook(tier: ChestTierName, override?: Pick<ChestDesign, 'imageUrl' | 'openImageUrl' | 'name' | 'color'> | null): ChestLook {
   const designs = useChestDesigns();
   return chestLook(tier, override ?? designs[tier]);
 }
@@ -51,9 +64,11 @@ function ordered(prizes: ChestPrize[]) {
   return [...prizes].sort((left, right) => rank(left) - rank(right));
 }
 
-export function ChestIcon({ tier, className, design }: { tier: ChestTierName; className?: string; design?: Pick<ChestDesign, 'imageUrl' | 'name' | 'color'> | null }) {
-  const { color, dark, imageUrl } = useChestLook(tier, design);
-  if (imageUrl) return <img src={imageUrl} alt="" draggable={false} className={cn('object-contain', className)} />;
+export function ChestIcon({ tier, className, design, open = false }: { tier: ChestTierName; className?: string; design?: Pick<ChestDesign, 'imageUrl' | 'openImageUrl' | 'name' | 'color'> | null; open?: boolean }) {
+  const { color, dark, imageUrl, openImageUrl } = useChestLook(tier, design);
+  // Com a arte do baú aberto cadastrada, ela troca no instante da abertura.
+  const art = open && openImageUrl ? openImageUrl : imageUrl;
+  if (art) return <img src={art} alt="" draggable={false} className={cn('object-contain', className)} />;
   return (
     <svg viewBox="0 0 160 140" className={className} aria-hidden="true">
       <defs>
@@ -146,9 +161,12 @@ function Reel({ prize, durationMs, onStop }: { prize: ChestPrize; durationMs: nu
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setGo(true));
     const timer = window.setTimeout(() => stop.current(), durationMs + 120);
+    // Tique do carretel: começa rápido e vai espaçando até parar no prêmio.
+    const ticks = Array.from({ length: 16 }, (_, index) => window.setTimeout(() => playSfx('reelTick'), durationMs * (1 - (1 - (index + 1) / 16) ** 2.4)));
     return () => {
       window.cancelAnimationFrame(frame);
       window.clearTimeout(timer);
+      ticks.forEach((tick) => window.clearTimeout(tick));
     };
   }, [durationMs]);
 
@@ -178,13 +196,13 @@ function Reel({ prize, durationMs, onStop }: { prize: ChestPrize; durationMs: nu
   );
 }
 
-type Phase = 'closed' | 'shaking' | 'reel' | 'suspense' | 'reveal' | 'summary';
+type Phase = 'closed' | 'shaking' | 'opened' | 'reel' | 'suspense' | 'reveal' | 'summary';
 
 /**
  * Abertura do baú em tela cheia: o baú treme, os prêmios passam num carretel e cada um aparece com uma
  * animação; antes de abrir uma figurinha rara há um suspense que cresce com a raridade (lendária é o máximo).
  */
-export function ChestOpening({ tier, prizes, onDone, preview = false, design }: { tier: ChestTierName; prizes: ChestPrize[]; onDone: () => void; preview?: boolean; design?: Pick<ChestDesign, 'imageUrl' | 'name' | 'color'> | null }) {
+export function ChestOpening({ tier, prizes, onDone, preview = false, design }: { tier: ChestTierName; prizes: ChestPrize[]; onDone: () => void; preview?: boolean; design?: Pick<ChestDesign, 'imageUrl' | 'openImageUrl' | 'name' | 'color'> | null }) {
   const list = useMemo(() => ordered(prizes), [prizes]);
   const [phase, setPhase] = useState<Phase>('closed');
   const [index, setIndex] = useState(0);
@@ -203,11 +221,18 @@ export function ChestOpening({ tier, prizes, onDone, preview = false, design }: 
   useEffect(() => () => timers.current.forEach((timer) => window.clearTimeout(timer)), []);
 
   function open() {
-    playSfx('open');
+    playSfx(CHEST_SFX[tier]);
     setPhase('shaking');
     later(() => {
       setFlash(info.color);
-      setPhase(list.length > 0 ? 'reel' : 'summary');
+      if (list.length === 0) return setPhase('summary');
+      // Com a arte do baú aberto, ela aparece por um instante antes dos prêmios começarem a passar.
+      if (info.openImageUrl) {
+        setPhase('opened');
+        later(() => setPhase('reel'), 750);
+      } else {
+        setPhase('reel');
+      }
     }, 950);
   }
 
@@ -215,14 +240,14 @@ export function ChestOpening({ tier, prizes, onDone, preview = false, design }: 
     if (!isSticker || level === 0) return reveal();
     // Suspense antes de abrir a figurinha: cresce com a raridade.
     setPhase('suspense');
-    playSfx('swipe');
+    playSfx(SUSPENSE_SFX[Math.min(level, 3)]);
     later(reveal, SUSPENSE_MS[Math.min(level, 3)]);
   }
 
   function reveal() {
     setPhase('reveal');
     setFlash(isSticker ? rarityColor : null);
-    playSfx(!isSticker ? (prize?.kind === 'COINS' ? 'coin' : 'success') : level >= 1 ? 'reward' : 'success');
+    playSfx(prizeSfx(prize, level));
     // Moedas e ajudas passam sozinhas; figurinhas esperam o toque para o jogador curtir.
     if (!isSticker) later(next, 1100);
   }
@@ -262,14 +287,14 @@ export function ChestOpening({ tier, prizes, onDone, preview = false, design }: 
           {preview ? ' · teste' : ''}
         </p>
 
-        {phase === 'closed' || phase === 'shaking' ? (
+        {phase === 'closed' || phase === 'shaking' || phase === 'opened' ? (
           <>
-            <button type="button" onClick={open} disabled={phase === 'shaking'} className="group relative" aria-label="Abrir o baú">
+            <button type="button" onClick={open} disabled={phase !== 'closed'} className="group relative" aria-label="Abrir o baú">
               <span className="absolute inset-0 -z-10 rounded-full blur-3xl" style={{ background: `${info.color}66` }} />
-              <ChestIcon tier={tier} design={design} className={cn('h-52 w-60 drop-shadow-2xl', phase === 'shaking' ? 'animate-chest-shake' : 'animate-chest-idle')} />
+              <ChestIcon tier={tier} design={design} open={phase === 'opened'} className={cn('h-52 w-60 drop-shadow-2xl', phase === 'shaking' ? 'animate-chest-shake' : phase === 'opened' ? 'animate-pop-in' : 'animate-chest-idle')} />
             </button>
-            <Button size="xl" onClick={open} disabled={phase === 'shaking'}>
-              {phase === 'shaking' ? 'Abrindo...' : 'Toque para abrir'}
+            <Button size="xl" onClick={open} disabled={phase !== 'closed'}>
+              {phase !== 'closed' ? 'Abrindo...' : 'Toque para abrir'}
             </Button>
           </>
         ) : null}

@@ -722,6 +722,8 @@ model ChestDesign {
   tier      String   @unique
   /// Arte do baú fechado (quadrada, fundo transparente fica melhor).
   imageUrl  String?  @map("image_url")
+  /// Arte do baú aberto (mesmo enquadramento do fechado): aparece no instante em que ele abre.
+  openImageUrl String? @map("open_image_url")
   /// Nome exibido (vazio usa o padrão) e cor de destaque do brilho.
   name      String?
   color     String?

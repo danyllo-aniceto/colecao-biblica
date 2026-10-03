@@ -3,7 +3,7 @@ import { apiRequest } from '@/lib/http';
 import type { ChestTierName } from '@/lib/user-api';
 
 /** Visual de um baú cadastrado no painel (campos vazios usam o desenho padrão do app). */
-export type ChestDesign = { tier: ChestTierName; imageUrl: string | null; name: string | null; color: string | null };
+export type ChestDesign = { tier: ChestTierName; imageUrl: string | null; openImageUrl: string | null; name: string | null; color: string | null };
 
 export type ChestDesigns = Partial<Record<ChestTierName, ChestDesign>>;
 
@@ -45,6 +45,6 @@ export function setChestDesign(design: ChestDesign) {
   publish({ ...(cache ?? {}), [design.tier]: design });
 }
 
-export function saveChestDesign(tier: ChestTierName, payload: { imageUrl: string | null; name: string | null; color: string | null }) {
+export function saveChestDesign(tier: ChestTierName, payload: { imageUrl: string | null; openImageUrl: string | null; name: string | null; color: string | null }) {
   return apiRequest<ChestDesign>(`/chests/admin/designs/${tier.toLowerCase()}`, { method: 'PUT', body: JSON.stringify(payload) }, 'Não foi possível salvar o visual do baú.');
 }

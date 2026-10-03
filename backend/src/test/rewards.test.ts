@@ -328,13 +328,13 @@ describe.skipIf(!hasDatabase)("recompensas novas", () => {
       expect((await api.put("/api/chests/admin/designs/gold").set(bearer(player)).send({ name: "x" })).status).toBe(403);
       expect((await api.put("/api/chests/admin/designs/gold").set(bearer(admin)).send({ color: "azul" })).status).toBe(400);
 
-      const saved = await api.put("/api/chests/admin/designs/gold").set(bearer(admin)).send({ imageUrl: "https://exemplo.com/ouro.png", name: "Tesouro de Ouro", color: "#ffcc00" });
-      expect(saved.body).toEqual({ tier: "GOLD", imageUrl: "https://exemplo.com/ouro.png", name: "Tesouro de Ouro", color: "#ffcc00" });
+      const saved = await api.put("/api/chests/admin/designs/gold").set(bearer(admin)).send({ imageUrl: "https://exemplo.com/ouro.png", openImageUrl: "https://exemplo.com/ouro-aberto.png", name: "Tesouro de Ouro", color: "#ffcc00" });
+      expect(saved.body).toEqual({ tier: "GOLD", imageUrl: "https://exemplo.com/ouro.png", openImageUrl: "https://exemplo.com/ouro-aberto.png", name: "Tesouro de Ouro", color: "#ffcc00" });
       expect((await api.get("/api/chests/designs").set(bearer(player))).body).toEqual([saved.body]);
       expect((await api.put("/api/chests/admin/designs/rubi").set(bearer(admin)).send({})).status).toBe(400);
       // Limpar os campos volta ao desenho padrão.
-      const cleared = await api.put("/api/chests/admin/designs/gold").set(bearer(admin)).send({ imageUrl: null, name: "", color: null });
-      expect(cleared.body).toEqual({ tier: "GOLD", imageUrl: null, name: null, color: null });
+      const cleared = await api.put("/api/chests/admin/designs/gold").set(bearer(admin)).send({ imageUrl: null, openImageUrl: null, name: "", color: null });
+      expect(cleared.body).toEqual({ tier: "GOLD", imageUrl: null, openImageUrl: null, name: null, color: null });
     });
 
     it("simulador de baús do painel: só admin, números coerentes e nada é gravado", async () => {

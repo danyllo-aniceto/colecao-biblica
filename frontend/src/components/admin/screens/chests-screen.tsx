@@ -11,7 +11,8 @@ import { ColorField } from '@/components/ui/color-field';
 import { Alert, CoinIcon } from '@/components/game/game-ui';
 import { ImageUploadField } from '../image-upload-field';
 import { saveChestDesign, setChestDesign, useChestDesigns } from '@/lib/chest-designs';
-import { CHEST_TIERS, ChestIcon, ChestOpening, chestLook } from '@/components/user/chest-opening';
+import { CHEST_SFX, CHEST_TIERS, ChestIcon, ChestOpening, chestLook } from '@/components/user/chest-opening';
+import { playSfx, type SfxName } from '@/lib/sound/sfx';
 import { simulateChests, type ChestSimulation, type SimulatedChestTier } from '@/lib/admin-api';
 import type { ChestPrize, ChestTierName } from '@/lib/user-api';
 import { getRarityLabel } from '@/lib/rarity-theme';
@@ -103,7 +104,7 @@ function TierCard({ tier, data, minCorrect, onTest }: { tier: ChestTierName; dat
   );
 }
 
-type DesignDraft = { imageUrl: string; name: string; color: string };
+type DesignDraft = { imageUrl: string; openImageUrl: string; name: string; color: string };
 
 /** Visual de cada baú: arte, nome e cor de brilho. O que ficar vazio usa o desenho padrão do app. */
 function ChestDesignPanel({ samples, onPreview }: { samples: Partial<Record<ChestTierName, ChestPrize[][]>>; onPreview: (tier: ChestTierName, prizes: ChestPrize[], design: DesignDraft) => void }) {
@@ -112,7 +113,7 @@ function ChestDesignPanel({ samples, onPreview }: { samples: Partial<Record<Ches
   const [drafts, setDrafts] = useState<Partial<Record<ChestTierName, DesignDraft>>>({});
   const [saving, setSaving] = useState<ChestTierName | null>(null);
 
-  const draftOf = (tier: ChestTierName): DesignDraft => drafts[tier] ?? { imageUrl: designs[tier]?.imageUrl ?? '', name: designs[tier]?.name ?? '', color: designs[tier]?.color ?? CHEST_TIERS[tier].color };
+  const draftOf = (tier: ChestTierName): DesignDraft => drafts[tier] ?? { imageUrl: designs[tier]?.imageUrl ?? '', openImageUrl: designs[tier]?.openImageUrl ?? '', name: designs[tier]?.name ?? '', color: designs[tier]?.color ?? CHEST_TIERS[tier].color };
   const change = (tier: ChestTierName, patch: Partial<DesignDraft>) => setDrafts((current) => ({ ...current, [tier]: { ...draftOf(tier), ...patch } }));
 
   async function save(tier: ChestTierName) {
@@ -121,7 +122,7 @@ function ChestDesignPanel({ samples, onPreview }: { samples: Partial<Record<Ches
     try {
       // A cor só é salva se mudou do padrão (assim a cor padrão acompanha o app).
       const color = draft.color.toLowerCase() === CHEST_TIERS[tier].color.toLowerCase() ? null : draft.color;
-      const saved = await saveChestDesign(tier, { imageUrl: draft.imageUrl || null, name: draft.name.trim() || null, color });
+      const saved = await saveChestDesign(tier, { imageUrl: draft.imageUrl || null, openImageUrl: draft.openImageUrl || null, name: draft.name.trim() || null, color });
       setChestDesign(saved);
       setDrafts((current) => {
         const next = { ...current };
@@ -146,9 +147,13 @@ function ChestDesignPanel({ samples, onPreview }: { samples: Partial<Record<Ches
             <article key={tier} className="space-y-3 rounded-3xl border-2 border-edge bg-surface p-4">
               <div className="flex h-32 items-center justify-center rounded-2xl" style={{ background: `radial-gradient(circle, ${look.color}44, transparent 70%)` }}>
                 <ChestIcon tier={tier} design={draft} className="h-28 w-32" />
+                {draft.openImageUrl ? <ChestIcon tier={tier} design={draft} open className="ml-2 h-28 w-32" /> : null}
               </div>
-              <Field label="Arte do baú">
+              <Field label="Baú fechado">
                 <ImageUploadField value={draft.imageUrl} onChange={(url) => change(tier, { imageUrl: url })} />
+              </Field>
+              <Field label="Baú aberto (opcional)" hint="Mesmo enquadramento do fechado. Aparece no instante em que o baú abre.">
+                <ImageUploadField value={draft.openImageUrl} onChange={(url) => change(tier, { openImageUrl: url })} />
               </Field>
               <Field label="Nome" hint={`Padrão: ${CHEST_TIERS[tier].label}`}>
                 <Input value={draft.name} maxLength={40} onChange={(event) => change(tier, { name: event.target.value })} placeholder={CHEST_TIERS[tier].label} />
@@ -172,6 +177,54 @@ function ChestDesignPanel({ samples, onPreview }: { samples: Partial<Record<Ches
             </article>
           );
         })}
+      </div>
+    </AdminPanel>
+  );
+}
+
+const SOUND_TESTS: Array<{ title: string; sounds: Array<{ name: SfxName; label: string }> }> = [
+  { title: 'Abertura de cada baú', sounds: TIER_ORDER.map((tier) => ({ name: CHEST_SFX[tier], label: CHEST_TIERS[tier].label.replace('Baú de ', '') })) },
+  {
+    title: 'Carretel e suspense',
+    sounds: [
+      { name: 'reelTick', label: 'Tique do carretel' },
+      { name: 'suspenseRare', label: 'Suspense: rara' },
+      { name: 'suspenseEpic', label: 'Suspense: épica' },
+      { name: 'suspenseLegendary', label: 'Suspense: lendária' },
+    ],
+  },
+  {
+    title: 'Prêmios',
+    sounds: [
+      { name: 'prizeCoins', label: 'Moedas' },
+      { name: 'prizeHelper', label: 'Ajuda' },
+      { name: 'prizeCosmetic', label: 'Item visual' },
+      { name: 'stickerCommon', label: 'Figurinha comum' },
+      { name: 'stickerRare', label: 'Figurinha rara' },
+      { name: 'stickerEpic', label: 'Figurinha épica' },
+      { name: 'stickerLegendary', label: 'Figurinha lendária' },
+    ],
+  },
+];
+
+/** Teste dos sons dos baús (respeita o volume e o mudo das configurações de som do app). */
+function SoundPanel() {
+  return (
+    <AdminPanel title="Sons dos baús" description="Cada nível de baú e cada tipo de prêmio tem um som próprio, criado no próprio app (não precisa de arquivo). Toque para ouvir; o volume segue as configurações de som do app.">
+      <div className="grid gap-4 md:grid-cols-3">
+        {SOUND_TESTS.map((group) => (
+          <section key={group.title} className="space-y-2">
+            <h3 className="font-display font-bold text-ink">{group.title}</h3>
+            <div className="flex flex-wrap gap-2">
+              {group.sounds.map((sound) => (
+                <Button key={sound.name} size="sm" variant="secondary" onClick={() => playSfx(sound.name)}>
+                  <PlayArrowRoundedIcon fontSize="small" />
+                  {sound.label}
+                </Button>
+              ))}
+            </div>
+          </section>
+        ))}
       </div>
     </AdminPanel>
   );
@@ -279,6 +332,8 @@ export function ChestsScreen() {
         onPreview={(tier, prizes, design) => setPreview({ tier, prizes, design })}
       />
 
+      <SoundPanel />
+
       {data ? (
         <AdminPanel title="Quanto um jogador ganha por dia" description="Estimativa pela taxa de acerto: a chance de cada nível de baú numa maratona (até as vidas acabarem), os limites diários e o que cada baú entrega. Não inclui a garantia contra azar nem a loja.">
           <div className="max-w-xs">
@@ -323,7 +378,7 @@ export function ChestsScreen() {
         </AdminPanel>
       ) : null}
 
-      {preview ? <ChestOpening tier={preview.tier} prizes={preview.prizes} design={preview.design ? { imageUrl: preview.design.imageUrl || null, name: preview.design.name || null, color: preview.design.color } : undefined} preview onDone={() => setPreview(null)} /> : null}
+      {preview ? <ChestOpening tier={preview.tier} prizes={preview.prizes} design={preview.design ? { imageUrl: preview.design.imageUrl || null, openImageUrl: preview.design.openImageUrl || null, name: preview.design.name || null, color: preview.design.color } : undefined} preview onDone={() => setPreview(null)} /> : null}
     </>
   );
 }
