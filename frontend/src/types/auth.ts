@@ -42,6 +42,8 @@ export type UserProfile = {
   frameId?: number | null;
   titleId?: number | null;
   nameColorId?: number | null;
+  profileBgId?: number | null;
+  albumCoverId?: number | null;
   showcase?: number[];
   lastDailyClaim?: string | null;
   name: string;

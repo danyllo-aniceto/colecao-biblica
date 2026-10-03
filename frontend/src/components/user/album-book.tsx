@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
@@ -60,13 +60,15 @@ type AlbumBookProps = {
   /** Figurinha a mostrar ao abrir (volta da ficha): o álbum abre na folha dela. */
   focusId?: number | null;
   onFocused?: () => void;
+  /** Capa equipada pelo jogador (cores e imagem da capa do livro). */
+  coverStyle?: CSSProperties;
 };
 
 /**
  * Álbum de verdade: capa, folhas de papel e a folha virando ao trocar de página
  * (setas, arrastar no celular, setas do teclado ou a paginação embaixo).
  */
-export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, levelsById, onOpenSticker, resetKey, focusId = null, onFocused }: AlbumBookProps) {
+export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, levelsById, onOpenSticker, resetKey, focusId = null, onFocused, coverStyle }: AlbumBookProps) {
   const wide = useWide();
   const perPage = wide ? PER_PAGE_WIDE : PER_PAGE_NARROW;
   const [view, setView] = useState(0);
@@ -235,6 +237,7 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
             if (delta < -50) go(view + 1);
             if (delta > 50) go(view - 1);
           }}
+          style={coverStyle}
           className="album-cover rounded-[1.75rem] p-2 outline-none focus-visible:ring-4 focus-visible:ring-primary/40 sm:p-3"
         >
           <div className="relative overflow-hidden rounded-2xl [perspective:1800px]">

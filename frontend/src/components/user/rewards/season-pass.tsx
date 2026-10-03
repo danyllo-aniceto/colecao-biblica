@@ -36,11 +36,16 @@ function TierReward({ tier, playerName }: { tier: PassTierView; playerName: stri
         </span>
       ) : null}
       {tier.cosmetic ? (
-        <span className="inline-flex items-center gap-1.5">
+        <span className={cn('inline-flex items-center gap-1.5', tier.cosmeticOwned && 'opacity-60')}>
           <span className="inline-flex max-w-[9rem] items-center">
             <CosmeticPreview item={tier.cosmetic} playerName={playerName} size="md" />
           </span>
           {tier.cosmetic.type === 'TITLE' ? null : tier.cosmetic.name}
+        </span>
+      ) : null}
+      {tier.cosmeticOwned && tier.duplicateCoins !== null ? (
+        <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary-strong dark:text-primary">
+          Você já tem este item: vira <CoinIcon className="h-3.5 w-3.5" /> +{tier.duplicateCoins}
         </span>
       ) : null}
     </span>
@@ -63,7 +68,7 @@ export function SeasonPassCard({ profile, onClaimed }: { profile: UserProfile | 
 
   useEffect(load, [load]);
 
-  if (!pass || pass.tiers.length === 0) return null;
+  if (!pass || !pass.pass || pass.tiers.length === 0) return null;
   const top = pass.tiers.at(-1)!.requiredXp;
   const next = pass.tiers.find((tier) => !tier.reached);
   const ready = pass.tiers.filter((tier) => tier.reached && !tier.claimed).length;
@@ -75,7 +80,14 @@ export function SeasonPassCard({ profile, onClaimed }: { profile: UserProfile | 
       const result = await claimPassTier(tier.id);
       onClaimed(result.user, result.unlockedAchievements);
       toast.success(`Prêmio do degrau ${tier.level} resgatado!`, {
-        description: [result.coins ? `+${result.coins} moedas` : null, result.reward?.characterName ?? result.reward?.rewardName, result.cosmeticGranted ? tier.cosmetic?.name : null].filter(Boolean).join(' · '),
+        description: [
+          result.coins ? `+${result.coins} moedas` : null,
+          result.reward?.characterName ?? result.reward?.rewardName,
+          result.cosmeticGranted ? tier.cosmetic?.name : null,
+          result.duplicate ? `Item repetido: +${result.duplicate.coins} moedas${result.duplicate.reward ? ` e ${result.duplicate.reward.characterName ?? result.duplicate.reward.rewardName}` : ''}` : null,
+        ]
+          .filter(Boolean)
+          .join(' · '),
       });
       load();
     } catch (reason) {
@@ -86,26 +98,34 @@ export function SeasonPassCard({ profile, onClaimed }: { profile: UserProfile | 
   }
 
   return (
-    <section className="panel space-y-3 p-5">
-      <div className="flex items-start justify-between gap-3">
+    <section className="panel relative space-y-3 overflow-hidden p-5" style={pass.pass.color ? { borderColor: pass.pass.color } : undefined}>
+      {pass.pass.imageUrl ? (
+        <>
+          <img src={pass.pass.imageUrl} alt="" aria-hidden="true" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-25" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-surface/90 to-surface/30" />
+        </>
+      ) : null}
+      <div className="relative flex items-start justify-between gap-3">
         <div>
           <h3 className="flex items-center gap-2 font-display text-lg font-bold text-ink">
-            <MilitaryTechRoundedIcon className="text-violet" /> Passe de {month}
+            <MilitaryTechRoundedIcon style={pass.pass.color ? { color: pass.pass.color } : undefined} className="text-violet" /> {pass.pass.name}
           </h3>
           <p className="text-sm text-muted">
-            {pass.xp.toLocaleString('pt-BR')} XP no mês · acaba em {daysLeft(pass.endsAt)} dias
+            {pass.xp.toLocaleString('pt-BR')} XP em {month} · acaba em {daysLeft(pass.endsAt)} dias
           </p>
+          {pass.pass.description ? <p className="mt-0.5 text-xs font-semibold text-muted">{pass.pass.description}</p> : null}
         </div>
         <Button size="sm" variant={ready ? 'primary' : 'secondary'} onClick={() => setOpen(true)}>
           {ready ? `Resgatar (${ready})` : 'Ver trilha'}
         </Button>
       </div>
-      <ProgressBar value={Math.min(100, (pass.xp / top) * 100)} />
-      <p className="text-xs font-semibold text-muted">
+      <ProgressBar className="relative" value={Math.min(100, (pass.xp / top) * 100)} />
+      <p className="relative text-xs font-semibold text-muted">
         {next ? `Próximo prêmio com ${next.requiredXp.toLocaleString('pt-BR')} XP (faltam ${(next.requiredXp - pass.xp).toLocaleString('pt-BR')}).` : 'Você completou a trilha deste mês!'}
+        {pass.nextPass ? ` · No mês que vem: ${pass.nextPass.name}.` : ''}
       </p>
 
-      <Modal open={open} size="md" title={`Passe de ${month}`} description="Todo XP que você ganha no mês sobe a trilha. Ela recomeça no dia 1º." onClose={() => setOpen(false)}>
+      <Modal open={open} size="md" title={pass.pass.name} description={`Todo XP que você ganha em ${month} sobe a trilha. No dia 1º vem o próximo passe${pass.nextPass ? `: ${pass.nextPass.name}` : ''}.`} onClose={() => setOpen(false)}>
         {!pass ? <LoadingState /> : null}
         <ol className="space-y-2">
           {paging.pageItems.map((tier) => (

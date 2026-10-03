@@ -2,6 +2,9 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import ToggleOffRoundedIcon from '@mui/icons-material/ToggleOffRounded';
+import ToggleOnRoundedIcon from '@mui/icons-material/ToggleOnRounded';
+import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
 import { Button } from '@/components/ui/button';
 import { ColorField } from '@/components/ui/color-field';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
@@ -17,7 +20,13 @@ import { Alert, CoinIcon } from '@/components/game/game-ui';
 import { listRewards, type AdminReward } from '@/lib/admin-api';
 import {
   createEvent,
+  createPass,
   createPassTier,
+  deletePass,
+  getPassSchedule,
+  importPassTiers,
+  listPasses,
+  updatePass,
   deleteEvent,
   deletePassTier,
   listEventsAdmin,
@@ -25,11 +34,14 @@ import {
   updateEvent,
   updatePassTier,
   type AdminEvent,
+  type AdminPass,
   type AdminPassTier,
+  type PassScheduleMonth,
 } from '@/lib/admin-rewards-api';
 import { AdminPanel, Cell, DataTable, IconAction, Row, StatusBadge } from '../admin-ui';
 import { usePagedList } from '../use-paged-list';
 import { ImageUploadField } from '../image-upload-field';
+import { BulkImportModal } from '../bulk-import-modal';
 import { useCosmeticOptions } from './collections-screen';
 
 const formatDate = (iso: string) => new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
@@ -43,33 +55,254 @@ function eventStatus(event: AdminEvent) {
 }
 
 export function SeasonScreen() {
+  const [passes, setPasses] = useState<AdminPass[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const load = useCallback(() => {
+    setLoading(true);
+    listPasses()
+      .then((data) => {
+        setPasses(data);
+        setError(null);
+      })
+      .catch((reason: unknown) => setError(errorMessage(reason)))
+      .finally(() => setLoading(false));
+  }, []);
+  useEffect(load, [load]);
+
   return (
     <div className="space-y-6">
-      <PassPanel />
+      <PassesPanel passes={passes} loading={loading} error={error} onChanged={load} />
+      <TiersPanel passes={passes} onChanged={load} />
       <EventsPanel />
     </div>
   );
 }
 
-function PassPanel() {
+const monthLabel = (monthKey: string) => new Date(`${monthKey}-15T12:00:00`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+/** Próximos 24 meses para fixar um passe. */
+function monthOptions(current: string | null) {
+  const now = new Date();
+  const keys = Array.from({ length: 24 }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth() + index, 1);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  });
+  if (current && !keys.includes(current)) keys.unshift(current);
+  return [{ value: '', label: 'Nenhum: entra no rodízio' }, ...keys.map((key) => ({ value: key, label: monthLabel(key) }))];
+}
+
+function PassesPanel({ passes, loading, error, onChanged }: { passes: AdminPass[]; loading: boolean; error: string | null; onChanged: () => void }) {
   const { confirm } = useDialogs();
   const toast = useToast();
+  const [editing, setEditing] = useState<AdminPass | 'new' | null>(null);
+  const [schedule, setSchedule] = useState<PassScheduleMonth[]>([]);
+  const paging = usePagination(passes, 10);
+
+  useEffect(() => {
+    getPassSchedule()
+      .then(setSchedule)
+      .catch(() => setSchedule([]));
+  }, [passes]);
+
+  async function remove(pass: AdminPass) {
+    const ok = await confirm({ title: `Excluir "${pass.name}"?`, message: `Os ${pass.tiers} degrau(s) deste passe também somem. Quem já resgatou continua com os prêmios.`, confirmLabel: 'Excluir', tone: 'danger' });
+    if (!ok) return;
+    try {
+      await deletePass(pass.id);
+      toast.success('Passe excluído.');
+      onChanged();
+    } catch (reason) {
+      toast.error(errorMessage(reason));
+    }
+  }
+
+  async function toggle(pass: AdminPass) {
+    try {
+      await updatePass(pass.id, { active: !pass.active });
+      toast.success(pass.active ? 'Passe tirado do rodízio.' : 'Passe de volta ao rodízio.');
+      onChanged();
+    } catch (reason) {
+      toast.error(errorMessage(reason));
+    }
+  }
+
+  return (
+    <AdminPanel
+      title="Passes temáticos"
+      description="Cada mês vale um passe: o que estiver fixado naquele mês (ex.: Natal em dezembro) ou, senão, o do rodízio entre os passes ativos. Quanto mais passes, mais raro cada um volta. Se o jogador já tiver o item visual do degrau, ele recebe moedas no lugar."
+      actions={
+        <Button onClick={() => setEditing('new')}>
+          <AddRoundedIcon fontSize="small" /> Novo passe
+        </Button>
+      }
+    >
+      <DataTable
+        columns={[{ label: 'Passe' }, { label: 'Quando vale' }, { label: 'Degraus' }, { label: 'Status' }, { label: '', className: 'w-36' }]}
+        loading={loading}
+        error={error}
+        isEmpty={passes.length === 0}
+        empty="Nenhum passe. Crie o primeiro."
+        minWidth={620}
+      >
+        {paging.pageItems.map((pass) => (
+          <Row key={pass.id} onClick={() => setEditing(pass)}>
+            <Cell>
+              <div className="flex items-center gap-3">
+                <span className="h-9 w-9 shrink-0 overflow-hidden rounded-xl border border-edge" style={{ background: pass.color ?? 'var(--surface-3)' }}>
+                  {pass.imageUrl ? <img src={pass.imageUrl} alt="" className="h-full w-full object-cover" /> : null}
+                </span>
+                <div className="min-w-0">
+                  <p className="font-display font-semibold text-ink">{pass.name}</p>
+                  {pass.description ? <p className="line-clamp-1 text-xs text-muted">{pass.description}</p> : null}
+                </div>
+              </div>
+            </Cell>
+            <Cell>{pass.pinnedMonth ? <span className="font-semibold capitalize">{monthLabel(pass.pinnedMonth)}</span> : <span className="text-muted">Rodízio</span>}</Cell>
+            <Cell>{pass.tiers}</Cell>
+            <Cell>
+              <StatusBadge active={pass.active} on="Ativo" off="Fora do rodízio" />
+            </Cell>
+            <Cell>
+              <div className="flex justify-end gap-1">
+                <IconAction label="Editar" onClick={() => setEditing(pass)}>
+                  <EditRoundedIcon fontSize="small" />
+                </IconAction>
+                <IconAction label={pass.active ? 'Tirar do rodízio' : 'Pôr no rodízio'} onClick={() => void toggle(pass)}>
+                  {pass.active ? <ToggleOnRoundedIcon fontSize="small" className="text-success" /> : <ToggleOffRoundedIcon fontSize="small" />}
+                </IconAction>
+                <IconAction label="Excluir" tone="danger" onClick={() => void remove(pass)}>
+                  <DeleteOutlineRoundedIcon fontSize="small" />
+                </IconAction>
+              </div>
+            </Cell>
+          </Row>
+        ))}
+      </DataTable>
+      <Pagination page={paging.page} totalPages={paging.totalPages} totalElements={paging.totalElements} onPageChange={paging.setPage} itemLabel="passes" />
+
+      {schedule.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-sm font-bold text-muted">Próximos meses</p>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {schedule.map((month) => (
+              <div key={month.monthKey} className="flex items-center justify-between gap-2 rounded-2xl bg-surface-2 px-3 py-2">
+                <span className="text-sm font-semibold capitalize text-muted">{monthLabel(month.monthKey)}</span>
+                <span className="truncate text-sm font-bold text-ink">
+                  {month.name ?? 'Sem passe'}
+                  {month.pinned ? ' 📌' : ''}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {editing ? (
+        <PassModal
+          pass={editing === 'new' ? null : editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null);
+            onChanged();
+          }}
+        />
+      ) : null}
+    </AdminPanel>
+  );
+}
+
+function PassModal({ pass, onClose, onSaved }: { pass: AdminPass | null; onClose: () => void; onSaved: () => void }) {
+  const toast = useToast();
+  const [name, setName] = useState(pass?.name ?? '');
+  const [description, setDescription] = useState(pass?.description ?? '');
+  const [color, setColor] = useState(pass?.color ?? '#8e6bd1');
+  const [imageUrl, setImageUrl] = useState(pass?.imageUrl ?? '');
+  const [pinnedMonth, setPinnedMonth] = useState(pass?.pinnedMonth ?? '');
+  const [active, setActive] = useState(pass?.active ?? true);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!name.trim()) return setNameError('Dê um nome ao passe.');
+    setNameError(null);
+    setSaving(true);
+    const payload = { name: name.trim(), description: description.trim() || null, color, imageUrl: imageUrl || null, pinnedMonth: pinnedMonth || null, active };
+    try {
+      if (pass) await updatePass(pass.id, payload);
+      else await createPass(payload);
+      toast.success(pass ? 'Passe salvo.' : 'Passe criado.');
+      onSaved();
+    } catch (reason) {
+      toast.error(errorMessage(reason));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal open size="md" title={pass ? `Editar: ${pass.name}` : 'Novo passe'} onClose={saving ? undefined : onClose}>
+      <form className="space-y-4" onSubmit={submit} noValidate>
+        <Field label="Nome" required error={nameError ?? undefined}>
+          <Input value={name} onChange={(event) => setName(event.target.value)} maxLength={80} placeholder="Ex.: Passe do Natal" />
+        </Field>
+        <Field label="Descrição (opcional)" hint="Aparece embaixo do nome para o jogador.">
+          <Textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={300} rows={2} />
+        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Cor do tema">
+            <ColorField value={color} onChange={setColor} />
+          </Field>
+          <Field label="Fixar num mês" hint="Vazio = entra no rodízio.">
+            <Select aria-label="Mês" searchable value={pinnedMonth} onChange={setPinnedMonth} options={monthOptions(pass?.pinnedMonth ?? null)} />
+          </Field>
+        </div>
+        <Field label="Imagem de fundo (opcional)" hint="Aparece suave atrás do cartão do passe.">
+          <ImageUploadField value={imageUrl} onChange={setImageUrl} wide />
+        </Field>
+        <Switch checked={active} onChange={setActive} label="No rodízio" description="Passes fora do rodízio não valem em nenhum mês (a menos que você os reative)." />
+        <div className="flex justify-end gap-2 border-t border-edge pt-4">
+          <Button variant="secondary" onClick={onClose} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button type="submit" loading={saving}>
+            Salvar
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function TiersPanel({ passes, onChanged }: { passes: AdminPass[]; onChanged: () => void }) {
+  const { confirm } = useDialogs();
+  const toast = useToast();
+  const [passId, setPassId] = useState('');
+  const selected = passId || (passes[0] ? String(passes[0].id) : '');
+  const selectedPass = passes.find((pass) => String(pass.id) === selected) ?? null;
   const [tiers, setTiers] = useState<AdminPassTier[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<AdminPassTier | 'new' | null>(null);
+  const [importing, setImporting] = useState(false);
   const paging = usePagination(tiers, 10);
 
   const load = useCallback(() => {
+    if (!selected) {
+      setTiers([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
-    listPassTiers()
+    listPassTiers(Number(selected))
       .then((data) => {
         setTiers(data);
         setError(null);
       })
       .catch((reason: unknown) => setError(errorMessage(reason)))
       .finally(() => setLoading(false));
-  }, []);
+  }, [selected]);
   useEffect(load, [load]);
 
   async function remove(tier: AdminPassTier) {
@@ -79,6 +312,7 @@ function PassPanel() {
       await deletePassTier(tier.id);
       toast.success('Degrau excluído.');
       load();
+      onChanged();
     } catch (reason) {
       toast.error(errorMessage(reason));
     }
@@ -86,21 +320,31 @@ function PassPanel() {
 
   return (
     <AdminPanel
-      title="Passe da temporada"
-      description="Trilha mensal: o progresso é o XP que o jogador ganha no mês e recomeça no dia 1º. Cada degrau pode dar moedas, uma recompensa (ajuda, figurinha, pacote) e/ou um item visual."
+      title="Degraus do passe"
+      description="O progresso é o XP que o jogador ganha no mês e recomeça no dia 1º. Cada degrau pode dar moedas, uma recompensa (ajuda, figurinha, pacote) e/ou um item visual (ícone, moldura, fundo de perfil, capa do álbum, reação...)."
       actions={
-        <Button onClick={() => setEditing('new')}>
-          <AddRoundedIcon fontSize="small" /> Novo degrau
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={() => setImporting(true)} disabled={!selectedPass}>
+            <UploadFileRoundedIcon fontSize="small" /> Importar planilha
+          </Button>
+          <Button onClick={() => setEditing('new')} disabled={!selectedPass}>
+            <AddRoundedIcon fontSize="small" /> Novo degrau
+          </Button>
+        </div>
       }
     >
+      {passes.length > 0 ? (
+        <div className="max-w-sm">
+          <Select aria-label="Passe" searchable value={selected} onChange={setPassId} options={passes.map((pass) => ({ value: String(pass.id), label: pass.name }))} />
+        </div>
+      ) : null}
       <DataTable
-        columns={[{ label: 'Degrau' }, { label: 'XP no mês' }, { label: 'Prêmio' }, { label: 'Status' }, { label: '', className: 'w-28' }]}
+        columns={[{ label: 'Degrau' }, { label: 'XP no mês' }, { label: 'Prêmio' }, { label: 'Se já tiver o item' }, { label: 'Status' }, { label: '', className: 'w-28' }]}
         loading={loading}
         error={error}
         isEmpty={tiers.length === 0}
-        empty="Nenhum degrau. Crie a trilha do passe."
-        minWidth={620}
+        empty="Nenhum degrau neste passe."
+        minWidth={760}
       >
         {paging.pageItems.map((tier) => (
           <Row key={tier.id}>
@@ -119,6 +363,19 @@ function PassPanel() {
               </span>
             </Cell>
             <Cell>
+              {tier.rewardCosmetic ? (
+                <span className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="inline-flex items-center gap-1">
+                    <CoinIcon className="h-4 w-4" />
+                    {tier.duplicateCoins ?? `${DEFAULT_DUPLICATE_COINS[tier.rewardCosmetic.rarity] ?? 50} (padrão)`}
+                  </span>
+                  {tier.duplicateRewardDefinition ? <span>+ {tier.duplicateRewardDefinition.name}</span> : null}
+                </span>
+              ) : (
+                <span className="text-muted">—</span>
+              )}
+            </Cell>
+            <Cell>
               <StatusBadge active={tier.active} />
             </Cell>
             <Cell>
@@ -135,14 +392,53 @@ function PassPanel() {
         ))}
       </DataTable>
       <Pagination page={paging.page} totalPages={paging.totalPages} totalElements={paging.totalElements} onPageChange={paging.setPage} itemLabel="degraus" />
-      {editing ? (
+      {editing && selectedPass ? (
         <TierModal
+          passId={selectedPass.id}
           tier={editing === 'new' ? null : editing}
           nextLevel={(tiers.at(-1)?.level ?? 0) + 1}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
             load();
+            onChanged();
+          }}
+        />
+      ) : null}
+      {importing && selectedPass ? (
+        <BulkImportModal
+          title={`Importar degraus: ${selectedPass.name}`}
+          description="Use uma planilha CSV (Excel ou Google Planilhas: Arquivo → Baixar como CSV). Cada linha vira um degrau."
+          noun="degrau(s)"
+          templateFile="modelo-degraus-passe.csv"
+          header={['Degrau', 'XP', 'Moedas', 'Recompensa', 'Item visual', 'Moedas se repetido', 'Recompensa se repetido']}
+          templateRows={[
+            ['1', '300', '40', '', '', '', ''],
+            ['2', '900', '', 'Dica 50/50', 'Moldura de Natal', '150', 'Pacote surpresa'],
+          ]}
+          aliases={{
+            passe: 'pass',
+            degrau: 'level',
+            nivel: 'level',
+            xp: 'xp',
+            'xp no mes': 'xp',
+            moedas: 'coins',
+            recompensa: 'reward',
+            'item visual': 'cosmetic',
+            item: 'cosmetic',
+            'moedas se repetido': 'duplicateCoins',
+            'recompensa se repetido': 'duplicateReward',
+          }}
+          required={{ level: 'Degrau', xp: 'XP' }}
+          help={<>Colunas: Degrau, XP e, se quiser, Moedas, Recompensa (nome da tela Recompensas), Item visual (nome exato), Moedas se repetido e Recompensa se repetido. Uma coluna "Passe" opcional manda cada degrau para um passe; sem ela, todos entram em {selectedPass.name}.</>}
+          maxRows={300}
+          run={(rows, dryRun) => importPassTiers(rows, dryRun, selectedPass.id)}
+          rowLabel={(row) => (row.level ? `Degrau ${row.level}` : undefined)}
+          onClose={() => setImporting(false)}
+          onImported={() => {
+            setImporting(false);
+            load();
+            onChanged();
           }}
         />
       ) : null}
@@ -150,13 +446,18 @@ function PassPanel() {
   );
 }
 
-function TierModal({ tier, nextLevel, onClose, onSaved }: { tier: AdminPassTier | null; nextLevel: number; onClose: () => void; onSaved: () => void }) {
+/** Mesmos valores do servidor para o item visual repetido (quando o degrau não define). */
+const DEFAULT_DUPLICATE_COINS: Record<string, number> = { COMMON: 50, RARE: 100, EPIC: 200, LEGENDARY: 400, SPECIAL: 400 };
+
+function TierModal({ passId, tier, nextLevel, onClose, onSaved }: { passId: number; tier: AdminPassTier | null; nextLevel: number; onClose: () => void; onSaved: () => void }) {
   const toast = useToast();
   const [level, setLevel] = useState(String(tier?.level ?? nextLevel));
   const [xp, setXp] = useState(String(tier?.requiredXp ?? nextLevel * 900));
   const [coins, setCoins] = useState(String(tier?.rewardCoins ?? 100));
   const [rewardId, setRewardId] = useState(tier?.rewardDefinitionId ? String(tier.rewardDefinitionId) : '');
   const [cosmeticId, setCosmeticId] = useState(tier?.rewardCosmeticId ? String(tier.rewardCosmeticId) : '');
+  const [duplicateCoins, setDuplicateCoins] = useState(tier?.duplicateCoins != null ? String(tier.duplicateCoins) : '');
+  const [duplicateRewardId, setDuplicateRewardId] = useState(tier?.duplicateRewardDefinitionId ? String(tier.duplicateRewardDefinitionId) : '');
   const [active, setActive] = useState(tier?.active ?? true);
   const [rewards, setRewards] = useState<AdminReward[]>([]);
   const [saving, setSaving] = useState(false);
@@ -171,7 +472,7 @@ function TierModal({ tier, nextLevel, onClose, onSaved }: { tier: AdminPassTier 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
-    const payload = { level: Number(level), requiredXp: Number(xp), rewardCoins: Number(coins) || 0, rewardDefinitionId: rewardId ? Number(rewardId) : null, rewardCosmeticId: cosmeticId ? Number(cosmeticId) : null, active };
+    const payload = { passId, duplicateCoins: duplicateCoins.trim() === '' ? null : Number(duplicateCoins), duplicateRewardDefinitionId: duplicateRewardId ? Number(duplicateRewardId) : null, level: Number(level), requiredXp: Number(xp), rewardCoins: Number(coins) || 0, rewardDefinitionId: rewardId ? Number(rewardId) : null, rewardCosmeticId: cosmeticId ? Number(cosmeticId) : null, active };
     try {
       if (tier) await updatePassTier(tier.id, payload);
       else await createPassTier(payload);
@@ -201,9 +502,20 @@ function TierModal({ tier, nextLevel, onClose, onSaved }: { tier: AdminPassTier 
         <Field label="Recompensa (opcional)">
           <Select aria-label="Recompensa" searchable value={rewardId} onChange={setRewardId} options={[{ value: '', label: 'Nenhuma' }, ...rewards.map((reward) => ({ value: String(reward.id), label: reward.name }))]} />
         </Field>
-        <Field label="Item visual (opcional)">
+        <Field label="Item visual (opcional)" hint="Ícone, moldura, título, cor do nome, reação, fundo de perfil ou capa do álbum.">
           <Select aria-label="Item visual" searchable value={cosmeticId} onChange={setCosmeticId} options={cosmeticOptions} />
         </Field>
+        {cosmeticId ? (
+          <div className="grid gap-4 rounded-2xl bg-surface-2 p-3 sm:grid-cols-2">
+            <p className="text-xs font-semibold text-muted sm:col-span-2">Se o jogador já tiver este item (de quando o passe passou antes), ele recebe isto no lugar:</p>
+            <Field label="Moedas" hint="Vazio = valor padrão pela raridade do item.">
+              <Input type="number" min={0} value={duplicateCoins} onChange={(event) => setDuplicateCoins(event.target.value)} />
+            </Field>
+            <Field label="Recompensa extra (opcional)">
+              <Select aria-label="Recompensa se repetido" searchable value={duplicateRewardId} onChange={setDuplicateRewardId} options={[{ value: '', label: 'Nenhuma' }, ...rewards.map((reward) => ({ value: String(reward.id), label: reward.name }))]} />
+            </Field>
+          </div>
+        ) : null}
         <Switch checked={active} onChange={setActive} label="Ativo" />
         <div className="flex justify-end gap-2 border-t border-edge pt-4">
           <Button variant="secondary" onClick={onClose} disabled={saving}>

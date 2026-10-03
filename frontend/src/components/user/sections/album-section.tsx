@@ -15,6 +15,8 @@ import { EmptyState } from '@/components/game/game-ui';
 import { StickerCard } from '@/components/game/sticker-card';
 import type { StickerRarity, Testament } from '@/lib/admin-api';
 import { sortBooks } from '@/lib/bible-books';
+import { albumCoverStyle } from '@/lib/look-background';
+import type { PlayerLook } from '@/lib/rewards-api';
 import { HISTORICAL_PERIODS, TESTAMENT_LABELS } from '@/lib/labels';
 import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
 import { saveAlbumView, takeAlbumReturn } from '@/lib/sticker-return';
@@ -51,6 +53,8 @@ type AlbumSectionProps = {
   onUpgraded: () => void;
   onFused: (result: FuseResult) => void;
   playerName: string;
+  /** Aparência do jogador: a capa equipada vira a capa do livro. */
+  look?: PlayerLook | null;
 };
 
 /** "em 3 dias", "amanhã", "hoje às 18:00". */
@@ -62,7 +66,7 @@ function untilLabel(date: string) {
   return `em ${days} dias`;
 }
 
-export function AlbumSection({ characters, ownedIds, collection, gameRules, onOpenSticker, onWallet, onUpgraded, onFused, playerName }: AlbumSectionProps) {
+export function AlbumSection({ characters, ownedIds, collection, gameRules, onOpenSticker, onWallet, onUpgraded, onFused, playerName, look }: AlbumSectionProps) {
   // Ao voltar da ficha de uma figurinha, o álbum reabre com os mesmos filtros e na folha dela.
   const [restored] = useState(() => takeAlbumReturn());
   const [focusId, setFocusId] = useState<number | null>(restored?.characterId ?? null);
@@ -256,7 +260,7 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
       {tab === 'collections' ? <ThemeCollections playerName={playerName} onCoins={(coins) => onWallet({ userCoins: coins })} refreshKey={collection.length} /> : null}
 
       {tab === 'album' ? (
-        <AlbumBook items={ownedFiltered} totalCharacters={characters.length} ownedCount={ownedCount} duplicatesById={duplicatesById} levelsById={levelsById} onOpenSticker={(id) => {
+        <AlbumBook coverStyle={albumCoverStyle(look?.albumCover)} items={ownedFiltered} totalCharacters={characters.length} ownedCount={ownedCount} duplicatesById={duplicatesById} levelsById={levelsById} onOpenSticker={(id) => {
             saveAlbumView(albumView);
             onOpenSticker(id);
           }} resetKey={resetKey} focusId={focusId} onFocused={() => setFocusId(null)} />

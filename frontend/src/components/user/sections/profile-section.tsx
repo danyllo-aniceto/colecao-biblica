@@ -8,6 +8,7 @@ import { ShowcasePicker } from '@/components/user/rewards/showcase-picker';
 import { VisualLocker } from '@/components/user/rewards/visual-locker';
 import { QUIZ_HELPERS } from '@/lib/quiz-helpers';
 import { rewardVisual } from '@/lib/reward-visual';
+import { surfaceStyle } from '@/lib/look-background';
 import type { PlayerLook } from '@/lib/rewards-api';
 import type { UserSticker } from '@/lib/user-api';
 import { cn } from '@/lib/cn';
@@ -68,7 +69,8 @@ export function ProfileSection({
 
   return (
     <div className="space-y-5">
-      <section className="panel relative overflow-hidden p-6">
+      <section className="panel relative overflow-hidden p-6" style={surfaceStyle(look?.profileBg)}>
+        {look?.profileBg ? <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-surface/90 via-surface/65 to-surface/20" /> : null}
         <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-violet/25 blur-3xl" />
         <div className="relative flex flex-wrap items-center gap-5">
           <span className="relative">

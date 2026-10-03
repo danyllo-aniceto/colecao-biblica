@@ -47,7 +47,7 @@ import { ReactionsImport } from '../reactions-import';
 import { REACTION_ANIMATION_LABELS } from '@/lib/labels';
 import { useDebouncedValue, usePagedList } from '../use-paged-list';
 
-const TYPES: CosmeticType[] = ['AVATAR', 'FRAME', 'TITLE', 'NAME_COLOR', 'REACTION'];
+const TYPES: CosmeticType[] = ['AVATAR', 'FRAME', 'TITLE', 'NAME_COLOR', 'REACTION', 'PROFILE_BG', 'ALBUM_COVER'];
 
 const UNLOCK_LABELS: Record<CosmeticUnlock, string> = { FREE: 'Grátis', SHOP: 'Loja', REQUIREMENT: 'Meta', REWARD: 'Prêmio' };
 const UNLOCK_HELP: Record<CosmeticUnlock, string> = {
@@ -298,6 +298,7 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (type === 'AVATAR' && !imageUrl) return toast.error('Envie a imagem do ícone.');
+    if ((type === 'PROFILE_BG' || type === 'ALBUM_COVER') && !imageUrl && !color) return toast.error('Envie uma imagem ou escolha uma cor.');
     if (type === 'REACTION' && !imageUrl && !style.trim()) return toast.error('Informe um emoji ou envie uma imagem para a reação.');
     if (unlock === 'SHOP' && !(Number(price) >= 0)) return toast.error('Informe o preço.');
     setSaving(true);
@@ -335,7 +336,7 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
       <form className="space-y-5" onSubmit={submit}>
         {isNew ? (
           <div className="no-scrollbar -mx-1 overflow-x-auto px-1">
-            <Segmented aria-label="Tipo de item" className="min-w-[30rem]" value={type} onChange={setType} options={TYPES.map((value) => ({ value, label: COSMETIC_TYPE_LABELS[value].one }))} />
+            <Segmented aria-label="Tipo de item" className="min-w-[46rem]" value={type} onChange={setType} options={TYPES.map((value) => ({ value, label: COSMETIC_TYPE_LABELS[value].one }))} />
           </div>
         ) : null}
 
@@ -358,9 +359,23 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
           <Textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={200} rows={2} />
         </Field>
 
-        {type === 'AVATAR' || type === 'REACTION' || type === 'FRAME' ? (
-          <Field label={type === 'FRAME' ? 'Imagem da moldura (opcional, PNG transparente)' : type === 'REACTION' ? 'Imagem ou GIF (opcional se usar emoji)' : 'Imagem do ícone'} required={type === 'AVATAR'}>
-            <ImageUploadField value={imageUrl} onChange={setImageUrl} round={type !== 'REACTION'} />
+        {type === 'AVATAR' || type === 'REACTION' || type === 'FRAME' || type === 'PROFILE_BG' || type === 'ALBUM_COVER' ? (
+          <Field
+            label={
+              type === 'FRAME'
+                ? 'Imagem da moldura (opcional, PNG transparente)'
+                : type === 'REACTION'
+                  ? 'Imagem ou GIF (opcional se usar emoji)'
+                  : type === 'PROFILE_BG'
+                    ? 'Imagem do fundo (opcional, horizontal)'
+                    : type === 'ALBUM_COVER'
+                      ? 'Imagem da capa (opcional, vertical)'
+                      : 'Imagem do ícone'
+            }
+            required={type === 'AVATAR'}
+            hint={type === 'PROFILE_BG' || type === 'ALBUM_COVER' ? 'Sem imagem, vale a cor escolhida abaixo (em degradê). Com imagem, a cor serve de reserva.' : undefined}
+          >
+            <ImageUploadField value={imageUrl} onChange={setImageUrl} round={type === 'AVATAR' || type === 'FRAME'} wide={type === 'PROFILE_BG'} />
           </Field>
         ) : null}
         {type === 'REACTION' ? (
@@ -382,7 +397,7 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
             <ReactionChatPreview reaction={preview} />
           </>
         ) : null}
-        {type === 'TITLE' || type === 'NAME_COLOR' || (type === 'FRAME' && effectiveStyle === 'solid') ? (
+        {type === 'TITLE' || type === 'NAME_COLOR' || type === 'PROFILE_BG' || type === 'ALBUM_COVER' || (type === 'FRAME' && effectiveStyle === 'solid') ? (
           <Field label="Cor">
             <ColorField value={color} onChange={setColor} />
           </Field>

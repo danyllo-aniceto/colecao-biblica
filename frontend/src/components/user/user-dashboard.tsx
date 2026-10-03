@@ -602,6 +602,7 @@ export function UserDashboard() {
 
             {section === 'stickers' ? (
               <AlbumSection
+                look={myLook}
                 playerName={profile?.name ?? 'Você'}
                 characters={characters}
                 ownedIds={ownedIds}
