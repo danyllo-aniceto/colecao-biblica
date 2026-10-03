@@ -546,3 +546,47 @@ export type ChestSimulation = {
 export function simulateChests(runs: number) {
   return apiRequest<ChestSimulation>('/admin/chests/simulate', json('POST', { runs }), 'Não foi possível simular os baús.');
 }
+
+// Missões ----------------------------------------------------------------
+
+export type MissionPeriod = 'DAILY' | 'WEEKLY';
+
+export type AdminMission = {
+  id: number;
+  code: string;
+  period: MissionPeriod;
+  metric: string;
+  title: string;
+  target: number;
+  rewardCoins: number;
+  rewardDefinitionId: number | null;
+  reward: { id: number; name: string; rewardType: string } | null;
+  active: boolean;
+  system: boolean;
+};
+
+export type AdminMissionPayload = {
+  title: string;
+  target: number;
+  rewardCoins: number;
+  rewardDefinitionId: number | null;
+  active: boolean;
+  period?: MissionPeriod;
+  metric?: string;
+};
+
+export function listMissionsAdmin() {
+  return apiRequest<{ metrics: Array<{ value: string; label: string }>; missions: AdminMission[] }>('/missions/admin', { method: 'GET' }, 'Não foi possível carregar as missões.');
+}
+
+export function createMission(payload: AdminMissionPayload) {
+  return apiRequest<AdminMission>('/missions/admin', json('POST', payload), 'Não foi possível criar a missão.');
+}
+
+export function updateMission(id: number, payload: Partial<AdminMissionPayload>) {
+  return apiRequest<AdminMission>(`/missions/admin/${id}`, json('PUT', payload), 'Não foi possível atualizar a missão.');
+}
+
+export function deleteMission(id: number) {
+  return apiRequestVoid(`/missions/admin/${id}`, { method: 'DELETE' }, 'Não foi possível excluir a missão.');
+}

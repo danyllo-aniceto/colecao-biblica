@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
-import ContentCutRoundedIcon from '@mui/icons-material/ContentCutRounded';
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 import { Button } from '@/components/ui/button';
 import { Segmented } from '@/components/ui/segmented';
@@ -8,6 +7,9 @@ import { Spinner } from '@/components/ui/spinner';
 import { errorMessage, useToast } from '@/components/ui/toast';
 import { CoinIcon, ProgressBar } from '@/components/game/game-ui';
 import { cn } from '@/lib/cn';
+import { rewardVisual } from '@/lib/reward-visual';
+import { Tooltip } from '@/components/ui/tooltip';
+import type { UserProfile } from '@/types/auth';
 import { claimMission, listMissions, type Mission } from '@/lib/user-api';
 
 /** Tempo restante até o fim do período ("termina em 5 h", "termina em 3 dias"). */
@@ -19,7 +21,7 @@ function remaining(endsAt: string) {
 }
 
 /** Missões diárias (3, mudam todo dia) e semanais, com resgate da recompensa. */
-export function MissionsCard({ onClaimed }: { onClaimed: (result: { userCoins: number; hintBoosts: number }) => void }) {
+export function MissionsCard({ onClaimed }: { onClaimed: (user: UserProfile) => void }) {
   const toast = useToast();
   const [missions, setMissions] = useState<Mission[] | null>(null);
   const [period, setPeriod] = useState<'DAILY' | 'WEEKLY'>('DAILY');
@@ -37,8 +39,9 @@ export function MissionsCard({ onClaimed }: { onClaimed: (result: { userCoins: n
     setClaiming(mission.code);
     try {
       const result = await claimMission(mission.code);
-      onClaimed(result);
-      toast.success('Missão concluída!', { description: `+${result.coins} moedas${result.hints ? ` e +${result.hints} dica 50/50` : ''}`, icon: <CoinIcon /> });
+      onClaimed(result.user);
+      const extra = result.reward ? (result.reward.characterName ?? result.reward.cosmeticName ?? result.reward.name) : null;
+      toast.success('Missão concluída!', { description: [result.coins ? `+${result.coins} moedas` : null, extra].filter(Boolean).join(' e '), icon: <CoinIcon /> });
       load();
     } catch (error) {
       toast.error(errorMessage(error));
@@ -87,10 +90,20 @@ export function MissionsCard({ onClaimed }: { onClaimed: (result: { userCoins: n
               <div className="min-w-0 flex-1 space-y-1.5">
                 <div className="flex items-center justify-between gap-2">
                   <p className={cn('font-display font-semibold', mission.claimed ? 'text-muted line-through' : 'text-ink')}>{mission.title}</p>
-                  <span className="inline-flex shrink-0 items-center gap-1 text-sm font-bold text-ink">
-                    <CoinIcon className="h-4 w-4" />
-                    {mission.coins}
-                    {mission.hints ? <ContentCutRoundedIcon sx={{ fontSize: 16 }} className="ml-1 text-violet" /> : null}
+                  <span className="inline-flex shrink-0 items-center gap-1.5 text-sm font-bold text-ink">
+                    {mission.coins > 0 ? (
+                      <span className="inline-flex items-center gap-1">
+                        <CoinIcon className="h-4 w-4" />
+                        {mission.coins}
+                      </span>
+                    ) : null}
+                    {mission.reward ? (
+                      <Tooltip content={mission.reward.name}>
+                        <span tabIndex={0} aria-label={`Prêmio: ${mission.reward.name}`} className={cn('flex h-7 w-7 items-center justify-center rounded-lg', rewardVisual(mission.reward.rewardType, 18).tint)}>
+                          {rewardVisual(mission.reward.rewardType, 18).icon}
+                        </span>
+                      </Tooltip>
+                    ) : null}
                   </span>
                 </div>
                 {!mission.claimed ? (

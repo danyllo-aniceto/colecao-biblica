@@ -277,6 +277,7 @@ model RewardDefinition {
   shopItems        ShopItem[]
   passTiers        PassTier[]
   scenarioNodes    ScenarioNode[]
+  missions         Mission[]
 
   @@map("reward_definitions")
 }
@@ -630,6 +631,27 @@ model PassTier {
   rewardCosmetic   Cosmetic?         @relation(fields: [rewardCosmeticId], references: [id], onDelete: SetNull)
 
   @@map("pass_tiers")
+}
+
+/// Missão diária ou semanal. `metric` diz o que é contado (partidas, acertos...); o prêmio é moedas e/ou uma recompensa.
+model Mission {
+  id                 Int     @id @default(autoincrement())
+  code               String  @unique
+  /// DAILY ou WEEKLY.
+  period             String
+  metric             String
+  title              String
+  target             Int
+  rewardCoins        Int     @default(0) @map("reward_coins")
+  rewardDefinitionId Int?    @map("reward_definition_id")
+  active             Boolean @default(true)
+  /// As do seed não são excluíveis (só desativadas); as criadas no painel têm system = false.
+  system             Boolean @default(false)
+  sortOrder          Int     @default(0) @map("sort_order")
+
+  rewardDefinition RewardDefinition? @relation(fields: [rewardDefinitionId], references: [id], onDelete: SetNull)
+
+  @@map("missions")
 }
 
 /// Evento por tempo limitado (Páscoa, Natal...): multiplica XP/moedas e libera itens na loja.

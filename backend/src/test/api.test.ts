@@ -675,7 +675,7 @@ describe.skipIf(!hasDatabase)("API", () => {
         data: Array.from({ length: 15 }, () => ({ userId: user.id, quizType: "GENERAL" as const, finishedAt: new Date(), questionsAnswered: 10, correctAnswers: 7, wrongAnswers: 3, xpGained: 0, scoreGained: 0 })),
       });
       const claim = await api.post("/api/missions/W_PLAY_15/claim").set(bearer(token));
-      expect(claim.body).toMatchObject({ coins: 100, userCoins: 100 });
+      expect(claim.body).toMatchObject({ coins: 80, reward: { name: "Pacote surpresa" } });
       expect((await api.post("/api/missions/W_PLAY_15/claim").set(bearer(token))).status).toBe(400);
       const after = await api.get("/api/missions").set(bearer(token));
       expect(after.body.find((m: { code: string }) => m.code === "W_PLAY_15")).toMatchObject({ completed: true, claimed: true });

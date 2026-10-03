@@ -505,7 +505,8 @@ export type Mission = {
   period: 'DAILY' | 'WEEKLY';
   title: string;
   coins: number;
-  hints: number;
+  /** Recompensa extra além das moedas (ajuda, pacote, item visual...). */
+  reward: { id: number; name: string; rewardType: string } | null;
   current: number;
   target: number;
   completed: boolean;
@@ -553,7 +554,7 @@ export async function listMissions(): Promise<Mission[]> {
   return apiRequest<Mission[]>('/missions', { method: 'GET' }, 'Não foi possível carregar as missões.');
 }
 
-export async function claimMission(code: string): Promise<{ code: string; coins: number; hints: number; userCoins: number; hintBoosts: number }> {
+export async function claimMission(code: string): Promise<{ code: string; coins: number; reward: { name: string; characterName: string | null; cosmeticName: string | null } | null; user: UserProfile }> {
   return apiRequest(`/missions/${code}/claim`, { method: 'POST' }, 'Não foi possível resgatar a missão.');
 }
 

@@ -85,7 +85,7 @@ export function HomeSection({ profile, characters, collection, history, activeSe
 
       <div className="grid gap-6 lg:grid-cols-2">
         <DailyRewardCard onClaimed={onDailyClaimed} />
-        <MissionsCard onClaimed={onWallet} />
+        <MissionsCard onClaimed={(user) => onUserUpdate(user, [])} />
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
