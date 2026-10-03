@@ -514,6 +514,27 @@ describe("passes temáticos", () => {
     expect(passForMonth(withNatal, "2026-11")?.id).not.toBe(9);
   });
 
+  it("passe fixado em \"MM\" vale todo ano; o mês exato vence", () => {
+    const base = [...passes, { id: 9, pinnedMonth: "12" }];
+    expect(passForMonth(base, "2026-12")?.id).toBe(9);
+    expect(passForMonth(base, "2031-12")?.id).toBe(9);
+    expect(passForMonth(base, "2031-11")?.id).not.toBe(9);
+    expect(passForMonth([...base, { id: 10, pinnedMonth: "2027-12" }], "2027-12")?.id).toBe(10);
+  });
+
+  it("meses fixados não gastam a vez de ninguém no rodízio", () => {
+    const withPins = [...Array.from({ length: 5 }, (_, index) => ({ id: index + 1 })), { id: 90, pinnedMonth: "12" }, { id: 91, pinnedMonth: "04" }];
+    const free = months.filter((month) => !["12", "04"].includes(month.slice(5, 7)));
+    const chosen = free.map((month) => passForMonth(withPins, month)!.id);
+    // Com 5 passes livres, existe um alinhamento em que cada 5 meses livres seguidos trazem os 5 passes, sem repetir.
+    const aligned = [0, 1, 2, 3, 4].some((offset) => {
+      for (let start = offset; start + 5 <= chosen.length; start += 5) if (new Set(chosen.slice(start, start + 5)).size !== 5) return false;
+      return true;
+    });
+    expect(aligned).toBe(true);
+    for (let index = 1; index < chosen.length; index += 1) expect(chosen[index]).not.toBe(chosen[index - 1]);
+  });
+
   it("o rodízio é estável e passa por todos antes de repetir", () => {
     const chosen = months.map((month) => passForMonth(passes, month)!.id);
     expect(chosen).toEqual(months.map((month) => passForMonth(passes, month)!.id));

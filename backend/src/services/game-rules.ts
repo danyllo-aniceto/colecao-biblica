@@ -716,25 +716,36 @@ export function nextMonthKey(monthKey: string): string {
 }
 
 /**
- * Qual passe vale no mês. O passe fixado naquele mês ("pinnedMonth") vence; senão os passes livres entram em
+ * Qual passe vale no mês. O passe fixado naquele mês ("pinnedMonth": "AAAA-MM" ou "MM" para todo ano) vence; senão os passes livres entram em
  * rodízio: cada "volta" sorteia a ordem de todos (estável, pelo número da volta) e nunca repete o último da volta
  * anterior no começo da seguinte. Com mais passes cadastrados, cada um volta mais raramente.
  */
 export function passForMonth<T extends { id: number; pinnedMonth?: string | null }>(passes: T[], monthKey: string): T | null {
-  const pinned = passes.find((pass) => pass.pinnedMonth === monthKey);
+  const pinnedFor = (key: string) => passes.find((pass) => pass.pinnedMonth === key) ?? passes.find((pass) => pass.pinnedMonth === key.slice(5, 7));
+  const pinned = pinnedFor(monthKey);
   if (pinned) return pinned;
   const pool = passes.filter((pass) => !pass.pinnedMonth).sort((left, right) => left.id - right.id);
   if (pool.length === 0) return null;
   if (pool.length === 1) return pool[0];
 
-  const index = monthNumber(monthKey);
-  const round = Math.floor(index / pool.length);
-  let last: T | null = null;
+  // O rodízio só conta os meses livres: meses com passe fixado não gastam a vez de ninguém.
+  const target = monthNumber(monthKey);
+  let freeIndex = 0;
+  for (let month = 0; month < target; month += 1) {
+    const year = 2000 + Math.floor(month / 12);
+    if (!pinnedFor(`${year}-${String((month % 12) + 1).padStart(2, "0")}`)) freeIndex += 1;
+  }
+
+  const round = Math.floor(freeIndex / pool.length);
+  // Cada volta sorteia a ordem; os últimos passes da volta anterior (2 se houver 4 ou mais) vão para o fim da nova volta,
+  // assim nenhum passe reaparece logo depois de passar.
+  const keepApart = pool.length >= 4 ? 2 : 1;
+  let recent = new Set<number>();
   let order = pool;
   for (let current = 0; current <= round; current += 1) {
-    order = shuffle(pool, seededRandom(hashString(`passes:${current}`)));
-    if (last && order[0].id === last.id) [order[0], order[1]] = [order[1], order[0]];
-    last = order[order.length - 1];
+    const shuffled = shuffle(pool, seededRandom(hashString(`passes:${current}`)));
+    order = [...shuffled.filter((pass) => !recent.has(pass.id)), ...shuffled.filter((pass) => recent.has(pass.id))];
+    recent = new Set(order.slice(-keepApart).map((pass) => pass.id));
   }
-  return order[index % pool.length];
+  return order[freeIndex % pool.length];
 }

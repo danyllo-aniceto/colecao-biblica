@@ -195,7 +195,7 @@ const passSchema = z.object({
   imageUrl: imageRef(),
   pinnedMonth: z
     .string()
-    .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Use o mês no formato AAAA-MM")
+    .regex(/^(\d{4}-)?(0[1-9]|1[0-2])$/, "Use o mês no formato AAAA-MM (ou MM para todo ano)")
     .nullish()
     .or(z.literal("")),
   active: z.boolean().optional(),

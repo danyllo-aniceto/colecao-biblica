@@ -1,10 +1,17 @@
 # Passes temáticos — cadastro, formatos e prompts de arte
 
-Este guia cobre **6 passes temáticos** prontos para cadastrar: nomes, cores, textos, itens visuais, degraus e **os prompts para gerar cada imagem**. Duas planilhas já estão prontas em `docs/passes/` para você importar no painel e não digitar nada.
+Este guia cobre **10 passes temáticos** prontos para cadastrar: nomes, cores, textos, itens visuais, degraus e **os prompts para gerar cada imagem**. Duas planilhas já estão prontas em `docs/passes/` para você importar no painel e não digitar nada.
+
+## 0. Como os passes aparecem ao longo dos anos
+
+- **Sazonais (fixados todo ano):** *Noite de Belém* em **dezembro**, *Aleluia, Ele Vive!* em **abril** e *Fogo do Espírito* em **maio**. No campo *Fixar num mês* escolha **"Todo ano em ..."**: eles voltam sozinhos todos os anos, sem você mexer. (Para uma data única, como "só dezembro de 2027", escolha *Só em ...*; o mês exato vale mais que o de todo ano.)
+- **Rodízio (sem mês fixo):** os outros 7 passes (Mar Vermelho, Davi, Paulo, Elias, Daniel, Jonas e Rute) são sorteados nos demais meses. O sorteio é o mesmo para todos os jogadores, nunca repete o mesmo passe em dois meses seguidos e só repete um passe depois de passar por todos os outros. Na prática, cada um volta **cerca de 1 vez a cada 7 meses**.
+- **Mais passes = menos repetição:** cada passe novo cadastrado (sem mês fixo) entra no rodízio e todos os outros voltam mais raramente. O painel mostra o calendário dos próximos 12 meses para você conferir.
+- **Item que o jogador já tem:** quando um passe volta e o jogador já ganhou o item numa passagem anterior, ele recebe moedas no lugar (seção 5).
 
 ## 1. Ordem de cadastro (5 passos)
 
-1. **Itens visuais (planilha):** painel → **Visual** → **Importar itens** → escolha `docs/passes/itens-visuais-passes.csv`. Cria os 48 itens (8 por passe): as 12 reações já ficam prontas (usam emoji, sem imagem), as cores do nome, os títulos, os fundos de perfil e as capas já funcionam só com a **cor**; as **molduras** entram só com a cor (a imagem é opcional) e os **ícones entram desativados** até você enviar a imagem.
+1. **Itens visuais (planilha):** painel → **Visual** → **Importar itens** → escolha `docs/passes/itens-visuais-passes.csv`. Cria os 80 itens (8 por passe): as 20 reações já ficam prontas (usam emoji, sem imagem), as cores do nome, os títulos, os fundos de perfil e as capas já funcionam só com a **cor**; as **molduras** entram só com a cor (a imagem é opcional) e os **ícones entram desativados** até você enviar a imagem.
 2. **Criar os passes:** painel → **Passe e eventos** → **Novo passe**, um por passe, com os dados da seção 4 (nome, descrição, cor, mês fixado). Suba o **banner** de cada um aqui.
 3. **Enviar as imagens dos itens:** painel → **Visual** → editar cada item e enviar a imagem (ícone, moldura, fundo de perfil, capa). Ícones: depois de enviar, **ative** o item.
 4. **Degraus (planilha):** painel → **Passe e eventos** → em *Degraus do passe* → **Importar planilha** → `docs/passes/degraus-passes.csv`. A coluna *Passe* manda cada degrau para o passe certo (por isso o nome do passe precisa ser igual ao cadastrado no passo 2). Faça o passo 4 **depois** do 1 e do 2: os degraus procuram os itens e os passes pelo nome.
@@ -41,7 +48,7 @@ O painel reduz sozinho imagens grandes (para WebP). GIF animado vai como está.
 | **Nome** | Noite de Belém |
 | **Descrição** | O anúncio do nascimento de Jesus: estrela, pastores e canto dos anjos. |
 | **Cor do tema** | `#1b2a5c` |
-| **Fixar num mês** | `2026-12` — dezembro de 2026 (Natal) |
+| **Fixar num mês** | **Todo ano em dezembro (Natal)** (opção «Todo ano em ...») |
 | **Paleta da arte** | azul-noite profundo, dourado quente, branco-estrela e toques de verde-pinho |
 | **Cores de apoio** | dourado/acento `#f2c94c`, claro `#fff6d6` |
 
@@ -93,7 +100,7 @@ O painel reduz sozinho imagens grandes (para WebP). GIF animado vai como está.
 | **Nome** | Aleluia, Ele Vive! |
 | **Descrição** | A manhã da ressurreição: a tumba vazia, a luz da alvorada e a alegria dos discípulos. |
 | **Cor do tema** | `#8e6bd1` |
-| **Fixar num mês** | `2027-03` — março de 2027 (Páscoa) |
+| **Fixar num mês** | **Todo ano em abril (Páscoa)** (opção «Todo ano em ...») |
 | **Paleta da arte** | violeta suave, dourado de alvorada, branco-pérola e rosa-aurora |
 | **Cores de apoio** | dourado/acento `#f4b942`, claro `#f7f3e8` |
 
@@ -145,7 +152,7 @@ O painel reduz sozinho imagens grandes (para WebP). GIF animado vai como está.
 | **Nome** | Fogo do Espírito |
 | **Descrição** | O dia em que o Espírito Santo desceu: línguas de fogo, vento forte e coragem para falar. |
 | **Cor do tema** | `#e4572e` |
-| **Fixar num mês** | `2027-05` — maio de 2027 (Pentecostes) |
+| **Fixar num mês** | **Todo ano em maio (Pentecostes)** (opção «Todo ano em ...») |
 | **Paleta da arte** | vermelho-fogo, laranja-brasa, dourado e creme, com fundo escuro quente |
 | **Cores de apoio** | dourado/acento `#f2994a`, claro `#ffe3b3` |
 
@@ -346,7 +353,215 @@ O painel reduz sozinho imagens grandes (para WebP). GIF animado vai como está.
 [ESTILO BASE] Figurinha/emoji 1:1 (256x256) com FUNDO TRANSPARENTE: um rolo de pergaminho meio aberto amarrado com fita, contorno grosso e brilho leve, centralizada, ocupando 80% da área.
 ```
 
-## 5. Degraus (iguais nos 6 passes)
+### 4.7 Elias, o Profeta de Fogo
+
+| Campo do painel | Valor |
+|---|---|
+| **Nome** | Elias, o Profeta de Fogo |
+| **Descrição** | O fogo que desceu do céu no monte Carmelo: coragem de um profeta que não se curvou. |
+| **Cor do tema** | `#c2410c` |
+| **Fixar num mês** | Nenhum — entra no rodízio |
+| **Paleta da arte** | laranja-brasa, ocre, azul-noite e dourado |
+| **Cores de apoio** | dourado/acento `#f59e0b`, claro `#fde9c9` |
+
+**Itens visuais** (já na planilha; todos *só como prêmio*):
+
+| Tipo | Nome | Raridade | Como fica |
+|---|---|---|---|
+| Reação | Fogo do Carmelo 🔥 | Comum | emoji, animação Pulsar, pacote «Elias, o Profeta de Fogo» |
+| Cor do nome | Laranja do Carmelo | Rara | `#e8590c` |
+| Ícone | Carruagem de Fogo | Rara | **enviar imagem 512×512** e ativar |
+| Reação | Corvos de Elias 🐦 | Rara | emoji, animação Subir, pacote «Elias, o Profeta de Fogo» |
+| Moldura | Moldura Fogo do Carmelo | Épica | cor `#f59e0b` + imagem opcional (512×512 transparente) |
+| Título | Profeta do Carmelo | Épica | `#f59e0b`, efeito Pulsar |
+| Fundo de perfil | Monte Carmelo | Épica | cor `#c2410c` + **imagem 1600×800** |
+| Capa do álbum | Capa Elias, o Profeta | Lendária | cor `#c2410c` + **imagem 1200×1800** |
+
+**Prompts** (cada um começa com o *estilo base* da seção 3):
+
+**Banner do passe — 1600×600 (8:3):**
+```
+[ESTILO BASE] Banner horizontal 8:3 (1600x600) do passe bíblico "Elias, o Profeta de Fogo": o monte Carmelo ao entardecer: um altar de pedras com fogo descendo do céu, uma pequena nuvem no horizonte, rochas ocres e céu laranja-escuro com faíscas. Composição panorâmica: o lado esquerdo é calmo, suave e com poucos detalhes (será coberto por uma película), e o brilho e os detalhes principais ficam no lado direito. Paleta: laranja-brasa, ocre, azul-noite e dourado. Atmosfera suave e acolhedora, sem texto, sem números, sem personagens com rosto.
+```
+**Ícone de perfil — 512×512 (1:1):** *item «Carruagem de Fogo»*
+```
+[ESTILO BASE] Ícone quadrado 1:1 (512x512): uma pequena carruagem de fogo com rodas flamejantes e um manto voando, contorno grosso e arredondado, volume suave e brilho leve. O emblema fica centralizado e ocupa cerca de 70% da área (será recortado em círculo). Fundo de cor sólida laranja-brasa #c2410c com degradê muito sutil. Sem texto, sem moldura, sem transparência.
+```
+**Moldura — 512×512 PNG transparente:** *item «Moldura Fogo do Carmelo»*
+```
+[ESTILO BASE] Moldura circular 1:1 (512x512) com FUNDO TRANSPARENTE para avatar de jogo: um anel decorativo fino formado por chamas estilizadas e pequenas faíscas douradas em volta do anel, com pedras empilhadas na base. O círculo central (78% do diâmetro) é totalmente transparente e vazio; toda a decoração fica só na faixa externa do anel, dentro de um círculo perfeito que toca as bordas da imagem, e nada passa para fora desse círculo. Cores: laranja-brasa, ocre, azul-noite e dourado. Sem texto, sem fundo, sem sombra projetada fora do anel.
+```
+**Fundo de perfil — 1600×800 (2:1):** *item «Monte Carmelo»*
+```
+[ESTILO BASE] Imagem horizontal 2:1 (1600x800) para fundo de cartão de perfil: o monte Carmelo ao entardecer: um altar de pedras com fogo descendo do céu, uma pequena nuvem no horizonte, rochas ocres e céu laranja-escuro com faíscas. Composição aberta: o lado esquerdo é mais escuro, calmo e com poucos detalhes (ali ficam o ícone e o nome do jogador), e a cena mais rica e luminosa fica à direita e no centro. Paleta: laranja-brasa, ocre, azul-noite e dourado. Sem texto, sem números, sem personagens com rosto.
+```
+**Capa do álbum — 1200×1800 (2:3 vertical):** *item «Capa Elias, o Profeta»*
+```
+[ESTILO BASE] Capa vertical 2:3 (1200x1800) de um álbum de figurinhas bíblicas, tema "Elias, o Profeta de Fogo": o monte Carmelo ao entardecer: um altar de pedras com fogo descendo do céu, uma pequena nuvem no horizonte, rochas ocres e céu laranja-escuro com faíscas, arte emoldurada por uma borda fina e elegante. A cena principal ocupa o centro e a metade de cima; o terço inferior é mais escuro, calmo e quase sem detalhes (um texto será escrito ali pelo app). Textura sutil de couro/papel, acabamento premium. Paleta: laranja-brasa, ocre, azul-noite e dourado. Sem texto, sem números, sem personagens com rosto.
+```
+**Reações em imagem (opcional)** — 256×256, fundo transparente:
+```
+[ESTILO BASE] Figurinha/emoji 1:1 (256x256) com FUNDO TRANSPARENTE: uma chama grande descendo do céu sobre um altar de pedras, contorno grosso e brilho leve, centralizada, ocupando 80% da área.
+[ESTILO BASE] Figurinha/emoji 1:1 (256x256) com FUNDO TRANSPARENTE: um corvo estilizado carregando um pãozinho, contorno grosso e brilho leve, centralizada, ocupando 80% da área.
+```
+
+### 4.8 Daniel e os Leões
+
+| Campo do painel | Valor |
+|---|---|
+| **Nome** | Daniel e os Leões |
+| **Descrição** | Fiel até na cova dos leões: a oração de Daniel e o livramento de Deus. |
+| **Cor do tema** | `#7c5a2b` |
+| **Fixar num mês** | Nenhum — entra no rodízio |
+| **Paleta da arte** | dourado-areia, marrom-couro, azul-noite e luz âmbar |
+| **Cores de apoio** | dourado/acento `#e0b43a`, claro `#f4e8d0` |
+
+**Itens visuais** (já na planilha; todos *só como prêmio*):
+
+| Tipo | Nome | Raridade | Como fica |
+|---|---|---|---|
+| Reação | Leão manso 🦁 | Comum | emoji, animação Pulo, pacote «Daniel e os Leões» |
+| Cor do nome | Âmbar de Babilônia | Rara | `#d9a441` |
+| Ícone | Leão de Daniel | Rara | **enviar imagem 512×512** e ativar |
+| Reação | Oração de Daniel 🙏 | Rara | emoji, animação Subir, pacote «Daniel e os Leões» |
+| Moldura | Moldura Cova dos Leões | Épica | cor `#e0b43a` + imagem opcional (512×512 transparente) |
+| Título | Fiel entre os Leões | Épica | `#e0b43a`, efeito Brilho |
+| Fundo de perfil | Cova dos Leões | Épica | cor `#7c5a2b` + **imagem 1600×800** |
+| Capa do álbum | Capa Daniel e os Leões | Lendária | cor `#7c5a2b` + **imagem 1200×1800** |
+
+**Prompts** (cada um começa com o *estilo base* da seção 3):
+
+**Banner do passe — 1600×600 (8:3):**
+```
+[ESTILO BASE] Banner horizontal 8:3 (1600x600) do passe bíblico "Daniel e os Leões": uma cova de pedra com leões grandes deitados mansamente, um raio de luz dourada vindo de uma abertura no alto, um anjo de luz suave sem rosto e muros de tijolo da Babilônia ao fundo. Composição panorâmica: o lado esquerdo é calmo, suave e com poucos detalhes (será coberto por uma película), e o brilho e os detalhes principais ficam no lado direito. Paleta: dourado-areia, marrom-couro, azul-noite e luz âmbar. Atmosfera suave e acolhedora, sem texto, sem números, sem personagens com rosto.
+```
+**Ícone de perfil — 512×512 (1:1):** *item «Leão de Daniel»*
+```
+[ESTILO BASE] Ícone quadrado 1:1 (512x512): a cabeça de um leão manso com uma pequena coroa de luz acima, contorno grosso e arredondado, volume suave e brilho leve. O emblema fica centralizado e ocupa cerca de 70% da área (será recortado em círculo). Fundo de cor sólida âmbar #7c5a2b com degradê muito sutil. Sem texto, sem moldura, sem transparência.
+```
+**Moldura — 512×512 PNG transparente:** *item «Moldura Cova dos Leões»*
+```
+[ESTILO BASE] Moldura circular 1:1 (512x512) com FUNDO TRANSPARENTE para avatar de jogo: um anel decorativo fino formado por uma juba de leão estilizada dourada em volta do anel, com pequenas estrelas de luz. O círculo central (78% do diâmetro) é totalmente transparente e vazio; toda a decoração fica só na faixa externa do anel, dentro de um círculo perfeito que toca as bordas da imagem, e nada passa para fora desse círculo. Cores: dourado-areia, marrom-couro, azul-noite e luz âmbar. Sem texto, sem fundo, sem sombra projetada fora do anel.
+```
+**Fundo de perfil — 1600×800 (2:1):** *item «Cova dos Leões»*
+```
+[ESTILO BASE] Imagem horizontal 2:1 (1600x800) para fundo de cartão de perfil: uma cova de pedra com leões grandes deitados mansamente, um raio de luz dourada vindo de uma abertura no alto, um anjo de luz suave sem rosto e muros de tijolo da Babilônia ao fundo. Composição aberta: o lado esquerdo é mais escuro, calmo e com poucos detalhes (ali ficam o ícone e o nome do jogador), e a cena mais rica e luminosa fica à direita e no centro. Paleta: dourado-areia, marrom-couro, azul-noite e luz âmbar. Sem texto, sem números, sem personagens com rosto.
+```
+**Capa do álbum — 1200×1800 (2:3 vertical):** *item «Capa Daniel e os Leões»*
+```
+[ESTILO BASE] Capa vertical 2:3 (1200x1800) de um álbum de figurinhas bíblicas, tema "Daniel e os Leões": uma cova de pedra com leões grandes deitados mansamente, um raio de luz dourada vindo de uma abertura no alto, um anjo de luz suave sem rosto e muros de tijolo da Babilônia ao fundo, arte emoldurada por uma borda fina e elegante. A cena principal ocupa o centro e a metade de cima; o terço inferior é mais escuro, calmo e quase sem detalhes (um texto será escrito ali pelo app). Textura sutil de couro/papel, acabamento premium. Paleta: dourado-areia, marrom-couro, azul-noite e luz âmbar. Sem texto, sem números, sem personagens com rosto.
+```
+**Reações em imagem (opcional)** — 256×256, fundo transparente:
+```
+[ESTILO BASE] Figurinha/emoji 1:1 (256x256) com FUNDO TRANSPARENTE: um leão sorridente e manso, contorno grosso e brilho leve, centralizada, ocupando 80% da área.
+[ESTILO BASE] Figurinha/emoji 1:1 (256x256) com FUNDO TRANSPARENTE: mãos postas em oração com um brilho dourado, contorno grosso e brilho leve, centralizada, ocupando 80% da área.
+```
+
+### 4.9 Jonas e o Grande Peixe
+
+| Campo do painel | Valor |
+|---|---|
+| **Nome** | Jonas e o Grande Peixe |
+| **Descrição** | Do fundo do mar a Nínive: a segunda chance de quem obedece a Deus. |
+| **Cor do tema** | `#3b6ea5` |
+| **Fixar num mês** | Nenhum — entra no rodízio |
+| **Paleta da arte** | azul-profundo, verde-água, coral e raios de sol entrando na água |
+| **Cores de apoio** | dourado/acento `#f4a259`, claro `#e6f4f1` |
+
+**Itens visuais** (já na planilha; todos *só como prêmio*):
+
+| Tipo | Nome | Raridade | Como fica |
+|---|---|---|---|
+| Reação | Grande peixe 🐋 | Comum | emoji, animação Quicar, pacote «Jonas e o Grande Peixe» |
+| Cor do nome | Verde-água de Társis | Rara | `#2a9d8f` |
+| Ícone | Baleia de Jonas | Rara | **enviar imagem 512×512** e ativar |
+| Reação | Nínive ouviu 📣 | Rara | emoji, animação Tremer, pacote «Jonas e o Grande Peixe» |
+| Moldura | Moldura Ondas de Társis | Épica | cor `#f4a259` + imagem opcional (512×512 transparente) |
+| Título | Mensageiro de Nínive | Épica | `#2a9d8f`, efeito Onda |
+| Fundo de perfil | Mar de Társis | Épica | cor `#3b6ea5` + **imagem 1600×800** |
+| Capa do álbum | Capa Jonas e o Grande Peixe | Lendária | cor `#3b6ea5` + **imagem 1200×1800** |
+
+**Prompts** (cada um começa com o *estilo base* da seção 3):
+
+**Banner do passe — 1600×600 (8:3):**
+```
+[ESTILO BASE] Banner horizontal 8:3 (1600x600) do passe bíblico "Jonas e o Grande Peixe": um mar profundo azul com raios de sol atravessando a água, um enorme peixe estilizado e amigável ao fundo e um barco pequeno na superfície ao longe. Composição panorâmica: o lado esquerdo é calmo, suave e com poucos detalhes (será coberto por uma película), e o brilho e os detalhes principais ficam no lado direito. Paleta: azul-profundo, verde-água, coral e raios de sol entrando na água. Atmosfera suave e acolhedora, sem texto, sem números, sem personagens com rosto.
+```
+**Ícone de perfil — 512×512 (1:1):** *item «Baleia de Jonas»*
+```
+[ESTILO BASE] Ícone quadrado 1:1 (512x512): um grande peixe azul sorridente com um pequeno barco no dorso e ondas, contorno grosso e arredondado, volume suave e brilho leve. O emblema fica centralizado e ocupa cerca de 70% da área (será recortado em círculo). Fundo de cor sólida azul-profundo #3b6ea5 com degradê muito sutil. Sem texto, sem moldura, sem transparência.
+```
+**Moldura — 512×512 PNG transparente:** *item «Moldura Ondas de Társis»*
+```
+[ESTILO BASE] Moldura circular 1:1 (512x512) com FUNDO TRANSPARENTE para avatar de jogo: um anel decorativo fino formado por ondas e bolhas em volta do anel, com pequenos peixinhos coloridos. O círculo central (78% do diâmetro) é totalmente transparente e vazio; toda a decoração fica só na faixa externa do anel, dentro de um círculo perfeito que toca as bordas da imagem, e nada passa para fora desse círculo. Cores: azul-profundo, verde-água, coral e raios de sol entrando na água. Sem texto, sem fundo, sem sombra projetada fora do anel.
+```
+**Fundo de perfil — 1600×800 (2:1):** *item «Mar de Társis»*
+```
+[ESTILO BASE] Imagem horizontal 2:1 (1600x800) para fundo de cartão de perfil: um mar profundo azul com raios de sol atravessando a água, um enorme peixe estilizado e amigável ao fundo e um barco pequeno na superfície ao longe. Composição aberta: o lado esquerdo é mais escuro, calmo e com poucos detalhes (ali ficam o ícone e o nome do jogador), e a cena mais rica e luminosa fica à direita e no centro. Paleta: azul-profundo, verde-água, coral e raios de sol entrando na água. Sem texto, sem números, sem personagens com rosto.
+```
+**Capa do álbum — 1200×1800 (2:3 vertical):** *item «Capa Jonas e o Grande Peixe»*
+```
+[ESTILO BASE] Capa vertical 2:3 (1200x1800) de um álbum de figurinhas bíblicas, tema "Jonas e o Grande Peixe": um mar profundo azul com raios de sol atravessando a água, um enorme peixe estilizado e amigável ao fundo e um barco pequeno na superfície ao longe, arte emoldurada por uma borda fina e elegante. A cena principal ocupa o centro e a metade de cima; o terço inferior é mais escuro, calmo e quase sem detalhes (um texto será escrito ali pelo app). Textura sutil de couro/papel, acabamento premium. Paleta: azul-profundo, verde-água, coral e raios de sol entrando na água. Sem texto, sem números, sem personagens com rosto.
+```
+**Reações em imagem (opcional)** — 256×256, fundo transparente:
+```
+[ESTILO BASE] Figurinha/emoji 1:1 (256x256) com FUNDO TRANSPARENTE: uma baleia azul estilizada sorrindo, contorno grosso e brilho leve, centralizada, ocupando 80% da área.
+[ESTILO BASE] Figurinha/emoji 1:1 (256x256) com FUNDO TRANSPARENTE: uma trombeta antiga dourada com ondas de som, contorno grosso e brilho leve, centralizada, ocupando 80% da área.
+```
+
+### 4.10 Rute e Noemi
+
+| Campo do painel | Valor |
+|---|---|
+| **Nome** | Rute e Noemi |
+| **Descrição** | A colheita da fidelidade: duas mulheres, um caminho juntas e a bondade que muda o futuro. |
+| **Cor do tema** | `#b8860b` |
+| **Fixar num mês** | Nenhum — entra no rodízio |
+| **Paleta da arte** | dourado-trigo, verde-sálvia, terracota e céu rosado de fim de tarde |
+| **Cores de apoio** | dourado/acento `#e9c46a`, claro `#fbf3d5` |
+
+**Itens visuais** (já na planilha; todos *só como prêmio*):
+
+| Tipo | Nome | Raridade | Como fica |
+|---|---|---|---|
+| Reação | Espiga dourada 🌾 | Comum | emoji, animação Subir, pacote «Rute e Noemi» |
+| Cor do nome | Trigo de Belém | Rara | `#c9a227` |
+| Ícone | Feixe de Trigo | Rara | **enviar imagem 512×512** e ativar |
+| Reação | Fidelidade 🤝 | Rara | emoji, animação Pulsar, pacote «Rute e Noemi» |
+| Moldura | Moldura Campos de Boaz | Épica | cor `#e9c46a` + imagem opcional (512×512 transparente) |
+| Título | Fiel como Rute | Épica | `#c9a227`, efeito Brilho |
+| Fundo de perfil | Campos de Boaz | Épica | cor `#b8860b` + **imagem 1600×800** |
+| Capa do álbum | Capa Rute e Noemi | Lendária | cor `#b8860b` + **imagem 1200×1800** |
+
+**Prompts** (cada um começa com o *estilo base* da seção 3):
+
+**Banner do passe — 1600×600 (8:3):**
+```
+[ESTILO BASE] Banner horizontal 8:3 (1600x600) do passe bíblico "Rute e Noemi": campos de trigo dourado ao fim da tarde, uma estrada de terra serpenteando, feixes de trigo empilhados e duas silhuetas pequenas de mulheres caminhando juntas, sem rosto. Composição panorâmica: o lado esquerdo é calmo, suave e com poucos detalhes (será coberto por uma película), e o brilho e os detalhes principais ficam no lado direito. Paleta: dourado-trigo, verde-sálvia, terracota e céu rosado de fim de tarde. Atmosfera suave e acolhedora, sem texto, sem números, sem personagens com rosto.
+```
+**Ícone de perfil — 512×512 (1:1):** *item «Feixe de Trigo»*
+```
+[ESTILO BASE] Ícone quadrado 1:1 (512x512): um feixe de trigo dourado amarrado com fita, contorno grosso e arredondado, volume suave e brilho leve. O emblema fica centralizado e ocupa cerca de 70% da área (será recortado em círculo). Fundo de cor sólida dourado-trigo #b8860b com degradê muito sutil. Sem texto, sem moldura, sem transparência.
+```
+**Moldura — 512×512 PNG transparente:** *item «Moldura Campos de Boaz»*
+```
+[ESTILO BASE] Moldura circular 1:1 (512x512) com FUNDO TRANSPARENTE para avatar de jogo: um anel decorativo fino formado por espigas de trigo entrelaçadas em coroa em volta do anel, com pequenas flores. O círculo central (78% do diâmetro) é totalmente transparente e vazio; toda a decoração fica só na faixa externa do anel, dentro de um círculo perfeito que toca as bordas da imagem, e nada passa para fora desse círculo. Cores: dourado-trigo, verde-sálvia, terracota e céu rosado de fim de tarde. Sem texto, sem fundo, sem sombra projetada fora do anel.
+```
+**Fundo de perfil — 1600×800 (2:1):** *item «Campos de Boaz»*
+```
+[ESTILO BASE] Imagem horizontal 2:1 (1600x800) para fundo de cartão de perfil: campos de trigo dourado ao fim da tarde, uma estrada de terra serpenteando, feixes de trigo empilhados e duas silhuetas pequenas de mulheres caminhando juntas, sem rosto. Composição aberta: o lado esquerdo é mais escuro, calmo e com poucos detalhes (ali ficam o ícone e o nome do jogador), e a cena mais rica e luminosa fica à direita e no centro. Paleta: dourado-trigo, verde-sálvia, terracota e céu rosado de fim de tarde. Sem texto, sem números, sem personagens com rosto.
+```
+**Capa do álbum — 1200×1800 (2:3 vertical):** *item «Capa Rute e Noemi»*
+```
+[ESTILO BASE] Capa vertical 2:3 (1200x1800) de um álbum de figurinhas bíblicas, tema "Rute e Noemi": campos de trigo dourado ao fim da tarde, uma estrada de terra serpenteando, feixes de trigo empilhados e duas silhuetas pequenas de mulheres caminhando juntas, sem rosto, arte emoldurada por uma borda fina e elegante. A cena principal ocupa o centro e a metade de cima; o terço inferior é mais escuro, calmo e quase sem detalhes (um texto será escrito ali pelo app). Textura sutil de couro/papel, acabamento premium. Paleta: dourado-trigo, verde-sálvia, terracota e céu rosado de fim de tarde. Sem texto, sem números, sem personagens com rosto.
+```
+**Reações em imagem (opcional)** — 256×256, fundo transparente:
+```
+[ESTILO BASE] Figurinha/emoji 1:1 (256x256) com FUNDO TRANSPARENTE: uma espiga de trigo dourada, contorno grosso e brilho leve, centralizada, ocupando 80% da área.
+[ESTILO BASE] Figurinha/emoji 1:1 (256x256) com FUNDO TRANSPARENTE: duas mãos apertando-se com um coração pequeno, contorno grosso e brilho leve, centralizada, ocupando 80% da área.
+```
+
+## 5. Degraus (iguais nos 10 passes)
 
 A trilha reinicia todo mês e é liberada pelo **XP do mês**. Os valores seguem a economia atual (docs/economia.md): quem joga bastante chega ao degrau 8 (18.000 XP); quem joga pouco ainda leva os primeiros itens.
 
@@ -365,9 +580,9 @@ A trilha reinicia todo mês e é liberada pelo **XP do mês**. Os valores seguem
 
 ## 6. Checklist final
 
-- [ ] `itens-visuais-passes.csv` importado (48 itens).
-- [ ] 6 passes criados com nome **exatamente igual** ao da planilha de degraus; banner enviado.
-- [ ] Imagens de ícone (6), moldura (6, opcional), fundo de perfil (6) e capa (6) enviadas; ícones **ativados**.
-- [ ] `degraus-passes.csv` importado (48 degraus).
+- [ ] `itens-visuais-passes.csv` importado (80 itens).
+- [ ] 10 passes criados com nome **exatamente igual** ao da planilha de degraus; banner enviado.
+- [ ] Imagens de ícone (10), moldura (10, opcional), fundo de perfil (10) e capa (10) enviadas; ícones **ativados**.
+- [ ] `degraus-passes.csv` importado (80 degraus).
 - [ ] Calendário dos próximos meses conferido no painel.
 - [ ] Conta de teste: resgatou um degrau, equipou o fundo de perfil e a capa e viu o álbum abrir com a nova capa.

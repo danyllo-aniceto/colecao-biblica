@@ -80,6 +80,9 @@ export function SeasonScreen() {
 }
 
 const monthLabel = (monthKey: string) => new Date(`${monthKey}-15T12:00:00`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+const MONTH_NAMES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+/** "12" = todo dezembro; "2026-12" = só dezembro de 2026. */
+const pinnedLabel = (pinned: string) => (pinned.length === 2 ? `Todo ano em ${MONTH_NAMES[Number(pinned) - 1]}` : monthLabel(pinned));
 
 /** Próximos 24 meses para fixar um passe. */
 function monthOptions(current: string | null) {
@@ -89,7 +92,8 @@ function monthOptions(current: string | null) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
   });
   if (current && !keys.includes(current)) keys.unshift(current);
-  return [{ value: '', label: 'Nenhum: entra no rodízio' }, ...keys.map((key) => ({ value: key, label: monthLabel(key) }))];
+  const yearly = MONTH_NAMES.map((name, index) => ({ value: String(index + 1).padStart(2, '0'), label: `Todo ano em ${name}` }));
+  return [{ value: '', label: 'Nenhum: entra no rodízio' }, ...yearly, ...keys.map((key) => ({ value: key, label: `Só em ${monthLabel(key)}` }))];
 }
 
 function PassesPanel({ passes, loading, error, onChanged }: { passes: AdminPass[]; loading: boolean; error: string | null; onChanged: () => void }) {
@@ -158,7 +162,7 @@ function PassesPanel({ passes, loading, error, onChanged }: { passes: AdminPass[
                 </div>
               </div>
             </Cell>
-            <Cell>{pass.pinnedMonth ? <span className="font-semibold capitalize">{monthLabel(pass.pinnedMonth)}</span> : <span className="text-muted">Rodízio</span>}</Cell>
+            <Cell>{pass.pinnedMonth ? <span className="font-semibold">{pinnedLabel(pass.pinnedMonth)}</span> : <span className="text-muted">Rodízio</span>}</Cell>
             <Cell>{pass.tiers}</Cell>
             <Cell>
               <StatusBadge active={pass.active} on="Ativo" off="Fora do rodízio" />
@@ -254,7 +258,7 @@ function PassModal({ pass, onClose, onSaved }: { pass: AdminPass | null; onClose
           <Field label="Cor do tema">
             <ColorField value={color} onChange={setColor} />
           </Field>
-          <Field label="Fixar num mês" hint="Vazio = entra no rodízio.">
+          <Field label="Fixar num mês" hint="Todo ano num mês (ex.: Natal) ou só num mês específico. Vazio = entra no rodízio.">
             <Select aria-label="Mês" searchable value={pinnedMonth} onChange={setPinnedMonth} options={monthOptions(pass?.pinnedMonth ?? null)} />
           </Field>
         </div>
