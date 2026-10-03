@@ -57,7 +57,7 @@ export function HomeSection({ profile, characters, collection, history, activeSe
               {activeSession ? (
                 <Button size="xl" variant="accent" onClick={onResume}>
                   <PlayArrowRoundedIcon />
-                  Continuar partida ({activeSession.currentQuestionIndex + 1}/{activeSession.totalQuestions})
+                  Continuar partida ({activeSession.marathon ? `questão ${activeSession.currentQuestionIndex + 1}` : `${activeSession.currentQuestionIndex + 1}/${activeSession.totalQuestions}`})
                 </Button>
               ) : (
                 <Button size="xl" onClick={() => onNavigate('quiz')}>

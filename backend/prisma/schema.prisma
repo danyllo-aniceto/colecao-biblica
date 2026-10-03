@@ -380,6 +380,8 @@ model QuizSession {
   fiftyFiftyUsed              Boolean           @default(false) @map("fifty_fifty_used")
   fiftyFiftyQuestionId        Int?              @map("fifty_fifty_question_id")
   fiftyFiftyRemoved           String?           @map("fifty_fifty_removed")
+  /// Treino (número de perguntas escolhido): não rende baú. Sem o treino, a partida vai até as vidas acabarem.
+  training                    Boolean           @default(false)
   questionIds                 Int[]             @map("question_ids")
   currentQuestionStartedAt    DateTime?         @map("current_question_started_at")
   currentQuestionExtraSeconds Int               @default(0) @map("current_question_extra_seconds")

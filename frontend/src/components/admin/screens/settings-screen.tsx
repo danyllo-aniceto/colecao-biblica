@@ -21,10 +21,12 @@ const GROUPS: Array<{ title: string; description: string; fields: FieldDef[] }> 
     fields: [
       { key: 'startingLives', label: 'Vidas por partida', min: 1, max: 20, hint: 'A partida acaba quando as vidas zeram.' },
       { key: 'maxQuestionsPerMatch', label: 'Máximo de perguntas por partida', min: 1, max: 1000 },
-      { key: 'rewardMinCorrectAnswers', label: 'Acertos para concorrer ao prêmio', min: 1, max: 100, hint: 'No quiz geral. Limitado ao total de perguntas ativas.' },
+      { key: 'rewardMinCorrectAnswers', label: 'Acertos mínimos para ganhar baú', min: 1, max: 100, hint: 'No quiz geral. Limitado ao total de perguntas ativas.' },
       { key: 'xpFullMatchesPerDay', label: 'Partidas por dia com XP cheio', min: 0, max: 100, hint: 'Depois disso o XP cai para a porcentagem abaixo (0 desliga o freio).' },
       { key: 'xpAfterLimitPercent', label: 'XP depois do limite diário', min: 0, max: 100, suffix: '%', hint: 'Porcentagem do XP nas partidas extras do dia.' },
-      { key: 'rewardMatchLimitPerDay', label: 'Prêmios sorteados por dia', min: 0, max: 20, hint: 'Partidas premiadas por jogador por dia (0 desliga o sorteio).' },
+      { key: 'rewardMatchLimitPerDay', label: 'Baús da partida por dia', min: 0, max: 20, hint: 'Quantos baús o jogador pode ganhar por dia na maratona (0 desliga os baús).' },
+      { key: 'chestSilverMinCorrect', label: 'Acertos para o baú de prata', min: 1, max: 1000, hint: 'Abaixo disso o baú é de bronze (o mínimo para ganhar baú é "Acertos mínimos para ganhar baú").' },
+      { key: 'chestGoldMinCorrect', label: 'Acertos para o baú de ouro', min: 1, max: 1000, hint: 'O ouro sempre dá figurinha, com chances melhores de rara e épica.' },
     ],
   },
   {

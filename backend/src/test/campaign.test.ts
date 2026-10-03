@@ -197,7 +197,7 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     }
     expect(base.scenarioId).toBeNull();
     const token = await login("user@email.com");
-    const started = await api.post("/api/quiz/sessions/start").set(bearer(token)).send({ quizType: "GENERAL", questionLimit: 6 });
+    const started = await api.post("/api/quiz/sessions/start").set(bearer(token)).send({ quizType: "GENERAL", questionLimit: 6, training: true });
     expect(started.status).toBe(200);
     const session = await prisma.quizSession.findUniqueOrThrow({ where: { id: started.body.sessionId } });
     const ids = session.questionIds as number[];

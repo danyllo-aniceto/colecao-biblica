@@ -94,6 +94,37 @@ export function requiredCorrectAnswersForReward(configured: number, activeQuesti
   return activeQuestionCount > 0 ? Math.min(minimum, activeQuestionCount) : minimum;
 }
 
+export type ChestTier = "BRONZE" | "SILVER" | "GOLD";
+
+/**
+ * Baú da partida (quiz geral em maratona): o nível depende dos acertos. Abaixo do mínimo não há baú.
+ * Prata e ouro nunca ficam abaixo do mínimo nem fora de ordem.
+ */
+export function chestTierFor(correctAnswers: number, minCorrect: number, silverMin: number, goldMin: number): ChestTier | null {
+  const bronze = Math.max(1, minCorrect);
+  if (correctAnswers < bronze) return null;
+  const silver = Math.max(bronze + 1, silverMin);
+  const gold = Math.max(silver + 1, goldMin);
+  if (correctAnswers >= gold) return "GOLD";
+  if (correctAnswers >= silver) return "SILVER";
+  return "BRONZE";
+}
+
+/** Moedas garantidas de cada baú, além do item sorteado. */
+export const CHEST_BONUS_COINS: Record<ChestTier, number> = { BRONZE: 6, SILVER: 15, GOLD: 30 };
+
+/** Peso de cada recompensa no sorteio do baú: prata favorece figurinhas e o ouro só dá figurinha, com raras melhores. */
+export function chestRewardWeight(tier: ChestTier, reward: { rewardType: string; stickerRarity: StickerRarity | null; dropChance: number }): number {
+  const isPack = reward.rewardType === "STICKER_PACK";
+  const isSticker = reward.rewardType === "STICKER" || isPack;
+  // Bronze: figurinha é rara (o baú serve mais para moedas e ajudas). Prata: um pouco mais de chance.
+  if (tier === "BRONZE") return isSticker ? reward.dropChance * 0.6 : reward.dropChance;
+  if (tier === "SILVER") return isSticker ? reward.dropChance * 1.2 : reward.dropChance;
+  if (!isSticker) return 0;
+  const byRarity: Partial<Record<StickerRarity, number>> = { COMMON: 1, RARE: 1.6, EPIC: 2.2, LEGENDARY: 1.5 };
+  return reward.dropChance * (isPack ? 1.5 : (byRarity[reward.stickerRarity ?? "COMMON"] ?? 1));
+}
+
 /** Partida "perfeita" para o bônus de moedas: sem erros e com um mínimo de perguntas. */
 export const PERFECT_MATCH_MIN_QUESTIONS = 5;
 

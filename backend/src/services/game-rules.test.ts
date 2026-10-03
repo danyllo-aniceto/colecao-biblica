@@ -15,6 +15,9 @@ import {
   nextCombo,
   accuracyBonus,
   applyDailyXpLimit,
+  CHEST_BONUS_COINS,
+  chestRewardWeight,
+  chestTierFor,
   calculateLevel,
   xpForLevel,
   calculateMatchCoins,
@@ -83,6 +86,33 @@ describe("XP, pontos e nível", () => {
     expect(applyDailyXpLimit(150, 9, 6, 25)).toBe(37);
     expect(applyDailyXpLimit(100, 20, 0, 25)).toBe(100); // 0 desliga o freio
     expect(applyDailyXpLimit(100, 6, 6, 150)).toBe(100); // porcentagem limitada a 100
+  });
+});
+
+describe("baús da partida", () => {
+  it("o nível do baú vem dos acertos: abaixo do mínimo não há baú", () => {
+    expect(chestTierFor(6, 7, 12, 20)).toBeNull();
+    expect(chestTierFor(7, 7, 12, 20)).toBe("BRONZE");
+    expect(chestTierFor(11, 7, 12, 20)).toBe("BRONZE");
+    expect(chestTierFor(12, 7, 12, 20)).toBe("SILVER");
+    expect(chestTierFor(19, 7, 12, 20)).toBe("SILVER");
+    expect(chestTierFor(20, 7, 12, 20)).toBe("GOLD");
+    // Configuração fora de ordem não quebra: prata e ouro ficam acima do mínimo e em sequência.
+    expect(chestTierFor(8, 7, 3, 3)).toBe("SILVER");
+    expect(chestTierFor(9, 7, 3, 3)).toBe("GOLD");
+    expect(CHEST_BONUS_COINS.GOLD).toBeGreaterThan(CHEST_BONUS_COINS.SILVER);
+  });
+
+  it("o ouro só dá figurinha e a prata favorece figurinhas", () => {
+    const sticker = { rewardType: "STICKER", stickerRarity: "RARE" as const, dropChance: 3.5 };
+    const coins = { rewardType: "COINS", stickerRarity: null, dropChance: 30 };
+    expect(chestRewardWeight("BRONZE", sticker)).toBeLessThan(3.5);
+    expect(chestRewardWeight("BRONZE", coins)).toBe(30);
+    expect(chestRewardWeight("SILVER", sticker)).toBeGreaterThan(3.5);
+    expect(chestRewardWeight("SILVER", coins)).toBe(30);
+    expect(chestRewardWeight("GOLD", coins)).toBe(0);
+    expect(chestRewardWeight("GOLD", sticker)).toBeGreaterThan(3.5);
+    expect(chestRewardWeight("GOLD", { ...sticker, stickerRarity: "EPIC" })).toBeGreaterThan(chestRewardWeight("GOLD", { ...sticker, stickerRarity: "COMMON" }));
   });
 });
 

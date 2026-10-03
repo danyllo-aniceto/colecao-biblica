@@ -263,9 +263,9 @@ describe.skipIf(!hasDatabase)("API", () => {
   });
 
   describe("quiz", () => {
-    it("quiz geral perfeito dá XP, pontos e sorteia um prêmio", async () => {
+    it("maratona perfeita dá XP, pontos e um baú de bronze com prêmio", async () => {
       const token = await login("user@email.com");
-      const { last } = await playSession(token, { quizType: "GENERAL", questionLimit: 10 }, (correct) => correct);
+      const { last } = await playSession(token, { quizType: "GENERAL" }, (correct) => correct);
 
       expect(last.finished).toBe(true);
       const result = last.matchResult;
@@ -274,7 +274,10 @@ describe.skipIf(!hasDatabase)("API", () => {
       expect(result.rewardGranted).toBe(true);
       expect(result.rewardName).toBeTruthy();
       expect(result.rewardMatchesUsedToday).toBe(1);
-      expect(result.rewardMatchesLimitPerDay).toBe(2);
+      expect(result.rewardMatchesLimitPerDay).toBe(5);
+      // Só 3 perguntas ativas: o mínimo cai para 3 e o baú é de bronze (6 moedas garantidas, além do item).
+      expect(result.chestTier).toBe("BRONZE");
+      expect(result.chestCoins).toBe(6);
       expect(result.coinsGained).toBe(7); // 1 da sequência + 3 acertos × 2 (bônus de perfeita só com 5+ perguntas)
       expect(result.unlockedAchievements).toEqual(expect.arrayContaining([expect.objectContaining({ code: "FIRST_MATCH", coins: 30 })]));
       expect(last.correctOption).toMatch(/^[ABCD]$/);
@@ -290,6 +293,18 @@ describe.skipIf(!hasDatabase)("API", () => {
       const history = await api.get("/api/quiz/history").set(bearer(token));
       expect(history.body.sessions[0].status).toBe("FINISHED");
       expect(history.body.matches[0]).toMatchObject({ xpGained: 66, rewardGranted: true });
+    });
+
+    it("treino do quiz geral não rende baú e a maratona vai até as vidas acabarem", async () => {
+      const token = await login("user@email.com");
+      const training = await playSession(token, { quizType: "GENERAL", questionLimit: 3, training: true }, (correct) => correct);
+      expect(training.last.matchResult).toMatchObject({ rewardGranted: false, chestTier: null, chestCoins: 0 });
+
+      const started = await api.post("/api/quiz/sessions/start").set(bearer(token)).send({ quizType: "GENERAL", questionLimit: 1 });
+      expect(started.body).toMatchObject({ marathon: true, training: false });
+      // A maratona ignora o número de perguntas pedido: sorteia todas as ativas.
+      expect(started.body.totalQuestions).toBe(3);
+      await api.post(`/api/quiz/sessions/${started.body.sessionId}/abandon`).set(bearer(token));
     });
 
     it("sem acertos suficientes não há prêmio; erros tiram vidas e encerram a partida", async () => {

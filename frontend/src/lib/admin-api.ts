@@ -144,6 +144,8 @@ export type GameSettings = {
   maxQuestionsPerMatch: number;
   startingLives: number;
   rewardMatchLimitPerDay: number;
+  chestSilverMinCorrect: number;
+  chestGoldMinCorrect: number;
   xpFullMatchesPerDay: number;
   xpAfterLimitPercent: number;
   maxExtraLifeBoosts: number;

@@ -34,6 +34,12 @@ function starsFor(correct: number, answered: number) {
   return 0;
 }
 
+const CHEST_LABELS = {
+  BRONZE: { label: 'Baú de Bronze', tone: 'bg-[#b87333]/20 text-[#8a4f1d] dark:text-[#e0a164]' },
+  SILVER: { label: 'Baú de Prata', tone: 'bg-slate-400/25 text-slate-700 dark:text-slate-200' },
+  GOLD: { label: 'Baú de Ouro', tone: 'bg-primary/25 text-primary-strong dark:text-primary' },
+} as const;
+
 const HEADLINES = ['Continue tentando!', 'Boa!', 'Muito bem!', 'Incrível!'];
 
 export function MatchResult({
@@ -174,6 +180,16 @@ export function MatchResult({
         ) : null}
 
         <div className="relative mt-5">
+          {result.chestTier ? (
+            <p className={cn('mb-3 inline-flex items-center gap-2 rounded-full px-4 py-1.5 font-display text-sm font-bold', CHEST_LABELS[result.chestTier].tone)}>
+              <Inventory2RoundedIcon fontSize="small" /> {CHEST_LABELS[result.chestTier].label}
+              {result.chestCoins ? (
+                <span className="inline-flex items-center gap-1">
+                  · <CoinIcon className="h-4 w-4" />+{result.chestCoins}
+                </span>
+              ) : null}
+            </p>
+          ) : null}
           {wonSticker ? (
             <div className="space-y-3">
               <p className="font-display text-lg font-bold text-ink">{result.rewardCharacterUnlocked ? 'Nova figurinha!' : 'Figurinha repetida'}</p>
@@ -199,11 +215,11 @@ export function MatchResult({
               <p className="font-display text-lg font-bold text-ink">{result.rewardName}</p>
             </div>
           ) : dailyLimitReached ? (
-            <p className="text-sm text-muted">Você já ganhou os {result.rewardMatchesLimitPerDay} prêmios de hoje. Amanhã tem mais!</p>
+            <p className="text-sm text-muted">Você já abriu os {result.rewardMatchesLimitPerDay} baús de hoje. Amanhã tem mais!</p>
           ) : (
             <p className="text-sm text-muted">
-              Sem prêmio desta vez.
-              {minCorrectForReward ? ` No quiz geral, acerte ${minCorrectForReward}+ para concorrer.` : ''}
+              Sem baú desta vez.
+              {minCorrectForReward ? ` Na maratona, acerte ${minCorrectForReward}+ para ganhar um baú (o treino não rende baú).` : ''}
             </p>
           )}
         </div>
@@ -216,7 +232,7 @@ export function MatchResult({
 
         {result.rewardMatchesLimitPerDay > 0 ? (
           <p className="relative mt-4 text-xs font-bold uppercase tracking-wider text-muted">
-            Prêmios hoje: {result.rewardMatchesUsedToday}/{result.rewardMatchesLimitPerDay}
+            Baús hoje: {result.rewardMatchesUsedToday}/{result.rewardMatchesLimitPerDay}
           </p>
         ) : null}
 

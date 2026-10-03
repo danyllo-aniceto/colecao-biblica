@@ -87,6 +87,8 @@ export type StartQuizSessionPayload = {
   quizType: QuizType;
   characterId?: number | null;
   questionLimit?: number | null;
+  /** Quiz geral em treino (número de perguntas escolhido, sem baú). Sem isso, é a maratona. */
+  training?: boolean;
 };
 
 export type QuizQuestionView = {
@@ -113,6 +115,10 @@ export type QuizQuestionView = {
 
 export type QuizSessionStatus = {
   sessionId: number;
+  /** Treino do quiz geral (sem baú). */
+  training?: boolean;
+  /** Maratona: vai até as vidas acabarem (não tem total de perguntas fixo). */
+  marathon?: boolean;
   quizType: QuizType;
   status: string;
   totalQuestions: number;
@@ -183,6 +189,9 @@ export type QuizMatchResult = {
   levelUp?: boolean;
   /** O XP desta partida foi reduzido pelo limite diário. */
   xpReduced?: boolean;
+  /** Baú da partida (quiz geral em maratona): o nível vem dos acertos. */
+  chestTier?: 'BRONZE' | 'SILVER' | 'GOLD' | null;
+  chestCoins?: number;
   /** Só no estudo de personagem: acertos acumulados e status do personagem. */
   studyStatus?: StudyStatus | null;
   studyLevelUp?: boolean;

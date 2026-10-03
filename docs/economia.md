@@ -54,6 +54,27 @@ Causas:
 A venda de repetidas subiu junto com os preços (~12% do valor de compra) para a repetida continuar valendo a pena.
 O estudo de personagem não entra na conta: não rende XP, moedas nem prêmios.
 
+## Maratona e baús da partida
+
+O quiz geral virou uma **maratona**: sem escolher o número de perguntas, a partida vai até as 3 vidas acabarem (teto de
+100 perguntas, ou até o banco acabar). O **Treino** mantém o número de perguntas escolhido, mas não rende baú. O estudo
+de personagem continua como está.
+
+O prêmio sorteado por partida foi trocado por um **baú da partida**, cujo nível vem dos acertos. Até 5 baús por dia
+(configurável); ganha baú quem acerta no mínimo 7.
+
+| Acertos | Baú | Moedas garantidas | O que sai |
+|---|---|---|---|
+| 7 a 14 | Bronze | 6 | sorteio comum (figurinha é mais rara) |
+| 15 a 39 | Prata | 15 | sorteio com um pouco mais de chance de figurinha |
+| 40 ou mais | Ouro | 30 | sempre figurinha, com raras e épicas favorecidas |
+
+A garantia de figurinha (a cada 10 baús sem figurinha) continua. Os cortes de prata e ouro, o limite diário e o mínimo
+de acertos ficam em Configurações. Como a maratona rende mais acertos por partida, o limite de partidas com moedas por dia
+caiu de 5 para 3 e o de XP cheio de 6 para 4.
+
+Figurinhas por dia vindas dos baús (simulação): casual ~0,1, regular ~0,5, dedicado ~1. Somam-se à compra na loja (1 por dia).
+
 ## Como o ajuste chega ao jogo
 
 A migração `20261011090000_rebalanceamento_economia` troca os valores só onde ainda estão no padrão antigo

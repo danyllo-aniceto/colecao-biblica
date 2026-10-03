@@ -10,7 +10,7 @@ async function correctOf(questionId: number) {
 const wrong = (correct: string) => (correct === "A" ? "B" : "A");
 
 async function start(token: string, questionLimit = 2) {
-  const started = await api.post("/api/quiz/sessions/start").set(bearer(token)).send({ quizType: "GENERAL", questionLimit });
+  const started = await api.post("/api/quiz/sessions/start").set(bearer(token)).send({ quizType: "GENERAL", questionLimit, training: true });
   expect(started.status).toBe(200);
   return started.body as { sessionId: number; currentQuestion: { id: number } };
 }

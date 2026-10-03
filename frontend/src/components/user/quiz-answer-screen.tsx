@@ -279,24 +279,31 @@ export function QuizAnswerScreen({
               <CloseRoundedIcon />
             </button>
           </Tooltip>
-          <div className="flex flex-1 gap-1" aria-label={`Questão ${session.currentQuestionIndex + 1} de ${session.totalQuestions}`}>
-            {Array.from({ length: session.totalQuestions }, (_, index) => (
-              <span
-                key={index}
-                className={cn(
-                  'h-2.5 flex-1 rounded-full transition-colors',
-                  index < answeredCount ? 'bg-accent' : index === session.currentQuestionIndex ? 'bg-primary' : 'bg-surface-3',
-                )}
-              />
-            ))}
-          </div>
+          {session.marathon ? (
+            <div className="flex flex-1 items-center gap-2 rounded-full bg-surface-3 px-4 py-2 font-display text-sm font-bold text-ink" aria-label={`Maratona: ${session.correctAnswers} acertos`}>
+              <span className="text-primary-strong dark:text-primary">Maratona</span>
+              <span className="text-success">{session.correctAnswers} acertos</span>
+            </div>
+          ) : (
+            <div className="flex flex-1 gap-1" aria-label={`Questão ${session.currentQuestionIndex + 1} de ${session.totalQuestions}`}>
+              {Array.from({ length: session.totalQuestions }, (_, index) => (
+                <span
+                  key={index}
+                  className={cn(
+                    'h-2.5 flex-1 rounded-full transition-colors',
+                    index < answeredCount ? 'bg-accent' : index === session.currentQuestionIndex ? 'bg-primary' : 'bg-surface-3',
+                  )}
+                />
+              ))}
+            </div>
+          )}
           <Hearts lives={session.livesRemaining} max={maxLives} />
         </div>
 
         <div className="flex items-center justify-between gap-3">
           <span className="font-display text-lg font-bold text-ink">
             Questão {session.currentQuestionIndex + 1}
-            <span className="text-muted">/{session.totalQuestions}</span>
+            {session.marathon ? null : <span className="text-muted">/{session.totalQuestions}</span>}
           </span>
           <span className="flex flex-wrap items-center justify-end gap-2 text-sm font-bold text-muted">
             {session.doubleCoinsUsed ? (

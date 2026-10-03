@@ -13,6 +13,8 @@ const updateSchema = z.object({
   maxQuestionsPerMatch: int(1, 1000),
   startingLives: int(1, 20),
   rewardMatchLimitPerDay: int(0, 20),
+  chestSilverMinCorrect: int(1, 1000),
+  chestGoldMinCorrect: int(1, 1000),
   xpFullMatchesPerDay: int(0, 100),
   xpAfterLimitPercent: int(0, 100),
   maxExtraLifeBoosts: int(1, 20),

@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
+import FitnessCenterRoundedIcon from '@mui/icons-material/FitnessCenterRounded';
 import PersonSearchRoundedIcon from '@mui/icons-material/PersonSearchRounded';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
@@ -12,7 +13,7 @@ import type { CharacterEntry, GameRules, QuizSessionStatus, UserSticker } from '
 import type { UserProfile } from '@/types/auth';
 
 export type QuizFormState = {
-  quizType: 'GENERAL' | 'CHARACTER_STUDY';
+  quizType: 'MARATHON' | 'TRAINING' | 'CHARACTER_STUDY';
   characterId: string;
   questionLimit: string;
 };
@@ -64,11 +65,11 @@ export function PlaySection({
         <section className="panel space-y-5 p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="font-display text-xl font-semibold text-ink">
-              Questão {answered + 1} de {quizSession.totalQuestions}
+              {quizSession.marathon ? `Questão ${answered + 1}` : `Questão ${answered + 1} de ${quizSession.totalQuestions}`}
             </p>
             <Hearts lives={quizSession.livesRemaining} />
           </div>
-          <ProgressBar value={(answered / Math.max(quizSession.totalQuestions, 1)) * 100} className="h-4" />
+          {quizSession.marathon ? null : <ProgressBar value={(answered / Math.max(quizSession.totalQuestions, 1)) * 100} className="h-4" />}
           <p className="text-sm font-semibold text-muted">
             {quizSession.correctAnswers} acertos · {quizSession.wrongAnswers} erros
           </p>
@@ -87,7 +88,8 @@ export function PlaySection({
     );
   }
 
-  const isGeneral = quizForm.quizType === 'GENERAL';
+  const isStudy = quizForm.quizType === 'CHARACTER_STUDY';
+  const isMarathon = quizForm.quizType === 'MARATHON';
   const limit = Number(quizForm.questionLimit);
   const studyById = new Map(collection.map((item) => [item.characterId, item.study]));
   const studyCharacters = [...characters]
@@ -101,17 +103,29 @@ export function PlaySection({
 
       <DailyChallengeCard onStart={onStartChallenge} starting={submitting} currentUserId={profile?.id} />
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <ModeCard
-          active={isGeneral}
-          onClick={() => onChangeForm((current) => ({ ...current, quizType: 'GENERAL' }))}
+          active={isMarathon}
+          onClick={() => onChangeForm((current) => ({ ...current, quizType: 'MARATHON' }))}
           icon={<PublicRoundedIcon sx={{ fontSize: 36 }} />}
-          title="Quiz geral"
-          description={gameRules ? `Perguntas de toda a Bíblia. Acerte ${gameRules.rewardMinCorrectAnswers}+ para concorrer a um prêmio.` : 'Perguntas de toda a Bíblia, com prêmios.'}
+          title="Maratona"
+          description={
+            gameRules
+              ? `Perguntas de toda a Bíblia até suas ${gameRules.startingLives} vidas acabarem. Acerte ${gameRules.rewardMinCorrectAnswers}+ para ganhar um baú (até ${gameRules.rewardMatchLimitPerDay} por dia): quanto mais acertos, melhor o baú.`
+              : 'Perguntas de toda a Bíblia até suas vidas acabarem. Quanto mais acertos, melhor o baú.'
+          }
           tone="primary"
         />
         <ModeCard
-          active={!isGeneral}
+          active={quizForm.quizType === 'TRAINING'}
+          onClick={() => onChangeForm((current) => ({ ...current, quizType: 'TRAINING' }))}
+          icon={<FitnessCenterRoundedIcon sx={{ fontSize: 36 }} />}
+          title="Treino"
+          description="Você escolhe quantas perguntas. Sem baú: serve para praticar com calma."
+          tone="accent"
+        />
+        <ModeCard
+          active={isStudy}
           onClick={() => onChangeForm((current) => ({ ...current, quizType: 'CHARACTER_STUDY' }))}
           icon={<PersonSearchRoundedIcon sx={{ fontSize: 36 }} />}
           title="Estudo de personagem"
@@ -121,7 +135,7 @@ export function PlaySection({
       </div>
 
       <section className="panel space-y-5 p-5 sm:p-6">
-        {!isGeneral ? (
+        {isStudy ? (
           <div className="space-y-2">
             <span className="text-sm font-bold text-muted">Personagem</span>
             <Select
@@ -150,6 +164,9 @@ export function PlaySection({
           </div>
         ) : null}
 
+        {isMarathon ? (
+          <p className="rounded-2xl bg-surface-2 p-4 text-sm font-semibold text-muted">Sem limite de perguntas: você joga até perder todas as vidas. Responda rápido e sem errar para chegar longe.</p>
+        ) : (
         <fieldset className="space-y-2">
           <legend className="text-sm font-bold text-muted">Número de perguntas</legend>
           <div className="flex flex-wrap gap-2">
@@ -179,6 +196,7 @@ export function PlaySection({
             />
           </div>
         </fieldset>
+        )}
 
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-bold text-muted">Seus bônus:</span>
@@ -187,13 +205,13 @@ export function PlaySection({
 
         {gameRules ? (
           <p className="text-sm text-muted">
-            Cada acerto vale {gameRules.coinsPerCorrectAnswer} moeda(s){isGeneral ? '' : ' (no estudo de personagem não há moedas nem XP)'}; partida perfeita com 5+ perguntas dá +{gameRules.perfectMatchBonusCoins}.
+            Cada acerto vale {gameRules.coinsPerCorrectAnswer} moeda(s){isStudy ? ' (no estudo de personagem não há moedas nem XP)' : ''}; partida perfeita com 5+ perguntas dá +{gameRules.perfectMatchBonusCoins}.
           </p>
         ) : null}
 
         {error ? <Alert tone="danger">{error}</Alert> : null}
 
-        <Button type="submit" size="xl" className="w-full sm:w-auto" loading={submitting} disabled={!isGeneral && !quizForm.characterId}>
+        <Button type="submit" size="xl" className="w-full sm:w-auto" loading={submitting} disabled={isStudy && !quizForm.characterId}>
           {submitting ? null : <PlayArrowRoundedIcon />}
           {submitting ? 'Preparando...' : 'Começar partida'}
         </Button>
@@ -215,9 +233,9 @@ function ModeCard({
   icon: React.ReactNode;
   title: string;
   description: string;
-  tone: 'primary' | 'violet';
+  tone: 'primary' | 'violet' | 'accent';
 }) {
-  const toneClass = tone === 'primary' ? 'bg-primary text-on-primary' : 'bg-violet text-white';
+  const toneClass = tone === 'primary' ? 'bg-primary text-on-primary' : tone === 'accent' ? 'bg-accent text-white' : 'bg-violet text-white';
   return (
     <button
       type="button"

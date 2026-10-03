@@ -68,7 +68,7 @@ import { QUIZ_HELPERS, helperCounts, spentHelpers } from '@/lib/quiz-helpers';
 type StickerReveal = Pick<ShopPurchaseResult, 'characterId' | 'characterName' | 'characterRarity' | 'characterImageUrl' | 'characterUnlocked' | 'duplicate'> & { title?: string };
 
 const emptyQuizForm: QuizFormState = {
-  quizType: 'GENERAL',
+  quizType: 'MARATHON',
   characterId: '',
   questionLimit: '10',
 };
@@ -234,9 +234,11 @@ export function UserDashboard() {
 
     try {
       const payload: StartQuizSessionPayload = {
-        quizType: quizForm.quizType,
+        quizType: quizForm.quizType === 'CHARACTER_STUDY' ? 'CHARACTER_STUDY' : 'GENERAL',
         characterId: quizForm.quizType === 'CHARACTER_STUDY' ? Number(quizForm.characterId) : null,
-        questionLimit: Number(quizForm.questionLimit),
+        // A maratona não escolhe quantidade: vai até as 3 vidas acabarem.
+        ...(quizForm.quizType === 'MARATHON' ? {} : { questionLimit: Number(quizForm.questionLimit) }),
+        ...(quizForm.quizType === 'TRAINING' ? { training: true } : {}),
       };
 
       const session = await startQuizSession(payload);
