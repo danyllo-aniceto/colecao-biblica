@@ -358,3 +358,133 @@ cosmeticsRouter.post(
     res.json({ valid: valid.length, created: dryRun ? 0 : valid.length, errors });
   }),
 );
+
+// ---------------------------------------------------------------------------
+// Importação de itens visuais de qualquer tipo (planilha)
+// ---------------------------------------------------------------------------
+
+const TYPE_ALIASES: Record<string, z.infer<typeof cosmeticType>> = {
+  icone: "AVATAR",
+  avatar: "AVATAR",
+  moldura: "FRAME",
+  frame: "FRAME",
+  titulo: "TITLE",
+  title: "TITLE",
+  "cor do nome": "NAME_COLOR",
+  cor: "NAME_COLOR",
+  reacao: "REACTION",
+  reaction: "REACTION",
+  "fundo de perfil": "PROFILE_BG",
+  fundo: "PROFILE_BG",
+  "capa do album": "ALBUM_COVER",
+  capa: "ALBUM_COVER",
+};
+
+const TITLE_STYLE_ALIASES: Record<string, (typeof TITLE_STYLES)[number]> = {
+  simples: "plain",
+  plain: "plain",
+  brilho: "glow",
+  glow: "glow",
+  "arco-iris": "rainbow",
+  rainbow: "rainbow",
+  pulsar: "pulse",
+  pulse: "pulse",
+  cintilar: "shimmer",
+  shimmer: "shimmer",
+  onda: "wave",
+  wave: "wave",
+};
+
+const bulkCosmeticRow = bulkReactionRow.extend({
+  type: z.string().trim().min(1, "informe o tipo (Ícone, Moldura, Título, Cor do nome, Reação, Fundo de perfil ou Capa do álbum)"),
+  color: z.string().trim().optional(),
+  effect: z.string().trim().optional(),
+});
+
+/**
+ * Cria itens visuais de qualquer tipo de uma vez. Com Preço o item vai para a loja; sem Preço fica só como prêmio (passe, baú, admin).
+ * Ícone sem imagem entra desativado: envie a imagem depois, na edição do item, e ative.
+ */
+cosmeticsRouter.post(
+  "/admin/bulk",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const { rows, dryRun } = z.object({ rows: z.array(z.unknown()).min(1).max(300), dryRun: z.boolean().optional() }).parse(req.body);
+    const existing = new Set((await prisma.cosmetic.findMany({ select: { type: true, name: true } })).map((item) => `${item.type}:${normalizeKey(item.name)}`));
+    const errors: Array<{ row: number; message: string }> = [];
+    const valid: Prisma.CosmeticCreateManyInput[] = [];
+
+    rows.forEach((raw, index) => {
+      const row = index + 1;
+      const parsed = bulkCosmeticRow.safeParse(raw);
+      if (!parsed.success) {
+        const issue = parsed.error.issues[0];
+        errors.push({ row, message: `${issue.path.join(".") || "linha"}: ${issue.message}` });
+        return;
+      }
+      const data = parsed.data;
+      const type = TYPE_ALIASES[normalizeKey(data.type)];
+      if (!type) {
+        errors.push({ row, message: `tipo "${data.type}" inválido (use Ícone, Moldura, Título, Cor do nome, Reação, Fundo de perfil ou Capa do álbum)` });
+        return;
+      }
+      const rarity = data.rarity ? RARITY_ALIASES[normalizeKey(data.rarity)] : "COMMON";
+      if (!rarity) {
+        errors.push({ row, message: `raridade "${data.rarity}" inválida (Comum, Rara, Épica ou Lendária)` });
+        return;
+      }
+      if (data.color && !/^#[0-9a-fA-F]{6}$/.test(data.color)) {
+        errors.push({ row, message: `cor "${data.color}" inválida (use #rrggbb, ex.: #f2c94c)` });
+        return;
+      }
+      if (data.imageUrl && !/^(https?:\/\/|\/api\/uploads\/file\/|\/)/.test(data.imageUrl)) {
+        errors.push({ row, message: "o link da imagem precisa começar com http(s)://" });
+        return;
+      }
+      let style: string | null = null;
+      let animation: string | null = null;
+      let active = true;
+      if (type === "TITLE") {
+        style = data.effect ? (TITLE_STYLE_ALIASES[normalizeKey(data.effect)] ?? null) : "glow";
+        if (!style) return void errors.push({ row, message: `efeito "${data.effect}" inválido (Simples, Brilho, Arco-íris, Pulsar, Cintilar ou Onda)` });
+        if (!data.color) return void errors.push({ row, message: "o título precisa de uma cor" });
+      } else if (type === "NAME_COLOR") {
+        if (!data.color) return void errors.push({ row, message: "a cor do nome precisa de uma cor (#rrggbb)" });
+      } else if (type === "FRAME") {
+        style = data.effect ? normalizeKey(data.effect) : "solid";
+        if (!(FRAME_STYLES as readonly string[]).includes(style)) return void errors.push({ row, message: `estilo de moldura "${data.effect}" inválido (${FRAME_STYLES.join(", ")})` });
+      } else if (type === "REACTION") {
+        if (!data.emoji && !data.imageUrl) return void errors.push({ row, message: "informe um emoji ou o link de uma imagem" });
+        style = data.emoji || null;
+        animation = data.animation ? (ANIMATION_ALIASES[normalizeKey(data.animation)] ?? null) : "pop";
+        if (!animation) return void errors.push({ row, message: `animação "${data.animation}" inválida (Pulo, Quicar, Tremer, Girar, Subir ou Pulsar)` });
+      } else if (type === "AVATAR") {
+        // Sem imagem não dá para usar: entra desativado até a imagem ser enviada.
+        if (!data.imageUrl) active = false;
+      } else if (!data.imageUrl && !data.color) {
+        return void errors.push({ row, message: "informe uma cor (#rrggbb) e/ou o link de uma imagem" });
+      }
+      const key = `${type}:${normalizeKey(data.name)}`;
+      if (existing.has(key)) return void errors.push({ row, message: "já existe um item deste tipo com este nome" });
+      existing.add(key);
+      const forSale = data.price !== undefined;
+      valid.push({
+        type,
+        name: data.name,
+        description: data.description || null,
+        rarity,
+        imageUrl: data.imageUrl || null,
+        color: type === "AVATAR" || type === "REACTION" ? null : data.color || null,
+        style,
+        animation,
+        pack: type === "REACTION" ? data.pack || null : null,
+        unlock: forSale ? "SHOP" : "REWARD",
+        priceCoins: forSale ? data.price : null,
+        active,
+      });
+    });
+
+    if (!dryRun && valid.length > 0) await prisma.cosmetic.createMany({ data: valid });
+    res.json({ valid: valid.length, created: dryRun ? 0 : valid.length, errors });
+  }),
+);

@@ -14,10 +14,14 @@ export function surfaceStyle(item: Surface): CSSProperties | undefined {
     : { backgroundImage: gradient };
 }
 
-/** Capa do álbum: troca as cores da capa (e a imagem, se houver) sem mexer no resto do livro. */
+/** Capa do álbum: troca as cores do livro (a imagem da capa vai na folha de abertura, ver `coverImageStyle`). */
 export function albumCoverStyle(item: Surface): CSSProperties | undefined {
-  if (!item || (!item.imageUrl && !item.color)) return undefined;
-  const color = item.color ?? '#5a2fd6';
-  const vars = { '--album-cover': color, '--album-cover-strong': `color-mix(in srgb, ${color} 55%, black)` } as CSSProperties;
-  return item.imageUrl ? { ...vars, backgroundImage: `url("${safeUrl(item.imageUrl)}")`, backgroundSize: 'cover', backgroundPosition: 'center' } : vars;
+  if (!item?.color) return undefined;
+  return { '--album-cover': item.color, '--album-cover-strong': `color-mix(in srgb, ${item.color} 55%, black)` } as CSSProperties;
+}
+
+/** Imagem da capa em tela cheia na folha de abertura do álbum. */
+export function coverImageStyle(imageUrl?: string | null): CSSProperties | undefined {
+  if (!imageUrl) return undefined;
+  return { backgroundImage: `url("${safeUrl(imageUrl)}")`, backgroundSize: 'cover', backgroundPosition: 'center' };
 }

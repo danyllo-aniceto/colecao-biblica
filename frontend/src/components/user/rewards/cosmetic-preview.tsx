@@ -1,5 +1,5 @@
 import { PlayerAvatar, PlayerTitle, ReactionGlyph } from '@/components/game/player-look';
-import { albumCoverStyle, surfaceStyle } from '@/lib/look-background';
+import { albumCoverStyle, coverImageStyle, surfaceStyle } from '@/lib/look-background';
 import type { Cosmetic } from '@/lib/rewards-api';
 
 export const COSMETIC_TYPE_LABELS: Record<Cosmetic['type'], { one: string; many: string }> = {
@@ -38,8 +38,8 @@ export function CosmeticPreview({ item, playerName, avatarUrl, size = 'lg' }: { 
       );
     case 'ALBUM_COVER':
       return (
-        <span className="album-cover relative flex h-16 w-12 shrink-0 items-center justify-center rounded-md" style={albumCoverStyle(item)}>
-          <span className="h-10 w-7 rounded-sm bg-[var(--album-paper)] opacity-90" />
+        <span className="album-cover relative flex h-16 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md" style={{ ...albumCoverStyle(item), ...coverImageStyle(item.imageUrl) }}>
+          {item.imageUrl ? null : <span className="h-10 w-7 rounded-sm bg-[var(--album-paper)] opacity-90" />}
         </span>
       );
   }

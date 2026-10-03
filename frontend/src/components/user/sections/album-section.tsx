@@ -260,7 +260,7 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
       {tab === 'collections' ? <ThemeCollections playerName={playerName} onCoins={(coins) => onWallet({ userCoins: coins })} refreshKey={collection.length} /> : null}
 
       {tab === 'album' ? (
-        <AlbumBook coverStyle={albumCoverStyle(look?.albumCover)} items={ownedFiltered} totalCharacters={characters.length} ownedCount={ownedCount} duplicatesById={duplicatesById} levelsById={levelsById} onOpenSticker={(id) => {
+        <AlbumBook coverStyle={albumCoverStyle(look?.albumCover)} coverImage={look?.albumCover?.imageUrl} items={ownedFiltered} totalCharacters={characters.length} ownedCount={ownedCount} duplicatesById={duplicatesById} levelsById={levelsById} onOpenSticker={(id) => {
             saveAlbumView(albumView);
             onOpenSticker(id);
           }} resetKey={resetKey} focusId={focusId} onFocused={() => setFocusId(null)} />

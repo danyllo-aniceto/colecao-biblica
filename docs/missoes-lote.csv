@@ -1,0 +1,47 @@
+﻿Missão;Período;Conta;Meta;Moedas;Recompensa
+Termine 1 partida;Diária;Partidas terminadas;1;20;
+Termine 3 partidas;Diária;Partidas terminadas;3;25;Dica 50/50
+Termine 4 partidas;Diária;Partidas terminadas;4;30;Vida extra
+Acerte 8 perguntas;Diária;Perguntas acertadas;8;20;
+Acerte 10 perguntas;Diária;Perguntas acertadas;10;20;Dica 50/50
+Acerte 20 perguntas;Diária;Perguntas acertadas;20;25;Tempo extra
+Acerte 25 perguntas;Diária;Perguntas acertadas;25;30;Pular pergunta
+Acerte 30 perguntas;Diária;Perguntas acertadas;30;35;Segunda chance
+Complete o desafio do dia;Diária;Desafio do dia jogado;1;25;Voz da multidão
+Encare o desafio do dia e ganhe um bônus;Diária;Desafio do dia jogado;1;15;Pista do versículo
+Faça uma partida perfeita;Diária;Partidas sem erros (5+ perguntas);1;30;Ampulheta
+Faça uma partida sem errar nenhuma;Diária;Partidas sem erros (5+ perguntas);1;20;Escudo de sequência
+Faça 2 partidas perfeitas;Diária;Partidas sem erros (5+ perguntas);2;40;Bênção dobrada
+Anote algo sobre uma figurinha;Diária;Anotações em figurinhas;1;25;
+Escreva 2 anotações hoje;Diária;Anotações em figurinhas;2;20;Pista do versículo
+Conquiste uma figurinha nova hoje;Diária;Figurinhas novas;1;25;Dica 50/50
+Tire uma figurinha nova do álbum hoje;Diária;Figurinhas novas;1;;Pacote surpresa
+Jogue 2 partidas e acerte bem;Diária;Partidas terminadas;2;;XP em dobro
+Aqueça com 2 partidas;Diária;Partidas terminadas;2;;Tempo extra
+Acerte 12 perguntas;Diária;Perguntas acertadas;12;;Vida extra
+Acerte 15 perguntas sem pressa;Diária;Perguntas acertadas;15;15;Tempo extra
+Termine 5 partidas hoje;Diária;Partidas terminadas;5;40;
+Acerte 35 perguntas;Diária;Perguntas acertadas;35;40;Bênção dobrada
+Sequência do dia: 1 partida perfeita;Diária;Partidas sem erros (5+ perguntas);1;;Protetor de sequência
+Hoje é dia de desafio;Diária;Desafio do dia jogado;1;;Segunda chance
+Leia e anote: 1 anotação;Diária;Anotações em figurinhas;1;;Dica 50/50
+Duas partidas valendo XP;Diária;Partidas terminadas;2;15;XP em dobro
+Acerte 18 perguntas;Diária;Perguntas acertadas;18;15;Voz da multidão
+Termine 3 partidas com atenção;Diária;Partidas terminadas;3;;Ampulheta
+Descubra 1 figurinha nova;Diária;Figurinhas novas;1;15;Tempo extra
+Termine 10 partidas na semana;Semanal;Partidas terminadas;10;80;Dica 50/50
+Termine 20 partidas na semana;Semanal;Partidas terminadas;20;110;Pacote surpresa
+Termine 25 partidas na semana;Semanal;Partidas terminadas;25;100;Vida extra
+Acerte 80 perguntas na semana;Semanal;Perguntas acertadas;80;70;Tempo extra
+Acerte 150 perguntas na semana;Semanal;Perguntas acertadas;150;100;Protetor de sequência
+Acerte 200 perguntas na semana;Semanal;Perguntas acertadas;200;120;Bênção dobrada
+Acerte 250 perguntas na semana;Semanal;Perguntas acertadas;250;;Pacote surpresa
+Jogue o desafio do dia 3 vezes;Semanal;Desafio do dia jogado;3;60;Voz da multidão
+Jogue o desafio do dia 5 vezes;Semanal;Desafio do dia jogado;5;90;Segunda chance
+Complete o desafio do dia a semana toda;Semanal;Desafio do dia jogado;7;100;Escudo de sequência
+Faça 2 partidas perfeitas na semana;Semanal;Partidas sem erros (5+ perguntas);2;80;Ampulheta
+Faça 4 partidas perfeitas na semana;Semanal;Partidas sem erros (5+ perguntas);4;120;XP em dobro
+Escreva 3 anotações na semana;Semanal;Anotações em figurinhas;3;60;Pista do versículo
+Escreva 5 anotações na semana;Semanal;Anotações em figurinhas;5;;Pacote surpresa
+Ganhe 2 figurinhas novas na semana;Semanal;Figurinhas novas;2;70;Dica 50/50
+Ganhe 5 figurinhas novas na semana;Semanal;Figurinhas novas;5;;Pacote surpresa

@@ -44,6 +44,7 @@ import { ImageUploadField } from '../image-upload-field';
 import { EmojiPicker } from '../emoji-picker';
 import { ReactionChatPreview } from '../reaction-chat-preview';
 import { ReactionsImport } from '../reactions-import';
+import { CosmeticsImport } from '../cosmetics-import';
 import { REACTION_ANIMATION_LABELS } from '@/lib/labels';
 import { useDebouncedValue, usePagedList } from '../use-paged-list';
 
@@ -90,6 +91,7 @@ export function CosmeticsScreen() {
   const [editing, setEditing] = useState<AdminCosmetic | 'new' | null>(null);
   const [granting, setGranting] = useState<AdminCosmetic | null>(null);
   const [importingReactions, setImportingReactions] = useState(false);
+  const [importingItems, setImportingItems] = useState(false);
   const [meta, setMeta] = useState<CosmeticMeta | null>(null);
   const list = usePagedList(listCosmeticsAdmin, { type: type || undefined, search: debounced || undefined }, 20);
 
@@ -131,6 +133,10 @@ export function CosmeticsScreen() {
       description="Ícones, molduras, títulos que brilham, cores do nome e reações do chat. Itens com cadeado vieram com o app: dá para editar e desativar."
       actions={
         <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={() => setImportingItems(true)}>
+            <UploadFileRoundedIcon fontSize="small" />
+            Importar itens
+          </Button>
           <Button variant="secondary" onClick={() => setImportingReactions(true)}>
             <UploadFileRoundedIcon fontSize="small" />
             Importar reações
@@ -225,6 +231,15 @@ export function CosmeticsScreen() {
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
+            list.reload();
+          }}
+        />
+      ) : null}
+      {importingItems ? (
+        <CosmeticsImport
+          onClose={() => setImportingItems(false)}
+          onImported={() => {
+            setImportingItems(false);
             list.reload();
           }}
         />

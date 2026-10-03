@@ -598,3 +598,7 @@ export function importMissions(rows: Array<Record<string, string>>, dryRun: bool
 export function importReactions(rows: Array<Record<string, string>>, dryRun: boolean) {
   return apiRequest<BulkImportResult>('/cosmetics/admin/bulk-reactions', json('POST', { rows, dryRun }), 'Não foi possível importar as reações.');
 }
+
+export function importCosmetics(rows: Array<Record<string, string>>, dryRun: boolean) {
+  return apiRequest<BulkImportResult>('/cosmetics/admin/bulk', json('POST', { rows, dryRun }), 'Não foi possível importar os itens visuais.');
+}

@@ -148,4 +148,29 @@ describe.skipIf(!hasDatabase)("missões e passes no painel", () => {
     for (const pass of all.body.slice(0, -1)) expect((await api.delete(`/api/pass/admin/passes/${pass.id}`).set(bearer(admin))).status).toBe(204);
     expect((await api.delete(`/api/pass/admin/passes/${all.body.at(-1).id}`).set(bearer(admin))).status).toBe(400);
   });
+
+  it("itens visuais: importação em lote de qualquer tipo (ícone sem imagem entra desativado)", async () => {
+    const admin = await login("admin2@email.com");
+    const rows = [
+      { type: "Cor do nome", name: "Dourado de Belém", rarity: "Rara", color: "#f2c94c" },
+      { type: "Título", name: "Pastor de Belém", rarity: "Épica", color: "#f2c94c", effect: "Cintilar" },
+      { type: "Ícone", name: "Manjedoura", rarity: "Rara" },
+      { type: "Fundo de perfil", name: "Noite em Belém", color: "#1b2a5c" },
+      { type: "Capa do álbum", name: "Capa Noite de Belém", rarity: "Lendária", color: "#1b2a5c" },
+      { type: "Reação", name: "Estrela de Belém", emoji: "⭐", animation: "Girar", pack: "Natal", price: "120" },
+      { type: "Fundo de perfil", name: "Sem cor nem imagem" },
+      { type: "Moldura", name: "Moldura ruim", effect: "inexistente" },
+      { type: "Brinquedo", name: "Tipo errado" },
+      { type: "Cor do nome", name: "Dourado de Belém", color: "#ffffff" },
+    ];
+    const preview = await api.post("/api/cosmetics/admin/bulk").set(bearer(admin)).send({ rows, dryRun: true });
+    expect(preview.body.valid).toBe(6);
+    expect(preview.body.errors.map((error: { row: number }) => error.row)).toEqual([7, 8, 9, 10]);
+    expect(await prisma.cosmetic.count({ where: { name: "Manjedoura" } })).toBe(0);
+
+    await api.post("/api/cosmetics/admin/bulk").set(bearer(admin)).send({ rows });
+    expect(await prisma.cosmetic.findFirstOrThrow({ where: { name: "Manjedoura" } })).toMatchObject({ type: "AVATAR", active: false, unlock: "REWARD" });
+    expect(await prisma.cosmetic.findFirstOrThrow({ where: { name: "Pastor de Belém" } })).toMatchObject({ type: "TITLE", style: "shimmer", color: "#f2c94c" });
+    expect(await prisma.cosmetic.findFirstOrThrow({ where: { name: "Estrela de Belém" } })).toMatchObject({ type: "REACTION", unlock: "SHOP", priceCoins: 120, animation: "spin", pack: "Natal" });
+  });
 });
