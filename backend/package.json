@@ -12,6 +12,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
     "seed": "tsx src/scripts/seed.ts",
+    "simular-economia": "node src/scripts/simular-economia.cjs",
     "create-user": "tsx src/scripts/createUser.ts"
   },
   "dependencies": {

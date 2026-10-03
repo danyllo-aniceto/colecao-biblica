@@ -46,22 +46,22 @@ const correctIn = async (db: Db, userId: number, range: Range) =>
 const stickersIn = (db: Db, userId: number, range: Range) => db.userSticker.count({ where: { userId, acquiredAt: inRange(range) } });
 
 export const MISSIONS: MissionDefinition[] = [
-  { code: "D_PLAY_2", period: "DAILY", title: "Termine 2 partidas", coins: 30, target: 2, progress: (db, u, r) => matchesIn(db, u, r) },
-  { code: "D_CORRECT_15", period: "DAILY", title: "Acerte 15 perguntas", coins: 40, target: 15, progress: correctIn },
-  { code: "D_CHALLENGE", period: "DAILY", title: "Jogue o desafio do dia", coins: 40, target: 1, progress: (db, u, r) => matchesIn(db, u, r, { quizType: "DAILY_CHALLENGE" }) },
+  { code: "D_PLAY_2", period: "DAILY", title: "Termine 2 partidas", coins: 25, target: 2, progress: (db, u, r) => matchesIn(db, u, r) },
+  { code: "D_CORRECT_15", period: "DAILY", title: "Acerte 15 perguntas", coins: 30, target: 15, progress: correctIn },
+  { code: "D_CHALLENGE", period: "DAILY", title: "Jogue o desafio do dia", coins: 30, target: 1, progress: (db, u, r) => matchesIn(db, u, r, { quizType: "DAILY_CHALLENGE" }) },
   {
     code: "D_PERFECT",
     period: "DAILY",
     title: `Faça uma partida sem erros (${PERFECT_MATCH_MIN_QUESTIONS}+ perguntas)`,
-    coins: 50,
+    coins: 40,
     target: 1,
     progress: (db, u, r) => matchesIn(db, u, r, { wrongAnswers: 0, correctAnswers: { gte: PERFECT_MATCH_MIN_QUESTIONS } }),
   },
-  { code: "D_NOTE", period: "DAILY", title: "Escreva uma anotação em uma figurinha", coins: 25, target: 1, progress: (db, u, r) => db.userComment.count({ where: { userId: u, createdAt: inRange(r) } }) },
-  { code: "D_STICKER", period: "DAILY", title: "Ganhe uma figurinha nova", coins: 40, target: 1, progress: stickersIn },
-  { code: "W_PLAY_15", period: "WEEKLY", title: "Termine 15 partidas na semana", coins: 150, target: 15, progress: (db, u, r) => matchesIn(db, u, r) },
-  { code: "W_CORRECT_100", period: "WEEKLY", title: "Acerte 100 perguntas na semana", coins: 200, target: 100, progress: correctIn },
-  { code: "W_STICKERS_3", period: "WEEKLY", title: "Ganhe 3 figurinhas novas na semana", coins: 150, hints: 1, target: 3, progress: stickersIn },
+  { code: "D_NOTE", period: "DAILY", title: "Escreva uma anotação em uma figurinha", coins: 20, target: 1, progress: (db, u, r) => db.userComment.count({ where: { userId: u, createdAt: inRange(r) } }) },
+  { code: "D_STICKER", period: "DAILY", title: "Ganhe uma figurinha nova", coins: 30, target: 1, progress: stickersIn },
+  { code: "W_PLAY_15", period: "WEEKLY", title: "Termine 15 partidas na semana", coins: 100, target: 15, progress: (db, u, r) => matchesIn(db, u, r) },
+  { code: "W_CORRECT_100", period: "WEEKLY", title: "Acerte 100 perguntas na semana", coins: 130, target: 100, progress: correctIn },
+  { code: "W_STICKERS_3", period: "WEEKLY", title: "Ganhe 3 figurinhas novas na semana", coins: 100, hints: 1, target: 3, progress: stickersIn },
 ];
 
 const DAILY_COUNT = 3;

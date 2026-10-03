@@ -14,6 +14,7 @@ import {
   multiplyCoins,
   nextCombo,
   accuracyBonus,
+  applyDailyXpLimit,
   calculateLevel,
   xpForLevel,
   calculateMatchCoins,
@@ -64,15 +65,24 @@ describe("XP, pontos e nível", () => {
     expect(calculateScore(0, 3)).toBe(-90);
   });
 
-  it("sobe um nível a cada 200 XP", () => {
+  it("curva de nível: 300 XP para o nível 2 e +100 XP a cada nível seguinte", () => {
     expect(calculateLevel(0)).toBe(1);
-    expect(calculateLevel(199)).toBe(1);
-    expect(calculateLevel(200)).toBe(2);
-    // Curva progressiva: 200, 250, 300... XP por nível.
-    expect(calculateLevel(449)).toBe(2);
-    expect(calculateLevel(450)).toBe(3);
-    expect(calculateLevel(750)).toBe(4);
-    expect(xpForLevel(10)).toBe(3600);
+    expect(calculateLevel(299)).toBe(1);
+    expect(calculateLevel(300)).toBe(2);
+    // Curva progressiva: 300, 400, 500... XP por nível.
+    expect(calculateLevel(699)).toBe(2);
+    expect(calculateLevel(700)).toBe(3);
+    expect(xpForLevel(10)).toBe(6300);
+    expect(xpForLevel(50)).toBe(132300);
+  });
+
+  it("freio diário de XP: cheio nas primeiras partidas, só uma parte depois", () => {
+    expect(applyDailyXpLimit(100, 0, 6, 25)).toBe(100);
+    expect(applyDailyXpLimit(100, 5, 6, 25)).toBe(100);
+    expect(applyDailyXpLimit(100, 6, 6, 25)).toBe(25);
+    expect(applyDailyXpLimit(150, 9, 6, 25)).toBe(37);
+    expect(applyDailyXpLimit(100, 20, 0, 25)).toBe(100); // 0 desliga o freio
+    expect(applyDailyXpLimit(100, 6, 6, 150)).toBe(100); // porcentagem limitada a 100
   });
 });
 

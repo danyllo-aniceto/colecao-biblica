@@ -129,6 +129,9 @@ export function MatchResult({
 
         {study ? null : (
           <>
+            {result.xpReduced ? (
+              <p className="relative mt-3 text-xs font-semibold text-muted">Você já jogou bastante hoje: o XP das partidas extras do dia é menor. Amanhã volta ao normal!</p>
+            ) : null}
         {leveledUp ? (
           <div className="relative mt-3 flex flex-col items-center justify-center gap-1 rounded-2xl bg-primary/20 p-3 font-display font-bold text-ink">
             <span className="flex items-center gap-2">

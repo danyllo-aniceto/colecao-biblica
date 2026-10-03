@@ -22,6 +22,8 @@ const GROUPS: Array<{ title: string; description: string; fields: FieldDef[] }> 
       { key: 'startingLives', label: 'Vidas por partida', min: 1, max: 20, hint: 'A partida acaba quando as vidas zeram.' },
       { key: 'maxQuestionsPerMatch', label: 'Máximo de perguntas por partida', min: 1, max: 1000 },
       { key: 'rewardMinCorrectAnswers', label: 'Acertos para concorrer ao prêmio', min: 1, max: 100, hint: 'No quiz geral. Limitado ao total de perguntas ativas.' },
+      { key: 'xpFullMatchesPerDay', label: 'Partidas por dia com XP cheio', min: 0, max: 100, hint: 'Depois disso o XP cai para a porcentagem abaixo (0 desliga o freio).' },
+      { key: 'xpAfterLimitPercent', label: 'XP depois do limite diário', min: 0, max: 100, suffix: '%', hint: 'Porcentagem do XP nas partidas extras do dia.' },
       { key: 'rewardMatchLimitPerDay', label: 'Prêmios sorteados por dia', min: 0, max: 20, hint: 'Partidas premiadas por jogador por dia (0 desliga o sorteio).' },
     ],
   },

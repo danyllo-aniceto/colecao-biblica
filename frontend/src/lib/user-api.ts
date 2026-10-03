@@ -181,6 +181,8 @@ export type QuizMatchResult = {
   coinMultiplier?: number;
   eventName?: string | null;
   levelUp?: boolean;
+  /** O XP desta partida foi reduzido pelo limite diário. */
+  xpReduced?: boolean;
   /** Só no estudo de personagem: acertos acumulados e status do personagem. */
   studyStatus?: StudyStatus | null;
   studyLevelUp?: boolean;

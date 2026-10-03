@@ -13,6 +13,7 @@ import {
   calculateXp,
   comboBonus,
   crowdPercentages,
+  applyDailyXpLimit,
   dayRangeInTimeZone,
   isCampaignOnlyRarity,
   multiplyCoins,
@@ -775,6 +776,16 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
     studyLevelUp = study.level > studyStatus(before?.correctAnswers ?? 0).level;
   }
 
+  // Freio diário: depois das primeiras partidas do dia o XP cai (não vale para o estudo, que não dá XP).
+  let xpReduced = false;
+  if (!isStudy && settings.xpFullMatchesPerDay > 0) {
+    const { start, end } = dayRangeInTimeZone(new Date(), env.timezone);
+    const playedToday = await tx.quizMatch.count({ where: { userId: user.id, quizType: { not: "CHARACTER_STUDY" }, finishedAt: { gte: start, lt: end } } });
+    const limited = applyDailyXpLimit(xp, playedToday, settings.xpFullMatchesPerDay, settings.xpAfterLimitPercent);
+    xpReduced = limited < xp;
+    xp = limited;
+  }
+
   // Evento ativo multiplica o XP da partida.
   if (event && event.xpMultiplier > 1) xp = Math.round(xp * event.xpMultiplier);
 
@@ -870,6 +881,7 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
     bestCombo: stats.bestCombo ?? 0,
     comboBonusPoints: stats.comboPoints ?? 0,
     coinMultiplier: stats.coinMultiplier ?? 1,
+    xpReduced,
     studyStatus: study,
     studyLevelUp,
     eventName: event && (event.xpMultiplier > 1 || event.coinMultiplier > 1) ? event.name : null,

@@ -55,7 +55,7 @@ function scenarioCosmetics(scenario: DefaultScenario, index: number) {
 
 /** Moedas da parada: sobem com o nível; a relíquia paga em dobro. */
 export function nodeCoins(level: number, relic: boolean): number {
-  const base = Math.round((20 + level * 2) / 5) * 5;
+  const base = Math.round((15 + level * 1.5) / 5) * 5;
   return relic ? base * 2 : base;
 }
 

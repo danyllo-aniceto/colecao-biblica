@@ -11,8 +11,8 @@ const XP_PER_CORRECT = 10;
 const POINTS_PER_CORRECT = 100;
 const POINTS_PER_WRONG = 30;
 /** XP para sair do nível 1; cada nível seguinte pede mais LEVEL_XP_STEP. */
-const LEVEL_BASE_XP = 200;
-const LEVEL_XP_STEP = 50;
+const LEVEL_BASE_XP = 300;
+const LEVEL_XP_STEP = 100;
 
 export function defaultTimeByDifficulty(difficulty: QuestionDifficulty): number {
   switch (difficulty) {
@@ -44,11 +44,20 @@ export function calculateXp(correctAnswers: number, questionsAnswered: number, x
   return Math.round(base * xpMultiplier);
 }
 
+/**
+ * Freio diário de XP: as primeiras partidas do dia rendem XP cheio; depois, só uma porcentagem.
+ * Evita subir de nível (e destravar baús e a campanha) só jogando sem parar num único dia.
+ */
+export function applyDailyXpLimit(xp: number, matchesToday: number, fullMatchesPerDay: number, percentAfterLimit: number): number {
+  if (fullMatchesPerDay <= 0 || matchesToday < fullMatchesPerDay) return xp;
+  return Math.trunc((xp * Math.min(100, Math.max(0, percentAfterLimit))) / 100);
+}
+
 export function calculateScore(correctAnswers: number, wrongAnswers: number): number {
   return correctAnswers * POINTS_PER_CORRECT - wrongAnswers * POINTS_PER_WRONG;
 }
 
-/** XP total para chegar ao nível (curva progressiva: cada nível pede 50 XP a mais que o anterior). */
+/** XP total para chegar ao nível (curva progressiva: cada nível pede 100 XP a mais que o anterior). */
 export function xpForLevel(level: number): number {
   const steps = Math.max(0, level - 1);
   return LEVEL_BASE_XP * steps + (LEVEL_XP_STEP * steps * (steps - 1)) / 2;
