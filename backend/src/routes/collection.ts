@@ -4,6 +4,7 @@ import { currentUser } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
 import { z } from "../lib/validation";
 import { fuseDuplicates, sellDuplicates } from "../services/collection";
+import { studyStatus } from "../services/game-rules";
 import { visibleCharacter } from "../services/visibility";
 
 export const collectionRouter = Router();
@@ -17,6 +18,8 @@ collectionRouter.get(
       include: { character: { select: { id: true, name: true, imageUrl: true, rarity: true } } },
       orderBy: { acquiredAt: "asc" },
     });
+    const studies = await prisma.characterStudy.findMany({ where: { userId: currentUser(req).id, characterId: { in: stickers.map((sticker) => sticker.characterId) } } });
+    const studyByCharacter = new Map(studies.map((study) => [study.characterId, study.correctAnswers]));
     res.json(
       stickers.map((sticker) => ({
         characterId: sticker.character.id,
@@ -25,6 +28,7 @@ collectionRouter.get(
         rarity: sticker.character.rarity,
         acquiredAt: sticker.acquiredAt,
         duplicates: sticker.duplicates,
+        study: studyStatus(studyByCharacter.get(sticker.characterId) ?? 0),
       })),
     );
   }),

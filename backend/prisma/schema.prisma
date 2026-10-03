@@ -154,6 +154,7 @@ model User {
   deletedBy          String?   @map("deleted_by")
 
   stickers     UserSticker[]
+  studies      CharacterStudy[]
   comments     UserComment[]
   quizMatches  QuizMatch[]
   quizSessions QuizSession[]
@@ -204,6 +205,7 @@ model BiblicalCharacter {
 
   questions         Question[]
   stickers          UserSticker[]
+  studies           CharacterStudy[]
   tradesOffered     Trade[]               @relation("TradeOffered")
   tradesRequested   Trade[]               @relation("TradeRequested")
   comments          UserComment[]
@@ -303,6 +305,22 @@ model UserSticker {
 
   @@unique([userId, characterId])
   @@map("user_stickers")
+}
+
+/// Estudo de personagem: só acumula acertos por personagem (vira um status, sem prêmios).
+model CharacterStudy {
+  id                Int      @id @default(autoincrement())
+  userId            Int      @map("user_id")
+  characterId       Int      @map("character_id")
+  correctAnswers    Int      @default(0) @map("correct_answers")
+  questionsAnswered Int      @default(0) @map("questions_answered")
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  character BiblicalCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, characterId])
+  @@map("character_studies")
 }
 
 model UserComment {

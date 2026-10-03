@@ -7,9 +7,8 @@ import { Button } from '@/components/ui/button';
 import { fieldClassName } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Alert, BoostChips, ProgressBar, SectionHeading } from '@/components/game/game-ui';
-import { getRarityLabel } from '@/lib/rarity-theme';
 import { DailyChallengeCard } from '@/components/user/daily-challenge-card';
-import type { CharacterEntry, GameRules, QuizSessionStatus } from '@/lib/user-api';
+import type { CharacterEntry, GameRules, QuizSessionStatus, UserSticker } from '@/lib/user-api';
 import type { UserProfile } from '@/types/auth';
 
 export type QuizFormState = {
@@ -28,6 +27,7 @@ type PlaySectionProps = {
   profile: UserProfile | null;
   characters: CharacterEntry[];
   ownedIds: Set<number>;
+  collection: UserSticker[];
   gameRules: GameRules | null;
   quizForm: QuizFormState;
   onChangeForm: (updater: (current: QuizFormState) => QuizFormState) => void;
@@ -44,6 +44,7 @@ export function PlaySection({
   profile,
   characters,
   ownedIds,
+  collection,
   gameRules,
   quizForm,
   onChangeForm,
@@ -88,6 +89,10 @@ export function PlaySection({
 
   const isGeneral = quizForm.quizType === 'GENERAL';
   const limit = Number(quizForm.questionLimit);
+  const studyById = new Map(collection.map((item) => [item.characterId, item.study]));
+  const studyCharacters = [...characters]
+    .filter((character) => ownedIds.has(character.id))
+    .sort((left, right) => Number(right.questionCount > 0) - Number(left.questionCount > 0) || left.name.localeCompare(right.name, 'pt-BR'));
   const selectedCharacter = characters.find((character) => String(character.id) === quizForm.characterId);
 
   return (
@@ -110,7 +115,7 @@ export function PlaySection({
           onClick={() => onChangeForm((current) => ({ ...current, quizType: 'CHARACTER_STUDY' }))}
           icon={<PersonSearchRoundedIcon sx={{ fontSize: 36 }} />}
           title="Estudo de personagem"
-          description={gameRules ? `Foque em um personagem. Acerte ${gameRules.characterStickerMinAccuracyPercent}% para ganhar a figurinha dele.` : 'Foque em um personagem e ganhe a figurinha dele.'}
+          description="Só para personagens que você já tem. Não rende prêmios: cada acerto soma no status do personagem."
           tone="violet"
         />
       </div>
@@ -125,18 +130,20 @@ export function PlaySection({
               value={quizForm.characterId}
               placeholder="Escolha um personagem"
               onChange={(value) => onChangeForm((current) => ({ ...current, characterId: value }))}
-              options={[...characters]
-                .sort((left, right) => Number(right.questionCount > 0) - Number(left.questionCount > 0) || left.name.localeCompare(right.name, 'pt-BR'))
-                .map((character) => ({
+              options={studyCharacters.map((character) => {
+                const study = studyById.get(character.id);
+                return {
                   value: String(character.id),
                   label: character.name,
                   disabled: character.questionCount === 0,
                   description:
                     character.questionCount === 0
                       ? 'Ainda sem perguntas'
-                      : `${getRarityLabel(character.rarity)} · ${character.questionCount} pergunta(s)${ownedIds.has(character.id) ? ' · já conquistada' : ''}`,
-                }))}
+                      : `${study?.label ?? 'Iniciante'} · ${study?.correctAnswers ?? 0} acerto(s) · ${character.questionCount} pergunta(s)`,
+                };
+              })}
             />
+            {studyCharacters.length === 0 ? <p className="text-xs font-semibold text-muted">Você ainda não tem figurinhas para estudar. Jogue o quiz geral para conquistar as primeiras.</p> : null}
             {selectedCharacter && selectedCharacter.questionCount < limit ? (
               <p className="text-xs font-semibold text-muted">Este personagem tem {selectedCharacter.questionCount} pergunta(s): a partida terá no máximo esse número.</p>
             ) : null}
@@ -180,7 +187,7 @@ export function PlaySection({
 
         {gameRules ? (
           <p className="text-sm text-muted">
-            Cada acerto vale {gameRules.coinsPerCorrectAnswer} moeda(s){isGeneral ? '' : ` (${gameRules.characterStudyXpPercent}% no estudo)`}; partida perfeita com 5+ perguntas dá +{gameRules.perfectMatchBonusCoins}.
+            Cada acerto vale {gameRules.coinsPerCorrectAnswer} moeda(s){isGeneral ? '' : ' (no estudo de personagem não há moedas nem XP)'}; partida perfeita com 5+ perguntas dá +{gameRules.perfectMatchBonusCoins}.
           </p>
         ) : null}
 

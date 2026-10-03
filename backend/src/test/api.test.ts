@@ -395,26 +395,36 @@ describe.skipIf(!hasDatabase)("API", () => {
       expect(after).toMatchObject({ extraLifeBoosts: 1, doubleXpBoosts: 1, extraTimeBoosts: 1 });
     });
 
-    it("estudo de personagem: figurinha só com aproveitamento mínimo e XP reduzido", async () => {
+    it("estudo de personagem: só de figurinha que já tem, sem prêmio algum, só acumula acertos", async () => {
       const token = await login("user@email.com");
+      const user = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
       const davi = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Davi" } });
 
-      const fail = await playSession(token, { quizType: "CHARACTER_STUDY", characterId: davi.id }, (correct) => wrongOption(correct));
-      expect(fail.last.matchResult.rewardCharacterId).toBeNull();
+      // Sem a figurinha, não abre.
+      const blocked = await api.post("/api/quiz/sessions/start").set(bearer(token)).send({ quizType: "CHARACTER_STUDY", characterId: davi.id });
+      expect(blocked.status).toBe(400);
+
+      await prisma.userSticker.create({ data: { userId: user.id, characterId: davi.id } });
+      const before = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
 
       const win = await playSession(token, { quizType: "CHARACTER_STUDY", characterId: davi.id }, (correct) => correct);
       expect(win.last.matchResult).toMatchObject({
         rewardGranted: false,
-        rewardType: "STICKER",
-        rewardCharacterId: davi.id,
-        rewardCharacterUnlocked: true,
-        xpGained: 7, // 22 XP × 35%
+        rewardType: null,
+        rewardCharacterId: null,
+        xpGained: 0,
+        coinsGained: 0,
+        scoreGained: 0,
       });
+      expect(win.last.matchResult.studyStatus.correctAnswers).toBeGreaterThan(0);
+
+      const after = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+      expect(after).toMatchObject({ xp: before.xp, coins: before.coins, totalScore: before.totalScore });
 
       const collection = await api.get("/api/collection/my").set(bearer(token));
-      expect(collection.body).toEqual([expect.objectContaining({ characterId: davi.id, characterName: "Davi", rarity: "RARE" })]);
-      const progress = await api.get("/api/collection/my/progress").set(bearer(token));
-      expect(progress.body).toEqual({ owned: 1, total: 4 });
+      expect(collection.body).toEqual([
+        expect.objectContaining({ characterId: davi.id, study: expect.objectContaining({ correctAnswers: win.last.matchResult.studyStatus.correctAnswers }) }),
+      ]);
 
       const missing = await api.post("/api/quiz/sessions/start").set(bearer(token)).send({ quizType: "CHARACTER_STUDY" });
       expect(missing.status).toBe(400);

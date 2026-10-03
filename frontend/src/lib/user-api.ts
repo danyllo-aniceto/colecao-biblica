@@ -3,6 +3,15 @@ import type { UserProfile } from '@/types/auth';
 import type { PaginatedResponse, StickerRarity, Testament } from '@/lib/admin-api';
 import type { PlayerLook, UnlockedCosmetic } from '@/lib/rewards-api';
 
+/** Status de estudo do personagem (só acumula acertos; não rende prêmios). */
+export type StudyStatus = {
+  level: number;
+  label: string;
+  correctAnswers: number;
+  nextLabel: string | null;
+  nextAt: number | null;
+};
+
 export type UserSticker = {
   characterId: number;
   characterName: string;
@@ -11,6 +20,7 @@ export type UserSticker = {
   acquiredAt?: string;
   /** Cópias repetidas guardadas (vender ou fundir). */
   duplicates: number;
+  study?: StudyStatus;
 };
 
 export type CollectionProgress = {
@@ -171,6 +181,9 @@ export type QuizMatchResult = {
   coinMultiplier?: number;
   eventName?: string | null;
   levelUp?: boolean;
+  /** Só no estudo de personagem: acertos acumulados e status do personagem. */
+  studyStatus?: StudyStatus | null;
+  studyLevelUp?: boolean;
   chestsPending?: number;
   userXp: number;
   userLevel: number;
@@ -239,10 +252,8 @@ export type GameRules = {
   maxQuestionsPerMatch: number;
   startingLives: number;
   rewardMatchLimitPerDay: number;
-  characterStudyXpPercent: number;
   extraTimeSeconds: number;
   rewardMinCorrectAnswers: number;
-  characterStickerMinAccuracyPercent: number;
   coinsPerCorrectAnswer: number;
   perfectMatchBonusCoins: number;
   coinMatchLimitPerDay: number;

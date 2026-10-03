@@ -10,7 +10,6 @@ import { visibleCharacter } from "./visibility";
 
 export type AchievementStats = {
   matches: number;
-  characterStudyMatches: number;
   perfectMatches: number;
   level: number;
   stickers: number;
@@ -44,7 +43,6 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     coins: 100,
     progress: (s) => ({ current: s.perfectMatches, target: 1 }),
   },
-  { code: "STUDY_5", title: "Biógrafo", description: "Termine 5 estudos de personagem.", icon: "person", coins: 100, progress: (s) => ({ current: s.characterStudyMatches, target: 5 }) },
   { code: "LEVEL_5", title: "Discípulo", description: "Chegue ao nível 5.", icon: "level", coins: 150, progress: (s) => ({ current: s.level, target: 5 }) },
   { code: "LEVEL_10", title: "Mestre", description: "Chegue ao nível 10.", icon: "level", coins: 300, progress: (s) => ({ current: s.level, target: 10 }) },
   { code: "STICKERS_10", title: "Colecionador", description: "Tenha 10 figurinhas no álbum.", icon: "album", coins: 150, progress: (s) => ({ current: s.stickers, target: 10 }) },
@@ -65,11 +63,10 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
 ];
 
 export async function loadStats(db: Db, userId: number): Promise<AchievementStats> {
-  const [user, matches, characterStudyMatches, perfectMatches, stickers, totalStickers, legendaryStickers, notes, friends, trades] = await Promise.all([
+  const [user, matches, perfectMatches, stickers, totalStickers, legendaryStickers, notes, friends, trades] = await Promise.all([
     db.user.findUniqueOrThrow({ where: { id: userId }, select: { level: true, dailyStreak: true } }),
-    db.quizMatch.count({ where: { userId } }),
-    db.quizMatch.count({ where: { userId, quizType: "CHARACTER_STUDY" } }),
-    db.quizMatch.count({ where: { userId, wrongAnswers: 0, correctAnswers: { gte: PERFECT_MATCH_MIN_QUESTIONS } } }),
+    db.quizMatch.count({ where: { userId, quizType: { not: "CHARACTER_STUDY" } } }),
+    db.quizMatch.count({ where: { userId, quizType: { not: "CHARACTER_STUDY" }, wrongAnswers: 0, correctAnswers: { gte: PERFECT_MATCH_MIN_QUESTIONS } } }),
     db.userSticker.count({ where: { userId, character: visibleCharacter() } }),
     db.biblicalCharacter.count({ where: visibleCharacter() }),
     db.userSticker.count({ where: { userId, character: { rarity: "LEGENDARY" } } }),
@@ -77,7 +74,7 @@ export async function loadStats(db: Db, userId: number): Promise<AchievementStat
     db.friendship.count({ where: { status: "ACCEPTED", OR: [{ requesterId: userId }, { addresseeId: userId }] } }),
     db.trade.count({ where: { status: "ACCEPTED", OR: [{ proposerId: userId }, { receiverId: userId }] } }),
   ]);
-  return { matches, characterStudyMatches, perfectMatches, level: user.level, stickers, totalStickers, legendaryStickers, dailyStreak: user.dailyStreak, notes, friends, trades };
+  return { matches, perfectMatches, level: user.level, stickers, totalStickers, legendaryStickers, dailyStreak: user.dailyStreak, notes, friends, trades };
 }
 
 export type UnlockedAchievement = { code: string; title: string; coins: number };

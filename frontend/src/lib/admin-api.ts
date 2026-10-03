@@ -144,7 +144,6 @@ export type GameSettings = {
   maxQuestionsPerMatch: number;
   startingLives: number;
   rewardMatchLimitPerDay: number;
-  characterStudyXpPercent: number;
   maxExtraLifeBoosts: number;
   maxExtraTimeBoosts: number;
   maxDoubleXpBoosts: number;
@@ -152,7 +151,6 @@ export type GameSettings = {
   doubleXpMultiplier: number;
   extraTimeSeconds: number;
   rewardMinCorrectAnswers: number;
-  characterStickerMinAccuracyPercent: number;
   coinsPerCorrectAnswer: number;
   perfectMatchBonusCoins: number;
   coinMatchLimitPerDay: number;

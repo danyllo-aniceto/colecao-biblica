@@ -14,7 +14,6 @@ import {
   multiplyCoins,
   nextCombo,
   accuracyBonus,
-  applyCharacterStudyPercent,
   calculateLevel,
   xpForLevel,
   calculateMatchCoins,
@@ -37,7 +36,7 @@ import {
   dayRangeInTimeZone,
   defaultTimeByDifficulty,
   isTimeExpired,
-  reachedStickerAccuracy,
+  studyStatus,
   remainingSeconds,
   requiredCorrectAnswersForReward,
   shuffle,
@@ -60,11 +59,6 @@ describe("XP, pontos e nível", () => {
     expect(calculateXp(3, 10, 1)).toBe(30);
   });
 
-  it("estudo de personagem rende só a porcentagem configurada (arredonda para baixo)", () => {
-    expect(applyCharacterStudyPercent(126, 35)).toBe(44);
-    expect(applyCharacterStudyPercent(0, 35)).toBe(0);
-  });
-
   it("pontua acertos e desconta erros", () => {
     expect(calculateScore(7, 3)).toBe(610);
     expect(calculateScore(0, 3)).toBe(-90);
@@ -83,11 +77,13 @@ describe("XP, pontos e nível", () => {
 });
 
 describe("prêmios", () => {
-  it("exige aproveitamento mínimo e ao menos um acerto para a figurinha do personagem", () => {
-    expect(reachedStickerAccuracy(7, 10, 70)).toBe(true);
-    expect(reachedStickerAccuracy(6, 10, 70)).toBe(false);
-    expect(reachedStickerAccuracy(0, 0, 0)).toBe(false);
-    expect(reachedStickerAccuracy(0, 3, 0)).toBe(false);
+  it("estudo de personagem: status sobe com os acertos acumulados", () => {
+    expect(studyStatus(0)).toMatchObject({ label: "Iniciante", nextLabel: "Aprendiz", nextAt: 10 });
+    expect(studyStatus(9).label).toBe("Iniciante");
+    expect(studyStatus(10)).toMatchObject({ level: 1, label: "Aprendiz", nextAt: 30 });
+    expect(studyStatus(59).label).toBe("Estudioso");
+    expect(studyStatus(100)).toMatchObject({ level: 4, label: "Mestre", nextLabel: null, nextAt: null });
+    expect(studyStatus(-5).correctAnswers).toBe(0);
   });
 
   it("limita os acertos exigidos ao tamanho do banco de perguntas", () => {

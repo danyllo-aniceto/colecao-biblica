@@ -1,7 +1,8 @@
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
+import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 import { Button } from '@/components/ui/button';
-import { CoinIcon } from '@/components/game/game-ui';
+import { CoinIcon, ProgressBar } from '@/components/game/game-ui';
 import { rewardVisual } from '@/lib/reward-visual';
 import LocalFireDepartmentRoundedIcon from '@mui/icons-material/LocalFireDepartmentRounded';
 import CelebrationRoundedIcon from '@mui/icons-material/CelebrationRounded';
@@ -51,6 +52,7 @@ export function MatchResult({
   }
 
   const { result, correct, answered, previousLevel } = summary;
+  const study = result.studyStatus ?? null;
   const stars = starsFor(correct, answered);
   const leveledUp = result.userLevel > previousLevel;
   const wonSticker = (result.rewardType === 'STICKER' || result.rewardType === 'STICKER_PACK') && result.rewardCharacterName;
@@ -77,6 +79,31 @@ export function MatchResult({
           {correct} de {answered} {answered === 1 ? 'acerto' : 'acertos'}
         </p>
 
+        {study ? (
+          <div className="relative mt-5 space-y-2 rounded-2xl bg-violet/15 p-4 text-left">
+            <div className="flex items-center justify-between gap-3">
+              <span className="flex items-center gap-2 font-display text-lg font-bold text-violet-strong dark:text-violet">
+                <SchoolRoundedIcon /> {study.label}
+              </span>
+              <span className="text-sm font-bold text-muted">
+                {study.correctAnswers} {study.correctAnswers === 1 ? 'acerto' : 'acertos'} no total
+              </span>
+            </div>
+            {study.nextAt ? (
+              <>
+                <ProgressBar value={(study.correctAnswers / study.nextAt) * 100} className="h-3" />
+                <p className="text-xs font-semibold text-muted">
+                  Faltam {study.nextAt - study.correctAnswers} acerto(s) para {study.nextLabel}.
+                </p>
+              </>
+            ) : (
+              <p className="text-xs font-semibold text-muted">Status máximo alcançado.</p>
+            )}
+            {result.studyLevelUp ? <p className="font-display font-bold text-ink">Você subiu de status!</p> : null}
+            <p className="text-xs text-muted">O estudo de personagem não rende XP, moedas nem prêmios: é só para aprender e acompanhar seu avanço.</p>
+          </div>
+        ) : (
+          <>
         <div className="relative mt-5 grid grid-cols-3 gap-3">
           <div className="rounded-2xl bg-violet/15 p-3">
             <div className="font-display text-2xl font-bold text-violet-strong dark:text-violet">+{result.xpGained}</div>
@@ -97,6 +124,11 @@ export function MatchResult({
           </div>
         </div>
 
+          </>
+        )}
+
+        {study ? null : (
+          <>
         {leveledUp ? (
           <div className="relative mt-3 flex flex-col items-center justify-center gap-1 rounded-2xl bg-primary/20 p-3 font-display font-bold text-ink">
             <span className="flex items-center gap-2">
@@ -184,6 +216,9 @@ export function MatchResult({
             Prêmios hoje: {result.rewardMatchesUsedToday}/{result.rewardMatchesLimitPerDay}
           </p>
         ) : null}
+
+          </>
+        )}
 
         <Button size="xl" className="relative mt-5 w-full" onClick={onContinue}>
           Continuar

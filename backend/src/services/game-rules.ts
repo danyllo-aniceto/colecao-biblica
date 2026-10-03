@@ -44,11 +44,6 @@ export function calculateXp(correctAnswers: number, questionsAnswered: number, x
   return Math.round(base * xpMultiplier);
 }
 
-/** XP do estudo de personagem: só uma porcentagem do XP normal (divisão inteira). */
-export function applyCharacterStudyPercent(xp: number, percent: number): number {
-  return Math.trunc((xp * percent) / 100);
-}
-
 export function calculateScore(correctAnswers: number, wrongAnswers: number): number {
   return correctAnswers * POINTS_PER_CORRECT - wrongAnswers * POINTS_PER_WRONG;
 }
@@ -65,12 +60,23 @@ export function calculateLevel(xp: number): number {
   return level;
 }
 
-/** A figurinha do estudo de personagem exige aproveitamento mínimo e ao menos um acerto. */
-export function reachedStickerAccuracy(correctAnswers: number, questionsAnswered: number, minPercent: number): boolean {
-  if (questionsAnswered <= 0 || correctAnswers <= 0) {
-    return false;
-  }
-  return correctAnswers * 100 >= minPercent * questionsAnswered;
+/**
+ * Estudo de personagem: não dá XP, moedas nem prêmios. Só acumula acertos naquele personagem
+ * e, a cada marco, o jogador sobe de status (apenas um selo de dedicação).
+ */
+export const STUDY_STATUSES = [
+  { level: 0, label: "Iniciante", minCorrect: 0 },
+  { level: 1, label: "Aprendiz", minCorrect: 10 },
+  { level: 2, label: "Estudioso", minCorrect: 30 },
+  { level: 3, label: "Conhecedor", minCorrect: 60 },
+  { level: 4, label: "Mestre", minCorrect: 100 },
+] as const;
+
+export function studyStatus(correctAnswers: number) {
+  const total = Math.max(0, Math.trunc(correctAnswers));
+  const current = [...STUDY_STATUSES].reverse().find((status) => total >= status.minCorrect) ?? STUDY_STATUSES[0];
+  const next = STUDY_STATUSES.find((status) => status.minCorrect > total) ?? null;
+  return { level: current.level, label: current.label, correctAnswers: total, nextLabel: next?.label ?? null, nextAt: next?.minCorrect ?? null };
 }
 
 /** Acertos mínimos no quiz geral, limitados ao banco de perguntas para bancos pequenos continuarem premiando. */

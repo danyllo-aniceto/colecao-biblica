@@ -23,8 +23,6 @@ const GROUPS: Array<{ title: string; description: string; fields: FieldDef[] }> 
       { key: 'maxQuestionsPerMatch', label: 'Máximo de perguntas por partida', min: 1, max: 1000 },
       { key: 'rewardMinCorrectAnswers', label: 'Acertos para concorrer ao prêmio', min: 1, max: 100, hint: 'No quiz geral. Limitado ao total de perguntas ativas.' },
       { key: 'rewardMatchLimitPerDay', label: 'Prêmios sorteados por dia', min: 0, max: 20, hint: 'Partidas premiadas por jogador por dia (0 desliga o sorteio).' },
-      { key: 'characterStudyXpPercent', label: 'XP e moedas no estudo de personagem', min: 0, max: 100, suffix: '%', hint: 'Porcentagem do que o quiz geral daria.' },
-      { key: 'characterStickerMinAccuracyPercent', label: 'Aproveitamento para ganhar a figurinha', min: 0, max: 100, suffix: '%', hint: 'No estudo de personagem.' },
     ],
   },
   {

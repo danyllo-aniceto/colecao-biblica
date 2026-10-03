@@ -615,6 +615,7 @@ export function UserDashboard() {
                 profile={profile}
                 characters={characters}
                 ownedIds={ownedIds}
+                collection={collection}
                 gameRules={gameRules}
                 quizForm={quizForm}
                 onChangeForm={setQuizForm}

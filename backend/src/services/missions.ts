@@ -35,17 +35,19 @@ type MissionDefinition = {
 
 const inRange = (range: Range) => ({ gte: range.start, lt: range.end });
 
-const matchesIn = (db: Db, userId: number, range: Range, extra: object = {}) => db.quizMatch.count({ where: { userId, finishedAt: inRange(range), ...extra } });
+// Estudo de personagem não conta para missões (não rende nada, só acumula acertos).
+const notStudy = { quizType: { not: "CHARACTER_STUDY" as const } };
+
+const matchesIn = (db: Db, userId: number, range: Range, extra: object = {}) => db.quizMatch.count({ where: { userId, finishedAt: inRange(range), ...notStudy, ...extra } });
 
 const correctIn = async (db: Db, userId: number, range: Range) =>
-  (await db.quizMatch.aggregate({ where: { userId, finishedAt: inRange(range) }, _sum: { correctAnswers: true } }))._sum.correctAnswers ?? 0;
+  (await db.quizMatch.aggregate({ where: { userId, finishedAt: inRange(range), ...notStudy }, _sum: { correctAnswers: true } }))._sum.correctAnswers ?? 0;
 
 const stickersIn = (db: Db, userId: number, range: Range) => db.userSticker.count({ where: { userId, acquiredAt: inRange(range) } });
 
 export const MISSIONS: MissionDefinition[] = [
   { code: "D_PLAY_2", period: "DAILY", title: "Termine 2 partidas", coins: 30, target: 2, progress: (db, u, r) => matchesIn(db, u, r) },
   { code: "D_CORRECT_15", period: "DAILY", title: "Acerte 15 perguntas", coins: 40, target: 15, progress: correctIn },
-  { code: "D_STUDY", period: "DAILY", title: "Faça um estudo de personagem", coins: 30, target: 1, progress: (db, u, r) => matchesIn(db, u, r, { quizType: "CHARACTER_STUDY" }) },
   { code: "D_CHALLENGE", period: "DAILY", title: "Jogue o desafio do dia", coins: 40, target: 1, progress: (db, u, r) => matchesIn(db, u, r, { quizType: "DAILY_CHALLENGE" }) },
   {
     code: "D_PERFECT",

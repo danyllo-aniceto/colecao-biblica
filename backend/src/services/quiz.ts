@@ -3,7 +3,6 @@ import { lockUser, prisma, transaction, type Db } from "../db/prisma";
 import { badRequest, notFound } from "../lib/errors";
 import { env } from "../lib/env";
 import {
-  applyCharacterStudyPercent,
   availableSeconds,
   calculateLevel,
   calculateMatchCoins,
@@ -21,10 +20,10 @@ import {
   nextCombo,
   isTimeExpired,
   pickFiftyFiftyRemovals,
-  reachedStickerAccuracy,
   remainingSeconds,
   requiredCorrectAnswersForReward,
   shuffle,
+  studyStatus,
   weightedPick,
 } from "./game-rules";
 import { currentScenarioIdFor } from "./campaign";
@@ -185,6 +184,11 @@ export async function startSession(user: User, input: StartInput) {
     const character = await prisma.biblicalCharacter.findFirst({ where: { id: input.characterId, ...visibleCharacter() }, select: { id: true } });
     if (!character) {
       throw notFound("Personagem não encontrado");
+    }
+    // O estudo é só para quem já tem a figurinha: não libera nada, apenas acumula acertos.
+    const owned = await prisma.userSticker.findUnique({ where: { userId_characterId: { userId: user.id, characterId: character.id } }, select: { id: true } });
+    if (!owned) {
+      throw badRequest("Conquiste a figurinha deste personagem para estudá-lo");
     }
     characterId = character.id;
   }
@@ -741,8 +745,10 @@ async function coinMatchesToday(tx: Tx, userId: number) {
 
 export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, stats: MatchStats, random: () => number = Math.random) {
   const event = await activeEvent(tx);
-  let xp = calculateXp(stats.correctAnswers, stats.questionsAnswered, stats.xpMultiplier);
-  const score = calculateScore(stats.correctAnswers, stats.wrongAnswers) + (stats.comboPoints ?? 0);
+  // Estudo de personagem não rende XP, pontos, moedas nem prêmios: só acumula acertos (status do personagem).
+  const isStudy = stats.quizType === "CHARACTER_STUDY";
+  let xp = isStudy ? 0 : calculateXp(stats.correctAnswers, stats.questionsAnswered, stats.xpMultiplier);
+  const score = isStudy ? 0 : calculateScore(stats.correctAnswers, stats.wrongAnswers) + (stats.comboPoints ?? 0);
 
   let rewardGranted = false;
   let rewardName: string | null = null;
@@ -756,21 +762,17 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
   let pityGuaranteed = false;
   let stickerPity = user.stickerPity;
 
-  if (stats.quizType === "CHARACTER_STUDY") {
-    xp = applyCharacterStudyPercent(xp, settings.characterStudyXpPercent);
-
-    // A figurinha do personagem só é liberada com aproveitamento mínimo.
-    if (stats.characterId && reachedStickerAccuracy(stats.correctAnswers, stats.questionsAnswered, settings.characterStickerMinAccuracyPercent)) {
-      const character = await tx.biblicalCharacter.findUnique({ where: { id: stats.characterId } });
-      if (character && !isCampaignOnlyRarity(character.rarity)) {
-        rewardType = "STICKER";
-        rewardCharacterId = character.id;
-        rewardCharacterName = character.name;
-        rewardCharacterRarity = character.rarity;
-        rewardCharacterImageUrl = character.imageUrl;
-        rewardCharacterUnlocked = await grantStickerIfMissing(tx, user.id, character.id);
-      }
-    }
+  let study: ReturnType<typeof studyStatus> | null = null;
+  let studyLevelUp = false;
+  if (isStudy && stats.characterId) {
+    const before = await tx.characterStudy.findUnique({ where: { userId_characterId: { userId: user.id, characterId: stats.characterId } } });
+    const saved = await tx.characterStudy.upsert({
+      where: { userId_characterId: { userId: user.id, characterId: stats.characterId } },
+      create: { userId: user.id, characterId: stats.characterId, correctAnswers: stats.correctAnswers, questionsAnswered: stats.questionsAnswered },
+      update: { correctAnswers: { increment: stats.correctAnswers }, questionsAnswered: { increment: stats.questionsAnswered } },
+    });
+    study = studyStatus(saved.correctAnswers);
+    studyLevelUp = study.level > studyStatus(before?.correctAnswers ?? 0).level;
   }
 
   // Evento ativo multiplica o XP da partida.
@@ -781,11 +783,8 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
 
   // Moedas por acerto: toda partida conta, até o limite diário (evita "farmar" o mesmo quiz).
   let coinsGained = 0;
-  if (stats.correctAnswers > 0 && (await coinMatchesToday(tx, user.id)) < settings.coinMatchLimitPerDay) {
+  if (!isStudy && stats.correctAnswers > 0 && (await coinMatchesToday(tx, user.id)) < settings.coinMatchLimitPerDay) {
     coinsGained = calculateMatchCoins(stats.correctAnswers, stats.wrongAnswers, settings) + (stats.comboCoins ?? 0);
-    if (stats.quizType === "CHARACTER_STUDY") {
-      coinsGained = applyCharacterStudyPercent(coinsGained, settings.characterStudyXpPercent);
-    }
     coinsGained = multiplyCoins(coinsGained, stats.coinMultiplier ?? 1, event?.coinMultiplier ?? 1);
     wallet.coins += coinsGained;
   }
@@ -871,6 +870,8 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
     bestCombo: stats.bestCombo ?? 0,
     comboBonusPoints: stats.comboPoints ?? 0,
     coinMultiplier: stats.coinMultiplier ?? 1,
+    studyStatus: study,
+    studyLevelUp,
     eventName: event && (event.xpMultiplier > 1 || event.coinMultiplier > 1) ? event.name : null,
     levelUp: updated.level > user.level,
     chestsPending: Math.max(0, updated.level - updated.chestLevel),
