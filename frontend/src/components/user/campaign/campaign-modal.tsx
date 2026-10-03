@@ -21,7 +21,11 @@ import { claimCampaignNode, type Campaign, type CampaignNode, type CampaignScena
 import { scenarioFallbackBackground, scenarioMapSrc, scenarioThemeVars } from '@/lib/campaign-theme';
 import { playSfx } from '@/lib/sound/sfx';
 import { rewardVisual } from '@/lib/reward-visual';
-import { ChestOpening } from '@/components/user/chest-opening';
+import { ChestIcon, ChestOpening } from '@/components/user/chest-opening';
+import { xpForLevel } from '@/components/game/game-ui';
+import { getRarityLabel } from '@/lib/rarity-theme';
+import HourglassTopRoundedIcon from '@mui/icons-material/HourglassTopRounded';
+import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import type { UnlockedAchievement } from '@/lib/user-api';
 import type { UserProfile } from '@/types/auth';
 
@@ -143,6 +147,85 @@ function RewardLines({ node, playerName, music }: { node: CampaignNode; playerNa
   );
 }
 
+const pageShell = 'relative flex h-full snap-start snap-always flex-col items-center overflow-y-auto bg-bg px-4 pb-6 pt-4';
+
+/** Última página, no alto do caminho: aviso de que novos cenários vêm por aí. */
+function SoonPage({ active }: { active: boolean }) {
+  return (
+    <section aria-label="Novos cenários em breve" aria-hidden={active ? undefined : true} className={cn(pageShell, 'justify-center text-center')}>
+      <div className={cn('max-w-xs space-y-3 transition-all duration-700', active ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0')}>
+        <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/15 text-primary-strong dark:text-primary">
+          <HourglassTopRoundedIcon sx={{ fontSize: 44 }} />
+        </span>
+        <h3 className="font-display text-2xl font-bold text-ink">Novos cenários em breve!</h3>
+        <p className="text-sm font-semibold text-muted">A jornada continua: a equipe está preparando as próximas paradas da campanha. Volte em breve para seguir adiante.</p>
+      </div>
+    </section>
+  );
+}
+
+/** Depois de Jerusalém: o prêmio final, ainda bloqueado (Baú de Esmeralda e a figurinha especial). */
+function FinalePage({ campaign, special, playerName, active }: { campaign: Campaign; special: NonNullable<Campaign['special']>; playerName: string; active: boolean }) {
+  const chest = campaign.emeraldChest;
+  const left = Math.max(special.totalFragments - special.fragments, 0);
+  return (
+    <section aria-label="Prêmio final da campanha" aria-hidden={active ? undefined : true} className={pageShell}>
+      <div className={cn('my-auto w-full max-w-md space-y-4 transition-all duration-700', active ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0')}>
+        <div className="text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-r-special">{special.owned ? 'Conquistado' : 'Prêmio final'}</p>
+          <h3 className="font-display text-2xl font-bold text-ink">Figurinha especial de {special.character.name}</h3>
+          <p className="mt-1 text-sm font-semibold text-muted">
+            {special.owned ? 'Você juntou todos os fragmentos!' : `Junte os ${special.totalFragments} fragmentos espalhados pelas paradas (faltam ${left}) para abrir o baú e conquistar esta figurinha.`}
+          </p>
+        </div>
+
+        <div className="flex items-center justify-center gap-5">
+          <div className="w-32 shrink-0">
+            <StickerCard name={special.character.name} rarity={special.character.rarity} imageUrl={special.character.imageUrl} owned={special.owned} size="sm" />
+          </div>
+          <div className="relative flex w-32 shrink-0 flex-col items-center">
+            <ChestIcon tier="EMERALD" className={cn('h-28 w-32 drop-shadow-xl', special.owned ? '' : 'opacity-70 grayscale-[40%]')} />
+            {special.owned ? null : (
+              <span className="absolute right-2 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-surface-3 text-muted shadow">
+                <LockRoundedIcon fontSize="small" />
+              </span>
+            )}
+            <span className="mt-1 font-display text-sm font-bold text-ink">Baú de Esmeralda</span>
+          </div>
+        </div>
+        {special.owned ? null : <ProgressBar className="h-3" value={(special.fragments / Math.max(special.totalFragments, 1)) * 100} color="var(--r-special)" />}
+
+        <div className="panel space-y-2 p-4">
+          <p className="flex items-center gap-2 font-display font-bold text-ink">
+            <Inventory2RoundedIcon fontSize="small" className="text-r-special" /> O que vem no baú
+          </p>
+          <ul className="space-y-1.5 text-sm font-semibold text-ink">
+            <li className="flex items-center gap-2">
+              <CoinIcon className="h-5 w-5" /> {chest.coins.toLocaleString('pt-BR')} moedas
+            </li>
+            <li>{chest.helpers} ajudas sortidas</li>
+            <li>1 figurinha {chest.stickerRarities.map((rarity) => getRarityLabel(rarity).toLowerCase()).join(' e 1 ')}</li>
+            <li>A figurinha especial de {special.character.name}</li>
+          </ul>
+          {chest.cosmetics.length > 0 ? (
+            <div className="space-y-1.5 pt-1">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted">Conjunto de itens visuais exclusivo</p>
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                {chest.cosmetics.map((item) => (
+                  <div key={item.id} data-rarity={item.rarity} className="rarity rarity-bg flex items-center gap-2 rounded-xl p-2">
+                    <CosmeticPreview item={item} playerName={playerName} size="md" />
+                    {item.type === 'TITLE' ? null : <span className="min-w-0 truncate text-xs font-bold text-ink">{item.name}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 type CampaignModalProps = {
   open: boolean;
   campaign: Campaign | null;
@@ -162,6 +245,9 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
   const toast = useToast();
   // Subida: o primeiro cenário fica embaixo e os seguintes vão aparecendo para cima.
   const scenarios = useMemo(() => [...(campaign?.scenarios ?? [])].reverse(), [campaign]);
+  // Acima do último cenário ficam o prêmio final (baú de esmeralda e figurinha especial) e o aviso de novidades.
+  const topPages = campaign?.special ? 2 : 1;
+  const pageCount = scenarios.length + topPages;
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const positioned = useRef(false);
   const frame = useRef(0);
@@ -173,7 +259,7 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
   const [emerald, setEmerald] = useState<ClaimNodeResult | null>(null);
 
   const special = campaign?.special ?? null;
-  const scenario = scenarios[active] ?? null;
+  const scenario = scenarios[active - topPages] ?? scenarios[0] ?? null;
   const selectedScenario = selected ? (scenarios.find((item) => item.nodes.some((node) => node.id === selected.id)) ?? null) : null;
   const liveSelected = selected && selectedScenario ? (selectedScenario.nodes.find((node) => node.id === selected.id) ?? selected) : selected;
 
@@ -196,11 +282,11 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
     const scroller = scrollerRef.current;
     if (!open || !campaign || !scroller || positioned.current) return;
     positioned.current = true;
-    const index = Math.max(0, scenarios.findIndex((item) => item.id === campaign.currentScenarioId));
+    const index = Math.max(0, scenarios.findIndex((item) => item.id === campaign.currentScenarioId)) + topPages;
     // 'instant' ignora o scroll-smooth do CSS; com 'auto' a abertura rolaria do topo até o cenário.
     scroller.scrollTo({ top: index * scroller.clientHeight, behavior: 'instant' });
     setActive(index);
-  }, [open, campaign, scenarios]);
+  }, [open, campaign, scenarios, topPages]);
 
   // Whoosh a cada cenário que passa (arrastando ou pelas setas).
   const previousActive = useRef(active);
@@ -212,9 +298,9 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
   const goTo = useCallback((index: number) => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
-    const target = Math.max(0, Math.min(index, scenarios.length - 1));
+    const target = Math.max(0, Math.min(index, pageCount - 1));
     scroller.scrollTo({ top: target * scroller.clientHeight, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
-  }, [scenarios.length]);
+  }, [pageCount]);
 
   function handleScroll() {
     cancelAnimationFrame(frame.current);
@@ -313,7 +399,11 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
           ) : (
             <div className="relative min-h-0 flex-1">
               <div ref={scrollerRef} onScroll={handleScroll} tabIndex={0} aria-label="Cenários da campanha" className="h-full snap-y snap-mandatory overflow-y-auto overscroll-contain scroll-smooth outline-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {scenarios.map((item, index) => (
+                <SoonPage active={active === 0} />
+                {campaign.special ? <FinalePage campaign={campaign} special={campaign.special} playerName={playerName} active={active === 1} /> : null}
+                {scenarios.map((item, scenarioIndex) => {
+                  const index = scenarioIndex + topPages;
+                  return (
                   <section
                     key={item.id}
                     style={scenarioThemeVars(item.color)}
@@ -343,7 +433,8 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
                       <ScenarioMap scenario={item} onOpenNode={setSelected} />
                     </div>
                   </section>
-                ))}
+                  );
+                })}
               </div>
 
               <nav aria-label="Navegar entre cenários" className="pointer-events-none absolute inset-y-0 right-1 flex flex-col items-center justify-center gap-2">
@@ -353,7 +444,14 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
                   </button>
                 </Tooltip>
                 <ol className="pointer-events-auto flex flex-col items-center gap-1 rounded-full bg-surface/80 px-1 py-1.5 backdrop-blur">
-                  {scenarios.map((item, index) => (
+                  {Array.from({ length: topPages }, (_, index) => (
+                    <li key={`extra-${index}`}>
+                      <button type="button" onClick={() => goTo(index)} aria-label={index === 0 && topPages === 2 ? 'Ir para o aviso de novidades' : index === topPages - 1 && topPages === 2 ? 'Ir para o prêmio final' : 'Ir para o aviso de novidades'} aria-current={index === active ? 'true' : undefined} className={cn('block rounded-full transition-all duration-300', index === active ? 'h-4 w-2 bg-primary' : 'h-2 w-2 bg-edge-strong/60')} />
+                    </li>
+                  ))}
+                  {scenarios.map((item, scenarioIndex) => {
+                    const index = scenarioIndex + topPages;
+                    return (
                     <li key={item.id}>
                       <button
                         type="button"
@@ -363,10 +461,11 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
                         className={cn('block rounded-full transition-all duration-300', index === active ? 'h-4 w-2 bg-primary' : item.completed ? 'h-2 w-2 bg-success' : 'h-2 w-2 bg-edge-strong')}
                       />
                     </li>
-                  ))}
+                    );
+                  })}
                 </ol>
                 <Tooltip content="Cenário anterior" side="top">
-                  <button type="button" onClick={() => goTo(active + 1)} disabled={active >= scenarios.length - 1} aria-label="Cenário anterior (para baixo)" className={cn(arrow, 'pointer-events-auto')}>
+                  <button type="button" onClick={() => goTo(active + 1)} disabled={active >= pageCount - 1} aria-label="Cenário anterior (para baixo)" className={cn(arrow, 'pointer-events-auto')}>
                     <KeyboardArrowDownRoundedIcon fontSize="small" />
                   </button>
                 </Tooltip>
@@ -398,6 +497,10 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
       >
         {liveSelected ? (
           <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3 rounded-2xl bg-violet/15 p-3">
+              <span className="text-sm font-bold text-muted">XP para chegar ao nível {liveSelected.level}</span>
+              <span className="font-display text-lg font-bold text-violet-strong dark:text-violet">{xpForLevel(liveSelected.level).toLocaleString('pt-BR')} XP</span>
+            </div>
             {liveSelected.state === 'locked' ? <Alert tone="info">Chegue ao nível {liveSelected.level} para abrir esta parada.</Alert> : null}
             {liveSelected.state === 'claimed' ? <Alert tone="success">Você já resgatou esta parada.</Alert> : null}
             <RewardLines node={liveSelected} playerName={playerName} music={selectedScenario?.hasMusic && liveSelected.level === selectedScenario.startLevel ? selectedScenario.name : null} />

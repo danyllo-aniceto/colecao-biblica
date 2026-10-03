@@ -62,6 +62,8 @@ export type Campaign = {
   level: number;
   currentScenarioId: number | null;
   special: CampaignSpecial | null;
+  /** O que o Baú de Esmeralda traz (prêmio da figurinha especial). */
+  emeraldChest: { coins: number; helpers: number; stickerRarities: StickerRarity[]; cosmetics: Cosmetic[] };
   scenarios: CampaignScenario[];
 };
 

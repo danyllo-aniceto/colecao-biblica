@@ -2,7 +2,8 @@ import { lockUser, prisma, transaction, type Db } from "../db/prisma";
 import { badRequest, notFound } from "../lib/errors";
 import { checkAchievements } from "./achievements";
 import { campaignNodeState, currentScenarioId, defaultNodePosition, fragmentsComplete } from "./game-rules";
-import { openEmeraldChest } from "./chests";
+import { EMERALD_CHEST, openEmeraldChest } from "./chests";
+import { EMERALD_SET_NAMES } from "./default-cosmetics";
 import { grantCosmetic, toCosmeticResponse } from "./cosmetics";
 import { toUserResponse } from "./mappers";
 import { applyReward, grantStickerIfMissing, walletData } from "./rewards";
@@ -38,9 +39,18 @@ export async function getCampaign(userId: number) {
   const fragmentCharacter = scenarios.find((scenario) => scenario.fragmentCharacter)?.fragmentCharacter ?? null;
   const owned = fragmentCharacter ? (await prisma.userSticker.count({ where: { userId, characterId: fragmentCharacter.id } })) > 0 : false;
 
+  // Prévia do Baú de Esmeralda (o prêmio da figurinha especial): o que ele traz, para o mapa mostrar bloqueado.
+  const emeraldCosmetics = await prisma.cosmetic.findMany({ where: { name: { in: [...EMERALD_SET_NAMES] }, active: true }, orderBy: { id: "asc" } });
+
   return {
     level: user.level,
     currentScenarioId: currentId,
+    emeraldChest: {
+      coins: EMERALD_CHEST.coins,
+      helpers: EMERALD_CHEST.helpers,
+      stickerRarities: ["EPIC", "LEGENDARY"] as const,
+      cosmetics: emeraldCosmetics.map(toCosmeticResponse),
+    },
     special: fragmentCharacter
       ? {
           character: fragmentCharacter,
