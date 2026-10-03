@@ -914,6 +914,61 @@ input:-webkit-autofill:focus {
   }
 }
 
+/* ---------- Abertura de baú ---------- */
+@keyframes chest-shake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  15% { transform: translateX(-8px) rotate(-4deg); }
+  30% { transform: translateX(8px) rotate(4deg); }
+  45% { transform: translateX(-10px) rotate(-5deg); }
+  60% { transform: translateX(10px) rotate(5deg); }
+  75% { transform: translateX(-6px) rotate(-3deg); }
+}
+
+@keyframes chest-idle {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-6px) scale(1.03); }
+}
+
+@keyframes screen-flash {
+  0% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+@keyframes rays-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orb-charge {
+  0% { transform: scale(0.35); opacity: 0.2; filter: blur(6px); }
+  70% { transform: scale(1); opacity: 1; filter: blur(0); }
+  100% { transform: scale(1.35); opacity: 1; }
+}
+
+@keyframes burst-out {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0.2) rotate(var(--rot, 0deg)); opacity: 0; }
+}
+
+@keyframes ring-grow {
+  0% { transform: scale(0.3); opacity: 0.9; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+@keyframes reveal-card {
+  0% { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+  60% { transform: scale(1.12) rotate(2deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); }
+}
+
+.animate-chest-shake { animation: chest-shake 0.9s ease-in-out both; }
+.animate-chest-idle { animation: chest-idle 2.2s ease-in-out infinite; }
+.animate-screen-flash { animation: screen-flash 0.7s ease-out forwards; }
+.animate-rays-spin { animation: rays-spin 6s linear infinite; }
+.animate-orb-charge { animation: orb-charge var(--charge, 1s) ease-out forwards; }
+.animate-burst-out { animation: burst-out var(--dur, 1s) cubic-bezier(0.2, 0.7, 0.3, 1) forwards; }
+.animate-ring-grow { animation: ring-grow 0.9s ease-out forwards; }
+.animate-reveal-card { animation: reveal-card 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

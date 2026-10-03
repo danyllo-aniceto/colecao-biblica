@@ -61,22 +61,29 @@ O quiz geral virou uma **maratona**: sem escolher o número de perguntas, a part
 de personagem continua como está.
 
 O prêmio sorteado por partida foi trocado por um **baú da partida**, cujo nível vem dos acertos. Até 5 baús por dia
-(configurável); ganha baú quem acerta no mínimo 7.
+(configurável); ganha baú quem acerta no mínimo 7. Cada baú traz **vários prêmios**: moedas, ajudas e, por chance,
+figurinha (no ouro e no diamante ela é garantida).
 
-| Acertos | Baú | Moedas garantidas | O que sai |
-|---|---|---|---|
-| 7 a 14 | Bronze | 6 | sorteio comum (figurinha é mais rara) |
-| 15 a 39 | Prata | 15 | sorteio com um pouco mais de chance de figurinha |
-| 40 a 69 | Ouro | 30 | sempre figurinha, com raras e épicas favorecidas |
-| 70 ou mais | Diamante | 100 | sempre figurinha épica (75%) ou lendária (25%), mais 1 ajuda e 30% de chance de um item visual raro |
+| Acertos | Baú | Moedas | Ajudas | Figurinha | Extras |
+|---|---|---|---|---|---|
+| 7 a 14 | Bronze | 10 | 1 | 45% de chance | |
+| 15 a 39 | Prata | 25 | 2 | 65% de chance, raras e épicas favorecidas | |
+| 40 a 69 | Ouro | 50 | 2 | garantida (10% de uma segunda), mais raras | |
+| 70 ou mais | Diamante | 100 | 3 | garantida épica (75%) ou lendária (25%) (20% de uma segunda) | 30% de item visual raro |
 
-O diamante é só para quem acerta muito (por volta de 90% de acerto chega a 70 em cerca de 1 partida a cada 40) e tem limite de 1 por dia, dentro dos 5 baús; acima disso vira ouro.
+O diamante é só para quem acerta muito (por volta de 90% de acerto chega a 70 em cerca de 1 partida a cada 40) e tem
+limite de 1 por dia, dentro dos 5 baús; acima disso vira ouro. A garantia de figurinha (a cada 10 baús sem figurinha)
+continua. Ajuda que o jogador já tem no limite vira moedas. A figurinha do baú tem 75% de chance de ser uma que ainda
+não se tem; no resto pode vir repetida (as repetidas têm uso: vender, trocar, fundir e subir de nível).
 
-A garantia de figurinha (a cada 10 baús sem figurinha) continua. Os cortes de prata e ouro, o limite diário e o mínimo
-de acertos ficam em Configurações. Como a maratona rende mais acertos por partida, o limite de partidas com moedas por dia
-caiu de 5 para 3 e o de XP cheio de 6 para 4.
+O conteúdo de cada baú fica em `CHEST_SPECS` (`game-rules.ts`) e o **Simulador de baús** do painel abre milhares de baús
+com os dados reais e mostra o que cada um entrega, além de uma tabela de ganho por dia conforme a taxa de acerto.
 
-Figurinhas por dia vindas dos baús (simulação): casual ~0,1, regular ~0,5, dedicado ~1. Somam-se à compra na loja (1 por dia).
+Os cortes de acertos, o limite diário e o mínimo ficam em Configurações. Como a maratona rende mais acertos por partida,
+o limite de partidas com moedas por dia caiu de 5 para 3 e o de XP cheio de 6 para 4.
+
+Figurinhas por dia vindas dos baús (simulação): casual ~0,4, regular ~1,4 e dedicado ~2,9. Somam-se à compra na loja
+(1 por dia) e às repetidas, que alimentam o nível das figurinhas.
 
 ## Repetidas: vender a amigos e nível da figurinha
 

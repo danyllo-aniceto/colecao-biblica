@@ -167,6 +167,15 @@ export type AnswerQuizQuestionPayload = {
   useXpMultiplier?: boolean;
 };
 
+/** O que um baú trouxe, na ordem em que aparece na animação. */
+export type ChestPrize =
+  | { kind: 'COINS'; amount: number }
+  | { kind: 'HELPER'; name: string; amount: number }
+  | { kind: 'STICKER'; characterId: number | null; name: string | null; rarity: StickerRarity | string | null; imageUrl: string | null; unlocked: boolean; duplicate: boolean }
+  | { kind: 'COSMETIC'; name: string };
+
+export type ChestTierName = 'BRONZE' | 'SILVER' | 'GOLD' | 'DIAMOND';
+
 export type QuizMatchResult = {
   matchId: number;
   xpGained: number;
@@ -194,10 +203,10 @@ export type QuizMatchResult = {
   /** O XP desta partida foi reduzido pelo limite diário. */
   xpReduced?: boolean;
   /** Baú da partida (quiz geral em maratona): o nível vem dos acertos. */
-  chestTier?: 'BRONZE' | 'SILVER' | 'GOLD' | 'DIAMOND' | null;
+  chestTier?: ChestTierName | null;
   chestCoins?: number;
-  /** Extras do baú de diamante. */
-  chestExtras?: { helperName: string | null; cosmeticName: string | null };
+  /** Tudo que o baú trouxe: moedas, ajudas, figurinhas e (no diamante) item visual. */
+  chestPrizes?: ChestPrize[];
   /** Só no estudo de personagem: acertos acumulados e status do personagem. */
   studyStatus?: StudyStatus | null;
   studyLevelUp?: boolean;

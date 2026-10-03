@@ -297,6 +297,27 @@ describe.skipIf(!hasDatabase)("recompensas novas", () => {
       expect((await api.post("/api/collection/upgrade").set(bearer(token)).send({ characterId: davi.id })).body.message).toMatch(/nível máximo/);
     });
 
+    it("simulador de baús do painel: só admin, números coerentes e nada é gravado", async () => {
+      const admin = await login("admin2@email.com");
+      const player = await login("user@email.com");
+      expect((await api.post("/api/admin/chests/simulate").set(bearer(player)).send({ runs: 500 })).status).toBe(403);
+      const before = await prisma.userSticker.count();
+
+      const simulation = await api.post("/api/admin/chests/simulate").set(bearer(admin)).send({ runs: 1000 });
+      expect(simulation.status).toBe(200);
+      const { tiers, thresholds } = simulation.body;
+      expect(thresholds).toMatchObject({ bronze: 7, silver: 15, gold: 40, diamond: 70, dailyLimit: 5 });
+      // Ouro e diamante sempre trazem figurinha; o bronze, só às vezes.
+      expect(tiers.GOLD.chanceSticker).toBe(1);
+      expect(tiers.BRONZE.chanceSticker).toBeGreaterThan(0.3);
+      expect(tiers.BRONZE.chanceSticker).toBeLessThan(0.6);
+      expect(tiers.BRONZE.avgCoins).toBe(10);
+      expect(tiers.DIAMOND.avgCoins).toBe(100);
+      expect(tiers.GOLD.samples).toHaveLength(3);
+      expect(tiers.GOLD.samples[0][0]).toMatchObject({ kind: "COINS", amount: 50 });
+      expect(await prisma.userSticker.count()).toBe(before);
+    });
+
     it("diamante: figurinha épica ou lendária, extras, e só um por dia (o resto vira ouro)", async () => {
       const player = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
       await prisma.biblicalCharacter.createMany({
@@ -322,7 +343,11 @@ describe.skipIf(!hasDatabase)("recompensas novas", () => {
 
       const first = await play(70);
       expect(first).toMatchObject({ chestTier: "DIAMOND", chestCoins: 100, rewardCharacterRarity: "EPIC" });
-      expect(first.chestExtras.helperName).toBeTruthy();
+      const prizes = first.chestPrizes as Array<{ kind: string; rarity?: string }>;
+      expect(prizes.filter((prize) => prize.kind === "HELPER")).toHaveLength(3);
+      const stickers = prizes.filter((prize) => prize.kind === "STICKER");
+      expect(stickers.length).toBeGreaterThanOrEqual(1);
+      expect(stickers.every((prize) => prize.rarity === "EPIC" || prize.rarity === "LEGENDARY")).toBe(true);
       expect((await prisma.quizMatch.findUniqueOrThrow({ where: { id: first.matchId } })).chestTier).toBe("DIAMOND");
 
       // O limite é de 1 diamante por dia: o segundo vira baú de ouro.

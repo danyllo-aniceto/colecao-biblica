@@ -13,6 +13,7 @@ const updateSchema = z.object({
   maxQuestionsPerMatch: int(1, 1000),
   startingLives: int(1, 20),
   rewardMatchLimitPerDay: int(0, 20),
+  chestNewStickerPercent: int(0, 100),
   chestDiamondMinCorrect: int(1, 1000),
   chestDiamondLimitPerDay: int(0, 20),
   friendSalePriceCommon: int(0, 100_000),

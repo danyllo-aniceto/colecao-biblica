@@ -16,7 +16,9 @@ import {
   accuracyBonus,
   applyDailyXpLimit,
   CHEST_BONUS_COINS,
-  chestRewardWeight,
+  CHEST_HELPER_FALLBACK_COINS,
+  chestStickerWeight,
+  planChest,
   chestTierFor,
   friendSalePrice,
   friendSaleSellerCoins,
@@ -106,16 +108,51 @@ describe("baús da partida", () => {
     expect(CHEST_BONUS_COINS.GOLD).toBeGreaterThan(CHEST_BONUS_COINS.SILVER);
   });
 
-  it("o ouro só dá figurinha e a prata favorece figurinhas", () => {
-    const sticker = { rewardType: "STICKER", stickerRarity: "RARE" as const, dropChance: 3.5 };
+  it("o peso das figurinhas no baú: só conta figurinha e o ouro favorece as raras", () => {
+    const common = { rewardType: "STICKER", stickerRarity: "COMMON" as const, dropChance: 9 };
+    const epic = { rewardType: "STICKER", stickerRarity: "EPIC" as const, dropChance: 1.2 };
     const coins = { rewardType: "COINS", stickerRarity: null, dropChance: 30 };
-    expect(chestRewardWeight("BRONZE", sticker)).toBeLessThan(3.5);
-    expect(chestRewardWeight("BRONZE", coins)).toBe(30);
-    expect(chestRewardWeight("SILVER", sticker)).toBeGreaterThan(3.5);
-    expect(chestRewardWeight("SILVER", coins)).toBe(30);
-    expect(chestRewardWeight("GOLD", coins)).toBe(0);
-    expect(chestRewardWeight("GOLD", sticker)).toBeGreaterThan(3.5);
-    expect(chestRewardWeight("GOLD", { ...sticker, stickerRarity: "EPIC" })).toBeGreaterThan(chestRewardWeight("GOLD", { ...sticker, stickerRarity: "COMMON" }));
+    expect(chestStickerWeight("BRONZE", coins)).toBe(0);
+    expect(chestStickerWeight("GOLD", coins)).toBe(0);
+    expect(chestStickerWeight("BRONZE", common)).toBe(9);
+    // Quanto melhor o baú, maior a fatia da épica em relação à comum.
+    const share = (tier: "BRONZE" | "SILVER" | "GOLD") => chestStickerWeight(tier, epic) / (chestStickerWeight(tier, epic) + chestStickerWeight(tier, common));
+    expect(share("SILVER")).toBeGreaterThan(share("BRONZE"));
+    expect(share("GOLD")).toBeGreaterThan(share("SILVER"));
+  });
+
+  const stickers = [
+    { id: 1, name: "Figurinha Comum", rewardType: "STICKER", stickerRarity: "COMMON" as const, dropChance: 9 },
+    { id: 2, name: "Figurinha Épica", rewardType: "STICKER", stickerRarity: "EPIC" as const, dropChance: 1.2 },
+    { id: 3, name: "Figurinha Lendária", rewardType: "STICKER", stickerRarity: "LEGENDARY" as const, dropChance: 0.4 },
+  ];
+  const helperPool = ["A", "B", "C", "D"].map((name) => ({ field: `f${name}`, name }));
+
+  it("o baú traz moedas, ajudas sem repetir e figurinha conforme o nível", () => {
+    const always = () => 0; // sempre "sorte"
+    const never = () => 0.999;
+    const bronze = planChest("BRONZE", { stickerRewards: stickers, helperPool, forceSticker: false, cosmeticAvailable: true }, always);
+    expect(bronze.coins).toBe(CHEST_BONUS_COINS.BRONZE);
+    expect(bronze.helpers).toHaveLength(1);
+    expect(bronze.stickers).toHaveLength(1);
+    expect(planChest("BRONZE", { stickerRewards: stickers, helperPool, forceSticker: false, cosmeticAvailable: true }, never).stickers).toHaveLength(0);
+    // A garantia contra azar força a figurinha mesmo no azar.
+    expect(planChest("BRONZE", { stickerRewards: stickers, helperPool, forceSticker: true, cosmeticAvailable: false }, never).stickers).toHaveLength(1);
+
+    const diamond = planChest("DIAMOND", { stickerRewards: stickers, helperPool, forceSticker: false, cosmeticAvailable: true }, always);
+    expect(diamond.helpers).toHaveLength(3);
+    expect(new Set(diamond.helpers.map((helper) => helper.name)).size).toBe(3);
+    // Diamante: sempre figurinha épica ou lendária, nunca a comum.
+    expect(diamond.stickers.every((picked) => picked.rewardId !== 1)).toBe(true);
+    expect(diamond.stickers.length).toBeGreaterThanOrEqual(1);
+    expect(diamond.cosmetic).toBe(true);
+  });
+
+  it("ajuda que não cabe mais vira moedas e sem figurinha disponível o baú vem sem figurinha", () => {
+    const full = planChest("SILVER", { stickerRewards: [], helperPool: [], forceSticker: true, cosmeticAvailable: false }, () => 0);
+    expect(full.helpers).toHaveLength(0);
+    expect(full.stickers).toHaveLength(0);
+    expect(full.coins).toBe(CHEST_BONUS_COINS.SILVER + 2 * CHEST_HELPER_FALLBACK_COINS);
   });
 });
 
@@ -127,10 +164,10 @@ describe("diamante, venda a amigos e nível da figurinha", () => {
     // Sem corte de diamante configurado (ou fora de ordem), nunca vira diamante abaixo do ouro.
     expect(chestTierFor(80, 7, 15, 40)).toBe("GOLD");
     expect(chestTierFor(41, 7, 15, 40, 10)).toBe("DIAMOND");
-    expect(chestRewardWeight("DIAMOND", { rewardType: "STICKER", stickerRarity: "EPIC", dropChance: 1 })).toBe(75);
-    expect(chestRewardWeight("DIAMOND", { rewardType: "STICKER", stickerRarity: "LEGENDARY", dropChance: 1 })).toBe(25);
-    expect(chestRewardWeight("DIAMOND", { rewardType: "STICKER", stickerRarity: "COMMON", dropChance: 50 })).toBe(0);
-    expect(chestRewardWeight("DIAMOND", { rewardType: "STICKER_PACK", stickerRarity: null, dropChance: 50 })).toBe(0);
+    expect(chestStickerWeight("DIAMOND", { rewardType: "STICKER", stickerRarity: "EPIC", dropChance: 1 })).toBe(75);
+    expect(chestStickerWeight("DIAMOND", { rewardType: "STICKER", stickerRarity: "LEGENDARY", dropChance: 1 })).toBe(25);
+    expect(chestStickerWeight("DIAMOND", { rewardType: "STICKER", stickerRarity: "COMMON", dropChance: 50 })).toBe(0);
+    expect(chestStickerWeight("DIAMOND", { rewardType: "STICKER_PACK", stickerRarity: null, dropChance: 50 })).toBe(0);
   });
 
   it("venda a amigo: preço único por raridade e taxa que some do jogo", () => {

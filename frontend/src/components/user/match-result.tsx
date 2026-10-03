@@ -1,16 +1,17 @@
+import { useEffect, useState } from 'react';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 import { Button } from '@/components/ui/button';
 import { CoinIcon, ProgressBar } from '@/components/game/game-ui';
-import { rewardVisual } from '@/lib/reward-visual';
 import LocalFireDepartmentRoundedIcon from '@mui/icons-material/LocalFireDepartmentRounded';
 import CelebrationRoundedIcon from '@mui/icons-material/CelebrationRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import PaletteRoundedIcon from '@mui/icons-material/PaletteRounded';
 import { StickerCard } from '@/components/game/sticker-card';
 import type { StickerRarity } from '@/lib/admin-api';
-import type { QuizMatchResult } from '@/lib/user-api';
+import type { ChestPrize, QuizMatchResult } from '@/lib/user-api';
+import { CHEST_TIERS, ChestIcon, ChestOpening } from '@/components/user/chest-opening';
 
 function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ');
@@ -54,6 +55,14 @@ export function MatchResult({
   onContinue: () => void;
   onOpenSticker?: (id: number) => void;
 }) {
+  const [opening, setOpening] = useState(false);
+  const [opened, setOpened] = useState(false);
+  const matchId = summary?.result.matchId;
+  useEffect(() => {
+    setOpening(false);
+    setOpened(false);
+  }, [matchId]);
+
   if (!summary) {
     return null;
   }
@@ -62,7 +71,7 @@ export function MatchResult({
   const study = result.studyStatus ?? null;
   const stars = starsFor(correct, answered);
   const leveledUp = result.userLevel > previousLevel;
-  const wonSticker = (result.rewardType === 'STICKER' || result.rewardType === 'STICKER_PACK') && result.rewardCharacterName;
+  const chestPrizes = result.chestPrizes ?? [];
   const dailyLimitReached = !result.rewardGranted && result.rewardMatchesLimitPerDay > 0 && result.rewardMatchesUsedToday >= result.rewardMatchesLimitPerDay;
 
   return (
@@ -181,46 +190,57 @@ export function MatchResult({
         ) : null}
 
         <div className="relative mt-5">
-          {result.chestTier ? (
-            <p className={cn('mb-3 inline-flex items-center gap-2 rounded-full px-4 py-1.5 font-display text-sm font-bold', CHEST_LABELS[result.chestTier].tone)}>
-              <Inventory2RoundedIcon fontSize="small" /> {CHEST_LABELS[result.chestTier].label}
-              {result.chestCoins ? (
-                <span className="inline-flex items-center gap-1">
-                  · <CoinIcon className="h-4 w-4" />+{result.chestCoins}
-                </span>
-              ) : null}
-            </p>
-          ) : null}
-          {result.chestTier === 'DIAMOND' && (result.chestExtras?.helperName || result.chestExtras?.cosmeticName) ? (
-            <p className="mb-3 text-sm font-bold text-info">
-              Extras do diamante:{' '}
-              {[result.chestExtras.helperName ? `ajuda ${result.chestExtras.helperName}` : null, result.chestExtras.cosmeticName ? `item visual ${result.chestExtras.cosmeticName}` : null].filter(Boolean).join(' e ')}
-            </p>
-          ) : null}
-          {wonSticker ? (
-            <div className="space-y-3">
-              <p className="font-display text-lg font-bold text-ink">{result.rewardCharacterUnlocked ? 'Nova figurinha!' : 'Figurinha repetida'}</p>
-              {result.pityGuaranteed ? <p className="text-xs font-bold uppercase tracking-wider text-violet-strong dark:text-violet">Figurinha garantida pela sorte acumulada</p> : null}
-              <div className="mx-auto w-40">
-                <StickerCard
-                  name={result.rewardCharacterName ?? ''}
-                  rarity={(result.rewardCharacterRarity ?? 'COMMON') as StickerRarity}
-                  imageUrl={result.rewardCharacterImageUrl}
-                  owned
-                  onClick={onOpenSticker && result.rewardCharacterId ? () => onOpenSticker(result.rewardCharacterId!) : undefined}
-                />
+          {result.chestTier && chestPrizes.length > 0 ? (
+            opened ? (
+              <div className="space-y-3">
+                <p className={cn('inline-flex items-center gap-2 rounded-full px-4 py-1.5 font-display text-sm font-bold', CHEST_LABELS[result.chestTier].tone)}>
+                  <Inventory2RoundedIcon fontSize="small" /> {CHEST_LABELS[result.chestTier].label}
+                </p>
+                {result.pityGuaranteed ? <p className="text-xs font-bold uppercase tracking-wider text-violet-strong dark:text-violet">Figurinha garantida pela sorte acumulada</p> : null}
+                <ul className="space-y-1 text-sm font-semibold text-ink">
+                  {chestPrizes
+                    .filter((prize) => prize.kind !== 'STICKER')
+                    .map((prize, position) => (
+                      <li key={position} className="flex items-center justify-center gap-1.5">
+                        {prize.kind === 'COINS' ? (
+                          <>
+                            <CoinIcon className="h-4 w-4" /> +{prize.amount} moedas
+                          </>
+                        ) : prize.kind === 'HELPER' ? (
+                          <>+1 {prize.name}</>
+                        ) : (
+                          <>
+                            <PaletteRoundedIcon fontSize="small" /> Item visual: {prize.kind === 'COSMETIC' ? prize.name : ''}
+                          </>
+                        )}
+                      </li>
+                    ))}
+                </ul>
+                <div className="flex flex-wrap items-start justify-center gap-3">
+                  {chestPrizes
+                    .filter((prize): prize is Extract<ChestPrize, { kind: 'STICKER' }> => prize.kind === 'STICKER')
+                    .map((prize, position) => (
+                      <div key={position} className="w-28 space-y-1">
+                        <StickerCard
+                          name={prize.name ?? 'Figurinha'}
+                          rarity={(prize.rarity ?? 'COMMON') as StickerRarity}
+                          imageUrl={prize.imageUrl}
+                          owned
+                          size="sm"
+                          onClick={onOpenSticker && prize.characterId ? () => onOpenSticker(prize.characterId!) : undefined}
+                        />
+                        <p className="text-xs font-bold text-muted">{prize.unlocked ? 'Nova!' : 'Repetida: foi para as repetidas'}</p>
+                      </div>
+                    ))}
+                </div>
               </div>
-              {!result.rewardCharacterUnlocked ? (
-                <p className="text-sm text-muted">Você já tinha: a cópia foi guardada nas repetidas do álbum (venda ou funda).</p>
-              ) : null}
-            </div>
-          ) : result.rewardGranted ? (
-            <div className="flex flex-col items-center gap-2">
-              <span className="flex h-20 w-20 items-center justify-center rounded-3xl bg-surface-2">
-                <RewardIcon type={result.rewardType} />
-              </span>
-              <p className="font-display text-lg font-bold text-ink">{result.rewardName}</p>
-            </div>
+            ) : (
+              <button type="button" onClick={() => setOpening(true)} className="group mx-auto flex flex-col items-center gap-2" aria-label={`Abrir ${CHEST_TIERS[result.chestTier].label}`}>
+                <ChestIcon tier={result.chestTier} className="animate-chest-idle h-28 w-32 drop-shadow-xl transition group-hover:scale-105" />
+                <span className="font-display text-lg font-bold text-ink">{CHEST_LABELS[result.chestTier].label}</span>
+                <span className="rounded-full bg-primary px-5 py-2 font-display text-sm font-bold text-on-primary">Toque para abrir</span>
+              </button>
+            )
           ) : dailyLimitReached ? (
             <p className="text-sm text-muted">Você já abriu os {result.rewardMatchesLimitPerDay} baús de hoje. Amanhã tem mais!</p>
           ) : (
@@ -230,12 +250,6 @@ export function MatchResult({
             </p>
           )}
         </div>
-
-        {result.rewardGranted && !wonSticker && result.pityRemaining ? (
-          <p className="relative mt-3 text-xs text-muted">
-            {result.pityRemaining === 1 ? 'O próximo prêmio é figurinha garantida!' : `Figurinha garantida em no máximo ${result.pityRemaining} prêmios.`}
-          </p>
-        ) : null}
 
         {result.rewardMatchesLimitPerDay > 0 ? (
           <p className="relative mt-4 text-xs font-bold uppercase tracking-wider text-muted">
@@ -250,11 +264,16 @@ export function MatchResult({
           Continuar
         </Button>
       </div>
+      {opening && result.chestTier ? (
+        <ChestOpening
+          tier={result.chestTier}
+          prizes={chestPrizes}
+          onDone={() => {
+            setOpening(false);
+            setOpened(true);
+          }}
+        />
+      ) : null}
     </div>
   );
-}
-
-function RewardIcon({ type }: { type?: string | null }) {
-  const { icon, tint } = rewardVisual(type, 44);
-  return <span className={cn('flex h-full w-full items-center justify-center rounded-3xl text-5xl', tint)}>{icon}</span>;
 }

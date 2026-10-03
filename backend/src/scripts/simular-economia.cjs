@@ -56,12 +56,14 @@ function simulate(c, p, days = 365) {
   const total = c.album.C + c.album.R + c.album.E + c.album.L;
   const out = []; let doneDay = null;
   st.cum = 0; const hist = [0]; const earn = (n, cat = 'outros') => { st.coins += n; st.cum += n; (SRC[cat] ??= 0); SRC[cat] += n; };
-  const giveSticker = (r) => { // r: C R E L (sorteio e loja preferem figurinhas que faltam)
-    if (st.owned[r] < c.album[r]) { st.owned[r]++; return true; }
+  const giveSticker = (r, free = false) => { // r: C R E L (sorteio e loja preferem figurinhas que faltam; no baú, às vezes vem repetida)
+    const faltam = c.album[r] - st.owned[r];
+    const bias = free && c.newBias !== undefined ? c.newBias : 1;
+    if (faltam > 0 && (bias >= 1 || rnd() < bias + (1 - bias) * (faltam / c.album[r]))) { st.owned[r]++; return true; }
     earn(c.dup[r], 'repetidas'); return false;
   };
   for (let d = 1; d <= days; d++) {
-        let coinMatches = 0, draws = 0, xpToday = 0;
+        let coinMatches = 0, draws = 0, xpToday = 0, diamondsToday = 0;
     const base = c.marathon ? p.marathons : p.matches;
     const m = Math.round(base + (rnd() - 0.5) * base * 0.6);
     for (let i = 0; i < Math.max(0, m); i++) {
@@ -70,19 +72,24 @@ function simulate(c, p, days = 365) {
       st.xp += xp;
       if (r.correct > 0 && coinMatches < c.coinMatchLimit) { coinMatches++; earn(r.correct * c.coinsPerCorrect + r.combo + (r.perfect ? c.perfectBonus : 0), 'partidas'); }
       if (c.chests) {
-        // Baú da partida: o nível vem dos acertos; até chestLimit por dia.
+        // Baú da partida: o nível vem dos acertos; até chestLimit por dia (diamante: 1 por dia).
         const k = c.chests;
-        const tier = r.correct >= k.gold ? 'G' : r.correct >= k.silver ? 'S' : r.correct >= c.rewardMinCorrect ? 'B' : null;
+        let tier = r.correct >= k.diamond ? 'D' : r.correct >= k.gold ? 'G' : r.correct >= k.silver ? 'S' : r.correct >= c.rewardMinCorrect ? 'B' : null;
+        if (tier === 'D' && diamondsToday >= 1) tier = 'G';
         if (tier && draws < k.limit) {
-          draws++; earn(k.bonus[tier], 'baús');
-          const g = c.draw; const pityOn = st.noSticker >= c.pity;
-          const sb = k.stickerBoost; const mult = { B: Array(5).fill(sb.B), S: Array(5).fill(sb.S), G: [1, 1.6, 2.2, 1.5, 1.5] }[tier];
-          const sticker = [['C', g.stC * mult[0]], ['R', g.stR * mult[1]], ['E', g.stE * mult[2]], ['L', g.stL * mult[3]], ['pack', g.pack * mult[4]]];
-          const table = tier === 'G' || pityOn ? (tier === 'G' ? sticker : sticker) : [...sticker, ['coins', g.coins], ['other', g.other]];
-          const res = pick(table);
-          if (res === 'coins') { earn(c.draw.coinAmt, 'baús'); st.noSticker++; }
-          else if (res === 'other') st.noSticker++;
-          else { const rar = res === 'pack' ? pick(Object.entries(c.packOdds)) : res; giveSticker(rar); st.noSticker = 0; stickerDraws++; }
+          draws++; if (tier === 'D') diamondsToday++;
+          const spec = k.spec[tier];
+          earn(spec.coins, 'baús');
+          let n = 0;
+          if (spec.sticker >= 1 || st.noSticker >= c.pity || rnd() < spec.sticker) { n = 1; if (spec.extra > 0 && rnd() < spec.extra) n = 2; }
+          for (let i = 0; i < n; i++) {
+            const g = c.draw; const m = k.boost[tier];
+            const items = tier === 'D' ? [['E', 75], ['L', 25]] : [['C', g.stC * m[0]], ['R', g.stR * m[1]], ['E', g.stE * m[2]], ['L', g.stL * m[3]], ['pack', g.pack * m[4]]];
+            const res = pick(items);
+            const rar = res === 'pack' ? pick(Object.entries(c.packOdds)) : res;
+            giveSticker(rar, true); stickerDraws++;
+          }
+          st.noSticker = n > 0 ? 0 : st.noSticker + 1;
         }
       } else if (r.correct >= c.rewardMinCorrect && draws < c.rewardLimit) {
         draws++;
@@ -154,7 +161,12 @@ const NOVO = {
   missionDaily: 26, weekly: 330,
   // Quiz geral em maratona (até as 3 vidas) com baús Bronze/Prata/Ouro por acertos.
   marathon: true,
-  chests: { silver: 15, gold: 40, limit: 5, bonus: { B: 6, S: 15, G: 30 }, stickerBoost: { B: 0.6, S: 1.2 } },
+  newBias: 0.75,
+  chests: {
+    silver: 15, gold: 40, diamond: 70, limit: 5,
+    spec: { B: { coins: 10, sticker: 0.45, extra: 0 }, S: { coins: 25, sticker: 0.65, extra: 0 }, G: { coins: 50, sticker: 1, extra: 0.1 }, D: { coins: 100, sticker: 1, extra: 0.2 } },
+    boost: { B: [1, 1, 1, 1, 1], S: [0.8, 1.3, 1.6, 1.3, 1.2], G: [1, 1.6, 2.2, 1.5, 1.5] },
+  },
 };
 
 function relatorio(titulo, cfg) {

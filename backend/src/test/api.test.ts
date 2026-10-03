@@ -275,9 +275,12 @@ describe.skipIf(!hasDatabase)("API", () => {
       expect(result.rewardName).toBeTruthy();
       expect(result.rewardMatchesUsedToday).toBe(1);
       expect(result.rewardMatchesLimitPerDay).toBe(5);
-      // Só 3 perguntas ativas: o mínimo cai para 3 e o baú é de bronze (6 moedas garantidas, além do item).
+      // Só 3 perguntas ativas: o mínimo cai para 3 e o baú é de bronze (10 moedas garantidas, além do restante).
       expect(result.chestTier).toBe("BRONZE");
-      expect(result.chestCoins).toBe(6);
+      expect(result.chestCoins).toBe(10);
+      // O baú vem com vários prêmios: moedas primeiro, depois ajudas e (se sair) a figurinha por último.
+      expect(result.chestPrizes[0]).toEqual({ kind: "COINS", amount: 10 });
+      expect(result.chestPrizes.filter((prize: { kind: string }) => prize.kind === "HELPER")).toHaveLength(1);
       expect(result.coinsGained).toBe(7); // 1 da sequência + 3 acertos × 2 (bônus de perfeita só com 5+ perguntas)
       expect(result.unlockedAchievements).toEqual(expect.arrayContaining([expect.objectContaining({ code: "FIRST_MATCH", coins: 30 })]));
       expect(last.correctOption).toMatch(/^[ABCD]$/);
@@ -320,7 +323,9 @@ describe.skipIf(!hasDatabase)("API", () => {
       const token = await login("user@email.com");
       const { last } = await playSession(token, { quizType: "GENERAL" }, (correct) => correct);
       expect(last.finished).toBe(true);
-      expect(last.matchResult.rewardGranted).toBe(false);
+      // Sem figurinha elegível o baú ainda vem (moedas e ajuda), só que sem figurinha.
+      expect(last.matchResult.chestPrizes.some((prize: { kind: string }) => prize.kind === "STICKER")).toBe(false);
+      expect(last.matchResult.chestCoins).toBeGreaterThan(0);
     });
 
     it("respeita o limite diário de partidas premiadas", async () => {

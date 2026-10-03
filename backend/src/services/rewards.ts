@@ -58,7 +58,7 @@ export async function grantStickerOrDuplicate(db: Db, userId: number, characterI
   return false;
 }
 
-async function randomCharacterOfRarity(db: Db, userId: number, rarity: StickerRarity, random: () => number): Promise<BiblicalCharacter | null> {
+async function randomCharacterOfRarity(db: Db, userId: number, rarity: StickerRarity, random: () => number, newPercent = 100): Promise<BiblicalCharacter | null> {
   const byRarity = await db.biblicalCharacter.findMany({ where: { rarity, ...visible() }, orderBy: { id: "asc" } });
   if (byRarity.length === 0) {
     return null;
@@ -66,7 +66,9 @@ async function randomCharacterOfRarity(db: Db, userId: number, rarity: StickerRa
   // Prefere figurinhas que o usuário ainda não tem.
   const owned = await ownedCharacterIds(db, userId);
   const missing = byRarity.filter((character) => !owned.has(character.id));
-  const pool = missing.length > 0 ? missing : byRarity;
+  // `newPercent` < 100: nos baús, às vezes a figurinha vem repetida mesmo faltando outras (as repetidas têm uso).
+  const preferMissing = missing.length > 0 && (newPercent >= 100 || random() * 100 < newPercent);
+  const pool = preferMissing ? missing : byRarity;
   return pool[Math.floor(random() * pool.length)];
 }
 
@@ -81,10 +83,11 @@ async function pickStickerCharacter(
   reward: RewardDefinition,
   settings: GameSettings,
   random: () => number,
+  newPercent = 100,
 ): Promise<BiblicalCharacter> {
   if (reward.rewardType === "STICKER_PACK") {
     const rarity = pickPackRarity(settings, await publishedRarities(db), random);
-    const character = rarity ? await randomCharacterOfRarity(db, userId, rarity, random) : null;
+    const character = rarity ? await randomCharacterOfRarity(db, userId, rarity, random, newPercent) : null;
     if (character) {
       return character;
     }
@@ -99,7 +102,7 @@ async function pickStickerCharacter(
   }
 
   if (reward.stickerRarity) {
-    const character = await randomCharacterOfRarity(db, userId, reward.stickerRarity, random);
+    const character = await randomCharacterOfRarity(db, userId, reward.stickerRarity, random, newPercent);
     if (character) {
       return character;
     }
@@ -118,6 +121,7 @@ export async function applyReward(
   reward: RewardDefinition,
   settings: GameSettings,
   random: () => number = Math.random,
+  options: { newStickerPercent?: number } = {},
 ): Promise<RewardApplication> {
   const base: RewardApplication = {
     rewardType: reward.rewardType,
@@ -169,7 +173,7 @@ export async function applyReward(
       return base;
     case "STICKER":
     case "STICKER_PACK": {
-      const character = await pickStickerCharacter(db, wallet.id, reward, settings, random);
+      const character = await pickStickerCharacter(db, wallet.id, reward, settings, random, options.newStickerPercent);
       const unlocked = await grantStickerOrDuplicate(db, wallet.id, character.id);
       return {
         ...base,

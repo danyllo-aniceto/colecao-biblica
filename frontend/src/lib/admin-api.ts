@@ -1,5 +1,6 @@
 import { apiRequest, apiRequestVoid } from '@/lib/http';
 import type { UserProfile } from '@/types/auth';
+import type { ChestPrize } from '@/lib/user-api';
 
 export type Role = 'ADMIN' | 'USER';
 export type StickerRarity = 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY' | 'SPECIAL';
@@ -502,4 +503,41 @@ export function updateSettings(payload: Partial<GameSettings>) {
 
 export function getAdminStats() {
   return apiRequest<AdminStats>('/admin/stats', { method: 'GET' }, 'Não foi possível carregar a visão geral.');
+}
+
+// Simulador de baús ------------------------------------------------------
+
+export type SimulatedChestTier = {
+  possible: boolean;
+  spec: { coins: number; helpers: number; stickerChance: number; extraStickerChance: number; cosmeticChance: number };
+  avgCoins: number;
+  avgHelpers: number;
+  avgStickers: number;
+  chanceSticker: number;
+  chanceTwoStickers: number;
+  chanceCosmetic: number;
+  rarityPerChest: Record<'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY', number>;
+  helpers: Record<string, number>;
+  samples: ChestPrize[][];
+};
+
+export type ChestSimulation = {
+  runs: number;
+  publishedByRarity: Record<string, number>;
+  thresholds: {
+    bronze: number;
+    silver: number;
+    gold: number;
+    diamond: number;
+    dailyLimit: number;
+    diamondPerDay: number;
+    newStickerPercent: number;
+    pityThreshold: number;
+    startingLives: number;
+  };
+  tiers: Record<'BRONZE' | 'SILVER' | 'GOLD' | 'DIAMOND', SimulatedChestTier>;
+};
+
+export function simulateChests(runs: number) {
+  return apiRequest<ChestSimulation>('/admin/chests/simulate', json('POST', { runs }), 'Não foi possível simular os baús.');
 }

@@ -112,25 +112,104 @@ export function chestTierFor(correctAnswers: number, minCorrect: number, silverM
   return "BRONZE";
 }
 
-/** Moedas garantidas de cada baú, além do item sorteado. */
-export const CHEST_BONUS_COINS: Record<ChestTier, number> = { BRONZE: 6, SILVER: 15, GOLD: 30, DIAMOND: 100 };
+/**
+ * O que cada baú traz. Todos dão moedas e ajudas; a figurinha vem por chance (ouro e diamante: garantida).
+ * Os números aqui valem para o jogo e para o simulador do painel.
+ */
+export type ChestSpec = {
+  coins: number;
+  /** Ajudas sortidas (sem repetir). Se o jogador já está no limite de uma ajuda, ela é trocada por moedas. */
+  helpers: number;
+  /** Chance (0 a 1) de vir uma figurinha. */
+  stickerChance: number;
+  /** Chance (0 a 1) de vir uma segunda figurinha, quando a primeira veio. */
+  extraStickerChance: number;
+  /** Chance (0 a 1) de vir também um item visual raro. */
+  cosmeticChance: number;
+};
 
-/** Peso de cada recompensa no sorteio do baú: prata favorece figurinhas e o ouro só dá figurinha, com raras melhores. */
-export function chestRewardWeight(tier: ChestTier, reward: { rewardType: string; stickerRarity: StickerRarity | null; dropChance: number }): number {
+export const CHEST_SPECS: Record<ChestTier, ChestSpec> = {
+  BRONZE: { coins: 10, helpers: 1, stickerChance: 0.45, extraStickerChance: 0, cosmeticChance: 0 },
+  SILVER: { coins: 25, helpers: 2, stickerChance: 0.65, extraStickerChance: 0, cosmeticChance: 0 },
+  GOLD: { coins: 50, helpers: 2, stickerChance: 1, extraStickerChance: 0.1, cosmeticChance: 0 },
+  DIAMOND: { coins: 100, helpers: 3, stickerChance: 1, extraStickerChance: 0.2, cosmeticChance: 0.3 },
+};
+
+/** Moedas garantidas de cada baú, além do restante. */
+export const CHEST_BONUS_COINS: Record<ChestTier, number> = { BRONZE: CHEST_SPECS.BRONZE.coins, SILVER: CHEST_SPECS.SILVER.coins, GOLD: CHEST_SPECS.GOLD.coins, DIAMOND: CHEST_SPECS.DIAMOND.coins };
+
+/** Moedas no lugar de uma ajuda que o jogador não pode mais receber (já está no limite). */
+export const CHEST_HELPER_FALLBACK_COINS = 15;
+
+type StickerRewardLike = { rewardType: string; stickerRarity: StickerRarity | null; dropChance: number };
+
+const STICKER_WEIGHT_BOOST: Record<Exclude<ChestTier, "DIAMOND">, { COMMON: number; RARE: number; EPIC: number; LEGENDARY: number; PACK: number }> = {
+  BRONZE: { COMMON: 1, RARE: 1, EPIC: 1, LEGENDARY: 1, PACK: 1 },
+  SILVER: { COMMON: 0.8, RARE: 1.3, EPIC: 1.6, LEGENDARY: 1.3, PACK: 1.2 },
+  GOLD: { COMMON: 1, RARE: 1.6, EPIC: 2.2, LEGENDARY: 1.5, PACK: 1.5 },
+};
+
+/** Peso de cada recompensa de figurinha no sorteio do baú (zero para o que não é figurinha). Quanto melhor o baú, mais raras. */
+export function chestStickerWeight(tier: ChestTier, reward: StickerRewardLike): number {
   const isPack = reward.rewardType === "STICKER_PACK";
-  const isSticker = reward.rewardType === "STICKER" || isPack;
-  // Bronze: figurinha é rara (o baú serve mais para moedas e ajudas). Prata: um pouco mais de chance.
+  if (reward.rewardType !== "STICKER" && !isPack) return 0;
   // Diamante: só figurinha épica (75%) ou lendária (25%).
-  if (tier === "DIAMOND") return reward.rewardType === "STICKER" && reward.stickerRarity === "EPIC" ? 75 : reward.rewardType === "STICKER" && reward.stickerRarity === "LEGENDARY" ? 25 : 0;
-  if (tier === "BRONZE") return isSticker ? reward.dropChance * 0.6 : reward.dropChance;
-  if (tier === "SILVER") return isSticker ? reward.dropChance * 1.2 : reward.dropChance;
-  if (!isSticker) return 0;
-  const byRarity: Partial<Record<StickerRarity, number>> = { COMMON: 1, RARE: 1.6, EPIC: 2.2, LEGENDARY: 1.5 };
-  return reward.dropChance * (isPack ? 1.5 : (byRarity[reward.stickerRarity ?? "COMMON"] ?? 1));
+  if (tier === "DIAMOND") return !isPack && reward.stickerRarity === "EPIC" ? 75 : !isPack && reward.stickerRarity === "LEGENDARY" ? 25 : 0;
+  const boost = STICKER_WEIGHT_BOOST[tier];
+  const multiplier = isPack ? boost.PACK : (boost[(reward.stickerRarity ?? "COMMON") as keyof typeof boost] ?? 1);
+  return reward.dropChance * multiplier;
 }
 
-/** Chance (%) do baú de diamante trazer também um item visual raro. */
-export const DIAMOND_COSMETIC_CHANCE = 30;
+export type ChestRollContext = {
+  /** Recompensas de figurinha que podem sair (pacote incluído). */
+  stickerRewards: Array<StickerRewardLike & { id: number; name: string }>;
+  /** Ajudas que ainda cabem no inventário do jogador. */
+  helperPool: Array<{ field: string; name: string }>;
+  /** Garantia contra azar: depois de N baús sem figurinha, este traz uma. */
+  forceSticker: boolean;
+  /** Existe algum item visual raro que o jogador ainda não tem. */
+  cosmeticAvailable: boolean;
+};
+
+export type ChestPlan = {
+  coins: number;
+  helpers: Array<{ field: string; name: string }>;
+  stickers: Array<{ rewardId: number; rewardName: string }>;
+  cosmetic: boolean;
+};
+
+/** Sorteia o conteúdo de um baú. Pura: o jogo e o simulador do painel usam esta mesma função. */
+export function planChest(tier: ChestTier, context: ChestRollContext, random: () => number = Math.random): ChestPlan {
+  const spec = CHEST_SPECS[tier];
+  const pool = [...context.helperPool];
+  const helpers: ChestPlan["helpers"] = [];
+  while (helpers.length < spec.helpers && pool.length > 0) {
+    helpers.push(pool.splice(Math.floor(random() * pool.length), 1)[0]);
+  }
+  const missingHelpers = spec.helpers - helpers.length;
+
+  const stickers: ChestPlan["stickers"] = [];
+  const pickSticker = () => {
+    const weighted = weightedPick(context.stickerRewards, (reward) => chestStickerWeight(tier, reward), random);
+    // Sem nenhuma figurinha elegível para este nível, usa a chance normal do sorteio.
+    return weighted ?? weightedPick(context.stickerRewards, (reward) => reward.dropChance, random);
+  };
+  if (context.stickerRewards.length > 0 && (context.forceSticker || spec.stickerChance >= 1 || random() < spec.stickerChance)) {
+    const first = pickSticker();
+    if (first) stickers.push({ rewardId: first.id, rewardName: first.name });
+    if (first && spec.extraStickerChance > 0 && random() < spec.extraStickerChance) {
+      const second = pickSticker();
+      if (second) stickers.push({ rewardId: second.id, rewardName: second.name });
+    }
+  }
+
+  return {
+    coins: spec.coins + Math.max(0, missingHelpers) * CHEST_HELPER_FALLBACK_COINS,
+    helpers,
+    stickers,
+    cosmetic: spec.cosmeticChance > 0 && context.cosmeticAvailable && random() < spec.cosmeticChance,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Venda a amigos e nível da figurinha

@@ -14,6 +14,7 @@ export const SETTINGS = {
   rewardMatchLimitPerDay: { key: "quiz.general.rewardLimitPerDay", defaultValue: 5, description: "Baús da partida por dia (quiz geral)", kind: "int" },
   chestSilverMinCorrect: { key: "quiz.chest.silverMinCorrect", defaultValue: 15, description: "Acertos na partida para ganhar o baú de prata", kind: "int" },
   chestGoldMinCorrect: { key: "quiz.chest.goldMinCorrect", defaultValue: 40, description: "Acertos na partida para ganhar o baú de ouro", kind: "int" },
+  chestNewStickerPercent: { key: "quiz.chest.newStickerPercent", defaultValue: 75, description: "Chance (%) de a figurinha do baú ser uma que o jogador ainda não tem (o resto pode vir repetida)", kind: "int" },
   chestDiamondMinCorrect: { key: "quiz.chest.diamondMinCorrect", defaultValue: 70, description: "Acertos na partida para ganhar o baú de diamante", kind: "int" },
   chestDiamondLimitPerDay: { key: "quiz.chest.diamondLimitPerDay", defaultValue: 1, description: "Baús de diamante por dia (contam dentro do limite de baús)", kind: "int" },
   friendSalePriceCommon: { key: "social.salePrice.common", defaultValue: 225, description: "Preço da figurinha comum vendida a um amigo", kind: "int" },
