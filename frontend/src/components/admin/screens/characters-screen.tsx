@@ -3,6 +3,7 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
+import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
 import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +18,7 @@ import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
 import { AdminPanel, Cell, DataTable, IconAction, RarityBadge, Row, SearchInput, StatusBadge, Thumb } from '../admin-ui';
 import { useDebouncedValue, usePagedList } from '../use-paged-list';
 import type { AdminNavigate } from '../admin-dashboard';
+import { ImportCharactersModal } from './import-characters-modal';
 
 export function CharactersScreen({ params, onNavigate }: { params: URLSearchParams; onNavigate: AdminNavigate }) {
   const { confirm } = useDialogs();
@@ -25,6 +27,7 @@ export function CharactersScreen({ params, onNavigate }: { params: URLSearchPara
   const [rarity, setRarity] = useState('');
   const [status, setStatus] = useState(params.get('status') ?? '');
   const [issue, setIssue] = useState(params.get('pendencia') ?? '');
+  const [importing, setImporting] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
   const debouncedSearch = useDebouncedValue(search);
 
@@ -72,10 +75,16 @@ export function CharactersScreen({ params, onNavigate }: { params: URLSearchPara
   return (
     <AdminPanel
       actions={
-        <Button onClick={() => onNavigate('personagens', { editar: 'novo' })}>
-          <AddRoundedIcon fontSize="small" />
-          Novo personagem
-        </Button>
+        <>
+          <Button variant="secondary" onClick={() => setImporting(true)}>
+            <UploadFileRoundedIcon fontSize="small" />
+            Importar planilha
+          </Button>
+          <Button onClick={() => onNavigate('personagens', { editar: 'novo' })}>
+            <AddRoundedIcon fontSize="small" />
+            Novo personagem
+          </Button>
+        </>
       }
     >
       <div className="grid gap-3 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
@@ -183,6 +192,16 @@ export function CharactersScreen({ params, onNavigate }: { params: URLSearchPara
         onPageSizeChange={list.setSize}
         itemLabel="personagens"
       />
+
+      {importing ? (
+        <ImportCharactersModal
+          onClose={() => setImporting(false)}
+          onImported={() => {
+            setImporting(false);
+            list.reload();
+          }}
+        />
+      ) : null}
     </AdminPanel>
   );
 }

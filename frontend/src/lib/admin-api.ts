@@ -411,6 +411,16 @@ export function importQuestions(rows: BulkQuestionRow[], dryRun: boolean) {
   return apiRequest<BulkImportResult>('/questions/admin/bulk', json('POST', { rows, dryRun }), 'Não foi possível importar as perguntas.');
 }
 
+export type BulkCharacterRow = Partial<
+  Record<'name' | 'rarity' | 'testament' | 'shortSummary' | 'fullDescription' | 'curiosities' | 'bibleReferences' | 'narrativeRole' | 'historicalPeriod' | 'bibleBooks' | 'keyVerses' | 'keywords' | 'published', string>
+>;
+
+export type BulkCharacterResult = BulkImportResult & { updated: number; willCreate: number; willUpdate: number };
+
+export function importCharacters(rows: BulkCharacterRow[], dryRun: boolean) {
+  return apiRequest<BulkCharacterResult>('/characters/admin/bulk', json('POST', { rows, dryRun }), 'Não foi possível importar os personagens.');
+}
+
 export function applySuggestedDifficulty(ids: number[]) {
   return apiRequest<{ updated: number }>('/questions/admin/apply-suggestions', json('POST', { ids }), 'Não foi possível aplicar as sugestões.');
 }
