@@ -118,7 +118,7 @@ function PrizeFace({ prize, large = false }: { prize: ChestPrize; large?: boolea
   if (prize.kind === 'STICKER') {
     return (
       <div className={cn('mx-auto', large ? 'w-44' : 'w-24')}>
-        <StickerCard name={prize.name ?? 'Figurinha'} rarity={(prize.rarity ?? 'COMMON') as StickerRarity} imageUrl={prize.imageUrl} owned size={large ? 'lg' : 'sm'} />
+        <StickerCard name={prize.name ?? 'Figurinha'} rarity={(prize.rarity ?? 'COMMON') as StickerRarity} imageUrl={prize.imageUrl} owned size={large ? 'lg' : 'sm'} eager />
       </div>
     );
   }
@@ -220,6 +220,15 @@ export function ChestOpening({ tier, prizes, onDone, preview = false, design }: 
   const [index, setIndex] = useState(0);
   const [flash, setFlash] = useState<string | null>(null);
   const timers = useRef<number[]>([]);
+  // As artes das figurinhas começam a carregar já na abertura (ficam escondidas no carretel): na revelação elas já estão prontas.
+  useEffect(() => {
+    for (const item of prizes) {
+      if (item.kind === 'STICKER' && item.imageUrl) {
+        const image = new Image();
+        image.src = item.imageUrl;
+      }
+    }
+  }, [prizes]);
   const fast = reducedMotion() ? 0.1 : 1;
   // Baú com muitos prêmios (esmeralda): moedas, ajudas e itens passam mais rápido; figurinhas mantêm o suspense.
   const brisk = list.length > 8 ? 0.55 : 1;
