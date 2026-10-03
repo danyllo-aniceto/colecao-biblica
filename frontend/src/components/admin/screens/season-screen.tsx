@@ -12,6 +12,7 @@ import { useDialogs } from '@/components/ui/dialogs';
 import { Field } from '@/components/ui/field';
 import { Input, Textarea } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
+import { LoadingState } from '@/components/ui/spinner';
 import { Pagination, usePagination } from '@/components/ui/pagination';
 import { Select } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
@@ -42,6 +43,8 @@ import { AdminPanel, Cell, DataTable, IconAction, Row, StatusBadge } from '../ad
 import { usePagedList } from '../use-paged-list';
 import { ImageUploadField } from '../image-upload-field';
 import { BulkImportModal } from '../bulk-import-modal';
+import { PassPreview } from '../pass-preview';
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import { useCosmeticOptions } from './collections-screen';
 
 const formatDate = (iso: string) => new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
@@ -101,6 +104,7 @@ function PassesPanel({ passes, loading, error, onChanged }: { passes: AdminPass[
   const toast = useToast();
   const [editing, setEditing] = useState<AdminPass | 'new' | null>(null);
   const [schedule, setSchedule] = useState<PassScheduleMonth[]>([]);
+  const [previewing, setPreviewing] = useState<AdminPass | null>(null);
   const paging = usePagination(passes, 10);
 
   useEffect(() => {
@@ -142,7 +146,7 @@ function PassesPanel({ passes, loading, error, onChanged }: { passes: AdminPass[
       }
     >
       <DataTable
-        columns={[{ label: 'Passe' }, { label: 'Quando vale' }, { label: 'Degraus' }, { label: 'Status' }, { label: '', className: 'w-36' }]}
+        columns={[{ label: 'Passe' }, { label: 'Quando vale' }, { label: 'Degraus' }, { label: 'Status' }, { label: '', className: 'w-44' }]}
         loading={loading}
         error={error}
         isEmpty={passes.length === 0}
@@ -169,6 +173,9 @@ function PassesPanel({ passes, loading, error, onChanged }: { passes: AdminPass[
             </Cell>
             <Cell>
               <div className="flex justify-end gap-1">
+                <IconAction label="Ver como o jogador vê" onClick={() => setPreviewing(pass)}>
+                  <VisibilityRoundedIcon fontSize="small" />
+                </IconAction>
                 <IconAction label="Editar" onClick={() => setEditing(pass)}>
                   <EditRoundedIcon fontSize="small" />
                 </IconAction>
@@ -202,6 +209,8 @@ function PassesPanel({ passes, loading, error, onChanged }: { passes: AdminPass[
         </div>
       ) : null}
 
+      {previewing ? <PassPreviewModal pass={previewing} onClose={() => setPreviewing(null)} /> : null}
+
       {editing ? (
         <PassModal
           pass={editing === 'new' ? null : editing}
@@ -226,6 +235,15 @@ function PassModal({ pass, onClose, onSaved }: { pass: AdminPass | null; onClose
   const [active, setActive] = useState(pass?.active ?? true);
   const [nameError, setNameError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [previewTiers, setPreviewTiers] = useState<AdminPassTier[]>([]);
+
+  // A prévia do cartão usa os degraus já cadastrados (um passe novo ainda não tem).
+  useEffect(() => {
+    if (!pass) return;
+    listPassTiers(pass.id)
+      .then(setPreviewTiers)
+      .catch(() => setPreviewTiers([]));
+  }, [pass]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -248,6 +266,9 @@ function PassModal({ pass, onClose, onSaved }: { pass: AdminPass | null; onClose
   return (
     <Modal open size="md" title={pass ? `Editar: ${pass.name}` : 'Novo passe'} onClose={saving ? undefined : onClose}>
       <form className="space-y-4" onSubmit={submit} noValidate>
+        <div className="border-b border-edge pb-4">
+          <PassPreview pass={{ name, description, color, imageUrl }} tiers={previewTiers} showTrail={false} />
+        </div>
         <Field label="Nome" required error={nameError ?? undefined}>
           <Input value={name} onChange={(event) => setName(event.target.value)} maxLength={80} placeholder="Ex.: Passe do Natal" />
         </Field>
@@ -266,6 +287,7 @@ function PassModal({ pass, onClose, onSaved }: { pass: AdminPass | null; onClose
           <ImageUploadField value={imageUrl} onChange={setImageUrl} wide />
         </Field>
         <Switch checked={active} onChange={setActive} label="No rodízio" description="Passes fora do rodízio não valem em nenhum mês (a menos que você os reative)." />
+
         <div className="flex justify-end gap-2 border-t border-edge pt-4">
           <Button variant="secondary" onClick={onClose} disabled={saving}>
             Cancelar
@@ -275,6 +297,21 @@ function PassModal({ pass, onClose, onSaved }: { pass: AdminPass | null; onClose
           </Button>
         </div>
       </form>
+    </Modal>
+  );
+}
+
+/** Prévia do passe salvo, com banner, cartão e trilha de degraus como o jogador vê. */
+function PassPreviewModal({ pass, onClose }: { pass: AdminPass; onClose: () => void }) {
+  const [tiers, setTiers] = useState<AdminPassTier[] | null>(null);
+  useEffect(() => {
+    listPassTiers(pass.id)
+      .then(setTiers)
+      .catch(() => setTiers([]));
+  }, [pass.id]);
+  return (
+    <Modal open size="md" title={`Prévia: ${pass.name}`} description="Como o jogador vê este passe (com o tema claro ou escuro do seu painel)." onClose={onClose}>
+      {tiers === null ? <LoadingState label="Carregando o passe..." /> : <PassPreview pass={pass} tiers={tiers} />}
     </Modal>
   );
 }

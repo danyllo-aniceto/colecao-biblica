@@ -275,8 +275,8 @@ const tierSchema = z.object({
 });
 
 const tierInclude = {
-  rewardDefinition: { select: { id: true, name: true } },
-  rewardCosmetic: { select: { id: true, name: true, type: true, rarity: true } },
+  rewardDefinition: { select: { id: true, name: true, rewardType: true } },
+  rewardCosmetic: true,
   duplicateRewardDefinition: { select: { id: true, name: true } },
 } as const;
 
@@ -285,7 +285,9 @@ passRouter.get(
   requireAdmin,
   asyncHandler(async (req, res) => {
     const passId = Number(req.query.passId);
-    res.json(await prisma.passTier.findMany({ where: Number.isInteger(passId) && passId > 0 ? { passId } : {}, orderBy: [{ passId: "asc" }, { level: "asc" }], include: tierInclude }));
+    const tiers = await prisma.passTier.findMany({ where: Number.isInteger(passId) && passId > 0 ? { passId } : {}, orderBy: [{ passId: "asc" }, { level: "asc" }], include: tierInclude });
+    // O item visual vai completo (imagem, cor, estilo): a prévia do painel desenha o degrau como o jogador vê.
+    res.json(tiers.map((tier) => ({ ...tier, rewardCosmetic: tier.rewardCosmetic ? toCosmeticResponse(tier.rewardCosmetic) : null })));
   }),
 );
 

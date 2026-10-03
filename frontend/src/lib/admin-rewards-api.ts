@@ -98,8 +98,9 @@ export type AdminPassTier = {
   rewardCosmeticId?: number | null;
   duplicateCoins?: number | null;
   duplicateRewardDefinitionId?: number | null;
-  rewardDefinition?: { id: number; name: string } | null;
-  rewardCosmetic?: { id: number; name: string; type: CosmeticType; rarity: StickerRarity } | null;
+  rewardDefinition?: { id: number; name: string; rewardType: string } | null;
+  /** Item visual completo (imagem, cor, estilo): a prévia do painel desenha o degrau como o jogador vê. */
+  rewardCosmetic?: Cosmetic | null;
   duplicateRewardDefinition?: { id: number; name: string } | null;
   active: boolean;
 };
