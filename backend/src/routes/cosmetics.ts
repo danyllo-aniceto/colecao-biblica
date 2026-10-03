@@ -3,11 +3,12 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "../db/prisma";
 import { badRequest, notFound } from "../lib/errors";
 import { pageOf, queryText, readPage } from "../lib/pagination";
-import { clearableText, imageRef, parseId, requiredText, z } from "../lib/validation";
+import { clearableText, imageRef, normalizeKey, parseId, requiredText, z } from "../lib/validation";
 import { currentUser, requireAdmin } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
 import {
   FRAME_STYLES,
+  REACTION_ANIMATIONS,
   REQUIREMENTS,
   TITLE_STYLES,
   buyCosmetic,
@@ -83,6 +84,7 @@ cosmeticsRouter.get(
       requirements: REQUIREMENTS.map(({ code, label, needsValue }) => ({ code, label, needsValue })),
       titleStyles: TITLE_STYLES,
       frameStyles: FRAME_STYLES,
+      reactionAnimations: REACTION_ANIMATIONS,
     });
   }),
 );
@@ -126,6 +128,8 @@ const baseSchema = {
   imageUrl: imageRef(),
   color,
   style: clearableText(20),
+  animation: clearableText(20),
+  pack: clearableText(40),
   unlock: z.enum(["FREE", "SHOP", "REQUIREMENT", "REWARD"]),
   priceCoins: z.number().int().min(0).max(1_000_000).nullish(),
   requirement: clearableText(40),
@@ -150,6 +154,7 @@ async function validate(type: z.infer<typeof cosmeticType>, input: CosmeticInput
     throw badRequest("Escolha a cor");
   }
   if (type === "TITLE" && input.style && !(TITLE_STYLES as readonly string[]).includes(input.style)) throw badRequest("Efeito de título inválido");
+  if (type === "REACTION" && input.animation && !(REACTION_ANIMATIONS as readonly string[]).includes(input.animation)) throw badRequest("Animação de reação inválida");
   if (type === "FRAME" && input.style && !(FRAME_STYLES as readonly string[]).includes(input.style)) throw badRequest("Estilo de moldura inválido");
   if (input.unlock === "SHOP" && (input.priceCoins === null || input.priceCoins === undefined)) throw badRequest("Informe o preço em moedas");
   if (input.unlock === "REQUIREMENT") {
@@ -238,5 +243,115 @@ cosmeticsRouter.post(
     const granted = await grantCosmetic(prisma, userId, id, "ADMIN");
     if (!granted) throw badRequest(`${user.name} já tem este item`);
     res.json({ granted: true });
+  }),
+);
+
+// ---------------------------------------------------------------------------
+// Importação de reações em lote (planilha)
+// ---------------------------------------------------------------------------
+
+const RARITY_ALIASES: Record<string, "COMMON" | "RARE" | "EPIC" | "LEGENDARY"> = {
+  comum: "COMMON",
+  common: "COMMON",
+  rara: "RARE",
+  rare: "RARE",
+  epica: "EPIC",
+  epic: "EPIC",
+  lendaria: "LEGENDARY",
+  legendary: "LEGENDARY",
+};
+
+const ANIMATION_ALIASES: Record<string, (typeof REACTION_ANIMATIONS)[number]> = {
+  pulo: "pop",
+  pop: "pop",
+  quicar: "bounce",
+  bounce: "bounce",
+  tremer: "shake",
+  shake: "shake",
+  girar: "spin",
+  spin: "spin",
+  subir: "rise",
+  rise: "rise",
+  pulsar: "pulse",
+  pulse: "pulse",
+};
+
+const bulkReactionRow = z.object({
+  name: requiredText(60),
+  emoji: z.string().trim().max(20).optional(),
+  imageUrl: z.string().trim().max(2048).optional(),
+  rarity: z.string().trim().optional(),
+  animation: z.string().trim().optional(),
+  pack: z.string().trim().max(40).optional(),
+  price: z.coerce.number().int().min(0).max(1_000_000).optional(),
+  description: z.string().trim().max(200).optional(),
+});
+
+const bulkReactionsSchema = z.object({ rows: z.array(z.unknown()).min(1).max(300), dryRun: z.boolean().optional() });
+
+/**
+ * Cria várias reações de uma vez. Com preço, a reação vai para a loja; sem preço, fica como prêmio (passe, baú, admin).
+ * Valida linha por linha; com dryRun só mostra a prévia.
+ */
+cosmeticsRouter.post(
+  "/admin/bulk-reactions",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const { rows, dryRun } = bulkReactionsSchema.parse(req.body);
+    const existing = new Set((await prisma.cosmetic.findMany({ where: { type: "REACTION" }, select: { name: true } })).map((item) => normalizeKey(item.name)));
+    const errors: Array<{ row: number; message: string }> = [];
+    const valid: Prisma.CosmeticCreateManyInput[] = [];
+
+    rows.forEach((raw, index) => {
+      const row = index + 1;
+      const parsed = bulkReactionRow.safeParse(raw);
+      if (!parsed.success) {
+        const issue = parsed.error.issues[0];
+        errors.push({ row, message: `${issue.path.join(".") || "linha"}: ${issue.message}` });
+        return;
+      }
+      const data = parsed.data;
+      if (!data.emoji && !data.imageUrl) {
+        errors.push({ row, message: "informe um emoji ou o link de uma imagem" });
+        return;
+      }
+      if (data.imageUrl && !/^(https?:\/\/|\/api\/uploads\/file\/|\/)/.test(data.imageUrl)) {
+        errors.push({ row, message: "o link da imagem precisa começar com http(s)://" });
+        return;
+      }
+      const rarity = data.rarity ? RARITY_ALIASES[normalizeKey(data.rarity)] : "COMMON";
+      if (!rarity) {
+        errors.push({ row, message: `raridade "${data.rarity}" inválida (Comum, Rara, Épica ou Lendária)` });
+        return;
+      }
+      const animation = data.animation ? ANIMATION_ALIASES[normalizeKey(data.animation)] : "pop";
+      if (!animation) {
+        errors.push({ row, message: `animação "${data.animation}" inválida (Pulo, Quicar, Tremer, Girar, Subir ou Pulsar)` });
+        return;
+      }
+      const key = normalizeKey(data.name);
+      if (existing.has(key)) {
+        errors.push({ row, message: "já existe uma reação com este nome" });
+        return;
+      }
+      existing.add(key);
+      const forSale = data.price !== undefined;
+      valid.push({
+        type: "REACTION",
+        name: data.name,
+        description: data.description || null,
+        rarity,
+        imageUrl: data.imageUrl || null,
+        style: data.emoji || null,
+        animation,
+        pack: data.pack || null,
+        unlock: forSale ? "SHOP" : "REWARD",
+        priceCoins: forSale ? data.price : null,
+        active: true,
+      });
+    });
+
+    if (!dryRun && valid.length > 0) await prisma.cosmetic.createMany({ data: valid });
+    res.json({ valid: valid.length, created: dryRun ? 0 : valid.length, errors });
   }),
 );

@@ -64,7 +64,7 @@ export type ChatMessage = {
   reaction?: ChatReaction | null;
 };
 
-export type ChatReaction = { id: number; name: string; imageUrl?: string | null; style?: string | null };
+export type ChatReaction = { id: number; name: string; imageUrl?: string | null; style?: string | null; animation?: string | null; pack?: string | null };
 
 export type ChatPage = {
   chatEnabled: boolean;

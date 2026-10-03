@@ -553,6 +553,10 @@ model Cosmetic {
   color            String?
   /// Efeito: títulos (plain, glow, rainbow, pulse) e molduras (solid, wood, silver, gold, fire, rainbow).
   style            String?
+  /// Reações: como a figurinha entra no chat (pop, bounce, shake, spin, rise, pulse).
+  animation        String?
+  /// Reações: grupo/pacote (ex.: "Natal"); o seletor do chat agrupa por ele.
+  pack             String?
   unlock           CosmeticUnlock
   priceCoins       Int?           @map("price_coins")
   /// Meta para os de unlock REQUIREMENT (ex.: LEVEL, ALBUM_COMPLETE, BEST_COMBO).

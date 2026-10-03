@@ -53,6 +53,8 @@ export const REQUIREMENTS: RequirementDefinition[] = [
 export const requirementByCode = (code: string | null) => REQUIREMENTS.find((requirement) => requirement.code === code);
 
 export const TITLE_STYLES = ["plain", "glow", "rainbow", "pulse", "shimmer", "wave"] as const;
+/** Como a reação entra no chat. `pop` é a padrão. */
+export const REACTION_ANIMATIONS = ["pop", "bounce", "shake", "spin", "rise", "pulse"] as const;
 export const FRAME_STYLES = ["solid", "wood", "silver", "gold", "fire", "rainbow", "copper", "ice", "sunset", "laurel", "aurora", "neon", "royal", "galaxy", "pearl", "pentecost"] as const;
 
 /** Campo do usuário que guarda o item equipado de cada tipo (reações não se equipam). */
@@ -140,6 +142,8 @@ export function toCosmeticResponse(cosmetic: Cosmetic) {
     imageUrl: cosmetic.imageUrl,
     color: cosmetic.color,
     style: cosmetic.style,
+    animation: cosmetic.animation,
+    pack: cosmetic.pack,
     unlock: cosmetic.unlock,
     priceCoins: cosmetic.priceCoins,
     requirement: cosmetic.requirement,

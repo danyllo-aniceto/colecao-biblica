@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
@@ -21,6 +22,7 @@ import { CoinIcon } from '@/components/game/game-ui';
 import {
   createMission,
   deleteMission,
+  importMissions,
   listMissionsAdmin,
   listRewards,
   updateMission,
@@ -29,6 +31,7 @@ import {
   type MissionPeriod,
 } from '@/lib/admin-api';
 import { AdminPanel, Cell, DataTable, IconAction, Row, StatusBadge } from '../admin-ui';
+import { BulkImportModal } from '../bulk-import-modal';
 import { rewardSummary } from './rewards-screen';
 
 const PERIOD_LABELS: Record<MissionPeriod, string> = { DAILY: 'Diária', WEEKLY: 'Semanal' };
@@ -46,6 +49,7 @@ export function MissionsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState<MissionPeriod>('DAILY');
   const [editing, setEditing] = useState<AdminMission | 'new' | null>(null);
+  const [importing, setImporting] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -93,10 +97,16 @@ export function MissionsScreen() {
     <AdminPanel
       description="Metas que renovam. Cada jogador recebe 3 missões diárias sorteadas entre as ativas (mude todo dia) e todas as semanais ativas. O prêmio pode ser moedas, uma recompensa (ajuda, pacote, figurinha, item visual) ou os dois."
       actions={
-        <Button onClick={() => setEditing('new')}>
-          <AddRoundedIcon fontSize="small" />
-          Nova missão
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={() => setImporting(true)}>
+            <UploadFileRoundedIcon fontSize="small" />
+            Importar planilha
+          </Button>
+          <Button onClick={() => setEditing('new')}>
+            <AddRoundedIcon fontSize="small" />
+            Nova missão
+          </Button>
+        </div>
       }
     >
       <div className="max-w-xs">
@@ -170,6 +180,48 @@ export function MissionsScreen() {
         ))}
       </DataTable>
       <Pagination page={paging.page} totalPages={paging.totalPages} totalElements={paging.totalElements} pageSize={paging.pageSize} onPageChange={paging.setPage} onPageSizeChange={paging.setPageSize} itemLabel="missões" />
+
+      {importing ? (
+        <BulkImportModal
+          title="Importar missões"
+          description="Use uma planilha CSV (no Excel ou Google Planilhas: Arquivo → Salvar/Baixar como CSV). Cada linha vira uma missão."
+          noun="missão(ões)"
+          templateFile="modelo-missoes.csv"
+          header={['Missão', 'Período', 'Conta', 'Meta', 'Moedas', 'Recompensa']}
+          templateRows={[
+            ['Termine 3 partidas', 'Diária', 'Partidas terminadas', '3', '30', ''],
+            ['Acerte 50 perguntas na semana', 'Semanal', 'Perguntas acertadas', '50', '40', 'Pacote surpresa'],
+          ]}
+          aliases={{
+            missao: 'title',
+            texto: 'title',
+            titulo: 'title',
+            periodo: 'period',
+            conta: 'metric',
+            'o que conta': 'metric',
+            tipo: 'metric',
+            meta: 'target',
+            quantidade: 'target',
+            moedas: 'coins',
+            recompensa: 'reward',
+            premio: 'reward',
+          }}
+          required={{ title: 'Missão', period: 'Período', metric: 'Conta', target: 'Meta' }}
+          help={
+            <>
+              Colunas: Missão, Período (Diária ou Semanal), Conta ({metrics.map((metric) => metric.label).join(', ') || '...'}), Meta, e, se quiser, Moedas e Recompensa (nome igual ao da tela Recompensas). Cada missão precisa de moedas e/ou recompensa.
+            </>
+          }
+          maxRows={300}
+          run={importMissions}
+          rowLabel={(row) => row.title}
+          onClose={() => setImporting(false)}
+          onImported={() => {
+            setImporting(false);
+            load();
+          }}
+        />
+      ) : null}
 
       {editing ? (
         <MissionModal

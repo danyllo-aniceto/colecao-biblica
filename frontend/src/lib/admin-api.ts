@@ -590,3 +590,11 @@ export function updateMission(id: number, payload: Partial<AdminMissionPayload>)
 export function deleteMission(id: number) {
   return apiRequestVoid(`/missions/admin/${id}`, { method: 'DELETE' }, 'Não foi possível excluir a missão.');
 }
+
+export function importMissions(rows: Array<Record<string, string>>, dryRun: boolean) {
+  return apiRequest<BulkImportResult>('/missions/admin/bulk', json('POST', { rows, dryRun }), 'Não foi possível importar as missões.');
+}
+
+export function importReactions(rows: Array<Record<string, string>>, dryRun: boolean) {
+  return apiRequest<BulkImportResult>('/cosmetics/admin/bulk-reactions', json('POST', { rows, dryRun }), 'Não foi possível importar as reações.');
+}

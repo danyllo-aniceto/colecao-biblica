@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
@@ -40,6 +41,10 @@ import type { Cosmetic, CosmeticType, CosmeticUnlock } from '@/lib/rewards-api';
 import type { UserProfile } from '@/types/auth';
 import { AdminPanel, Cell, DataTable, IconAction, RarityBadge, Row, SearchInput, StatusBadge } from '../admin-ui';
 import { ImageUploadField } from '../image-upload-field';
+import { EmojiPicker } from '../emoji-picker';
+import { ReactionChatPreview } from '../reaction-chat-preview';
+import { ReactionsImport } from '../reactions-import';
+import { REACTION_ANIMATION_LABELS } from '@/lib/labels';
 import { useDebouncedValue, usePagedList } from '../use-paged-list';
 
 const TYPES: CosmeticType[] = ['AVATAR', 'FRAME', 'TITLE', 'NAME_COLOR', 'REACTION'];
@@ -84,6 +89,7 @@ export function CosmeticsScreen() {
   const debounced = useDebouncedValue(search);
   const [editing, setEditing] = useState<AdminCosmetic | 'new' | null>(null);
   const [granting, setGranting] = useState<AdminCosmetic | null>(null);
+  const [importingReactions, setImportingReactions] = useState(false);
   const [meta, setMeta] = useState<CosmeticMeta | null>(null);
   const list = usePagedList(listCosmeticsAdmin, { type: type || undefined, search: debounced || undefined }, 20);
 
@@ -124,10 +130,16 @@ export function CosmeticsScreen() {
     <AdminPanel
       description="Ícones, molduras, títulos que brilham, cores do nome e reações do chat. Itens com cadeado vieram com o app: dá para editar e desativar."
       actions={
-        <Button onClick={() => setEditing('new')}>
-          <AddRoundedIcon fontSize="small" />
-          Novo item
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={() => setImportingReactions(true)}>
+            <UploadFileRoundedIcon fontSize="small" />
+            Importar reações
+          </Button>
+          <Button onClick={() => setEditing('new')}>
+            <AddRoundedIcon fontSize="small" />
+            Novo item
+          </Button>
+        </div>
       }
     >
       <div className="grid gap-3 md:grid-cols-[1fr_16rem]">
@@ -163,6 +175,7 @@ export function CosmeticsScreen() {
                     {item.name}
                   </p>
                   <RarityBadge rarity={item.rarity} />
+                  {item.type === 'REACTION' && item.pack ? <span className="ml-1.5 text-xs text-muted">Pacote {item.pack}</span> : null}
                 </div>
               </div>
             </Cell>
@@ -216,6 +229,15 @@ export function CosmeticsScreen() {
           }}
         />
       ) : null}
+      {importingReactions ? (
+        <ReactionsImport
+          onClose={() => setImportingReactions(false)}
+          onImported={() => {
+            setImportingReactions(false);
+            list.reload();
+          }}
+        />
+      ) : null}
       {granting ? <GrantModal item={granting} onClose={() => setGranting(null)} onGranted={list.reload} /> : null}
     </AdminPanel>
   );
@@ -231,6 +253,8 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
   const [imageUrl, setImageUrl] = useState(item?.imageUrl ?? '');
   const [color, setColor] = useState(item?.color ?? '#7c4dff');
   const [style, setStyle] = useState(item?.style ?? '');
+  const [animation, setAnimation] = useState(item?.animation ?? 'pop');
+  const [pack, setPack] = useState(item?.pack ?? '');
   const [unlock, setUnlock] = useState<CosmeticUnlock>(item?.unlock ?? 'SHOP');
   const [price, setPrice] = useState(String(item?.priceCoins ?? 300));
   const [requirement, setRequirement] = useState(item?.requirement ?? 'LEVEL');
@@ -260,13 +284,15 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
       imageUrl: imageUrl || null,
       color,
       style: type === 'REACTION' ? style : effectiveStyle,
+      animation: type === 'REACTION' ? animation : null,
+      pack: type === 'REACTION' ? pack : null,
       unlock,
       inChestPool,
       active,
       system: false,
       sortOrder: 0,
     }),
-    [item, type, name, rarity, imageUrl, color, style, effectiveStyle, unlock, inChestPool, active],
+    [item, type, name, rarity, imageUrl, color, style, effectiveStyle, animation, pack, unlock, inChestPool, active],
   );
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -282,6 +308,8 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
       imageUrl: imageUrl || null,
       color: type === 'AVATAR' || type === 'REACTION' ? null : color,
       style: type === 'REACTION' ? style.trim() || null : type === 'TITLE' || type === 'FRAME' ? effectiveStyle : null,
+      animation: type === 'REACTION' ? animation : null,
+      pack: type === 'REACTION' ? pack.trim() || null : null,
       unlock,
       priceCoins: unlock === 'SHOP' ? Number(price) : null,
       requirement: unlock === 'REQUIREMENT' ? requirement : null,
@@ -336,9 +364,23 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
           </Field>
         ) : null}
         {type === 'REACTION' ? (
-          <Field label="Emoji" hint="Usado quando não há imagem. Ex.: 🙏">
-            <Input value={style} onChange={(event) => setStyle(event.target.value)} maxLength={8} />
-          </Field>
+          <>
+            <Field label="Emoji" hint="Usado quando não há imagem. Escolha abaixo ou cole qualquer emoji.">
+              <div className="space-y-2">
+                <Input value={style} onChange={(event) => setStyle(event.target.value)} maxLength={8} placeholder="🙏" />
+                <EmojiPicker value={style} onPick={setStyle} />
+              </div>
+            </Field>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Animação" hint="Como a reação entra na conversa.">
+                <Select aria-label="Animação" value={animation} onChange={setAnimation} options={Object.entries(REACTION_ANIMATION_LABELS).map(([value, label]) => ({ value, label }))} />
+              </Field>
+              <Field label="Pacote (opcional)" hint="Reações com o mesmo pacote ficam juntas no chat. Ex.: Natal.">
+                <Input value={pack} onChange={(event) => setPack(event.target.value)} maxLength={40} placeholder="Ex.: Páscoa" />
+              </Field>
+            </div>
+            <ReactionChatPreview reaction={preview} />
+          </>
         ) : null}
         {type === 'TITLE' || type === 'NAME_COLOR' || (type === 'FRAME' && effectiveStyle === 'solid') ? (
           <Field label="Cor">

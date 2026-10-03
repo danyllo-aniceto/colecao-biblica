@@ -19,6 +19,8 @@ export type CosmeticPayload = {
   imageUrl?: string | null;
   color?: string | null;
   style?: string | null;
+  animation?: string | null;
+  pack?: string | null;
   unlock: CosmeticUnlock;
   priceCoins?: number | null;
   requirement?: string | null;
@@ -33,6 +35,7 @@ export type CosmeticMeta = {
   requirements: Array<{ code: string; label: string; needsValue: boolean }>;
   titleStyles: string[];
   frameStyles: string[];
+  reactionAnimations: string[];
 };
 
 export const listCosmeticsAdmin = (params: { page: number; size: number; type?: string; search?: string }) =>

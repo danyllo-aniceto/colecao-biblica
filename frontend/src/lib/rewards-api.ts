@@ -16,6 +16,10 @@ export type Cosmetic = {
   color?: string | null;
   /** Título: plain/glow/rainbow/pulse/shimmer/wave. Moldura: solid/wood/copper/silver/gold/fire/rainbow/ice/sunset/laurel/aurora/neon/royal/galaxy/pearl/pentecost/emerald. Reação: emoji. */
   style?: string | null;
+  /** Reação: como entra no chat (pop, bounce, shake, spin, rise, pulse). */
+  animation?: string | null;
+  /** Reação: pacote/grupo. */
+  pack?: string | null;
   unlock: CosmeticUnlock;
   priceCoins?: number | null;
   requirement?: string | null;

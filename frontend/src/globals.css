@@ -795,6 +795,113 @@ input:-webkit-autofill:focus {
   }
 }
 
+.reaction-bounce {
+  animation: reaction-bounce 1000ms ease-out both;
+}
+.reaction-shake {
+  animation: reaction-shake 800ms ease-in-out both;
+}
+.reaction-spin {
+  animation: reaction-spin 900ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+.reaction-rise {
+  animation: reaction-rise 1000ms ease-out both;
+}
+.reaction-pulse {
+  animation: reaction-pulse 1100ms ease-in-out both;
+}
+
+@keyframes reaction-bounce {
+  0% {
+    transform: translateY(-60%) scale(0.8);
+    opacity: 0;
+  }
+  35% {
+    transform: translateY(0) scale(1.05);
+    opacity: 1;
+  }
+  55% {
+    transform: translateY(-22%);
+  }
+  75% {
+    transform: translateY(0);
+  }
+  88% {
+    transform: translateY(-7%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes reaction-shake {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(1.1) rotate(-12deg);
+    opacity: 1;
+  }
+  45% {
+    transform: rotate(12deg);
+  }
+  65% {
+    transform: rotate(-8deg);
+  }
+  85% {
+    transform: rotate(5deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes reaction-spin {
+  0% {
+    transform: scale(0.1) rotate(-540deg);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
+@keyframes reaction-rise {
+  0% {
+    transform: translateY(70%) scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(-12%) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes reaction-pulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  70% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 /* Baú abrindo. */
 .chest-shake {
   animation: chest-shake 700ms ease-in-out both;

@@ -52,6 +52,13 @@ function IconAction({ label, onClick, children, danger = false }: { label: strin
 }
 
 /** Conversa com um amigo: mensagens, propostas de troca no meio da conversa e ações da amizade. */
+/** Agrupa as reações pelo pacote (as sem pacote vêm primeiro). */
+function groupReactions(reactions: ChatReaction[]) {
+  const groups = new Map<string | null, ChatReaction[]>();
+  for (const reaction of reactions) groups.set(reaction.pack ?? null, [...(groups.get(reaction.pack ?? null) ?? []), reaction]);
+  return [...groups.entries()].sort(([a], [b]) => (a ?? '').localeCompare(b ?? '', 'pt-BR')).map(([pack, items]) => ({ pack, items }));
+}
+
 export function ChatView({
   meId,
   friend,
@@ -330,13 +337,20 @@ export function ChatView({
             <div className="animate-pop-in mb-3 rounded-2xl border border-edge bg-surface-2 p-2" role="listbox" aria-label="Suas reações">
               {reactions === null ? <LoadingState label="Abrindo reações..." /> : null}
               {reactions?.length === 0 ? <p className="p-2 text-sm text-muted">Você ainda não tem reações. Compre na loja (aba Visual).</p> : null}
-              <div className="flex flex-wrap gap-1">
-                {reactions?.map((reaction) => (
-                  <Tooltip key={reaction.id} content={reaction.name}>
-                    <button type="button" role="option" aria-selected={false} aria-label={reaction.name} onClick={() => void react(reaction)} className="rounded-xl p-1 transition hover:scale-110 hover:bg-surface-3">
-                      <ReactionGlyph reaction={reaction} size="md" />
-                    </button>
-                  </Tooltip>
+              <div className="max-h-60 space-y-2 overflow-y-auto">
+                {groupReactions(reactions ?? []).map((group) => (
+                  <div key={group.pack ?? ''}>
+                    {group.pack ? <p className="px-1 pb-0.5 text-[11px] font-bold uppercase tracking-wider text-muted">{group.pack}</p> : null}
+                    <div className="flex flex-wrap gap-1">
+                      {group.items.map((reaction) => (
+                        <Tooltip key={reaction.id} content={reaction.name}>
+                          <button type="button" role="option" aria-selected={false} aria-label={reaction.name} onClick={() => void react(reaction)} className="rounded-xl p-1 transition hover:scale-110 hover:bg-surface-3">
+                            <ReactionGlyph reaction={reaction} size="md" />
+                          </button>
+                        </Tooltip>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>

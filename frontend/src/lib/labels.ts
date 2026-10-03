@@ -92,3 +92,13 @@ export const QUIZ_TYPE_LABELS: Record<string, string> = {
   CHARACTER_STUDY: 'Estudo de personagem',
   DAILY_CHALLENGE: 'Desafio do dia',
 };
+
+/** Como a reação entra no chat (valor guardado -> nome no painel). */
+export const REACTION_ANIMATION_LABELS: Record<string, string> = {
+  pop: 'Pulo',
+  bounce: 'Quicar',
+  shake: 'Tremer',
+  spin: 'Girar',
+  rise: 'Subir',
+  pulse: 'Pulsar',
+};
