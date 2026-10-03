@@ -146,6 +146,8 @@ const tradeSchema = z.object({
   offeredCharacterId: z.number().int().positive().nullish(),
   requestedCharacterId: z.number().int().positive().nullish(),
   message: z.string().trim().max(300).nullish(),
+  /** Venda: cobra o preço padrão da raridade (só vale oferecendo uma repetida, sem pedir nada em troca). */
+  sale: z.boolean().nullish(),
 });
 
 socialRouter.post(

@@ -20,6 +20,10 @@ export type UserSticker = {
   acquiredAt?: string;
   /** Cópias repetidas guardadas (vender ou fundir). */
   duplicates: number;
+  /** Nível da figurinha (1 a 5), sobe gastando repetidas dela. */
+  level: number;
+  /** Repetidas para o próximo nível; null no nível máximo. */
+  upgradeCost: number | null;
   study?: StudyStatus;
 };
 
@@ -190,8 +194,10 @@ export type QuizMatchResult = {
   /** O XP desta partida foi reduzido pelo limite diário. */
   xpReduced?: boolean;
   /** Baú da partida (quiz geral em maratona): o nível vem dos acertos. */
-  chestTier?: 'BRONZE' | 'SILVER' | 'GOLD' | null;
+  chestTier?: 'BRONZE' | 'SILVER' | 'GOLD' | 'DIAMOND' | null;
   chestCoins?: number;
+  /** Extras do baú de diamante. */
+  chestExtras?: { helperName: string | null; cosmeticName: string | null };
   /** Só no estudo de personagem: acertos acumulados e status do personagem. */
   studyStatus?: StudyStatus | null;
   studyLevelUp?: boolean;
@@ -557,6 +563,12 @@ export async function listUpcoming(): Promise<UpcomingSticker[]> {
 
 export async function sellDuplicates(characterId: number, quantity: number): Promise<{ sold: number; coins: number; userCoins: number }> {
   return apiRequest('/collection/sell', { method: 'POST', body: JSON.stringify({ characterId, quantity }) }, 'Não foi possível vender as repetidas.');
+}
+
+export type UpgradeResult = { characterId: number; characterName: string; level: number; duplicates: number; spent: number; nextCost: number | null };
+
+export async function upgradeSticker(characterId: number): Promise<UpgradeResult> {
+  return apiRequest<UpgradeResult>('/collection/upgrade', { method: 'POST', body: JSON.stringify({ characterId }) }, 'Não foi possível subir o nível da figurinha.');
 }
 
 export async function fuseDuplicates(rarity: StickerRarity): Promise<FuseResult> {

@@ -297,8 +297,10 @@ model UserSticker {
   userId      Int      @map("user_id")
   characterId Int      @map("character_id")
   acquiredAt  DateTime @default(now()) @map("acquired_at")
-  /// Cópias repetidas guardadas para vender ou fundir.
+  /// Cópias repetidas guardadas para vender, trocar, fundir ou subir o nível.
   duplicates  Int      @default(0)
+  /// Nível da figurinha (1 a 5), sobe gastando repetidas dela. Hoje só enfeita; vai valer no modo de cartas.
+  level       Int      @default(1)
 
   user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   character BiblicalCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
@@ -352,6 +354,8 @@ model QuizMatch {
   coinsGained       Int       @default(0) @map("coins_gained")
   rewardGranted     Boolean   @default(false) @map("reward_granted")
   rewardGrantedName String?   @map("reward_granted_name")
+  /// Baú da partida ganho (BRONZE, SILVER, GOLD ou DIAMOND).
+  chestTier         String?   @map("chest_tier")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -513,6 +517,9 @@ model Trade {
   offeredCharacterId   Int?        @map("offered_character_id")
   requestedCharacterId Int?        @map("requested_character_id")
   message              String?
+  /// Venda a amigo: preço padrão da raridade (o comprador paga) e o que o vendedor recebe já sem a taxa.
+  priceCoins           Int?        @map("price_coins")
+  sellerCoins          Int?        @map("seller_coins")
   status               TradeStatus @default(PENDING)
   createdAt            DateTime    @default(now()) @map("created_at")
   respondedAt          DateTime?   @map("responded_at")

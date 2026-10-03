@@ -47,6 +47,9 @@ export type Trade = {
   respondedAt?: string | null;
   offered: TradeCharacter | null;
   requested: TradeCharacter | null;
+  /** Venda a amigo: o comprador paga priceCoins e o vendedor recebe sellerCoins (sem a taxa). */
+  priceCoins?: number | null;
+  sellerCoins?: number | null;
   proposer?: UserCard;
   receiver?: UserCard;
 };
@@ -75,6 +78,8 @@ export type AlbumCard = {
   rarity: StickerRarity;
   imageUrl?: string | null;
   duplicates: number;
+  /** Preço padrão se vendida a um amigo. */
+  salePrice?: number;
 };
 
 export type FriendAlbum = {
@@ -117,7 +122,7 @@ export const listMyReactions = () => apiRequest<ChatReaction[]>('/social/reactio
 export const sendChatReaction = (userId: number, reactionId: number) =>
   apiRequest<ChatMessage>(`/social/chat/${userId}`, json('POST', { reactionId }), 'Não foi possível enviar a reação.');
 export const sendChatMessage = (userId: number, text: string) => apiRequest<ChatMessage>(`/social/chat/${userId}`, json('POST', { text }), 'Não foi possível enviar a mensagem.');
-export const createTrade = (payload: { toUserId: number; offeredCharacterId?: number | null; requestedCharacterId?: number | null; message?: string }) =>
+export const createTrade = (payload: { toUserId: number; offeredCharacterId?: number | null; requestedCharacterId?: number | null; message?: string; sale?: boolean }) =>
   apiRequest<Trade>('/social/trades', json('POST', payload), 'Não foi possível enviar a proposta.');
 export const listTrades = (box: 'received' | 'sent' | 'history', page = 0, size = 10) =>
   apiRequest<PaginatedResponse<Trade>>(`/social/trades?box=${box}&page=${page}&size=${size}`, { method: 'GET' }, 'Não foi possível carregar as trocas.');

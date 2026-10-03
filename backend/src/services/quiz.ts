@@ -15,6 +15,7 @@ import {
   crowdPercentages,
   applyDailyXpLimit,
   CHEST_BONUS_COINS,
+  DIAMOND_COSMETIC_CHANCE,
   chestRewardWeight,
   chestTierFor,
   type ChestTier,
@@ -38,7 +39,8 @@ import { getSettings, type GameSettings } from "./settings";
 import { pageOf } from "../lib/pagination";
 import { visibleCharacter } from "./visibility";
 import { activeEvent } from "./events";
-import { checkCosmetics, playerLooks } from "./cosmetics";
+import { checkCosmetics, grantCosmetic, playerLooks } from "./cosmetics";
+import { CHEST_BOOSTS as CHEST_HELPERS } from "./progression";
 import type { HelperField } from "./helpers";
 
 type Tx = Prisma.TransactionClient;
@@ -751,6 +753,11 @@ async function rewardedMatchesToday(tx: Tx, userId: number) {
   });
 }
 
+async function diamondChestsToday(tx: Tx, userId: number) {
+  const { start, end } = dayRangeInTimeZone(new Date(), env.timezone);
+  return tx.quizMatch.count({ where: { userId, chestTier: "DIAMOND", finishedAt: { gte: start, lt: end } } });
+}
+
 async function coinMatchesToday(tx: Tx, userId: number) {
   const { start, end } = dayRangeInTimeZone(new Date(), env.timezone);
   return tx.quizMatch.count({ where: { userId, coinsGained: { gt: 0 }, finishedAt: { gte: start, lt: end } } });
@@ -816,19 +823,29 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
   // Baú da partida: só no quiz geral em maratona (o treino não rende). O nível vem dos acertos.
   let chestTier: ChestTier | null = null;
   let chestCoins = 0;
+  const chestExtras: { helperName: string | null; cosmeticName: string | null } = { helperName: null, cosmeticName: null };
   if (stats.quizType === "GENERAL" && !stats.training) {
     const activeQuestions = await tx.question.count({ where: { active: true } });
     const required = requiredCorrectAnswersForReward(settings.rewardMinCorrectAnswers, activeQuestions);
-    const tier = chestTierFor(stats.correctAnswers, required, settings.chestSilverMinCorrect, settings.chestGoldMinCorrect);
+    let tier = chestTierFor(stats.correctAnswers, required, settings.chestSilverMinCorrect, settings.chestGoldMinCorrect, settings.chestDiamondMinCorrect);
+    // Diamante tem limite próprio por dia; acima dele, vira ouro.
+    if (tier === "DIAMOND" && (settings.chestDiamondLimitPerDay <= 0 || (await diamondChestsToday(tx, user.id)) >= settings.chestDiamondLimitPerDay)) tier = "GOLD";
     if (tier && (await rewardedMatchesToday(tx, user.id)) < dailyLimit) {
       const rewards = await availableRewards(tx, await tx.rewardDefinition.findMany({ where: { active: true }, orderBy: { id: "asc" } }));
       // Garantia contra azar: depois de N baús sem figurinha, só concorrem figurinhas.
       const stickerRewards = rewards.filter((reward) => reward.rewardType === "STICKER" || reward.rewardType === "STICKER_PACK");
       pityGuaranteed = pityActive(stickerPity, settings.pityThreshold) && stickerRewards.length > 0;
       const pool = pityGuaranteed ? stickerRewards : rewards;
-      // O ouro só dá figurinha; se não houver nenhuma disponível, cai no sorteio comum.
-      const goldPool = tier === "GOLD" && stickerRewards.length > 0 ? stickerRewards : pool;
-      const drawn = weightedPick(goldPool, (reward) => chestRewardWeight(tier, reward), random) ?? weightedPick(pool, (reward) => reward.dropChance, random);
+      // Ouro e diamante só dão figurinha; se não houver nenhuma disponível, cai no sorteio comum.
+      const stickerOnly = (level: ChestTier) => (level === "GOLD" || level === "DIAMOND") && stickerRewards.length > 0;
+      const draw = (level: ChestTier) => weightedPick(stickerOnly(level) ? stickerRewards : pool, (reward) => chestRewardWeight(level, reward), random);
+      let drawn = draw(tier);
+      // Sem figurinha épica/lendária publicada, o diamante vira ouro.
+      if (!drawn && tier === "DIAMOND") {
+        tier = "GOLD";
+        drawn = draw(tier);
+      }
+      drawn ??= weightedPick(pool, (reward) => reward.dropChance, random);
       if (drawn) {
         chestTier = tier;
         chestCoins = CHEST_BONUS_COINS[tier];
@@ -844,6 +861,21 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
         rewardCharacterUnlocked = applied.characterUnlocked;
         rewardDuplicate = applied.duplicate;
         stickerPity = applied.characterId ? 0 : stickerPity + 1;
+
+        if (tier === "DIAMOND") {
+          // Extras do diamante: uma ajuda sortida (se couber) e, às vezes, um item visual raro.
+          const room = CHEST_HELPERS.filter((helper) => wallet[helper.field] < settings[helper.maxSetting]);
+          const helper = room.length > 0 ? room[Math.floor(random() * room.length)] : null;
+          if (helper) {
+            wallet[helper.field] += 1;
+            chestExtras.helperName = helper.name;
+          }
+          if (random() * 100 < DIAMOND_COSMETIC_CHANCE) {
+            const options = await tx.cosmetic.findMany({ where: { active: true, inChestPool: true, rarity: { in: ["RARE", "EPIC"] }, owners: { none: { userId: user.id } } } });
+            const cosmetic = options.length > 0 ? options[Math.floor(random() * options.length)] : null;
+            if (cosmetic && (await grantCosmetic(tx, user.id, cosmetic.id, "CHEST"))) chestExtras.cosmeticName = cosmetic.name;
+          }
+        }
       }
     }
   }
@@ -874,6 +906,7 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
       coinsGained,
       rewardGranted,
       rewardGrantedName: rewardName,
+      chestTier,
     },
   });
 
@@ -914,6 +947,7 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
     userCoins: updated.coins + achievementCoins,
     chestTier,
     chestCoins,
+    chestExtras,
     rewardMatchesUsedToday: await rewardedMatchesToday(tx, user.id),
     rewardMatchesLimitPerDay: dailyLimit,
   };

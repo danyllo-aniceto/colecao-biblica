@@ -4,6 +4,7 @@ import SwapHorizRoundedIcon from '@mui/icons-material/SwapHorizRounded';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { errorMessage, useToast } from '@/components/ui/toast';
+import { CoinIcon } from '@/components/game/game-ui';
 import { StickerCard } from '@/components/game/sticker-card';
 import { cn } from '@/lib/cn';
 import { respondTrade, type Trade, type TradeCharacter, type TradeResponse, type TradeStatus } from '@/lib/social-api';
@@ -37,7 +38,8 @@ export function TradeCard({ trade, meId, otherName, onChanged, compact = false }
   // Do meu ponto de vista: o que eu dou e o que eu recebo.
   const give = mine ? trade.offered : trade.requested;
   const get = mine ? trade.requested : trade.offered;
-  const kind = trade.offered && trade.requested ? 'Troca' : trade.offered ? 'Presente' : 'Pedido';
+  const isSale = Boolean(trade.priceCoins);
+  const kind = trade.offered && trade.requested ? 'Troca' : isSale ? 'Venda' : trade.offered ? 'Presente' : 'Pedido';
   const title = mine ? `${kind} para ${otherName}` : `${kind} de ${otherName}`;
 
   async function act(action: 'accept' | 'decline' | 'cancel') {
@@ -45,7 +47,7 @@ export function TradeCard({ trade, meId, otherName, onChanged, compact = false }
     try {
       const result = await respondTrade(trade.id, action);
       if (action === 'accept') {
-        toast.success(kind === 'Pedido' ? 'Figurinha enviada!' : 'Troca concluída!', {
+        toast.success(kind === 'Pedido' ? 'Figurinha enviada!' : kind === 'Venda' ? 'Compra concluída!' : 'Troca concluída!', {
           description: result.received ? `Você recebeu ${result.received.name}${result.received.unlocked ? ' (nova!)' : ' (foi para as repetidas)'}.` : undefined,
         });
       } else {
@@ -63,7 +65,7 @@ export function TradeCard({ trade, meId, otherName, onChanged, compact = false }
     <div className={cn('space-y-3 rounded-3xl border-2 bg-surface p-3', trade.status === 'PENDING' ? 'border-primary/60' : 'border-edge', compact ? 'max-w-xs' : '')}>
       <div className="flex items-center justify-between gap-2">
         <p className="flex items-center gap-1.5 font-display text-sm font-bold text-ink">
-          {kind === 'Presente' ? <CardGiftcardRoundedIcon fontSize="small" className="text-violet" /> : <SwapHorizRoundedIcon fontSize="small" className="text-primary-strong dark:text-primary" />}
+          {kind === 'Presente' || kind === 'Venda' ? <CardGiftcardRoundedIcon fontSize="small" className="text-violet" /> : <SwapHorizRoundedIcon fontSize="small" className="text-primary-strong dark:text-primary" />}
           {title}
         </p>
         <Badge tone={STATUS[trade.status].tone}>{STATUS[trade.status].label}</Badge>
@@ -73,6 +75,19 @@ export function TradeCard({ trade, meId, otherName, onChanged, compact = false }
         <SwapHorizRoundedIcon className="text-muted" />
         <Side label="Você recebe" character={get} />
       </div>
+      {isSale ? (
+        <p className="flex flex-wrap items-center justify-center gap-1 rounded-2xl bg-primary/15 px-3 py-2 text-sm font-bold text-ink">
+          {mine ? (
+            <>
+              Você recebe <CoinIcon className="h-4 w-4" /> {trade.sellerCoins} <span className="font-semibold text-muted">(preço {trade.priceCoins}, menos a taxa)</span>
+            </>
+          ) : (
+            <>
+              Você paga <CoinIcon className="h-4 w-4" /> {trade.priceCoins}
+            </>
+          )}
+        </p>
+      ) : null}
       {trade.message ? <p className="rounded-2xl bg-surface-2 px-3 py-2 text-sm text-ink">“{trade.message}”</p> : null}
       {trade.status === 'PENDING' ? (
         <div className="flex flex-wrap justify-end gap-2">
@@ -86,7 +101,7 @@ export function TradeCard({ trade, meId, otherName, onChanged, compact = false }
                 Recusar
               </Button>
               <Button size="sm" onClick={() => void act('accept')} loading={busy === 'accept'} disabled={busy !== null}>
-                {kind === 'Pedido' ? 'Enviar figurinha' : 'Aceitar'}
+                {kind === 'Pedido' ? 'Enviar figurinha' : kind === 'Venda' ? `Comprar (${trade.priceCoins})` : 'Aceitar'}
               </Button>
             </>
           )}

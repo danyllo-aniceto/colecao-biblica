@@ -72,6 +72,7 @@ export function StickerPage() {
   const [character, setCharacter] = useState<CharacterDetail | null>(null);
   const [isOwned, setIsOwned] = useState(false);
   const [study, setStudy] = useState<StudyStatus | null>(null);
+  const [stickerLevel, setStickerLevel] = useState(1);
   const [tab, setTab] = useState<Tab>('identidade');
   const [locked, setLocked] = useState(false);
   const [comments, setComments] = useState<CommentEntry[]>([]);
@@ -111,6 +112,7 @@ export function StickerPage() {
         const mine = collection.find((item) => item.characterId === parsedCharacterId);
         const owned = Boolean(mine);
         setStudy(mine?.study ?? null);
+        setStickerLevel(mine?.level ?? 1);
         if (!owned) {
           setLocked(true);
           return;
@@ -230,7 +232,7 @@ export function StickerPage() {
           <div className="mt-4 space-y-6">
             <section className="rarity grid items-start gap-6 md:grid-cols-[280px_1fr]" data-rarity={character.rarity}>
               <div className="animate-pop-in mx-auto w-56 md:w-full">
-                <StickerCard name={character.name} rarity={character.rarity} imageUrl={character.imageUrl} owned={isOwned} size="lg" />
+                <StickerCard name={character.name} rarity={character.rarity} imageUrl={character.imageUrl} owned={isOwned} size="lg" level={stickerLevel} />
               </div>
               <div className="panel relative overflow-hidden p-6 sm:p-8">
                 <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[var(--r)] opacity-20 blur-3xl" />
@@ -299,6 +301,7 @@ export function StickerPage() {
                       <dl className="grid gap-4 sm:grid-cols-2">
                         <Fact label="Nome" value={character.name} />
                         <Fact label="Raridade" value={getRarityLabel(character.rarity)} />
+                        <Fact label="Nível da figurinha" value={`${stickerLevel} de 5`} />
                         <Fact label="Papel na história" value={character.narrativeRole} />
                         <Fact label="Testamento" value={character.testament ? TESTAMENT_LABELS[character.testament] : null} />
                         <Fact label="Período histórico" value={character.historicalPeriod} />

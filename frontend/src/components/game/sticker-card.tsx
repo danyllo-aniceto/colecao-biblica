@@ -17,13 +17,15 @@ type StickerCardProps = {
   className?: string;
   /** Cópias repetidas guardadas (mostra o selo "x2", "x3"...). */
   duplicates?: number;
+  /** Nível da figurinha (1 a 5): aparece como selo a partir do nível 2. */
+  level?: number;
 };
 
 /**
  * Figurinha do álbum: moldura e brilho na cor da raridade. Bloqueada, fica toda
  * cinza, desabilitada e com cadeado; a lendária ganha um brilho que atravessa a carta.
  */
-export function StickerCard({ name, rarity, imageUrl, owned, onClick, size = 'md', className, duplicates = 0 }: StickerCardProps) {
+export function StickerCard({ name, rarity, imageUrl, owned, onClick, size = 'md', className, duplicates = 0, level = 1 }: StickerCardProps) {
   const interactive = Boolean(onClick) && owned;
   const Tag = interactive ? 'button' : 'div';
 
@@ -74,6 +76,11 @@ export function StickerCard({ name, rarity, imageUrl, owned, onClick, size = 'md
         >
           {getRarityLabel(rarity)}
         </span>
+        {owned && level > 1 ? (
+          <span className="absolute bottom-2 left-2 rounded-full bg-ink px-2 py-0.5 font-display text-[11px] font-bold text-bg" aria-label={`nível ${level}`}>
+            Nv {level}
+          </span>
+        ) : null}
         {owned && duplicates > 0 ? (
           <span className="absolute right-2 top-2 rounded-full bg-ink px-2 py-0.5 font-display text-[11px] font-bold text-bg" aria-label={`${duplicates} repetida(s)`}>
             x{duplicates + 1}

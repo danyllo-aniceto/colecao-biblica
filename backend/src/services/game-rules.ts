@@ -94,35 +94,69 @@ export function requiredCorrectAnswersForReward(configured: number, activeQuesti
   return activeQuestionCount > 0 ? Math.min(minimum, activeQuestionCount) : minimum;
 }
 
-export type ChestTier = "BRONZE" | "SILVER" | "GOLD";
+export type ChestTier = "BRONZE" | "SILVER" | "GOLD" | "DIAMOND";
 
 /**
  * Baú da partida (quiz geral em maratona): o nível depende dos acertos. Abaixo do mínimo não há baú.
  * Prata e ouro nunca ficam abaixo do mínimo nem fora de ordem.
  */
-export function chestTierFor(correctAnswers: number, minCorrect: number, silverMin: number, goldMin: number): ChestTier | null {
+export function chestTierFor(correctAnswers: number, minCorrect: number, silverMin: number, goldMin: number, diamondMin = Number.POSITIVE_INFINITY): ChestTier | null {
   const bronze = Math.max(1, minCorrect);
   if (correctAnswers < bronze) return null;
   const silver = Math.max(bronze + 1, silverMin);
   const gold = Math.max(silver + 1, goldMin);
+  const diamond = Math.max(gold + 1, diamondMin);
+  if (correctAnswers >= diamond) return "DIAMOND";
   if (correctAnswers >= gold) return "GOLD";
   if (correctAnswers >= silver) return "SILVER";
   return "BRONZE";
 }
 
 /** Moedas garantidas de cada baú, além do item sorteado. */
-export const CHEST_BONUS_COINS: Record<ChestTier, number> = { BRONZE: 6, SILVER: 15, GOLD: 30 };
+export const CHEST_BONUS_COINS: Record<ChestTier, number> = { BRONZE: 6, SILVER: 15, GOLD: 30, DIAMOND: 100 };
 
 /** Peso de cada recompensa no sorteio do baú: prata favorece figurinhas e o ouro só dá figurinha, com raras melhores. */
 export function chestRewardWeight(tier: ChestTier, reward: { rewardType: string; stickerRarity: StickerRarity | null; dropChance: number }): number {
   const isPack = reward.rewardType === "STICKER_PACK";
   const isSticker = reward.rewardType === "STICKER" || isPack;
   // Bronze: figurinha é rara (o baú serve mais para moedas e ajudas). Prata: um pouco mais de chance.
+  // Diamante: só figurinha épica (75%) ou lendária (25%).
+  if (tier === "DIAMOND") return reward.rewardType === "STICKER" && reward.stickerRarity === "EPIC" ? 75 : reward.rewardType === "STICKER" && reward.stickerRarity === "LEGENDARY" ? 25 : 0;
   if (tier === "BRONZE") return isSticker ? reward.dropChance * 0.6 : reward.dropChance;
   if (tier === "SILVER") return isSticker ? reward.dropChance * 1.2 : reward.dropChance;
   if (!isSticker) return 0;
   const byRarity: Partial<Record<StickerRarity, number>> = { COMMON: 1, RARE: 1.6, EPIC: 2.2, LEGENDARY: 1.5 };
   return reward.dropChance * (isPack ? 1.5 : (byRarity[reward.stickerRarity ?? "COMMON"] ?? 1));
+}
+
+/** Chance (%) do baú de diamante trazer também um item visual raro. */
+export const DIAMOND_COSMETIC_CHANCE = 30;
+
+// ---------------------------------------------------------------------------
+// Venda a amigos e nível da figurinha
+// ---------------------------------------------------------------------------
+
+type SaleRules = { friendSalePriceCommon: number; friendSalePriceRare: number; friendSalePriceEpic: number; friendSalePriceLegendary: number; friendSaleFeePercent: number };
+
+/** Preço padrão da figurinha vendida a um amigo (único por raridade; a especial não se vende). */
+export function friendSalePrice(rarity: StickerRarity, rules: SaleRules): number {
+  const price = { COMMON: rules.friendSalePriceCommon, RARE: rules.friendSalePriceRare, EPIC: rules.friendSalePriceEpic, LEGENDARY: rules.friendSalePriceLegendary, SPECIAL: 0 }[rarity];
+  return Math.max(0, price);
+}
+
+/** O que o vendedor recebe: o preço sem a taxa (que some do jogo, evitando criar moedas). */
+export function friendSaleSellerCoins(price: number, feePercent: number): number {
+  return Math.floor((Math.max(0, price) * (100 - Math.min(100, Math.max(0, feePercent)))) / 100);
+}
+
+export const STICKER_MAX_LEVEL = 5;
+/** Repetidas gastas para chegar ao nível 2, 3, 4 e 5 (11 no total). */
+const STICKER_LEVEL_COSTS = [1, 2, 3, 5];
+
+/** Custo (em repetidas) de subir do nível atual para o próximo; null no nível máximo. */
+export function stickerUpgradeCost(level: number): number | null {
+  if (level >= STICKER_MAX_LEVEL) return null;
+  return STICKER_LEVEL_COSTS[Math.max(1, level) - 1] ?? null;
 }
 
 /** Partida "perfeita" para o bônus de moedas: sem erros e com um mínimo de perguntas. */

@@ -144,6 +144,13 @@ export type GameSettings = {
   maxQuestionsPerMatch: number;
   startingLives: number;
   rewardMatchLimitPerDay: number;
+  chestDiamondMinCorrect: number;
+  chestDiamondLimitPerDay: number;
+  friendSalePriceCommon: number;
+  friendSalePriceRare: number;
+  friendSalePriceEpic: number;
+  friendSalePriceLegendary: number;
+  friendSaleFeePercent: number;
   chestSilverMinCorrect: number;
   chestGoldMinCorrect: number;
   xpFullMatchesPerDay: number;

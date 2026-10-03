@@ -599,6 +599,7 @@ export function UserDashboard() {
                 ownedIds={ownedIds}
                 collection={collection}
                 gameRules={gameRules}
+                onUpgraded={() => void refreshCollection()}
                 onOpenSticker={openSticker}
                 onWallet={(wallet) => {
                   updateWallet(wallet);

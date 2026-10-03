@@ -38,6 +38,7 @@ const CHEST_LABELS = {
   BRONZE: { label: 'Baú de Bronze', tone: 'bg-[#b87333]/20 text-[#8a4f1d] dark:text-[#e0a164]' },
   SILVER: { label: 'Baú de Prata', tone: 'bg-slate-400/25 text-slate-700 dark:text-slate-200' },
   GOLD: { label: 'Baú de Ouro', tone: 'bg-primary/25 text-primary-strong dark:text-primary' },
+  DIAMOND: { label: 'Baú de Diamante', tone: 'bg-info/25 text-info' },
 } as const;
 
 const HEADLINES = ['Continue tentando!', 'Boa!', 'Muito bem!', 'Incrível!'];
@@ -188,6 +189,12 @@ export function MatchResult({
                   · <CoinIcon className="h-4 w-4" />+{result.chestCoins}
                 </span>
               ) : null}
+            </p>
+          ) : null}
+          {result.chestTier === 'DIAMOND' && (result.chestExtras?.helperName || result.chestExtras?.cosmeticName) ? (
+            <p className="mb-3 text-sm font-bold text-info">
+              Extras do diamante:{' '}
+              {[result.chestExtras.helperName ? `ajuda ${result.chestExtras.helperName}` : null, result.chestExtras.cosmeticName ? `item visual ${result.chestExtras.cosmeticName}` : null].filter(Boolean).join(' e ')}
             </p>
           ) : null}
           {wonSticker ? (

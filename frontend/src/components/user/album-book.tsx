@@ -53,6 +53,7 @@ type AlbumBookProps = {
   totalCharacters: number;
   ownedCount: number;
   duplicatesById: Map<number, number>;
+  levelsById?: Map<number, number>;
   onOpenSticker: (id: number) => void;
   /** Muda quando os filtros mudam: o álbum volta para a primeira folha. */
   resetKey: string;
@@ -65,7 +66,7 @@ type AlbumBookProps = {
  * Álbum de verdade: capa, folhas de papel e a folha virando ao trocar de página
  * (setas, arrastar no celular, setas do teclado ou a paginação embaixo).
  */
-export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, onOpenSticker, resetKey, focusId = null, onFocused }: AlbumBookProps) {
+export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, levelsById, onOpenSticker, resetKey, focusId = null, onFocused }: AlbumBookProps) {
   const wide = useWide();
   const perPage = wide ? PER_PAGE_WIDE : PER_PAGE_NARROW;
   const [view, setView] = useState(0);
@@ -161,6 +162,7 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
                 owned
                 size="sm"
                 duplicates={duplicatesById.get(character.id) ?? 0}
+                level={levelsById?.get(character.id) ?? 1}
                 onClick={() => onOpenSticker(character.id)}
               />
             </div>

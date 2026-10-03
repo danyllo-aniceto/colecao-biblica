@@ -16,7 +16,7 @@ import { visibleCharacter } from "./visibility";
 const CHEST_FULL_BOOSTS_COINS = 25;
 
 /** Todas as ajudas que o baú pode trazer (as antigas e as novas). */
-const CHEST_BOOSTS = [
+export const CHEST_BOOSTS = [
   { field: "extraLifeBoosts", maxSetting: "maxExtraLifeBoosts", name: "Vida extra" },
   { field: "extraTimeBoosts", maxSetting: "maxExtraTimeBoosts", name: "Tempo extra" },
   { field: "doubleXpBoosts", maxSetting: "maxDoubleXpBoosts", name: "XP em dobro" },

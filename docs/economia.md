@@ -67,13 +67,26 @@ O prêmio sorteado por partida foi trocado por um **baú da partida**, cujo nív
 |---|---|---|---|
 | 7 a 14 | Bronze | 6 | sorteio comum (figurinha é mais rara) |
 | 15 a 39 | Prata | 15 | sorteio com um pouco mais de chance de figurinha |
-| 40 ou mais | Ouro | 30 | sempre figurinha, com raras e épicas favorecidas |
+| 40 a 69 | Ouro | 30 | sempre figurinha, com raras e épicas favorecidas |
+| 70 ou mais | Diamante | 100 | sempre figurinha épica (75%) ou lendária (25%), mais 1 ajuda e 30% de chance de um item visual raro |
+
+O diamante é só para quem acerta muito (por volta de 90% de acerto chega a 70 em cerca de 1 partida a cada 40) e tem limite de 1 por dia, dentro dos 5 baús; acima disso vira ouro.
 
 A garantia de figurinha (a cada 10 baús sem figurinha) continua. Os cortes de prata e ouro, o limite diário e o mínimo
 de acertos ficam em Configurações. Como a maratona rende mais acertos por partida, o limite de partidas com moedas por dia
 caiu de 5 para 3 e o de XP cheio de 6 para 4.
 
 Figurinhas por dia vindas dos baús (simulação): casual ~0,1, regular ~0,5, dedicado ~1. Somam-se à compra na loja (1 por dia).
+
+## Repetidas: vender a amigos e nível da figurinha
+
+Uma repetida pode virar moedas (vender ao jogo), ir para um amigo, subir o nível da figurinha ou ser fundida.
+
+- **Venda a amigos:** preço padrão por raridade (comum 225, rara 550, épica 1.400, lendária 4.000). O comprador paga o
+  preço cheio e o vendedor recebe 90%: a taxa de 10% some do jogo. Só repetidas; a figurinha especial não se vende.
+  Segue os limites e a expiração das trocas.
+- **Nível da figurinha:** de 1 a 5, gastando repetidas da própria figurinha (nível 2: 1, nível 3: 2, nível 4: 3 e
+  nível 5: 5 repetidas). Por enquanto só enfeita (selo "Nv" na carta e na ficha); vai valer no futuro modo de cartas.
 
 ## Como o ajuste chega ao jogo
 

@@ -3,8 +3,8 @@ import { prisma } from "../db/prisma";
 import { currentUser } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
 import { z } from "../lib/validation";
-import { fuseDuplicates, sellDuplicates } from "../services/collection";
-import { studyStatus } from "../services/game-rules";
+import { fuseDuplicates, sellDuplicates, upgradeSticker } from "../services/collection";
+import { stickerUpgradeCost, studyStatus } from "../services/game-rules";
 import { visibleCharacter } from "../services/visibility";
 
 export const collectionRouter = Router();
@@ -28,6 +28,8 @@ collectionRouter.get(
         rarity: sticker.character.rarity,
         acquiredAt: sticker.acquiredAt,
         duplicates: sticker.duplicates,
+        level: sticker.level,
+        upgradeCost: stickerUpgradeCost(sticker.level),
         study: studyStatus(studyByCharacter.get(sticker.characterId) ?? 0),
       })),
     );
@@ -53,6 +55,13 @@ collectionRouter.post(
   asyncHandler(async (req, res) => {
     const input = sellSchema.parse(req.body);
     res.json(await sellDuplicates(currentUser(req).id, input.characterId, input.quantity));
+  }),
+);
+
+collectionRouter.post(
+  "/upgrade",
+  asyncHandler(async (req, res) => {
+    res.json(await upgradeSticker(currentUser(req).id, z.object({ characterId: z.number().int().positive() }).parse(req.body).characterId));
   }),
 );
 

@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "../db/prisma";
+import { transaction } from "../db/prisma";
+import { finalizeMatch } from "../services/quiz";
+import { getSettings } from "../services/settings";
 import { api, bearer, login, resetDatabase } from "./helpers";
 
 const hasDatabase = Boolean(process.env.TEST_DATABASE_URL);
@@ -268,6 +271,66 @@ describe.skipIf(!hasDatabase)("recompensas novas", () => {
       expect(claimed.body.user.hintBoosts).toBe(1);
       expect(claimed.body.user).not.toHaveProperty("password");
       expect((await api.post(`/api/pass/tiers/${second.id}/claim`).set(bearer(token))).status).toBe(400);
+    });
+  });
+
+  describe("nível da figurinha e baú de diamante", () => {
+    it("repetidas sobem o nível da figurinha (1, 2, 3 e 5 repetidas) até o nível 5", async () => {
+      const token = await login("user@email.com");
+      const player = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
+      const davi = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Davi" } });
+      await prisma.userSticker.create({ data: { userId: player.id, characterId: davi.id, duplicates: 1 } });
+
+      expect((await api.get("/api/collection/my").set(bearer(token))).body[0]).toMatchObject({ level: 1, upgradeCost: 1, duplicates: 1 });
+      const first = await api.post("/api/collection/upgrade").set(bearer(token)).send({ characterId: davi.id });
+      expect(first.body).toMatchObject({ level: 2, duplicates: 0, spent: 1, nextCost: 2 });
+
+      // Faltam repetidas para o próximo nível.
+      const short = await api.post("/api/collection/upgrade").set(bearer(token)).send({ characterId: davi.id });
+      expect(short.status).toBe(400);
+      expect(short.body.message).toMatch(/Faltam repetidas/);
+
+      await prisma.userSticker.update({ where: { userId_characterId: { userId: player.id, characterId: davi.id } }, data: { duplicates: 10 } });
+      expect((await api.post("/api/collection/upgrade").set(bearer(token)).send({ characterId: davi.id })).body).toMatchObject({ level: 3, duplicates: 8 });
+      expect((await api.post("/api/collection/upgrade").set(bearer(token)).send({ characterId: davi.id })).body).toMatchObject({ level: 4, duplicates: 5 });
+      expect((await api.post("/api/collection/upgrade").set(bearer(token)).send({ characterId: davi.id })).body).toMatchObject({ level: 5, duplicates: 0, nextCost: null });
+      expect((await api.post("/api/collection/upgrade").set(bearer(token)).send({ characterId: davi.id })).body.message).toMatch(/nível máximo/);
+    });
+
+    it("diamante: figurinha épica ou lendária, extras, e só um por dia (o resto vira ouro)", async () => {
+      const player = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
+      await prisma.biblicalCharacter.createMany({
+        data: [
+          { name: "Épico de teste", rarity: "EPIC", shortSummary: "<p>x</p>", fullDescription: "<p>x</p>", published: true, createdBy: "teste" },
+          { name: "Lendário de teste", rarity: "LEGENDARY", shortSummary: "<p>x</p>", fullDescription: "<p>x</p>", published: true, createdBy: "teste" },
+        ],
+      });
+      const play = (correctAnswers: number) =>
+        transaction(async (tx) => {
+          const user = await tx.user.findUniqueOrThrow({ where: { id: player.id } });
+          const settings = await getSettings(tx);
+          return finalizeMatch(tx, user, settings, {
+            quizType: "GENERAL",
+            questionsAnswered: correctAnswers + 3,
+            correctAnswers,
+            wrongAnswers: 3,
+            characterId: null,
+            xpMultiplier: 1,
+            startedAt: new Date(),
+          }, () => 0.1);
+        });
+
+      const first = await play(70);
+      expect(first).toMatchObject({ chestTier: "DIAMOND", chestCoins: 100, rewardCharacterRarity: "EPIC" });
+      expect(first.chestExtras.helperName).toBeTruthy();
+      expect((await prisma.quizMatch.findUniqueOrThrow({ where: { id: first.matchId } })).chestTier).toBe("DIAMOND");
+
+      // O limite é de 1 diamante por dia: o segundo vira baú de ouro.
+      const second = await play(75);
+      expect(second.chestTier).toBe("GOLD");
+
+      // Abaixo do corte não é diamante.
+      expect((await play(45)).chestTier).toBe("GOLD");
     });
   });
 });

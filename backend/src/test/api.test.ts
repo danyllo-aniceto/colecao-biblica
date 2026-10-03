@@ -887,6 +887,40 @@ describe.skipIf(!hasDatabase)("API", () => {
       expect(history.body.content[0]).toMatchObject({ status: "ACCEPTED" });
     });
 
+    it("venda a amigo: preço padrão da raridade, taxa para o vendedor e comprador precisa ter as moedas", async () => {
+      const { user, admin, userId, adminId } = await befriend();
+      const davi = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Davi" } });
+      const ester = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Ester" } });
+      await prisma.userSticker.create({ data: { userId, characterId: davi.id, duplicates: 1 } });
+      await prisma.userSticker.create({ data: { userId: adminId, characterId: ester.id, duplicates: 1 } });
+
+      // Venda é só oferecer uma repetida: não mistura com pedido em troca.
+      const mixed = await api.post("/api/social/trades").set(bearer(user)).send({ toUserId: adminId, offeredCharacterId: davi.id, requestedCharacterId: ester.id, sale: true });
+      expect(mixed.status).toBe(400);
+
+      const sale = await api.post("/api/social/trades").set(bearer(user)).send({ toUserId: adminId, offeredCharacterId: davi.id, sale: true });
+      expect(sale.status).toBe(201);
+      // Davi é rara: 550 moedas, e o vendedor recebe 90% (495).
+      expect(sale.body).toMatchObject({ priceCoins: 550, sellerCoins: 495 });
+
+      const broke = await api.post(`/api/social/trades/${sale.body.id}/accept`).set(bearer(admin));
+      expect(broke.status).toBe(400);
+      expect(broke.body.message).toMatch(/Moedas insuficientes/);
+
+      await prisma.user.update({ where: { id: adminId }, data: { coins: 1000 } });
+      const done = await api.post(`/api/social/trades/${sale.body.id}/accept`).set(bearer(admin));
+      expect(done.status).toBe(200);
+      // Os dois ganham também os 50 da conquista "Partilha" (primeira troca).
+      expect((await prisma.user.findUniqueOrThrow({ where: { id: adminId } })).coins).toBe(1000 - 550 + 50);
+      expect((await prisma.user.findUniqueOrThrow({ where: { id: userId } })).coins).toBe(495 + 50);
+      expect((await prisma.userSticker.findUniqueOrThrow({ where: { userId_characterId: { userId, characterId: davi.id } } })).duplicates).toBe(0);
+      expect(await prisma.userSticker.count({ where: { userId: adminId, characterId: davi.id } })).toBe(1);
+
+      // O álbum do amigo já mostra o preço padrão de cada repetida.
+      const album = await api.get(`/api/social/friends/${userId}/album`).set(bearer(admin));
+      expect(album.status).toBe(200);
+    });
+
     it("limite diário de trocas e bloqueio cancela propostas e corta a conversa", async () => {
       const { user, admin, userId, adminId } = await befriend();
       const davi = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Davi" } });

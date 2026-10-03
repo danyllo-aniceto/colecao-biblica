@@ -4,9 +4,10 @@ import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { Pagination, usePagination } from '@/components/ui/pagination';
+import { Switch } from '@/components/ui/switch';
 import { LoadingState } from '@/components/ui/spinner';
 import { errorMessage, useToast } from '@/components/ui/toast';
-import { Alert } from '@/components/game/game-ui';
+import { Alert, CoinIcon } from '@/components/game/game-ui';
 import { StickerCard } from '@/components/game/sticker-card';
 import { cn } from '@/lib/cn';
 import { createTrade, getFriendAlbum, type AlbumCard, type FriendAlbum, type Trade } from '@/lib/social-api';
@@ -72,6 +73,7 @@ export function TradeComposer({ friendId, friendName, onClose, onSent }: { frien
   const [offered, setOffered] = useState<number | null>(null);
   const [requested, setRequested] = useState<number | null>(null);
   const [message, setMessage] = useState('');
+  const [sale, setSale] = useState(false);
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
@@ -80,7 +82,11 @@ export function TradeComposer({ friendId, friendName, onClose, onSent }: { frien
       .catch((reason: unknown) => setError(errorMessage(reason)));
   }, [friendId]);
 
-  const kind = offered && requested ? 'troca' : offered ? 'presente' : requested ? 'pedido' : null;
+  // Venda: só oferecendo uma repetida (sem pedir nada). O preço é padrão por raridade e vem do servidor.
+  const offeredCard = album?.myDuplicates.find((item) => item.characterId === offered) ?? null;
+  const canSell = Boolean(offered && !requested && (offeredCard?.salePrice ?? 0) > 0);
+  const selling = sale && canSell;
+  const kind = offered && requested ? 'troca' : selling ? 'venda' : offered ? 'presente' : requested ? 'pedido' : null;
 
   async function send() {
     setSending(true);
@@ -90,8 +96,9 @@ export function TradeComposer({ friendId, friendName, onClose, onSent }: { frien
         offeredCharacterId: offered,
         requestedCharacterId: requested,
         message: message.trim() || undefined,
+        sale: selling || undefined,
       });
-      toast.success(kind === 'presente' ? 'Presente enviado! Seu amigo precisa aceitar.' : 'Proposta enviada!');
+      toast.success(kind === 'presente' ? 'Presente enviado! Seu amigo precisa aceitar.' : kind === 'venda' ? 'Venda oferecida! Seu amigo precisa aceitar.' : 'Proposta enviada!');
       onSent(trade);
     } catch (reason) {
       toast.error(errorMessage(reason));
@@ -113,7 +120,7 @@ export function TradeComposer({ friendId, friendName, onClose, onSent }: { frien
             Cancelar
           </Button>
           <Button onClick={() => void send()} disabled={!kind} loading={sending}>
-            {kind === 'troca' ? 'Propor troca' : kind === 'presente' ? 'Enviar presente' : kind === 'pedido' ? 'Pedir figurinha' : 'Escolha uma figurinha'}
+            {kind === 'troca' ? 'Propor troca' : kind === 'venda' ? 'Oferecer venda' : kind === 'presente' ? 'Enviar presente' : kind === 'pedido' ? 'Pedir figurinha' : 'Escolha uma figurinha'}
           </Button>
         </>
       }
@@ -140,10 +147,25 @@ export function TradeComposer({ friendId, friendName, onClose, onSent }: { frien
             flag={(item) => (item.theyOwn ? null : 'falta pro amigo')}
             empty="Você ainda não tem figurinhas repetidas para oferecer."
           />
+          {canSell ? (
+            <div className="rounded-2xl bg-surface-2 p-4">
+              <Switch
+                checked={sale}
+                onChange={setSale}
+                label="Vender esta figurinha"
+                description={`Preço padrão da raridade: ${offeredCard?.salePrice} moedas. Quem vende recebe o valor menos a taxa do jogo.`}
+              />
+              {selling ? (
+                <p className="mt-2 flex items-center gap-1 text-sm font-bold text-ink">
+                  Seu amigo paga <CoinIcon className="h-4 w-4" /> {offeredCard?.salePrice}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
           <Field label="Mensagem (opcional)">
             <Input value={message} onChange={(event) => setMessage(event.target.value)} maxLength={300} placeholder="Ex.: troca comigo? 😊" />
           </Field>
-          <p className="text-xs text-muted">Só a figurinha marcada no topo: pedido. Só a de baixo: presente. As duas: troca.</p>
+          <p className="text-xs text-muted">Só a figurinha marcada no topo: pedido. Só a de baixo: presente (ou venda, se ligar a opção). As duas: troca.</p>
         </div>
       ) : null}
     </Modal>

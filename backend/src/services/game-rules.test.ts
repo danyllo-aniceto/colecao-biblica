@@ -18,6 +18,9 @@ import {
   CHEST_BONUS_COINS,
   chestRewardWeight,
   chestTierFor,
+  friendSalePrice,
+  friendSaleSellerCoins,
+  stickerUpgradeCost,
   calculateLevel,
   xpForLevel,
   calculateMatchCoins,
@@ -113,6 +116,38 @@ describe("baús da partida", () => {
     expect(chestRewardWeight("GOLD", coins)).toBe(0);
     expect(chestRewardWeight("GOLD", sticker)).toBeGreaterThan(3.5);
     expect(chestRewardWeight("GOLD", { ...sticker, stickerRarity: "EPIC" })).toBeGreaterThan(chestRewardWeight("GOLD", { ...sticker, stickerRarity: "COMMON" }));
+  });
+});
+
+describe("diamante, venda a amigos e nível da figurinha", () => {
+  it("diamante só com muitos acertos e sempre acima do ouro", () => {
+    expect(chestTierFor(69, 7, 15, 40, 70)).toBe("GOLD");
+    expect(chestTierFor(70, 7, 15, 40, 70)).toBe("DIAMOND");
+    expect(chestTierFor(500, 7, 15, 40, 70)).toBe("DIAMOND");
+    // Sem corte de diamante configurado (ou fora de ordem), nunca vira diamante abaixo do ouro.
+    expect(chestTierFor(80, 7, 15, 40)).toBe("GOLD");
+    expect(chestTierFor(41, 7, 15, 40, 10)).toBe("DIAMOND");
+    expect(chestRewardWeight("DIAMOND", { rewardType: "STICKER", stickerRarity: "EPIC", dropChance: 1 })).toBe(75);
+    expect(chestRewardWeight("DIAMOND", { rewardType: "STICKER", stickerRarity: "LEGENDARY", dropChance: 1 })).toBe(25);
+    expect(chestRewardWeight("DIAMOND", { rewardType: "STICKER", stickerRarity: "COMMON", dropChance: 50 })).toBe(0);
+    expect(chestRewardWeight("DIAMOND", { rewardType: "STICKER_PACK", stickerRarity: null, dropChance: 50 })).toBe(0);
+  });
+
+  it("venda a amigo: preço único por raridade e taxa que some do jogo", () => {
+    const rules = { friendSalePriceCommon: 225, friendSalePriceRare: 550, friendSalePriceEpic: 1400, friendSalePriceLegendary: 4000, friendSaleFeePercent: 10 };
+    expect(friendSalePrice("COMMON", rules)).toBe(225);
+    expect(friendSalePrice("LEGENDARY", rules)).toBe(4000);
+    expect(friendSalePrice("SPECIAL", rules)).toBe(0);
+    expect(friendSaleSellerCoins(550, 10)).toBe(495);
+    expect(friendSaleSellerCoins(225, 10)).toBe(202); // arredonda para baixo
+    expect(friendSaleSellerCoins(225, 0)).toBe(225);
+    expect(friendSaleSellerCoins(225, 150)).toBe(0);
+  });
+
+  it("nível da figurinha: 1, 2, 3 e 5 repetidas até o nível 5", () => {
+    expect([1, 2, 3, 4].map(stickerUpgradeCost)).toEqual([1, 2, 3, 5]);
+    expect(stickerUpgradeCost(5)).toBeNull();
+    expect(stickerUpgradeCost(9)).toBeNull();
   });
 });
 

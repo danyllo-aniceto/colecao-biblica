@@ -47,6 +47,8 @@ type AlbumSectionProps = {
   gameRules: GameRules | null;
   onOpenSticker: (id: number) => void;
   onWallet: (wallet: { userCoins: number }) => void;
+  /** Depois de subir o nível de uma figurinha (recarrega o álbum). */
+  onUpgraded: () => void;
   onFused: (result: FuseResult) => void;
   playerName: string;
 };
@@ -60,7 +62,7 @@ function untilLabel(date: string) {
   return `em ${days} dias`;
 }
 
-export function AlbumSection({ characters, ownedIds, collection, gameRules, onOpenSticker, onWallet, onFused, playerName }: AlbumSectionProps) {
+export function AlbumSection({ characters, ownedIds, collection, gameRules, onOpenSticker, onWallet, onUpgraded, onFused, playerName }: AlbumSectionProps) {
   // Ao voltar da ficha de uma figurinha, o álbum reabre com os mesmos filtros e na folha dela.
   const [restored] = useState(() => takeAlbumReturn());
   const [focusId, setFocusId] = useState<number | null>(restored?.characterId ?? null);
@@ -74,6 +76,7 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [duplicatesOpen, setDuplicatesOpen] = useState(false);
   const [upcoming, setUpcoming] = useState<UpcomingSticker[]>([]);
+  const levelsById = useMemo(() => new Map(collection.map((sticker) => [sticker.characterId, sticker.level])), [collection]);
   const duplicatesById = useMemo(() => new Map(collection.map((sticker) => [sticker.characterId, sticker.duplicates])), [collection]);
   const totalDuplicates = collection.reduce((sum, sticker) => sum + sticker.duplicates, 0);
 
@@ -173,7 +176,7 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
       {tab === 'collections' ? <ThemeCollections playerName={playerName} onCoins={(coins) => onWallet({ userCoins: coins })} refreshKey={collection.length} /> : null}
 
       {tab === 'album' ? (
-        <AlbumBook items={ownedFiltered} totalCharacters={characters.length} ownedCount={ownedCount} duplicatesById={duplicatesById} onOpenSticker={(id) => {
+        <AlbumBook items={ownedFiltered} totalCharacters={characters.length} ownedCount={ownedCount} duplicatesById={duplicatesById} levelsById={levelsById} onOpenSticker={(id) => {
             saveAlbumView(albumView);
             onOpenSticker(id);
           }} resetKey={resetKey} focusId={focusId} onFocused={() => setFocusId(null)} />
@@ -234,6 +237,7 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
         collection={collection}
         rules={gameRules}
         onChanged={onWallet}
+        onUpgraded={onUpgraded}
         onFused={(result) => {
           setDuplicatesOpen(false);
           onFused(result);

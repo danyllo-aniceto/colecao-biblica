@@ -8,7 +8,7 @@ import { CoinIcon, EmptyState } from '@/components/game/game-ui';
 import { StickerCard } from '@/components/game/sticker-card';
 import type { StickerRarity } from '@/lib/admin-api';
 import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
-import { fuseDuplicates, sellDuplicates, type FuseResult, type GameRules, type UserSticker } from '@/lib/user-api';
+import { fuseDuplicates, sellDuplicates, upgradeSticker, type FuseResult, type GameRules, type UserSticker } from '@/lib/user-api';
 
 const NEXT: Partial<Record<StickerRarity, StickerRarity>> = { COMMON: 'RARE', RARE: 'EPIC', EPIC: 'LEGENDARY' };
 const PLURAL: Record<StickerRarity, string> = { COMMON: 'comuns', RARE: 'raras', EPIC: 'épicas', LEGENDARY: 'lendárias', SPECIAL: 'especiais' };
@@ -19,11 +19,12 @@ type Props = {
   collection: UserSticker[];
   rules: GameRules | null;
   onChanged: (wallet: { userCoins: number }) => void;
+  onUpgraded: () => void;
   onFused: (result: FuseResult) => void;
 };
 
 /** Repetidas guardadas: vender por moedas ou fundir N de uma raridade em uma de raridade acima. */
-export function DuplicatesModal({ open, onClose, collection, rules, onChanged, onFused }: Props) {
+export function DuplicatesModal({ open, onClose, collection, rules, onChanged, onUpgraded, onFused }: Props) {
   const toast = useToast();
   const [busy, setBusy] = useState<string | null>(null);
   const withDuplicates = useMemo(() => collection.filter((sticker) => sticker.duplicates > 0), [collection]);
@@ -47,6 +48,19 @@ export function DuplicatesModal({ open, onClose, collection, rules, onChanged, o
     }
   }
 
+  async function upgrade(sticker: UserSticker) {
+    setBusy(`up-${sticker.characterId}`);
+    try {
+      const result = await upgradeSticker(sticker.characterId);
+      onUpgraded();
+      toast.success(`${result.characterName} subiu para o nível ${result.level}!`, { description: result.nextCost ? `Próximo nível: ${result.nextCost} repetida(s).` : 'Nível máximo alcançado.' });
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function fuse(rarity: StickerRarity) {
     setBusy(`fuse-${rarity}`);
     try {
@@ -61,7 +75,7 @@ export function DuplicatesModal({ open, onClose, collection, rules, onChanged, o
   }
 
   return (
-    <Modal open={open} size="lg" title="Minhas repetidas" description={`Venda por moedas ou junte ${fuseCost} repetidas da mesma raridade para ganhar uma da raridade acima (de preferência uma que você não tem).`} onClose={onClose}>
+    <Modal open={open} size="lg" title="Minhas repetidas" description={`Cada repetida pode virar moedas, ir para um amigo (troca, presente ou venda), subir o nível da própria figurinha ou ser fundida: junte ${fuseCost} da mesma raridade para ganhar uma da raridade acima.`} onClose={onClose}>
       {withDuplicates.length === 0 ? (
         <EmptyState icon={<AutoAwesomeRoundedIcon fontSize="large" />} title="Nenhuma repetida ainda">
           Figurinhas repetidas de sorteios e pacotes aparecem aqui.
@@ -94,9 +108,16 @@ export function DuplicatesModal({ open, onClose, collection, rules, onChanged, o
                 <div className="min-w-0 flex-1 space-y-2">
                   <p className="truncate font-display font-semibold text-ink">{sticker.characterName}</p>
                   <p className="text-xs text-muted">
-                    {sticker.duplicates} repetida(s) · {sellValue(sticker.rarity)} moedas cada
+                    Nível {sticker.level} · {sticker.duplicates} repetida(s) · {sellValue(sticker.rarity)} moedas cada
                   </p>
                   <div className="flex flex-wrap gap-2">
+                    {sticker.upgradeCost !== null ? (
+                      <Button size="sm" loading={busy === `up-${sticker.characterId}`} disabled={busy !== null || sticker.duplicates < sticker.upgradeCost} onClick={() => void upgrade(sticker)}>
+                        Subir nível ({sticker.upgradeCost})
+                      </Button>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full bg-primary/20 px-3 py-1 text-xs font-bold text-primary-strong dark:text-primary">Nível máximo</span>
+                    )}
                     <Button size="sm" variant="secondary" loading={busy === `sell-${sticker.characterId}`} disabled={busy !== null} onClick={() => void sell(sticker, 1)}>
                       Vender 1
                     </Button>
