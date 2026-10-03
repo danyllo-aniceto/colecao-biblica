@@ -112,11 +112,11 @@ function Burst({ count, color }: { count: number; color: string }) {
   );
 }
 
-function PrizeFace({ prize, large = false, mask = false }: { prize: ChestPrize; large?: boolean; mask?: boolean }) {
+function PrizeFace({ prize, large = false }: { prize: ChestPrize; large?: boolean }) {
   if (prize.kind === 'STICKER') {
     return (
       <div className={cn('mx-auto', large ? 'w-44' : 'w-24')}>
-        <StickerCard name={prize.name ?? 'Figurinha'} rarity={(prize.rarity ?? 'COMMON') as StickerRarity} imageUrl={prize.imageUrl} owned size={large ? 'lg' : 'sm'} maskName={mask} />
+        <StickerCard name={prize.name ?? 'Figurinha'} rarity={(prize.rarity ?? 'COMMON') as StickerRarity} imageUrl={prize.imageUrl} owned size={large ? 'lg' : 'sm'} />
       </div>
     );
   }
@@ -136,6 +136,16 @@ function PrizeFace({ prize, large = false, mask = false }: { prize: ChestPrize; 
       <span className="text-primary-strong dark:text-primary">{icon}</span>
       <p className={cn('font-display font-bold text-ink', large ? 'text-lg' : 'text-xs')}>{prize.name}</p>
       <p className="text-[10px] font-bold uppercase tracking-wider text-muted">{prize.kind === 'COSMETIC' ? 'item visual' : 'ajuda'}</p>
+    </div>
+  );
+}
+
+/** Verso da figurinha no carretel: o personagem e a raridade só aparecem quando ela é revelada (nova ou repetida). */
+function CardBack() {
+  return (
+    <div className="mx-auto flex aspect-[3/4] w-24 flex-col items-center justify-center gap-1 rounded-3xl border-4 border-white/70 bg-[linear-gradient(145deg,#7c3aed,#312e81)] shadow-lg">
+      <span className="font-display text-5xl font-bold text-white/90">?</span>
+      <AutoAwesomeRoundedIcon className="text-white/70" sx={{ fontSize: 18 }} />
     </div>
   );
 }
@@ -183,7 +193,7 @@ function Reel({ prize, durationMs, onStop }: { prize: ChestPrize; durationMs: nu
         {tiles.map((tile) => (
           <div key={tile.index} className="flex shrink-0 items-center justify-center" style={{ width: `${TILE_REM}rem`, height: '8.5rem' }}>
             {tile.index === finalIndex ? (
-              <PrizeFace prize={prize} mask />
+              <CardBack />
             ) : (
               <div className={cn('flex h-24 w-20 items-center justify-center rounded-2xl border border-edge', tint(tile.tint))}>{DECOYS[tile.decoy]()}</div>
             )}
