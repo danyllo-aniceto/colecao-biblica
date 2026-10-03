@@ -1,0 +1,332 @@
+﻿"Nome";"Resumo curto";"História completa";"Curiosidades";"Onde ler";"Papel na história";"Período";"Livros";"Versículos-chave";"Palavras-chave";"Publicado";"Árvore genealógica";"Linha do tempo"
+"Marcos";"João Marcos, jovem de Jerusalém cuja mãe abria a casa para a igreja, acompanhou Paulo, Barnabé e Pedro; falhou numa viagem missionária, foi restaurado e, segundo a tradição, escreveu o Evangelho de Marcos, o mais curto e provavelmente o primeiro.";"João Marcos era de Jerusalém, filho de uma mulher chamada Maria, que tinha uma casa grande onde os primeiros cristãos se reuniam. Foi justamente para lá que Pedro foi depois de ser libertado da prisão por um anjo, e encontrou ali muitos orando. Marcos era primo de Barnabé, o ""filho da consolação"", o que o aproximou do círculo dos apóstolos. Quando Barnabé e Saulo (Paulo) voltaram de Jerusalém a Antioquia, levaram Marcos como auxiliar.
+Na primeira viagem missionária, Marcos acompanhou os dois como ajudante, passando por Chipre. Mas, ao chegarem a Perge, na Panfília, ele os deixou e voltou para Jerusalém. A Bíblia não explica por quê: as hipóteses vão de saudade de casa e medo dos perigos a discordâncias sobre a abertura aos gentios. O fato é que Paulo considerou aquilo um abandono. Quando Barnabé quis levar Marcos de novo na segunda viagem, Paulo recusou, e a discordância foi tão forte que os dois se separaram: Paulo escolheu Silas e foi pela Síria e Cilícia; Barnabé levou Marcos a Chipre.
+Marcos, porém, não ficou marcado pelo fracasso. Anos depois, Paulo o menciona com carinho, entre os colaboradores que lhe eram de conforto, em Colossenses 4:10 e em Filemom 24. Na última carta, escrita da prisão em Roma pouco antes do martírio, Paulo pede a Timóteo: ""Toma Marcos e traze-o contigo, porque me é muito útil para o ministério"". Pedro também o chama ""meu filho Marcos"", o que sugere uma relação de pai espiritual, e escreve de ""Babilônia"", nome usado para Roma.
+A tradição cristã antiga, a partir de Papias de Hierápolis, registra que Marcos foi intérprete de Pedro e que escreveu, com exatidão, tudo o que lembrava das pregações do apóstolo. Esse é o Evangelho de Marcos, o mais curto dos quatro, vívido e rápido, que descreve Jesus como o Servo sofredor e Filho de Deus e usa muitas vezes a palavra ""imediatamente"". Muitos estudiosos o consideram o primeiro Evangelho escrito, e Mateus e Lucas teriam se baseado nele. Há quem veja em Marcos 14:51-52, o jovem que fugiu nu quando Jesus foi preso, uma assinatura discreta do próprio autor.
+Segundo a tradição, Marcos depois foi para o Egito e fundou a igreja de Alexandria, onde sofreu martírio. A história de Marcos é a história de uma segunda chance: o jovem que abandonou a missão foi recuperado, tornou-se útil a Paulo e a Pedro e escreveu um dos livros mais lidos da Bíblia.";"O nome completo era João Marcos: João era o nome hebraico, e Marcos, o nome romano.
+A casa de sua mãe, Maria, foi um dos primeiros pontos de encontro da igreja em Jerusalém (Atos 12:12).
+Marcos é primo de Barnabé, segundo Colossenses 4:10.
+O Evangelho de Marcos é o mais curto e usa a palavra ""logo"" ou ""imediatamente"" cerca de 40 vezes.
+A discussão entre Paulo e Barnabé por causa de Marcos foi tão séria que os dois seguiram caminhos diferentes (Atos 15:39).
+No final da vida, Paulo pediu a Timóteo que trouxesse Marcos, ""muito útil para o ministério"" (2 Timóteo 4:11).";"Atos 12:12 e 12:25 (a casa de Maria e a volta a Antioquia)
+Atos 13:5 e 13:13 (a viagem com Paulo e Barnabé)
+Atos 15:36-41 (a discordância)
+Colossenses 4:10, Filemom 24 e 2 Timóteo 4:11 (a restauração)
+1 Pedro 5:13 (Marcos com Pedro)
+O Evangelho de Marcos, escrito segundo a tradição por ele";"Colaborador de Pedro, Paulo e Barnabé e autor tradicional do Evangelho de Marcos; exemplo de restauração depois do fracasso";"Igreja primitiva (cerca de 40 a 68 d.C.)";"Marcos, Atos, Colossenses, 2 Timóteo, Filemom, 1 Pedro";"Atos 12:12; Atos 13:13; Colossenses 4:10; 2 Timóteo 4:11; 1 Pedro 5:13";"restauração, discipulado, Evangelho, segunda chance, ministério, Barnabé";"Sim";"graph TD
+  Maria[""Maria, mãe de Marcos""] --> Marcos[""João Marcos""]
+  Maria -.parente.- Barnabe[""Barnabé, o primo""]
+  Marcos -->|auxilia na 1ª viagem| Paulo[""Paulo""]
+  Marcos -->|restaurado por| Paulo
+  Marcos -->|meu filho Marcos| Pedro[""Pedro""]
+  Pedro -->|pregações registradas em| Evangelho[""O Evangelho de Marcos""]
+  Marcos --> Evangelho";"timeline
+  title A vida de Marcos
+  Atos 12 : Pedro vai à casa de Maria, mãe de Marcos
+  Atos 13 : Acompanha Paulo e Barnabé na primeira viagem
+  Atos 13 : Deixa a missão em Perge e volta a Jerusalém
+  Atos 15 : Barnabé o leva a Chipre depois da discordância com Paulo
+  Colossenses 4 : Paulo o menciona como colaborador
+  1 Pedro 5 : Está com Pedro em Roma
+  2 Timóteo 4 : Paulo pede que Marcos seja trazido, pois é útil
+  Tradição : Escreve o Evangelho e funda a igreja de Alexandria"
+"Moisés";"Salvo das águas do Nilo ainda bebê, criado no palácio do faraó e chamado por Deus numa sarça ardente, Moisés libertou Israel da escravidão no Egito, recebeu a Lei no Sinai e conduziu o povo por 40 anos no deserto.";"Moisés nasceu no Egito, filho de Anrão e Joquebede, da tribo de Levi, numa época em que o faraó ordenara que todo menino hebreu fosse lançado ao Nilo. Sua mãe o escondeu por três meses e depois o colocou numa cesta de junco calafetada com betume, entre os juncos da margem, com sua irmã Miriã vigiando de longe. A filha do faraó encontrou o menino, teve compaixão e o adotou, e Miriã providenciou que a própria mãe fosse a ama. Deram-lhe o nome Moisés, ""tirado das águas"". Foi criado no palácio e instruído em toda a sabedoria dos egípcios.
+Já adulto, aos 40 anos, viu um egípcio espancando um hebreu, matou-o e escondeu o corpo. Quando o fato veio à tona, fugiu para Midiã, onde se casou com Zípora, filha do sacerdote Jetro, e foi pastor de ovelhas por outros 40 anos. Um dia, no monte Horebe, viu uma sarça que ardia sem se consumir. Deus o chamou: ""Tira as sandálias, porque o lugar em que estás é terra santa"". Revelou-se como o Deus de Abraão, Isaque e Jacó e deu seu nome: ""EU SOU O QUE SOU"". Moisés argumentou que não sabia falar bem e que ninguém o ouviria, mas Deus lhe deu o cajado e o irmão Arão como porta-voz.
+Moisés e Arão se apresentaram ao faraó pedindo: ""Deixa ir o meu povo"". O faraó endureceu o coração, e vieram dez pragas, da água transformada em sangue à morte dos primogênitos. Na noite da Páscoa, cada família hebreia sacrificou um cordeiro e marcou a porta com o sangue, e o anjo da morte passou por cima delas. O faraó finalmente deixou o povo sair. Quando o exército egípcio os alcançou, junto ao mar Vermelho, Moisés estendeu o cajado: as águas se dividiram, o povo passou a pé enxuto e as águas fecharam sobre os egípcios.
+No deserto, Deus alimentou Israel com maná e codornizes e fez brotar água da rocha. No monte Sinai, Moisés subiu e permaneceu 40 dias na presença de Deus, de onde trouxe as tábuas com os Dez Mandamentos e as instruções para o tabernáculo. Ao descer, encontrou o povo adorando o bezerro de ouro que Arão fizera. Moisés quebrou as tábuas, mas intercedeu: ""Peço-te que lhes perdoes o pecado, ou risca-me do livro"". Deus renovou a aliança. Mais tarde, o povo se recusou a entrar em Canaã por medo e vagou pelo deserto por quarenta anos. Em Meribá, Moisés bateu na rocha em vez de falar a ela, e por isso não entrou na terra prometida.
+Antes de morrer, Moisés pronunciou os discursos de Deuteronômio, relembrando a Lei e chamando o povo a escolher a vida. Entregou a liderança a Josué, subiu o monte Nebo e viu de longe toda a terra. Morreu aos 120 anos, com a vista intacta e o vigor preservado, e o próprio Deus o sepultou. ""Nunca mais se levantou em Israel profeta como Moisés, com quem o Senhor houvesse tratado face a face."" Tradicionalmente, é considerado o autor dos cinco primeiros livros da Bíblia, a Torá.";"Moisés é o profeta de maior destaque do Antigo Testamento e é considerado autor tradicional do Pentateuco, os cinco primeiros livros da Bíblia.
+O nome ""Moisés"" lembra o verbo hebraico ""tirar"" e foi dado pela filha do faraó (Êxodo 2:10).
+Moisés aparece ao lado de Elias na transfiguração de Jesus (Mateus 17:3).
+Viveu três períodos de 40 anos: no palácio, em Midiã e no deserto, morrendo aos 120.
+O Salmo 90 traz no título ""oração de Moisés, homem de Deus"".
+Em Judas 9, o arcanjo Miguel disputa com o diabo pelo corpo de Moisés.
+A serpente de bronze que levantou no deserto é citada por Jesus em João 3:14.";"Êxodo 1 a 4 (nascimento, fuga e sarça ardente)
+Êxodo 7 a 14 (pragas, Páscoa e mar Vermelho)
+Êxodo 19 e 20 (o Sinai e os Dez Mandamentos)
+Êxodo 32 a 34 (o bezerro de ouro e a intercessão)
+Números 20 e Deuteronômio 34 (Meribá e a morte de Moisés)
+Hebreus 11:23-29 (a fé de Moisés)";"Libertador e legislador de Israel; mediador da aliança no Sinai e autor tradicional da Torá";"Êxodo e peregrinação no deserto (cerca de 1500 a 1400 a.C.)";"Êxodo, Levítico, Números, Deuteronômio, Salmos, Mateus, João, Atos, Hebreus";"Êxodo 3:14; Êxodo 14:13-14; Êxodo 20:2-3; Deuteronômio 6:4-5; Deuteronômio 34:10; Hebreus 11:24-25";"libertação, Lei, Êxodo, aliança, intercessão, profeta, mediador";"Sim";"graph TD
+  Levi[""Levi""] --> Coate[""Coate""]
+  Coate --> Anrao[""Anrão""]
+  Anrao ---|e Joquebede| Joquebede[""Joquebede""]
+  Joquebede --> Miria[""Miriã""]
+  Joquebede --> Arao[""Arão""]
+  Joquebede --> Moises[""Moisés""]
+  Jetro[""Jetro, sacerdote de Midiã""] --> Zipora[""Zípora""]
+  Moises ---|casado com| Zipora
+  Zipora --> Gerson[""Gérson""]
+  Zipora --> Eliezer[""Eliézer""]
+  Moises -->|sucessor| Josue[""Josué""]";"timeline
+  title A vida de Moisés
+  Êxodo 2 : Nasce no Egito e é salvo no Nilo
+  Êxodo 2 : Foge para Midiã depois de matar um egípcio
+  Êxodo 3 : Deus o chama na sarça ardente
+  Êxodo 7 a 12 : Enfrenta o faraó e as dez pragas
+  Êxodo 14 : Atravessa o mar Vermelho
+  Êxodo 20 : Recebe os Dez Mandamentos no Sinai
+  Êxodo 32 : Intercede depois do bezerro de ouro
+  Números 20 : Bate na rocha em Meribá
+  Deuteronômio 34 : Vê a terra prometida do monte Nebo e morre aos 120 anos"
+"Naamã";"Comandante do exército de Arã, poderoso e respeitado, mas leproso, Naamã foi curado depois de se humilhar e mergulhar sete vezes no rio Jordão por ordem do profeta Eliseu, e confessou o Deus de Israel como o único Deus.";"Naamã era o chefe do exército do rei de Arã (Síria), um homem ""grande e de muito prestígio diante do seu senhor, porque por ele o Senhor dera livramento à Síria"". Mas havia um problema que nenhuma vitória resolvia: ele era leproso. Numa das incursões contra Israel, os arameus haviam levado cativa uma menina israelita, que passou a servir a mulher de Naamã. Foi ela quem falou: ""Ah, se o meu senhor estivesse diante do profeta que está em Samaria! Ele o curaria da lepra"". A fé de uma menina escravizada abriu o caminho da cura de seu senhor.
+Naamã contou ao rei de Arã, que escreveu uma carta ao rei de Israel e mandou junto dez talentos de prata, seis mil siclos de ouro e dez vestes finas. Ao ler a carta, o rei de Israel rasgou as vestes: ""Sou eu Deus, para matar e para dar vida, para que este homem me mande curar um leproso? Vede como ele procura briga comigo"". O profeta Eliseu soube do ocorrido e mandou dizer: ""Que venha a mim, e saberá que há profeta em Israel"".
+Naamã chegou com cavalos e carros à porta de Eliseu, mas o profeta nem saiu: mandou um mensageiro dizer que se lavasse sete vezes no Jordão. Naamã se irritou: ""Eis que eu dizia comigo: ele sairá a mim, invocará o nome do Senhor, moverá a mão sobre o lugar e curará o leproso. Não são Abana e Farfar, rios de Damasco, melhores do que todas as águas de Israel?"". Voltou furioso. Seus servos, porém, ponderaram: ""Meu pai, se o profeta te tivesse mandado fazer alguma coisa difícil, não a farias? Quanto mais agora, que te diz: Lava-te e ficarás limpo!"".
+Naamã desceu ao Jordão e mergulhou sete vezes, e sua carne voltou ""como a carne de um menino"", e ficou limpo. Voltou a Eliseu e confessou: ""Eis que reconheço que em toda a terra não há Deus, senão em Israel"". Quis dar presentes, mas Eliseu recusou. Naamã pediu então dois muares carregados de terra de Israel, para oferecer holocaustos ao Senhor em seu país, e perguntou se Deus o perdoaria quando acompanhasse o rei ao templo de Rimom. Eliseu respondeu: ""Vai em paz"".
+Mas o servo de Eliseu, Geazi, viu a oportunidade: correu atrás de Naamã, inventou uma história e pegou dois talentos de prata e duas vestes. Quando voltou, Eliseu sabia de tudo: ""Por isso, a lepra de Naamã se pegará a ti e à tua descendência para sempre"". Geazi saiu branco como a neve. Jesus citou Naamã em Nazaré para mostrar que a graça de Deus alcançava também os estrangeiros: ""Muitos leprosos havia em Israel no tempo do profeta Eliseu, e nenhum deles foi purificado, senão Naamã, o sírio"".";"A narrativa mostra duas pessoas sem nome decisivas para a cura: a menina cativa e os servos de Naamã.
+Naamã tinha lepra, termo que na Bíblia pode designar várias doenças de pele.
+Naamã achava que Abana e Farfar, os rios de Damasco, eram melhores que o Jordão, e esse foi o motivo do seu orgulho.
+A cura veio por obediência simples: sete mergulhos, nem mais nem menos.
+Naamã levou ""terra de Israel"" para adorar a Deus na Síria, ideia de que cada território tinha seus deuses.
+Jesus citou o caso de Naamã em Lucas 4:27, causando a ira de seus ouvintes em Nazaré.";"2 Reis 5 (a história completa de Naamã)
+Lucas 4:23-30 (Jesus cita Naamã em Nazaré)";"General estrangeiro curado da lepra; exemplo de humildade e de que a graça de Deus alcança todos os povos";"Reino dividido, época de Eliseu (cerca de 850 a 800 a.C.)";"2 Reis, Lucas";"2 Reis 5:3; 2 Reis 5:10; 2 Reis 5:14; 2 Reis 5:15; Lucas 4:27";"cura, humildade, obediência, lepra, fé, graça";"Sim";"graph TD
+  Rei[""Rei de Arã""] -->|comanda| Naama[""Naamã, general de Arã""]
+  Naama ---|casado com| Esposa[""Sua esposa""]
+  Menina[""Menina israelita cativa""] -->|serve| Esposa
+  Menina -->|indica o profeta| Eliseu[""Eliseu, profeta em Samaria""]
+  Eliseu -->|cura| Naama
+  Eliseu -->|servo| Geazi[""Geazi""]
+  Geazi -->|engana Naamã e fica leproso| Naama";"timeline
+  title A cura de Naamã
+  2 Reis 5 versículos 1 a 3 : Naamã é leproso e uma menina cativa indica o profeta
+  2 Reis 5 versículos 4 a 8 : Parte com cartas e presentes e o rei de Israel se perturba
+  2 Reis 5 versículos 9 a 12 : Eliseu manda lavar-se no Jordão e Naamã se irrita
+  2 Reis 5 versículos 13 e 14 : Os servos o convencem e ele mergulha sete vezes
+  2 Reis 5 versículos 15 a 19 : Confessa o Deus de Israel e leva terra para casa
+  2 Reis 5 versículos 20 a 27 : Geazi ganha a lepra por ganância"
+"Ninrode";"Bisneto de Noé e fundador de grandes cidades na Mesopotâmia, Ninrode é descrito em Gênesis como ""poderoso caçador diante do Senhor""; a tradição o associa a Babel, e seu nome tornou-se sinônimo de poder e ambição humana.";"Ninrode aparece na Tabela das Nações de Gênesis 10 como filho de Cuxe, neto de Cam e bisneto de Noé. A Bíblia lhe dedica apenas alguns versículos, mas o retrato é marcante: ""Ele começou a ser poderoso na terra. Foi poderoso caçador diante do Senhor; por isso se diz: Como Ninrode, poderoso caçador diante do Senhor"". Ele é apresentado como o primeiro grande governante depois do dilúvio, um líder que fundou um reino em lugar de apenas liderar um clã.
+O início do seu reino foi em Babel, Ereque, Acade e Calné, na terra de Sinear, ou seja, a região do sul da Mesopotâmia, hoje Iraque. Dali, diz o texto, ""saiu para a Assíria"", onde edificou Nínive, Reobote-Ir, Calá e Resen, ""a grande cidade"" entre Nínive e Calá. Ele aparece, portanto, como o fundador de cidades que seriam centros de dois grandes impérios antigos: a Babilônia e a Assíria. O profeta Miqueias chama a Assíria de ""a terra de Ninrode"".
+A expressão ""diante do Senhor"" é ambígua em hebraico e tem sido interpretada de duas maneiras: como louvor a um grande caçador sob a bênção divina, ou como um desafio e oposição ""diante da face"" do Senhor. Ao longo da história, a tradição judaica antiga, como a do historiador Josefo e dos targuns, o descreveu como um rebelde que incentivou o povo a construir a torre de Babel e a se desafiar a Deus. A Bíblia, porém, nunca o cita nominalmente em Gênesis 11. Essa ligação vem da tradição e é uma hipótese, não um dado da Escritura.
+O que o texto bíblico deixa claro é que Babel, cuja origem é associada a Ninrode, se tornou símbolo de orgulho humano e de confusão, e que Nínive e a Assíria mais tarde seriam, respectivamente, objeto da pregação de Jonas e instrumentos de juízo sobre Israel. Dessa forma, a breve passagem sobre Ninrode funciona como uma introdução ao tema bíblico dos impérios que se levantam fora de Deus.
+Outros nomes da mesma família também aparecem: seus irmãos Seba, Havilá, Sabtá, Raamá e Sabteca, e os povos de Cuxe, Mizraim (Egito), Pute e Canaã, filhos de Cam. Na cultura popular, ""ninrode"" ficou como sinônimo de caçador hábil, e sua figura continua a inspirar lendas, arte e debates sobre a origem das primeiras civilizações.";"Ninrode é chamado de ""o primeiro poderoso na terra"" (Gênesis 10:8), ou o primeiro grande rei depois do dilúvio.
+A Bíblia diz que ele fundou ou governou cidades como Babel, Nínive e Calá, grandes centros do mundo antigo.
+Miqueias 5:6 chama a Assíria de ""a terra de Ninrode"".
+O nome ""Ninrode"" pode vir do verbo hebraico ""rebelar-se"", o que alimentou a tradição de que ele foi opositor de Deus.
+A ligação entre Ninrode e a torre de Babel não está na Bíblia: vem de tradições judaicas posteriores.
+Seu avô Cam era filho de Noé, e Cuxe, seu pai, deu nome à região conhecida como Cuxe ou Etiópia.";"Gênesis 10:6-12 (Ninrode e suas cidades)
+1 Crônicas 1:8-10 (a genealogia de Ninrode)
+Miqueias 5:6 (a ""terra de Ninrode"")
+Gênesis 11:1-9 (a torre de Babel, associada a ele pela tradição)";"Primeiro grande rei e caçador depois do dilúvio, fundador de cidades da Mesopotâmia; figura associada à ambição humana e a Babel";"Pós-dilúvio, tempos primitivos (data incerta)";"Gênesis, 1 Crônicas, Miqueias";"Gênesis 10:8; Gênesis 10:9; Gênesis 10:10; Miqueias 5:6";"poder, caçador, Babel, Nínive, impérios, ambição, Mesopotâmia";"Sim";"graph TD
+  Noe[""Noé""] --> Cam[""Cam""]
+  Cam --> Cuxe[""Cuxe""]
+  Cam --> Mizraim[""Mizraim, Egito""]
+  Cam --> Pute[""Pute""]
+  Cam --> Canaa[""Canaã""]
+  Cuxe --> Ninrode[""Ninrode""]
+  Cuxe --> Seba[""Seba""]
+  Cuxe --> Havila[""Havilá""]
+  Cuxe --> Sabta[""Sabtá""]
+  Cuxe --> Raama[""Raamá""]
+  Cuxe --> Sabteca[""Sabteca""]
+  Ninrode --> Cidades[""Babel, Ereque, Acade, Calné, Nínive e Calá""]";"timeline
+  title Ninrode
+  Gênesis 9 : Noé, bisavô de Ninrode, sobrevive ao dilúvio e seus filhos repovoam a terra
+  Gênesis 10 versículos 6 a 8 : Ninrode nasce como filho de Cuxe e começa a ser poderoso
+  Gênesis 10 versículo 9 : É conhecido como poderoso caçador diante do Senhor
+  Gênesis 10 versículo 10 : Seu reino começa em Babel, Ereque, Acade e Calné
+  Gênesis 10 versículos 11 e 12 : Vai à Assíria e constrói Nínive e Calá
+  Miqueias 5 : A Assíria é chamada de terra de Ninrode"
+"Noé";"Homem justo numa geração violenta, Noé construiu uma arca por ordem de Deus, salvou a si, a família e os animais do dilúvio e recebeu a promessa de que a terra nunca mais seria destruída por águas, selada pelo arco-íris.";"Noé era filho de Lameque, neto de Matusalém, da linhagem de Sete. Seu pai lhe deu o nome com esperança: ""Este nos consolará"". Quando a terra se encheu de violência e a maldade humana chegou ao ponto de ""toda a imaginação do coração só ser má continuamente"", Deus se arrependeu de ter feito o homem. Mas ""Noé achou graça aos olhos do Senhor"". Era ""homem justo e íntegro entre os seus contemporâneos"" e ""andava com Deus"". Tinha três filhos: Sem, Cam e Jafé.
+Deus lhe revelou que traria um dilúvio e mandou construir uma arca de madeira de gofer, com cerca de 135 metros de comprimento, 22 de largura e 13 de altura, com três pavimentos, uma janela e uma porta lateral. Noé obedeceu, e o texto resume: ""Fez Noé conforme tudo o que Deus lhe ordenara"". Durante a construção, ele pregou a justiça (2 Pedro 2:5), sem que ninguém desse atenção. Quando a arca ficou pronta, Deus enviou animais de toda espécie, casais de cada um e sete casais dos animais limpos, e Noé entrou com a esposa, os filhos e as noras. Tinha 600 anos. ""E o Senhor fechou a porta atrás dele.""
+As fontes do grande abismo se romperam e as comportas do céu se abriram. Choveu quarenta dias e quarenta noites, e as águas prevaleceram por cento e cinquenta dias, cobrindo os mais altos montes. Toda carne que se movia sobre a terra morreu, mas ""Deus se lembrou de Noé"". Mandou um vento sobre a terra e as águas começaram a baixar. A arca pousou nos montes de Ararate. Noé soltou um corvo e depois uma pomba, que voltou com um ramo de oliveira no bico, sinal de que a terra começava a secar. Na segunda vez que a pomba foi solta, não voltou.
+Depois de mais de um ano na arca, Noé saiu, construiu um altar e ofereceu holocaustos. O Senhor sentiu o aroma agradável e disse em seu coração que nunca mais amaldiçoaria a terra por causa do homem. Abençoou Noé e seus filhos e fez uma aliança: ""Nunca mais haverá dilúvio para destruir a terra"". Como sinal, colocou o arco-íris nas nuvens: ""Porei o meu arco nas nuvens, e será por sinal da aliança entre mim e a terra"".
+A história de Noé termina com um episódio difícil: ele plantou uma vinha, bebeu do vinho e ficou embriagado e nu dentro da tenda. Cam viu e contou aos irmãos; Sem e Jafé, de costas, cobriram o pai. Noé abençoou Sem e Jafé e amaldiçoou Canaã, filho de Cam. Viveu 950 anos. Das três famílias, Sem, Cam e Jafé, repovoaram a terra, e a Bíblia relaciona delas as nações. Jesus compara a volta do Filho do Homem aos dias de Noé, e Hebreus 11:7 destaca sua fé: ""Pela fé, Noé, divinamente instruído acerca de coisas que ainda não se viam, temeu e preparou a arca"".";"O nome ""Noé"" lembra a ideia de descanso e consolo (Gênesis 5:29).
+A arca tinha cerca de 300 côvados de comprimento, 50 de largura e 30 de altura, aproximadamente 135 por 22 por 13 metros.
+Noé tinha 600 anos quando o dilúvio começou e viveu 950 anos, segundo Gênesis 9:29.
+O arco-íris é o sinal da aliança de Deus com toda a terra, e Deus diz que o verá para ""se lembrar"" da aliança.
+Ezequiel 14:14 cita Noé, Daniel e Jó como homens exemplares de justiça.
+Jesus compara os dias de Noé aos dias da volta do Filho do Homem (Mateus 24:37-39).
+Pedro lembra que oito pessoas foram salvas pela água na arca (1 Pedro 3:20).";"Gênesis 5:28-32 e 6:5-22 (a geração de Noé e a ordem de construir a arca)
+Gênesis 7 e 8 (o dilúvio e a saída da arca)
+Gênesis 9 (a aliança, o arco-íris e a embriaguez)
+Mateus 24:37-39 e Hebreus 11:7 (Noé no Novo Testamento)
+1 Pedro 3:20 e 2 Pedro 2:5 (Noé, pregador da justiça)";"Construtor da arca e sobrevivente do dilúvio; pai da humanidade pós-dilúvio e beneficiário da primeira aliança com toda a criação";"Tempos primitivos, antes e depois do dilúvio (data incerta)";"Gênesis, 1 Crônicas, Isaías, Ezequiel, Mateus, Lucas, Hebreus, 1 Pedro, 2 Pedro";"Gênesis 6:8-9; Gênesis 6:22; Gênesis 8:1; Gênesis 9:13; Hebreus 11:7";"arca, dilúvio, obediência, aliança, arco-íris, justiça, graça";"Sim";"graph TD
+  Sete[""Sete""] --> Enos[""Enos""]
+  Enos --> Caina[""Cainã""]
+  Caina --> Maalalel[""Maalalel""]
+  Maalalel --> Jarede[""Jarede""]
+  Jarede --> Enoque[""Enoque""]
+  Enoque --> Matusalem[""Matusalém""]
+  Matusalem --> Lameque[""Lameque""]
+  Lameque --> Noe[""Noé""]
+  Noe --> Sem[""Sem""]
+  Noe --> Cam[""Cam""]
+  Noe --> Jafe[""Jafé""]
+  Sem --> Abraao[""Linhagem que leva a Abraão""]
+  Cam --> Povos[""Cuxe, Mizraim, Pute e Canaã""]
+  Jafe --> Povos2[""Gômer, Magogue, Madai, Javã, Tubal, Meseque e Tiras""]";"timeline
+  title A vida de Noé
+  Gênesis 5 : Nasce e recebe o nome que significa consolo
+  Gênesis 6 : Encontra graça diante de Deus e constrói a arca
+  Gênesis 7 : Entra na arca aos 600 anos e começa o dilúvio
+  Gênesis 8 : A arca pousa em Ararate e Noé solta o corvo e a pomba
+  Gênesis 8 : Sai da arca e oferece sacrifícios
+  Gênesis 9 : Deus faz aliança e coloca o arco-íris nas nuvens
+  Gênesis 9 : A embriaguez de Noé e a bênção sobre Sem e Jafé
+  Gênesis 9 : Morre aos 950 anos"
+"Paulo";"De perseguidor da igreja a maior missionário do cristianismo, Paulo foi transformado por uma visão de Jesus no caminho de Damasco, plantou igrejas pelo Império Romano e escreveu treze cartas do Novo Testamento.";"Paulo, chamado originalmente Saulo, nasceu em Tarso, na Cilícia, da tribo de Benjamim, hebreu de hebreus, fariseu, educado em Jerusalém aos pés de Gamaliel. Era também cidadão romano, o que lhe daria proteção jurídica em muitas ocasiões. Zeloso pela Lei, tornou-se perseguidor da igreja: esteve presente quando Estêvão foi apedrejado, guardando as vestes dos executores, e depois foi de casa em casa prendendo cristãos. Quando partiu para Damasco com cartas para prender os seguidores de Jesus, uma luz do céu o derrubou e uma voz disse: ""Saulo, Saulo, por que me persegues?"". ""Quem és, Senhor?"" ""Eu sou Jesus, a quem tu persegues."" Ficou cego por três dias até que Ananias, um discípulo, o visitou, impôs-lhe as mãos e o batizou.
+Depois de um período na Arábia e em Damasco, e de anos de preparo, Paulo foi chamado por Barnabé para trabalhar em Antioquia. Dali, a igreja enviou os dois na primeira viagem missionária, passando por Chipre e pelas cidades da Galácia. Em Listra, após ser apedrejado e dado por morto, levantou-se e seguiu viagem. No concílio de Jerusalém, defendeu que os gentios não precisavam se circuncidar para ser salvos. Na segunda viagem, com Silas e depois Timóteo, levou o evangelho à Europa: Filipos, Tessalônica, Atenas, onde falou no Areópago, e Corinto, onde ficou um ano e meio. Na terceira viagem, ficou três anos em Éfeso.
+Em todas as cidades, Paulo fundava comunidades e depois as acompanhava por cartas. Suas treze epístolas incluem Romanos, a mais densa exposição do evangelho; 1 e 2 Coríntios, que tratam de problemas práticos da igreja; Gálatas, sobre a liberdade em Cristo; Efésios, Filipenses e Colossenses; 1 e 2 Tessalonicenses; 1 e 2 Timóteo e Tito, cartas pastorais; e Filemom, um bilhete pessoal em favor do escravo Onésimo. Em 2 Coríntios, lista seus sofrimentos: açoites, apedrejamento, naufrágios, perigos de rios, de ladrões e de falsos irmãos, e fala de um ""espinho na carne"" que Deus não removeu: ""A minha graça te basta"".
+De volta a Jerusalém, Paulo foi preso no templo por causa de uma acusação falsa e passou dois anos detido em Cesareia. Como cidadão romano, apelou a César e foi enviado a Roma. Na viagem, o navio foi dominado por uma tempestade, e Paulo, por revelação, anunciou que todos se salvariam; naufragaram em Malta, onde uma víbora o mordeu, sem consequência. Em Roma, viveu em prisão domiciliar por dois anos, pregando ""com toda a liberdade e sem impedimento"".
+A tradição afirma que Paulo foi solto, viajou mais e foi preso de novo, sendo executado por decapitação em Roma, sob Nero, por volta de 64 a 67 d.C. Sua última carta, 2 Timóteo, é um testamento: ""Combati o bom combate, completei a carreira, guardei a fé. Desde agora, a coroa da justiça me está guardada"". A mudança de Saulo, o perseguidor, em Paulo, o apóstolo, é um dos maiores testemunhos de graça da Bíblia.";"Paulo escreveu 13 dos 27 livros do Novo Testamento, e Atos dedica mais da metade de seu texto às suas viagens.
+Seu ofício era fazer tendas (Atos 18:3), e ele trabalhou com as próprias mãos para não ser peso às igrejas.
+Era chamado ""Saulo"" em hebraico e ""Paulo"" em latim, e passou a ser mais conhecido por esse último nome entre os gentios.
+Era cidadão romano de nascimento, privilégio que o livrou de açoites em Filipos e levou seu caso a Roma.
+Em 2 Coríntios 12, Paulo fala de um ""espinho na carne"" que Deus não retirou, pois ""o poder se aperfeiçoa na fraqueza"".
+Pedro, em 2 Pedro 3:15-16, diz que há pontos difíceis de entender nas cartas de Paulo e as coloca ao lado das demais Escrituras.";"Atos 7:58 a 9:31 (Estêvão, Damasco e a conversão)
+Atos 13 e 14 (a primeira viagem)
+Atos 16 a 18 (a segunda viagem e a chegada à Europa)
+Atos 19 a 21 (a terceira viagem e a prisão)
+Atos 27 e 28 (o naufrágio e Roma)
+Romanos 1 a 8 e 2 Timóteo 4 (a mensagem e o testamento de Paulo)";"Apóstolo dos gentios, missionário e autor de treze cartas; principal teólogo do cristianismo primitivo";"Igreja primitiva (cerca de 5 a 67 d.C.)";"Atos, Romanos, 1 Coríntios, 2 Coríntios, Gálatas, Efésios, Filipenses, Colossenses, 1 Tessalonicenses, 2 Tessalonicenses, 1 Timóteo, 2 Timóteo, Tito, Filemom";"Atos 9:15; Romanos 1:16; Gálatas 2:20; Filipenses 4:13; 2 Timóteo 4:7";"conversão, missão, graça, cartas, perseguição, gentios, fé";"Sim";"graph TD
+  Benjamim[""Tribo de Benjamim, em Tarso""] --> Paulo[""Paulo, antes Saulo""]
+  Gamaliel[""Gamaliel, mestre em Jerusalém""] -->|ensina| Paulo
+  Ananias[""Ananias, em Damasco""] -->|batiza| Paulo
+  Barnabe[""Barnabé""] -->|apresenta e leva à missão| Paulo
+  Paulo -->|companheiro| Silas[""Silas""]
+  Paulo -->|filho na fé| Timoteo[""Timóteo""]
+  Paulo -->|filho na fé| Tito[""Tito""]
+  Paulo -->|colaboradores| Priscila[""Priscila e Áquila""]
+  Paulo -->|colaborador| Lucas[""Lucas""]";"timeline
+  title A vida de Paulo
+  Atos 7 : Guarda as vestes dos que apedrejam Estêvão
+  Atos 9 : Encontra Jesus no caminho de Damasco
+  Atos 13 e 14 : Primeira viagem missionária com Barnabé
+  Atos 15 : Defende os gentios no concílio de Jerusalém
+  Atos 16 a 18 : Segunda viagem e chegada à Europa
+  Atos 19 e 20 : Terceira viagem e três anos em Éfeso
+  Atos 21 a 26 : Preso em Jerusalém e levado a Cesareia
+  Atos 27 e 28 : Naufraga em Malta e chega a Roma
+  2 Timóteo 4 : Escreve seu testamento antes da execução"
+"Pedro";"Pescador de Cafarnaum chamado por Jesus, Pedro foi o discípulo mais impetuoso: confessou Jesus como o Cristo, negou-o três vezes, foi restaurado e liderou a igreja nascente até o martírio em Roma.";"Simão, filho de Jonas, era pescador no mar da Galileia, de Betsaida, e vivia em Cafarnaum. Foi seu irmão André quem o levou a Jesus, que lhe disse: ""Tu és Simão, filho de João; serás chamado Cefas"", em grego Pedro, ""pedra"". Mais tarde, depois de uma pesca milagrosa, Pedro caiu aos pés de Jesus e disse: ""Senhor, retira-te de mim, porque sou homem pecador"". Jesus respondeu: ""Não temas; de agora em diante serás pescador de homens"". Pedro deixou as redes e o seguiu. Em casa, sua sogra foi curada de febre, e a Bíblia sugere que era casado.
+Entre os doze, Pedro é sempre o primeiro da lista e o que mais fala. Foi um dos três do círculo íntimo, com Tiago e João, que viram a transfiguração e a ressurreição da filha de Jairo. Ao ver Jesus andando sobre as águas, pediu para ir ao seu encontro; andou alguns passos e, ao olhar para o vento, começou a afundar. Em Cesareia de Filipe, quando Jesus perguntou ""Quem dizeis que eu sou?"", Pedro respondeu: ""Tu és o Cristo, o Filho do Deus vivo"". Jesus declarou: ""Sobre esta pedra edificarei a minha igreja"". Logo depois, Pedro repreendeu Jesus por falar de sua morte e recebeu uma dura resposta: ""Para trás de mim, Satanás"".
+Na noite da prisão, Pedro prometeu fidelidade: ""Ainda que todos se escandalizem, eu não"". Jesus avisou que, antes do galo cantar, ele o negaria três vezes. Pedro cortou a orelha de um servo no jardim e depois seguiu Jesus de longe até o pátio do sumo sacerdote. Ali, três vezes negou conhecê-lo e, quando o galo cantou, Jesus olhou para ele; Pedro saiu e chorou amargamente. Depois da ressurreição, Jesus apareceu-lhe pessoalmente. Junto ao mar da Galileia, perguntou-lhe três vezes: ""Simão, filho de João, tu me amas?"". Pedro, entristecido, respondeu: ""Senhor, tu sabes tudo; tu sabes que eu te amo"". Jesus o restaurou: ""Apascenta as minhas ovelhas"".
+No dia de Pentecostes, cheio do Espírito, Pedro pregou em Jerusalém e cerca de três mil pessoas foram batizadas. Curou um coxo na porta do templo, enfrentou o Sinédrio (""Importa obedecer antes a Deus do que aos homens"") e foi preso e libertado por um anjo. Em Jope, teve a visão do lençol com animais e foi à casa do centurião Cornélio, em Cesareia, onde o Espírito desceu sobre os gentios: foi o início da abertura da igreja às nações. Mais tarde, Paulo o repreendeu publicamente por recuar diante dos judaizantes em Antioquia.
+Pedro escreveu duas cartas, 1 e 2 Pedro, a cristãos que sofriam perseguição, encorajando-os a viver como ""pedras vivas"" e a confiar em Deus. A tradição conta que foi preso em Roma durante a perseguição de Nero e crucificado de cabeça para baixo, por não se considerar digno de morrer como seu Senhor. Jesus já lhe havia dito, em João 21:18-19, que ele morreria por glorificar a Deus.";"O nome ""Pedro"" vem do grego petros, ""pedra"", tradução do aramaico Cefas.
+Pedro é o discípulo mais mencionado nos Evangelhos, depois de Jesus.
+Foi o único discípulo que andou sobre as águas como Jesus (Mateus 14:29).
+A negação de Pedro é narrada nos quatro Evangelhos, e sua restauração, em João 21, também usa três perguntas.
+Em Atos 5:15, as pessoas colocavam enfermos nas ruas para que a sombra de Pedro os alcançasse.
+A tradição diz que Pedro foi crucificado de cabeça para baixo em Roma.
+Escreveu 1 e 2 Pedro, e a tradição liga o Evangelho de Marcos a suas pregações.";"Mateus 4:18-20 e Lucas 5:1-11 (o chamado de Pedro)
+Mateus 14:22-33 (andando sobre as águas)
+Mateus 16:13-23 (a confissão e a repreensão)
+Lucas 22:54-62 e João 21:15-19 (a negação e a restauração)
+Atos 2 e 10 (Pentecostes e Cornélio)
+1 Pedro e 2 Pedro (suas cartas)";"Discípulo mais próximo de Jesus e líder da igreja nascente; símbolo de fé impetuosa, queda e restauração";"Ministério de Jesus e igreja primitiva (cerca de 27 a 67 d.C.)";"Mateus, Marcos, Lucas, João, Atos, 1 Coríntios, Gálatas, 1 Pedro, 2 Pedro";"Mateus 16:16; Mateus 16:18; Lucas 22:62; João 21:17; Atos 2:38; 1 Pedro 2:5";"discípulo, confissão, negação, restauração, Pentecostes, liderança, perseguição";"Sim";"graph TD
+  Jonas[""Jonas ou João""] --> Pedro[""Simão Pedro""]
+  Jonas --> Andre[""André""]
+  Pedro ---|casado, com sogra curada por Jesus| Esposa[""Sua esposa""]
+  Andre -->|apresenta a Jesus| Pedro
+  Pedro -.círculo íntimo.- Tiago[""Tiago, filho de Zebedeu""]
+  Pedro -.círculo íntimo.- Joao[""João, filho de Zebedeu""]
+  Pedro -->|meu filho Marcos| Marcos[""João Marcos""]
+  Jesus[""Jesus""] -->|chama e restaura| Pedro";"timeline
+  title A vida de Pedro
+  João 1 : André leva Simão a Jesus que lhe dá o nome Pedro
+  Lucas 5 : Deixa as redes e segue Jesus
+  Mateus 14 : Anda sobre as águas e começa a afundar
+  Mateus 16 : Confessa que Jesus é o Cristo
+  Lucas 22 : Nega Jesus três vezes e chora amargamente
+  João 21 : É restaurado à beira do mar
+  Atos 2 : Prega em Pentecostes e três mil são batizados
+  Atos 10 : Leva o evangelho à casa de Cornélio
+  Tradição : É martirizado em Roma sob Nero"
+"Rute";"Jovem moabita que, depois de perder o marido, escolheu ficar com a sogra Noemi e seguir o Deus de Israel; sua lealdade a levou a Belém, ao casamento com Boaz e a ser bisavó do rei Davi e ancestral de Jesus.";"No tempo dos juízes, uma fome atingiu Belém e um homem chamado Elimeleque levou a esposa Noemi e os filhos Malom e Quiliom para viver em Moabe. Lá, Elimeleque morreu, e os filhos se casaram com mulheres moabitas: Orfa e Rute. Depois de dez anos, Malom e Quiliom também morreram, e Noemi ficou viúva, sem filhos e longe da terra natal. Ouvindo que o Senhor tinha visitado seu povo e dado pão, resolveu voltar a Belém e aconselhou as noras a retornarem à casa de suas mães. Orfa, com lágrimas, voltou. Rute se apegou à sogra.
+A resposta de Rute se tornou uma das declarações de lealdade mais famosas da Bíblia: ""Não me instes para que te deixe e me afaste de ti; porque aonde quer que fores, irei eu; e onde quer que pousares, ali pousarei eu; o teu povo será o meu povo, e o teu Deus será o meu Deus. Onde quer que morreres, morrerei eu, e ali serei sepultada. Assim me faça o Senhor, e outro tanto, se outra coisa que não seja a morte me separar de ti"". Noemi voltou a Belém acompanhada por uma estrangeira, e as mulheres da cidade mal a reconheceram: ""Não me chameis Noemi, chamai-me Mara, porque o Todo-poderoso me tem tratado com muita amargura"".
+Chegaram a Belém no início da colheita da cevada. Para sustentar a sogra, Rute pediu para respigar atrás dos ceifeiros, recolhendo as espigas que sobravam, como a Lei de Moisés permitia aos pobres e estrangeiros. Foi parar justamente no campo de Boaz, um homem rico e parente de Elimeleque. Boaz perguntou quem era a moça, soube de sua história e a tratou com bondade: pediu que bebesse da água dos servos, que comesse com os ceifeiros e ordenou que deixassem espigas de propósito para ela. Rute perguntou por que recebia tanto favor, sendo estrangeira, e Boaz respondeu que soubera de toda a sua fidelidade à sogra.
+Noemi percebeu a providência de Deus: Boaz era ""remidor"", um parente que, pela Lei, podia resgatar a propriedade da família e se casar com a viúva para dar continuidade ao nome do falecido. Instruiu Rute a ir à eira à noite e deitar-se aos pés de Boaz. Ele a acolheu com honra e prometeu cumprir seu papel, mas havia um parente mais próximo. De manhã, Boaz foi à porta da cidade e, diante dos anciãos, perguntou ao outro se desejava resgatar a terra; o parente recusou ao saber que isso incluía casar-se com Rute. Boaz anunciou que adquiria tudo o que pertencera a Elimeleque e que tomava Rute por esposa.
+O Senhor lhes deu um filho, Obede, e as mulheres disseram a Noemi: ""Bendito seja o Senhor, que não deixou hoje de te dar um remidor... pois a tua nora, que te ama, e que te é melhor do que sete filhos, o deu à luz"". Noemi tomou o menino ao colo e foi sua ama. Obede foi pai de Jessé, e Jessé, pai de Davi. Rute, a estrangeira de Moabe, entra assim na linhagem do rei Davi e, em Mateus 1, na genealogia de Jesus.";"Rute é uma das cinco mulheres mencionadas na genealogia de Jesus em Mateus 1 (com Tamar, Raabe, Bate-Seba e Maria).
+Rute era moabita, povo com quem Israel tinha relações difíceis, e ainda assim entrou na linhagem do Messias.
+O livro de Rute é lido na festa judaica de Shavuot (Pentecostes), que coincide com a colheita.
+A palavra hebraica goel (remidor) designa o parente que resgata, imagem usada depois para falar de Deus como Redentor.
+A prática de respigar (colher o que sobra) era uma proteção aos pobres e estrangeiros (Levítico 19:9-10).
+O nome ""Noemi"" significa ""minha doçura"", e Mara significa ""amarga"".";"Rute 1 (a perda e a decisão de Rute)
+Rute 2 (a colheita no campo de Boaz)
+Rute 3 (a eira e o pedido de proteção)
+Rute 4 (o resgate, o casamento e a genealogia)
+Mateus 1:5 (Rute na genealogia de Jesus)";"Estrangeira fiel que se tornou ancestral de Davi e de Jesus; símbolo de lealdade, de acolhimento e do cuidado de Deus com todos os povos";"Época dos juízes (cerca de 1100 a.C.)";"Rute, Mateus";"Rute 1:16; Rute 1:17; Rute 2:12; Rute 3:11; Rute 4:14";"lealdade, fé, providência, remidor, colheita, estrangeira, Belém";"Sim";"graph TD
+  Elimeleque[""Elimeleque de Belém""] ---|casado com| Noemi[""Noemi""]
+  Noemi --> Malom[""Malom""]
+  Noemi --> Quiliom[""Quiliom""]
+  Malom ---|casado com| Rute[""Rute, de Moabe""]
+  Quiliom ---|casado com| Orfa[""Orfa""]
+  Salmom[""Salmom""] ---|e Raabe| Boaz[""Boaz""]
+  Boaz ---|depois casa com| Rute
+  Rute --> Obede[""Obede""]
+  Obede --> Jesse[""Jessé""]
+  Jesse --> Davi[""Davi""]
+  Davi --> Jesus[""Jesus, o Messias""]";"timeline
+  title A história de Rute
+  Rute 1 : Elimeleque e a família vão para Moabe por causa da fome
+  Rute 1 : Morrem Elimeleque e, dez anos depois, os dois filhos
+  Rute 1 : Rute decide ficar com Noemi e volta com ela a Belém
+  Rute 2 : Respiga no campo de Boaz e encontra favor
+  Rute 3 : Vai à eira e pede o resgate de Boaz
+  Rute 4 : Boaz resgata a terra e se casa com Rute
+  Rute 4 : Nasce Obede, avô de Davi"
+"Salomão";"Filho de Davi e rei de Israel, Salomão pediu sabedoria a Deus e se tornou o homem mais sábio da terra; construiu o templo em Jerusalém e levou o reino ao auge, mas seu coração se desviou e o reino foi dividido depois de sua morte.";"Salomão era filho de Davi e de Bate-Seba. Quando Davi estava velho, seu filho Adonias tentou tomar o trono, mas o profeta Natã e Bate-Seba lembraram o rei de que havia prometido o reino a Salomão. Zadoque, o sacerdote, e Natã o ungiram rei em Giom, e Davi, antes de morrer, o instruiu: ""Guarda o que o Senhor teu Deus ordena, andando nos seus caminhos"". Salomão consolidou o poder e começou seu governo oferecendo mil holocaustos em Gibeão. Ali, em sonho, Deus lhe disse: ""Pede o que queres que eu te dê"".
+Salomão respondeu com humildade: ""Sou ainda menino... Dá, pois, ao teu servo um coração entendido para julgar o teu povo e para discernir entre o bem e o mal"". Agradou a Deus que ele não pedisse riqueza, nem vida longa, nem a morte de inimigos. O Senhor concedeu o que pediu e acrescentou o que não pedira: riqueza e honra. A sabedoria de Salomão foi demonstrada num caso célebre: duas mulheres disputavam um bebê, e o rei mandou dividi-lo ao meio; a verdadeira mãe preferiu perder o filho a vê-lo morto, e foi assim identificada. Todo Israel viu que havia nele ""a sabedoria de Deus para fazer justiça"".
+Salomão compôs três mil provérbios e mil e cinco cânticos, falou sobre árvores, animais e aves, e vinham reis de toda a terra ouvir sua sabedoria. Tradicionalmente, é autor de Provérbios, Eclesiastes e Cântico dos Cânticos, além de alguns salmos. No quarto ano de seu reinado, começou a construir o templo de Jerusalém, o sonho de seu pai Davi; a obra durou sete anos, com madeira de cedro do Líbano, ouro e pedras preciosas. Na dedicação, Salomão orou de joelhos diante de todo o povo, e a glória do Senhor encheu a casa. Construiu também seu palácio, o muro de Jerusalém e cidades de abastecimento.
+A fama de Salomão atraiu a rainha de Sabá, que veio de longe com camelos, especiarias e ouro. Depois de fazer perguntas difíceis e ver o palácio, o templo e a ordem da corte, exclamou: ""Nem a metade me tinha sido contada"". O reino de Salomão chegou ao auge: ouro em abundância, trono de marfim, milhares de cavalos e carros.
+Mas a história tem um fim triste. Contrariando a Lei, que mandava o rei não multiplicar mulheres nem cavalos, Salomão teve 700 esposas e 300 concubinas, muitas estrangeiras, que desviaram seu coração para outros deuses. Ele construiu altares a Astarote, Quemos e Moloque. O Senhor lhe apareceu duas vezes e anunciou que, por causa dessa infidelidade, o reino seria dividido, ainda que não em seus dias, por amor a Davi. Salomão reinou 40 anos e morreu; seu filho Roboão o sucedeu, e dez tribos se rebelaram, formando o Reino do Norte. Em Eclesiastes, escreve a conclusão de uma vida de experiência: ""Teme a Deus e guarda os seus mandamentos, porque isto é o dever de todo homem"". Jesus diria dele: ""Aqui está quem é maior do que Salomão"".";"O nome ""Salomão"" vem de ""shalom"" e significa ""pacífico"" ou ""o de paz""; Deus o chamou também de Jedidias, ""amado do Senhor"".
+Segundo 1 Reis 4:32, Salomão compôs 3.000 provérbios e 1.005 cânticos.
+O templo que construiu levou sete anos e usou cedro do Líbano, ouro e bronze (1 Reis 6).
+Jesus o cita em Mateus 12:42: a rainha do Sul veio ouvir a sabedoria de Salomão, e ""aqui está quem é maior do que Salomão"".
+O rei recebia cerca de 666 talentos de ouro por ano (1 Reis 10:14).
+Segundo 1 Reis 11:3, teve 700 esposas e 300 concubinas, o que o levou à idolatria.
+Salomão é considerado autor de Provérbios, Eclesiastes, Cântico dos Cânticos e dos Salmos 72 e 127.";"1 Reis 1 e 2 (a sucessão ao trono)
+1 Reis 3 (o pedido de sabedoria e o julgamento das duas mulheres)
+1 Reis 5 a 8 (a construção e a dedicação do templo)
+1 Reis 10 (a rainha de Sabá)
+1 Reis 11 (a apostasia e a divisão do reino)
+Provérbios, Eclesiastes e Cântico dos Cânticos (obras atribuídas a ele)";"Terceiro rei de Israel; construtor do templo e símbolo máximo de sabedoria; seu desvio na velhice levou à divisão do reino";"Monarquia unida (cerca de 970 a 931 a.C.)";"2 Samuel, 1 Reis, 1 Crônicas, 2 Crônicas, Salmos, Provérbios, Eclesiastes, Cânticos, Mateus, Lucas";"1 Reis 3:9; 1 Reis 4:29; 1 Reis 8:27; Provérbios 1:7; Eclesiastes 12:13";"sabedoria, templo, riqueza, paz, idolatria, divisão do reino";"Sim";"graph TD
+  Davi[""Davi""] --> Salomao[""Salomão""]
+  BateSeba[""Bate-Seba""] --> Salomao
+  Davi ---|casado com| BateSeba
+  Davi --> Adonias[""Adonias""]
+  Salomao ---|casado com| Naama[""Naamá, a amonita""]
+  Naama --> Roboao[""Roboão, rei de Judá""]
+  Salomao --> Jeroboao[""Jeroboão, servo que formou o Reino do Norte""]
+  Roboao --> Dinastia[""Dinastia de Davi, até o Messias""]
+  Dinastia --> Jesus[""Jesus""]";"timeline
+  title O reinado de Salomão
+  1 Reis 1 : É ungido rei em lugar de Adonias
+  1 Reis 3 : Pede sabedoria a Deus em Gibeão
+  1 Reis 3 : Julga o caso das duas mulheres
+  1 Reis 6 : Começa a construir o templo de Jerusalém
+  1 Reis 8 : Dedica o templo com uma oração diante do povo
+  1 Reis 10 : Recebe a visita da rainha de Sabá
+  1 Reis 11 : Seu coração se desvia para outros deuses
+  1 Reis 11 : Morre após 40 anos de reinado e o reino é dividido"
+"Tiago(Maior)";"Filho de Zebedeu e irmão de João, Tiago foi um dos três discípulos mais próximos de Jesus; chamado ""filho do trovão"", foi o primeiro apóstolo a morrer como mártir, executado à espada por Herodes Agripa I.";"Tiago era filho de Zebedeu e de Salomé e irmão de João. Pescador no mar da Galileia, trabalhava com o pai e os empregados quando Jesus passou e os chamou: ""Vinde após mim, e eu vos farei pescadores de homens"". Tiago e João deixaram o barco e o pai e o seguiram. Sócios de Pedro e André, formavam com eles o grupo mais próximo de Jesus. É chamado ""Maior"" na tradição para distinguir de outro apóstolo, Tiago, filho de Alfeu (""Menor""), e não deve ser confundido com Tiago, irmão do Senhor, autor da carta de Tiago.
+Tiago, junto com Pedro e João, fez parte do círculo íntimo de Jesus: só os três presenciaram a ressurreição da filha de Jairo, a transfiguração no monte e a oração no Getsêmani, quando Jesus lhes pediu que vigiassem. Jesus deu aos irmãos Tiago e João o apelido de ""Boanerges"", que significa ""filhos do trovão"", provavelmente pelo temperamento fogoso. Em Lucas 9, quando uma aldeia samaritana não quis receber Jesus, os dois perguntaram: ""Senhor, queres que mandemos descer fogo do céu para os consumir?"". Jesus os repreendeu: ""Não sabeis de que espírito sois"".
+Outra cena revela a ambição dos dois. Salomé, a mãe, pediu a Jesus que seus filhos se sentassem um à direita e outro à esquerda no reino. Jesus respondeu: ""Não sabeis o que pedis. Podeis beber o cálice que eu estou para beber?"". Eles disseram: ""Podemos"". Jesus confirmou que beberiam seu cálice, mas ensinou que a grandeza no Reino é servir: ""Quem quiser tornar-se grande entre vós será vosso servo"". Os demais discípulos se indignaram, e Jesus os reuniu para ensinar que o Filho do Homem não veio para ser servido, mas para servir.
+Depois da ressurreição e de Pentecostes, Tiago permaneceu com a igreja em Jerusalém. Pouco se diz dele em Atos, exceto sobre a sua morte: ""Por aquele tempo, o rei Herodes começou a perseguir alguns da igreja. E mandou matar à espada Tiago, irmão de João"". Foi o primeiro dos doze apóstolos martirizado, por volta de 44 d.C. A profecia de Jesus sobre o ""cálice"" se cumpria: Tiago foi o primeiro a beber dele. Seu irmão João, segundo a tradição, foi o último dos doze a morrer.
+Uma antiga tradição ibérica afirma que Tiago pregou na Espanha e que seus restos foram levados para Santiago de Compostela, na Galícia, que se tornou um dos maiores destinos de peregrinação da cristandade, o Caminho de Santiago. Essa tradição é muito antiga e popular, mas não aparece na Bíblia. O que a Escritura mostra é um homem de coragem, que passou de discípulo ambicioso a mártir fiel.";"Tiago e João receberam de Jesus o apelido ""Boanerges"", ""filhos do trovão"" (Marcos 3:17).
+Tiago foi o primeiro dos doze apóstolos a ser martirizado, por volta de 44 d.C. (Atos 12:2).
+Pertencia ao círculo mais íntimo de Jesus, com Pedro e João, nos momentos de maior glória e de maior angústia.
+Seu nome é a forma portuguesa de ""Jacó"", em hebraico Ya'akov.
+Não é o autor da carta de Tiago, escrita por Tiago, irmão do Senhor, líder da igreja em Jerusalém.
+A tradição liga seu nome a Santiago de Compostela, na Espanha, destino do ""Caminho de Santiago"".";"Marcos 1:16-20 (o chamado de Tiago e João)
+Marcos 3:13-19 (os doze e o apelido ""filhos do trovão"")
+Marcos 5:35-43, 9:2-13 e 14:32-42 (o círculo íntimo)
+Lucas 9:51-56 (o fogo do céu)
+Marcos 10:35-45 (o pedido pelos tronos)
+Atos 12:1-2 (a morte de Tiago)";"Um dos três discípulos mais próximos de Jesus e primeiro apóstolo mártir; irmão de João e filho de Zebedeu";"Ministério de Jesus e igreja primitiva (cerca de 27 a 44 d.C.)";"Mateus, Marcos, Lucas, João, Atos";"Marcos 1:17; Marcos 3:17; Marcos 10:38; Lucas 9:54; Atos 12:2";"discípulo, círculo íntimo, filhos do trovão, ambição, martírio, serviço";"Sim";"graph TD
+  Zebedeu[""Zebedeu""] --> Tiago[""Tiago, o Maior""]
+  Zebedeu --> Joao[""João""]
+  Salome[""Salomé""] --> Tiago
+  Salome --> Joao
+  Zebedeu ---|casado com| Salome
+  Tiago -.sócio.- Pedro[""Pedro""]
+  Tiago -.sócio.- Andre[""André""]
+  Jesus[""Jesus""] -->|chama e envia| Tiago
+  Herodes[""Herodes Agripa I""] -->|manda matar à espada| Tiago";"timeline
+  title A vida de Tiago, o Maior
+  Marcos 1 : É chamado por Jesus junto com João enquanto pescava
+  Marcos 3 : Torna-se um dos doze e recebe o apelido de filho do trovão
+  Marcos 5 : Presencia a ressurreição da filha de Jairo
+  Marcos 9 : Vê a transfiguração de Jesus
+  Lucas 9 : Quer chamar fogo do céu sobre uma aldeia samaritana
+  Marcos 10 : Pede um lugar de honra no reino e aprende que servir é ser grande
+  Marcos 14 : Vigia com Pedro e João no Getsêmani
+  Atos 12 : Herodes Agripa I o mata à espada por volta de 44 d.C."
