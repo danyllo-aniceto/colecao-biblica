@@ -1,0 +1,308 @@
+﻿"Nome";"Resumo curto";"História completa";"Curiosidades";"Onde ler";"Papel na história";"Período";"Livros";"Versículos-chave";"Palavras-chave";"Publicado";"Árvore genealógica";"Linha do tempo"
+"Abigail";"Mulher sábia e corajosa que, ao saber que o marido insensato, Nabal, havia insultado Davi, correu ao encontro do futuro rei com provisões e palavras de paz, evitou um massacre e acabou se tornando sua esposa.";"Abigail vivia em Maom, no deserto de Judá, casada com Nabal, um homem muito rico, dono de três mil ovelhas e mil cabras, que vivia em Carmelo. A Bíblia a descreve como ""de bom entendimento e formosa de aparência"", enquanto o marido era ""duro e maligno nas suas ações"". O próprio nome Nabal significa ""insensato"", e a história mostra que ele fazia jus a ele. Davi, então fugitivo de Saul, estava com seiscentos homens naquela região e havia protegido os pastores de Nabal, sem que nada lhes faltasse.
+Na época da tosquia, festa de fartura, Davi enviou dez jovens para pedir a Nabal o que ele pudesse oferecer. Nabal respondeu com desprezo: ""Quem é Davi? Quem é o filho de Jessé? Hoje em dia há muitos servos que fogem de seus senhores. Tomarei eu o meu pão e a minha água e a carne que preparei para os meus tosquiadores e os darei a homens que não sei de onde vêm?"". Ofendido, Davi mandou que quatrocentos homens colocassem a espada à cintura e jurou que, até o amanhecer, não deixaria vivo nenhum varão da casa de Nabal.
+Um dos servos contou tudo a Abigail e lhe disse que Nabal era tão mau que ninguém podia falar com ele. Sem avisar o marido, Abigail agiu depressa: preparou duzentos pães, dois odres de vinho, cinco ovelhas assadas, cinco medidas de grão torrado, cem cachos de passas e duzentas tortas de figos, carregou tudo em jumentos e saiu ao encontro de Davi. Quando o viu descer pela encosta do monte, desceu do jumento, prostrou-se com o rosto em terra e disse: ""Meu senhor, a culpa seja sobre mim"". Pediu que ele não desse atenção a Nabal, ""porque conforme o seu nome, assim é ele"", reconheceu que o Senhor construiria para Davi uma casa duradoura e o fez ver que, no dia em que fosse rei, não lhe pesaria na consciência ter derramado sangue sem motivo.
+Davi ficou comovido: ""Bendito seja o Senhor, Deus de Israel, que hoje te enviou ao meu encontro! Bendita seja a tua prudência, e bendita sejas tu, que hoje me impediste de derramar sangue e de fazer justiça por minhas próprias mãos"". Aceitou os presentes e mandou-a voltar em paz. Quando Abigail chegou em casa, encontrou Nabal em plena festa, completamente embriagado, e esperou até o amanhecer para contar tudo. Ouvindo o relato, o coração de Nabal ""morreu dentro dele, e ele ficou como uma pedra"". Dez dias depois, o Senhor o feriu e ele morreu.
+Quando Davi soube, louvou a Deus por ter feito justiça e enviou mensageiros para pedir Abigail em casamento. Ela respondeu com humildade: ""Eis a tua serva, para lavar os pés dos servos do meu senhor"". Levantou-se depressa, montou num jumento, acompanhada de cinco servas, e foi ser esposa de Davi. Mais tarde, em Ziclague, foi levada cativa pelos amalequitas, junto com Ainoã, e Davi a resgatou. Em Hebrom, deu a Davi um filho, Quileabe, também chamado Daniel. A história de Abigail mostra que sabedoria, coragem e palavras certas no momento certo podem evitar tragédias.";"Nabal significa ""insensato"" ou ""tolo"", e a narrativa brinca com o contraste entre o nome do marido e a prudência da esposa.
+Abigail não só levou comida: levou também um discurso profético, ao dizer que Davi seria príncipe sobre Israel, muito antes de ele ser coroado.
+Os presentes que levou, cerca de 200 pães, 2 odres de vinho, 5 ovelhas, grão torrado, passas e figos, davam para alimentar centenas de pessoas.
+Há outra Abigail na Bíblia: a irmã de Davi, mãe de Amasa (1 Crônicas 2:16-17).
+O filho que teve com Davi aparece como Quileabe (2 Samuel 3:3) e como Daniel (1 Crônicas 3:1).
+Sua atitude lembra Provérbios 15:1: ""A resposta branda desvia o furor"".";"1 Samuel 25 (Nabal, Abigail e Davi)
+1 Samuel 27:3 e 30:1-18 (Abigail cativa e resgatada em Ziclague)
+2 Samuel 3:2-3 e 1 Crônicas 3:1 (o filho de Abigail)
+Provérbios 15:1 (a resposta branda)";"Mulher prudente que evitou um massacre e impediu Davi de cometer uma vingança injusta; símbolo de sabedoria e de coragem pacífica";"Monarquia nascente, época da fuga de Davi de Saul (cerca de 1015 a.C.)";"1 Samuel, 2 Samuel, 1 Crônicas";"1 Samuel 25:3; 1 Samuel 25:28; 1 Samuel 25:32-33; Provérbios 15:1";"sabedoria, prudência, coragem, paz, intercessão, casamento";"Sim";"graph TD
+  Caleb[""Casa de Calebe, em Maom""] --> Nabal[""Nabal, o insensato""]
+  Nabal ---|casado com| Abigail[""Abigail""]
+  Abigail ---|viúva, casa com| Davi[""Davi""]
+  Davi ---|outra esposa| Ainoa[""Ainoã de Jezreel""]
+  Ainoa --> Amnom[""Amnom""]
+  Abigail --> Quileabe[""Quileabe, também chamado Daniel""]
+  Davi --> Quileabe
+  Davi --> Salomao[""Salomão, filho de Bate-Seba""]";"timeline
+  title A história de Abigail
+  1 Samuel 25 : Nabal recusa ajuda a Davi e o insulta
+  1 Samuel 25 : Davi sai com 400 homens para se vingar
+  1 Samuel 25 : Abigail leva provisões e intercede por sua casa
+  1 Samuel 25 : Nabal morre dez dias depois
+  1 Samuel 25 : Abigail torna-se esposa de Davi
+  1 Samuel 30 : Cativa em Ziclague e resgatada por Davi
+  2 Samuel 3 : Dá a Davi o filho Quileabe em Hebrom"
+"Eliseu";"Sucessor de Elias, Eliseu foi chamado enquanto arava um campo e se tornou um dos profetas mais atuantes de Israel: multiplicou azeite, curou o general Naamã, ressuscitou um menino e manteve viva a esperança do povo.";"Eliseu era filho de Safate, de Abel-Meolá, e estava arando o campo com doze juntas de bois quando Elias passou e lançou o manto sobre ele. Era o sinal do chamado profético. Eliseu pediu apenas para se despedir dos pais, matou os bois, queimou o arado como combustível e deu a carne ao povo: cortava assim os laços com a vida anterior. Depois seguiu Elias e tornou-se seu servo e discípulo.
+Quando Elias estava prestes a ser levado, Eliseu se recusou a deixá-lo e pediu ""porção dobrada do teu espírito"". Viu o carro de fogo e os cavalos de fogo separarem os dois e Elias subir ao céu num redemoinho. Pegou o manto que caiu, voltou ao Jordão, feriu as águas e perguntou: ""Onde está o Senhor, o Deus de Elias?"". As águas se dividiram. Os discípulos dos profetas reconheceram: ""O espírito de Elias repousa sobre Eliseu"". Ele ainda purificou as águas de Jericó com sal, e o Senhor deu saúde à fonte.
+O ministério de Eliseu é cheio de milagres que mostram o cuidado de Deus com os pequenos. Multiplicou o azeite de uma viúva endividada, a ponto de ela pagar a dívida e viver do que sobrou. Foi hospedado por uma mulher de Suném, que lhe preparou um quarto, e lhe prometeu um filho; quando o menino morreu, Eliseu se deitou sobre ele e o devolveu à vida. Também neutralizou um guisado envenenado e alimentou cem homens com vinte pães de cevada, com sobras.
+O episódio mais conhecido é o de Naamã, comandante do exército de Arã, atingido de lepra. Uma menina israelita cativa indicou o profeta em Samaria. Eliseu não saiu para recebê-lo; mandou dizer que se lavasse sete vezes no Jordão. Naamã se irritou, mas os servos o convenceram a obedecer; ao sair da água pela sétima vez, sua pele ficou como a de uma criança. Convertido, confessou que ""não há Deus em toda a terra, senão em Israel"". Eliseu recusou qualquer pagamento, mas seu servo Geazi correu atrás de Naamã para pegar presentes e ficou leproso.
+Em outras ocasiões, Eliseu fez um machado de ferro flutuar, revelou os planos secretos do rei de Arã e, quando o exército inimigo cercou Dotã, orou para que o seu servo visse os exércitos de Deus: ""Não temas, porque mais são os que estão conosco do que os que estão com eles"". Cegou os soldados inimigos, conduziu-os a Samaria e o rei de Israel, por sua orientação, os alimentou e os despediu. Também profetizou o fim de um cerco e o fim da fome em Samaria, e enviou um jovem profeta para ungir Jeú rei, pondo fim à casa de Acabe. Eliseu morreu doente, já idoso, e até depois da morte houve milagre: um defunto lançado na sepultura dele tocou os seus ossos e reviveu.";"Eliseu pediu a Elias ""porção dobrada"" do espírito, expressão que lembra o direito do primogênito à herança dobrada.
+O nome ""Eliseu"" significa ""Deus é salvação"".
+A Bíblia relata mais milagres de Eliseu do que de Elias, quase o dobro, segundo muitos estudiosos.
+Jesus citou Naamã e Eliseu em Lucas 4:27 ao lembrar que Deus também curou um estrangeiro.
+Geazi, o servo de Eliseu, ganhou a lepra de Naamã por causa da ganância.
+Em 2 Reis 13:20-21, um morto reviveu ao tocar os ossos de Eliseu.";"1 Reis 19:19-21 (o chamado de Eliseu)
+2 Reis 2 (o manto de Elias e a porção dobrada)
+2 Reis 4 (a viúva, a sunamita e os pães)
+2 Reis 5 (Naamã e Geazi)
+2 Reis 6:8-23 (o exército cego em Dotã)
+2 Reis 13:14-21 (a morte de Eliseu)";"Profeta do Reino do Norte, sucessor de Elias; seus milagres mostraram o poder e a misericórdia de Deus para o povo comum";"Reino dividido, Reino de Israel (cerca de 850 a 800 a.C.)";"1 Reis, 2 Reis, Lucas";"1 Reis 19:21; 2 Reis 2:9; 2 Reis 5:15; 2 Reis 6:16; 2 Reis 13:21";"profecia, milagres, sucessão, cura, fé, Naamã";"Sim";"graph TD
+  Safate[""Safate, de Abel-Meolá""] --> Eliseu[""Eliseu""]
+  Elias[""Elias, o profeta""] -->|chama e forma| Eliseu
+  Eliseu -->|servo| Geazi[""Geazi""]
+  Eliseu -->|cura| Naama[""Naamã, general de Arã""]
+  Eliseu -->|hospedado por| Sunamita[""A mulher de Suném""]
+  Sunamita --> Menino[""O filho que ressuscitou""]
+  Eliseu -->|envia um jovem profeta| Jeu[""Jeú, ungido rei de Israel""]
+  Eliseu -->|profetiza a Hazael| Hazael[""Hazael, rei de Arã""]
+  Eliseu -->|ao morrer, aconselha| Joas[""Joás, rei de Israel""]";"timeline
+  title A vida de Eliseu
+  1 Reis 19 : Elias lança o manto sobre Eliseu no campo
+  2 Reis 2 : Elias é levado ao céu e Eliseu recebe porção dobrada
+  2 Reis 2 : Purifica as águas de Jericó
+  2 Reis 4 : Multiplica o azeite e ressuscita o filho da sunamita
+  2 Reis 5 : Cura Naamã no rio Jordão
+  2 Reis 6 : O exército de Arã é cercado em Dotã
+  2 Reis 9 : Um jovem profeta unge Jeú rei
+  2 Reis 13 : Morre e seus ossos devolvem a vida a um morto"
+"Ester";"Jovem judia órfã que se tornou rainha da Pérsia e, com coragem e estratégia, arriscou a própria vida para salvar o seu povo da destruição planejada por Hamã; sua história é lembrada até hoje na festa de Purim.";"Hadassa, que significa ""mirto"", era uma órfã judia da tribo de Benjamim, criada pelo primo Mardoqueu em Susã, a capital do império persa, durante o exílio. Seu nome persa era Ester. O rei Assuero (Xerxes I) havia deposto a rainha Vasti, que se recusara a comparecer a um banquete, e mandou reunir as mais belas jovens do reino para escolher a nova rainha. Ester foi levada ao palácio, ganhou a simpatia de todos e, por orientação de Mardoqueu, não revelou sua origem. O rei a amou mais que todas e a coroou rainha.
+Pouco depois, Mardoqueu descobriu uma conspiração contra a vida do rei e a revelou por meio de Ester; o fato foi registrado nas crônicas reais. Tempos depois, Hamã, o agagita, foi promovido a primeiro-ministro. Todos se curvavam diante dele, exceto Mardoqueu, que recusava. Furioso, Hamã decidiu destruir não só Mardoqueu, mas todos os judeus do império. Lançou a sorte, o pur, para escolher a data, e o rei, enganado, selou o decreto: no dia 13 do mês de Adar, todos os judeus deveriam ser mortos.
+Mardoqueu rasgou as vestes, vestiu pano de saco e mandou dizer a Ester que intercedesse junto ao rei. Ela lembrou que ninguém podia se apresentar ao rei sem ser chamado, sob pena de morte, a não ser que ele estendesse o cetro de ouro. A resposta de Mardoqueu é uma das passagens mais citadas da Bíblia: ""Se te calares neste tempo, socorro e livramento de outra parte virá para os judeus, mas tu e a casa de teu pai perecereis. Quem sabe se para tal tempo como este chegaste ao reino?"". Ester pediu que todos os judeus jejuassem por três dias e decidiu: ""Irei ter com o rei, ainda que não seja segundo a lei; se perecer, pereci"".
+Ao entrar no pátio, o rei estendeu-lhe o cetro. Ela o convidou, junto com Hamã, a um banquete e, em vez de apresentar o pedido, convidou-os para um segundo. Naquela noite, o rei não conseguia dormir e mandou ler as crônicas, onde descobriu que Mardoqueu nunca fora recompensado por ter salvado sua vida. Quando Hamã chegou para pedir a morte de Mardoqueu, o rei lhe perguntou o que fazer pelo homem que desejava honrar, e Hamã, pensando ser ele mesmo, sugeriu uma grande honra pública, que acabou sendo prestada a Mardoqueu.
+No segundo banquete, Ester revelou sua identidade e pediu a vida do seu povo, acusando Hamã de ser o inimigo. O rei se levantou irado e Hamã foi enforcado na própria forca de 50 côvados que preparara para Mardoqueu. Como a lei persa não podia ser revogada, o rei permitiu que os judeus se defendessem; no dia marcado, eles venceram seus inimigos. Mardoqueu foi promovido a segundo no reino. Em memória do livramento, os judeus passaram a celebrar a festa de Purim, na qual o livro de Ester é lido em voz alta, com alegria e presentes aos pobres.";"O livro de Ester é um dos dois da Bíblia com nome de mulher, junto com Rute, e nunca menciona o nome de Deus de forma explícita.
+""Purim"" vem de ""pur"", a palavra persa para ""sorte"", em referência ao sorteio feito por Hamã.
+Ester tinha um nome hebraico (Hadassa, ""mirto"") e outro persa (Ester, provavelmente ""estrela"").
+O rei Assuero é identificado com Xerxes I, que reinou na Pérsia de 486 a 465 a.C.
+Hamã era descendente de Agague, rei dos amalequitas, antigos inimigos de Israel.
+A frase ""para tal tempo como este"" tornou-se símbolo de ser colocado por Deus no lugar e na hora certos.";"Ester 1 e 2 (Vasti é deposta e Ester se torna rainha)
+Ester 3 (o decreto de Hamã)
+Ester 4 (a decisão de Ester)
+Ester 5 a 7 (os banquetes e a queda de Hamã)
+Ester 8 e 9 (o livramento e a festa de Purim)";"Rainha da Pérsia que arriscou a vida para salvar os judeus; exemplo de coragem e de providência divina oculta";"Domínio persa (cerca de 483 a 473 a.C.)";"Ester";"Ester 2:7; Ester 4:14; Ester 4:16; Ester 7:3; Ester 9:22";"coragem, providência, jejum, livramento, Purim, rainha";"Sim";"graph TD
+  Quis[""Quis, da tribo de Benjamim""] --> Simei[""Simei""]
+  Simei --> Jair[""Jair""]
+  Jair --> Mardoqueu[""Mardoqueu""]
+  Abiail[""Abiail""] --> Ester[""Ester, Hadassa""]
+  Mardoqueu -->|cria como filha| Ester
+  Assuero[""Rei Assuero""] ---|rainha deposta| Vasti[""Vasti""]
+  Assuero ---|rainha| Ester
+  Hama[""Hamã, o agagita""] -.inimigo de.-> Mardoqueu
+  Hama -.inimigo de.-> Ester";"timeline
+  title A história de Ester
+  Ester 1 : Assuero depõe a rainha Vasti
+  Ester 2 : Ester é escolhida rainha da Pérsia
+  Ester 2 : Mardoqueu descobre uma conspiração contra o rei
+  Ester 3 : Hamã decreta a destruição dos judeus
+  Ester 4 : Ester decide ir ao rei após três dias de jejum
+  Ester 5 : Os dois banquetes de Ester
+  Ester 6 : O rei honra Mardoqueu
+  Ester 7 : Hamã é enforcado na própria forca
+  Ester 9 : Os judeus vencem seus inimigos e nasce a festa de Purim"
+"Eva";"A primeira mulher, formada por Deus como companheira de Adão, Eva viveu no Éden, foi enganada pela serpente e comeu do fruto proibido; apesar da queda, recebeu a promessa de que sua descendência traria a vitória sobre o mal.";"Depois de criar o homem e de colocá-lo no jardim do Éden, Deus declarou: ""Não é bom que o homem esteja só"". Fez cair sobre Adão um sono profundo, tirou-lhe uma costela e com ela formou a mulher, que levou ao homem. Adão exclamou: ""Esta, afinal, é osso dos meus ossos e carne da minha carne"". A palavra hebraica traduzida por ""auxiliadora"" (ezer) é a mesma usada em outros lugares para o próprio Deus, o que indica companheirismo e força, não inferioridade. Os dois estavam nus e não se envergonhavam.
+O livro de Gênesis conta que a serpente, o mais astuto dos animais, procurou a mulher e lançou a dúvida: ""É assim que Deus disse: não comereis de toda árvore do jardim?"". Eva respondeu que só não podiam comer da árvore que estava no meio do jardim, para não morrerem. A serpente contradisse: ""Certamente não morrereis. Porque Deus sabe que, no dia em que dele comerdes, vossos olhos se abrirão e sereis como Deus"". Eva viu que o fruto era bom para comer, agradável aos olhos e desejável para dar entendimento. Tomou do fruto, comeu e deu também ao marido, que estava com ela, e ele comeu.
+Seus olhos se abriram e perceberam que estavam nus; costuraram folhas de figueira. Ouvindo a voz de Deus no jardim, esconderam-se. Quando Deus os interrogou, Adão culpou a mulher e a mulher culpou a serpente. A serpente foi amaldiçoada, mas Deus anunciou uma promessa: a descendência da mulher esmagaria a cabeça da serpente (Gênesis 3:15). A Eva foram anunciadas dores no parto e conflitos no relacionamento. Depois disso, Adão deu à mulher o nome de Eva, ""porque ela era a mãe de todos os viventes"". Deus fez túnicas de pele para os dois e os expulsou do Éden.
+Fora do jardim, Eva deu à luz Caim e disse: ""Adquiri um varão com o auxílio do Senhor"". Depois nasceu Abel. Passado algum tempo, Caim matou Abel, o que representou para ela a dor de perder um filho pela mão do outro. Mais tarde, Eva teve Sete, e disse: ""Deus me concedeu outro filho em lugar de Abel"". Por meio dele continuou a linhagem que levaria a Noé e, muito depois, a Cristo. Gênesis 5:4 registra que Adão teve outros filhos e filhas.
+O Novo Testamento volta a Eva. Paulo adverte os coríntios para que não sejam enganados ""como a serpente enganou Eva com sua astúcia"" e, em 1 Timóteo 2, lembra que Adão foi formado primeiro e depois Eva. Eva é, na Bíblia, símbolo da humanidade, de sua vulnerabilidade, mas também da graça de Deus: a mulher que caiu foi também a que recebeu a primeira promessa da vitória futura.";"O nome ""Eva"" vem do hebraico Havá, relacionado a ""viver"": ""mãe de todos os viventes"" (Gênesis 3:20).
+Eva foi formada de uma costela de Adão, e a palavra hebraica traduzida por ""auxiliadora"" é usada também para Deus como socorro de seu povo.
+A Bíblia nunca diz que o fruto proibido era uma maçã: apenas ""fruto da árvore"".
+Antes da queda, Adão e Eva ""não se envergonhavam"" da nudez (Gênesis 2:25).
+Ao dar à luz Caim, Eva reconheceu a ajuda de Deus: ""Adquiri um varão com o auxílio do Senhor"".
+Paulo cita Eva como advertência em 2 Coríntios 11:3 e 1 Timóteo 2:13-14.";"Gênesis 2:18-25 (a criação da mulher)
+Gênesis 3 (a queda e a primeira promessa)
+Gênesis 4:1-2 e 4:25 (os filhos de Eva)
+2 Coríntios 11:3 e 1 Timóteo 2:13-14 (Eva no Novo Testamento)";"Primeira mulher e mãe da humanidade; sua história explica a origem do pecado e prepara a promessa de redenção";"Início da humanidade (a Criação, tempos primitivos)";"Gênesis, 2 Coríntios, 1 Timóteo";"Gênesis 2:23; Gênesis 3:15; Gênesis 3:20; Gênesis 4:1; Gênesis 4:25";"criação, tentação, queda, promessa, maternidade, mãe de todos os viventes";"Sim";"graph TD
+  Deus[""Deus, o Criador""] --> Adao[""Adão""]
+  Deus -->|forma da costela de Adão| Eva[""Eva""]
+  Adao ---|casado com| Eva
+  Eva --> Caim[""Caim""]
+  Eva --> Abel[""Abel""]
+  Eva --> Sete[""Sete""]
+  Eva --> Outros[""Outros filhos e filhas""]
+  Caim --> EnoqueCaim[""Enoque, de quem vem a primeira cidade""]
+  Sete --> Enos[""Enos""]";"timeline
+  title A história de Eva
+  Gênesis 2 : É formada por Deus como companheira de Adão
+  Gênesis 3 : A serpente a engana e ela come do fruto
+  Gênesis 3 : Recebe a promessa de que sua descendência vencerá a serpente
+  Gênesis 3 : É expulsa do Éden e Adão lhe dá o nome Eva
+  Gênesis 4 : Nascem Caim e Abel e Abel é morto
+  Gênesis 4 : Nasce Sete em lugar de Abel"
+"Ezequiel";"Sacerdote levado cativo para a Babilônia, Ezequiel foi chamado por Deus como atalaia de Israel; com visões extraordinárias e gestos simbólicos, anunciou o juízo, a queda de Jerusalém e a esperança de um novo coração e de um povo restaurado.";"Ezequiel, filho de Buzi, era sacerdote e foi deportado para a Babilônia com o rei Joaquim, em 597 a.C., durante o primeiro cerco de Jerusalém. Vivia entre os exilados junto ao rio Quebar quando, no quinto ano do cativeiro, os céus se abriram e ele viu visões de Deus: uma tempestade vinda do norte, quatro seres viventes com rostos de homem, leão, boi e águia, rodas dentro de rodas e, acima delas, um trono com a figura de um homem rodeada de glória. Ezequiel caiu com o rosto em terra, e Deus o comissionou como profeta a um povo rebelde: ""Filho do homem, levanta-te sobre os teus pés, e falarei contigo"".
+Recebeu um rolo escrito por dentro e por fora, de lamentações, gemidos e ais, e foi mandado comê-lo, o que significava que a mensagem devia primeiro entrar nele. O Senhor o constituiu atalaia da casa de Israel: se avisasse o ímpio e ele não se desviasse, o ímpio morreria por sua culpa, mas o profeta salvaria a própria vida; se se calasse, seria responsável. Durante anos, Ezequiel viveu a mensagem em atos simbólicos: desenhou Jerusalém num tijolo e a sitiou, deitou-se sobre um lado por 390 dias e sobre o outro por 40 para carregar a culpa do povo, e cortou o cabelo e a barba para ilustrar o julgamento.
+Em visões, Ezequiel foi transportado a Jerusalém e viu as abominações praticadas no templo, e viu a glória do Senhor deixando o santuário. Em 586 a.C., a cidade caiu. No dia em que o sítio começou, Deus lhe anunciou que sua esposa, ""a delícia dos teus olhos"", morreria de repente, e proibiu-o de chorar publicamente, como sinal de que o luto da nação seria tão grande que não restariam lágrimas. Depois, os oráculos contra as nações vizinhas (Amom, Moabe, Edom, Tiro, Egito) mostram que o Senhor é soberano sobre todos os povos.
+Depois da queda de Jerusalém, a mensagem de Ezequiel muda de juízo para esperança. Deus promete ser o pastor de suas ovelhas, no lugar dos maus pastores, e declara: ""Dar-vos-ei um coração novo e porei dentro de vós um espírito novo; tirarei de vós o coração de pedra e vos darei um coração de carne"". Na visão do vale de ossos secos, Ezequiel profetiza sobre os ossos, que ganham tendões, carne e pele, e o sopro de Deus os levanta como um exército: o povo morto no exílio voltaria à vida.
+Os últimos capítulos descrevem a visão de um novo templo e de um rio que sai dele e dá vida a tudo por onde passa, curando até o Mar Morto. A cidade tem um novo nome: ""O Senhor está ali"". As imagens de Ezequiel, os querubins, o rio de vida e o novo templo, ecoam no Apocalipse, e seu livro permanece como um dos grandes textos da esperança bíblica.";"Ezequiel é chamado ""filho do homem"" mais de 90 vezes no livro, título que Jesus usaria para si mesmo.
+Foi profeta ao mesmo tempo que Jeremias, em Jerusalém, e Daniel, na Babilônia, e Daniel é citado em Ezequiel 14:14.
+Muitos de seus sermões foram ""encenados"": Ezequiel viveu a mensagem com gestos, e ficou mudo por um período.
+A visão do vale de ossos secos (capítulo 37) é uma das imagens mais famosas da Bíblia sobre a restauração do povo.
+O rio que sai do templo (capítulo 47) lembra o rio da vida do Apocalipse 22.
+O livro termina com o nome da nova cidade: ""O Senhor está ali"" (Ezequiel 48:35).";"Ezequiel 1 a 3 (a visão do trono e o chamado)
+Ezequiel 33 (o atalaia)
+Ezequiel 34 (o pastor de Israel)
+Ezequiel 36:22-38 (um coração novo)
+Ezequiel 37 (o vale de ossos secos)
+Ezequiel 40 a 48 (o novo templo e o rio da vida)";"Profeta e sacerdote do exílio babilônico que anunciou o juízo sobre Jerusalém e, depois, a restauração do povo de Deus com um novo coração";"Exílio babilônico (cerca de 593 a 571 a.C.)";"Ezequiel, Apocalipse";"Ezequiel 3:17; Ezequiel 11:19-20; Ezequiel 34:11; Ezequiel 36:26; Ezequiel 37:5; Ezequiel 48:35";"profeta, exílio, atalaia, visões, vale de ossos secos, novo coração, novo templo";"Sim";"graph TD
+  Buzi[""Buzi, sacerdote""] --> Ezequiel[""Ezequiel, sacerdote e profeta""]
+  Ezequiel ---|casado com| Esposa[""Sua esposa, a delícia dos olhos""]
+  Joaquim[""Joaquim, rei de Judá, exilado em 597 a.C.""] -.deportados juntos.-> Ezequiel
+  Ezequiel -.contemporâneo.- Jeremias[""Jeremias, em Jerusalém""]
+  Ezequiel -.contemporâneo.- Daniel[""Daniel, na corte da Babilônia""]";"timeline
+  title A vida de Ezequiel
+  597 a.C. : É deportado para a Babilônia com o rei Joaquim
+  593 a.C. : Recebe a visão do trono junto ao rio Quebar e é chamado como profeta
+  Ezequiel 4 e 5 : Encena o cerco de Jerusalém com gestos simbólicos
+  Ezequiel 8 a 11 : Vê a glória do Senhor deixar o templo
+  586 a.C. : Jerusalém é destruída e a esposa de Ezequiel morre
+  Ezequiel 34 e 36 : Anuncia o bom pastor e o coração novo
+  Ezequiel 37 : A visão do vale de ossos secos
+  Ezequiel 40 a 48 : A visão do novo templo e do rio da vida"
+"Herodes Agripa I";"Neto de Herodes, o Grande, Agripa I governou a Judeia por poucos anos como rei vassalo de Roma; para agradar aos judeus, mandou matar o apóstolo Tiago e prender Pedro, e morreu de forma repentina por ter aceitado ser tratado como um deus.";"Herodes Agripa I era neto de Herodes, o Grande, o rei que mandou matar os meninos de Belém ao nascer Jesus, e filho de Aristóbulo e de Berenice. Foi criado em Roma, na corte imperial, onde fez amizade com os futuros imperadores Calígula e Cláudio. Quando Calígula subiu ao trono, em 37 d.C., deu-lhe os territórios de seu tio Filipe e, mais tarde, a Galileia e a Pereia. Cláudio acrescentou a Judeia e Samaria em 41 d.C., e Agripa passou a reinar sobre quase todo o antigo reino de seu avô. É o ""rei Herodes"" de Atos 12. Para os judeus, era um rei mais próximo da tradição que os governantes anteriores.
+Como Roma havia perdido o favor entre os judeus por causa de governadores duros, Agripa procurava agradar o povo e os líderes religiosos, e parece ter sido sinceramente observante. Foi nesse contexto que Lucas registra: ""Por aquele tempo, o rei Herodes começou a perseguir alguns da igreja. E mandou matar à espada Tiago, irmão de João"". Tiago, filho de Zebedeu, foi o primeiro apóstolo martirizado. Vendo que isso agradou aos judeus, Herodes mandou também prender Pedro, durante a festa dos Pães Asmos, e o entregou a quatro grupos de quatro soldados para guardá-lo, com a intenção de apresentá-lo ao povo depois da Páscoa.
+Enquanto Pedro estava preso, a igreja orava por ele com insistência. Na noite anterior ao julgamento, Pedro dormia entre dois soldados, acorrentado, quando um anjo do Senhor apareceu, as correntes caíram e as portas de ferro se abriram por si mesmas. Pedro foi à casa de Maria, mãe de João Marcos, onde muitos estavam orando; a serva Rode reconheceu a voz de Pedro, mas, em vez de abrir a porta, correu para contar, e eles não acreditaram. Pedro bateu, foi recebido e contou como o Senhor o havia libertado. Herodes, ao descobrir a fuga, interrogou os guardas e mandou executá-los.
+Pouco depois, Herodes foi a Cesareia, onde recebeu embaixadores de Tiro e Sidom, que dependiam de seu reino para o fornecimento de alimentos. No dia marcado, sentou-se no trono, vestido de roupas reais, e discursou ao povo. O povo exclamou: ""É voz de um deus, e não de um homem!"". Imediatamente, um anjo do Senhor o feriu, ""por não ter dado glória a Deus"", e ele morreu comido de vermes. O historiador Josefo relata um episódio semelhante: o rei, vestido com um manto de prata que brilhava ao sol, foi aclamado como deus, sofreu fortes dores abdominais e morreu cinco dias depois, em 44 d.C.
+Lucas conclui o episódio com uma frase de contraste: ""Entretanto, a palavra de Deus crescia e se multiplicava"". O rei que parecia tão poderoso desapareceu, enquanto o evangelho que tentou sufocar continuou a avançar. Os filhos de Agripa I também aparecem na história bíblica: Agripa II, diante de quem Paulo fez sua defesa, e Drusila, esposa do governador Félix.";"Agripa I foi o último rei a governar sobre todo o território de seu avô Herodes, o Grande.
+Era irmão de Herodias, aquela que pediu a cabeça de João Batista.
+Tiago, filho de Zebedeu, foi o primeiro dos doze apóstolos a morrer como mártir (Atos 12:2).
+Seu filho, Agripa II, ouviu Paulo em Cesareia e disse: ""Por pouco me persuades a me fazer cristão"" (Atos 26:28).
+A filha Drusila casou-se com o governador romano Félix e ouviu Paulo com ele (Atos 24:24).
+Josefo confirma o relato de Atos sobre sua morte em Cesareia, em 44 d.C.";"Atos 12:1-5 (a morte de Tiago e a prisão de Pedro)
+Atos 12:6-19 (a libertação de Pedro)
+Atos 12:20-24 (a morte de Herodes)
+Atos 24:24 e 25:13 a 26:32 (os filhos de Agripa e Paulo)";"Rei da Judeia que perseguiu a igreja primitiva, mandou matar o apóstolo Tiago e prendeu Pedro; seu fim ilustra o juízo sobre o orgulho";"Igreja primitiva (cerca de 41 a 44 d.C.)";"Atos";"Atos 12:2; Atos 12:5; Atos 12:7; Atos 12:23; Atos 12:24";"perseguição, oração, libertação, orgulho, juízo, igreja primitiva";"Sim";"graph TD
+  HerodesGrande[""Herodes, o Grande""] --> Aristobulo[""Aristóbulo""]
+  Aristobulo --> Agripa1[""Herodes Agripa I""]
+  Aristobulo --> Herodias[""Herodias""]
+  Herodias ---|casada com| Antipas[""Herodes Antipas""]
+  Agripa1 --> Agripa2[""Agripa II""]
+  Agripa1 --> Berenice[""Berenice""]
+  Agripa1 --> Drusila[""Drusila""]
+  Drusila ---|casada com| Felix[""Félix, governador romano""]";"timeline
+  title Herodes Agripa I
+  37 d.C. : Calígula lhe dá os territórios de Filipe e o título de rei
+  41 d.C. : Cláudio acrescenta a Judeia e Samaria
+  Atos 12 versículos 1 e 2 : Manda matar o apóstolo Tiago à espada
+  Atos 12 versículos 3 a 5 : Prende Pedro durante a festa dos Pães Asmos
+  Atos 12 versículos 6 a 19 : Um anjo liberta Pedro da prisão
+  44 d.C. : Morre em Cesareia depois de ser aclamado como deus"
+"Josafá";"Rei de Judá que buscou ao Senhor, enviou mestres da Lei por todo o reino e, diante de uma invasão, confiou em Deus com jejum e louvor; apesar disso, aliou-se a Acabe e a Acazias, de Israel, e pagou por essas alianças.";"Josafá era filho de Asa e subiu ao trono de Judá aos 35 anos, reinando 25 anos em Jerusalém. Seguiu o caminho do pai, fazendo o que era reto diante do Senhor, embora os altos não tenham sido removidos. Segundo 2 Crônicas 17, o Senhor esteve com ele ""porque andou nos primeiros caminhos de Davi"". Fortaleceu o exército e as cidades fortificadas. Seu maior legado, porém, foi religioso: no terceiro ano de reinado enviou príncipes, levitas e sacerdotes com o Livro da Lei por todas as cidades de Judá para ensinar o povo. O reino prosperou, e os povos vizinhos lhe traziam presentes.
+Mas Josafá cometeu um erro grave: aliou-se a Acabe, rei de Israel, e casou seu filho Jeorão com Atalia, filha de Acabe e Jezabel. Num encontro em Samaria, aceitou participar de uma campanha contra Ramote-Gileade, mas insistiu em consultar um profeta do Senhor. Os quatrocentos profetas de Acabe prometeram vitória; só Micaías disse a verdade e previu a derrota. Josafá foi à batalha mesmo assim, quase morreu quando foi confundido com Acabe e foi salvo ao clamar. Ao voltar, o vidente Jeú o repreendeu: ""Devias tu ajudar ao ímpio e amar os que odeiam o Senhor?"". Mesmo assim, reconheceu que nele havia ""coisas boas"".
+Depois da repreensão, Josafá fez reformas: percorreu o país reconduzindo o povo ao Senhor, nomeou juízes em todas as cidades fortificadas e disse-lhes: ""Vede o que fazeis, porque não julgais da parte do homem, mas da parte do Senhor"". Em Jerusalém instituiu um tribunal supremo de levitas, sacerdotes e chefes de famílias.
+O momento de maior destaque veio quando uma coalizão de moabitas, amonitas e meunitas marchou contra Judá. Josafá teve medo, mas voltou o rosto para buscar ao Senhor e proclamou um jejum. Diante do povo, no templo, orou: ""Ó nosso Deus... em nós não há força contra esta grande multidão que vem contra nós, e não sabemos o que fazer; mas os nossos olhos estão postos em ti"". O Espírito veio sobre um levita, Jaaziel, que disse: ""Não tereis de lutar nesta batalha... o Senhor estará convosco"". No dia seguinte, Josafá colocou cantores à frente do exército para louvar a Deus: ""Louvai ao Senhor, porque a sua misericórdia dura para sempre"". Quando começaram a cantar, o Senhor pôs emboscadas e os inimigos se destruíram uns aos outros. Judá levou três dias para recolher os despojos, e o lugar ficou chamado vale de Beracá, ""bênção"".
+Mais tarde, Josafá se associou a Acazias, rei de Israel, para construir navios em Eziom-Geber, mas os navios se quebraram. Também se juntou a Jorão, filho de Acabe, na guerra contra Moabe. Morreu aos 60 anos e foi sepultado na cidade de Davi; seu filho Jeorão o sucedeu, e a aliança com a casa de Acabe viria a trazer graves problemas para Judá.";"O nome ""Josafá"" significa ""o Senhor julgou"", e o rei nomeou juízes e instituiu um tribunal em todo o reino.
+Josafá enviou uma espécie de ""missão de ensino"" com o Livro da Lei a todas as cidades de Judá, algo notável para a época.
+Na guerra contra a coalizão de moabitas e amonitas, os cantores foram à frente do exército, o que fez dessa história um modelo de louvor como arma espiritual.
+O ""vale de Beracá"" ganhou o nome por causa da bênção recebida após a vitória (2 Crônicas 20:26).
+O casamento de seu filho Jeorão com Atalia, filha de Acabe, abriu caminho para a idolatria na casa de Davi.
+Apesar de seu reinado piedoso, Jeorão matou todos os irmãos quando subiu ao trono (2 Crônicas 21:4).";"1 Reis 22:1-50 (a aliança com Acabe e a morte de Acabe)
+2 Crônicas 17 (as reformas e o ensino da Lei)
+2 Crônicas 19 (os juízes)
+2 Crônicas 20 (a batalha vencida com louvor)
+2 Reis 3 (a campanha contra Moabe)";"Rei de Judá que buscou ao Senhor, reformou o ensino e a justiça e liderou o povo com louvor, apesar das alianças erradas com o Reino do Norte";"Reino dividido, Reino de Judá (cerca de 870 a 848 a.C.)";"1 Reis, 2 Reis, 2 Crônicas";"2 Crônicas 17:3-4; 2 Crônicas 19:6; 2 Crônicas 20:12; 2 Crônicas 20:15; 2 Crônicas 20:21";"reforma, justiça, oração, louvor, jejum, aliança, vitória";"Sim";"graph TD
+  Asa[""Asa, rei de Judá""] --> Josafa[""Josafá, rei de Judá""]
+  Josafa --> Jeorao[""Jeorão, rei de Judá""]
+  Acabe[""Acabe, rei de Israel""] --> Atalia[""Atalia""]
+  Jeorao ---|casado com| Atalia
+  Jeorao --> Acazias[""Acazias, rei de Judá""]
+  Josafa --> Irmaos[""Outros filhos, mortos por Jeorão""]";"timeline
+  title O reinado de Josafá
+  1 Reis 22 : Sucede seu pai Asa no trono de Judá
+  2 Crônicas 17 : Envia mestres com o Livro da Lei por todas as cidades
+  1 Reis 22 : Alia-se a Acabe e vai à guerra em Ramote-Gileade
+  2 Crônicas 19 : Nomeia juízes e reforma a justiça
+  2 Crônicas 20 : Vence a coalizão de moabitas e amonitas com louvor
+  2 Crônicas 20 : Perde os navios de Eziom-Geber depois da aliança com Acazias
+  2 Reis 3 : Acompanha Jorão de Israel na campanha contra Moabe"
+"Josué";"Sucessor de Moisés, Josué liderou Israel na travessia do Jordão e na conquista de Canaã; destacou-se pela coragem, pela obediência a Deus e pela famosa declaração: ""Eu e a minha casa serviremos ao Senhor"".";"Josué, chamado originalmente de Oséias, era filho de Num e da tribo de Efraim. Moisés mudou seu nome para Josué (""o Senhor salva""). Ele aparece pela primeira vez em Êxodo 17, comandando o exército que derrotou Amaleque enquanto Moisés orava no monte. Foi também o ajudante de Moisés e o guarda da tenda da congregação, onde permanecia mesmo quando Moisés saía. Foi escolhido como um dos doze espiões enviados a Canaã e, com Calebe, trouxe um relatório de fé: ""Se o Senhor se agradar de nós, ele nos introduzirá nessa terra"". O povo, porém, quis apedrejá-los, e aquela geração morreu no deserto. Só Josué e Calebe, entre os adultos, entraram na terra prometida.
+Quando Moisés estava para morrer, Deus escolheu Josué como sucessor, e Moisés lhe impôs as mãos diante de Eleazar e de toda a congregação. Depois da morte de Moisés, o Senhor falou a Josué: ""Sê forte e corajoso, porque tu farás este povo herdar a terra... Não temas, nem te espantes, porque o Senhor teu Deus é contigo por onde quer que andares"". Josué enviou dois espiões a Jericó, onde foram escondidos por Raabe, uma mulher da cidade que acreditava no Deus de Israel.
+Israel atravessou o rio Jordão em época de cheia: os sacerdotes que levavam a arca entraram na água, o rio se abriu e todo o povo passou a pé enxuto. Doze pedras foram colocadas em Gilgal como memorial. Ali Josué circuncidou os homens nascidos no deserto, celebrou a Páscoa, e o maná cessou. Perto de Jericó, encontrou o príncipe do exército do Senhor e, em reverência, tirou as sandálias. Jericó caiu depois de sete dias de marcha em torno das muralhas, com sacerdotes tocando trombetas e o povo gritando ao sétimo dia; só Raabe e sua família foram poupadas.
+A conquista nem sempre foi simples: em Ai, Israel foi derrotado por causa da desobediência de Acã, que escondeu despojos proibidos; depois do castigo, Israel venceu. Os gibeonitas enganaram Josué com um tratado de paz, e ele foi obrigado a honrá-lo. Em Gibeão, Josué orou para que o sol e a lua parassem, e Deus deu a vitória sobre cinco reis amorreus. Seguiram-se campanhas no sul e no norte, e Hazor, a principal cidade do norte, foi derrotada. A terra foi repartida entre as tribos por sorteio; Calebe recebeu Hebrom como herança.
+No fim da vida, Josué reuniu as tribos em Siquém e renovou a aliança. Recitou a história da fidelidade de Deus e desafiou o povo: ""Escolhei hoje a quem sirvais... Eu e a minha casa serviremos ao Senhor"". O povo prometeu fidelidade, e Josué colocou uma grande pedra como testemunha. Morreu aos 110 anos e foi sepultado em Timnate-Sera, na região montanhosa de Efraim. ""Israel serviu ao Senhor todos os dias de Josué.""";"O nome ""Josué"" em hebraico (Yehoshua) é o mesmo que ""Jesus"" em grego, e significa ""o Senhor salva"".
+Josué e Calebe foram os únicos adultos da geração do Êxodo que entraram na terra prometida.
+Em Josué 10:12-14, o dia em que o sol parou é descrito como único: ""não houve dia como aquele, nem antes nem depois"".
+Raabe, a prostituta que escondeu os espiões, aparece na genealogia de Jesus (Mateus 1:5).
+Josué morreu aos 110 anos, a mesma idade que José, filho de Jacó.
+A frase ""Eu e a minha casa serviremos ao Senhor"" é uma das mais citadas da Bíblia sobre decisão familiar.";"Êxodo 17:8-16 e Números 13 e 14 (Josué antes de ser líder)
+Josué 1 (o chamado e a coragem)
+Josué 2 a 6 (Raabe, o Jordão e Jericó)
+Josué 7 a 12 (Ai, Gibeão e as conquistas)
+Josué 23 e 24 (as últimas palavras e a aliança em Siquém)";"Sucessor de Moisés e comandante da conquista de Canaã; líder que renovou a aliança de Israel com Deus";"Conquista de Canaã (cerca de 1405 a 1380 a.C.)";"Êxodo, Números, Deuteronômio, Josué, Juízes, Atos, Hebreus";"Josué 1:8-9; Josué 3:5; Josué 6:20; Josué 24:15; Josué 24:31";"liderança, coragem, conquista, aliança, obediência, Jericó";"Sim";"graph TD
+  Efraim[""Efraim""] --> Berias[""Berias""]
+  Berias --> Refa[""Refa""]
+  Refa --> Resefe[""Resefe""]
+  Resefe --> Tela[""Telá""]
+  Tela --> Taa[""Taã""]
+  Taa --> Ladan[""Ladã""]
+  Ladan --> Amiude[""Amiúde""]
+  Amiude --> Elisama[""Elisama""]
+  Elisama --> Num[""Num""]
+  Num --> Josue[""Josué""]
+  Moises[""Moisés""] -->|sucessor| Josue
+  Calebe[""Calebe""] -.companheiro de fé.- Josue
+  Raabe[""Raabe de Jericó""] -.protegida por.-> Josue";"timeline
+  title A vida de Josué
+  Êxodo 17 : Comanda a batalha contra Amaleque
+  Números 13 e 14 : Espia Canaã com Calebe e confia em Deus
+  Números 27 : Moisés lhe impõe as mãos como sucessor
+  Josué 3 : Atravessa o Jordão a pé enxuto
+  Josué 6 : As muralhas de Jericó caem
+  Josué 7 e 8 : Derrota em Ai por causa de Acã e depois a vitória
+  Josué 10 : O sol e a lua param em Gibeão
+  Josué 13 a 21 : A terra é repartida entre as tribos
+  Josué 24 : Renova a aliança em Siquém e morre aos 110 anos"
+"Jó";"Homem íntegro e rico que perdeu bens, filhos e saúde numa sucessão de calamidades; sem entender o porquê, clamou a Deus, resistiu às acusações dos amigos e acabou restaurado depois de um encontro direto com o Senhor.";"Jó vivia na terra de Uz e era ""íntegro, reto, temente a Deus e desviava-se do mal"". Tinha sete filhos e três filhas, e era dono de sete mil ovelhas, três mil camelos, quinhentas juntas de bois e quinhentas jumentas, além de muitos servos: ""o maior de todos os do Oriente"". Cheio de zelo, oferecia sacrifícios todos os dias em favor dos filhos, por precaução. O livro abre mostrando uma cena no céu, na qual o Acusador diz a Deus que Jó só o serve por causa das bênçãos. Deus permite que Jó seja provado.
+Em um único dia, sabeus levaram os bois e jumentas, fogo do céu consumiu as ovelhas e servos, caldeus roubaram os camelos e um vento forte derrubou a casa em que os filhos comiam, matando todos eles. Jó rasgou o manto, rapou a cabeça, prostrou-se em terra e disse: ""Nu saí do ventre de minha mãe, e nu tornarei para lá; o Senhor o deu, e o Senhor o tomou; bendito seja o nome do Senhor"". O Acusador voltou à carga e Jó foi ferido com úlceras malignas da cabeça aos pés. Sentado nas cinzas, raspava as feridas com um caco. A mulher lhe disse: ""Ainda manténs a tua integridade? Amaldiçoa a Deus e morre"". Jó respondeu: ""Receberemos o bem de Deus e não receberemos também o mal?"".
+Três amigos, Elifaz, Bildade e Zofar, vieram consolá-lo. Sentaram-se com ele no chão em silêncio durante sete dias e sete noites. Depois que Jó rompeu o silêncio e lamentou ter nascido, os amigos passaram a defender uma teologia rígida: o sofrimento é sempre castigo pelo pecado, logo Jó devia ter pecado e precisava se arrepender. Jó recusou-se a admitir culpa que não tinha. Nos longos diálogos, oscila entre o desespero e a fé: ""Ainda que ele me mate, nele esperarei"" e ""Eu sei que o meu Redentor vive, e que por fim se levantará sobre a terra"". Um jovem chamado Eliú falou depois, com mais eloquência, mas sem resposta ao mistério.
+Então o Senhor respondeu a Jó do meio do redemoinho. Não deu explicação para o sofrimento, mas fez perguntas que mostram a grandeza do Criador: ""Onde estavas tu, quando eu fundava a terra?"". Falou do mar, das estrelas, dos animais selvagens, do hipopótamo e do crocodilo. Jó respondeu com humildade: ""Eu te conhecia só de ouvir, mas agora os meus olhos te veem. Por isso me retrato e me arrependo no pó e na cinza"".
+Deus repreendeu os três amigos, ""porque não falastes de mim o que era reto, como o meu servo Jó"", e pediu que Jó intercedesse por eles. Depois que Jó orou por seus amigos, o Senhor restaurou a sua sorte e deu-lhe o dobro do que tinha antes. Teve mais sete filhos e três filhas, chamadas Jemima, Quézia e Quéren-Hapuque, as mais belas da terra, que receberam herança junto com os irmãos. Jó viveu mais 140 anos e viu seus filhos e netos até a quarta geração.";"Jó é citado em Ezequiel 14:14 ao lado de Noé e Daniel como exemplo de justiça.
+Tiago 5:11 diz: ""Tendes ouvido da paciência de Jó e vistes o fim que o Senhor lhe deu"".
+Em Jó 19:25, Jó declara ""Eu sei que o meu Redentor vive"", versículo tantas vezes usado em cultos e hinos.
+O livro de Jó é um dos mais antigos da Bíblia e faz parte da literatura sapiencial, junto com Provérbios e Eclesiastes.
+Seus três amigos permaneceram sete dias e sete noites em silêncio: o consolo mais eficaz do livro.
+As filhas de Jó recebem nomes e herança junto com os irmãos, algo raro nas Escrituras (Jó 42:13-15).";"Jó 1 e 2 (a prova)
+Jó 3 a 31 (os diálogos com os amigos)
+Jó 38 a 41 (Deus responde do redemoinho)
+Jó 42 (o arrependimento e a restauração)
+Tiago 5:11 (a paciência de Jó no Novo Testamento)";"Homem justo cujo sofrimento inexplicável ensina que a fé não depende de entender; modelo de perseverança e de honestidade diante de Deus";"Era patriarcal (data incerta, provavelmente antes ou durante o período dos patriarcas)";"Jó, Ezequiel, Tiago";"Jó 1:21; Jó 13:15; Jó 19:25; Jó 38:4; Jó 42:5";"sofrimento, integridade, paciência, amigos, sabedoria, restauração, Redentor";"Sim";"graph TD
+  Jo[""Jó, de Uz""] ---|casado com| Esposa[""Sua esposa""]
+  Jo --> Antes[""7 filhos e 3 filhas, perdidos""]
+  Jo --> Depois[""7 filhos e 3 filhas depois da restauração""]
+  Depois --> Jemima[""Jemima""]
+  Depois --> Quezia[""Quézia""]
+  Depois --> Querem[""Quéren-Hapuque""]
+  Elifaz[""Elifaz, de Temã""] -.amigo.- Jo
+  Bildade[""Bildade, de Suá""] -.amigo.- Jo
+  Zofar[""Zofar, de Naamate""] -.amigo.- Jo
+  Eliu[""Eliú, filho de Baraquel""] -.fala depois.- Jo";"timeline
+  title A história de Jó
+  Jó 1 : Homem íntegro, rico e pai de dez filhos
+  Jó 1 : Perde de uma vez os bens e os filhos
+  Jó 2 : É ferido com úlceras e rejeitado até pela esposa
+  Jó 2 : Os três amigos chegam e ficam sete dias em silêncio
+  Jó 3 a 31 : Debate com os amigos e clama a Deus
+  Jó 32 a 37 : Eliú fala
+  Jó 38 a 41 : Deus responde a Jó do redemoinho
+  Jó 42 : Jó se arrepende, intercede pelos amigos e é restaurado em dobro"
+"Lídia";"Comerciante de púrpura de Tiatira, estabelecida em Filipos, Lídia foi a primeira convertida registrada na Europa; ouviu Paulo à beira de um rio, foi batizada com sua casa e abriu o lar para a nascente igreja.";"Lídia era natural de Tiatira, cidade da Ásia Menor famosa pela tinturaria, e vivia em Filipos, colônia romana na Macedônia. Era ""vendedora de púrpura"", um tecido caro e usado por quem tinha riqueza ou poder, o que sugere que era mulher de negócios, independente e bem estabelecida. A Bíblia a descreve como ""temente a Deus"": não era judia de nascimento, mas adorava o Deus de Israel. Seu nome aparece no relato da segunda viagem missionária de Paulo.
+Paulo, Silas, Timóteo e Lucas estavam no mar quando Paulo teve uma visão: um macedônio lhe pedia que passasse à Macedônia para ajudá-los. Desembarcaram e chegaram a Filipos, e, no sábado, saíram da cidade e foram à beira do rio, onde supunham haver um lugar de oração. Ali encontraram mulheres reunidas, e Paulo lhes falou. Entre elas, estava Lídia. Atos registra: ""O Senhor lhe abriu o coração para atender às coisas que Paulo dizia"". Ela creu e foi batizada, ela e todos os de sua casa.
+Em seguida, Lídia convidou os missionários: ""Se me julgais fiel ao Senhor, entrai em minha casa e ficai nela"". Lucas acrescenta: ""E nos constrangeu a isso"". A hospitalidade de Lídia foi o primeiro apoio logístico e afetivo da missão na Europa. Sua casa se tornou ponto de encontro dos cristãos de Filipos. Quando Paulo e Silas foram açoitados e presos por libertar uma escrava possuída por espírito de adivinhação, e depois soltos por um terremoto, foi à casa de Lídia que voltaram: ""Entraram na casa de Lídia e, tendo visto os irmãos, os confortaram e partiram"".
+A igreja de Filipos, que nasceu nesse contexto, tornou-se uma das mais queridas de Paulo. Anos depois, escrevendo-lhes da prisão, ele lembra a generosidade da comunidade e agradece as ofertas que enviaram para suprir suas necessidades. É provável que Lídia tenha tido papel importante no sustento da comunidade.
+Embora Lídia apareça apenas em poucos versículos, sua história é um dos relatos mais ricos do Novo Testamento. Mostra que o evangelho chegou à Europa pelas mãos de uma mulher de negócios, que Deus abre o coração para ouvir, que a fé pode levar uma família inteira ao batismo e que a hospitalidade é uma forma concreta de missão. Tiatira, sua cidade natal, foi depois uma das sete igrejas do Apocalipse (Apocalipse 2:18-29).";"Lídia é considerada a primeira convertida registrada na Europa, segundo o livro de Atos.
+Tiatira, sua cidade de origem, era conhecida pela indústria de tecidos e corantes, e depois foi uma das sete igrejas do Apocalipse.
+A púrpura era um dos tecidos mais caros da Antiguidade, o que indica que Lídia era próspera.
+""Temente a Deus"" era o termo para gentios simpatizantes do judaísmo que ainda não tinham se convertido formalmente.
+O primeiro ""culto"" da igreja de Filipos foi uma reunião à beira de um rio, não numa sinagoga.
+Paulo e Silas, presos e libertos em Filipos, foram direto à casa de Lídia antes de partir, o que mostra que ela era a anfitriã da comunidade.";"Atos 16:6-15 (a visão do macedônio e a conversão de Lídia)
+Atos 16:40 (Paulo e Silas voltam à casa de Lídia)
+Filipenses 1:3-8 e 4:14-18 (a comunidade que ela ajudou a formar)
+Apocalipse 2:18-29 (a igreja de Tiatira, sua cidade de origem)";"Empresária que se tornou a primeira convertida registrada na Europa e abriu sua casa para a igreja de Filipos";"Igreja primitiva, segunda viagem missionária de Paulo (cerca de 50 d.C.)";"Atos, Filipenses";"Atos 16:14; Atos 16:15; Atos 16:40; Filipenses 1:5";"conversão, hospitalidade, empreendedorismo, batismo, Filipos, igreja primitiva";"Sim";"graph TD
+  Lidia[""Lídia, vendedora de púrpura de Tiatira""] ---|batizada com| Casa[""Todos os de sua casa""]
+  Paulo[""Paulo""] -->|prega junto ao rio| Lidia
+  Silas[""Silas""] -.companheiro.- Paulo
+  Timoteo[""Timóteo""] -.companheiro.- Paulo
+  Lucas[""Lucas""] -.companheiro.- Paulo
+  Lidia -->|hospeda| Paulo
+  Lidia -->|casa vira ponto de encontro| Filipos[""Igreja de Filipos""]";"timeline
+  title A história de Lídia
+  Atos 16 versículos 6 a 10 : Paulo tem a visão do macedônio e vai a Filipos
+  Atos 16 versículos 11 a 13 : Paulo e os companheiros encontram mulheres em oração à beira do rio
+  Atos 16 versículo 14 : O Senhor abre o coração de Lídia
+  Atos 16 versículo 15 : Lídia e sua casa são batizadas e ela hospeda os missionários
+  Atos 16 versículos 16 a 39 : Paulo e Silas são presos e libertados em Filipos
+  Atos 16 versículo 40 : Voltam à casa de Lídia antes de partir
+  Filipenses 4 : Anos depois a igreja de Filipos apoia Paulo com ofertas"
