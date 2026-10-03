@@ -84,8 +84,7 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
     setFlip(null);
     const index = focusId === null ? -1 : items.findIndex((item) => item.id === focusId);
     if (index === -1) {
-      // O álbum abre direto nas figurinhas; a folha de abertura fica uma página atrás (só no celular, no desktop ela é a página da esquerda).
-      setView(!wide && items.length > 0 ? 1 : 0);
+      setView(0);
       return;
     }
     // Folha 0 é a abertura; a figurinha está na folha 1 + posição / por folha.

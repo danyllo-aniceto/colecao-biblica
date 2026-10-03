@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Pagination, usePagination } from '@/components/ui/pagination';
 import { Segmented } from '@/components/ui/segmented';
 import { Select } from '@/components/ui/select';
-import { EmptyState, ProgressBar, SectionHeading } from '@/components/game/game-ui';
+import { EmptyState } from '@/components/game/game-ui';
 import { StickerCard } from '@/components/game/sticker-card';
 import type { StickerRarity, Testament } from '@/lib/admin-api';
 import { sortBooks } from '@/lib/bible-books';
@@ -223,28 +223,22 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
 
   return (
     <div className="space-y-5">
-      <section className="panel space-y-3 p-4 sm:p-5">
-        <SectionHeading
-          title="Meu álbum"
-          subtitle={`${ownedCount} de ${characters.length} figurinhas conquistadas`}
-          action={
-            <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" size="sm" onClick={() => setDuplicatesOpen(true)}>
-                <AutoAwesomeRoundedIcon fontSize="small" />
-                Repetidas{totalDuplicates ? ` (${totalDuplicates})` : ''}
-              </Button>
-              <Button variant={filtersOpen ? 'primary' : 'secondary'} size="sm" onClick={() => setFiltersOpen((open) => !open)} aria-expanded={filtersOpen}>
-                <TuneRoundedIcon fontSize="small" />
-                Filtros{extraFilters ? ` (${extraFilters})` : ''}
-                <ExpandMoreRoundedIcon fontSize="small" className={cn('transition-transform', filtersOpen && 'rotate-180')} />
-              </Button>
-            </div>
-          }
-        />
-        <ProgressBar value={characters.length ? (ownedCount / characters.length) * 100 : 0} className="h-3" />
-      </section>
-
-      {filtersOpen ? filtersPanel : null}
+      <div className="flex items-center justify-between gap-3">
+        <p className="min-w-0 truncate text-sm font-bold text-muted">
+          <span className="font-display text-lg text-ink">{ownedCount}</span>/{characters.length} figurinhas
+        </p>
+        <div className="flex shrink-0 gap-2">
+          <Button variant="secondary" size="sm" onClick={() => setDuplicatesOpen(true)}>
+            <AutoAwesomeRoundedIcon fontSize="small" />
+            Repetidas{totalDuplicates ? ` (${totalDuplicates})` : ''}
+          </Button>
+          <Button variant={filtersOpen ? 'primary' : 'secondary'} size="sm" onClick={() => setFiltersOpen((open) => !open)} aria-expanded={filtersOpen}>
+            <TuneRoundedIcon fontSize="small" />
+            Filtros{extraFilters ? ` (${extraFilters})` : ''}
+            <ExpandMoreRoundedIcon fontSize="small" className={cn('transition-transform', filtersOpen && 'rotate-180')} />
+          </Button>
+        </div>
+      </div>
 
       <Segmented
         aria-label="Parte do álbum"
@@ -256,6 +250,8 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
           { value: 'collections', label: 'Coleções' },
         ]}
       />
+
+      {filtersOpen ? filtersPanel : null}
 
       {tab === 'collections' ? <ThemeCollections playerName={playerName} onCoins={(coins) => onWallet({ userCoins: coins })} refreshKey={collection.length} /> : null}
 
