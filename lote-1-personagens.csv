@@ -1,0 +1,331 @@
+﻿"Nome";"Resumo curto";"História completa";"Curiosidades";"Onde ler";"Papel na história";"Período";"Livros";"Versículos-chave";"Palavras-chave";"Publicado";"Árvore genealógica";"Linha do tempo"
+"Abraão";"Chamado por Deus aos 75 anos para deixar sua terra e seguir rumo ao desconhecido, Abraão tornou-se o pai da fé: recebeu a promessa de uma descendência incontável, creu em Deus mesmo quando tudo parecia impossível e foi chamado de amigo de Deus.";"Abrão nasceu em Ur dos caldeus, cidade próspera da Mesopotâmia, filho de Terá. Casou-se com Sarai, que era estéril, e acompanhou o pai até Harã, onde Terá morreu. Foi ali, já com 75 anos, que Deus lhe falou: ""Sai da tua terra, da tua parentela e da casa de teu pai, para a terra que eu te mostrarei"". A ordem vinha com uma promessa tripla: uma grande nação, um nome engrandecido e bênção para todas as famílias da terra. Sem mapa e sem garantias, Abrão partiu com Sarai, seu sobrinho Ló, os servos e os rebanhos.
+Em Canaã, ergueu altares em Siquém e em Betel e invocou o nome do Senhor. Uma fome o empurrou ao Egito, onde, por medo, pediu que Sarai se apresentasse como sua irmã; Deus interveio e os livrou. De volta a Canaã, Abrão e Ló já tinham rebanhos grandes demais para a mesma pastagem. Abrão deu a Ló a escolha da terra e ficou com o restante, em Hebrom. Mais tarde, quando reis inimigos levaram Ló cativo, reuniu 318 homens de sua casa, venceu a coalizão e foi abençoado por Melquisedeque, rei de Salém e sacerdote do Deus Altíssimo, a quem entregou o dízimo.
+Os anos passavam e o herdeiro não vinha. Numa noite, Deus mandou Abrão contar as estrelas: ""Assim será a tua descendência"". E a Escritura registra: ""Abrão creu no Senhor, e isso lhe foi imputado como justiça"". Deus selou a aliança num ritual com animais partidos. Impaciente, Sarai deu a serva Agar a Abrão e nasceu Ismael, mas a promessa seguiria por outro filho. Aos 99 anos, Deus renovou a aliança, mudou seu nome para Abraão (pai de multidões) e o de Sarai para Sara (princesa), e estabeleceu a circuncisão como sinal.
+Pouco depois, três visitantes foram recebidos com hospitalidade junto aos carvalhos de Manre e anunciaram que Sara teria um filho em um ano. Ela riu, incrédula, mas Isaque, ""riso"", nasceu quando Abraão tinha 100 anos. Antes disso, Abraão intercedeu por Sodoma, perguntando se o Juiz de toda a terra não faria justiça, e Deus poupou Ló da destruição. Mais tarde, Agar e Ismael foram despedidos, e Deus cuidou deles no deserto.
+O maior teste veio em Gênesis 22: Deus pediu que Abraão oferecesse Isaque no monte Moriá. Abraão obedeceu, confiando que Deus proveria; no último instante, o anjo do Senhor o deteve e um carneiro preso num arbusto tomou o lugar do filho. O lugar ficou conhecido como ""O Senhor proverá"". Quando Sara morreu aos 127 anos, Abraão comprou de Efrom, o heteu, o campo e a caverna de Macpela, em Hebrom, a única porção da terra prometida que possuiu em vida. Enviou um servo fiel a buscar Rebeca para Isaque, casou-se de novo com Cetura e morreu aos 175 anos, sepultado em Macpela por Isaque e Ismael.";"Abraão é venerado por judeus, cristãos e muçulmanos, por isso são chamadas ""religiões abraâmicas"".
+Sara era meia-irmã de Abraão, filha do mesmo pai, segundo Gênesis 20:12.
+Abraão é chamado ""amigo de Deus"" em Isaías 41:8 e em Tiago 2:23.
+O Novo Testamento o apresenta como ""pai de todos os que creem"" (Romanos 4:11) e usa sua fé como exemplo central em Romanos 4, Gálatas 3, Hebreus 11 e Tiago 2.
+A única terra que Abraão possuiu em Canaã foi o sepulcro da família, comprado por 400 siclos de prata.
+Os nomes foram mudados por Deus: Abrão (""pai exaltado"") virou Abraão (""pai de multidões"") e Sarai virou Sara (""princesa"").";"Gênesis 11:26 a 25:11 (a vida de Abraão)
+Gênesis 12:1-9 (o chamado)
+Gênesis 15 (a aliança e a fé imputada como justiça)
+Gênesis 22 (o sacrifício de Isaque)
+Romanos 4, Gálatas 3:6-9 e Hebreus 11:8-19 (a fé de Abraão no Novo Testamento)";"Pai da fé e patriarca de Israel; receptor da aliança e da promessa de terra, descendência e bênção a todas as nações";"Período patriarcal (cerca de 2000 a 1800 a.C.)";"Gênesis, Isaías, Mateus, Lucas, João, Atos, Romanos, Gálatas, Hebreus, Tiago";"Gênesis 12:1-3; Gênesis 15:6; Gênesis 22:8; Romanos 4:3; Hebreus 11:8; Tiago 2:23";"fé, promessa, aliança, obediência, hospitalidade, intercessão, amigo de Deus";"Sim";"graph TD
+  Tera[""Terá""] --> Abraao[""Abraão""]
+  Tera --> Naor[""Naor""]
+  Tera --> Hara[""Harã""]
+  Hara --> Lo[""Ló""]
+  Abraao ---|casado com| Sara[""Sara""]
+  Abraao ---|e a serva| Agar[""Agar""]
+  Abraao ---|depois| Cetura[""Cetura""]
+  Sara --> Isaque[""Isaque""]
+  Agar --> Ismael[""Ismael""]
+  Cetura --> Midia[""Midiã e outros 5 filhos""]
+  Isaque --> Esau[""Esaú""]
+  Isaque --> Jaco[""Jacó""]
+  Jaco --> Tribos[""Os 12 filhos que originam as tribos de Israel""]
+  Ismael --> Principes[""12 príncipes""]";"timeline
+  title A jornada de Abraão
+  Gênesis 11 : Nasce em Ur dos caldeus e segue com Terá até Harã
+  Gênesis 12 : Deus o chama aos 75 anos e ele parte para Canaã
+  Gênesis 14 : Resgata Ló e recebe a bênção de Melquisedeque
+  Gênesis 15 : Deus promete descendência como as estrelas e faz aliança
+  Gênesis 17 : Recebe o nome Abraão e a circuncisão como sinal
+  Gênesis 18 e 19 : Hospeda três visitantes e intercede por Sodoma
+  Gênesis 21 : Nasce Isaque quando Abraão tem 100 anos
+  Gênesis 22 : Obedece no monte Moriá e Deus provê o carneiro
+  Gênesis 23 : Sara morre e ele compra a caverna de Macpela
+  Gênesis 25 : Morre aos 175 anos e é sepultado em Macpela"
+"Acabe";"Sétimo rei de Israel (Reino do Norte), Acabe reinou 22 anos em Samaria e é lembrado como um dos reis mais ímpios: casou-se com Jezabel, promoveu o culto a Baal e enfrentou o profeta Elias.";"Acabe era filho de Onri, o general que fundou Samaria e fez dela a capital do Reino do Norte. Subiu ao trono em Israel e reinou 22 anos. A Bíblia resume seu governo de forma severa: ""fez o que era mau aos olhos do Senhor, mais do que todos os que foram antes dele"". O ponto de virada foi o casamento com Jezabel, filha de Etbaal, rei dos sidônios, uma aliança política que trouxe para Israel o culto a Baal e a Aserá. Acabe construiu um templo a Baal em Samaria e ergueu um poste sagrado, afastando o povo da aliança com o Senhor.
+O profeta Elias surgiu para confrontá-lo e anunciou uma seca que duraria até que ele mesmo mandasse. Por três anos e meio a terra ficou sem chuva e Acabe passou a caçar Elias por todos os reinos vizinhos. O confronto decisivo foi no monte Carmelo, onde Elias desafiou os profetas de Baal; o fogo do Senhor desceu e o povo proclamou que o Senhor é Deus. Depois, a chuva voltou. Jezabel, porém, jurou matar Elias, e o rei nada fez para detê-la.
+Nem tudo em Acabe foi apenas oposição. Em 1 Reis 20, quando Ben-Hadade, rei de Arã, cercou Samaria com um grande exército, um profeta anunciou que o Senhor daria a vitória a Israel, e Acabe venceu duas vezes. Mas, em vez de cumprir a ordem de eliminar o inimigo, firmou um tratado com Ben-Hadade e o deixou ir, o que lhe valeu a condenação de um profeta. Registros assírios confirmam que Acabe foi um rei poderoso: ele aparece entre os aliados que enfrentaram Salmaneser III na batalha de Qarqar, em 853 a.C., com 2.000 carros e 10.000 soldados.
+O episódio mais sombrio foi o de Nabote. Acabe desejava a vinha de Nabote, em Jezreel, e, diante da recusa (a terra era herança de família), voltou para casa abatido. Jezabel forjou cartas, acusou Nabote falsamente e o fez apedrejar; Acabe foi tomar posse da vinha. Elias anunciou o julgamento: a casa de Acabe seria destruída e os cães lamberiam seu sangue. Surpreendentemente, Acabe rasgou as vestes, vestiu pano de saco e jejuou, e Deus adiou a calamidade para os dias de seu filho.
+Três anos depois, Acabe aliou-se a Josafá, rei de Judá, para retomar Ramote-Gileade. Quatrocentos profetas da corte prometeram vitória, mas Micaías, o único que falou a verdade, previu o desastre. Acabe foi à batalha disfarçado, mas uma flecha disparada ao acaso o atingiu entre as juntas da armadura. Morreu ao entardecer, apoiado em seu carro, e quando o carro foi lavado em Samaria, os cães lamberam o sangue, como Elias havia dito. Seu filho Acazias o sucedeu.";"O nome ""Ahab"" aparece em um texto assírio do rei Salmaneser III, o que o torna um dos reis de Israel confirmados fora da Bíblia.
+O pai de Acabe, Onri, é citado também na Estela de Mesa, de Moabe, como rei de Israel.
+Acabe construiu uma ""casa de marfim"" em Samaria (1 Reis 22:39), e arqueólogos encontraram na cidade centenas de peças de marfim esculpidas da mesma época.
+A filha de Acabe, Atalia, casou-se com o rei Jeorão de Judá e, anos depois, tomou o trono de Judá.
+Acabe tinha 70 descendentes em Samaria, e todos foram mortos por ordem de Jeú, que destruiu a dinastia (2 Reis 10).
+Mesmo cheio de maldade, quando Acabe se humilhou diante de Deus em 1 Reis 21:27-29, o julgamento foi adiado.";"1 Reis 16:29 a 22:40 (o reinado completo de Acabe)
+1 Reis 18 (o desafio de Elias no monte Carmelo)
+1 Reis 21 (a vinha de Nabote)
+1 Reis 22 (a morte em Ramote-Gileade)
+2 Reis 9 e 10 (o fim da casa de Acabe)";"Rei de Israel que promoveu o culto a Baal ao lado de Jezabel e foi o grande adversário do profeta Elias";"Reino dividido, Reino de Israel (cerca de 874 a 853 a.C.)";"1 Reis, 2 Reis, 2 Crônicas, Miqueias";"1 Reis 16:30; 1 Reis 18:21; 1 Reis 21:19; 1 Reis 22:34; Miqueias 6:16";"idolatria, Baal, Jezabel, injustiça, arrependimento, julgamento";"Sim";"graph TD
+  Onri[""Onri, rei de Israel""] --> Acabe[""Acabe, rei de Israel""]
+  Etbaal[""Etbaal, rei dos sidônios""] --> Jezabel[""Jezabel""]
+  Acabe ---|casado com| Jezabel
+  Acabe --> Acazias[""Acazias, rei de Israel""]
+  Acabe --> Jeorao[""Jeorão ou Jorão, rei de Israel""]
+  Acabe --> Atalia[""Atalia""]
+  Acabe --> Setenta[""70 descendentes em Samaria""]
+  Atalia ---|casada com| JeoraoJudah[""Jeorão, rei de Judá""]
+  JeoraoJudah --> AcaziasJudah[""Acazias, rei de Judá""]";"timeline
+  title O reinado de Acabe
+  1 Reis 16 : Torna-se rei em Samaria e casa-se com Jezabel
+  1 Reis 17 : Elias anuncia a seca
+  1 Reis 18 : Desafio no monte Carmelo e volta da chuva
+  1 Reis 20 : Vence Ben-Hadade de Arã e o poupa
+  1 Reis 21 : Toma a vinha de Nabote e é condenado por Elias
+  1 Reis 22 : Morre em Ramote-Gileade atingido por uma flecha"
+"Adão";"O primeiro homem, criado do pó da terra e animado pelo sopro de Deus, Adão viveu no Éden com Eva até a desobediência que trouxe o pecado e a morte ao mundo, sempre acompanhada da promessa de redenção.";"O livro de Gênesis conta que, no sexto dia da criação, Deus formou o homem do pó da terra e soprou em suas narinas o fôlego de vida. ""Adão"" significa ""homem"" e vem de ""adamá"", que quer dizer ""terra"": o primeiro ser humano foi feito de barro e de Deus. Criado à imagem e semelhança do Criador, recebeu a missão de cultivar e guardar o jardim do Éden, de dominar sobre a criação e de dar nome aos animais. Entre todos os seres que desfilaram diante dele, não havia ajudadora que lhe correspondesse. Deus fez cair sobre Adão um sono profundo, tirou uma de suas costelas e dela formou Eva, a mulher. Adão exclamou: ""Esta, afinal, é osso dos meus ossos e carne da minha carne"".
+No jardim havia livre acesso a todas as árvores, exceto uma: a árvore do conhecimento do bem e do mal. ""No dia em que dela comeres, certamente morrerás"". A serpente, o mais astuto dos animais, questionou a palavra de Deus: ""Certamente não morrereis"". Eva viu que o fruto era bom, agradável aos olhos e desejável para dar sabedoria; comeu e deu também a Adão, que estava com ela, e ele comeu. Imediatamente perceberam que estavam nus e costuraram folhas de figueira para se cobrir. Quando ouviram Deus caminhando no jardim, esconderam-se.
+Deus os chamou: ""Onde estás?"". Adão culpou a mulher, e a mulher culpou a serpente. As consequências foram graves: a serpente foi amaldiçoada, a mulher teria dores no parto, e Adão teria de tirar da terra o sustento com o suor do rosto, até voltar ao pó. Mas, no meio do julgamento, há esperança: a descendência da mulher esmagaria a cabeça da serpente (Gênesis 3:15), considerado o primeiro anúncio do Salvador. Deus ainda fez túnicas de pele para os dois e os expulsou do Éden, colocando querubins e uma espada flamejante a guardar o caminho da árvore da vida.
+Fora do jardim, Adão e Eva tiveram filhos. Caim, o primogênito, matou seu irmão Abel por inveja, e o primeiro lar da humanidade conheceu o luto e a violência. Mais tarde, nasceu Sete, que Eva recebeu como ""outro filho em lugar de Abel"". Dessa linhagem viria Noé, e, séculos depois, o próprio Cristo. Adão viveu 930 anos, teve outros filhos e filhas e morreu, como Deus havia dito.
+O Novo Testamento volta a Adão para explicar o evangelho. Paulo escreve que, assim como por um homem entrou o pecado no mundo, também por um só homem, Jesus Cristo, entrou a graça: ""Assim como em Adão todos morrem, também em Cristo todos serão vivificados"". Por isso, Jesus é chamado de ""último Adão"". Lucas inclui Adão na genealogia de Jesus e o chama de ""filho de Deus"".";"""Adão"" é a palavra hebraica para ""homem"" e tem ligação sonora com ""adamá"", terra, o material de que foi feito.
+Adão deu nome a todos os animais, o que mostra seu papel de governante sobre a criação.
+Segundo Gênesis 5:5, Adão viveu 930 anos, e Sete nasceu quando ele tinha 130.
+Judas 14 afirma que Enoque foi ""o sétimo depois de Adão"".
+Paulo chama Jesus de ""último Adão"" (1 Coríntios 15:45) e de segundo homem, que desfaz o que o primeiro quebrou.
+Deus mesmo fez roupas de pele para Adão e Eva antes de expulsá-los: sinal de cuidado mesmo no juízo.";"Gênesis 1:26 a 2:25 (criação do homem e da mulher)
+Gênesis 3 (a queda e a primeira promessa)
+Gênesis 4:1-2 e 4:25 a 5:5 (filhos e morte de Adão)
+Romanos 5:12-21 e 1 Coríntios 15:21-22,45 (Adão e Cristo)";"Primeiro ser humano, cuja desobediência explica a entrada do pecado no mundo e prepara a promessa da redenção em Cristo";"Início da humanidade (a Criação, tempos primitivos)";"Gênesis, 1 Crônicas, Lucas, Romanos, 1 Coríntios, 1 Timóteo, Judas";"Gênesis 1:27; Gênesis 2:7; Gênesis 3:15; Romanos 5:12; 1 Coríntios 15:22";"criação, Éden, queda, pecado, promessa, imagem de Deus";"Sim";"graph TD
+  Deus[""Deus, o Criador""] --> Adao[""Adão""]
+  Adao ---|e Deus formou| Eva[""Eva""]
+  Adao --> Caim[""Caim""]
+  Adao --> Abel[""Abel""]
+  Adao --> Sete[""Sete""]
+  Sete --> Enos[""Enos""]
+  Enos --> Caina[""Cainã""]
+  Caina --> Maalalel[""Maalalel""]
+  Maalalel --> Jarede[""Jarede""]
+  Jarede --> Enoque[""Enoque""]
+  Enoque --> Matusalem[""Matusalém""]
+  Matusalem --> Lameque[""Lameque""]
+  Lameque --> Noe[""Noé""]";"timeline
+  title A história de Adão
+  Gênesis 1 : Criado à imagem de Deus no sexto dia
+  Gênesis 2 : Colocado no Éden, dá nome aos animais e recebe Eva
+  Gênesis 3 : Come do fruto proibido e é expulso do jardim
+  Gênesis 4 : Nascem Caim e Abel e Caim mata o irmão
+  Gênesis 5 : Nasce Sete e Adão morre aos 930 anos"
+"Ana";"Mulher estéril de Siló que derramou sua alma em oração e recebeu de Deus o filho Samuel, a quem entregou ao serviço do Senhor; seu cântico de gratidão é um dos grandes poemas da Bíblia.";"Ana vivia em Ramataim, nos montes de Efraim, casada com Elcana, um levita devoto. Elcana tinha também outra esposa, Penina, que tinha filhos e provocava Ana sem trégua por causa de sua esterilidade. Todos os anos, a família subia a Siló para adorar e oferecer sacrifícios. Elcana dava a Ana uma porção dobrada e dizia, com carinho desajeitado: ""Ana, por que choras? Não sou eu melhor para ti do que dez filhos?"". Mas a dor dela era grande demais para ser consolada por palavras.
+Um dia, depois da refeição, Ana foi sozinha ao santuário e, ""amargurada de alma"", orou ao Senhor chorando muito. Fez um voto: se Deus lhe desse um filho, ela o dedicaria ao Senhor todos os dias de sua vida, e navalha nunca passaria por sua cabeça, como se faz com o nazireu. Orava em silêncio, movendo apenas os lábios, e o sacerdote Eli, que a observava, pensou que estivesse embriagada e a repreendeu. Ana respondeu com humildade: ""Não, meu senhor, sou uma mulher de espírito atribulado... derramei a minha alma diante do Senhor"". Eli então a abençoou: ""Vai em paz, e o Deus de Israel te conceda o que pediste"". Ana voltou, comeu, e seu rosto já não estava triste.
+No tempo certo, Ana deu à luz um menino e o chamou de Samuel, pois, disse ela, ""ao Senhor o pedi"". Quando o menino foi desmamado, Ana cumpriu o voto: subiu a Siló com três novilhos, farinha e vinho, levou o filho a Eli e declarou: ""Por este menino orava eu... Por isso, também eu o dou ao Senhor"". E ali deixou o pequeno para servir diante do Senhor.
+Em seguida, Ana entoou um cântico de louvor (1 Samuel 2:1-10): ""O meu coração exulta no Senhor... Não há santo como o Senhor"". Ela celebra um Deus que humilha os soberbos, levanta o pobre do pó e dá filhos à estéril. O poema ecoa no cântico de Maria, o Magnificat, em Lucas 1:46-55. Todos os anos, Ana visitava Samuel e levava uma pequena túnica que fizera para ele, e Deus a recompensou depois com mais três filhos e duas filhas.
+Samuel cresceu e se tornou o último juiz de Israel, profeta e quem ungiu os dois primeiros reis, Saul e Davi. A Bíblia mostra que o menino pedido em lágrimas se tornou uma bênção para toda a nação. A história de Ana ensina que Deus ouve a oração sincera e transforma a dor em propósito.";"O nome ""Samuel"" lembra a expressão hebraica ""ouvido por Deus"", ligada ao pedido de Ana.
+Ana é um dos exemplos bíblicos de oração silenciosa e sincera: apenas seus lábios se moviam (1 Samuel 1:13).
+O cântico de Ana inspirou o Magnificat de Maria, em Lucas 1:46-55.
+Por tradição, Ana é também citada no Talmude e na liturgia judaica como modelo de oração.
+Ana fazia anualmente uma pequena túnica para o filho, detalhe delicado de amor materno em 1 Samuel 2:19.
+Há outra Ana na Bíblia, a profetisa de Lucas 2:36-38, que reconheceu o menino Jesus no templo.";"1 Samuel 1 (a esterilidade, a oração e o nascimento de Samuel)
+1 Samuel 2:1-10 (o cântico de Ana)
+1 Samuel 2:18-21 (a túnica e os outros filhos)
+Lucas 1:46-55 (o Magnificat, com ecos do cântico de Ana)";"Mãe de Samuel e exemplo de oração perseverante; sua fé e seu voto deram a Israel o último juiz e grande profeta";"Época dos juízes (cerca de 1100 a.C.)";"1 Samuel";"1 Samuel 1:10; 1 Samuel 1:20; 1 Samuel 1:27-28; 1 Samuel 2:1; 1 Samuel 2:8";"oração, esterilidade, voto, gratidão, maternidade, Siló, Samuel";"Sim";"graph TD
+  Elcana[""Elcana, de Ramataim""] ---|esposa| Ana[""Ana""]
+  Elcana ---|outra esposa| Penina[""Penina""]
+  Penina --> FilhosPenina[""Filhos e filhas de Penina""]
+  Ana --> Samuel[""Samuel, juiz e profeta""]
+  Ana --> FilhosAna[""Mais 3 filhos e 2 filhas""]
+  Samuel --> Joel[""Joel""]
+  Samuel --> Abias[""Abias""]
+  Eli[""Eli, sacerdote em Siló""] -.abençoa.-> Ana";"timeline
+  title A história de Ana
+  1 Samuel 1 : Provocada por Penina, ora em Siló e faz o voto
+  1 Samuel 1 : Eli a abençoa e nasce Samuel
+  1 Samuel 1 e 2 : Leva Samuel ao santuário e o entrega ao Senhor
+  1 Samuel 2 : Entoa seu cântico de louvor
+  1 Samuel 2 : Recebe mais três filhos e duas filhas"
+"Arão";"Irmão mais velho de Moisés e primeiro sumo sacerdote de Israel, Arão foi o porta-voz do libertador diante do faraó e inaugurou o sacerdócio no tabernáculo, apesar de falhas graves como o bezerro de ouro.";"Arão nasceu no Egito, da tribo de Levi, filho de Anrão e Joquebede, três anos mais velho que Moisés. Quando Deus chamou Moisés na sarça ardente e ele se escusou por não saber falar bem, o Senhor respondeu: ""Não é teu irmão Arão, o levita? Bem sei que ele fala bem"". Arão foi ao encontro de Moisés no deserto e juntos voltaram ao Egito. Aos 83 anos, enquanto Moisés tinha 80, apresentaram-se ao faraó para exigir: ""Deixa ir o meu povo"". Arão lançou o cajado que virou serpente e, durante as pragas, estendeu o cajado sobre as águas do Egito, dando início às primeiras pragas.
+Na travessia do deserto, Arão esteve ao lado de Moisés nos momentos decisivos. Quando Amaleque atacou Israel em Refidim, Josué lutava no vale enquanto Moisés erguia as mãos no alto do monte; vendo que seus braços cansavam, Arão e Hur o ampararam, um de cada lado, até o pôr do sol. Também subiu o Sinai com Moisés, Nadabe, Abiú e setenta anciãos, e viu a glória de Deus.
+O ponto mais baixo veio logo depois: enquanto Moisés estava no monte recebendo a Lei, o povo, impaciente, pediu deuses visíveis. Arão pegou o ouro e fez um bezerro fundido, construiu um altar e proclamou uma festa. Quando Moisés desceu, Arão tentou justificar-se, mas foi poupado pela intercessão de Moisés. Deus, em sua graça, não anulou o chamado: Arão foi consagrado sumo sacerdote junto com os filhos, vestido com as vestes santas (o éfode, o peitoral com doze pedras e a mitra com a inscrição ""Santidade ao Senhor"") e ungido com óleo. Nadabe e Abiú foram mortos ao oferecer fogo estranho, e Arão calou-se diante do juízo de Deus.
+A vida de Arão também foi marcada por tensões. Ele e Miriã murmuraram contra Moisés por causa da esposa cuxita; Miriã ficou leprosa, e Arão confessou o erro e pediu perdão. Na rebelião de Corá, Arão pôs incenso no incensário e correu para o meio do povo, entre os mortos e os vivos, até que a praga cessasse. Depois, Deus confirmou a escolha de sua casa: a vara de Arão floresceu e deu amêndoas durante a noite, e foi guardada diante da arca.
+Em Meribá, Arão e Moisés desobedeceram a ordem de falar à rocha, e Deus os impediu de entrar na terra prometida. Chegando ao monte Hor, Moisés despiu Arão das vestes sacerdotais e as pôs em Eleazar, seu filho, e Arão morreu ali, aos 123 anos. O povo chorou por trinta dias. O Novo Testamento usa o sacerdócio de Arão como contraste: Cristo é sumo sacerdote superior, segundo a ordem de Melquisedeque (Hebreus 7).";"Arão tinha 83 anos quando enfrentou o faraó junto com Moisés, e 123 quando morreu.
+As vestes do sumo sacerdote eram ricas: o peitoral levava 12 pedras preciosas, uma para cada tribo de Israel.
+A vara de Arão que floresceu foi guardada diante da arca como lembrança contra a murmuração (Números 17).
+O Salmo 133 compara a união dos irmãos ao óleo precioso derramado sobre a cabeça de Arão.
+Seus descendentes formaram a linhagem sacerdotal de Israel por séculos. Tanto Zacarias quanto Isabel, pais de João Batista, eram da linhagem de Arão (Lucas 1:5).
+Hebreus 5:4 diz que ninguém toma para si essa honra, mas é chamado por Deus, ""como Arão"".";"Êxodo 4:10-16 e 7:1-13 (Arão como porta-voz de Moisés)
+Êxodo 17:8-13 (Arão e Hur sustentam os braços de Moisés)
+Êxodo 28 e 29 e Levítico 8 e 9 (a consagração como sumo sacerdote)
+Êxodo 32 (o bezerro de ouro)
+Números 16 e 17 (a revolta de Corá e a vara que floresceu)
+Números 20:22-29 (a morte de Arão no monte Hor)";"Primeiro sumo sacerdote de Israel e porta-voz de Moisés; fundador da linhagem sacerdotal que serviu no tabernáculo";"Êxodo e peregrinação no deserto (cerca de 1500 a 1400 a.C.)";"Êxodo, Levítico, Números, Deuteronômio, Salmos, Atos, Hebreus";"Êxodo 4:14-16; Êxodo 28:36; Números 17:8; Números 20:12; Salmos 133:1-2; Hebreus 5:4";"sacerdócio, intercessão, porta-voz, bezerro de ouro, vara que floresceu, tabernáculo";"Sim";"graph TD
+  Levi[""Levi""] --> Coate[""Coate""]
+  Coate --> Anrao[""Anrão""]
+  Anrao ---|e Joquebede| Joquebede[""Joquebede""]
+  Joquebede --> Miria[""Miriã""]
+  Joquebede --> Arao[""Arão""]
+  Joquebede --> Moises[""Moisés""]
+  Arao ---|casado com| Eliseba[""Eliseba""]
+  Eliseba --> Nadabe[""Nadabe, morto no tabernáculo""]
+  Eliseba --> Abiu[""Abiú, morto no tabernáculo""]
+  Eliseba --> Eleazar[""Eleazar, sumo sacerdote""]
+  Eliseba --> Itamar[""Itamar""]
+  Eleazar --> Fineias[""Finéias""]";"timeline
+  title A vida de Arão
+  Êxodo 4 : Deus o designa porta-voz de Moisés
+  Êxodo 7 : Enfrentam o faraó e começam as pragas
+  Êxodo 17 : Sustenta os braços de Moisés na batalha contra Amaleque
+  Êxodo 28 : É consagrado como primeiro sumo sacerdote
+  Êxodo 32 : Faz o bezerro de ouro com o povo
+  Levítico 10 : Perde Nadabe e Abiú pelo fogo estranho
+  Números 12 : Confessa o erro quando Miriã é ferida de lepra
+  Números 17 : Sua vara floresce como confirmação do sacerdócio
+  Números 20 : Morre no monte Hor aos 123 anos"
+"Corá";"Levita orgulhoso que liderou uma revolta contra Moisés e Arão no deserto, exigindo o sacerdócio para si; a terra se abriu e o engoliu, e o episódio ficou como advertência contra a rebelião.";"Corá era um levita da família de Coate, filho de Isar e primo de Moisés e Arão. Como levita, já tinha uma função honrosa: transportar os utensílios sagrados do tabernáculo. Mas isso não lhe bastava. No deserto, depois de longos anos de peregrinação e da sentença de que aquela geração não entraria em Canaã, o descontentamento cresceu. Corá uniu-se aos rubenitas Datã e Abirão, e a Om, e juntou 250 líderes da congregação, homens de renome, para confrontar Moisés e Arão.
+O argumento deles parecia piedoso: ""Basta! Toda a congregação é santa, todos são santos, e o Senhor está no meio deles. Por que vos elevais acima da assembleia do Senhor?"". Na prática, rejeitavam a autoridade que Deus mesmo havia estabelecido e queriam o sacerdócio. Moisés caiu com o rosto em terra e propôs um teste: no dia seguinte, cada um traria o seu incensário com fogo e incenso diante do Senhor, e Deus mostraria quem era seu escolhido. Disse a Corá: ""Parece-vos pouco que o Deus de Israel vos separou para o serviço do tabernáculo? Procurais também o sacerdócio?"".
+Datã e Abirão recusaram-se a comparecer e acusaram Moisés de tê-los tirado de uma terra ""que mana leite e mel"" para matá-los no deserto. No dia marcado, Corá reuniu toda a congregação contra Moisés e Arão à porta da tenda. A glória do Senhor apareceu e Deus pediu a Moisés que o povo se afastasse das tendas. Moisés declarou que, se aqueles homens morressem de morte comum, o Senhor não o teria enviado; mas, se a terra abrisse a boca e os engolisse vivos, saberiam que haviam desprezado o Senhor.
+Mal ele acabou de falar, a terra se fendeu: engoliu Datã, Abirão, suas casas e todos os que pertenciam a Corá, e eles desceram vivos ao Sheol. Fogo saiu do Senhor e consumiu os 250 homens que ofereciam incenso. O sacerdote Eleazar recolheu os incensários e Deus mandou que fossem reduzidos a lâminas para revestir o altar, como memorial de que ninguém, a não ser os descendentes de Arão, deveria oferecer incenso.
+No dia seguinte, o povo ainda murmurou, acusando Moisés e Arão de matar o povo do Senhor. Uma praga se espalhou e matou 14.700 pessoas, até que Arão tomou o incensário e correu para o meio da congregação, pondo-se entre os mortos e os vivos. Para encerrar a disputa, Deus mandou que cada tribo depositasse uma vara; apenas a de Arão floresceu, brotando e dando amêndoas. Os filhos de Corá, porém, não morreram (Números 26:11): seus descendentes foram porteiros e músicos do templo, e os ""filhos de Corá"" são autores de vários salmos.";"Números 26:11 registra que os filhos de Corá não morreram com ele, e sua linhagem continuou a servir.
+Os ""filhos de Corá"" são atribuídos a vários salmos, entre eles os Salmos 42, 44 a 49, 84, 85, 87 e 88.
+Os incensários da rebelião foram transformados em lâmina para o altar, como lembrete permanente.
+O profeta Samuel era descendente de Corá, pela linha de seu pai Elcana (1 Crônicas 6:22-28).
+Judas 11 cita ""a rebelião de Corá"" como exemplo de quem despreza a autoridade estabelecida por Deus.
+A rebelião foi resolvida pelo sinal da vara de Arão que floresceu (Números 17).";"Números 16 (a revolta e o julgamento)
+Números 17 (a vara de Arão que floresceu)
+Números 26:9-11 (os filhos de Corá sobreviveram)
+1 Crônicas 6:22-38 (descendentes de Corá)
+Judas 11 (a rebelião de Corá como advertência)";"Levita que se rebelou contra a liderança de Moisés e Arão e tornou-se exemplo bíblico dos riscos do orgulho e da ambição";"Peregrinação no deserto (cerca de 1445 a 1405 a.C.)";"Êxodo, Números, 1 Crônicas, Salmos, Judas";"Números 16:3; Números 16:32; Números 26:11; Judas 11";"rebelião, orgulho, autoridade, julgamento, incensário, sacerdócio";"Sim";"graph TD
+  Levi[""Levi""] --> Coate[""Coate""]
+  Coate --> Anrao[""Anrão""]
+  Coate --> Isar[""Isar""]
+  Anrao --> Arao[""Arão""]
+  Anrao --> Moises[""Moisés""]
+  Isar --> Cora[""Corá""]
+  Cora --> Filhos[""Filhos de Corá, porteiros e salmistas""]
+  Filhos --> Samuel[""Samuel, profeta, descendente de Corá""]
+  Ruben[""Rúben""] --> Palu[""Palu""]
+  Palu --> Eliabe[""Eliabe""]
+  Eliabe --> Data[""Datã""]
+  Eliabe --> Abirao[""Abirão""]
+  Data -.aliado de.-> Cora
+  Abirao -.aliado de.-> Cora";"timeline
+  title A revolta de Corá
+  Êxodo 6 : Sua linhagem é registrada entre os levitas de Coate
+  Números 16 : Reúne 250 líderes e contesta Moisés e Arão
+  Números 16 : O teste do incenso e a terra engole os rebeldes
+  Números 16 : A praga mata 14.700 e Arão fica entre os vivos e os mortos
+  Números 17 : A vara de Arão floresce
+  Números 26 : Os filhos de Corá sobrevivem
+  1 Crônicas 6 : Os coreítas servem como cantores e porteiros no templo"
+"Daniel";"Jovem judeu levado cativo para a Babilônia que permaneceu fiel a Deus durante o exílio, interpretou sonhos de reis, sobreviveu à cova dos leões e recebeu visões sobre o futuro dos reinos e do Reino de Deus.";"Daniel foi levado ainda adolescente para a Babilônia, no terceiro ano do reinado de Jeoaquim, rei de Judá (cerca de 605 a.C.), quando Nabucodonosor tomou Jerusalém e deportou jovens da nobreza. Com seus companheiros Hananias, Misael e Azarias, foi escolhido para ser treinado durante três anos na língua e na literatura dos caldeus. Receberam novos nomes: Daniel virou Beltessazar; os amigos, Sadraque, Mesaque e Abede-Nego. Mesmo no palácio, Daniel decidiu não se contaminar com a comida do rei e pediu uma dieta de legumes e água. Dez dias depois, estavam mais saudáveis que todos os outros, e Deus lhes deu sabedoria e entendimento.
+Por causa dessa sabedoria, Daniel foi chamado quando Nabucodonosor teve um sonho perturbador e exigiu que os sábios revelassem tanto o sonho quanto o significado. Só Daniel, depois de orar com seus amigos, recebeu a revelação: uma estátua de ouro, prata, bronze, ferro e barro, destruída por uma pedra que cresceu e encheu toda a terra. Era o desenho dos reinos humanos, seguidos por um Reino eterno que o Deus do céu estabeleceria. O rei confessou: ""Certamente o vosso Deus é Deus dos deuses"". Daniel foi promovido a governante da província de Babilônia.
+Pouco depois, Sadraque, Mesaque e Abede-Nego recusaram-se a adorar a imagem de ouro e foram lançados na fornalha ardente; o rei viu quatro homens andando no fogo, o quarto semelhante a ""um filho dos deuses"", e eles saíram sem nem o cheiro de fumaça. Daniel interpretou também o sonho da grande árvore cortada, avisando Nabucodonosor de que seu orgulho o humilharia; o rei viveu como animal por sete tempos até reconhecer que o Altíssimo domina sobre os reinos dos homens.
+Décadas depois, na noite em que Belsazar profanou os vasos do templo num banquete, uma mão escreveu na parede ""Mene, Mene, Tequel, Parsim"". Daniel, já idoso, leu a mensagem: o reino havia sido pesado e achado em falta, e seria entregue aos medos e persas. Naquela mesma noite Belsazar morreu e Dario, o medo, assumiu o reino. Daniel foi mantido em posição de destaque, o que despertou inveja. Seus rivais convenceram o rei a decretar que ninguém orasse a outro deus por 30 dias. Daniel, três vezes ao dia, abria as janelas voltadas para Jerusalém e orava, como sempre fizera. Foi lançado na cova dos leões, e Deus enviou seu anjo para fechar a boca das feras. Na manhã seguinte, Dario o encontrou ileso e decretou que todos temessem o Deus de Daniel.
+Na segunda metade do livro, Daniel recebe visões apocalípticas: quatro bestas saindo do mar, o Ancião de Dias entregando o domínio a ""alguém semelhante a um filho de homem"", o carneiro e o bode, a oração de arrependimento pelo seu povo (Daniel 9) e a revelação das ""setenta semanas"" trazida pelo anjo Gabriel. No terceiro ano de Ciro, ele recebe a última visão, que termina com a promessa da ressurreição dos mortos: ""Muitos dos que dormem no pó da terra ressuscitarão"". O anjo encerra dizendo: ""Tu, porém, segue o teu caminho até o fim; descansarás e te levantarás para a tua herança no fim dos dias"".";"O livro de Daniel foi escrito em dois idiomas: hebraico e aramaico (o trecho de Daniel 2:4 a 7:28 está em aramaico).
+Daniel serviu sob vários governos: Nabucodonosor, Belsazar, Dario, o medo, e Ciro, o persa.
+O livro o chama de ""homem muito amado"" (Daniel 9:23 e 10:11).
+A expressão ""escrita na parede"" nasceu do episódio do banquete de Belsazar.
+Ezequiel, contemporâneo de Daniel, o cita como exemplo de justiça junto com Noé e Jó (Ezequiel 14:14).
+Jesus mencionou ""o abominável da desolação de que falou o profeta Daniel"" em Mateus 24:15, e o título ""Filho do Homem"" que Jesus usava vem de Daniel 7.";"Daniel 1 (o cativeiro e a fidelidade na dieta)
+Daniel 2 (o sonho da estátua)
+Daniel 3 (a fornalha ardente)
+Daniel 5 (a escrita na parede)
+Daniel 6 (a cova dos leões)
+Daniel 7 a 12 (as visões)";"Profeta e estadista no exílio babilônico; modelo de fidelidade a Deus em meio a um império pagão e revelador do futuro dos reinos";"Exílio babilônico e início do domínio persa (cerca de 605 a 536 a.C.)";"Daniel, Ezequiel, Mateus";"Daniel 1:8; Daniel 2:20-22; Daniel 3:17-18; Daniel 6:10; Daniel 7:13-14; Daniel 12:3";"fidelidade, exílio, sabedoria, visões, oração, cova dos leões, profecia";"Sim";"graph TD
+  Daniel[""Daniel, jovem de Judá""] ---|companheiros| Hananias[""Hananias, Sadraque""]
+  Daniel --- Misael[""Misael, Mesaque""]
+  Daniel --- Azarias[""Azarias, Abede-Nego""]
+  Daniel -->|servo de| Nabucodonosor[""Nabucodonosor, rei da Babilônia""]
+  Daniel -->|servo de| Belsazar[""Belsazar, regente da Babilônia""]
+  Daniel -->|servo de| Dario[""Dario, o medo""]
+  Daniel -->|servo de| Ciro[""Ciro, rei da Pérsia""]
+  Daniel ---|visões com| Gabriel[""O anjo Gabriel""]";"timeline
+  title A vida de Daniel
+  Daniel 1 : Levado cativo para a Babilônia e recusa a comida do rei
+  Daniel 2 : Interpreta o sonho da estátua de Nabucodonosor
+  Daniel 3 : Os três amigos sobrevivem à fornalha ardente
+  Daniel 4 : Interpreta o sonho da árvore e o orgulho do rei
+  Daniel 5 : Lê a escrita na parede e a Babilônia cai
+  Daniel 6 : Sobrevive à cova dos leões sob o rei Dario
+  Daniel 7 e 8 : Recebe as visões das bestas e do carneiro e do bode
+  Daniel 9 : Ora pelo povo e recebe a profecia das setenta semanas
+  Daniel 10 a 12 : Última visão no terceiro ano de Ciro"
+"Davi";"De pastor de ovelhas em Belém a maior rei de Israel, Davi venceu o gigante Golias, escreveu salmos eternos, caiu em pecado grave e foi restaurado; Deus lhe prometeu um trono que durará para sempre, cumprido em Jesus.";"Davi era o caçula de oito irmãos, filho de Jessé, da tribo de Judá, e cuidava das ovelhas da família em Belém. Quando Deus rejeitou Saul como rei, enviou Samuel a Belém para ungir um dos filhos de Jessé. Passaram os sete mais velhos, de aparência imponente, e Deus os recusou: ""O homem vê o exterior, mas o Senhor vê o coração"". O escolhido foi o menino que estava no campo. A partir daquele dia, o Espírito do Senhor veio sobre Davi. Ele passou a tocar harpa na corte de Saul, acalmando o rei atormentado.
+O nome de Davi ficou conhecido em todo Israel quando ele enfrentou Golias, o gigante filisteu de quase três metros que desafiava o exército de Israel há quarenta dias. Sem armadura, apenas com cajado, funda e cinco pedras do ribeiro, Davi declarou: ""Tu vens contra mim com espada, lança e escudo, mas eu vou contra ti em nome do Senhor dos Exércitos"". Uma pedrada na testa derrubou o gigante. A vitória trouxe a amizade de Jônatas, filho de Saul, e o casamento com Mical, filha do rei, mas também a inveja de Saul, que passou a persegui-lo.
+Durante anos Davi viveu como fugitivo, escondido em cavernas como Adulão e En-Gedi, liderando um grupo de seiscentos homens. Por duas vezes poupou a vida de Saul, recusando-se a ""estender a mão contra o ungido do Senhor"". Quando Saul e Jônatas morreram em Gilboa, Davi lamentou publicamente. Foi ungido rei de Judá em Hebrom, onde reinou sete anos e meio, e depois rei sobre todo Israel. Conquistou Jerusalém, a cidade de Davi, tornou-a capital política e religiosa e trouxe para lá a arca da aliança, dançando diante do Senhor com todas as forças.
+Em 2 Samuel 7, Deus fez com Davi uma aliança: o templo seria construído por seu filho, e o trono de sua dinastia seria estabelecido para sempre. Essa promessa moldou toda a esperança messiânica de Israel. Mas Davi também caiu: viu Bate-Seba tomando banho, tomou-a, e, para encobrir a gravidez, mandou que o marido dela, Urias, fosse colocado na linha de frente da batalha. O profeta Natã o confrontou: ""Tu és o homem!"". Davi confessou, ""pequei contra o Senhor"", e escreveu o Salmo 51. Sofreu as consequências: a morte do bebê e conflitos dentro da própria casa, incluindo a rebelião de seu filho Absalão.
+Davi reinou 40 anos e, ao morrer, deixou o trono a Salomão, filho de Bate-Seba. Escreveu cerca de metade dos Salmos, entre eles o Salmo 23, e é descrito no Novo Testamento como ""homem segundo o coração de Deus"". O Messias seria ""filho de Davi"": Mateus abre seu evangelho chamando Jesus de ""filho de Davi, filho de Abraão"", e o Apocalipse o chama de ""a raiz e a geração de Davi"".";"Davi é o personagem mais mencionado da Bíblia depois de Jesus e o autor de cerca de metade dos Salmos.
+A Bíblia diz que Golias tinha seis côvados e um palmo de altura, cerca de 2,9 metros.
+Seu nome aparece nos títulos de cerca de 73 salmos.
+Rute, bisavó de Davi, era moabita: o maior rei de Israel tinha sangue estrangeiro.
+Davi comprou a eira de Araúna, local onde mais tarde seu filho construiria o templo (2 Samuel 24).
+O símbolo da ""Estrela de Davi"" é tradicional no judaísmo, embora não apareça na Bíblia.
+Jerusalém é chamada ""a cidade de Davi"" porque ele a conquistou dos jebuseus e a fez capital.";"1 Samuel 16 e 17 (a unção e a vitória sobre Golias)
+1 Samuel 24 e 26 (Davi poupa a vida de Saul)
+2 Samuel 5 a 7 (rei em Jerusalém e a aliança davídica)
+2 Samuel 11 e 12 e Salmo 51 (o pecado e o arrependimento)
+Salmos 23, 32 e 51 (salmos de Davi)
+Mateus 1:1-17 (a genealogia de Jesus como filho de Davi)";"Segundo rei de Israel; pastor, guerreiro, salmista e ancestral do Messias; modelo de coração arrependido diante de Deus";"Monarquia unida (cerca de 1010 a 970 a.C.)";"Rute, 1 Samuel, 2 Samuel, 1 Reis, 1 Crônicas, Salmos, Isaías, Mateus, Lucas, Atos, Romanos, Hebreus, Apocalipse";"1 Samuel 16:7; 1 Samuel 17:45; 2 Samuel 7:16; Salmos 23:1; Salmos 51:10; Atos 13:22";"coração, fé, coragem, rei, salmos, pecado e arrependimento, aliança davídica";"Sim";"graph TD
+  Juda[""Judá""] --> Perez[""Perez""]
+  Perez --> Naassom[""Naassom""]
+  Naassom --> Salmom[""Salmom""]
+  Salmom ---|e Raabe| Boaz[""Boaz""]
+  Boaz ---|e Rute| Obede[""Obede""]
+  Obede --> Jesse[""Jessé""]
+  Jesse --> Davi[""Davi""]
+  Davi --> Salomao[""Salomão, filho de Bate-Seba""]
+  Davi --> Absalao[""Absalão""]
+  Davi --> Amnom[""Amnom""]
+  Davi --> Nata[""Natã""]
+  Salomao -->|linhagem de Mateus| Jesus1[""Jesus, o Messias""]
+  Nata -->|linhagem de Lucas| Jesus1";"timeline
+  title A vida de Davi
+  1 Samuel 16 : Samuel unge Davi em Belém
+  1 Samuel 17 : Derrota o gigante Golias
+  1 Samuel 24 : Poupa a vida de Saul na caverna de En-Gedi
+  2 Samuel 2 : Torna-se rei de Judá em Hebrom
+  2 Samuel 5 : Torna-se rei de todo Israel e conquista Jerusalém
+  2 Samuel 6 : Traz a arca da aliança a Jerusalém
+  2 Samuel 7 : Deus promete que seu trono durará para sempre
+  2 Samuel 11 : Peca com Bate-Seba e é confrontado por Natã
+  2 Samuel 15 : Foge de Jerusalém durante a rebelião de Absalão
+  1 Reis 1 : Salomão é coroado e Davi morre após 40 anos de reinado"
+"Débora";"Única mulher entre os juízes de Israel, Débora foi profetisa, líder e compositora: chamou Baraque à batalha, derrotou o exército de Sísera e celebrou a vitória em um dos cânticos mais antigos da Bíblia.";"Depois da morte do juiz Eúde, o povo de Israel voltou a fazer o que era mau diante do Senhor, e Deus os entregou nas mãos de Jabim, rei de Canaã, que reinava em Hazor. O comandante de seu exército era Sísera, que dispunha de 900 carros de ferro e oprimiu Israel duramente por vinte anos. O povo clamou ao Senhor por socorro.
+Naquele tempo, Débora, profetisa e esposa de Lapidote, julgava Israel. Ela se sentava sob uma palmeira, entre Ramá e Betel, nos montes de Efraim, e os israelitas vinham a ela para resolver suas questões. Débora chamou Baraque, filho de Abinoão, de Quedes de Naftali, e transmitiu-lhe a ordem do Senhor: ""Vai, e reúne no monte Tabor dez mil homens das tribos de Naftali e de Zebulom; e eu farei vir ao teu encontro Sísera, com seus carros e seu exército, e o entregarei nas tuas mãos"".
+Baraque hesitou: ""Se fores comigo, irei; se não fores, não irei"". Débora aceitou, mas avisou: ""Irei contigo; porém a honra da jornada não será tua, porque o Senhor entregará Sísera nas mãos de uma mulher"". Ela e Baraque subiram a Quedes e dez mil homens os seguiram. Sísera reuniu seus novecentos carros de ferro na planície do rio Quisom. Débora deu o sinal: ""Levanta-te, porque este é o dia em que o Senhor entregou Sísera nas tuas mãos"". Baraque desceu do Tabor e o Senhor pôs em pânico todo o exército inimigo; o rio Quisom transbordou e arrastou muitos soldados, e todos os homens de Sísera morreram à espada.
+Sísera fugiu a pé até a tenda de Jael, mulher de Heber, o queneu, cuja família mantinha paz com Jabim. Ela o convidou a entrar, deu-lhe leite e o cobriu com uma manta. Quando o general adormeceu, Jael pegou uma estaca da tenda e um martelo e cravou-lhe a estaca na têmpora. Quando Baraque chegou, perseguindo Sísera, Jael o levou à tenda e mostrou o inimigo morto. Assim se cumpriu a profecia de Débora. Israel prevaleceu cada vez mais sobre Jabim, até destruí-lo.
+No capítulo 5, Débora e Baraque entoam um cântico de vitória: ""Quando os chefes de Israel tomaram a liderança... bendizei ao Senhor"". Débora se descreve como ""mãe em Israel"", louva as tribos que vieram à batalha, censura as que ficaram para trás e celebra a ação de Deus, que fez até as estrelas lutarem do céu contra Sísera. Depois da vitória, a terra teve paz por quarenta anos. A história de Débora mostra que Deus chama quem quer, homem ou mulher, e que a coragem de uma pessoa fiel pode reunir um povo inteiro.";"Débora é a única mulher entre os juízes de Israel e uma das profetisas nomeadas no Antigo Testamento.
+O Cântico de Débora (Juízes 5) é considerado um dos textos poéticos mais antigos da Bíblia.
+Ela despachava sentada sob uma palmeira que ficou conhecida como a ""palmeira de Débora"".
+O rio Quisom, que transbordou e atrapalhou os carros de ferro de Sísera, é lembrado no cântico (Juízes 5:21).
+Jael não era israelita: sua família, os queneus, estava em paz com Jabim, mas ela escolheu o lado de Israel.
+Hebreus 11:32 cita Baraque entre os heróis da fé.";"Juízes 4 (a narrativa da vitória sobre Sísera)
+Juízes 5 (o cântico de Débora e Baraque)
+Hebreus 11:32 (Baraque entre os heróis da fé)";"Profetisa, juíza e líder militar de Israel; símbolo de liderança, fé e coragem que trouxe 40 anos de paz";"Época dos juízes (cerca de 1200 a 1100 a.C.)";"Juízes";"Juízes 4:4; Juízes 4:14; Juízes 5:7; Juízes 5:12; Juízes 5:31";"liderança, profecia, coragem, juíza, fé, vitória, Jael";"Sim";"graph TD
+  Lapidote[""Lapidote""] ---|casado com| Debora[""Débora, profetisa e juíza""]
+  Debora -->|convoca| Baraque[""Baraque, filho de Abinoão""]
+  Baraque -->|10 mil homens de| Tribos[""Naftali e Zebulom""]
+  Jabim[""Jabim, rei de Canaã""] --> Sisera[""Sísera, comandante""]
+  Heber[""Heber, o queneu""] ---|casado com| Jael[""Jael""]
+  Jael -->|derrota| Sisera
+  Baraque -->|derrota o exército de| Sisera";"timeline
+  title A história de Débora
+  Juízes 4 : Israel é oprimido por Jabim e Sísera durante 20 anos
+  Juízes 4 : Débora julga sob a palmeira e chama Baraque
+  Juízes 4 : A batalha no Tabor e o rio Quisom derrotam Sísera
+  Juízes 4 : Jael mata Sísera com a estaca da tenda
+  Juízes 5 : Débora e Baraque cantam a vitória
+  Juízes 5 : A terra tem paz por 40 anos"
+"Elias";"Profeta do Reino do Norte que enfrentou o rei Acabe e os profetas de Baal, fez fogo descer do céu no monte Carmelo, ouviu Deus em uma voz mansa e foi levado ao céu num redemoinho sem passar pela morte.";"Elias, o tesbita, surge de repente na Bíblia, vindo de Tisbe, em Gileade, para anunciar ao rei Acabe: ""Vive o Senhor, Deus de Israel, perante cujo rosto estou, que nestes anos não haverá orvalho nem chuva, senão segundo a minha palavra"". A ordem era um golpe direto em Baal, o deus da tempestade que o rei e Jezabel promoviam. Deus mandou Elias esconder-se junto ao ribeiro de Querite, onde corvos lhe traziam pão e carne pela manhã e à tarde. Quando o ribeiro secou, Deus o enviou a Sarepta, em Sidom, terra de Jezabel. Ali uma viúva pobre dividiu com ele o último punhado de farinha e o pouco de azeite, e o Senhor fez que a farinha e o azeite não se acabassem enquanto durou a seca. Quando o filho da viúva morreu, Elias orou, e o menino voltou à vida.
+No terceiro ano da seca, Elias desafiou Acabe e os profetas de Baal a uma disputa no monte Carmelo. Perante todo o povo, perguntou: ""Até quando coxeareis entre dois pensamentos? Se o Senhor é Deus, segui-o; se Baal, segui-o"". Os 450 profetas de Baal clamaram da manhã ao meio-dia, dançaram e se feriram, sem resposta. Elias reconstruiu o altar do Senhor com doze pedras, fez encharcar o sacrifício com água por três vezes e orou em poucas palavras. O fogo do Senhor caiu e consumiu o holocausto, a lenha, as pedras e a água. O povo se prostrou: ""O Senhor é Deus!"". Em seguida, Elias subiu ao topo do Carmelo, orou e a chuva veio.
+A vitória foi seguida de colapso. Jezabel prometeu matar Elias em 24 horas, e ele fugiu para o deserto, sentou-se sob um zimbro e pediu para morrer. Um anjo o alimentou duas vezes e Elias caminhou quarenta dias até o monte Horebe. Ali, Deus passou: houve vento forte, terremoto e fogo, mas Deus não estava neles; depois, ""uma voz mansa e delicada"". Deus o consolou, mostrou que ele não estava só, pois havia 7.000 em Israel que não dobraram os joelhos a Baal, e o mandou ungir Hazael como rei de Arã, Jeú como rei de Israel e Eliseu como profeta em seu lugar.
+Elias voltou a confrontar Acabe quando o rei tomou a vinha de Nabote, e anunciou a destruição da casa real. Mais tarde, quando o rei Acazias, filho de Acabe, consultou Baal-Zebube em vez de Deus, Elias fez o fogo descer do céu sobre dois grupos de cinquenta soldados enviados para prendê-lo.
+O fim da jornada de Elias é um dos mais extraordinários da Bíblia. Acompanhado por Eliseu, atravessou o Jordão, dividindo as águas com seu manto. Eliseu pediu ""porção dobrada"" de seu espírito. De repente, um carro de fogo com cavalos de fogo os separou e Elias subiu ao céu num redemoinho, sem passar pela morte. O manto caiu e Eliseu o recolheu. Séculos depois, Malaquias profetizou que Elias viria antes do grande dia do Senhor, e o anjo Gabriel disse que João Batista viria ""no espírito e poder de Elias"". Na transfiguração de Jesus, Elias apareceu ao lado de Moisés.";"O nome ""Elias"" (Eliyahu) significa ""meu Deus é o Senhor"", resumo de toda a sua missão.
+Elias e Enoque são os dois únicos personagens da Bíblia que foram levados ao céu sem passar pela morte.
+Nas festas judaicas de Páscoa, costuma-se reservar um cálice para Elias, por causa da profecia de Malaquias 4:5.
+Tiago 5:17 lembra que Elias ""era homem semelhante a nós"" e que, orando, a chuva parou por três anos e seis meses.
+Elias apareceu ao lado de Moisés na transfiguração de Jesus (Mateus 17:1-13).
+Jesus disse que João Batista era o Elias que havia de vir (Mateus 11:14).
+Seu manto passou para Eliseu, símbolo da sucessão profética.";"1 Reis 17 (a seca, os corvos e a viúva de Sarepta)
+1 Reis 18 (o desafio no monte Carmelo)
+1 Reis 19 (a fuga e a voz mansa no Horebe)
+1 Reis 21 (a vinha de Nabote)
+2 Reis 1 e 2 (Acazias e o arrebatamento de Elias)
+Malaquias 4:5-6 e Mateus 17:1-13 (Elias na profecia e na transfiguração)";"Grande profeta do Reino do Norte que confrontou a idolatria de Baal e anunciou o juízo contra a casa de Acabe; precursor da expectativa de Elias antes do Messias";"Reino dividido, Reino de Israel (cerca de 874 a 850 a.C.)";"1 Reis, 2 Reis, 2 Crônicas, Malaquias, Mateus, Marcos, Lucas, João, Romanos, Tiago";"1 Reis 17:1; 1 Reis 18:21; 1 Reis 18:39; 1 Reis 19:12; 2 Reis 2:11; Tiago 5:17";"profeta, Baal, Carmelo, fogo, voz mansa, oração, arrebatamento";"Sim";"graph TD
+  Elias[""Elias, o tesbita de Gileade""] -->|discípulo e sucessor| Eliseu[""Eliseu""]
+  Elias -->|confronta| Acabe[""Acabe, rei de Israel""]
+  Acabe ---|casado com| Jezabel[""Jezabel""]
+  Elias -->|confronta| Baal[""450 profetas de Baal""]
+  Elias -->|hospedado por| Viuva[""Viúva de Sarepta""]
+  Elias -->|prenuncia| JoaoBatista[""João Batista, no espírito e poder de Elias""]
+  Elias -.aparece com Moisés.-> Jesus[""Transfiguração de Jesus""]";"timeline
+  title A vida de Elias
+  1 Reis 17 : Anuncia a seca, é alimentado por corvos e hospedado em Sarepta
+  1 Reis 18 : Desafia os profetas de Baal no monte Carmelo e a chuva volta
+  1 Reis 19 : Foge de Jezabel e ouve a voz mansa no Horebe
+  1 Reis 21 : Condena Acabe pelo assassinato de Nabote
+  2 Reis 1 : Fogo desce sobre os soldados do rei Acazias
+  2 Reis 2 : É levado ao céu num redemoinho e Eliseu recebe seu manto"
