@@ -133,6 +133,7 @@ export function QuizAnswerScreen({
   const [now, setNow] = useState(() => Date.now());
   const [reporting, setReporting] = useState(false);
   const [reported, setReported] = useState(false);
+  const [powersOpen, setPowersOpen] = useState(false);
 
   const submittingRef = useRef(false);
   const autoSubmittedRef = useRef(false);
@@ -267,6 +268,14 @@ export function QuizAnswerScreen({
   const extraLifeDisabled = session.extraLifeUsed || boosts.extraLife <= 0 || locked;
   const xpDisabled = session.xpMultiplierUsed || boosts.doubleXp <= 0 || locked;
   const timerColor = timeProgress > 50 ? 'var(--accent)' : timeProgress > 20 ? 'var(--primary)' : 'var(--danger)';
+  // Só entram no painel os poderes que o jogador tem (ou que já estão em uso nesta pergunta).
+  const availablePowers =
+    [
+      boosts.extraTime > 0 && !session.extraTimeUsed,
+      boosts.hint > 0 && !session.fiftyFiftyUsed,
+      boosts.extraLife > 0 && !session.extraLifeUsed,
+      boosts.doubleXp > 0 && !session.xpMultiplierUsed,
+    ].filter(Boolean).length + QUIZ_HELPERS.filter((helper) => helpers[helper.field] > 0 && !session[helper.usedKey]).length;
   const answeredCount = session.currentQuestionIndex + (reveal ? 1 : 0);
 
   return (
@@ -430,8 +439,10 @@ export function QuizAnswerScreen({
               />
             ) : null}
           </>
-        ) : (
-          <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+        ) : null}
+
+        {reveal ? null : (
+          <PowerPanel open={powersOpen} onToggle={() => setPowersOpen((value) => !value)} availableCount={availablePowers}>
             <PowerUp
               icon={<TimerRoundedIcon />}
               label={session.extraTimeUsed ? 'Usado' : usingBoost === 'time' ? 'Aplicando' : `+${extraTimeSeconds}s`}
@@ -499,7 +510,7 @@ export function QuizAnswerScreen({
                 />
               );
             })}
-          </div>
+          </PowerPanel>
         )}
 
         {errorMessage ? (
@@ -526,6 +537,31 @@ export function QuizAnswerScreen({
           </div>
         </div>
       </form>
+    </div>
+  );
+}
+
+/** Botão flutuante que expande o painel com os poderes disponíveis. */
+function PowerPanel({ open, onToggle, availableCount, children }: { open: boolean; onToggle: () => void; availableCount: number; children: ReactNode }) {
+  return (
+    <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-20 flex flex-col items-end gap-2 sm:bottom-6">
+      {open ? (
+        <div className="animate-pop-in panel grid w-[min(18rem,calc(100vw-2rem))] grid-cols-3 gap-2 p-3" role="group" aria-label="Poderes disponíveis">
+          {children}
+          {availableCount === 0 ? <p className="col-span-3 py-2 text-center text-sm font-semibold text-muted">Você não tem poderes disponíveis agora.</p> : null}
+        </div>
+      ) : null}
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        aria-label={open ? 'Fechar poderes' : `Abrir poderes (${availableCount} disponíveis)`}
+        className="btn-3d relative flex h-14 items-center gap-2 rounded-full bg-primary px-5 font-display text-base font-bold text-on-primary [--btn-edge:var(--primary-strong)]"
+      >
+        {open ? <CloseRoundedIcon /> : <BoltRoundedIcon />}
+        Poderes
+        {open ? null : <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-surface px-1.5 text-xs font-bold text-ink">{availableCount}</span>}
+      </button>
     </div>
   );
 }
@@ -582,6 +618,7 @@ function PowerUp({
   tone: 'info' | 'danger' | 'primary' | 'violet' | 'accent' | 'success';
   hint: string;
 }) {
+  if (count <= 0 && !active) return null;
   const toneClass = {
     info: active ? 'bg-info text-white' : 'bg-info/15 text-info',
     danger: active ? 'bg-danger text-white' : 'bg-danger/15 text-danger',

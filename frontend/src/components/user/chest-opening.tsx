@@ -298,7 +298,7 @@ export function ChestOpening({ tier, prizes, onDone, preview = false, design }: 
     >
       {flash ? <div key={`${phase}-${index}-${flash}`} className="animate-screen-flash pointer-events-none absolute inset-0 z-10" style={{ background: flash }} /> : null}
 
-      {phase !== 'summary' ? (
+      {phase !== 'summary' && preview ? (
         <button type="button" onClick={() => setPhase('summary')} className="absolute right-4 top-4 z-20 rounded-full bg-white/15 px-4 py-2 text-sm font-bold hover:bg-white/25">
           Pular
         </button>
