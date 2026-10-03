@@ -18,6 +18,23 @@ const TILTS = [-2.2, 1.6, -0.8, 2.4, -1.4, 0.9];
 
 type Flip = { from: number; to: number };
 
+/**
+ * Folha "fantasma" com todas as vagas de uma folha cheia. Fica invisível por trás de cada página para todas
+ * terem exatamente a mesma altura (folha cheia, folha com poucas figurinhas, capa e fim do álbum).
+ */
+function PageSizer({ wide }: { wide: boolean }) {
+  return (
+    <div aria-hidden className="pointer-events-none invisible col-start-1 row-start-1 flex flex-col">
+      <div className={cn('grid gap-3 sm:gap-4', wide ? 'grid-cols-3' : 'grid-cols-2')}>
+        {Array.from({ length: wide ? PER_PAGE_WIDE : PER_PAGE_NARROW }, (_, index) => (
+          <StickerCard key={index} name="Figurinha" rarity="COMMON" owned size="sm" />
+        ))}
+      </div>
+      <p className="mt-3 text-xs">0</p>
+    </div>
+  );
+}
+
 function useWide() {
   const query = '(min-width: 768px)';
   const [wide, setWide] = useState(() => typeof window !== 'undefined' && window.matchMedia(query).matches);
@@ -97,18 +114,23 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
   }
 
   function renderPage(index: number, side: 'left' | 'right' | 'single') {
-    const paper = cn('album-paper relative flex min-h-full w-full flex-col p-3 sm:p-5', side === 'left' && 'album-paper-left', side === 'right' && 'album-paper-right');
+    const paper = cn('album-paper relative grid min-h-full w-full grid-cols-1 content-start p-3 sm:p-5', side === 'left' && 'album-paper-left', side === 'right' && 'album-paper-right');
     if (index === 0) {
       return (
         <div className={paper}>
-          <AlbumIntro items={items} ownedCount={ownedCount} totalCharacters={totalCharacters} />
+          <PageSizer wide={wide} />
+          <div className="col-start-1 row-start-1 flex">
+            <AlbumIntro items={items} ownedCount={ownedCount} totalCharacters={totalCharacters} />
+          </div>
         </div>
       );
     }
     const stickers = stickerPages[index - 1];
     if (!stickers) {
       return (
-        <div className={cn(paper, 'items-center justify-center text-center')}>
+        <div className={paper}>
+          <PageSizer wide={wide} />
+          <div className="col-start-1 row-start-1 flex flex-col items-center justify-center text-center">
           {items.length === 0 ? (
             <>
               <CollectionsBookmarkRoundedIcon className="text-muted/60" sx={{ fontSize: 56 }} />
@@ -118,11 +140,14 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
           ) : (
             <p className="font-display text-sm font-semibold text-muted/70">Fim do álbum (por enquanto)</p>
           )}
+          </div>
         </div>
       );
     }
     return (
       <div className={paper}>
+        <PageSizer wide={wide} />
+        <div className="col-start-1 row-start-1 flex flex-col">
         <div className={cn('grid flex-1 content-start gap-3 sm:gap-4', wide ? 'grid-cols-3' : 'grid-cols-2')}>
           {stickers.map((character, position) => (
             <div key={character.id} className="relative" style={{ transform: `rotate(${TILTS[(character.id + position) % TILTS.length]}deg)` }}>
@@ -142,6 +167,7 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
           ))}
         </div>
         <p className={cn('mt-3 font-display text-xs font-bold text-muted', side === 'left' ? 'text-left' : side === 'right' ? 'text-right' : 'text-center')}>{index}</p>
+        </div>
       </div>
     );
   }
@@ -159,8 +185,8 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
     const rightPage = flip ? (forward ? right(flip.to) : right(flip.from)) : right(view);
     base = (
       <div className="grid grid-cols-2">
-        <div className="flex min-h-[34rem]">{renderPage(leftPage, 'left')}</div>
-        <div className="flex min-h-[34rem]">{renderPage(rightPage, 'right')}</div>
+        <div className="flex">{renderPage(leftPage, 'left')}</div>
+        <div className="flex">{renderPage(rightPage, 'right')}</div>
       </div>
     );
     if (flip) {
@@ -172,7 +198,7 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
       );
     }
   } else {
-    base = <div className="flex min-h-[31rem]">{renderPage(flip ? (forward ? flip.to : flip.from) : view, 'single')}</div>;
+    base = <div className="flex">{renderPage(flip ? (forward ? flip.to : flip.from) : view, 'single')}</div>;
     if (flip) {
       leaf = (
         <div className={cn('album-leaf pointer-events-none absolute inset-0 z-20', forward ? 'album-leaf-next' : 'album-leaf-in')} onAnimationEnd={(event) => event.target === event.currentTarget && done?.()}>
