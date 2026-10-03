@@ -14,7 +14,7 @@ export type Cosmetic = {
   rarity: StickerRarity;
   imageUrl?: string | null;
   color?: string | null;
-  /** Título: plain/glow/rainbow/pulse/shimmer/wave. Moldura: solid/wood/copper/silver/gold/fire/rainbow/ice/sunset/laurel/aurora/neon/royal/galaxy/pearl/pentecost. Reação: emoji. */
+  /** Título: plain/glow/rainbow/pulse/shimmer/wave. Moldura: solid/wood/copper/silver/gold/fire/rainbow/ice/sunset/laurel/aurora/neon/royal/galaxy/pearl/pentecost/emerald. Reação: emoji. */
   style?: string | null;
   unlock: CosmeticUnlock;
   priceCoins?: number | null;

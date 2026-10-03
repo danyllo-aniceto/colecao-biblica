@@ -18,7 +18,25 @@ import type { ChestPrize, ChestTierName } from '@/lib/user-api';
 import { getRarityLabel } from '@/lib/rarity-theme';
 import { AdminPanel } from '../admin-ui';
 
-const TIER_ORDER: ChestTierName[] = ['BRONZE', 'SILVER', 'GOLD', 'DIAMOND'];
+type MatchTier = Exclude<ChestTierName, 'EMERALD'>;
+const TIER_ORDER: MatchTier[] = ['BRONZE', 'SILVER', 'GOLD', 'DIAMOND'];
+/** O baú de esmeralda não é da partida (vem da campanha), mas também tem visual e animação para conferir. */
+const DESIGN_ORDER: ChestTierName[] = [...TIER_ORDER, 'EMERALD'];
+
+/** Exemplo do que o Baú de Esmeralda traz (teste de animação; o conteúdo real é fixo no servidor). */
+const EMERALD_SAMPLE: ChestPrize[] = [
+  { kind: 'COINS', amount: 1000 },
+  { kind: 'HELPER', name: 'Vida extra', amount: 1 },
+  { kind: 'HELPER', name: 'Dica 50/50', amount: 1 },
+  { kind: 'HELPER', name: 'Ampulheta', amount: 1 },
+  { kind: 'HELPER', name: 'Escudo de sequência', amount: 1 },
+  { kind: 'COSMETIC', name: 'Luz esmeralda', rarity: 'LEGENDARY' },
+  { kind: 'COSMETIC', name: 'Ovelha do Bom Pastor', rarity: 'LEGENDARY' },
+  { kind: 'COSMETIC', name: 'Pastor das ovelhas', rarity: 'LEGENDARY' },
+  { kind: 'STICKER', characterId: null, name: 'Figurinha épica', rarity: 'EPIC', imageUrl: null, unlocked: true, duplicate: false },
+  { kind: 'STICKER', characterId: null, name: 'Figurinha lendária', rarity: 'LEGENDARY', imageUrl: null, unlocked: true, duplicate: false },
+  { kind: 'STICKER', characterId: null, name: 'Carta especial', rarity: 'SPECIAL', imageUrl: null, unlocked: true, duplicate: false },
+];
 const RARITIES = ['COMMON', 'RARE', 'EPIC', 'LEGENDARY'] as const;
 const RARITY_COLOR: Record<(typeof RARITIES)[number], string> = { COMMON: '#9ca3af', RARE: '#3b82f6', EPIC: '#a855f7', LEGENDARY: '#fbbf24' };
 const ACCURACIES = [0.7, 0.75, 0.8, 0.85, 0.9, 0.95];
@@ -39,7 +57,7 @@ function chanceAtLeast(correct: number, accuracy: number, lives: number) {
   return sum;
 }
 
-function TierCard({ tier, data, minCorrect, onTest }: { tier: ChestTierName; data: SimulatedChestTier; minCorrect: number; onTest: () => void }) {
+function TierCard({ tier, data, minCorrect, onTest }: { tier: MatchTier; data: SimulatedChestTier; minCorrect: number; onTest: () => void }) {
   const designs = useChestDesigns();
   const info = chestLook(tier, designs[tier]);
   const helpers = Object.entries(data.helpers).sort((left, right) => right[1] - left[1]);
@@ -107,7 +125,7 @@ function TierCard({ tier, data, minCorrect, onTest }: { tier: ChestTierName; dat
 type DesignDraft = { imageUrl: string; openImageUrl: string; name: string; color: string };
 
 /** Visual de cada baú: arte, nome e cor de brilho. O que ficar vazio usa o desenho padrão do app. */
-function ChestDesignPanel({ samples, onPreview }: { samples: Partial<Record<ChestTierName, ChestPrize[][]>>; onPreview: (tier: ChestTierName, prizes: ChestPrize[], design: DesignDraft) => void }) {
+function ChestDesignPanel({ samples, onPreview }: { samples: Partial<Record<MatchTier, ChestPrize[][]>>; onPreview: (tier: ChestTierName, prizes: ChestPrize[], design: DesignDraft) => void }) {
   const toast = useToast();
   const designs = useChestDesigns();
   const [drafts, setDrafts] = useState<Partial<Record<ChestTierName, DesignDraft>>>({});
@@ -138,9 +156,9 @@ function ChestDesignPanel({ samples, onPreview }: { samples: Partial<Record<Ches
   }
 
   return (
-    <AdminPanel title="Visual dos baús" description="Suba a arte de cada baú (imagem quadrada, de preferência com fundo transparente), escolha o nome e a cor do brilho. Vale para o resultado da partida, a loja e a abertura. Vazio usa o desenho padrão.">
+    <AdminPanel title="Visual dos baús" description="O baú de esmeralda é o prêmio de conquistar a carta especial na campanha. Suba a arte de cada baú (imagem quadrada, de preferência com fundo transparente), escolha o nome e a cor do brilho. Vale para o resultado da partida, a loja e a abertura. Vazio usa o desenho padrão.">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {TIER_ORDER.map((tier) => {
+        {DESIGN_ORDER.map((tier) => {
           const draft = draftOf(tier);
           const look = chestLook(tier, draft);
           return (
@@ -168,7 +186,7 @@ function ChestDesignPanel({ samples, onPreview }: { samples: Partial<Record<Ches
                 <Button
                   size="sm"
                   variant="secondary"
-                  onClick={() => onPreview(tier, (samples[tier] ?? [])[0] ?? [{ kind: 'COINS', amount: 10 }], draft)}
+                  onClick={() => onPreview(tier, tier === 'EMERALD' ? EMERALD_SAMPLE : (samples[tier] ?? [])[0] ?? [{ kind: 'COINS', amount: 10 }], draft)}
                 >
                   <PlayArrowRoundedIcon fontSize="small" />
                   Testar
@@ -183,7 +201,7 @@ function ChestDesignPanel({ samples, onPreview }: { samples: Partial<Record<Ches
 }
 
 const SOUND_TESTS: Array<{ title: string; sounds: Array<{ name: SfxName; label: string }> }> = [
-  { title: 'Abertura de cada baú', sounds: TIER_ORDER.map((tier) => ({ name: CHEST_SFX[tier], label: CHEST_TIERS[tier].label.replace('Baú de ', '') })) },
+  { title: 'Abertura de cada baú', sounds: DESIGN_ORDER.map((tier) => ({ name: CHEST_SFX[tier], label: CHEST_TIERS[tier].label.replace('Baú de ', '') })) },
   {
     title: 'Carretel e suspense',
     sounds: [
@@ -203,6 +221,7 @@ const SOUND_TESTS: Array<{ title: string; sounds: Array<{ name: SfxName; label: 
       { name: 'stickerRare', label: 'Figurinha rara' },
       { name: 'stickerEpic', label: 'Figurinha épica' },
       { name: 'stickerLegendary', label: 'Figurinha lendária' },
+      { name: 'stickerSpecial', label: 'Carta especial' },
     ],
   },
 ];
@@ -255,7 +274,7 @@ export function ChestsScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function test(tier: ChestTierName) {
+  function test(tier: MatchTier) {
     const samples = data?.tiers[tier].samples ?? [];
     if (samples.length === 0) return;
     setPreview({ tier, prizes: samples[Math.floor(Math.random() * samples.length)] });

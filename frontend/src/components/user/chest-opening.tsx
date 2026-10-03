@@ -18,21 +18,22 @@ export const CHEST_TIERS: Record<ChestTierName, { label: string; color: string; 
   SILVER: { label: 'Baú de Prata', color: '#cbd5e1', dark: '#64748b' },
   GOLD: { label: 'Baú de Ouro', color: '#fbbf24', dark: '#b45309' },
   DIAMOND: { label: 'Baú de Diamante', color: '#5ad1ff', dark: '#0e7bb0' },
+  EMERALD: { label: 'Baú de Esmeralda', color: '#14b8a6', dark: '#047857' },
 };
 
 type ChestLook = { label: string; color: string; dark: string; imageUrl: string | null; openImageUrl: string | null };
 
 /** Som de cada nível de baú e de cada tipo de prêmio (também usados no teste de sons do painel). */
-export const CHEST_SFX: Record<ChestTierName, SfxName> = { BRONZE: 'chestBronze', SILVER: 'chestSilver', GOLD: 'chestGold', DIAMOND: 'chestDiamond' };
-const STICKER_SFX: SfxName[] = ['stickerCommon', 'stickerRare', 'stickerEpic', 'stickerLegendary'];
-const SUSPENSE_SFX: SfxName[] = ['stickerCommon', 'suspenseRare', 'suspenseEpic', 'suspenseLegendary'];
+export const CHEST_SFX: Record<ChestTierName, SfxName> = { BRONZE: 'chestBronze', SILVER: 'chestSilver', GOLD: 'chestGold', DIAMOND: 'chestDiamond', EMERALD: 'chestEmerald' };
+const STICKER_SFX: SfxName[] = ['stickerCommon', 'stickerRare', 'stickerEpic', 'stickerLegendary', 'stickerSpecial'];
+const SUSPENSE_SFX: SfxName[] = ['stickerCommon', 'suspenseRare', 'suspenseEpic', 'suspenseLegendary', 'suspenseLegendary'];
 
 function prizeSfx(prize: ChestPrize | undefined, level: number): SfxName {
   if (!prize) return 'success';
   if (prize.kind === 'COINS') return 'prizeCoins';
   if (prize.kind === 'HELPER') return 'prizeHelper';
   if (prize.kind === 'COSMETIC') return 'prizeCosmetic';
-  return STICKER_SFX[Math.min(level, 3)];
+  return STICKER_SFX[Math.min(level, 4)];
 }
 
 /** Nome, cor e arte de um baú: o que o admin cadastrou, com o desenho padrão no que estiver vazio. */
@@ -50,9 +51,9 @@ export function useChestLook(tier: ChestTierName, override?: Pick<ChestDesign, '
 const RARITY_RANK: Record<string, number> = { COMMON: 0, RARE: 1, EPIC: 2, LEGENDARY: 3, SPECIAL: 4 };
 const rank = (prize: ChestPrize) => (prize.kind === 'STICKER' ? RARITY_RANK[prize.rarity ?? 'COMMON'] ?? 0 : -1);
 /** Quanto mais rara a figurinha, mais longo o carretel e o suspense antes de abrir. */
-const REEL_MS = [1500, 1900, 2400, 3000];
-const SUSPENSE_MS = [0, 500, 1100, 1900];
-const PARTICLES = [10, 18, 36, 64];
+const REEL_MS = [1500, 1900, 2400, 3000, 3800];
+const SUSPENSE_MS = [0, 500, 1100, 1900, 2900];
+const PARTICLES = [10, 18, 36, 64, 110];
 const TILE_REM = 7;
 
 function reducedMotion() {
@@ -84,6 +85,7 @@ export function ChestIcon({ tier, className, design, open = false }: { tier: Che
       <rect x="68" y="54" width="24" height="34" rx="6" fill="#fff6" stroke={dark} strokeWidth="3" />
       <circle cx="80" cy="70" r="5" fill={dark} />
       {tier === 'DIAMOND' ? <path d="M80 6l12 14-12 14-12-14z" fill="#e6fbff" stroke={dark} strokeWidth="3" /> : null}
+      {tier === 'EMERALD' ? <path d="M66 10h28l10 14-24 18-24-18z" fill="#a7f3d0" stroke={dark} strokeWidth="3" /> : null}
     </svg>
   );
 }
@@ -219,11 +221,13 @@ export function ChestOpening({ tier, prizes, onDone, preview = false, design }: 
   const [flash, setFlash] = useState<string | null>(null);
   const timers = useRef<number[]>([]);
   const fast = reducedMotion() ? 0.1 : 1;
+  // Baú com muitos prêmios (esmeralda): moedas, ajudas e itens passam mais rápido; figurinhas mantêm o suspense.
+  const brisk = list.length > 8 ? 0.55 : 1;
   const prize = list[index];
   const level = prize ? Math.max(0, rank(prize)) : 0;
   const isSticker = prize?.kind === 'STICKER';
   const info = useChestLook(tier, design);
-  const rarityColor = ['#9ca3af', '#3b82f6', '#a855f7', '#fbbf24'][Math.min(level, 3)];
+  const rarityColor = ['#9ca3af', '#3b82f6', '#a855f7', '#fbbf24', '#14b8a6'][Math.min(level, 4)];
 
   const later = (callback: () => void, ms: number) => {
     timers.current.push(window.setTimeout(callback, ms * fast));
@@ -250,8 +254,8 @@ export function ChestOpening({ tier, prizes, onDone, preview = false, design }: 
     if (!isSticker || level === 0) return reveal();
     // Suspense antes de abrir a figurinha: cresce com a raridade.
     setPhase('suspense');
-    playSfx(SUSPENSE_SFX[Math.min(level, 3)]);
-    later(reveal, SUSPENSE_MS[Math.min(level, 3)]);
+    playSfx(SUSPENSE_SFX[Math.min(level, 4)]);
+    later(reveal, SUSPENSE_MS[Math.min(level, 4)]);
   }
 
   function reveal() {
@@ -259,7 +263,7 @@ export function ChestOpening({ tier, prizes, onDone, preview = false, design }: 
     setFlash(isSticker ? rarityColor : null);
     playSfx(prizeSfx(prize, level));
     // Moedas e ajudas passam sozinhas; figurinhas esperam o toque para o jogador curtir.
-    if (!isSticker) later(next, 1100);
+    if (!isSticker) later(next, 1100 * brisk);
   }
 
   function next() {
@@ -272,7 +276,7 @@ export function ChestOpening({ tier, prizes, onDone, preview = false, design }: 
     setPhase('reel');
   }
 
-  const reelMs = (isSticker ? REEL_MS[Math.min(level, 3)] : 1100) * fast;
+  const reelMs = (isSticker ? REEL_MS[Math.min(level, 4)] : 1100 * brisk) * fast;
   const shake = phase === 'reveal' && isSticker && level >= 2;
 
   return (
@@ -325,10 +329,10 @@ export function ChestOpening({ tier, prizes, onDone, preview = false, design }: 
             ) : null}
             <div
               className="animate-orb-charge relative h-40 w-40 rounded-full"
-              style={{ '--charge': `${(SUSPENSE_MS[Math.min(level, 3)] || 500) * fast}ms`, background: `radial-gradient(circle at 35% 30%, #fff, ${rarityColor} 55%, transparent 72%)`, boxShadow: `0 0 80px ${rarityColor}` } as CSSProperties}
+              style={{ '--charge': `${(SUSPENSE_MS[Math.min(level, 4)] || 500) * fast}ms`, background: `radial-gradient(circle at 35% 30%, #fff, ${rarityColor} 55%, transparent 72%)`, boxShadow: `0 0 80px ${rarityColor}` } as CSSProperties}
             />
             <p className="absolute -bottom-2 font-display text-xl font-bold" style={{ color: rarityColor }}>
-              {level >= 3 ? 'É lendária!?' : level === 2 ? 'Algo épico...' : 'Opa...'}
+              {level >= 4 ? 'Algo único...' : level === 3 ? 'É lendária!?' : level === 2 ? 'Algo épico...' : 'Opa...'}
             </p>
           </div>
         ) : null}
@@ -336,11 +340,11 @@ export function ChestOpening({ tier, prizes, onDone, preview = false, design }: 
         {phase === 'reveal' && prize ? (
           <div className="relative flex flex-col items-center gap-4">
             {isSticker && level >= 3 ? (
-              <div className="animate-rays-spin absolute -top-20 h-96 w-96 rounded-full opacity-60" style={{ background: 'repeating-conic-gradient(from 0deg, #fbbf24 0 5deg, transparent 5deg 20deg)', maskImage: 'radial-gradient(circle, black 25%, transparent 68%)', WebkitMaskImage: 'radial-gradient(circle, black 25%, transparent 68%)' }} />
+              <div className="animate-rays-spin absolute -top-20 h-96 w-96 rounded-full opacity-60" style={{ background: `repeating-conic-gradient(from 0deg, ${rarityColor} 0 5deg, transparent 5deg 20deg)`, maskImage: 'radial-gradient(circle, black 25%, transparent 68%)', WebkitMaskImage: 'radial-gradient(circle, black 25%, transparent 68%)' }} />
             ) : null}
             {isSticker ? <span className="animate-ring-grow absolute top-16 h-40 w-40 rounded-full border-4" style={{ borderColor: rarityColor }} /> : null}
             {isSticker && level >= 2 ? <span className="animate-ring-grow absolute top-16 h-40 w-40 rounded-full border-4" style={{ borderColor: rarityColor, animationDelay: '0.25s' }} /> : null}
-            <Burst count={isSticker ? PARTICLES[Math.min(level, 3)] : 8} color={isSticker ? rarityColor : info.color} />
+            <Burst count={isSticker ? PARTICLES[Math.min(level, 4)] : 8} color={isSticker ? rarityColor : info.color} />
             <div className="animate-reveal-card relative">
               <PrizeFace prize={prize} large />
             </div>

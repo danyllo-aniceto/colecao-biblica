@@ -1,6 +1,6 @@
 # Baús — guia de arte e prompts
 
-Cada baú (bronze, prata, ouro e diamante) usa **2 imagens**: o baú **fechado** (obrigatória) e o baú **aberto**
+Cada baú (bronze, prata, ouro, diamante e esmeralda) usa **2 imagens**: o baú **fechado** (obrigatória) e o baú **aberto**
 (opcional, mas deixa a abertura muito melhor). O tremor, o clarão, as faíscas e os prêmios saindo são feitos pelo
 app: não precisa de quadro a quadro.
 
@@ -26,6 +26,7 @@ para testar a animação na hora.
 | Prata | `#cbd5e1` | `#64748b` |
 | Ouro | `#fbbf24` | `#b45309` |
 | Diamante | `#5ad1ff` | `#0e7bb0` |
+| Esmeralda | `#14b8a6` | `#047857` |
 
 ## Estilo base (cole no início de TODO prompt)
 
@@ -79,6 +80,19 @@ fechado. Sem sombra no chão, sem texto.
 ABERTO: tampa de cristal levantada para trás (cerca de 110°), um feixe de luz azul-branca intensa subindo de
 dentro, com raios em leque, cristais de gelo brilhando e muitas estrelinhas. Interior luminoso e vazio. Fundo
 transparente, sem texto.
+
+### Esmeralda (o baú da carta especial)
+**Fechado:** `[ESTILO BASE]` Imagem 1:1 (1024x1024), fundo transparente. Um baú de tesouro sagrado e majestoso de madeira muito escura, revestido de esmeralda
+verde-água (#14b8a6, sombras #047857) e detalhes de ouro claro, com uma grande gema esmeralda lapidada no centro da tampa, um
+ornamento de cajado de pastor e folhas de oliveira em relevo nas laterais, fechadura com gemas verdes. Um brilho verde-água suave em
+volta, com poucas estrelinhas dentro da área da imagem. Visto de frente em 3/4, um pouco de cima, centralizado, 70% da imagem,
+fechado. Sem sombra no chão, sem texto, sem rostos.
+**Aberto:** `[ESTILO BASE]` O mesmo baú de esmeralda da imagem de referência, na mesma posição, tamanho e ângulo, agora ABERTO: tampa levantada para
+trás (cerca de 110°), uma luz verde-água e dourada solene subindo de dentro com raios largos em leque, folhas de oliveira brilhando e
+muitas estrelinhas. Interior luminoso e vazio. Fundo transparente, sem texto.
+
+O baú de esmeralda não tem imagem pronta: sem a arte enviada, o app usa o desenho padrão (verde-água com uma joia). Ele é aberto sozinho,
+uma única vez, quando o jogador conquista a carta especial na campanha.
 
 ## Sons
 

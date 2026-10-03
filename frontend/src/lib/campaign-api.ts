@@ -1,3 +1,4 @@
+import type { ChestPrize } from '@/lib/user-api';
 import { apiRequest } from '@/lib/http';
 import type { StickerRarity } from '@/lib/admin-api';
 import type { Cosmetic } from '@/lib/rewards-api';
@@ -74,6 +75,8 @@ export type ClaimNodeResult = {
   fragments: { claimed: number; total: number } | null;
   specialUnlocked: boolean;
   special: { id: number; name: string; imageUrl: string | null } | null;
+  /** Ao conquistar a carta especial: o Baú de Esmeralda e tudo que ele trouxe. */
+  emeraldChest?: { tier: 'EMERALD'; prizes: ChestPrize[] } | null;
   unlockedAchievements: UnlockedAchievement[];
   user: UserProfile;
 };

@@ -691,6 +691,12 @@ input:-webkit-autofill:focus {
   --frame-speed: 8s;
 }
 
+.frame-emerald {
+  --frame-bg: conic-gradient(#ccfbf1, #14b8a6, #fef3c7, #059669, #5eead4, #14b8a6, #ccfbf1);
+  --frame-speed: 3.5s;
+  filter: drop-shadow(0 0 6px #14b8a699);
+}
+
 .frame-pentecost {
   --frame-bg: conic-gradient(#fff3b0, #ff8c42, #ff3d2e, #ffd23f, #ff8c42, #fff3b0);
   --frame-speed: 1.8s;

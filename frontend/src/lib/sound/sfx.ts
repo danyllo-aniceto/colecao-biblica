@@ -13,6 +13,8 @@ export type ChestSfxName =
   | 'chestSilver'
   | 'chestGold'
   | 'chestDiamond'
+  | 'chestEmerald'
+  | 'stickerSpecial'
   | 'reelTick'
   | 'suspenseRare'
   | 'suspenseEpic'
@@ -159,6 +161,22 @@ const RECIPES: Record<SfxName, (o: Out) => void> = {
     notes(o, 'triangle', [523, 659, 784, 1047], 0, 1.0, 0.18, 0.4); // acorde final
     whoosh(o, 3500, 9000, 0.3, 0.8, 0.16, 2.5);
   },
+  // Esmeralda (carta especial): o mais solene e longo de todos, com coral de acordes que sobem.
+  chestEmerald: (o) => {
+    tone(o, 'sine', 50, 38, 0, 1.2, 0.5);
+    thud(o, 0.05, 160, 45, 0.6);
+    [262, 330, 392, 523].forEach((frequency, index) => notes(o, 'triangle', [frequency, frequency * 1.5], 0, 1.6, 0.14, 0.2 + index * 0.18));
+    [1047, 1319, 1568, 1976, 2349, 2794, 3136].forEach((frequency, index) => tone(o, 'sine', frequency, frequency, 0.5 + index * 0.1, 0.8, 0.14));
+    whoosh(o, 3000, 10000, 0.3, 1.4, 0.18, 2.5);
+  },
+  stickerSpecial: (o) => {
+    tone(o, 'sine', 70, 30, 0, 1.2, 0.6);
+    thud(o, 0.02, 230, 45, 0.65);
+    [262, 392, 523, 659, 784, 1047].forEach((frequency, index) => tone(o, 'triangle', frequency, frequency, 0.1 + index * 0.12, 1.4, 0.24));
+    notes(o, 'sawtooth', [196, 294], 0, 1.6, 0.06, 0.1);
+    [1568, 1976, 2349, 2794, 3136, 3951].forEach((frequency, index) => tone(o, 'sine', frequency, frequency, 0.7 + index * 0.1, 0.8, 0.14));
+    whoosh(o, 2000, 10000, 0.05, 1.6, 0.24, 2.5);
+  },
   // Tique do carretel passando os prêmios (o app o repete cada vez mais devagar).
   reelTick: (o) => tone(o, 'triangle', 1100, 760, 0, 0.035, 0.2),
   // Suspense antes de abrir a figurinha: sobe de tensão conforme a raridade.
@@ -216,7 +234,7 @@ const RECIPES: Record<SfxName, (o: Out) => void> = {
 };
 
 /** Sons mais longos que o padrão (a saída só é desligada depois que eles terminam). */
-const LENGTH_MS: Partial<Record<SfxName, number>> = { chestGold: 1800, chestDiamond: 2400, suspenseEpic: 1500, suspenseLegendary: 2500, stickerEpic: 1500, stickerLegendary: 2800 };
+const LENGTH_MS: Partial<Record<SfxName, number>> = { chestGold: 1800, chestDiamond: 2400, chestEmerald: 3200, stickerSpecial: 3200, suspenseEpic: 1500, suspenseLegendary: 2500, stickerEpic: 1500, stickerLegendary: 2800 };
 
 let lastPlayed = new Map<SfxName, number>();
 

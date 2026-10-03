@@ -40,6 +40,7 @@ const CHEST_LABELS = {
   SILVER: { label: 'Baú de Prata', tone: 'bg-slate-400/25 text-slate-700 dark:text-slate-200' },
   GOLD: { label: 'Baú de Ouro', tone: 'bg-primary/25 text-primary-strong dark:text-primary' },
   DIAMOND: { label: 'Baú de Diamante', tone: 'bg-info/25 text-info' },
+  EMERALD: { label: 'Baú de Esmeralda', tone: 'bg-r-special/25 text-r-special' },
 } as const;
 
 const HEADLINES = ['Continue tentando!', 'Boa!', 'Muito bem!', 'Incrível!'];

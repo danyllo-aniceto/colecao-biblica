@@ -73,6 +73,7 @@ const STYLE_LABELS: Record<string, string> = {
   galaxy: 'Céu estrelado girando',
   pearl: 'Pérola girando',
   pentecost: 'Língua de fogo girando',
+  emerald: 'Esmeralda girando (conjunto do baú de esmeralda)',
 };
 
 export function CosmeticsScreen() {

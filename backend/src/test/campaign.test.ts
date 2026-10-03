@@ -87,14 +87,29 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     const jesus = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Jesus" } });
 
     let last: Awaited<ReturnType<typeof api.post>> | null = null;
+    const emeralds: Array<{ tier: string; prizes: Array<{ kind: string; amount?: number; name?: string; rarity?: string }> }> = [];
     for (const node of nodes) {
       last = await api.post(`/api/campaign/nodes/${node.id}/claim`).set(bearer(token));
       expect(last.status).toBe(200);
+      if (last.body.emeraldChest) emeralds.push(last.body.emeraldChest);
       const owned = await prisma.userSticker.findUnique({ where: { userId_characterId: { userId: user.id, characterId: jesus.id } } });
       const lastFragment = nodes.filter((item) => item.fragment).at(-1)!;
       expect(Boolean(owned)).toBe(node.id === lastFragment.id || (owned !== null && node.id > lastFragment.id));
     }
     expect(last!.body.user.coins).toBeGreaterThan(0);
+
+    // Ao conquistar a carta especial abre o Baú de Esmeralda (uma única vez) com prêmios muito bons.
+    expect(emeralds).toHaveLength(1);
+    const [emerald] = emeralds;
+    expect(emerald.tier).toBe("EMERALD");
+    expect(emerald.prizes[0]).toEqual({ kind: "COINS", amount: 1000 });
+    expect(emerald.prizes.filter((prize) => prize.kind === "HELPER")).toHaveLength(4);
+    expect(emerald.prizes.filter((prize) => prize.kind === "COSMETIC").map((prize) => prize.name).sort()).toEqual(["Luz da manhã", "Luz esmeralda", "Ovelha do Bom Pastor", "Pastor das ovelhas", "Verde celestial"]);
+    const stickerPrizes = emerald.prizes.filter((prize) => prize.kind === "STICKER");
+    // A carta especial vem por último; antes dela, uma épica e uma lendária.
+    expect(stickerPrizes.at(-1)).toMatchObject({ name: "Jesus", rarity: "SPECIAL" });
+    expect(emerald.prizes.at(-1)).toMatchObject({ kind: "STICKER", rarity: "SPECIAL" });
+    expect(await prisma.userCosmetic.count({ where: { userId: user.id, cosmetic: { name: { in: ["Pastor das ovelhas", "Luz esmeralda", "Ovelha do Bom Pastor", "Verde celestial", "Luz da manhã"] } } } })).toBe(5);
     // Cada relíquia entrega também o ícone de perfil do cenário.
     const avatars = await prisma.userCosmetic.findMany({ where: { userId: user.id, cosmetic: { type: "AVATAR", name: { startsWith: "Ícone: " } } }, include: { cosmetic: true } });
     expect(avatars).toHaveLength(10);

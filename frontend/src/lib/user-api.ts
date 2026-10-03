@@ -174,7 +174,7 @@ export type ChestPrize =
   | { kind: 'STICKER'; characterId: number | null; name: string | null; rarity: StickerRarity | string | null; imageUrl: string | null; unlocked: boolean; duplicate: boolean }
   | { kind: 'COSMETIC'; name: string; rarity?: string };
 
-export type ChestTierName = 'BRONZE' | 'SILVER' | 'GOLD' | 'DIAMOND';
+export type ChestTierName = 'BRONZE' | 'SILVER' | 'GOLD' | 'DIAMOND' | 'EMERALD';
 
 export type QuizMatchResult = {
   matchId: number;

@@ -21,6 +21,7 @@ import { claimCampaignNode, type Campaign, type CampaignNode, type CampaignScena
 import { scenarioFallbackBackground, scenarioMapSrc, scenarioThemeVars } from '@/lib/campaign-theme';
 import { playSfx } from '@/lib/sound/sfx';
 import { rewardVisual } from '@/lib/reward-visual';
+import { ChestOpening } from '@/components/user/chest-opening';
 import type { UnlockedAchievement } from '@/lib/user-api';
 import type { UserProfile } from '@/types/auth';
 
@@ -168,6 +169,8 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
   const [selected, setSelected] = useState<CampaignNode | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [unlocked, setUnlocked] = useState<ClaimNodeResult | null>(null);
+  // Baú de Esmeralda: abre primeiro; depois aparece o aviso da carta especial.
+  const [emerald, setEmerald] = useState<ClaimNodeResult | null>(null);
 
   const special = campaign?.special ?? null;
   const scenario = scenarios[active] ?? null;
@@ -224,7 +227,7 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
   useEffect(() => {
     if (!open) return;
     function onKey(event: KeyboardEvent) {
-      if (selected || unlocked) return;
+      if (selected || unlocked || emerald) return;
       if (event.key === 'Escape') onClose();
       else if (event.key === 'ArrowDown' || event.key === 'PageDown') {
         event.preventDefault();
@@ -236,7 +239,7 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
     }
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [open, selected, unlocked, active, goTo, onClose]);
+  }, [open, selected, unlocked, emerald, active, goTo, onClose]);
 
   async function claim(node: CampaignNode) {
     setClaiming(true);
@@ -246,7 +249,8 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
       onChanged();
       setSelected(null);
       if (result.specialUnlocked) {
-        setUnlocked(result);
+        if (result.emeraldChest?.prizes.length) setEmerald(result);
+        else setUnlocked(result);
       } else {
         toast.success(`${nodeTitle(node)} resgatada!`, {
           description: [
@@ -400,6 +404,17 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
           </div>
         ) : null}
       </Modal>
+
+      {emerald?.emeraldChest ? (
+        <ChestOpening
+          tier="EMERALD"
+          prizes={emerald.emeraldChest.prizes}
+          onDone={() => {
+            setUnlocked(emerald);
+            setEmerald(null);
+          }}
+        />
+      ) : null}
 
       <Modal
         open={unlocked !== null}

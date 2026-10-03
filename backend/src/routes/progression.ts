@@ -21,7 +21,7 @@ async function ensureCosmetic(id?: number | null) {
 
 export const chestsRouter = Router();
 
-const CHEST_TIERS = ["BRONZE", "SILVER", "GOLD", "DIAMOND"] as const;
+const CHEST_TIERS = ["BRONZE", "SILVER", "GOLD", "DIAMOND", "EMERALD"] as const;
 
 /** Visual cadastrado de cada baú da partida (o app usa o desenho padrão para o que estiver vazio). */
 chestsRouter.get(

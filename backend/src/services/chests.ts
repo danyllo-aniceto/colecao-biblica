@@ -1,5 +1,6 @@
 import type { Prisma, StickerRarity } from "@prisma/client";
 import type { Db } from "../db/prisma";
+import { EMERALD_SET_NAMES } from "./default-cosmetics";
 import { CHEST_SPECS, chestStickerWeight, pityActive, planChest, type ChestTier } from "./game-rules";
 import { grantCosmetic } from "./cosmetics";
 import type { HelperField } from "./helpers";
@@ -13,6 +14,9 @@ export type ChestPrizeView =
   | { kind: "HELPER"; name: string; amount: number }
   | { kind: "STICKER"; characterId: number | null; name: string | null; rarity: string | null; imageUrl: string | null; unlocked: boolean; duplicate: boolean }
   | { kind: "COSMETIC"; name: string; rarity: string };
+
+/** Baú de Esmeralda: não é da partida, vem da campanha ao conquistar a carta especial. */
+export type SpecialChestTier = ChestTier | "EMERALD";
 
 export type ChestOpening = {
   tier: ChestTier;
@@ -80,4 +84,47 @@ export async function openChestRewards(
     if (cosmetic && (await grantCosmetic(tx as Db, wallet.id, cosmetic.id, "CHEST"))) prizes.push({ kind: "COSMETIC", name: cosmetic.name, rarity: cosmetic.rarity });
   }
   return { tier, coins: plan.coins, prizes, gotSticker: plan.stickers.length > 0, pityUsed };
+}
+
+/** O que o Baú de Esmeralda traz (fixo, é o prêmio da carta especial): moedas, ajudas, 2 figurinhas, o conjunto exclusivo e a carta. */
+export const EMERALD_CHEST = { coins: 1000, helpers: 4 } as const;
+
+/**
+ * Abre o Baú de Esmeralda ao conquistar a carta especial: 1.000 moedas, 4 ajudas, uma figurinha épica e uma lendária,
+ * o conjunto de itens visuais exclusivo (os que o jogador ainda não tem) e, por último, a própria carta especial.
+ * Altera `wallet` em memória (o chamador salva o usuário).
+ */
+export async function openEmeraldChest(
+  tx: Tx,
+  wallet: UserWallet,
+  settings: GameSettings,
+  random: () => number,
+  special: { id: number; name: string; imageUrl: string | null },
+): Promise<{ tier: "EMERALD"; prizes: ChestPrizeView[] }> {
+  const prizes: ChestPrizeView[] = [{ kind: "COINS", amount: EMERALD_CHEST.coins }];
+  wallet.coins += EMERALD_CHEST.coins;
+
+  const pool = CHEST_BOOSTS.filter((helper) => wallet[helper.field] < settings[helper.maxSetting]);
+  for (let index = 0; index < EMERALD_CHEST.helpers && pool.length > 0; index += 1) {
+    const helper = pool.splice(Math.floor(random() * pool.length), 1)[0];
+    wallet[helper.field as HelperField] += 1;
+    prizes.push({ kind: "HELPER", name: helper.name, amount: 1 });
+  }
+
+  const cosmetics = await tx.cosmetic.findMany({ where: { name: { in: [...EMERALD_SET_NAMES] }, active: true, owners: { none: { userId: wallet.id } } }, orderBy: { id: "asc" } });
+  for (const cosmetic of cosmetics) {
+    if (await grantCosmetic(tx as Db, wallet.id, cosmetic.id, "CAMPAIGN")) prizes.push({ kind: "COSMETIC", name: cosmetic.name, rarity: cosmetic.rarity });
+  }
+
+  const rewards = await availableRewards(tx as Db, await tx.rewardDefinition.findMany({ where: { active: true, rewardType: "STICKER", stickerRarity: { in: ["EPIC", "LEGENDARY"] }, stickerCharacterId: null }, orderBy: { id: "asc" } }));
+  for (const rarity of ["EPIC", "LEGENDARY"] as const) {
+    const reward = rewards.find((item) => item.stickerRarity === rarity);
+    if (!reward) continue;
+    const applied = await applyReward(tx as Db, wallet, reward, settings, random, { newStickerPercent: 100 });
+    prizes.push({ kind: "STICKER", characterId: applied.characterId, name: applied.characterName, rarity: applied.characterRarity, imageUrl: applied.characterImageUrl, unlocked: applied.characterUnlocked, duplicate: applied.duplicate });
+  }
+
+  // A carta especial por último: é o grande momento.
+  prizes.push({ kind: "STICKER", characterId: special.id, name: special.name, rarity: "SPECIAL", imageUrl: special.imageUrl, unlocked: true, duplicate: false });
+  return { tier: "EMERALD", prizes };
 }

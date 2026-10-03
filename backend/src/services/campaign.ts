@@ -2,6 +2,7 @@ import { lockUser, prisma, transaction, type Db } from "../db/prisma";
 import { badRequest, notFound } from "../lib/errors";
 import { checkAchievements } from "./achievements";
 import { campaignNodeState, currentScenarioId, defaultNodePosition, fragmentsComplete } from "./game-rules";
+import { openEmeraldChest } from "./chests";
 import { grantCosmetic, toCosmeticResponse } from "./cosmetics";
 import { toUserResponse } from "./mappers";
 import { applyReward, grantStickerIfMissing, walletData } from "./rewards";
@@ -127,6 +128,7 @@ export async function claimNode(userId: number, nodeId: number) {
     let fragments: { claimed: number; total: number } | null = null;
     let specialUnlocked = false;
     let special: { id: number; name: string; imageUrl: string | null } | null = null;
+    let emeraldChest: Awaited<ReturnType<typeof openEmeraldChest>> | null = null;
     const characterId = node.fragment ? node.scenario.fragmentCharacterId : null;
     if (characterId) {
       const fragmentNodes = await tx.scenarioNode.findMany({ where: { fragment: true, scenario: { fragmentCharacterId: characterId, active: true } }, select: { id: true } });
@@ -136,6 +138,11 @@ export async function claimNode(userId: number, nodeId: number) {
       if (fragmentsComplete(mine.length, ids.size)) {
         specialUnlocked = await grantStickerIfMissing(tx, userId, characterId);
         special = await tx.biblicalCharacter.findUnique({ where: { id: characterId }, select: { id: true, name: true, imageUrl: true } });
+        // Conquistar a carta especial abre o Baú de Esmeralda (uma única vez, junto com a carta).
+        if (specialUnlocked && special) {
+          emeraldChest = await openEmeraldChest(tx, wallet, settings, Math.random, special);
+          await tx.user.update({ where: { id: userId }, data: walletData(wallet) });
+        }
       }
     }
 
@@ -151,6 +158,7 @@ export async function claimNode(userId: number, nodeId: number) {
       fragments,
       specialUnlocked,
       special: specialUnlocked ? special : null,
+      emeraldChest,
       unlockedAchievements,
       user: toUserResponse(saved),
     };
