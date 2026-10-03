@@ -279,7 +279,7 @@ function TurnButton({ side, disabled, onClick }: { side: 'left' | 'right'; disab
   );
 }
 
-function AlbumIntro({ items, ownedCount, totalCharacters, coverImage }: { items: CharacterEntry[]; ownedCount: number; totalCharacters: number; coverImage?: string | null }) {
+export function AlbumIntro({ items, ownedCount, totalCharacters, coverImage }: { items: CharacterEntry[]; ownedCount: number; totalCharacters: number; coverImage?: string | null }) {
   const byRarity = (rarity: StickerRarity) => items.filter((item) => item.rarity === rarity).length;
   const percent = totalCharacters ? Math.round((ownedCount / totalCharacters) * 100) : 0;
   if (coverImage) {

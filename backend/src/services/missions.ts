@@ -135,7 +135,8 @@ export async function claimMission(userId: number, code: string) {
     return {
       code,
       coins: entry.mission.rewardCoins + (reward?.cosmeticConvertedCoins ?? 0),
-      reward: reward ? { name: reward.rewardName, characterName: reward.characterName, cosmeticName: reward.cosmeticName } : null,
+      // Recompensa completa (figurinha sorteada, item visual...): a tela mostra o que o jogador ganhou.
+      reward,
       user: toUserResponse(saved),
     };
   });

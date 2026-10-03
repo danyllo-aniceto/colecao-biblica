@@ -97,6 +97,23 @@ export type ThemeCollection = {
   claimed: boolean;
 };
 
+/** O que uma recompensa entregou (figurinha sorteada, ajuda, item visual...), como o servidor devolve. */
+export type RewardResult = {
+  rewardType?: string;
+  rewardName: string;
+  characterId: number | null;
+  characterName: string | null;
+  characterRarity: StickerRarity | null;
+  characterImageUrl: string | null;
+  /** A figurinha é nova no álbum. */
+  characterUnlocked: boolean;
+  /** A figurinha já era do jogador: a cópia foi para as repetidas. */
+  duplicate: boolean;
+  cosmeticId?: number | null;
+  cosmeticName: string | null;
+  cosmeticConvertedCoins?: number;
+};
+
 export type PassTierView = {
   id: number;
   level: number;
@@ -150,7 +167,7 @@ export const claimThemeCollection = (id: number) =>
   apiRequest<{ coins: number; cosmeticGranted: boolean; userCoins: number }>(`/collections/${id}/claim`, { method: 'POST' }, 'Não foi possível resgatar a coleção.');
 export const getSeasonPass = () => apiRequest<SeasonPass>('/pass', { method: 'GET' }, 'Não foi possível carregar o passe.');
 export const claimPassTier = (id: number) =>
-  apiRequest<{ coins: number; reward: { rewardName: string; characterName: string | null } | null; cosmeticGranted: boolean; duplicate: { coins: number; reward: { rewardName: string; characterName: string | null } | null } | null; unlockedAchievements: UnlockedAchievement[]; user: UserProfile }>(
+  apiRequest<{ coins: number; reward: RewardResult | null; cosmeticGranted: boolean; duplicate: { coins: number; reward: RewardResult | null } | null; unlockedAchievements: UnlockedAchievement[]; user: UserProfile }>(
     `/pass/tiers/${id}/claim`,
     { method: 'POST' },
     'Não foi possível resgatar o prêmio do passe.',

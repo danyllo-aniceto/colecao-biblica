@@ -10,6 +10,7 @@ import { CoinIcon, ProgressBar } from '@/components/game/game-ui';
 import { CosmeticPreview } from '@/components/user/rewards/cosmetic-preview';
 import { cn } from '@/lib/cn';
 import { rewardVisual } from '@/lib/reward-visual';
+import { RewardRevealModal, worthRevealing, type RewardReveal } from '@/components/user/rewards/reward-reveal';
 import { claimPassTier, getSeasonPass, type PassTierView, type SeasonPass } from '@/lib/rewards-api';
 import type { UnlockedAchievement } from '@/lib/user-api';
 import type { UserProfile } from '@/types/auth';
@@ -133,6 +134,7 @@ export function SeasonPassCard({ profile, onClaimed }: { profile: UserProfile | 
   const [pass, setPass] = useState<SeasonPass | null>(null);
   const [open, setOpen] = useState(false);
   const [claiming, setClaiming] = useState<number | null>(null);
+  const [reveal, setReveal] = useState<RewardReveal | null>(null);
 
   const load = useCallback(() => {
     getSeasonPass()
@@ -150,16 +152,16 @@ export function SeasonPassCard({ profile, onClaimed }: { profile: UserProfile | 
     try {
       const result = await claimPassTier(tier.id);
       onClaimed(result.user, result.unlockedAchievements);
-      toast.success(`Prêmio do degrau ${tier.level} resgatado!`, {
-        description: [
-          result.coins ? `+${result.coins} moedas` : null,
-          result.reward?.characterName ?? result.reward?.rewardName,
-          result.cosmeticGranted ? tier.cosmetic?.name : null,
-          result.duplicate ? `Item repetido: +${result.duplicate.coins} moedas${result.duplicate.reward ? ` e ${result.duplicate.reward.characterName ?? result.duplicate.reward.rewardName}` : ''}` : null,
-        ]
-          .filter(Boolean)
-          .join(' · '),
-      });
+      const rewards = [result.reward, result.duplicate?.reward].filter((reward): reward is NonNullable<typeof reward> => Boolean(reward));
+      const summary: RewardReveal = {
+        title: `Degrau ${tier.level} resgatado!`,
+        coins: result.coins + (result.duplicate?.coins ?? 0),
+        rewards,
+        cosmeticName: result.cosmeticGranted ? tier.cosmetic?.name : null,
+        note: result.duplicate ? `Você já tinha ${tier.cosmetic?.name ?? 'este item'}: ele virou +${result.duplicate.coins} moedas.` : null,
+      };
+      if (worthRevealing(summary)) setReveal(summary);
+      else toast.success(`Prêmio do degrau ${tier.level} resgatado!`, { description: [summary.coins ? `+${summary.coins} moedas` : null, result.reward?.rewardName, summary.note].filter(Boolean).join(' · ') });
       load();
     } catch (reason) {
       toast.error(errorMessage(reason));
@@ -180,6 +182,7 @@ export function SeasonPassCard({ profile, onClaimed }: { profile: UserProfile | 
       >
         <PassTrail pass={pass} playerName={profile?.name ?? 'Você'} claiming={claiming} onClaim={(tier) => void claim(tier)} />
       </Modal>
+      <RewardRevealModal reveal={reveal} onClose={() => setReveal(null)} />
     </>
   );
 }

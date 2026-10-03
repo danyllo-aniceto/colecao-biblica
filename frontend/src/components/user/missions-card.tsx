@@ -8,6 +8,7 @@ import { errorMessage, useToast } from '@/components/ui/toast';
 import { CoinIcon, ProgressBar } from '@/components/game/game-ui';
 import { cn } from '@/lib/cn';
 import { rewardVisual } from '@/lib/reward-visual';
+import { RewardRevealModal, worthRevealing, type RewardReveal } from '@/components/user/rewards/reward-reveal';
 import { Tooltip } from '@/components/ui/tooltip';
 import type { UserProfile } from '@/types/auth';
 import { claimMission, listMissions, type Mission } from '@/lib/user-api';
@@ -26,6 +27,7 @@ export function MissionsCard({ onClaimed }: { onClaimed: (user: UserProfile) => 
   const [missions, setMissions] = useState<Mission[] | null>(null);
   const [period, setPeriod] = useState<'DAILY' | 'WEEKLY'>('DAILY');
   const [claiming, setClaiming] = useState<string | null>(null);
+  const [reveal, setReveal] = useState<RewardReveal | null>(null);
 
   function load() {
     listMissions()
@@ -40,8 +42,13 @@ export function MissionsCard({ onClaimed }: { onClaimed: (user: UserProfile) => 
     try {
       const result = await claimMission(mission.code);
       onClaimed(result.user);
-      const extra = result.reward ? (result.reward.characterName ?? result.reward.cosmeticName ?? result.reward.name) : null;
-      toast.success('Missão concluída!', { description: [result.coins ? `+${result.coins} moedas` : null, extra].filter(Boolean).join(' e '), icon: <CoinIcon /> });
+      const summary: RewardReveal = { title: 'Missão concluída!', coins: result.coins, rewards: result.reward ? [result.reward] : [], cosmeticName: result.reward?.cosmeticName };
+      if (worthRevealing(summary)) {
+        // Figurinha ou item visual ganho: mostra numa janela para o jogador ver o que veio.
+        setReveal(summary);
+      } else {
+        toast.success('Missão concluída!', { description: [result.coins ? `+${result.coins} moedas` : null, result.reward?.rewardName].filter(Boolean).join(' e '), icon: <CoinIcon /> });
+      }
       load();
     } catch (error) {
       toast.error(errorMessage(error));
@@ -126,6 +133,7 @@ export function MissionsCard({ onClaimed }: { onClaimed: (user: UserProfile) => 
           ))}
         </ul>
       )}
+      <RewardRevealModal reveal={reveal} onClose={() => setReveal(null)} />
     </section>
   );
 }

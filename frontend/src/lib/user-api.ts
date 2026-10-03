@@ -1,7 +1,7 @@
 import { apiRequest, apiRequestVoid } from '@/lib/http';
 import type { UserProfile } from '@/types/auth';
 import type { PaginatedResponse, StickerRarity, Testament } from '@/lib/admin-api';
-import type { PlayerLook, UnlockedCosmetic } from '@/lib/rewards-api';
+import type { PlayerLook, RewardResult, UnlockedCosmetic } from '@/lib/rewards-api';
 
 /** Status de estudo do personagem (só acumula acertos; não rende prêmios). */
 export type StudyStatus = {
@@ -554,7 +554,7 @@ export async function listMissions(): Promise<Mission[]> {
   return apiRequest<Mission[]>('/missions', { method: 'GET' }, 'Não foi possível carregar as missões.');
 }
 
-export async function claimMission(code: string): Promise<{ code: string; coins: number; reward: { name: string; characterName: string | null; cosmeticName: string | null } | null; user: UserProfile }> {
+export async function claimMission(code: string): Promise<{ code: string; coins: number; reward: RewardResult | null; user: UserProfile }> {
   return apiRequest(`/missions/${code}/claim`, { method: 'POST' }, 'Não foi possível resgatar a missão.');
 }
 

@@ -43,6 +43,7 @@ import { AdminPanel, Cell, DataTable, IconAction, RarityBadge, Row, SearchInput,
 import { ImageUploadField } from '../image-upload-field';
 import { EmojiPicker } from '../emoji-picker';
 import { ReactionChatPreview } from '../reaction-chat-preview';
+import { AlbumCoverPreview, ProfileBgPreview } from '../surface-previews';
 import { ReactionsImport } from '../reactions-import';
 import { CosmeticsImport } from '../cosmetics-import';
 import { REACTION_ANIMATION_LABELS } from '@/lib/labels';
@@ -361,6 +362,9 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
           </span>
           <p className="text-sm text-muted">Prévia de como o item aparece para o jogador.</p>
         </div>
+
+        {type === 'PROFILE_BG' ? <ProfileBgPreview item={preview} /> : null}
+        {type === 'ALBUM_COVER' ? <AlbumCoverPreview item={preview} /> : null}
 
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Nome" required>
