@@ -534,6 +534,45 @@ describe.skipIf(!hasDatabase)("API", () => {
       expect((await api.post("/api/collection/sell").set(bearer(token)).send({ characterId: bought.body.characterId })).status).toBe(404);
     });
 
+    it("admin volta um jogador ao começo (conta e login ficam) e o reset geral exige confirmação", async () => {
+      const token = await login("user@email.com");
+      const admin = await login("admin2@email.com");
+      const user = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
+      const davi = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Davi" } });
+      await playSession(token, { quizType: "GENERAL", questionLimit: 3 }, (correct) => correct);
+      await prisma.userSticker.upsert({ where: { userId_characterId: { userId: user.id, characterId: davi.id } }, create: { userId: user.id, characterId: davi.id }, update: {} });
+      await prisma.characterStudy.create({ data: { userId: user.id, characterId: davi.id, correctAnswers: 12, questionsAnswered: 15 } });
+      await prisma.user.update({ where: { id: user.id }, data: { coins: 999, hintBoosts: 3, skipBoosts: 2, dailyStreak: 4, chestLevel: 3 } });
+
+      // Jogador comum não pode resetar ninguém.
+      expect((await api.post(`/api/users/${user.id}/reset`).set(bearer(token)).send({})).status).toBe(403);
+
+      const reset = await api.post(`/api/users/${user.id}/reset`).set(bearer(admin)).send({});
+      expect(reset.status).toBe(200);
+      expect(reset.body).toMatchObject({ coins: 0, xp: 0, level: 1 });
+      const fresh = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+      expect(fresh).toMatchObject({ email: "user@email.com", xp: 0, level: 1, coins: 0, totalScore: 0, hintBoosts: 0, skipBoosts: 0, dailyStreak: 0, chestLevel: 1, stickerPity: 0 });
+      expect(fresh.lastDailyClaim).toBeNull();
+      expect(await prisma.userSticker.count({ where: { userId: user.id } })).toBe(0);
+      expect(await prisma.characterStudy.count({ where: { userId: user.id } })).toBe(0);
+      expect(await prisma.quizMatch.count({ where: { userId: user.id } })).toBe(0);
+      expect(await prisma.userAchievement.count({ where: { userId: user.id } })).toBe(0);
+      expect((await api.get("/api/collection/my").set(bearer(token))).body).toEqual([]);
+      // O login continua valendo.
+      expect((await api.get("/api/users/me").set(bearer(token))).status).toBe(200);
+
+      // Reset geral: sem a palavra de confirmação, nada acontece.
+      expect((await api.post("/api/users/reset-all").set(bearer(admin)).send({})).status).toBe(400);
+      await prisma.user.update({ where: { id: user.id }, data: { coins: 50 } });
+      const all = await api.post("/api/users/reset-all").set(bearer(admin)).send({ confirm: "RESETAR" });
+      expect(all.status).toBe(200);
+      expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).coins).toBe(0);
+      // Administradores não são resetados.
+      await prisma.user.update({ where: { email: "admin2@email.com" }, data: { coins: 77 } });
+      await api.post("/api/users/reset-all").set(bearer(admin)).send({ confirm: "RESETAR" });
+      expect((await prisma.user.findUniqueOrThrow({ where: { email: "admin2@email.com" } })).coins).toBe(77);
+    });
+
     it("admin vê estatísticas e ajusta o saldo de um jogador", async () => {
       const admin = await login("admin2@email.com");
       const stats = await api.get("/api/admin/stats").set(bearer(admin));

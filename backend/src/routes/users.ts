@@ -10,6 +10,7 @@ import { currentUser, requireAdmin, requireAuth } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
 import { signupLimiter } from "../middleware/rateLimit";
 import { toUserResponse } from "../services/mappers";
+import { resetUsersProgress } from "../services/reset";
 
 export const usersRouter = Router();
 
@@ -209,6 +210,36 @@ usersRouter.post(
       },
     });
     res.json(toUserResponse(updated));
+  }),
+);
+
+const resetSchema = z.object({ includeSocial: z.boolean().optional() });
+
+/** Admin: volta TODOS os jogadores (não os admins) ao começo. Exige a palavra RESETAR para evitar clique por engano. */
+usersRouter.post(
+  "/reset-all",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const input = resetSchema.extend({ confirm: z.literal("RESETAR") }).parse(req.body);
+    const players = await prisma.user.findMany({ where: { role: "USER", deleted: false }, select: { id: true } });
+    const reset = await resetUsersProgress(
+      players.map((player) => player.id),
+      { includeSocial: input.includeSocial },
+    );
+    res.json({ reset });
+  }),
+);
+
+/** Admin: volta um jogador ao começo, como se a conta fosse nova (a conta e o login continuam). */
+usersRouter.post(
+  "/:id/reset",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const input = resetSchema.parse(req.body ?? {});
+    const target = await getActiveUser(parseId(req.params.id));
+    await resetUsersProgress([target.id], { includeSocial: input.includeSocial });
+    await prisma.user.update({ where: { id: target.id }, data: { updatedBy: currentUser(req).email } });
+    res.json(toUserResponse(await getActiveUser(target.id)));
   }),
 );
 

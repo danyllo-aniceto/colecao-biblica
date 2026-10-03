@@ -351,6 +351,14 @@ export function grantUser(id: number, payload: GrantPayload) {
   return apiRequest<UserProfile>(`/users/${id}/grant`, json('POST', payload), 'Não foi possível ajustar o saldo.');
 }
 
+export function resetUser(id: number, includeSocial: boolean) {
+  return apiRequest<UserProfile>(`/users/${id}/reset`, json('POST', { includeSocial }), 'Não foi possível resetar o jogador.');
+}
+
+export function resetAllUsers(includeSocial: boolean) {
+  return apiRequest<{ reset: number }>('/users/reset-all', json('POST', { includeSocial, confirm: 'RESETAR' }), 'Não foi possível resetar os jogadores.');
+}
+
 export function deleteUser(id: number) {
   return apiRequestVoid(`/users/${id}`, { method: 'DELETE' }, 'Não foi possível excluir o usuário.');
 }
