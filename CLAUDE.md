@@ -39,6 +39,15 @@ código em **português do Brasil**.
   `default-campaign.ts`; guia de arte em `docs/campanha-prompts-de-arte.md`.
 - Toda mudança de schema vira migração em `backend/prisma/migrations` (o deploy roda `migrate deploy`).
 
+## Modo Tabuleiro (jogo com amigos, sem progresso de perfil)
+
+- Plano e checklist por etapas em `docs/modo-tabuleiro-plano.md`; atualize o checklist a cada etapa.
+- O motor é **puro e sem dependências** em `backend/src/board/` (`engine.ts`, `bots.ts`, `scenarios.ts`) e roda igual no navegador
+  (partida local) e no servidor (online). O front o importa pelo alias `@board/*` (`vite.config.ts` e `tsconfig.json`): nunca
+  importe nada de fora dessa pasta dentro dela.
+- O motor não vê a alternativa marcada, só se acertou. Toda regra nova tem teste em `engine.test.ts`; regras de cenário são
+  dados em `scenarios.ts`. Nada do modo dá XP, moedas, figurinhas nem mexe nas estatísticas das perguntas.
+
 ## Comandos
 
 ```bash

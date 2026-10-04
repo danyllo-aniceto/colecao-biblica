@@ -4,6 +4,17 @@ Jogo para **jogar com amigos**, separado do progresso do perfil: não dá XP, mo
 ranking/missões/estatísticas das perguntas. É uma "sala de brincadeira". O segundo jogo (estilo Kahoot) virá depois, mas
 a camada de **sala** abaixo já nasce genérica para ele reaproveitar.
 
+## 0. Decisões confirmadas
+
+1. **Local sem conta**: quem joga no mesmo aparelho só digita o nome; só quem criou a partida precisa estar logado.
+2. **Online**: amigos com conta entram por convite no app; quem não tem conta entra pelo link/código **e vê um convite para criar conta**
+   (entra na etapa 4).
+3. **Vitórias**: só um contador e **peões** como prêmio (cosmético). Nada de XP, moedas, figurinhas ou estatística de pergunta.
+4. **Perguntas**: o mesmo banco do quiz, sorteadas como no quiz geral (`pickGeneralQuestionIds`: metade do cenário escolhido, o resto do
+   banco inteiro). Por isso **não existe ajuste de dificuldade na sala**: a pergunta de movimento vem do sorteio normal e só a
+   provação e a pergunta final puxam as difíceis.
+5. **Forma de trabalho**: etapas pequenas, cada uma jogável e testada, sem deixar nada pendente (checklist na seção 8).
+
 ## 1. A ideia em uma frase
 
 Corrida de peões por um caminho temático de um dos 10 cenários. Na sua vez: **rola o dado (1–6) → cai uma pergunta
@@ -30,9 +41,9 @@ atrás), **Fôlego** (poder-up inicial grátis) e a casa **Provação** (abaixo)
 ## 2. Regras do jogo (motor)
 
 - **Turno**: dado → pergunta (tempo da sala, padrão 20 s; estourar o tempo = erro) → resolve → próximo.
-- **Pergunta**: sorteada do banco ativo, **sem repetir na sala**. Sala de um cenário prioriza perguntas com
-  `scenarioId` daquele cenário (já existe o campo), completando com as gerais. Dificuldade acompanha a posição no
-  tabuleiro (início fácil → fim difícil), ou fica fixa pela dificuldade escolhida.
+- **Pergunta**: sorteada do banco ativo **sem repetir na partida** (se o banco acabar, o baralho recomeça). O lote da partida vem
+  como no quiz geral, com metade das perguntas do cenário escolhido (`scenarioId`). Provação e pergunta final preferem as
+  difíceis (`HARD`/`VERY_HARD`), com qualquer uma de reserva.
 - **Acertou**: anda o valor do dado, resolve a casa onde caiu (ver tipos). **Errou**: não anda; a explicação
   (`explanation`/`bibleReference`) aparece para todos — vira momento de aprendizado em grupo.
 - **Chegada**: para vencer, precisa **acertar a "pergunta final"** (difícil) ao alcançar ou passar a linha. Sem
@@ -101,9 +112,9 @@ do projeto):
    - Local: tocar numa vaga digita o nome (sem conta) e escolhe o peão; botão **"+ Bot"** em cada vaga vazia.
    - Online: o criador ocupa a vaga 1; vagas vazias mostram "Convidar amigo" (lista paginada dos amigos do app) e
      "Compartilhar link/código". Vagas **"+ Bot"** podem completar a qualquer momento.
-3. **Regras** — `Segmented`: tamanho (Rápido 25 · Clássico 40 · Épico 60), dificuldade (Tranquilo · Médio · Difícil),
-   tempo por pergunta (15/20/30 s), `Switch`es: bots, power-ups, empurrão, ajuda ao último colocado.
-   Predefinições: **"Em família"** (tempo longo, sem empurrão), **"Desafio"** (difícil, empurrão ligado).
+3. **Regras** — `Segmented`: estilo (Em família · Clássico · Desafio), tamanho (Rápido 25 · Clássico 40 · Épico 60), tempo por
+   pergunta (15/20/30 s) e `Switch`es: power-ups, empurrão, ajuda ao último colocado. Mexer em qualquer regra vira
+   "personalizado".
 
 **Lobby online**: código grande + QR, vagas ao vivo (mostra quem entrou), o dono pode expulsar, trocar cenário e
 iniciar com 2+. Quem não é dono vê "Aguardando o dono iniciar" com a regra resumida e a animação do cenário.
@@ -177,22 +188,37 @@ Pasta nova `components/user/board/`: `board-hub.tsx` (entrada), `room-wizard.tsx
 app (`Modal`, `Select`, `Segmented`, `Switch`, `Tooltip`, `Spinner`, toasts), tokens de tema e `Pagination` na lista de
 amigos do convite.
 
-## 8. Fatiamento sugerido (entregas pequenas e jogáveis)
+## 8. Roteiro por etapas (checklist)
 
-1. **Motor + testes** (casas comuns, power-ups comuns, empurrão, vitória) e **modo local** com 1 cenário (Éden) e
-   perguntas reais. Já dá para jogar em um celular com amigos. (maior valor, menor risco)
-2. **Bots** no modo local + os 10 cenários com provações/eventos/power-ups exclusivos (configuração em dados).
-3. **Cosmético Peão** (migração, seed, loja, painel) e escolha do peão.
-4. **Online**: salas, lobby, polling, ações e prazos preguiçosos; convite por amigo; reações.
-5. **Polimento**: arte por cenário, sons, revanche, preferências salvas, tabuleiro editável pelo painel.
-6. Depois: **modo estilo Kahoot** (host exibe pergunta, todos respondem em tempo real, ranking por velocidade) reutilizando
-   `BoardRoom` renomeada para `PartyRoom` (código, lobby, jogadores, bots, polling).
+Legenda: ✅ feito e testado · ⬜ a fazer.
 
-## 9. Perguntas em aberto (preciso da sua decisão)
+**Etapa 1 — Motor + modo local + bots (com o Éden completo)** ✅
+- ✅ Motor puro `backend/src/board/engine.ts` (tabuleiro sorteado com semente, dado, perguntas, movimento, empurrão, abrigo,
+  atalho/queda, poder, provação, portão/pergunta final, escudo, ajuda ao último colocado, 6 power-ups + Árvore da Vida) e
+  `bots.ts` (3 níveis), regras do cenário em `scenarios.ts`; 43 testes em `engine.test.ts` (inclui 40 partidas só de bots).
+- ✅ `POST /api/board/questions`: sorteio como no quiz geral, sem mexer em estatísticas (teste de integração).
+- ✅ Tela: card na aba Jogar, assistente de 3 passos (cenário paginado + "Surpreenda-me", jogadores/bots, regras com estilos),
+  partida em tela cheia (trilha em serpente que segue o peão, dado, pergunta com cronômetro e gabarito, mochila, histórico,
+  ajuda), pódio com revanche, partida guardada no aparelho para continuar.
+- ✅ Qualquer cenário já é jogável com a provação genérica; o Éden já tem provação e power-up próprios.
 
-1. **Jogo local sem conta**: ok convidados digitarem só o nome (sem login) ou só quem tem conta joga?
-2. **Online só para quem tem conta**, correto? Convidado entra por link/código sem conta?
-3. **Vitórias contam em algum lugar?** Sugiro apenas um contador e **peões** como prêmio (cosmético), sem XP/moedas.
-4. **Perguntas**: ok usar o banco atual (priorizando as do cenário) — ou quer um banco/tag específico de "amigos"
-   (mais leves, de roda de conversa)?
-5. **Tamanho do 1º corte**: começo pela fatia 1 (motor + local com Éden + 1 bot) ou por algo maior?
+**Etapa 2 — Os 10 cenários** ⬜
+- ⬜ Provação, evento e power-up exclusivo de cada cenário (tabela da seção 3) como dados em `scenarios.ts`, com testes por cenário.
+- ⬜ Novos tipos de efeito no motor: praga/dilúvio (casas que mudam por rodada), muro (2 acertos seguidos), pular vez, troca de lugar,
+  vento (dado invertido), vigília (todos respondem a mesma pergunta).
+- ⬜ Legenda e tela de ajuda mostrando os eventos de cada cenário.
+
+**Etapa 3 — Peão como cosmético** ⬜
+- ⬜ `CosmeticType.PAWN` + migração, seed (grátis, loja, por vitórias no tabuleiro, passe/baú), painel e loja.
+- ⬜ Escolha entre os peões que o jogador possui; contador de vitórias no perfil.
+
+**Etapa 4 — Online** ⬜
+- ⬜ Tabelas `BoardRoom`/`BoardPlayer` (migração), código da sala, lobby, convite por amigo, link para quem não tem conta com convite
+  para criar conta, polling com versão, prazos e vez dos bots resolvidos de forma "preguiçosa", expulsar/sair, bot assume quem sai.
+- ⬜ Mesma tela da partida local, alimentada pelo servidor (resposta certa só no servidor).
+
+**Etapa 5 — Polimento** ⬜
+- ⬜ Arte e fundo por cenário, sons e vibração, reações rápidas (cosmético REACTION), animação do peão casa a casa, modo sem animação,
+  tabuleiro editável pelo painel.
+
+**Depois — modo estilo Kahoot**, reaproveitando a camada de sala da etapa 4 (`BoardRoom` → `PartyRoom`).

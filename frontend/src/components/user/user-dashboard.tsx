@@ -19,6 +19,7 @@ import { QuizAnswerScreen, type AnswerReveal, type QuizAnswerPayload } from '@/c
 import { AlbumSection } from '@/components/user/sections/album-section';
 import { HomeSection } from '@/components/user/sections/home-section';
 import { PlaySection, type QuizFormState } from '@/components/user/sections/play-section';
+import { BoardHub } from '@/components/user/board/board-hub';
 import { ProfileSection } from '@/components/user/sections/profile-section';
 import { FriendsSection } from '@/components/user/sections/friends-section';
 import { RankingSection } from '@/components/user/sections/ranking-section';
@@ -623,22 +624,25 @@ export function UserDashboard() {
             ) : null}
 
             {section === 'quiz' ? (
-              <PlaySection
-                profile={profile}
-                characters={characters}
-                ownedIds={ownedIds}
-                collection={collection}
-                gameRules={gameRules}
-                quizForm={quizForm}
-                onChangeForm={setQuizForm}
-                quizSession={quizSession}
-                submitting={quizSubmitting}
-                error={quizError}
-                onStart={handleStartQuiz}
-                onResume={handleResumeQuiz}
-                onAbandon={handleAbandonQuiz}
-                onStartChallenge={() => void handleStartChallenge()}
-              />
+              <div className="space-y-8">
+                <PlaySection
+                  profile={profile}
+                  characters={characters}
+                  ownedIds={ownedIds}
+                  collection={collection}
+                  gameRules={gameRules}
+                  quizForm={quizForm}
+                  onChangeForm={setQuizForm}
+                  quizSession={quizSession}
+                  submitting={quizSubmitting}
+                  error={quizError}
+                  onStart={handleStartQuiz}
+                  onResume={handleResumeQuiz}
+                  onAbandon={handleAbandonQuiz}
+                  onStartChallenge={() => void handleStartChallenge()}
+                />
+                {quizSession ? null : <BoardHub playerName={profile?.name ?? ''} />}
+              </div>
             ) : null}
 
             {section === 'shop' ? (

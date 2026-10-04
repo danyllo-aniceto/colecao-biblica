@@ -23,7 +23,11 @@ export default defineConfig({
     __BUILD_ID__: JSON.stringify(resolveBuildId()),
   },
   resolve: {
-    alias: { "@": path.resolve(__dirname, "src") },
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+      // Motor do tabuleiro: o mesmo arquivo roda aqui (partida local) e no servidor.
+      "@board": path.resolve(__dirname, "../backend/src/board"),
+    },
   },
   plugins: [
     react(),
