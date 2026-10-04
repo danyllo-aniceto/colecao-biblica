@@ -25,7 +25,7 @@ export type RoomView = {
   serverNow: number;
   hostUserId: number;
   hostName: string;
-  scenario: { id: number; slug: string; name: string; color: string | null; verse: string | null; verseReference: string | null; iconImageUrl: string | null; quizBackgroundUrl: string | null; boardImageUrl: string | null; boardPathStyle: PathStyle | null; boardLandmarks: Landmark[] | null };
+  scenario: { id: number; slug: string; name: string; color: string | null; verse: string | null; verseReference: string | null; iconImageUrl: string | null; quizBackgroundUrl: string | null; boardImageUrl: string | null; boardPathStyle: PathStyle | null; boardLandmarks: Landmark[] | null; musicUrl: string | null };
   config: BoardConfig;
   players: RoomPlayer[];
   me: { key: string; userId: number; isHost: boolean; wins: number | null } | null;

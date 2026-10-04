@@ -291,7 +291,7 @@ export function OnlineRoom({ code, initial = null, scenarios, onClose }: Props) 
   const wins = view.me.wins;
   return (
     <BoardScreen
-      theme={{ name: view.scenario.name, color: view.scenario.color, background: view.scenario.quizBackgroundUrl, boardImage: view.scenario.boardImageUrl, pathStyle: view.scenario.boardPathStyle, landmarks: view.scenario.boardLandmarks }}
+      theme={{ name: view.scenario.name, color: view.scenario.color, background: view.scenario.quizBackgroundUrl, boardImage: view.scenario.boardImageUrl, pathStyle: view.scenario.boardPathStyle, landmarks: view.scenario.boardLandmarks, music: view.scenario.musicUrl }}
       state={view.state}
       log={view.log}
       flash={flash}

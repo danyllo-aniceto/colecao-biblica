@@ -13,6 +13,7 @@ import {
 } from '@board/engine';
 import { botAction } from '@board/bots';
 import { useDialogs } from '@/components/ui/dialogs';
+import { useCampaign } from '@/components/user/campaign/campaign-provider';
 import { playSfx } from '@/lib/sound/sfx';
 import { clearLocalBoard, saveLocalBoard, type LocalBoardGame } from '@/lib/board-local';
 import { eventMessage } from '@/components/user/board/board-meta';
@@ -31,6 +32,7 @@ const BOT_ACT_MS = 1000;
 
 /** Partida local: um aparelho, vários jogadores (e bots). O motor decide as regras; aqui ficam os turnos e a tela. */
 export function BoardGame({ game: saved, onExit, onRematch }: GameProps) {
+  const { campaign } = useCampaign();
   const dialogs = useDialogs();
   const [state, setState] = useState<BoardState>(saved.state);
   const [log, setLog] = useState<string[]>(saved.log);
@@ -178,7 +180,7 @@ export function BoardGame({ game: saved, onExit, onRematch }: GameProps) {
 
   return (
     <BoardScreen
-      theme={{ name: saved.scenario.name, color: saved.scenario.color, background: saved.scenario.background, boardImage: saved.scenario.boardImage, pathStyle: saved.scenario.pathStyle, landmarks: saved.scenario.landmarks }}
+      theme={{ name: saved.scenario.name, color: saved.scenario.color, background: saved.scenario.background, boardImage: saved.scenario.boardImage, pathStyle: saved.scenario.pathStyle, landmarks: saved.scenario.landmarks, music: campaign?.scenarios.find((item) => item.slug === saved.scenario.slug)?.boardMusicUrl ?? null }}
       state={state}
       log={log}
       flash={flash}

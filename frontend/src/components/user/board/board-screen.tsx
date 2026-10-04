@@ -18,6 +18,7 @@ import { Modal } from '@/components/ui/modal';
 import { Spinner } from '@/components/ui/spinner';
 import { Tooltip } from '@/components/ui/tooltip';
 import { cn } from '@/lib/cn';
+import { useBoardMusic } from '@/lib/sound/board-music';
 import { scenarioThemeVars } from '@/lib/campaign-theme';
 import { quizBackgroundStyle } from '@/lib/quiz-background';
 import { BoardHelp } from '@/components/user/board/board-help';
@@ -34,6 +35,8 @@ export type BoardTheme = {
   boardImage: string | null;
   pathStyle?: PathStyle | null;
   landmarks?: Landmark[] | null;
+  /** Música do tema do cenário (toca enquanto a partida está aberta). */
+  music?: string | null;
 };
 
 type BoardScreenProps = {
@@ -80,6 +83,7 @@ type BoardScreenProps = {
  * quem a usa decide de onde vêm os dados e o que cada botão faz.
  */
 export function BoardScreen(props: BoardScreenProps) {
+  useBoardMusic(props.theme.music);
   const { theme, state, log, flash, question, reveal, controlledBy, rolling, face, busy = false, deadlineAt, clockOffset, badge, notice, sharedDevice = false } = props;
   const [helpOpen, setHelpOpen] = useState(false);
   /** Power-up com alvo (Cajado, Rede) esperando a escolha do rival. */

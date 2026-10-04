@@ -97,6 +97,8 @@ export async function getCampaign(userId: number) {
         hasMusic: Boolean(scenario.musicUrl),
         musicUnlocked,
         musicUrl: musicUnlocked ? scenario.musicUrl : null,
+        /** Música do tema para o tabuleiro: lá o cenário é escolhido, então toca mesmo sem ter chegado ao nível. */
+        boardMusicUrl: scenario.musicUrl,
         startLevel,
         endLevel: nodes[nodes.length - 1]?.level ?? null,
         total: nodes.length,
