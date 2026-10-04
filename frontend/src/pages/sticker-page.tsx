@@ -73,6 +73,7 @@ export function StickerPage() {
   const [isOwned, setIsOwned] = useState(false);
   const [study, setStudy] = useState<StudyStatus | null>(null);
   const [stickerLevel, setStickerLevel] = useState(1);
+  const [duplicates, setDuplicates] = useState(0);
   const [tab, setTab] = useState<Tab>('identidade');
   const [locked, setLocked] = useState(false);
   const [comments, setComments] = useState<CommentEntry[]>([]);
@@ -113,6 +114,7 @@ export function StickerPage() {
         const owned = Boolean(mine);
         setStudy(mine?.study ?? null);
         setStickerLevel(mine?.level ?? 1);
+        setDuplicates(mine?.duplicates ?? 0);
         if (!owned) {
           setLocked(true);
           return;
@@ -232,7 +234,7 @@ export function StickerPage() {
           <div className="mt-4 space-y-6">
             <section className="rarity grid items-start gap-6 md:grid-cols-[280px_1fr]" data-rarity={character.rarity}>
               <div className="animate-pop-in mx-auto w-56 md:w-full">
-                <StickerCard name={character.name} rarity={character.rarity} imageUrl={character.imageUrl} owned={isOwned} size="lg" level={stickerLevel} />
+                <StickerCard name={character.name} rarity={character.rarity} imageUrl={character.imageUrl} owned={isOwned} size="lg" level={stickerLevel} duplicates={duplicates} />
               </div>
               <div className="panel relative overflow-hidden p-6 sm:p-8">
                 <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[var(--r)] opacity-20 blur-3xl" />
@@ -245,6 +247,7 @@ export function StickerPage() {
                   <div className="mt-3 flex flex-wrap gap-2">
                     {character.testament ? <Badge tone="accent">{TESTAMENT_LABELS[character.testament]}</Badge> : null}
                     {character.historicalPeriod ? <Badge tone="neutral">{character.historicalPeriod}</Badge> : null}
+                    {isOwned ? <Badge tone="primary">{duplicates === 0 ? 'Sem repetidas' : duplicates === 1 ? '1 repetida' : `${duplicates} repetidas`}</Badge> : null}
                   </div>
                   {isOwned ? (
                     <>
@@ -302,6 +305,7 @@ export function StickerPage() {
                         <Fact label="Nome" value={character.name} />
                         <Fact label="Raridade" value={getRarityLabel(character.rarity)} />
                         <Fact label="Nível da figurinha" value={`${stickerLevel} de 5`} />
+                        <Fact label="Repetidas" value={String(duplicates)} />
                         <Fact label="Papel na história" value={character.narrativeRole} />
                         <Fact label="Testamento" value={character.testament ? TESTAMENT_LABELS[character.testament] : null} />
                         <Fact label="Período histórico" value={character.historicalPeriod} />
