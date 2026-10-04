@@ -1,9 +1,15 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import CasinoRoundedIcon from '@mui/icons-material/CasinoRounded';
+import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
+import MeetingRoomRoundedIcon from '@mui/icons-material/MeetingRoomRounded';
 import { createGame } from '@board/engine';
 import { boardRulesFor } from '@board/scenarios';
 import { Button } from '@/components/ui/button';
 import { useDialogs } from '@/components/ui/dialogs';
+import { errorMessage, useToast } from '@/components/ui/toast';
+import { JoinRoomModal } from '@/components/user/board/join-room-modal';
+import { OnlineRoom } from '@/components/user/board/online-room';
+import { PENDING_ROOM_EVENT, createRoom, joinRoom, myRoom, takePendingRoom, type RoomView } from '@/lib/board-room-api';
 import { SectionHeading } from '@/components/game/game-ui';
 import { useCampaign } from '@/components/user/campaign/campaign-provider';
 import { BoardGame } from '@/components/user/board/board-game';
@@ -19,13 +25,45 @@ const MIN_QUESTIONS = 12;
 export function BoardHub({ playerName }: { playerName: string }) {
   const { campaign } = useCampaign();
   const dialogs = useDialogs();
+  const toast = useToast();
   const [setupOpen, setSetupOpen] = useState(false);
   const [game, setGame] = useState<LocalBoardGame | null>(null);
   const [gameKey, setGameKey] = useState(0);
   const [saved, setSaved] = useState<LocalBoardGame | null>(() => loadLocalBoard());
   const [lastSetup, setLastSetup] = useState<BoardSetup | null>(null);
+  const [onlineSetup, setOnlineSetup] = useState(false);
+  const [joinOpen, setJoinOpen] = useState(false);
+  /** Sala online aberta na tela (com a visão que veio de criar/entrar, para não piscar vazia). */
+  const [room, setRoom] = useState<{ code: string; initial: RoomView | null } | null>(null);
+  const [current, setCurrent] = useState<{ code: string; scenarioName: string } | null>(null);
 
   const scenarios = useMemo(() => campaign?.scenarios ?? [], [campaign]);
+
+  // Sala em que a pessoa já está (para voltar a ela) e salas pedidas por link ou convite de amigo.
+  const refreshCurrent = useCallback(() => {
+    myRoom()
+      .then((found) => setCurrent(found ? { code: found.code, scenarioName: found.scenarioName } : null))
+      .catch(() => setCurrent(null));
+  }, []);
+
+  const openPending = useCallback(async () => {
+    const code = takePendingRoom();
+    if (!code) return;
+    try {
+      setRoom({ code, initial: await joinRoom(code) });
+    } catch (reason) {
+      toast.error(errorMessage(reason, 'Não foi possível entrar na sala.'));
+      refreshCurrent();
+    }
+  }, [toast, refreshCurrent]);
+
+  useEffect(() => {
+    refreshCurrent();
+    void openPending();
+    const listener = () => void openPending();
+    window.addEventListener(PENDING_ROOM_EVENT, listener);
+    return () => window.removeEventListener(PENDING_ROOM_EVENT, listener);
+  }, [refreshCurrent, openPending]);
 
   /** Sorteia perguntas e tabuleiro e deixa a partida pronta. */
   const build = useCallback(
@@ -85,6 +123,23 @@ export function BoardHub({ playerName }: { playerName: string }) {
     begin(await build(base));
   }
 
+  async function handleCreateOnline(setup: BoardSetup) {
+    const created = await createRoom({ scenarioId: setup.scenarioId, config: setup.config });
+    setOnlineSetup(false);
+    setRoom({ code: created.code, initial: created });
+  }
+
+  async function handleJoinCode(code: string) {
+    const joined = await joinRoom(code);
+    setJoinOpen(false);
+    setRoom({ code: joined.code, initial: joined });
+  }
+
+  function closeRoom() {
+    setRoom(null);
+    refreshCurrent();
+  }
+
   function exitGame() {
     setGame(null);
     setSaved(loadLocalBoard());
@@ -113,7 +168,7 @@ export function BoardHub({ playerName }: { playerName: string }) {
           <div className="min-w-0 space-y-1">
             <h3 className="font-display text-xl font-bold text-ink">Tabuleiro</h3>
             <p className="text-sm font-semibold text-muted">
-              Role o dado, responda a pergunta e só anda quem acerta. Chegue primeiro no fim do caminho de um cenário! De 2 a 6 jogadores no mesmo aparelho, com bots para completar a mesa.
+              Role o dado, responda a pergunta e só anda quem acerta. Chegue primeiro no fim do caminho de um cenário! De 2 a 6 jogadores, no mesmo aparelho ou online com os amigos, com bots para completar a mesa.
             </p>
           </div>
         </div>
@@ -134,11 +189,27 @@ export function BoardHub({ playerName }: { playerName: string }) {
           </div>
         ) : null}
 
-        <div className="flex flex-wrap items-center gap-3">
+        {current && !room ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-accent/15 p-3">
+            <p className="text-sm font-semibold text-ink">
+              Você está na sala <b className="tracking-widest">{current.code}</b> · {current.scenarioName}
+            </p>
+            <Button size="sm" variant="accent" onClick={() => setRoom({ code: current.code, initial: null })}>
+              Voltar para a sala
+            </Button>
+          </div>
+        ) : null}
+
+        <div className="grid gap-2 sm:grid-cols-3">
           <Button size="lg" onClick={() => setSetupOpen(true)} disabled={scenarios.length === 0}>
-            Nova partida
+            <CasinoRoundedIcon /> No mesmo aparelho
           </Button>
-          <span className="text-xs font-semibold text-muted">Online com amigos: em breve.</span>
+          <Button size="lg" variant="accent" onClick={() => setOnlineSetup(true)} disabled={scenarios.length === 0}>
+            <GroupsRoundedIcon /> Criar sala online
+          </Button>
+          <Button size="lg" variant="secondary" onClick={() => setJoinOpen(true)}>
+            <MeetingRoomRoundedIcon /> Entrar com código
+          </Button>
         </div>
       </div>
 
@@ -152,6 +223,20 @@ export function BoardHub({ playerName }: { playerName: string }) {
           onStart={handleStart}
         />
       ) : null}
+
+      {onlineSetup ? (
+        <BoardSetupModal
+          open
+          mode="online"
+          scenarios={scenarios}
+          defaultScenarioId={campaign?.currentScenarioId ?? null}
+          playerName={playerName}
+          onClose={() => setOnlineSetup(false)}
+          onStart={handleCreateOnline}
+        />
+      ) : null}
+      {joinOpen ? <JoinRoomModal open onClose={() => setJoinOpen(false)} onJoin={handleJoinCode} /> : null}
+      {room ? <OnlineRoom key={room.code} code={room.code} initial={room.initial} scenarios={scenarios} onClose={closeRoom} /> : null}
 
       {game ? <BoardGame key={gameKey} game={game} onExit={exitGame} onRematch={handleRematch} /> : null}
     </section>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import { standings, type BoardState } from '@board/engine';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,22 @@ const PLACES = ['🥇', '🥈', '🥉', '4º', '5º', '6º'];
 const count = (value: number, one: string, many: string) => `${value} ${value === 1 ? one : many}`;
 
 /** Pódio da partida: quem venceu, a classificação e o resumo de cada jogador. */
-export function BoardResult({ state, scenarioName, onExit, onRematch }: { state: BoardState; scenarioName: string; onExit: () => void; onRematch: () => Promise<void> }) {
+export function BoardResult({
+  state,
+  scenarioName,
+  onExit,
+  onRematch,
+  canRematch = true,
+  note,
+}: {
+  state: BoardState;
+  scenarioName: string;
+  onExit: () => void;
+  onRematch: () => Promise<void>;
+  /** Online: só o anfitrião pede a revanche. */
+  canRematch?: boolean;
+  note?: ReactNode;
+}) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
   const ranking = standings(state);
@@ -62,12 +77,17 @@ export function BoardResult({ state, scenarioName, onExit, onRematch }: { state:
           ))}
         </ol>
 
+        {note}
         <p className="text-center text-xs font-semibold text-muted">Partida entre amigos: não rende XP, moedas nem figurinhas.</p>
 
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Button size="lg" className="flex-1" onClick={() => void rematch()} loading={loading}>
-            Revanche
-          </Button>
+          {canRematch ? (
+            <Button size="lg" className="flex-1" onClick={() => void rematch()} loading={loading}>
+              Revanche
+            </Button>
+          ) : (
+            <p className="flex flex-1 items-center justify-center text-center text-sm font-semibold text-muted">Quem criou a sala escolhe se tem revanche.</p>
+          )}
           <Button size="lg" variant="secondary" className="flex-1" onClick={onExit} disabled={loading}>
             Voltar
           </Button>

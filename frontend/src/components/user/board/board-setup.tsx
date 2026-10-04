@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CasinoRoundedIcon from '@mui/icons-material/CasinoRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
@@ -31,7 +31,7 @@ import { errorMessage, useToast } from '@/components/ui/toast';
 import { Alert } from '@/components/game/game-ui';
 import { ScenarioIcon } from '@/components/user/campaign/scenario-art';
 import { Pawn } from '@/components/user/board/board-track';
-import { getInventory } from '@/lib/rewards-api';
+import { usePawnOptions } from '@/components/user/board/use-pawn-options';
 import { scenarioThemeVars } from '@/lib/campaign-theme';
 import { cn } from '@/lib/cn';
 import type { CampaignScenario } from '@/lib/campaign-api';
@@ -41,9 +41,6 @@ export type BoardSetup = { scenarioId: number; players: SetupPlayer[]; config: B
 
 const BOT_NAMES = ['Davi', 'Ester', 'Daniel', 'Rute', 'Calebe', 'Débora', 'Josué', 'Miriã', 'Neemias', 'Lídia', 'Samuel', 'Ana'];
 const NAME_MAX = 16;
-
-type PawnOption = { value: string; name: string };
-const BASE_PAWNS: PawnOption[] = FREE_PAWNS.map((pawn) => ({ value: pawn, name: PAWN_NAMES[pawn] ?? pawn }));
 
 type PresetKey = 'family' | 'classic' | 'challenge' | 'custom';
 const PRESETS: Record<Exclude<PresetKey, 'custom'>, { label: string; hint: string; config: BoardConfig }> = {
@@ -66,39 +63,33 @@ type Props = {
   playerName: string;
   onClose: () => void;
   onStart: (setup: BoardSetup) => Promise<void>;
+  /**
+   * `online` pula os jogadores (a sala reúne gente no lobby): só cenário e regras, e o resultado traz `players` vazio.
+   * `initial` abre o assistente já com o cenário e as regras da sala (para o anfitrião mudar depois).
+   */
+  mode?: 'local' | 'online';
+  initial?: { scenarioId: number; config: BoardConfig };
+  submitLabel?: string;
 };
 
-/** Assistente de criação da partida: cenário, jogadores e regras, em três passos. */
-export function BoardSetupModal({ open, scenarios, defaultScenarioId, playerName, onClose, onStart }: Props) {
+/** Assistente de criação da partida: cenário, jogadores e regras (no online, só cenário e regras). */
+export function BoardSetupModal({ open, scenarios, defaultScenarioId, playerName, onClose, onStart, mode = 'local', initial, submitLabel }: Props) {
   const toast = useToast();
+  const online = mode === 'online';
+  const pages = online ? [0, 2] : [0, 1, 2];
   const [step, setStep] = useState(0);
-  const [scenarioId, setScenarioId] = useState<number | null>(defaultScenarioId ?? scenarios[0]?.id ?? null);
+  const position = pages.indexOf(step);
+  const [scenarioId, setScenarioId] = useState<number | null>(initial?.scenarioId ?? defaultScenarioId ?? scenarios[0]?.id ?? null);
   const [players, setPlayers] = useState<SetupPlayer[]>(() => [
     { id: 'p1', name: playerName.slice(0, NAME_MAX) || 'Jogador 1', pawn: FREE_PAWNS[0], bot: null },
     { id: 'p2', name: 'Jogador 2', pawn: FREE_PAWNS[1], bot: null },
   ]);
-  const [config, setConfig] = useState<BoardConfig>(DEFAULT_CONFIG);
+  const [config, setConfig] = useState<BoardConfig>(initial?.config ?? DEFAULT_CONFIG);
   const [showErrors, setShowErrors] = useState(false);
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
 
-  const [ownedPawns, setOwnedPawns] = useState<PawnOption[]>([]);
-
-  // Peões que o jogador tem (comprados ou ganhos, com emoji ou imagem do painel) somam-se aos básicos.
-  useEffect(() => {
-    if (!open) return;
-    getInventory()
-      .then((inventory) =>
-        setOwnedPawns(
-          inventory.items
-            .filter((item) => item.type === 'PAWN' && item.owned && (item.imageUrl || item.style))
-            .map((item) => ({ value: (item.imageUrl || item.style) as string, name: item.name.replace(/^Peão:\s*/i, '') })),
-        ),
-      )
-      .catch(() => setOwnedPawns([]));
-  }, [open]);
-
-  const pawnOptions = useMemo(() => [...BASE_PAWNS, ...ownedPawns.filter((owned) => !BASE_PAWNS.some((base) => base.value === owned.value))], [ownedPawns]);
+  const pawnOptions = usePawnOptions(open);
 
   const paging = usePagination(scenarios, PAGE_SIZE);
   const scenario = scenarios.find((item) => item.id === scenarioId) ?? null;
@@ -106,7 +97,7 @@ export function BoardSetupModal({ open, scenarios, defaultScenarioId, playerName
   const preset: PresetKey = (Object.keys(PRESETS) as Array<Exclude<PresetKey, 'custom'>>).find((key) => sameConfig(PRESETS[key].config, config)) ?? 'custom';
 
   const errors = useMemo(() => validatePlayers(players), [players]);
-  const hasErrors = Object.keys(errors.byId).length > 0 || errors.general !== null;
+  const hasErrors = !online && (Object.keys(errors.byId).length > 0 || errors.general !== null);
 
   function updatePlayer(id: string, patch: Partial<SetupPlayer>) {
     setPlayers((current) => current.map((player) => (player.id === id ? { ...player, ...patch } : player)));
@@ -146,7 +137,7 @@ export function BoardSetupModal({ open, scenarios, defaultScenarioId, playerName
       setShowErrors(true);
       if (hasErrors) return;
     }
-    setStep((current) => Math.min(2, current + 1));
+    setStep(pages[Math.min(pages.length - 1, position + 1)]);
   }
 
   async function start() {
@@ -154,9 +145,9 @@ export function BoardSetupModal({ open, scenarios, defaultScenarioId, playerName
     setStarting(true);
     setStartError(null);
     try {
-      await onStart({ scenarioId: scenario.id, players: players.map((player) => ({ ...player, name: player.name.trim() })), config });
+      await onStart({ scenarioId: scenario.id, players: online ? [] : players.map((player) => ({ ...player, name: player.name.trim() })), config });
     } catch (error) {
-      const message = errorMessage(error, 'Não foi possível começar a partida.');
+      const message = errorMessage(error, online ? 'Não foi possível salvar a sala.' : 'Não foi possível começar a partida.');
       setStartError(message);
       toast.error(message);
     } finally {
@@ -173,17 +164,19 @@ export function BoardSetupModal({ open, scenarios, defaultScenarioId, playerName
       size="lg"
       title={title}
       description={
-        <span className="flex items-center gap-1.5" aria-label={`Passo ${step + 1} de 3`}>
-          {[0, 1, 2].map((index) => (
-            <span key={index} className={cn('h-2 w-8 rounded-full transition-colors', index <= step ? 'bg-primary' : 'bg-surface-3')} />
+        <span className="flex items-center gap-1.5" aria-label={`Passo ${position + 1} de ${pages.length}`}>
+          {pages.map((page, index) => (
+            <span key={page} className={cn('h-2 w-8 rounded-full transition-colors', index <= position ? 'bg-primary' : 'bg-surface-3')} />
           ))}
-          <span className="ml-1 text-xs font-bold">Passo {step + 1} de 3</span>
+          <span className="ml-1 text-xs font-bold">
+            Passo {position + 1} de {pages.length}
+          </span>
         </span>
       }
       footer={
         <>
-          {step > 0 ? (
-            <Button variant="secondary" onClick={() => setStep((current) => current - 1)} disabled={starting}>
+          {position > 0 ? (
+            <Button variant="secondary" onClick={() => setStep(pages[position - 1])} disabled={starting}>
               Voltar
             </Button>
           ) : (
@@ -191,13 +184,13 @@ export function BoardSetupModal({ open, scenarios, defaultScenarioId, playerName
               Cancelar
             </Button>
           )}
-          {step < 2 ? (
+          {position < pages.length - 1 ? (
             <Button onClick={next} disabled={!scenario}>
               Avançar
             </Button>
           ) : (
             <Button onClick={() => void start()} loading={starting} disabled={!scenario}>
-              {starting ? 'Preparando...' : 'Começar partida'}
+              {starting ? 'Preparando...' : (submitLabel ?? (online ? 'Criar sala' : 'Começar partida'))}
             </Button>
           )}
         </>
@@ -396,17 +389,21 @@ export function BoardSetupModal({ open, scenarios, defaultScenarioId, playerName
 
           <section className="rounded-3xl bg-surface-2 p-4 text-sm font-semibold text-muted" aria-label="Resumo">
             <p className="text-ink">
-              {scenario?.name} · {config.size} casas · {players.length} jogadores
+              {scenario?.name} · {config.size} casas · {config.timeSeconds}s por pergunta{online ? '' : ` · ${players.length} jogadores`}
             </p>
-            <p className="flex flex-wrap items-center gap-x-4 gap-y-1">
-              {players.map((player) => (
-                <span key={player.id} className="inline-flex items-center gap-1.5">
-                  <Pawn emoji={player.pawn} className="text-lg" />
-                  {player.name}
-                  {player.bot ? ' 🤖' : ''}
-                </span>
-              ))}
-            </p>
+            {online ? (
+              <p>Os jogadores entram pela sala: convide amigos ou compartilhe o código.</p>
+            ) : (
+              <p className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                {players.map((player) => (
+                  <span key={player.id} className="inline-flex items-center gap-1.5">
+                    <Pawn emoji={player.pawn} className="text-lg" />
+                    {player.name}
+                    {player.bot ? ' 🤖' : ''}
+                  </span>
+                ))}
+              </p>
+            )}
           </section>
           {startError ? <Alert tone="danger">{startError}</Alert> : null}
         </div>

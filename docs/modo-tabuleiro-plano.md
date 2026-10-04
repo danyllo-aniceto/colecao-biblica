@@ -211,16 +211,37 @@ Legenda: ✅ feito e testado · ⬜ a fazer.
   muro e vigília nas perguntas, dica da Pomba, histórico das novas jogadas.
 - ✅ Peão cosmético (`PAWN`) com emoji ou imagem, loja, armário, importação em lote e seed; imagem do tabuleiro por cenário no painel.
 
-**Etapa 3 — Peão: vitórias** ⬜ (agora faz parte da etapa 4)
-- ⬜ Contador de vitórias no perfil e peões por meta de vitória, só com vitória confirmada pelo servidor (online).
+**Etapa 3 — Peão: vitórias** ✅ (feita junto com a etapa 4)
+- ✅ Contador de vitórias online no perfil do jogador (`users.board_wins`), meta `BOARD_WINS` nos itens visuais e dois peões por meta
+  no seed (3 e 15 vitórias). Só conta vitória confirmada pelo servidor, em sala com 2 ou mais pessoas.
 
-**Etapa 4 — Online** ⬜
-- ⬜ Tabelas `BoardRoom`/`BoardPlayer` (migração), código da sala, lobby, convite por amigo, link para quem não tem conta com convite
-  para criar conta, polling com versão, prazos e vez dos bots resolvidos de forma "preguiçosa", expulsar/sair, bot assume quem sai.
-- ⬜ Mesma tela da partida local, alimentada pelo servidor (resposta certa só no servidor).
+**Etapa 4 — Online** ✅
+- ✅ Salas (`board_rooms`, `board_room_players`, `board_invites`, migração `20261019090000`) com código de 5 caracteres, lobby, regras
+  editáveis pelo anfitrião, bots (3 níveis), peão por jogador (básicos + os do painel que a pessoa tem), expulsar, sair e revanche.
+- ✅ Sem websocket: consulta com versão (`?since=`); o servidor responde "nada mudou" sem baixar o estado. 1,5 s em jogo, 3 s no lobby.
+- ✅ Relógio "preguiçoso" no servidor: vez dos bots, tempo esgotado, gabarito (7 s, quem respondeu pode adiantar) e ausência
+  (3 faltas seguidas passam o lugar a um bot) são resolvidos na próxima consulta ou jogada, em ordem.
+- ✅ A alternativa certa e a explicação só chegam junto do gabarito; o sorteio e o baralho não saem do servidor.
+- ✅ Quem sai no meio do jogo é substituído por um bot; sem pessoas na sala, ela é apagada. Salas com mais de um dia são limpas.
+- ✅ Convite por amigo (lista paginada no servidor, aviso dentro do app a cada 12 s) e **link `/sala/CÓDIGO`**: quem não tem conta vê o
+  convite, cria a conta e a sala abre sozinha. Prévia pública sem login (`/api/board-public/:code`).
+- ✅ A tela da partida é a mesma do modo local (`board-screen.tsx`), alimentada pelo servidor; 13 testes de integração
+  (`board-room.test.ts`) e partida completa testada com dois navegadores.
 
 **Etapa 5 — Polimento** ⬜
-- ⬜ Arte e fundo por cenário, sons e vibração, reações rápidas (cosmético REACTION), animação do peão casa a casa, modo sem animação,
-  tabuleiro editável pelo painel.
+- ⬜ **Caminho sinuoso** no lugar da grade colada (ver "Proposta de design do tabuleiro" abaixo) e arte por cenário
+  (guia e prompts em `docs/tabuleiro-prompts-de-arte.md`).
+- ⬜ Sons e vibração, reações rápidas (cosmético REACTION), animação do peão casa a casa, modo sem animação.
 
 **Depois — modo estilo Kahoot**, reaproveitando a camada de sala da etapa 4 (`BoardRoom` → `PartyRoom`).
+
+## 10. Proposta de design do tabuleiro (para decidir)
+
+Hoje as casas formam uma grade de 6 colunas, quase coladas. Funciona, mas parece planilha e esconde a imagem de fundo. A proposta:
+
+- **Caminho sinuoso** desenhado em SVG, com uma estrada de ~26 px que serpenteia (curvas em "S") e casas em círculos sobre ela.
+- **Respiro**: ~64 px entre o centro de duas casas (hoje ~7 px de folga). Casas comuns pequenas (44 px) e especiais maiores (54 px),
+  portão e chegada ainda maiores: o ritmo visual diz onde estão as provações.
+- **Fundo = terreno visto de cima**, repetido e espelhado na vertical para qualquer tamanho de tabuleiro.
+- **Peão que anda** casa a casa (em vez de pular), com a câmera acompanhando; mini-mapa fino na lateral mostrando onde cada um está.
+- **Marcos do cenário** a cada abrigo (árvore, barco, tenda...), vindos da imagem ou de emojis.

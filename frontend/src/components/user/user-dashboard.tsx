@@ -20,6 +20,8 @@ import { AlbumSection } from '@/components/user/sections/album-section';
 import { HomeSection } from '@/components/user/sections/home-section';
 import { PlaySection, type QuizFormState } from '@/components/user/sections/play-section';
 import { BoardHub } from '@/components/user/board/board-hub';
+import { BoardInviteWatcher } from '@/components/user/board/board-invite-watcher';
+import { peekPendingRoom, setPendingRoom } from '@/lib/board-room-api';
 import { ProfileSection } from '@/components/user/sections/profile-section';
 import { FriendsSection } from '@/components/user/sections/friends-section';
 import { RankingSection } from '@/components/user/sections/ranking-section';
@@ -83,7 +85,8 @@ export function UserDashboard() {
   const toast = useToast();
   const { confirm } = useDialogs();
 
-  const [section, setSection] = useState<SectionId>(() => takeReturnSection());
+  // Quem chegou por um convite de sala abre direto na aba Jogar, onde a sala é aberta.
+  const [section, setSection] = useState<SectionId>(() => (peekPendingRoom() ? 'quiz' : takeReturnSection()));
   const [profile, setProfile] = useState<UserProfile | null>(user);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -559,6 +562,12 @@ export function UserDashboard() {
       }}
     >
     <MusicController inQuiz={Boolean(quizSession && showQuizAnswer)} />
+    <BoardInviteWatcher
+      onAccept={(code) => {
+        setPendingRoom(code);
+        navigate('quiz');
+      }}
+    />
     <div className="min-h-dvh pb-28 sm:pb-10">
       <PlayerHud look={myLook} profile={profile} section={section} onNavigate={navigate} socialNotices={socialSummary ? socialSummary.pendingRequests + socialSummary.pendingTrades + socialSummary.unreadMessages : 0} onSignOut={signOut} />
 
