@@ -49,6 +49,8 @@ export type CampaignScenario = {
   hasMusic: boolean;
   musicUnlocked: boolean;
   musicUrl: string | null;
+  /** Música do tema usada no tabuleiro (não depende do nível do jogador). */
+  boardMusicUrl?: string | null;
   startLevel: number | null;
   endLevel: number | null;
   total: number;
