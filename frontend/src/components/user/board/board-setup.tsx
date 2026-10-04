@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CasinoRoundedIcon from '@mui/icons-material/CasinoRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
@@ -30,6 +30,8 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { errorMessage, useToast } from '@/components/ui/toast';
 import { Alert } from '@/components/game/game-ui';
 import { ScenarioIcon } from '@/components/user/campaign/scenario-art';
+import { Pawn } from '@/components/user/board/board-track';
+import { getInventory } from '@/lib/rewards-api';
 import { scenarioThemeVars } from '@/lib/campaign-theme';
 import { cn } from '@/lib/cn';
 import type { CampaignScenario } from '@/lib/campaign-api';
@@ -39,6 +41,9 @@ export type BoardSetup = { scenarioId: number; players: SetupPlayer[]; config: B
 
 const BOT_NAMES = ['Davi', 'Ester', 'Daniel', 'Rute', 'Calebe', 'Débora', 'Josué', 'Miriã', 'Neemias', 'Lídia', 'Samuel', 'Ana'];
 const NAME_MAX = 16;
+
+type PawnOption = { value: string; name: string };
+const BASE_PAWNS: PawnOption[] = FREE_PAWNS.map((pawn) => ({ value: pawn, name: PAWN_NAMES[pawn] ?? pawn }));
 
 type PresetKey = 'family' | 'classic' | 'challenge' | 'custom';
 const PRESETS: Record<Exclude<PresetKey, 'custom'>, { label: string; hint: string; config: BoardConfig }> = {
@@ -77,6 +82,24 @@ export function BoardSetupModal({ open, scenarios, defaultScenarioId, playerName
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
 
+  const [ownedPawns, setOwnedPawns] = useState<PawnOption[]>([]);
+
+  // Peões que o jogador tem (comprados ou ganhos, com emoji ou imagem do painel) somam-se aos básicos.
+  useEffect(() => {
+    if (!open) return;
+    getInventory()
+      .then((inventory) =>
+        setOwnedPawns(
+          inventory.items
+            .filter((item) => item.type === 'PAWN' && item.owned && (item.imageUrl || item.style))
+            .map((item) => ({ value: (item.imageUrl || item.style) as string, name: item.name.replace(/^Peão:\s*/i, '') })),
+        ),
+      )
+      .catch(() => setOwnedPawns([]));
+  }, [open]);
+
+  const pawnOptions = useMemo(() => [...BASE_PAWNS, ...ownedPawns.filter((owned) => !BASE_PAWNS.some((base) => base.value === owned.value))], [ownedPawns]);
+
   const paging = usePagination(scenarios, PAGE_SIZE);
   const scenario = scenarios.find((item) => item.id === scenarioId) ?? null;
   const rules = scenario ? boardRulesFor(scenario.slug) : null;
@@ -97,7 +120,7 @@ export function BoardSetupModal({ open, scenarios, defaultScenarioId, playerName
   }
 
   function freePawn() {
-    return FREE_PAWNS.find((pawn) => !players.some((player) => player.pawn === pawn)) ?? FREE_PAWNS[0];
+    return (pawnOptions.find((option) => !players.some((player) => player.pawn === option.value)) ?? pawnOptions[0]).value;
   }
 
   function addHuman() {
@@ -222,7 +245,9 @@ export function BoardSetupModal({ open, scenarios, defaultScenarioId, playerName
               <h3 className="font-display text-base font-bold text-ink">{scenario.name}</h3>
               {scenario.verse ? <p className="text-xs italic text-muted">“{scenario.verse}”</p> : null}
               <p className="text-sm text-ink">
-                <b>⚔️ {rules.trial.name}.</b> <span className="text-muted">{rules.trial.description}</span>
+                <b>
+                  {rules.vigil ? '🕯️' : '⚔️'} {rules.trial.name}.
+                </b> <span className="text-muted">{rules.trial.description}</span>
               </p>
               <p className="text-sm text-ink">
                 {rules.exclusive ? (
@@ -236,7 +261,11 @@ export function BoardSetupModal({ open, scenarios, defaultScenarioId, playerName
                   <span className="text-muted">Power-ups comuns nas casas 🎁.</span>
                 )}
               </p>
-              {rules.shelterGrants ? <p className="text-sm text-muted">🌳 Os abrigos também dão um power-up.</p> : null}
+              {rules.event ? (
+                <p className="text-sm text-ink">
+                  <b>✨ {rules.event.name}.</b> <span className="text-muted">{rules.event.description}</span>
+                </p>
+              ) : null}
             </section>
           ) : (
             <Alert tone="danger">Nenhum cenário disponível no momento.</Alert>
@@ -255,16 +284,16 @@ export function BoardSetupModal({ open, scenarios, defaultScenarioId, playerName
               return (
                 <li key={player.id} className="rounded-3xl border-2 border-edge bg-surface-2 p-3">
                   <div className="flex items-start gap-2">
-                    <div className="w-24 shrink-0">
+                    <div className="w-36 shrink-0">
                       <Select
                         aria-label={`Peão de ${player.name || `jogador ${index + 1}`}`}
                         value={player.pawn}
                         onChange={(value) => updatePlayer(player.id, { pawn: value })}
-                        options={FREE_PAWNS.map((pawn) => ({
-                          value: pawn,
-                          label: pawn,
-                          description: PAWN_NAMES[pawn],
-                          disabled: players.some((other) => other.id !== player.id && other.pawn === pawn),
+                        options={pawnOptions.map((option) => ({
+                          value: option.value,
+                          label: option.name,
+                          icon: <Pawn emoji={option.value} className="text-xl" />,
+                          disabled: players.some((other) => other.id !== player.id && other.pawn === option.value),
                         }))}
                       />
                     </div>
@@ -369,8 +398,14 @@ export function BoardSetupModal({ open, scenarios, defaultScenarioId, playerName
             <p className="text-ink">
               {scenario?.name} · {config.size} casas · {players.length} jogadores
             </p>
-            <p>
-              {players.map((player) => `${player.pawn} ${player.name}${player.bot ? ' 🤖' : ''}`).join('  ')}
+            <p className="flex flex-wrap items-center gap-x-4 gap-y-1">
+              {players.map((player) => (
+                <span key={player.id} className="inline-flex items-center gap-1.5">
+                  <Pawn emoji={player.pawn} className="text-lg" />
+                  {player.name}
+                  {player.bot ? ' 🤖' : ''}
+                </span>
+              ))}
             </p>
           </section>
           {startError ? <Alert tone="danger">{startError}</Alert> : null}

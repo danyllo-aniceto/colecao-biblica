@@ -70,33 +70,34 @@ Dado dobrado (anda 2× o valor), Rerrolar dado. Cada cenário tem **1 power-up e
 
 ## 3. Os 10 cenários — provação, evento e power-up
 
-Dados já existentes: `default-campaign.ts` (slug, nome, cor, emoji). Todos os cenários usam o mesmo motor; o que muda é
-**dados de configuração** (efeitos nomeados), então dá para criar e editar pelo painel sem código novo.
+Tudo é dado em `backend/src/board/scenarios.ts` (o motor só lê); cenários criados no painel sem regra própria usam a provação genérica.
+O que está **implementado e testado** (`scenarios.test.ts`, inclusive 120 partidas só de bots):
 
 | # | Cenário | Provação | Evento do cenário | Power-up exclusivo |
 |---|---|---|---|---|
-| 1 | 🍎 Jardim do Éden | **Tentação**: a serpente oferece o "fruto" — pode **arriscar uma pergunta difícil por +3 casas** ou recusar | Casas de **Árvore**: abrigo + 1 power-up | **Árvore da Vida** — escudo que também cura 2 casas |
-| 2 | 🌈 Arca de Noé | **Dilúvio**: a cada 3 rodadas a água sobe e as 4 primeiras casas viram "alagadas" (recuo se parar nelas) | Casas **de pares** (animais): quem cair junto com outro avança 1 | **Pomba** — revela uma alternativa errada e uma dica de versículo |
-| 3 | ⛺ Terra de Canaã | **Poço de Isaque**: pergunta; acerta → escolhe um jogador para dar +1 de dado | **Estrelas de Abraão**: contar 3 casas Poder seguidas dá bônus | **Tenda** — pula a próxima provação |
-| 4 | 🐫 Egito | **Praga**: no início de cada rodada sorteia-se uma praga (rã, trevas, gafanhotos...) que afeta uma casa do tabuleiro | **Pão sem fermento**: 1 turno extra | **Cajado** — troca de lugar com um rival |
-| 5 | ⛰️ Sinai | **Bezerro de ouro**: pergunta de "fidelidade"; erra → perde um power-up | **Maná**: casas que dão power-up automático | **Maná** — rerrolar o dado quantas vezes quiser neste turno (1 uso) |
-| 6 | 📯 Jericó | **Muro**: o caminho tem muros que bloqueiam; só passa quem acertar 2 perguntas seguidas na casa | **Sete voltas**: ao 7º turno da sala, os muros caem para todos | **Trombeta** — derruba um muro |
-| 7 | 🕎 Templo | **Juízo de Salomão**: pergunta de dilema (2 respostas); a dupla mais rápida divide casas | **Ouro e cedro**: casas de abrigo douradas | **Sabedoria** — troca a pergunta |
-| 8 | 🦁 Babilônia | **Fornalha**: casas de fogo; sem Escudo, recua 3 (mas a casa seguinte é segura) | **Cova dos leões**: fique parado 1 turno se errar, mas ganhe Escudo | **Quarto homem** — imunidade por 1 rodada |
-| 9 | ⛵ Mar da Galileia | **Tempestade**: ventos sorteados inverte o dado (anda para trás se errar) | **Pesca milagrosa**: acerto em casa-rede dá 2 power-ups | **Rede** — puxa um rival uma casa para trás ou para você |
-| 10 | 🕊️ Jerusalém | **Getsêmani**: vigília — todos respondem a mesma pergunta; só quem acerta avança | **Túmulo vazio**: a chegada é mais perto, todos recebem Escudo no começo | **Luz** — vê a resposta certa de uma pergunta (1 uso) |
+| 1 | 🍎 Éden | **Tentação da serpente**: opcional, pergunta difícil por +3 (errou, recua 3) | **Árvores**: abrigos dão power-up | 🌳 **Árvore da Vida**: anula um recuo e avança 2 |
+| 2 | 🌈 Arca | **Rumo ao Ararate**: tudo ou nada (±2) | **Dilúvio**: a cada 3 rodadas 4 casas ficam alagadas (recuo 2) | 🕊️ **Pomba**: tira 1 errada e mostra o versículo |
+| 3 | ⛺ Canaã | **Poço de Isaque**: acertou, +2 e um power-up | **Bênção de Abraão** (o prêmio do poço) | ⛺ **Tenda**: atravessa uma provação sem arriscar, com o prêmio |
+| 4 | 🐫 Egito | **Coração do Faraó**: tudo ou nada (±2) | **Pragas**: toda rodada 3 casas atingidas, com praga sorteada (recuo 2) | 🪄 **Cajado**: troca de lugar com um rival à escolha |
+| 5 | ⛰️ Sinai | **Bezerro de ouro**: errou, recua 2 e perde um power-up | **Maná**: abrigos dão power-up | 🍞 **Maná**: rola de novo e não gasta a ajuda da vez |
+| 6 | 📯 Jericó | **Sete voltas**: tudo ou nada (±2) | **Muros**: param o peão até acertar 2 seguidas; caem na rodada 7 | 📯 **Trombeta**: derruba o muro na hora |
+| 7 | 🕎 Templo | **Juízo de Salomão**: acertou, +2 e adianta o último colocado 1 casa | **Ouro e cedro**: abrigos dão power-up | 📜 **Sabedoria**: troca a pergunta sem gastar a ajuda da vez |
+| 8 | 🦁 Babilônia | **Sonho do rei**: tudo ou nada (±2) | **Fornalha** (fogo: recua 3) e **cova dos leões** (uma vez sem jogar, ganha escudo) | 🔥 **Quarto homem**: imune a recuos até o fim da próxima rodada |
+| 9 | ⛵ Galileia | **Pesca milagrosa**: acertou, +2 e um power-up | **Tempestade**: em ~1/3 das rodadas, quem erra é levado 1 casa para trás | 🕸️ **Rede**: puxa um rival 2 casas para trás |
+| 10 | 🕊️ Jerusalém | **Vigília no Getsêmani**: todos respondem à mesma pergunta; só quem acerta avança 2 | **Túmulo vazio**: todos começam com um escudo extra | 💡 **Luz**: elimina as três erradas |
 
-> Os detalhes são sugestões iniciais para podermos balancear; cada linha é um objeto de dados (`kind`, `params`).
-> Arte e prompts por cenário ficam no guia de arte existente (`docs/campanha-prompts-de-arte.md`), com um tabuleiro
-> desenhado por cenário (já temos `scenario-art.tsx` e `defaultNodePosition` como base de caminho).
+Ajustes em relação ao rascunho inicial: o "dilúvio que sobe do começo" virou casas alagadas que mudam de lugar (não pune quem
+está atrás); a "pesca em dobro", "pares de animais" e "estrelas de Abraão" foram trocadas por mecânicas mais claras acima.
 
-## 4. Peão (novo cosmético)
+## 4. Peão (cosmético editável) e imagem do tabuleiro
 
-- `CosmeticType.PAWN`: o **estilo é um emoji** (como `REACTION` hoje) e opcionalmente uma cor de base. Jogadores da
-  sala podem escolher entre os peões que **possuem**; sem peão equipado, ganham um grátis (🐑 🕊️ 🐟 🌿 ⭐ 🦁).
-- Vêm no seed: vários grátis, alguns na loja, alguns por **vitórias no tabuleiro** (a única "evolução" ligada ao
-  modo, só cosmética) e alguns do passe/baú. Cada cenário ganha um peão temático.
-- Painel: editor de cosméticos já suporta tipos; entra um tipo novo, sem tela nova.
+- `CosmeticType.PAWN`: o peão é um **emoji ou uma imagem enviada pelo admin** (como a reação). Não se equipa: escolhe-se em cada
+  partida entre os 10 emojis básicos (de todos) e os peões que o jogador tem (loja, prêmio, painel).
+- Painel → Itens visuais: tipo **Peão** com emoji ou upload de imagem, prévia do peão no tabuleiro, importação em lote
+  (linha "Peão") e todas as formas de ganhar (loja, meta, prêmio). O seed traz 10 peões temáticos (um por cenário) na loja.
+- Painel → Campanha → cenário: campo **Imagem do tabuleiro** (vertical, sem texto) com prévia; ela vira o fundo do caminho do
+  jogo de tabuleiro daquele cenário (migração `20261018090000_tabuleiro_peao_imagem`).
+- Contador de vitórias e peões por meta de vitória ficam para a etapa online (só vale vitória que o servidor confirma).
 
 ## 5. UX de criação de sala (a parte que a pessoa mais vai ver)
 
@@ -202,15 +203,16 @@ Legenda: ✅ feito e testado · ⬜ a fazer.
   ajuda), pódio com revanche, partida guardada no aparelho para continuar.
 - ✅ Qualquer cenário já é jogável com a provação genérica; o Éden já tem provação e power-up próprios.
 
-**Etapa 2 — Os 10 cenários** ⬜
-- ⬜ Provação, evento e power-up exclusivo de cada cenário (tabela da seção 3) como dados em `scenarios.ts`, com testes por cenário.
-- ⬜ Novos tipos de efeito no motor: praga/dilúvio (casas que mudam por rodada), muro (2 acertos seguidos), pular vez, troca de lugar,
-  vento (dado invertido), vigília (todos respondem a mesma pergunta).
-- ⬜ Legenda e tela de ajuda mostrando os eventos de cada cenário.
+**Etapa 2 — Os 10 cenários + peão e imagem editáveis pelo painel** ✅
+- ✅ Motor: perigo que muda de lugar (dilúvio/pragas), muros, fornalha, cova dos leões (pular vez), tempestade, vigília, extras de
+  provação (power-up de prêmio, perda de power-up, dividir com o último), 10 power-ups exclusivos (alvo para Cajado e Rede),
+  imunidade e power-ups "grátis". 32 testes novos em `scenarios.test.ts`.
+- ✅ Tela: legenda e ajuda por cenário, evento na escolha do cenário, faixa de tempestade/perigo e casas marcadas, escolha do rival,
+  muro e vigília nas perguntas, dica da Pomba, histórico das novas jogadas.
+- ✅ Peão cosmético (`PAWN`) com emoji ou imagem, loja, armário, importação em lote e seed; imagem do tabuleiro por cenário no painel.
 
-**Etapa 3 — Peão como cosmético** ⬜
-- ⬜ `CosmeticType.PAWN` + migração, seed (grátis, loja, por vitórias no tabuleiro, passe/baú), painel e loja.
-- ⬜ Escolha entre os peões que o jogador possui; contador de vitórias no perfil.
+**Etapa 3 — Peão: vitórias** ⬜ (agora faz parte da etapa 4)
+- ⬜ Contador de vitórias no perfil e peões por meta de vitória, só com vitória confirmada pelo servidor (online).
 
 **Etapa 4 — Online** ⬜
 - ⬜ Tabelas `BoardRoom`/`BoardPlayer` (migração), código da sala, lobby, convite por amigo, link para quem não tem conta com convite

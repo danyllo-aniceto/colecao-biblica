@@ -8,6 +8,8 @@ import { cn } from '@/lib/cn';
 
 const PLACES = ['🥇', '🥈', '🥉', '4º', '5º', '6º'];
 
+const count = (value: number, one: string, many: string) => `${value} ${value === 1 ? one : many}`;
+
 /** Pódio da partida: quem venceu, a classificação e o resumo de cada jogador. */
 export function BoardResult({ state, scenarioName, onExit, onRematch }: { state: BoardState; scenarioName: string; onExit: () => void; onRematch: () => Promise<void> }) {
   const toast = useToast();
@@ -48,9 +50,9 @@ export function BoardResult({ state, scenarioName, onExit, onRematch }: { state:
                   {player.bot ? ' 🤖' : ''}
                 </p>
                 <p className="text-xs font-semibold text-muted">
-                  {player.stats.correct} acertos · {player.stats.wrong} erros · sequência {player.stats.bestStreak}
-                  {player.stats.pushes ? ` · ${player.stats.pushes} empurrões` : ''}
-                  {player.stats.trialsWon ? ` · ${player.stats.trialsWon} provações` : ''}
+                  {count(player.stats.correct, 'acerto', 'acertos')} · {count(player.stats.wrong, 'erro', 'erros')} · sequência {player.stats.bestStreak}
+                  {player.stats.pushes ? ` · ${count(player.stats.pushes, 'empurrão', 'empurrões')}` : ''}
+                  {player.stats.trialsWon ? ` · ${count(player.stats.trialsWon, 'provação vencida', 'provações vencidas')}` : ''}
                 </p>
               </div>
               <span className="text-sm font-bold text-muted">

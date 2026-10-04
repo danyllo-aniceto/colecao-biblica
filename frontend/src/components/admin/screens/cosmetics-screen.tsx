@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { PawnPreview } from './board-previews';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
@@ -49,7 +50,7 @@ import { CosmeticsImport } from '../cosmetics-import';
 import { REACTION_ANIMATION_LABELS } from '@/lib/labels';
 import { useDebouncedValue, usePagedList } from '../use-paged-list';
 
-const TYPES: CosmeticType[] = ['AVATAR', 'FRAME', 'TITLE', 'NAME_COLOR', 'REACTION', 'PROFILE_BG', 'ALBUM_COVER'];
+const TYPES: CosmeticType[] = ['AVATAR', 'FRAME', 'TITLE', 'NAME_COLOR', 'REACTION', 'PROFILE_BG', 'ALBUM_COVER', 'PAWN'];
 
 const UNLOCK_LABELS: Record<CosmeticUnlock, string> = { FREE: 'Grátis', SHOP: 'Loja', REQUIREMENT: 'Meta', REWARD: 'Prêmio' };
 const UNLOCK_HELP: Record<CosmeticUnlock, string> = {
@@ -299,7 +300,7 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
       rarity,
       imageUrl: imageUrl || null,
       color,
-      style: type === 'REACTION' ? style : effectiveStyle,
+      style: type === 'REACTION' || type === 'PAWN' ? style : effectiveStyle,
       animation: type === 'REACTION' ? animation : null,
       pack: type === 'REACTION' ? pack : null,
       unlock,
@@ -316,6 +317,7 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
     if (type === 'AVATAR' && !imageUrl) return toast.error('Envie a imagem do ícone.');
     if ((type === 'PROFILE_BG' || type === 'ALBUM_COVER') && !imageUrl && !color) return toast.error('Envie uma imagem ou escolha uma cor.');
     if (type === 'REACTION' && !imageUrl && !style.trim()) return toast.error('Informe um emoji ou envie uma imagem para a reação.');
+    if (type === 'PAWN' && !imageUrl && !style.trim()) return toast.error('Informe um emoji ou envie uma imagem para o peão.');
     if (unlock === 'SHOP' && !(Number(price) >= 0)) return toast.error('Informe o preço.');
     setSaving(true);
     const payload = {
@@ -323,8 +325,8 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
       description: description.trim() || null,
       rarity,
       imageUrl: imageUrl || null,
-      color: type === 'AVATAR' || type === 'REACTION' ? null : color,
-      style: type === 'REACTION' ? style.trim() || null : type === 'TITLE' || type === 'FRAME' ? effectiveStyle : null,
+      color: type === 'AVATAR' || type === 'REACTION' || type === 'PAWN' ? null : color,
+      style: type === 'REACTION' || type === 'PAWN' ? style.trim() || null : type === 'TITLE' || type === 'FRAME' ? effectiveStyle : null,
       animation: type === 'REACTION' ? animation : null,
       pack: type === 'REACTION' ? pack.trim() || null : null,
       unlock,
@@ -378,13 +380,15 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
           <Textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={200} rows={2} />
         </Field>
 
-        {type === 'AVATAR' || type === 'REACTION' || type === 'FRAME' || type === 'PROFILE_BG' || type === 'ALBUM_COVER' ? (
+        {type === 'AVATAR' || type === 'REACTION' || type === 'PAWN' || type === 'FRAME' || type === 'PROFILE_BG' || type === 'ALBUM_COVER' ? (
           <Field
             label={
               type === 'FRAME'
                 ? 'Imagem da moldura (opcional, PNG transparente)'
                 : type === 'REACTION'
                   ? 'Imagem ou GIF (opcional se usar emoji)'
+                  : type === 'PAWN'
+                    ? 'Imagem do peão (opcional se usar emoji)'
                   : type === 'PROFILE_BG'
                     ? 'Imagem do fundo (opcional, horizontal)'
                     : type === 'ALBUM_COVER'
@@ -414,6 +418,17 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
               </Field>
             </div>
             <ReactionChatPreview reaction={preview} />
+          </>
+        ) : null}
+        {type === 'PAWN' ? (
+          <>
+            <Field label="Emoji" hint="Usado quando não há imagem. Escolha abaixo ou cole qualquer emoji.">
+              <div className="space-y-2">
+                <Input value={style} onChange={(event) => setStyle(event.target.value)} maxLength={8} placeholder="🐑" />
+                <EmojiPicker value={style} onPick={setStyle} />
+              </div>
+            </Field>
+            <PawnPreview pawn={imageUrl || style} />
           </>
         ) : null}
         {type === 'TITLE' || type === 'NAME_COLOR' || type === 'PROFILE_BG' || type === 'ALBUM_COVER' || (type === 'FRAME' && effectiveStyle === 'solid') ? (

@@ -3,7 +3,7 @@ import type { StickerRarity } from '@/lib/admin-api';
 import type { UnlockedAchievement } from '@/lib/user-api';
 import type { UserProfile } from '@/types/auth';
 
-export type CosmeticType = 'AVATAR' | 'FRAME' | 'TITLE' | 'NAME_COLOR' | 'REACTION' | 'PROFILE_BG' | 'ALBUM_COVER';
+export type CosmeticType = 'AVATAR' | 'FRAME' | 'TITLE' | 'NAME_COLOR' | 'REACTION' | 'PROFILE_BG' | 'ALBUM_COVER' | 'PAWN';
 export type CosmeticUnlock = 'FREE' | 'SHOP' | 'REQUIREMENT' | 'REWARD';
 
 export type Cosmetic = {

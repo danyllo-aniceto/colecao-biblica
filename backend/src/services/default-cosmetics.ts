@@ -62,6 +62,17 @@ export const DEFAULT_COSMETICS: DefaultCosmetic[] = [
   { type: "AVATAR", name: "Vela acesa", rarity: "EPIC", imageUrl: avatar("vela"), unlock: "REQUIREMENT", requirement: "DAILY_STREAK", requirementValue: 14 },
   { type: "AVATAR", name: "Leão de Judá", rarity: "LEGENDARY", imageUrl: avatar("leao"), unlock: "REQUIREMENT", requirement: "ALL_LEGENDARY" },
   { type: "AVATAR", name: "Cruz", rarity: "LEGENDARY", imageUrl: avatar("cruz"), unlock: "REWARD", inChestPool: true },
+  // Peões do tabuleiro (os dez emojis básicos são de todos; estes vêm da loja e o painel pode trocar o emoji por uma imagem)
+  { type: "PAWN", name: "Peão: Maçã do Éden", description: "Peão do tabuleiro", rarity: "COMMON", style: "🍎", unlock: "SHOP", priceCoins: 150 },
+  { type: "PAWN", name: "Peão: Girafa da Arca", description: "Peão do tabuleiro", rarity: "COMMON", style: "🦒", unlock: "SHOP", priceCoins: 150 },
+  { type: "PAWN", name: "Peão: Camelo de Canaã", description: "Peão do tabuleiro", rarity: "COMMON", style: "🐪", unlock: "SHOP", priceCoins: 150 },
+  { type: "PAWN", name: "Peão: Rã do Egito", description: "Peão do tabuleiro", rarity: "COMMON", style: "🐸", unlock: "SHOP", priceCoins: 150 },
+  { type: "PAWN", name: "Peão: Pedra do Sinai", description: "Peão do tabuleiro", rarity: "RARE", style: "🪨", unlock: "SHOP", priceCoins: 300 },
+  { type: "PAWN", name: "Peão: Trombeta de Jericó", description: "Peão do tabuleiro", rarity: "RARE", style: "📯", unlock: "SHOP", priceCoins: 300 },
+  { type: "PAWN", name: "Peão: Menorá do Templo", description: "Peão do tabuleiro", rarity: "RARE", style: "🕎", unlock: "SHOP", priceCoins: 300 },
+  { type: "PAWN", name: "Peão: Muralha da Babilônia", description: "Peão do tabuleiro", rarity: "RARE", style: "🧱", unlock: "SHOP", priceCoins: 300 },
+  { type: "PAWN", name: "Peão: Barco da Galileia", description: "Peão do tabuleiro", rarity: "EPIC", style: "⛵", unlock: "SHOP", priceCoins: 600 },
+  { type: "PAWN", name: "Peão: Túmulo vazio", description: "Peão do tabuleiro", rarity: "EPIC", style: "⛰️", unlock: "SHOP", priceCoins: 600 },
   { type: "AVATAR", name: "Aliança", rarity: "LEGENDARY", imageUrl: avatar("arcoiris"), unlock: "REQUIREMENT", requirement: "COLLECTIONS", requirementValue: 5 },
 
   // Molduras

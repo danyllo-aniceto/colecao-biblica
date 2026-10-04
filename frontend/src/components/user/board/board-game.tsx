@@ -7,9 +7,11 @@ import {
   answerTrialOffer,
   catchUpBonus,
   currentPlayer,
+  powerTargets,
   rollDice,
   usePowerUp,
   usablePowerUps,
+  TARGETED_POWERS,
   type BoardState,
   type EngineResult,
   type OptionLetter,
@@ -22,9 +24,11 @@ import { Spinner } from '@/components/ui/spinner';
 import { Tooltip } from '@/components/ui/tooltip';
 import { useDialogs } from '@/components/ui/dialogs';
 import { Alert } from '@/components/game/game-ui';
+import { Modal } from '@/components/ui/modal';
 import { cn } from '@/lib/cn';
 import { playSfx } from '@/lib/sound/sfx';
 import { quizBackgroundStyle } from '@/lib/quiz-background';
+import { boardBackgroundStyle } from '@/lib/board-background';
 import { scenarioThemeVars } from '@/lib/campaign-theme';
 import { clearLocalBoard, saveLocalBoard, type LocalBoardGame } from '@/lib/board-local';
 import { BoardHelp } from '@/components/user/board/board-help';
@@ -55,6 +59,8 @@ export function BoardGame({ game: saved, onExit, onRematch }: GameProps) {
   const [face, setFace] = useState<number | null>(null);
   const [flash, setFlash] = useState<number[]>([]);
   const [helpOpen, setHelpOpen] = useState(false);
+  /** Power-up com alvo (Cajado, Rede) esperando a escolha do rival. */
+  const [picking, setPicking] = useState<PowerUpKind | null>(null);
 
   const stateRef = useRef(state);
   const setReveal = useCallback((value: Reveal | null) => {
@@ -145,9 +151,9 @@ export function BoardGame({ game: saved, onExit, onRematch }: GameProps) {
   }, [apply, bank, setReveal]);
 
   const spendPower = useCallback(
-    (kind: PowerUpKind) => {
+    (kind: PowerUpKind, targetId?: string) => {
       try {
-        apply(usePowerUp(stateRef.current, bank, kind));
+        apply(usePowerUp(stateRef.current, bank, kind, targetId));
         playSfx('toggleOn');
       } catch {
         playSfx('error');
@@ -164,7 +170,7 @@ export function BoardGame({ game: saved, onExit, onRematch }: GameProps) {
       const current = stateRef.current;
       const action = botAction(current, bank);
       if (action.type === 'ROLL') roll();
-      else if (action.type === 'POWER') spendPower(action.kind);
+      else if (action.type === 'POWER') spendPower(action.kind, action.targetId);
       else if (action.type === 'TRIAL') apply(answerTrialOffer(current, bank, action.accept));
       else if (current.pending) {
         const right = bank.correctOption(current.pending.questionId);
@@ -182,6 +188,12 @@ export function BoardGame({ game: saved, onExit, onRematch }: GameProps) {
     return () => window.clearTimeout(timer);
   }, [reveal, goOn]);
 
+  /** Power-ups com alvo abrem a escolha do rival; os demais se usam direto. */
+  function useFromBar(kind: PowerUpKind) {
+    if (TARGETED_POWERS.includes(kind)) setPicking(kind);
+    else spendPower(kind);
+  }
+
   async function leave() {
     const ok = await dialogs.confirm({
       title: 'Sair da partida?',
@@ -195,7 +207,8 @@ export function BoardGame({ game: saved, onExit, onRematch }: GameProps) {
   const usable = isBot ? [] : usablePowerUps(state);
   const bonus = state.phase === 'ROLL' && !isBot ? catchUpBonus(state, player) : 0;
   const steps = state.die !== null ? (state.die + state.bonus) * (state.doubled ? 2 : 1) : null;
-  const asking = Boolean(question) && (state.phase === 'QUESTION' || state.phase === 'TRIAL_QUESTION' || state.phase === 'FINAL_QUESTION');
+  // Há pergunta na mesa sempre que o motor tem uma pendente (movimento, provação, final, muro ou vigília).
+  const asking = Boolean(question) && pending !== null;
 
   return (
     <div
@@ -242,8 +255,20 @@ export function BoardGame({ game: saved, onExit, onRematch }: GameProps) {
         ))}
       </ul>
 
+      {state.storm || state.hazard ? (
+        <div className="mx-auto flex w-full max-w-2xl shrink-0 flex-wrap gap-2 px-3 pb-2" aria-label="Condições do cenário">
+          {state.storm ? <span className="rounded-full bg-info/20 px-3 py-1 text-xs font-bold text-ink">⛈️ Tempestade: quem erra é levado para trás</span> : null}
+          {state.hazard ? (
+            <span className="rounded-full bg-info/20 px-3 py-1 text-xs font-bold text-ink">
+              {state.hazard.emoji} {state.hazard.name}: casas marcadas recuam {state.rules.hazard?.penalty ?? 2}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <BoardTrack state={state} flash={flash} />
+        <div style={boardBackgroundStyle(saved.scenario.boardImage)}>
+          <BoardTrack state={state} flash={flash} />
         {log.length > 0 ? (
           <ul className="mx-auto mb-3 max-w-xl space-y-0.5 px-4 text-xs font-semibold text-muted" aria-label="Últimas jogadas" aria-live="polite">
             {log.slice(-4).map((line, index, all) => (
@@ -253,6 +278,7 @@ export function BoardGame({ game: saved, onExit, onRematch }: GameProps) {
             ))}
           </ul>
         ) : null}
+        </div>
       </div>
 
       <div className="mx-auto w-full max-w-2xl max-h-[78dvh] shrink-0 overflow-y-auto pb-[env(safe-area-inset-bottom)]">
@@ -269,10 +295,13 @@ export function BoardGame({ game: saved, onExit, onRematch }: GameProps) {
               </div>
             ) : null}
             <QuestionSheet
-              key={question.id}
+              // Na vigília a mesma pergunta passa por vários jogadores: cada um começa com cronômetro e escolha zerados.
+              key={`${question.id}-${player.id}`}
               question={question}
               kind={pending.kind}
               trialName={state.rules.trial.name}
+              wall={pending.kind === 'WALL' ? { got: pending.got ?? 0, need: pending.need ?? 2 } : undefined}
+              hint={pending.hint}
               playerName={player.name}
               watching={isBot}
               removed={pending.removed}
@@ -282,9 +311,9 @@ export function BoardGame({ game: saved, onExit, onRematch }: GameProps) {
               onAnswer={(selected) => answer(selected)}
               onContinue={goOn}
             />
-            {isBot ? null : <PowerBar state={state} usable={usable} locked={Boolean(reveal)} onUse={spendPower} />}
+            {isBot ? null : <PowerBar state={state} usable={usable} locked={Boolean(reveal)} onUse={useFromBar} />}
           </div>
-        ) : asking ? (
+        ) : pending !== null ? (
           <div className="p-3">
             <Alert tone="danger">Esta pergunta não está mais disponível. Saia e comece uma nova partida.</Alert>
           </div>
@@ -332,10 +361,40 @@ export function BoardGame({ game: saved, onExit, onRematch }: GameProps) {
                 {rolling ? 'Rolando...' : 'Rolar o dado'}
               </Button>
             )}
-            {isBot ? null : <PowerBar state={state} usable={usable} locked={rolling} onUse={spendPower} />}
+            {isBot ? null : <PowerBar state={state} usable={usable} locked={rolling} onUse={useFromBar} />}
           </section>
         )}
       </div>
+
+      <Modal open={picking !== null} onClose={() => setPicking(null)} title={picking ? `${POWER_UPS[picking].emoji} ${POWER_UPS[picking].name}` : ''} description="Escolha o rival." size="sm">
+        <ul className="space-y-2">
+          {picking
+            ? state.players
+                .filter((item) => powerTargets(state, picking).includes(item.id))
+                .map((item) => (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        spendPower(picking, item.id);
+                        setPicking(null);
+                      }}
+                      className="flex w-full items-center gap-3 rounded-2xl border-2 border-edge bg-surface-2 p-3 text-left transition hover:border-primary"
+                    >
+                      <Pawn emoji={item.pawn} className="text-3xl" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-display text-base font-bold text-ink">
+                          {item.name}
+                          {item.bot ? ' 🤖' : ''}
+                        </span>
+                        <span className="text-xs font-semibold text-muted">Casa {item.position}</span>
+                      </span>
+                    </button>
+                  </li>
+                ))
+            : null}
+        </ul>
+      </Modal>
 
       {finished ? <BoardResult state={state} scenarioName={saved.scenario.name} onExit={onExit} onRematch={onRematch} /> : null}
       <BoardHelp open={helpOpen} rules={state.rules} onClose={() => setHelpOpen(false)} />

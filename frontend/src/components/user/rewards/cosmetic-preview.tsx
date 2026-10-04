@@ -10,6 +10,7 @@ export const COSMETIC_TYPE_LABELS: Record<Cosmetic['type'], { one: string; many:
   REACTION: { one: 'Reação', many: 'Reações' },
   PROFILE_BG: { one: 'Fundo de perfil', many: 'Fundos de perfil' },
   ALBUM_COVER: { one: 'Capa do álbum', many: 'Capas do álbum' },
+  PAWN: { one: 'Peão', many: 'Peões' },
 };
 
 /** Como o item fica no jogador: usa o ícone atual para mostrar molduras. */
@@ -28,6 +29,7 @@ export function CosmeticPreview({ item, playerName, avatarUrl, size = 'lg' }: { 
         </span>
       );
     case 'REACTION':
+    case 'PAWN':
       return <ReactionGlyph reaction={item} size={size === 'lg' ? 'md' : 'sm'} />;
     case 'PROFILE_BG':
       return (

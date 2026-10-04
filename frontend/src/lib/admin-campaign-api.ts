@@ -21,6 +21,7 @@ export type AdminScenario = {
   musicUrl: string | null;
   /** Imagem de fundo da tela do quiz neste cenário. */
   quizBackgroundUrl?: string | null;
+  boardImageUrl?: string | null;
   fragmentCharacterId: number | null;
   fragmentCharacter: { id: number; name: string } | null;
   sortOrder: number;
@@ -42,6 +43,7 @@ export type ScenarioPayload = {
   musicUrl: string | null;
   /** Imagem de fundo da tela do quiz neste cenário. */
   quizBackgroundUrl?: string | null;
+  boardImageUrl?: string | null;
   fragmentCharacterId: number | null;
   sortOrder: number;
   active: boolean;

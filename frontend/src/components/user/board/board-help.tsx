@@ -1,9 +1,7 @@
-import { COMMON_POWER_UPS, EXTRA_SECONDS, MAX_POWER_UPS, POWER_UPS, PUSH_BACK, type ScenarioRules, type TileKind } from '@board/engine';
+import { COMMON_POWER_UPS, EXTRA_SECONDS, MAX_POWER_UPS, POWER_UPS, PUSH_BACK, type ScenarioRules } from '@board/engine';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
-import { TILE_INFO } from '@/components/user/board/board-meta';
-
-const LEGEND: TileKind[] = ['START', 'SHELTER', 'POWER', 'TRIAL', 'SHORTCUT', 'FALL', 'GATE', 'FINISH'];
+import { TILE_INFO, tileDescription, tileIcon, tileKindsOf } from '@/components/user/board/board-meta';
 
 /** Regras do jogo e legenda das casas, no cenário em jogo. */
 export function BoardHelp({ open, rules, onClose }: { open: boolean; rules: ScenarioRules; onClose: () => void }) {
@@ -21,21 +19,28 @@ export function BoardHelp({ open, rules, onClose }: { open: boolean; rules: Scen
         <section className="space-y-2">
           <h3 className="font-display text-base font-bold">Neste cenário</h3>
           <div className="rounded-2xl bg-surface-2 p-3">
-            <p className="font-bold">⚔️ {rules.trial.name}</p>
+            <p className="font-bold">
+              {rules.vigil ? '🕯️' : '⚔️'} {rules.trial.name}
+            </p>
             <p className="text-muted">{rules.trial.description}</p>
           </div>
-          {rules.shelterGrants ? <p className="text-muted">🌳 Os abrigos também dão um power-up.</p> : null}
+          {rules.event ? (
+            <div className="rounded-2xl bg-surface-2 p-3">
+              <p className="font-bold">✨ {rules.event.name}</p>
+              <p className="text-muted">{rules.event.description}</p>
+            </div>
+          ) : null}
         </section>
 
         <section className="space-y-2">
           <h3 className="font-display text-base font-bold">As casas</h3>
           <ul className="grid gap-2 sm:grid-cols-2">
-            {LEGEND.map((kind) => (
+            {tileKindsOf(rules).map((kind) => (
               <li key={kind} className="flex items-start gap-2 rounded-2xl bg-surface-2 p-2">
-                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 text-lg ${TILE_INFO[kind].className}`}>{kind === 'SHELTER' && rules.shelterGrants ? '🌳' : TILE_INFO[kind].icon}</span>
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 text-lg ${TILE_INFO[kind].className}`}>{tileIcon({ kind }, rules)}</span>
                 <span>
                   <b>{TILE_INFO[kind].label}</b>
-                  <span className="block text-xs text-muted">{TILE_INFO[kind].description}</span>
+                  <span className="block text-xs text-muted">{tileDescription(kind, rules)}</span>
                 </span>
               </li>
             ))}

@@ -61,6 +61,8 @@ enum CosmeticType {
   REACTION
   PROFILE_BG
   ALBUM_COVER
+  /// Peão do tabuleiro (emoji ou imagem); não se equipa, escolhe-se em cada partida.
+  PAWN
 }
 
 /// Como o item é obtido: grátis para todos, comprado, por meta ou só como prêmio (admin, baú, coleção, passe).
@@ -734,6 +736,8 @@ model Scenario {
   musicUrl            String?  @map("music_url")
   /// Imagem de fundo da tela do quiz neste cenário (vertical, sem texto).
   quizBackgroundUrl   String?  @map("quiz_background_url")
+  /// Imagem de fundo do tabuleiro deste cenário (vertical, sem texto), atrás do caminho do jogo de tabuleiro.
+  boardImageUrl       String?  @map("board_image_url")
   /// Personagem cujos fragmentos este cenário dá (a carta especial).
   fragmentCharacterId Int?     @map("fragment_character_id")
   /// Ícone de perfil (avatar) com a arte do cenário, entregue junto com a relíquia.

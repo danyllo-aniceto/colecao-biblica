@@ -32,8 +32,12 @@ function orderFor(questionId: number): OptionLetter[] {
 type QuestionSheetProps = {
   question: BoardQuestion;
   kind: QuestionKind;
-  /** Nome da provação, quando for uma. */
+  /** Nome da provação (ou da vigília), quando for uma. */
   trialName?: string;
+  /** Muro: acertos seguidos já feitos e quantos faltam. */
+  wall?: { got: number; need: number };
+  /** A Pomba mostrou o versículo da pergunta. */
+  hint?: boolean;
   /** De quem é a vez e se é um bot jogando (então a tela só acompanha). */
   playerName: string;
   watching: boolean;
@@ -48,9 +52,9 @@ type QuestionSheetProps = {
 
 /**
  * Folha com a pergunta da vez: tempo, alternativas, gabarito com explicação e o botão de seguir.
- * Quem usa deve passar `key={question.id}`: cada pergunta começa com cronômetro e escolha zerados.
+ * Quem usa deve passar uma `key` por pergunta e jogador: cada pergunta começa com cronômetro e escolha zerados.
  */
-export function QuestionSheet({ question, kind, trialName, playerName, watching, removed, seconds, extraSeconds, reveal, onAnswer, onContinue }: QuestionSheetProps) {
+export function QuestionSheet({ question, kind, trialName, wall, hint, playerName, watching, removed, seconds, extraSeconds, reveal, onAnswer, onContinue }: QuestionSheetProps) {
   const order = useMemo(() => orderFor(question.id), [question.id]);
   const [selected, setSelected] = useState<OptionLetter | null>(null);
   const startedAt = useRef(Date.now());
@@ -89,7 +93,7 @@ export function QuestionSheet({ question, kind, trialName, playerName, watching,
     <section className="panel animate-fade-up space-y-3 rounded-b-none p-4" aria-label={PHASE_LABEL[kind]}>
       <div className="flex items-center justify-between gap-3">
         <p className="font-display text-sm font-bold uppercase tracking-wide text-primary-strong dark:text-primary">
-          {kind === 'TRIAL' && trialName ? `Provação · ${trialName}` : PHASE_LABEL[kind]}
+          {kind === 'VIGIL' && trialName ? trialName : kind === 'TRIAL' && trialName ? `${PHASE_LABEL[kind]} · ${trialName}` : kind === 'WALL' && wall ? `Muro · ${wall.got + 1}ª de ${wall.need}` : PHASE_LABEL[kind]}
           <span className="ml-2 normal-case text-muted">{watching ? `${playerName} está respondendo` : `Vez de ${playerName}`}</span>
         </p>
         {!watching && !reveal ? (
@@ -102,6 +106,11 @@ export function QuestionSheet({ question, kind, trialName, playerName, watching,
       {!watching && !reveal ? <ProgressBar value={progress} color={timerColor} className="h-2" /> : null}
 
       <p className="font-display text-lg font-semibold leading-snug text-ink">{question.text}</p>
+      {hint && question.bibleReference && !reveal ? (
+        <p className="flex items-center gap-1.5 rounded-xl bg-info/10 px-3 py-1.5 text-sm font-bold text-info-strong dark:text-info">
+          <MenuBookRoundedIcon sx={{ fontSize: 16 }} /> Dica da Pomba: {question.bibleReference}
+        </p>
+      ) : null}
 
       <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Alternativas">
         {order.map((letter, slot) => {

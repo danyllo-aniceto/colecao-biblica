@@ -41,6 +41,7 @@ const scenarioSchema = z.object({
   iconImageUrl: imageRef(),
   musicUrl: musicRef(),
   quizBackgroundUrl: imageRef(),
+  boardImageUrl: imageRef(),
   fragmentCharacterId: z.number().int().positive().nullish(),
   sortOrder: z.number().int().min(0).max(100_000),
   active: z.boolean(),
@@ -104,6 +105,7 @@ campaignAdminRouter.post(
         iconImageUrl: input.iconImageUrl ?? null,
         musicUrl: input.musicUrl ?? null,
         quizBackgroundUrl: input.quizBackgroundUrl ?? null,
+        boardImageUrl: input.boardImageUrl ?? null,
         fragmentCharacterId: input.fragmentCharacterId ?? null,
       },
     });
@@ -133,6 +135,7 @@ campaignAdminRouter.put(
         iconImageUrl: input.iconImageUrl,
         musicUrl: input.musicUrl,
         quizBackgroundUrl: input.quizBackgroundUrl,
+        boardImageUrl: input.boardImageUrl,
       },
     });
     // O ícone de perfil acompanha a arte do ícone do cenário.

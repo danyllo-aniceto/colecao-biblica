@@ -23,7 +23,7 @@ import {
 
 export const cosmeticsRouter = Router();
 
-const cosmeticType = z.enum(["AVATAR", "FRAME", "TITLE", "NAME_COLOR", "REACTION", "PROFILE_BG", "ALBUM_COVER"]);
+const cosmeticType = z.enum(["AVATAR", "FRAME", "TITLE", "NAME_COLOR", "REACTION", "PROFILE_BG", "ALBUM_COVER", "PAWN"]);
 const color = z
   .string()
   .regex(/^#[0-9a-fA-F]{6}$/, "Use uma cor no formato #rrggbb")
@@ -149,6 +149,9 @@ type CosmeticInput = z.infer<typeof updateSchema> & { type?: z.infer<typeof cosm
 async function validate(type: z.infer<typeof cosmeticType>, input: CosmeticInput) {
   if ((type === "AVATAR" || type === "REACTION") && !input.imageUrl && !(type === "REACTION" && input.style)) {
     throw badRequest(type === "AVATAR" ? "O ícone precisa de uma imagem" : "A reação precisa de uma imagem ou de um emoji");
+  }
+  if (type === "PAWN" && !input.imageUrl && !input.style) {
+    throw badRequest("O peão precisa de uma imagem ou de um emoji");
   }
   if ((type === "PROFILE_BG" || type === "ALBUM_COVER") && !input.imageUrl && !input.color) {
     throw badRequest(type === "PROFILE_BG" ? "O fundo de perfil precisa de uma imagem ou de uma cor" : "A capa do álbum precisa de uma imagem ou de uma cor");
@@ -378,6 +381,8 @@ const TYPE_ALIASES: Record<string, z.infer<typeof cosmeticType>> = {
   fundo: "PROFILE_BG",
   "capa do album": "ALBUM_COVER",
   capa: "ALBUM_COVER",
+  peao: "PAWN",
+  pawn: "PAWN",
 };
 
 const TITLE_STYLE_ALIASES: Record<string, (typeof TITLE_STYLES)[number]> = {
@@ -396,7 +401,7 @@ const TITLE_STYLE_ALIASES: Record<string, (typeof TITLE_STYLES)[number]> = {
 };
 
 const bulkCosmeticRow = bulkReactionRow.extend({
-  type: z.string().trim().min(1, "informe o tipo (Ícone, Moldura, Título, Cor do nome, Reação, Fundo de perfil ou Capa do álbum)"),
+  type: z.string().trim().min(1, "informe o tipo (Ícone, Moldura, Título, Cor do nome, Reação, Fundo de perfil, Capa do álbum ou Peão)"),
   color: z.string().trim().optional(),
   effect: z.string().trim().optional(),
 });
@@ -425,7 +430,7 @@ cosmeticsRouter.post(
       const data = parsed.data;
       const type = TYPE_ALIASES[normalizeKey(data.type)];
       if (!type) {
-        errors.push({ row, message: `tipo "${data.type}" inválido (use Ícone, Moldura, Título, Cor do nome, Reação, Fundo de perfil ou Capa do álbum)` });
+        errors.push({ row, message: `tipo "${data.type}" inválido (use Ícone, Moldura, Título, Cor do nome, Reação, Fundo de perfil, Capa do álbum ou Peão)` });
         return;
       }
       const rarity = data.rarity ? RARITY_ALIASES[normalizeKey(data.rarity)] : "COMMON";
@@ -458,6 +463,9 @@ cosmeticsRouter.post(
         style = data.emoji || null;
         animation = data.animation ? (ANIMATION_ALIASES[normalizeKey(data.animation)] ?? null) : "pop";
         if (!animation) return void errors.push({ row, message: `animação "${data.animation}" inválida (Pulo, Quicar, Tremer, Girar, Subir ou Pulsar)` });
+      } else if (type === "PAWN") {
+        if (!data.emoji && !data.imageUrl) return void errors.push({ row, message: "informe um emoji ou o link de uma imagem para o peão" });
+        style = data.emoji || null;
       } else if (type === "AVATAR") {
         // Sem imagem não dá para usar: entra desativado até a imagem ser enviada.
         if (!data.imageUrl) active = false;
@@ -474,7 +482,7 @@ cosmeticsRouter.post(
         description: data.description || null,
         rarity,
         imageUrl: data.imageUrl || null,
-        color: type === "AVATAR" || type === "REACTION" ? null : data.color || null,
+        color: type === "AVATAR" || type === "REACTION" || type === "PAWN" ? null : data.color || null,
         style,
         animation,
         pack: type === "REACTION" ? data.pack || null : null,

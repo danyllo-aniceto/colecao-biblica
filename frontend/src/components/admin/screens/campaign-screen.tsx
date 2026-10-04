@@ -35,6 +35,7 @@ import { AdminPanel, Cell, DataTable, IconAction, Row, StatusBadge } from '../ad
 import { AudioUploadField } from '@/components/admin/audio-upload-field';
 import { ImageUploadField } from '../image-upload-field';
 import { QuizBackgroundPreview } from './quiz-background-preview';
+import { BoardImagePreview } from './board-previews';
 import { MapPositionEditor } from './map-position-editor';
 import { usePagedList } from '../use-paged-list';
 
@@ -183,6 +184,7 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
   const [iconImageUrl, setIconImageUrl] = useState(scenario?.iconImageUrl ?? '');
   const [musicUrl, setMusicUrl] = useState(scenario?.musicUrl ?? '');
   const [quizBackgroundUrl, setQuizBackgroundUrl] = useState(scenario?.quizBackgroundUrl ?? '');
+  const [boardImageUrl, setBoardImageUrl] = useState(scenario?.boardImageUrl ?? '');
   const [characterId, setCharacterId] = useState(scenario?.fragmentCharacterId ? String(scenario.fragmentCharacterId) : '');
   const [sortOrder, setSortOrder] = useState(String(scenario?.sortOrder ?? nextOrder));
   const [active, setActive] = useState(scenario?.active ?? true);
@@ -214,6 +216,7 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
       iconImageUrl: iconImageUrl || null,
       musicUrl: musicUrl || null,
       quizBackgroundUrl: quizBackgroundUrl || null,
+      boardImageUrl: boardImageUrl || null,
       fragmentCharacterId: characterId ? Number(characterId) : null,
       sortOrder: Number(sortOrder) || 0,
       active,
@@ -265,6 +268,12 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
             <ImageUploadField value={quizBackgroundUrl} onChange={setQuizBackgroundUrl} wide />
           </Field>
           <QuizBackgroundPreview imageUrl={quizBackgroundUrl || null} color={color} name={name.trim() || undefined} />
+        </div>
+        <div className="grid gap-4 md:grid-cols-[1fr_15rem]">
+          <Field label="Imagem do tabuleiro" hint="Jogo de tabuleiro com amigos. Imagem vertical (3:4 ou mais alta), tipo 1536×2048, sem texto. Fica atrás das casas do caminho, com uma película leve para elas continuarem legíveis. Vazio usa o fundo padrão do tema.">
+            <ImageUploadField value={boardImageUrl} onChange={setBoardImageUrl} wide />
+          </Field>
+          <BoardImagePreview imageUrl={boardImageUrl || null} color={color} />
         </div>
         <Field label="Música do tema" hint="MP3, M4A, OGG ou WAV de até 12 MB (um MP3 de 3 min em 192 kbps tem ~4,5 MB). Toca no quiz e é liberada ao jogador quando ele chega ao primeiro nível deste cenário. Vazio = cenário sem música.">
           <AudioUploadField value={musicUrl} onChange={setMusicUrl} />
