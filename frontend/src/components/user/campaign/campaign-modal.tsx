@@ -229,6 +229,8 @@ function FinalePage({ campaign, special, playerName, active }: { campaign: Campa
 type CampaignModalProps = {
   open: boolean;
   campaign: Campaign | null;
+  /** XP total acumulado do jogador. */
+  xp: number;
   playerName: string;
   onClose: () => void;
   onChanged: () => void;
@@ -241,7 +243,7 @@ const prefersReducedMotion = () => typeof window !== 'undefined' && window.match
  * Campanha em tela cheia: cada cenário ocupa a tela inteira e o jogador sobe e desce arrastando
  * (ou pelos botões ▲ ▼), do primeiro cenário embaixo ao último em cima. A rolagem encaixa em cada mapa e a cor da tela acompanha o cenário.
  */
-export function CampaignModal({ open, campaign, playerName, onClose, onChanged, onUserUpdate }: CampaignModalProps) {
+export function CampaignModal({ open, campaign, xp, playerName, onClose, onChanged, onUserUpdate }: CampaignModalProps) {
   const toast = useToast();
   // Subida: o primeiro cenário fica embaixo e os seguintes vão aparecendo para cima.
   const scenarios = useMemo(() => [...(campaign?.scenarios ?? [])].reverse(), [campaign]);
@@ -497,9 +499,16 @@ export function CampaignModal({ open, campaign, playerName, onClose, onChanged, 
       >
         {liveSelected ? (
           <div className="space-y-3">
-            <div className="flex items-center justify-between gap-3 rounded-2xl bg-violet/15 p-3">
-              <span className="text-sm font-bold text-muted">XP para chegar ao nível {liveSelected.level}</span>
-              <span className="font-display text-lg font-bold text-violet-strong dark:text-violet">{xpForLevel(liveSelected.level).toLocaleString('pt-BR')} XP</span>
+            <div className="space-y-1 rounded-2xl bg-violet/15 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-bold text-muted">XP total para chegar ao nível {liveSelected.level}</span>
+                <span className="font-display text-lg font-bold text-violet-strong dark:text-violet">{xpForLevel(liveSelected.level).toLocaleString('pt-BR')} XP</span>
+              </div>
+              <p className="text-xs font-semibold text-muted">
+                {xp >= xpForLevel(liveSelected.level)
+                  ? `Você já passou desse ponto: tem ${xp.toLocaleString('pt-BR')} XP no total.`
+                  : `Você tem ${xp.toLocaleString('pt-BR')} XP no total: faltam ${(xpForLevel(liveSelected.level) - xp).toLocaleString('pt-BR')} XP. A barra do topo mostra só o XP do nível atual.`}
+              </p>
             </div>
             {liveSelected.state === 'locked' ? <Alert tone="info">Chegue ao nível {liveSelected.level} para abrir esta parada.</Alert> : null}
             {liveSelected.state === 'claimed' ? <Alert tone="success">Você já resgatou esta parada.</Alert> : null}

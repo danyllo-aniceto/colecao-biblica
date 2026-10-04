@@ -554,6 +554,7 @@ export function UserDashboard() {
     <PlayerProfileProvider>
     <CampaignProvider
       level={profile?.level ?? 1}
+      xp={profile?.xp ?? 0}
       playerName={profile?.name ?? 'Você'}
       onUserUpdate={(updated, achievements) => {
         setProfile((current) => (current ? { ...current, ...updated } : updated));

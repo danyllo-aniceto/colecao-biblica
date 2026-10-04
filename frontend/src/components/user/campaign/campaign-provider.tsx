@@ -26,11 +26,14 @@ export const useCampaign = () => useContext(CampaignContext);
  */
 export function CampaignProvider({
   level,
+  xp,
   playerName,
   onUserUpdate,
   children,
 }: {
   level: number;
+  /** XP total acumulado do jogador (para mostrar quanto falta até cada parada). */
+  xp: number;
   playerName: string;
   onUserUpdate: (user: UserProfile, achievements: UnlockedAchievement[]) => void;
   children: ReactNode;
@@ -55,7 +58,7 @@ export function CampaignProvider({
   return (
     <CampaignContext.Provider value={value}>
       {children}
-      <CampaignModal open={open} campaign={campaign} playerName={playerName} onClose={() => setOpen(false)} onChanged={load} onUserUpdate={onUserUpdate} />
+      <CampaignModal open={open} campaign={campaign} xp={xp} playerName={playerName} onClose={() => setOpen(false)} onChanged={load} onUserUpdate={onUserUpdate} />
     </CampaignContext.Provider>
   );
 }

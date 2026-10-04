@@ -79,9 +79,11 @@ export function PlayerHud({
               <span className="truncate font-display text-base font-semibold text-ink" style={look?.nameColor ? { color: look.nameColor } : undefined}>
                 {profile?.name ?? 'Jogador'}
               </span>
-              <span className="shrink-0 text-xs font-bold text-muted">
-                {progress.current}/{progress.needed} XP
-              </span>
+              <Tooltip content={`Você tem ${progress.current} XP neste nível. Faltam ${progress.needed - progress.current} XP para o nível ${progress.level + 1}.`} side="bottom">
+                <span className="shrink-0 cursor-help text-xs font-bold text-muted" aria-label={`${progress.current} de ${progress.needed} XP neste nível; faltam ${progress.needed - progress.current} para o nível ${progress.level + 1}`}>
+                  {progress.current}/{progress.needed} XP
+                </span>
+              </Tooltip>
             </div>
             <ProgressBar value={progress.percent} className="mt-1 h-2.5" />
           </div>
