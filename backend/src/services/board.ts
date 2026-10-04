@@ -48,3 +48,30 @@ export async function getBoardQuestions(input: { scenarioId?: number | null; cou
 
   return { questions: ids.flatMap((id) => byId.get(id) ?? []) };
 }
+
+export type BoardPoolItem = { id: number; difficulty: "EASY" | "MEDIUM" | "HARD" | "VERY_HARD"; correct: "A" | "B" | "C" | "D" };
+
+/**
+ * Perguntas de uma sala online, sorteadas como no quiz geral. Só o servidor guarda a alternativa certa.
+ * O texto fica no banco de perguntas e é lido pergunta a pergunta, quando ela entra em jogo.
+ */
+export async function pickBoardPool(input: { scenarioId?: number | null; count: number }): Promise<BoardPoolItem[]> {
+  const count = Math.max(BOARD_MIN_QUESTIONS, Math.min(input.count, BOARD_MAX_QUESTIONS));
+  const available = await prisma.question.findMany({ where: { active: true }, select: { id: true, scenarioId: true } });
+  if (available.length === 0) {
+    throw badRequest("Ainda não há perguntas cadastradas para jogar");
+  }
+  const scenarioIds = input.scenarioId ? available.filter((question) => question.scenarioId === input.scenarioId).map((question) => question.id) : [];
+  const scenarioSet = new Set(scenarioIds);
+  const ids = pickGeneralQuestionIds(
+    scenarioIds,
+    available.filter((question) => !scenarioSet.has(question.id)).map((question) => question.id),
+    count,
+  );
+  const rows = await prisma.question.findMany({ where: { id: { in: ids } }, select: { id: true, difficulty: true, correctOption: true } });
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  return ids.flatMap((id) => {
+    const row = byId.get(id);
+    return row ? [{ id, difficulty: row.difficulty, correct: row.correctOption as BoardPoolItem["correct"] }] : [];
+  });
+}

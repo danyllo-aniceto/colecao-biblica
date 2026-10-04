@@ -73,6 +73,8 @@ export const DEFAULT_COSMETICS: DefaultCosmetic[] = [
   { type: "PAWN", name: "Peão: Muralha da Babilônia", description: "Peão do tabuleiro", rarity: "RARE", style: "🧱", unlock: "SHOP", priceCoins: 300 },
   { type: "PAWN", name: "Peão: Barco da Galileia", description: "Peão do tabuleiro", rarity: "EPIC", style: "⛵", unlock: "SHOP", priceCoins: 600 },
   { type: "PAWN", name: "Peão: Túmulo vazio", description: "Peão do tabuleiro", rarity: "EPIC", style: "⛰️", unlock: "SHOP", priceCoins: 600 },
+  { type: "PAWN", name: "Peão: Troféu", description: "Vença 3 partidas online do Tabuleiro", rarity: "RARE", style: "🏆", unlock: "REQUIREMENT", requirement: "BOARD_WINS", requirementValue: 3 },
+  { type: "PAWN", name: "Peão: Campeão", description: "Vença 15 partidas online do Tabuleiro", rarity: "EPIC", style: "🥇", unlock: "REQUIREMENT", requirement: "BOARD_WINS", requirementValue: 15 },
   { type: "AVATAR", name: "Aliança", rarity: "LEGENDARY", imageUrl: avatar("arcoiris"), unlock: "REQUIREMENT", requirement: "COLLECTIONS", requirementValue: 5 },
 
   // Molduras

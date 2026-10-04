@@ -17,6 +17,7 @@ export type CosmeticStats = AchievementStats & {
   achievements: number;
   allLegendary: boolean;
   collectionsCompleted: number;
+  boardWins: number;
 };
 
 type RequirementDefinition = {
@@ -48,6 +49,7 @@ export const REQUIREMENTS: RequirementDefinition[] = [
   { code: "TRADES", label: "Trocas concluídas", needsValue: true, progress: (s, v) => ({ current: s.trades, target: v }) },
   { code: "ACHIEVEMENTS", label: "Conquistas desbloqueadas", needsValue: true, progress: (s, v) => ({ current: s.achievements, target: v }) },
   { code: "COLLECTIONS", label: "Coleções temáticas completas", needsValue: true, progress: (s, v) => ({ current: s.collectionsCompleted, target: v }) },
+  { code: "BOARD_WINS", label: "Vencer partidas online do Tabuleiro", needsValue: true, progress: (s, v) => ({ current: s.boardWins, target: v }) },
 ];
 
 export const requirementByCode = (code: string | null) => REQUIREMENTS.find((requirement) => requirement.code === code);
@@ -70,7 +72,7 @@ const EQUIP_FIELD: Partial<Record<CosmeticType, "avatarId" | "frameId" | "titleI
 export async function loadCosmeticStats(db: Db, userId: number): Promise<CosmeticStats> {
   const [base, user, correct, leagueWins, achievements, legendaryTotal, legendaryOwned, collections] = await Promise.all([
     loadStats(db, userId),
-    db.user.findUniqueOrThrow({ where: { id: userId }, select: { bestCombo: true } }),
+    db.user.findUniqueOrThrow({ where: { id: userId }, select: { bestCombo: true, boardWins: true } }),
     db.quizMatch.aggregate({ where: { userId }, _sum: { correctAnswers: true } }),
     db.userClaim.count({ where: { userId, kind: "LEAGUE", code: "POS1" } }),
     db.userAchievement.count({ where: { userId } }),
@@ -82,6 +84,7 @@ export async function loadCosmeticStats(db: Db, userId: number): Promise<Cosmeti
     ...base,
     correctAnswers: correct._sum.correctAnswers ?? 0,
     bestCombo: user.bestCombo,
+    boardWins: user.boardWins,
     leagueWins,
     achievements,
     allLegendary: legendaryTotal > 0 && legendaryOwned >= legendaryTotal,

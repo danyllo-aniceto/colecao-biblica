@@ -116,6 +116,13 @@ enum QuizSessionStatus {
   ABANDONED
 }
 
+/// Sala do Modo Tabuleiro online: LOBBY (reunindo), PLAYING (em jogo) ou FINISHED (pódio na tela).
+enum BoardRoomStatus {
+  LOBBY
+  PLAYING
+  FINISHED
+}
+
 model User {
   id                 Int       @id @default(autoincrement())
   name               String
@@ -180,12 +187,18 @@ model User {
   profileBg  Cosmetic? @relation("UserProfileBg", fields: [profileBgId], references: [id], onDelete: SetNull)
   albumCover Cosmetic? @relation("UserAlbumCover", fields: [albumCoverId], references: [id], onDelete: SetNull)
 
-  friendRequestsSent     Friendship[] @relation("FriendshipRequester")
-  friendRequestsReceived Friendship[] @relation("FriendshipAddressee")
-  messagesSent           Message[]    @relation("MessageSender")
-  messagesReceived       Message[]    @relation("MessageReceiver")
-  tradesProposed         Trade[]      @relation("TradeProposer")
-  tradesReceived         Trade[]      @relation("TradeReceiver")
+  friendRequestsSent     Friendship[]      @relation("FriendshipRequester")
+  friendRequestsReceived Friendship[]      @relation("FriendshipAddressee")
+  messagesSent           Message[]         @relation("MessageSender")
+  messagesReceived       Message[]         @relation("MessageReceiver")
+  tradesProposed         Trade[]           @relation("TradeProposer")
+  tradesReceived         Trade[]           @relation("TradeReceiver")
+  /// Vitórias em salas online do Tabuleiro (só conta com 2 ou mais pessoas na sala).
+  boardWins              Int               @default(0) @map("board_wins")
+  hostedBoardRooms       BoardRoom[]       @relation("BoardRoomHost")
+  boardPlayers           BoardRoomPlayer[]
+  sentBoardInvites       BoardInvite[]     @relation("BoardInviteFrom")
+  receivedBoardInvites   BoardInvite[]     @relation("BoardInviteTo")
 
   @@index([totalScore, xp])
   @@map("users")
@@ -752,6 +765,7 @@ model Scenario {
   avatarCosmetic    Cosmetic?          @relation("ScenarioAvatar", fields: [avatarCosmeticId], references: [id], onDelete: SetNull)
   nodes             ScenarioNode[]
   questions         Question[]
+  boardRooms        BoardRoom[]
 
   @@index([sortOrder])
   @@map("scenarios")
@@ -796,4 +810,86 @@ model ChestDesign {
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("chest_designs")
+}
+
+/// Sala online do Tabuleiro. Dura pouco: o servidor apaga as de mais de um dia. O motor (state) e as
+/// respostas certas (pool) ficam aqui; o cliente nunca recebe a alternativa certa antes do gabarito.
+model BoardRoom {
+  id         Int             @id @default(autoincrement())
+  /// Código curto para entrar (sem letras que se confundem).
+  code       String          @unique
+  hostId     Int             @map("host_id")
+  scenarioId Int             @map("scenario_id")
+  status     BoardRoomStatus @default(LOBBY)
+  /// Regras da sala (tamanho, tempo, power-ups, empurrão, ajuda).
+  config     Json
+  /// Estado do motor (backend/src/board/engine.ts).
+  state      Json?
+  /// Perguntas da partida com a alternativa certa: [{ id, difficulty, correct }].
+  pool       Json?
+  /// Resposta dada e ainda não aplicada (todos veem o gabarito antes de seguir).
+  reveal     Json?
+  /// Últimas jogadas, em texto.
+  log        Json            @default("[]")
+  /// Sobe a cada mudança; o cliente só baixa a sala quando muda.
+  version    Int             @default(1)
+  /// Quando o servidor precisa agir sozinho (bot, tempo esgotado, fim do gabarito).
+  dueAt      DateTime?       @map("due_at")
+  /// Fim do tempo do jogador da vez (cronômetro).
+  deadlineAt DateTime?       @map("deadline_at")
+  createdAt  DateTime        @default(now()) @map("created_at")
+  updatedAt  DateTime        @updatedAt @map("updated_at")
+  startedAt  DateTime?       @map("started_at")
+  finishedAt DateTime?       @map("finished_at")
+
+  host     User              @relation("BoardRoomHost", fields: [hostId], references: [id], onDelete: Cascade)
+  scenario Scenario          @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  players  BoardRoomPlayer[]
+  invites  BoardInvite[]
+
+  @@index([status, updatedAt])
+  @@map("board_rooms")
+}
+
+/// Quem está na sala: pessoa (userId) ou bot (bot = nível). Quem sai no meio do jogo vira bot (replaced).
+model BoardRoomPlayer {
+  id         Int      @id @default(autoincrement())
+  roomId     Int      @map("room_id")
+  userId     Int?     @map("user_id")
+  slot       Int
+  name       String
+  /// Emoji ou endereço da imagem do peão.
+  pawn       String
+  /// APPRENTICE, STUDENT ou MASTER quando é bot.
+  bot        String?
+  /// Era uma pessoa e um bot assumiu o lugar (saiu ou ficou ausente).
+  replaced   Boolean  @default(false)
+  afkStrikes Int      @default(0) @map("afk_strikes")
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+  joinedAt   DateTime @default(now()) @map("joined_at")
+
+  room BoardRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, slot])
+  @@unique([roomId, userId])
+  @@index([userId])
+  @@map("board_room_players")
+}
+
+/// Convite de um amigo para uma sala ainda reunindo gente.
+model BoardInvite {
+  id         Int      @id @default(autoincrement())
+  roomId     Int      @map("room_id")
+  fromUserId Int      @map("from_user_id")
+  toUserId   Int      @map("to_user_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  room BoardRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  from User      @relation("BoardInviteFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  to   User      @relation("BoardInviteTo", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, toUserId])
+  @@index([toUserId, createdAt])
+  @@map("board_invites")
 }
