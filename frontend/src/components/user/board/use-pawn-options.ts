@@ -7,8 +7,9 @@ export type PawnOption = { value: string; name: string };
 export const BASE_PAWNS: PawnOption[] = FREE_PAWNS.map((pawn) => ({ value: pawn, name: PAWN_NAMES[pawn] ?? pawn }));
 
 /**
- * Peões que o jogador pode usar: os básicos (de todos) mais os que ele tem no armário (comprados, ganhos ou
- * cadastrados pelo painel, com emoji ou imagem). Carrega o inventário quando `active` fica verdadeiro.
+ * Peões que o jogador pode usar: os do armário (os básicos grátis, que o painel pode editar, mais os comprados, ganhos
+ * ou cadastrados, com emoji ou imagem). Se o armário não responder, valem os emojis básicos de fábrica.
+ * Carrega o inventário quando `active` fica verdadeiro.
  */
 export function usePawnOptions(active: boolean): PawnOption[] {
   const [owned, setOwned] = useState<PawnOption[]>([]);
@@ -19,11 +20,13 @@ export function usePawnOptions(active: boolean): PawnOption[] {
     getInventory()
       .then((inventory) => {
         if (!alive) return;
-        setOwned(
-          inventory.items
-            .filter((item) => item.type === 'PAWN' && item.owned && (item.imageUrl || item.style))
-            .map((item) => ({ value: (item.imageUrl || item.style) as string, name: item.name.replace(/^Peão:\s*/i, '') })),
-        );
+        const options: PawnOption[] = [];
+        for (const item of inventory.items) {
+          const value = item.imageUrl || item.style;
+          if (item.type !== 'PAWN' || !item.owned || !value || options.some((option) => option.value === value)) continue;
+          options.push({ value, name: item.name.replace(/^Peão:\s*/i, '') });
+        }
+        setOwned(options);
       })
       .catch(() => alive && setOwned([]));
     return () => {
@@ -31,5 +34,5 @@ export function usePawnOptions(active: boolean): PawnOption[] {
     };
   }, [active]);
 
-  return useMemo(() => [...BASE_PAWNS, ...owned.filter((item) => !BASE_PAWNS.some((base) => base.value === item.value))], [owned]);
+  return useMemo(() => (owned.length > 0 ? owned : BASE_PAWNS), [owned]);
 }

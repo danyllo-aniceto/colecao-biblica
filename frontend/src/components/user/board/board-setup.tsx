@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CasinoRoundedIcon from '@mui/icons-material/CasinoRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
@@ -90,6 +90,21 @@ export function BoardSetupModal({ open, scenarios, defaultScenarioId, playerName
   const [startError, setStartError] = useState<string | null>(null);
 
   const pawnOptions = usePawnOptions(open);
+
+  // Os peões básicos vêm do painel: quem começou com um que não existe mais (ou ainda não carregou) troca por um livre.
+  useEffect(() => {
+    setPlayers((current) => {
+      const valid = (pawn: string) => pawnOptions.some((option) => option.value === pawn);
+      if (current.every((player) => valid(player.pawn))) return current;
+      const used = new Set(current.filter((player) => valid(player.pawn)).map((player) => player.pawn));
+      return current.map((player) => {
+        if (valid(player.pawn)) return player;
+        const pick = pawnOptions.find((option) => !used.has(option.value)) ?? pawnOptions[0];
+        used.add(pick.value);
+        return { ...player, pawn: pick.value };
+      });
+    });
+  }, [pawnOptions]);
 
   const paging = usePagination(scenarios, PAGE_SIZE);
   const scenario = scenarios.find((item) => item.id === scenarioId) ?? null;

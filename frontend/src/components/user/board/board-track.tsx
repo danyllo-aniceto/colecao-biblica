@@ -2,12 +2,17 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { currentPlayer, isPawnImage, type BoardState, type HazardState, type ScenarioRules, type Tile, type TileKind } from '@board/engine';
 import { BAND_HEIGHT, computeLayout, landmarkCenter, type BoardLayout, type Landmark, type PathStyle } from '@board/layout';
 import { cn } from '@/lib/cn';
-import { TILE_INFO, tileIcon } from '@/components/user/board/board-meta';
+import { TILE_INFO, tileDescription, tileIcon } from '@/components/user/board/board-meta';
+import type { PawnFx } from '@board/callouts';
+import type { PawnEffects, TileBurst } from '@/components/user/board/use-callouts';
 
 /** Peão: emoji ou imagem cadastrada no painel. O tamanho vem do `text-*` (a imagem acompanha: 1em). */
-export function Pawn({ emoji, active = false, className }: { emoji: string; active?: boolean; className?: string }) {
+export function Pawn({ emoji, active = false, fx, className }: { emoji: string; active?: boolean; fx?: PawnFx; className?: string }) {
   return (
-    <span aria-hidden="true" className={cn('inline-block leading-none drop-shadow-[0_2px_1px_rgba(0,0,0,0.45)]', active && 'animate-bounce motion-reduce:animate-none', className)}>
+    <span
+      aria-hidden="true"
+      className={cn('inline-block leading-none drop-shadow-[0_2px_1px_rgba(0,0,0,0.45)]', fx ? `pawn-fx-${fx}` : active && 'animate-bounce motion-reduce:animate-none', className)}
+    >
       {isPawnImage(emoji) ? <img src={emoji} alt="" draggable={false} className="inline-block h-[1.15em] w-[1.15em] object-contain align-middle" /> : emoji}
     </span>
   );
@@ -98,6 +103,10 @@ type CanvasProps = {
   hazard?: HazardState | null;
   /** Casas em destaque (para onde o peão acabou de ir). */
   flash?: number[];
+  /** Brilhos e emojis que sobem das casas onde algo acabou de acontecer. */
+  bursts?: TileBurst[];
+  /** Movimento de cada peão (balançar, pular, escudo...). */
+  pawnFx?: PawnEffects;
   image?: string | null;
   pathStyle?: PathStyle | null;
   landmarks?: Landmark[] | null;
@@ -112,17 +121,27 @@ type CanvasProps = {
 
 const pct = (value: number, total: number) => `${(value / total) * 100}%`;
 
+/** Número da casa no balão (a largada e a chegada dispensam). */
+const indexLabel = (index: number, size: number) => (index > 0 && index < size ? ` · casa ${index}` : '');
+
 /**
  * O tabuleiro desenhado: o terreno (imagem repetida e espelhada), os marcos do cenário, a estrada em curvas,
  * as casas e os peões. Serve ao jogo e à prévia do painel. Tudo escala com a largura (unidades `cqw`).
  */
-export function BoardCanvas({ tiles, rules, size, pawns, activeId, hazard = null, flash = [], image, pathStyle, landmarks, animate = true, follow = false, focusKey, minimap = false, className }: CanvasProps) {
+export function BoardCanvas({ tiles, rules, size, pawns, activeId, hazard = null, flash = [], bursts = [], pawnFx = {}, image, pathStyle, landmarks, animate = true, follow = false, focusKey, minimap = false, className }: CanvasProps) {
   const layout: BoardLayout = useMemo(() => computeLayout(tiles.length, pathStyle ?? 'MEDIUM'), [tiles.length, pathStyle]);
   const { width, height, points } = layout;
   const targets = useMemo(() => Object.fromEntries(pawns.map((pawn) => [pawn.id, pawn.position])), [pawns]);
   const shown = useSteppedPositions(targets, animate);
   const pawnRefs = useRef<Record<string, HTMLSpanElement | null>>({});
   const bands = Math.ceil(height / BAND_HEIGHT);
+  /** Casa tocada: um balão explica o que ela faz. */
+  const [openTile, setOpenTile] = useState<number | null>(null);
+  useEffect(() => {
+    if (openTile === null) return;
+    const timer = window.setTimeout(() => setOpenTile(null), 6000);
+    return () => window.clearTimeout(timer);
+  }, [openTile]);
 
   // Quem divide a casa aparece lado a lado.
   const crowd = useMemo(() => {
@@ -238,10 +257,12 @@ export function BoardCanvas({ tiles, rules, size, pawns, activeId, hazard = null
           const here = (crowd.get(index) ?? []).length > 0;
           const label = `Casa ${index}, ${info.label.toLowerCase()}${tile.to !== undefined ? ` para a casa ${tile.to}` : ''}${hazard?.tiles.includes(index) ? `, atingida: ${hazard.name}` : ''}`;
           return (
-            <div
+            <button
               key={index}
-              role="img"
+              type="button"
               aria-label={label}
+              aria-expanded={openTile === index}
+              onClick={() => setOpenTile((current) => (current === index ? null : index))}
               className={cn(
                 'absolute flex items-center justify-center rounded-full border-2 shadow-[0_2px_0_var(--edge-strong)] transition-shadow',
                 info.className,
@@ -262,7 +283,58 @@ export function BoardCanvas({ tiles, rules, size, pawns, activeId, hazard = null
                   {hazard.emoji}
                 </span>
               ) : null}
-            </div>
+            </button>
+          );
+        })}
+
+        {/* Balão da casa tocada. */}
+        {openTile !== null && tiles[openTile] && points[openTile]
+          ? (() => {
+              const tile = tiles[openTile];
+              const point = points[openTile];
+              const meta = TILE_INFO[tile.kind];
+              const above = point.y > 90;
+              const left = Math.min(Math.max(point.x, 105), width - 105);
+              return (
+                <button
+                  type="button"
+                  onClick={() => setOpenTile(null)}
+                  className="absolute z-30 animate-pop-in rounded-2xl border-2 border-edge-strong bg-surface p-[2.2cqw] text-left shadow-lg"
+                  style={{
+                    left: pct(left, width),
+                    top: pct(point.y + (above ? -RADIUS[tile.kind] - 4 : RADIUS[tile.kind] + 4), height),
+                    width: pct(200, width),
+                    transform: `translate(-50%, ${above ? '-100%' : '0'})`,
+                    fontSize: '3.5cqw',
+                  }}
+                  aria-label={`${meta.label}: fechar explicação`}
+                >
+                  <span className="flex items-center gap-[1.5cqw] font-display font-bold leading-tight text-ink">
+                    <span aria-hidden="true">{tileIcon(tile, rules) || '·'}</span>
+                    {meta.label}
+                    {indexLabel(openTile, size)}
+                  </span>
+                  <span className="mt-[0.8cqw] block font-semibold leading-snug text-muted">
+                    {tileDescription(tile.kind, rules)}
+                    {tile.to !== undefined ? ` Vai para a casa ${tile.to}.` : ''}
+                  </span>
+                </button>
+              );
+            })()
+          : null}
+
+        {/* Brilhos e emojis dos acontecimentos. */}
+        {bursts.map((burst) => {
+          const point = points[Math.min(burst.tile, points.length - 1)];
+          if (!point) return null;
+          const color = burst.tone === 'good' ? 'var(--success)' : burst.tone === 'bad' ? 'var(--danger)' : burst.tone === 'special' ? 'var(--primary)' : 'var(--info)';
+          return (
+            <span key={burst.key} aria-hidden="true" className="pointer-events-none absolute z-[15]" style={{ left: pct(point.x, width), top: pct(point.y, height) }}>
+              <span className="board-ring absolute block rounded-full border-4" style={{ width: `${(60 / width) * 100}cqw`, aspectRatio: '1', borderColor: color, left: 0, top: 0 }} />
+              <span className="board-rise absolute block whitespace-nowrap leading-none" style={{ left: 0, top: 0, fontSize: `${(34 / width) * 100}cqw` }}>
+                {burst.emoji}
+              </span>
+            </span>
           );
         })}
 
@@ -279,7 +351,7 @@ export function BoardCanvas({ tiles, rules, size, pawns, activeId, hazard = null
               ref={(node) => {
                 pawnRefs.current[pawn.id] = node;
               }}
-              className={cn('absolute z-10 flex items-center justify-center transition-[left,top] duration-150 ease-linear motion-reduce:transition-none', active && 'z-20')}
+              className={cn('pointer-events-none absolute z-10 flex items-center justify-center transition-[left,top] duration-150 ease-linear motion-reduce:transition-none', active && 'z-20')}
               style={{
                 left: pct(point.x + dx, width),
                 top: pct(point.y + dy - 4, height),
@@ -290,7 +362,7 @@ export function BoardCanvas({ tiles, rules, size, pawns, activeId, hazard = null
               }}
               aria-label={pawn.name}
             >
-              <Pawn emoji={pawn.emoji} active={active} />
+              <Pawn key={pawnFx[pawn.id]?.key ?? 'idle'} emoji={pawn.emoji} active={active} fx={pawnFx[pawn.id]?.fx} />
             </span>
           );
         })}
@@ -302,13 +374,15 @@ export function BoardCanvas({ tiles, rules, size, pawns, activeId, hazard = null
 type TrackProps = {
   state: BoardState;
   flash: number[];
+  bursts?: TileBurst[];
+  pawnFx?: PawnEffects;
   image?: string | null;
   pathStyle?: PathStyle | null;
   landmarks?: Landmark[] | null;
 };
 
 /** O caminho da partida em andamento: o tabuleiro desenhado com os peões do estado do jogo. */
-export const BoardTrack = memo(function BoardTrack({ state, flash, image, pathStyle, landmarks }: TrackProps) {
+export const BoardTrack = memo(function BoardTrack({ state, flash, bursts, pawnFx, image, pathStyle, landmarks }: TrackProps) {
   const active = state.phase === 'FINISHED' ? null : currentPlayer(state).id;
   const pawns = useMemo(() => state.players.map((player) => ({ id: player.id, name: player.name, emoji: player.pawn, position: player.position })), [state.players]);
   return (
@@ -320,6 +394,8 @@ export const BoardTrack = memo(function BoardTrack({ state, flash, image, pathSt
       activeId={active}
       hazard={state.hazard}
       flash={flash}
+      bursts={bursts}
+      pawnFx={pawnFx}
       image={image}
       pathStyle={pathStyle}
       landmarks={landmarks}

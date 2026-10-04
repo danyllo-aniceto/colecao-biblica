@@ -17,6 +17,7 @@ type View = {
   question: Record<string, unknown> | null;
   reveal: { correctOption: string; correct: boolean; explanation: string | null } | null;
   log: string[];
+  feed: Array<{ id: string; title: string; text: string; tone: string; tiles: number[]; delayMs: number }>;
   deadlineAt: number | null;
 };
 
@@ -348,5 +349,60 @@ describe.skipIf(!hasDatabase)("tabuleiro online", () => {
     expect((response.body as View).players[0].pawn).toBe("🦊");
     const notOwned = await api.post("/api/board/rooms").set(bearer(bia)).send({ scenarioId: await scenarioId(), pawn: "🦊" });
     expect((notOwned.body as View).players[0].pawn).not.toBe("🦊");
+  });
+  it("os peões básicos são editados pelo painel: o novo vale para todos e o antigo deixa de valer", async () => {
+    // O painel trocou a Ovelha por uma raposa e desativou os demais básicos.
+    await prisma.cosmetic.updateMany({ where: { type: "PAWN", unlock: "FREE" }, data: { active: false } });
+    await prisma.cosmetic.update({ where: { type_name: { type: "PAWN", name: "Peão: Ovelha" } }, data: { style: "🦊", active: true } });
+    // Sem pedir peão nenhum, a sala usa o primeiro básico ativo.
+    const first = await api.post("/api/board/rooms").set(bearer(ana)).send({ scenarioId: await scenarioId() });
+    expect((first.body as View).players[0].pawn).toBe("🦊");
+    // Quem nunca abriu o armário também pode usar o básico; o emoji de fábrica antigo não vale mais.
+    const room = first.body as View;
+    const joined = await post(bia, `${room.code}/join`, { pawn: "🦊" });
+    expect((joined.body as View).players.find((player) => player.userId === biaId)?.pawn).toBe("🦊");
+    const old = await api.post("/api/board/rooms").set(bearer(bia)).send({ scenarioId: await scenarioId(), pawn: "🐑" });
+    expect((old.body as View).players[0].pawn).toBe("🦊");
+    // Desativando todos, voltam os emojis de fábrica (a sala nunca fica sem peão).
+    await prisma.cosmetic.updateMany({ where: { type: "PAWN", unlock: "FREE" }, data: { active: false } });
+    const fallback = await api.post("/api/board/rooms").set(bearer(ana)).send({ scenarioId: await scenarioId() });
+    expect((fallback.body as View).players[0].pawn).toBe("🐑");
+  });
+
+  it("os avisos animados chegam na visão, com id estável e sem a resposta certa", async () => {
+    const room = await newRoom(ana, { size: 25, timeSeconds: 30 });
+    await post(ana, `${room.code}/bots`, { skill: "MASTER" });
+    await post(ana, `${room.code}/start`);
+    expect(((await get(ana, room.code)).body as View).feed).toEqual([]);
+
+    let seen: string[] = [];
+    let view = (await get(ana, room.code)).body as View;
+    for (let step = 0; step < 400 && view.status === "PLAYING" && seen.length === 0; step += 1) {
+      const key = currentKey(view);
+      if (view.reveal) {
+        if (key === `u${anaId}`) await post(ana, `${room.code}/continue`);
+        else await prisma.boardRoom.update({ where: { code: room.code }, data: { dueAt: new Date(Date.now() - 1000) } });
+      } else if (key !== `u${anaId}`) {
+        await prisma.boardRoom.update({ where: { code: room.code }, data: { dueAt: new Date(Date.now() - 1000) } });
+      } else if (view.state!.phase === "ROLL") {
+        await post(ana, `${room.code}/roll`);
+      } else if (view.state!.phase === "TRIAL_OFFER") {
+        await post(ana, `${room.code}/trial`, { accept: true });
+      } else if (view.state!.pending) {
+        const right = await correctOf(room.code, view.state!.pending.questionId);
+        await post(ana, `${room.code}/answer`, { selected: right });
+      }
+      view = (await get(ana, room.code)).body as View;
+      seen = view.feed.map((item) => item.id);
+    }
+    expect(view.feed.length).toBeGreaterThan(0);
+    for (const item of view.feed) {
+      expect(item.title.length).toBeGreaterThan(0);
+      expect(item.text.length).toBeGreaterThan(0);
+      expect(JSON.stringify(item)).not.toMatch(/correctOption|rng/);
+    }
+    // Novas consultas sem mudança devolvem os mesmos ids (o cliente toca cada um uma vez só).
+    const again = (await get(ana, room.code)).body as View;
+    expect(again.feed.map((item) => item.id).slice(0, seen.length)).toEqual(seen);
   });
 });

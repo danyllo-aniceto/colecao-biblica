@@ -51,6 +51,9 @@ código em **português do Brasil**.
   sorteio ao cliente antes do gabarito. A tela da partida é a mesma no local e no online (`board-screen.tsx`).
 - O caminho do tabuleiro é desenhado pelo app (`board/layout.ts`: casas equidistantes ao longo de curvas, testado) sobre um terreno
   em imagem repetida e espelhada; marcos e curvas são dados do cenário editáveis no painel. A arte nunca desenha a estrada.
+- Avisos animados: `board/callouts.ts` (puro, testado) transforma os eventos do motor em cartazes; local e online usam a mesma lista
+  (`FeedEntry`, tocada uma vez por `id` em `use-callouts.ts`). Todo evento novo do motor que mereça aviso entra ali.
+- Os peões básicos (grátis) são itens `PAWN` do painel (`unlock = FREE`); `FREE_PAWNS` do motor é só o reserva.
 - O motor não vê a alternativa marcada, só se acertou. Toda regra nova tem teste em `engine.test.ts`; regras de cenário são
   dados em `scenarios.ts`. Nada do modo dá XP, moedas, figurinhas nem mexe nas estatísticas das perguntas.
 

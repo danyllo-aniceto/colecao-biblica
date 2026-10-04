@@ -238,6 +238,13 @@ Legenda: ✅ feito e testado · ⬜ a fazer.
   nos três tamanhos; posição por % vale para qualquer tamanho.
 - ✅ Peão que anda **casa a casa** (respeita "reduzir movimento"), câmera que segue o peão da vez, **mini-mapa** lateral e vibração curta
   na sua vez (online).
+- ✅ **Avisos animados** (`board/callouts.ts`, testado): cada acontecimento (atalho, queda, empurrão, fogo, poder ganho/usado,
+  muro, vigília, rede, vitória...) vira um cartaz por cima do tabuleiro dizendo o que foi e por quê, com anel e emoji subindo da
+  casa e um movimento no peão (balança, pula, escudo). Esperam o peão terminar de andar; no máximo 3 por jogada, em fila. No
+  online o servidor guarda os últimos (`board_rooms.feed`, migração `20261021090000`) e cada aparelho toca só os que ainda não viu.
+  Tocar numa casa abre um balão explicando o que ela faz.
+- ✅ **Peões básicos editáveis**: os 10 emojis grátis viraram itens `PAWN` de desbloqueio "Grátis" (seed `Peão: Ovelha`...), que o
+  painel troca por emoji/imagem ou desativa; a sala usa os ativos (os emojis de fábrica só se nenhum sobrar).
 - ⬜ Reações rápidas durante a partida online (cosmético REACTION), imagens de topo/rodapé (largada e chegada) e sons por cenário.
 
 **Depois — modo estilo Kahoot**, reaproveitando a camada de sala da etapa 4 (`BoardRoom` → `PartyRoom`).

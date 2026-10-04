@@ -1,5 +1,6 @@
 import { apiRequest, apiRequestVoid, fetchApi, safeParseJson } from '@/lib/http';
 import type { Landmark, PathStyle } from '@board/layout';
+import type { Callout } from '@board/callouts';
 import type { BoardConfig, BoardState, BotSkill, OptionLetter, PowerUpKind } from '@board/engine';
 import type { SheetQuestion } from '@/components/user/board/board-question';
 
@@ -42,6 +43,8 @@ export type RoomView = {
     bibleReference: string | null;
   } | null;
   log: string[];
+  /** Avisos animados recentes (cada aparelho toca só os que ainda não viu). */
+  feed: Array<Callout & { id: string }>;
   deadlineAt: number | null;
 };
 

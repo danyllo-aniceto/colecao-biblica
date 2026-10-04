@@ -12,12 +12,14 @@ import {
   type QuestionBank,
 } from '@board/engine';
 import { botAction } from '@board/bots';
+import { calloutsFor, pickCallouts } from '@board/callouts';
 import { useDialogs } from '@/components/ui/dialogs';
 import { playSfx } from '@/lib/sound/sfx';
 import { clearLocalBoard, saveLocalBoard, type LocalBoardGame } from '@/lib/board-local';
 import { eventMessage } from '@/components/user/board/board-meta';
 import { BoardScreen } from '@/components/user/board/board-screen';
 import type { Reveal } from '@/components/user/board/board-question';
+import type { FeedEntry } from '@/components/user/board/use-callouts';
 
 type GameProps = {
   game: LocalBoardGame;
@@ -39,6 +41,8 @@ export function BoardGame({ game: saved, onExit, onRematch }: GameProps) {
   const [rolling, setRolling] = useState(false);
   const [face, setFace] = useState<number | null>(null);
   const [flash, setFlash] = useState<number[]>([]);
+  const [feed, setFeed] = useState<FeedEntry[]>([]);
+  const feedCount = useRef(0);
 
   const stateRef = useRef(state);
   const setReveal = useCallback((value: Reveal | null) => {
@@ -80,6 +84,8 @@ export function BoardGame({ game: saved, onExit, onRematch }: GameProps) {
     setState(result.state);
     const lines = result.events.map((event) => eventMessage(event, result.state)).filter((line): line is string => Boolean(line));
     if (lines.length > 0) setLog((current) => [...current, ...lines].slice(-40));
+    const callouts = pickCallouts(calloutsFor(result.events, result.state));
+    if (callouts.length > 0) setFeed((current) => [...current, ...callouts.map((callout) => ({ ...callout, id: `local-${feedCount.current++}` }))].slice(-20));
     const arrivals = result.events.flatMap((event) => (event.type === 'MOVED' ? [event.to] : event.type === 'PUSHED' ? [event.to] : []));
     if (arrivals.length > 0) {
       setFlash(arrivals);
@@ -181,6 +187,7 @@ export function BoardGame({ game: saved, onExit, onRematch }: GameProps) {
       theme={{ name: saved.scenario.name, color: saved.scenario.color, background: saved.scenario.background, boardImage: saved.scenario.boardImage, pathStyle: saved.scenario.pathStyle, landmarks: saved.scenario.landmarks }}
       state={state}
       log={log}
+      feed={feed}
       flash={flash}
       question={question ?? null}
       reveal={reveal}

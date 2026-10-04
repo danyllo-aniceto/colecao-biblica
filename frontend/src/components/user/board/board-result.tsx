@@ -43,7 +43,7 @@ export function BoardResult({
   }
 
   return (
-    <div className="absolute inset-0 z-10 overflow-y-auto bg-bg/95 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Fim da partida">
+    <div className="absolute inset-0 z-40 overflow-y-auto bg-bg/95 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Fim da partida">
       <div className="mx-auto flex min-h-full max-w-md flex-col justify-center gap-5 p-5">
         <div className="animate-pop-in space-y-2 text-center">
           <EmojiEventsRoundedIcon sx={{ fontSize: 56 }} className="text-primary" />

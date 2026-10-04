@@ -26,6 +26,8 @@ import { Dice } from '@/components/user/board/dice';
 import { BoardTrack, Pawn } from '@/components/user/board/board-track';
 import type { Landmark, PathStyle } from '@board/layout';
 import { QuestionSheet, type Reveal, type SheetQuestion } from '@/components/user/board/board-question';
+import { CalloutBanner } from '@/components/user/board/callout-banner';
+import { useCalloutPlayer, type FeedEntry } from '@/components/user/board/use-callouts';
 
 export type BoardTheme = {
   name: string;
@@ -40,6 +42,8 @@ type BoardScreenProps = {
   theme: BoardTheme;
   state: BoardState;
   log: string[];
+  /** Avisos animados do que acontece (lista que só cresce; os que já estavam ao abrir a tela não tocam). */
+  feed: FeedEntry[];
   flash: number[];
   /** Pergunta aberta (a do `state.pending`), quando já chegou. */
   question: SheetQuestion | null;
@@ -82,6 +86,7 @@ type BoardScreenProps = {
 export function BoardScreen(props: BoardScreenProps) {
   const { theme, state, log, flash, question, reveal, controlledBy, rolling, face, busy = false, deadlineAt, clockOffset, badge, notice, sharedDevice = false } = props;
   const [helpOpen, setHelpOpen] = useState(false);
+  const callouts = useCalloutPlayer(props.feed);
   /** Power-up com alvo (Cajado, Rede) esperando a escolha do rival. */
   const [picking, setPicking] = useState<PowerUpKind | null>(null);
 
@@ -163,17 +168,20 @@ export function BoardScreen(props: BoardScreenProps) {
         </div>
       ) : null}
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <BoardTrack state={state} flash={flash} image={theme.boardImage} pathStyle={theme.pathStyle} landmarks={theme.landmarks} />
-        {log.length > 0 ? (
-          <ul className="mx-auto my-3 max-w-xl space-y-0.5 px-4 text-xs font-semibold text-muted" aria-label="Últimas jogadas" aria-live="polite">
-            {log.slice(-4).map((line, index, all) => (
-              <li key={`${log.length}-${index}`} className={index === all.length - 1 ? 'text-ink' : undefined}>
-                {line}
-              </li>
-            ))}
-          </ul>
-        ) : null}
+      <div className="relative min-h-0 flex-1">
+        <div className="h-full overflow-y-auto">
+          <BoardTrack state={state} flash={flash} bursts={callouts.bursts} pawnFx={callouts.pawnFx} image={theme.boardImage} pathStyle={theme.pathStyle} landmarks={theme.landmarks} />
+          {log.length > 0 ? (
+            <ul className="mx-auto my-3 max-w-xl space-y-0.5 px-4 text-xs font-semibold text-muted" aria-label="Últimas jogadas">
+              {log.slice(-4).map((line, index, all) => (
+                <li key={`${log.length}-${index}`} className={index === all.length - 1 ? 'text-ink' : undefined}>
+                  {line}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+        <CalloutBanner callout={callouts.active} />
       </div>
 
       <div className="mx-auto max-h-[78dvh] w-full max-w-2xl shrink-0 overflow-y-auto pb-[env(safe-area-inset-bottom)]">

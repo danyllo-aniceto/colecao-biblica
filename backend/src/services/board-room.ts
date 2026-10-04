@@ -27,6 +27,7 @@ import {
   type PowerUpKind,
   type QuestionBank,
 } from "../board/engine";
+import { calloutsFor, pickCallouts, type Callout } from "../board/callouts";
 import { eventMessage } from "../board/messages";
 import { boardRulesFor } from "../board/scenarios";
 import { pickBoardPool, type BoardPoolItem } from "./board";
@@ -73,6 +74,10 @@ type Reveal = {
   at: number;
 };
 
+/** Aviso animado guardado na sala: o `id` deixa cada aparelho tocar o aviso uma vez só. */
+type FeedItem = Callout & { id: string };
+const MAX_FEED = 12;
+
 type Work = {
   room: BoardRoom;
   players: BoardRoomPlayer[];
@@ -84,6 +89,7 @@ type Work = {
   pool: BoardPoolItem[];
   reveal: Reveal | null;
   log: string[];
+  feed: FeedItem[];
   dueAt: number | null;
   deadlineAt: number | null;
   dirtyPlayers: Set<number>;
@@ -121,6 +127,12 @@ function lines(events: BoardEvent[], state: BoardState): string[] {
   return events.map((event) => eventMessage(event, state)).filter((line): line is string => Boolean(line));
 }
 
+function pushFeed(work: Work, callouts: Callout[], at: number) {
+  if (callouts.length === 0) return;
+  const items = pickCallouts(callouts).map((callout, index) => ({ ...callout, id: `${at}-${index}` }));
+  work.feed = [...work.feed, ...items].slice(-MAX_FEED);
+}
+
 function pushLog(work: Work, newLines: string[]) {
   if (newLines.length > 0) work.log = [...work.log, ...newLines].slice(-MAX_LOG);
 }
@@ -130,14 +142,26 @@ function freeSlot(players: BoardRoomPlayer[]): number {
   throw badRequest("A sala está cheia");
 }
 
-function freePawn(players: BoardRoomPlayer[]): string {
-  return FREE_PAWNS.find((pawn) => !players.some((player) => player.pawn === pawn)) ?? FREE_PAWNS[0];
+/** Peões básicos de todos: os cosméticos de peão grátis e ativos do painel (os emojis de fábrica se não houver nenhum). */
+async function basicPawns(tx: Tx): Promise<string[]> {
+  const rows = await tx.cosmetic.findMany({
+    where: { type: "PAWN", unlock: "FREE", active: true },
+    orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+    select: { imageUrl: true, style: true },
+  });
+  const values = rows.map((row) => row.imageUrl || row.style).filter((value): value is string => Boolean(value));
+  return values.length > 0 ? values : FREE_PAWNS;
+}
+
+async function freePawn(tx: Tx, players: BoardRoomPlayer[]): Promise<string> {
+  const basics = await basicPawns(tx);
+  return basics.find((pawn) => !players.some((player) => player.pawn === pawn)) ?? basics[0];
 }
 
 /** Peão liberado para o jogador: os básicos de todos ou um peão do painel que ele tem. */
 async function allowedPawn(tx: Tx, userId: number, pawn: string | undefined | null): Promise<boolean> {
   if (!pawn) return false;
-  if (FREE_PAWNS.includes(pawn)) return true;
+  if ((await basicPawns(tx)).includes(pawn)) return true;
   const owned = await tx.userCosmetic.findFirst({
     where: { userId, cosmetic: { type: "PAWN", active: true, OR: [{ imageUrl: pawn }, { style: pawn }] } },
     select: { id: true },
@@ -148,7 +172,7 @@ async function allowedPawn(tx: Tx, userId: number, pawn: string | undefined | nu
 /** Valida o peão pedido: se já está em uso por outro ou não é do jogador, cai para um livre. */
 async function choosePawn(tx: Tx, userId: number, players: BoardRoomPlayer[], wanted: string | undefined | null, selfId?: number) {
   if (wanted && !players.some((player) => player.pawn === wanted && player.id !== selfId) && (await allowedPawn(tx, userId, wanted))) return wanted;
-  return freePawn(players.filter((player) => player.id !== selfId));
+  return freePawn(tx, players.filter((player) => player.id !== selfId));
 }
 
 export function validateConfig(input: Partial<BoardConfig> | undefined, base: BoardConfig = DEFAULT_CONFIG): BoardConfig {
@@ -197,6 +221,7 @@ function applyResult(work: Work, result: EngineResult, at: number, reschedule = 
   work.state = result.state;
   work.touched = true;
   pushLog(work, lines(result.events, result.state));
+  pushFeed(work, calloutsFor(result.events, result.state), at);
   if (result.state.phase === "FINISHED" && work.status === "PLAYING") {
     work.status = "FINISHED";
     work.justFinished = true;
@@ -313,6 +338,7 @@ async function load(tx: Tx, code: string): Promise<Work> {
     pool: (room.pool as unknown as BoardPoolItem[] | null) ?? [],
     reveal: (room.reveal as unknown as Reveal | null) ?? null,
     log: (room.log as unknown as string[]) ?? [],
+    feed: (room.feed as unknown as FeedItem[] | null) ?? [],
     dueAt: room.dueAt?.getTime() ?? null,
     deadlineAt: room.deadlineAt?.getTime() ?? null,
     dirtyPlayers: new Set(),
@@ -355,6 +381,7 @@ async function persist(tx: Tx, work: Work, now: number) {
       ...(work.poolDirty ? { pool: work.pool.length > 0 ? (work.pool as unknown as Prisma.InputJsonValue) : Prisma.JsonNull } : {}),
       reveal: work.reveal ? (work.reveal as unknown as Prisma.InputJsonValue) : Prisma.JsonNull,
       log: work.log as unknown as Prisma.InputJsonValue,
+      feed: work.feed as unknown as Prisma.InputJsonValue,
       version: { increment: 1 },
       dueAt: work.dueAt === null ? null : new Date(work.dueAt),
       deadlineAt: work.deadlineAt === null ? null : new Date(work.deadlineAt),
@@ -446,6 +473,7 @@ async function buildView(tx: Tx, work: Work, userId: number, now: number) {
     question,
     reveal,
     log: work.log,
+    feed: work.feed,
     deadlineAt: work.deadlineAt,
   };
 }
@@ -676,7 +704,7 @@ export function addBot(userId: number, code: string, skill: BotSkill) {
       if (work.players.length >= MAX_PLAYERS) throw badRequest("A sala está cheia (6 jogadores)");
       const taken = new Set(work.players.map((player) => player.name));
       const name = BOT_NAMES.find((candidate) => !taken.has(candidate)) ?? `Bot ${work.players.length + 1}`;
-      const row = await tx.boardRoomPlayer.create({ data: { roomId: work.room.id, slot: freeSlot(work.players), name, pawn: freePawn(work.players), bot: skill } });
+      const row = await tx.boardRoomPlayer.create({ data: { roomId: work.room.id, slot: freeSlot(work.players), name, pawn: await freePawn(tx, work.players), bot: skill } });
       work.players = [...work.players, row].sort((left, right) => left.slot - right.slot);
       work.touched = true;
     }),
@@ -737,6 +765,7 @@ export function startGame(userId: number, code: string) {
       work.poolDirty = true;
       work.reveal = null;
       work.log = [];
+      work.feed = [];
       work.status = "PLAYING";
       work.players.forEach((player) => {
         player.afkStrikes = 0;
@@ -766,6 +795,7 @@ export function rematch(userId: number, code: string) {
       work.poolDirty = true;
       work.reveal = null;
       work.log = [];
+      work.feed = [];
       work.dueAt = null;
       work.deadlineAt = null;
       work.touched = true;

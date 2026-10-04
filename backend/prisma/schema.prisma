@@ -835,6 +835,8 @@ model BoardRoom {
   reveal     Json?
   /// Últimas jogadas, em texto.
   log        Json            @default("[]")
+  /// Avisos animados recentes (calloutsFor): [{ id, emoji, title, text, tone, tiles, playerId, fx, delayMs }].
+  feed       Json            @default("[]")
   /// Sobe a cada mudança; o cliente só baixa a sala quando muda.
   version    Int             @default(1)
   /// Quando o servidor precisa agir sozinho (bot, tempo esgotado, fim do gabarito).

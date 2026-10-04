@@ -294,6 +294,7 @@ export function OnlineRoom({ code, initial = null, scenarios, onClose }: Props) 
       theme={{ name: view.scenario.name, color: view.scenario.color, background: view.scenario.quizBackgroundUrl, boardImage: view.scenario.boardImageUrl, pathStyle: view.scenario.boardPathStyle, landmarks: view.scenario.boardLandmarks }}
       state={view.state}
       log={view.log}
+      feed={view.feed ?? []}
       flash={flash}
       question={view.question}
       reveal={reveal}

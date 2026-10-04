@@ -62,7 +62,20 @@ export const DEFAULT_COSMETICS: DefaultCosmetic[] = [
   { type: "AVATAR", name: "Vela acesa", rarity: "EPIC", imageUrl: avatar("vela"), unlock: "REQUIREMENT", requirement: "DAILY_STREAK", requirementValue: 14 },
   { type: "AVATAR", name: "Leão de Judá", rarity: "LEGENDARY", imageUrl: avatar("leao"), unlock: "REQUIREMENT", requirement: "ALL_LEGENDARY" },
   { type: "AVATAR", name: "Cruz", rarity: "LEGENDARY", imageUrl: avatar("cruz"), unlock: "REWARD", inChestPool: true },
-  // Peões do tabuleiro (os dez emojis básicos são de todos; estes vêm da loja e o painel pode trocar o emoji por uma imagem)
+  // Peões do tabuleiro. Os dez primeiros são de todos (grátis); o painel pode trocar o emoji por uma imagem ou desativá-los.
+  ...[
+    ["🐑", "Ovelha"],
+    ["🕊️", "Pomba"],
+    ["🐟", "Peixe"],
+    ["🌿", "Ramo"],
+    ["⭐", "Estrela"],
+    ["🦁", "Leão"],
+    ["🔥", "Chama"],
+    ["🌊", "Onda"],
+    ["🍇", "Uvas"],
+    ["👑", "Coroa"],
+  ].map(([emoji, name]): DefaultCosmetic => ({ type: "PAWN", name: `Peão: ${name}`, description: "Peão básico do tabuleiro", rarity: "COMMON", style: emoji, unlock: "FREE" })),
+  // Os demais vêm da loja (ou de metas) e o painel também pode trocar o emoji por uma imagem
   { type: "PAWN", name: "Peão: Maçã do Éden", description: "Peão do tabuleiro", rarity: "COMMON", style: "🍎", unlock: "SHOP", priceCoins: 150 },
   { type: "PAWN", name: "Peão: Girafa da Arca", description: "Peão do tabuleiro", rarity: "COMMON", style: "🦒", unlock: "SHOP", priceCoins: 150 },
   { type: "PAWN", name: "Peão: Camelo de Canaã", description: "Peão do tabuleiro", rarity: "COMMON", style: "🐪", unlock: "SHOP", priceCoins: 150 },

@@ -396,7 +396,13 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
                       : 'Imagem do ícone'
             }
             required={type === 'AVATAR'}
-            hint={type === 'PROFILE_BG' || type === 'ALBUM_COVER' ? 'Sem imagem, vale a cor escolhida abaixo (em degradê). Com imagem, a cor serve de reserva.' : undefined}
+            hint={
+              type === 'PROFILE_BG' || type === 'ALBUM_COVER'
+                ? 'Sem imagem, vale a cor escolhida abaixo (em degradê). Com imagem, a cor serve de reserva.'
+                : type === 'PAWN'
+                  ? 'Os peões com desbloqueio "Grátis" são os básicos de todo jogador. Trocar o emoji ou a imagem vale para as próximas partidas.'
+                  : undefined
+            }
           >
             <ImageUploadField value={imageUrl} onChange={setImageUrl} round={type === 'AVATAR' || type === 'FRAME'} wide={type === 'PROFILE_BG'} />
           </Field>
