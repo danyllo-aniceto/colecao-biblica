@@ -751,6 +751,10 @@ model Scenario {
   quizBackgroundUrl   String?  @map("quiz_background_url")
   /// Imagem de fundo do tabuleiro deste cenário (vertical, sem texto), atrás do caminho do jogo de tabuleiro.
   boardImageUrl       String?  @map("board_image_url")
+  /// Curvas do caminho do tabuleiro: SOFT, MEDIUM ou WIDE (vazio = MEDIUM).
+  boardPathStyle      String?  @map("board_path_style")
+  /// Marcos do cenário ao lado do caminho: [{ imageUrl?, emoji?, at (0-100), side (L/R), offset, size }].
+  boardLandmarks      Json?    @map("board_landmarks")
   /// Personagem cujos fragmentos este cenário dá (a carta especial).
   fragmentCharacterId Int?     @map("fragment_character_id")
   /// Ícone de perfil (avatar) com a arte do cenário, entregue junto com a relíquia.

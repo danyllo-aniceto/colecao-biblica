@@ -383,7 +383,7 @@ async function buildView(tx: Tx, work: Work, userId: number, now: number) {
   const [scenario, host] = await Promise.all([
     tx.scenario.findUniqueOrThrow({
       where: { id: work.scenarioId },
-      select: { id: true, slug: true, name: true, color: true, verse: true, verseReference: true, iconImageUrl: true, quizBackgroundUrl: true, boardImageUrl: true },
+      select: { id: true, slug: true, name: true, color: true, verse: true, verseReference: true, iconImageUrl: true, quizBackgroundUrl: true, boardImageUrl: true, boardPathStyle: true, boardLandmarks: true },
     }),
     tx.user.findUnique({ where: { id: work.hostId }, select: { name: true } }),
   ]);

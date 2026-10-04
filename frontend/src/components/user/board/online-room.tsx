@@ -130,7 +130,11 @@ export function OnlineRoom({ code, initial = null, scenarios, onClose }: Props) 
     }
     if (view.state.winnerId && !before.state.winnerId) playSfx('reward');
     else if (view.reveal && !before.reveal) playSfx(view.reveal.correct ? 'correct' : 'wrong');
-    else if (view.state.turn !== before.state.turn && view.state.players[view.state.turn].id === view.me?.key) playSfx('toggleOn');
+    else if (view.state.turn !== before.state.turn && view.state.players[view.state.turn].id === view.me?.key) {
+      // Sua vez: um toque no som e uma vibração curta (se o aparelho tiver).
+      playSfx('toggleOn');
+      navigator.vibrate?.(60);
+    }
   }, [view]);
 
   /** Roda uma ação no servidor e já mostra o que ele devolveu. */
@@ -287,7 +291,7 @@ export function OnlineRoom({ code, initial = null, scenarios, onClose }: Props) 
   const wins = view.me.wins;
   return (
     <BoardScreen
-      theme={{ name: view.scenario.name, color: view.scenario.color, background: view.scenario.quizBackgroundUrl, boardImage: view.scenario.boardImageUrl }}
+      theme={{ name: view.scenario.name, color: view.scenario.color, background: view.scenario.quizBackgroundUrl, boardImage: view.scenario.boardImageUrl, pathStyle: view.scenario.boardPathStyle, landmarks: view.scenario.boardLandmarks }}
       state={view.state}
       log={view.log}
       flash={flash}

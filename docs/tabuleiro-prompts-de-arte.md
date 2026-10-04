@@ -1,15 +1,15 @@
 # Modo Tabuleiro — guia de arte e prompts
 
-Cada cenário do tabuleiro pode ter **1 imagem de fundo** (o terreno por onde o caminho passa) e o jogador pode ter **peões** com
-imagem própria. Tudo é enviado pelo painel:
+Cada cenário do tabuleiro pode ter **1 imagem de fundo** (o terreno por onde o caminho passa), **marcos** (desenhos ao lado do
+caminho) e o jogador pode ter **peões** com imagem própria. Tudo é enviado pelo painel:
 
-- Fundo: **Painel → Campanha → editar o cenário → Imagem do tabuleiro** (a prévia ao lado mostra como fica).
+- Fundo, curvas e marcos: **Painel → Campanha → editar o cenário → Tabuleiro** (a prévia ao lado mostra como fica).
 - Peão: **Painel → Visual → Novo item → Peão** (emoji ou imagem, com prévia no tabuleiro).
 
 > **Importante:** o app desenha o caminho e as casas **por cima** da imagem. Por isso o fundo **não tem estrada, casas, setas,
 > números, peões nem texto**: é só o terreno, visto **de cima** (como o tampo de um jogo de tabuleiro).
 
-## 1. Fundo do tabuleiro
+## 1. Fundo do tabuleiro (o terreno)
 
 ### Formato
 
@@ -21,27 +21,38 @@ imagem própria. Tudo é enviado pelo painel:
 | Texto, números, setas, casas, estrada | **nenhum** |
 | Transparência | nenhuma (cena completa) |
 
-### Por que visto de cima
+### Como o app usa a imagem
 
-O tabuleiro tem de 25 a 60 casas e fica bem mais alto que a tela. O app **repete a imagem de cima para baixo, espelhando uma
-cópia sim, outra não**, para as emendas sumirem. Isso só fica natural se a arte não tiver "alto" e "baixo" (céu em cima e chão
-embaixo). Uma vista aérea do terreno (grama, rio, areia, pedras) funciona de qualquer lado.
+O app **desenha a estrada e as casas** (curvas em "S") por cima do terreno. Por isso a arte nunca precisa "bater" com o caminho:
+basta ser um terreno bonito, calmo no meio e detalhado nas margens. O tabuleiro tem de 25 a 60 casas e fica bem mais alto que a
+tela, então o app **repete a imagem de cima para baixo, espelhando uma cópia sim, outra não**, para as emendas sumirem. Isso só
+fica natural se a arte não tiver "alto" e "baixo" (céu em cima e chão embaixo): uma vista aérea (grama, rio, areia, pedras)
+funciona de qualquer lado.
 
-### Medidas no celular (para a IA e para quem revisa)
+### Medidas (para a IA e para quem revisa)
 
-A imagem de 1080 px de largura ocupa a tela inteira do celular (390 px): **1 px do app ≈ 2,8 px da imagem**.
+O quadro do tabuleiro tem 360 unidades de largura, que correspondem a 1080 px da imagem: **1 unidade = 3 px**.
 
-| Elemento do app | No app | Na imagem (1080 × 1920) |
+| Elemento do app | Unidades | Na imagem (1080 × 1920) |
 |---|---|---|
-| Casa comum | círculo de 44 px | ~122 px |
-| Casa especial (poder, provação...) | círculo de 54 px | ~150 px |
-| Largura da estrada | 26 px | ~72 px |
-| Distância entre o centro de duas casas | 64 px | ~178 px |
-| **Corredor** onde o caminho serpenteia | 72% da largura | faixa central de **~780 px** |
+| Casa comum | círculo de 44 | ~132 px |
+| Casa especial (poder, provação...) | círculo de 50 a 54 | ~150 a 162 px |
+| Largada / portão / chegada | 58 / 62 / 76 | ~174 / 186 / 228 px |
+| Estrada (com a borda) | 36 | ~108 px |
+| Distância entre o centro de duas casas | 62 | ~186 px |
+| Altura de cada repetição da imagem | 640 | 1920 px |
 
-- **Corredor central (780 px):** terreno calmo, de cor média e pouco contraste. É aqui que ficam a estrada e as casas.
-- **Margens (150 px de cada lado):** é onde moram os detalhes do cenário (árvores, rochas, ondas, tendas, ruínas...), bem
-  pequenos e espalhados, nunca grudados no corredor.
+O painel deixa escolher as **curvas do caminho**; cada uma ocupa uma faixa central diferente da largura:
+
+| Curvas | Faixa onde ficam estrada e casas | Para a arte |
+|---|---|---|
+| Suave | ~45% (centro, ~500 px) | margens largas para marcos |
+| Média | ~75% (~810 px) | o equilíbrio de sempre |
+| Larga | ~85% (~920 px) | quase toda a largura; deixe o terreno calmo |
+
+- **Faixa central:** terreno calmo, de cor média e pouco contraste. Pense na Média: é o padrão.
+- **Margens:** é onde moram os detalhes do cenário (árvores, rochas, ondas, ruínas...), bem pequenos e espalhados.
+  Os **marcos** (seção 5) cobrem os desenhos maiores, que você posiciona pelo painel.
 - **Cores médias e saturadas, contraste baixo:** as casas têm cores fortes (verde, vermelho, azul, dourado) e precisam
   se destacar do fundo. Evite brancos estourados e pretos profundos.
 - O app aplica uma película leve na cor do tema; funciona nos temas claro e escuro.
@@ -124,7 +135,45 @@ Em todos, substitua `[ESTILO BASE]` pelo bloco da seção 2 e use o modelo da se
 - **Margens:** muralhas e telhados de pedra, jardim de oliveiras (Getsêmani), uma pedra grande redonda ao lado de um túmulo vazio.
 - **Cores:** violeta, pedra clara, verde-oliva e toques de dourado.
 
-## 5. Peões
+## 5. Marcos do cenário (opcional)
+
+Marcos são desenhos soltos — uma árvore grande, uma tenda, um barco, uma coluna — que ficam ao lado do caminho. Você os coloca
+pelo painel (**Campanha → editar o cenário → Tabuleiro → Marcos do cenário**, até 12 por cenário), escolhendo:
+
+- a **imagem** (ou um emoji, enquanto a arte não fica pronta);
+- a **posição no caminho em %** (0% = largada, 100% = chegada): vale para qualquer tamanho de tabuleiro, então a árvore a 30% fica
+  sempre "no primeiro terço", seja em 25 ou em 60 casas;
+- o **lado** (esquerda ou direita), a **distância da estrada** e o **tamanho**.
+
+A prévia ao lado mostra o resultado na hora, nos três tamanhos de tabuleiro.
+
+| | |
+|---|---|
+| Tamanho | **512 × 512 px**, quadrado |
+| Arquivo | **PNG com fundo transparente**, até ~300 KB |
+| Visão | de cima ou levemente inclinada (como o terreno), o objeto inteiro dentro do quadro |
+| Sombra | pode ter uma sombra curta e suave **colada ao objeto**; sem sombra no chão ao redor |
+| Texto | nenhum |
+
+### Modelo
+
+```
+[ESTILO BASE, mas com fundo transparente]
+
+Um único objeto de cenário para um jogo de tabuleiro, visto de cima (levemente inclinado): [OBJETO], no estilo do
+fundo do cenário "[NOME]". Silhueta clara, contorno suave e arredondado, cores saturadas. Fundo totalmente
+transparente, sem chão, sem outros objetos, sem texto, centralizado, ocupando 85% do quadro, 512x512.
+```
+
+### Ideias de marcos por cenário
+
+`eden` árvore frutífera grande · roseira · pedras do riacho · `arca` Arca pequena em terra firme · pilha de tábuas · poça com arco-íris ·
+`canaa` oliveira · tenda de pastor · poço de pedra · `egito` palmeira · bloco de templo · barco a vela no rio · `sinai` rochedo grande ·
+tenda · cacto · `jerico` torre de muralha · tenda de acampamento · trombeta no chão · `templo` coluna dourada · candelabro de sete
+braços · cedro · `babilonia` leão de pedra dourado · jardim em degraus · fonte azulejada · `galileia` barco de pesca · rede estendida ·
+juncos · `jerusalem` oliveira · túmulo com pedra rolada · muralha curta.
+
+## 6. Peões
 
 O peão aparece pequeno (de 28 a 48 px) em cima das casas, então precisa de **silhueta forte e poucos detalhes**.
 
@@ -152,11 +201,12 @@ centralizado, ocupando 80% do quadro, 512x512.
 `Menorá do Templo` · `Muralha da Babilônia` · `Barquinho da Galileia` · `Túmulo vazio com a pedra rolada` · `Troféu` (3 vitórias) ·
 `Medalha de campeão` (15 vitórias).
 
-## 6. Conferência antes de enviar
+## 7. Conferência antes de enviar
 
 - [ ] Sem texto, números, estrada, casas, setas ou rostos.
 - [ ] Vista de cima, sem horizonte (a imagem espelhada na vertical não estranha).
 - [ ] Centro calmo e de contraste baixo; detalhes só nas margens.
+- [ ] Marcos em PNG transparente, inteiros dentro do quadro, sem sombra no chão.
 - [ ] Cores médias: testar a prévia do painel nos temas claro e escuro.
 - [ ] Mesmo estilo e acabamento dos outros cenários.
 - [ ] Peões com fundo transparente, bem centrados e legíveis pequenos (veja a prévia do painel).

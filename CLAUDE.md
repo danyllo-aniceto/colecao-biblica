@@ -49,6 +49,8 @@ código em **português do Brasil**.
   `?since=<versão>`; tudo que acontece "sozinho" (bots, tempo esgotado, gabarito, ausência) é resolvido de forma preguiçosa por
   `advance()` na próxima consulta/jogada, sempre com a linha da sala trancada (`FOR UPDATE`). Nunca devolva a alternativa certa nem o
   sorteio ao cliente antes do gabarito. A tela da partida é a mesma no local e no online (`board-screen.tsx`).
+- O caminho do tabuleiro é desenhado pelo app (`board/layout.ts`: casas equidistantes ao longo de curvas, testado) sobre um terreno
+  em imagem repetida e espelhada; marcos e curvas são dados do cenário editáveis no painel. A arte nunca desenha a estrada.
 - O motor não vê a alternativa marcada, só se acertou. Toda regra nova tem teste em `engine.test.ts`; regras de cenário são
   dados em `scenarios.ts`. Nada do modo dá XP, moedas, figurinhas nem mexe nas estatísticas das perguntas.
 

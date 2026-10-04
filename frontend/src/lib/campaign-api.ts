@@ -1,5 +1,6 @@
 import type { ChestPrize } from '@/lib/user-api';
 import { apiRequest } from '@/lib/http';
+import type { Landmark, PathStyle } from '@board/layout';
 import type { StickerRarity } from '@/lib/admin-api';
 import type { Cosmetic } from '@/lib/rewards-api';
 import type { UnlockedAchievement } from '@/lib/user-api';
@@ -40,6 +41,9 @@ export type CampaignScenario = {
   quizBackgroundUrl?: string | null;
   /** Imagem de fundo do tabuleiro deste cenário. */
   boardImageUrl?: string | null;
+  /** Curvas do caminho do tabuleiro e marcos do cenário (editáveis no painel). */
+  boardPathStyle?: PathStyle | null;
+  boardLandmarks?: Landmark[] | null;
   /** Música do tema: liberada ao chegar ao primeiro nível do cenário. */
   /** Tem música cadastrada (mesmo bloqueada). */
   hasMusic: boolean;

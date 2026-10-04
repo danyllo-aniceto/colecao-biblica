@@ -228,14 +228,21 @@ Legenda: ✅ feito e testado · ⬜ a fazer.
 - ✅ A tela da partida é a mesma do modo local (`board-screen.tsx`), alimentada pelo servidor; 13 testes de integração
   (`board-room.test.ts`) e partida completa testada com dois navegadores.
 
-**Etapa 5 — Polimento** ⬜
-- ⬜ **Caminho sinuoso** no lugar da grade colada (ver "Proposta de design do tabuleiro" abaixo) e arte por cenário
-  (guia e prompts em `docs/tabuleiro-prompts-de-arte.md`).
-- ⬜ Sons e vibração, reações rápidas (cosmético REACTION), animação do peão casa a casa, modo sem animação.
+**Etapa 5 — Polimento** ✅ (primeira parte)
+- ✅ **Caminho sinuoso** desenhado pelo app (`board/layout.ts`, testado): casas sempre a 62 unidades umas das outras, nunca encostando,
+  estrada em curvas "S" (Suave, Média ou Larga, por cenário), casas redondas com tamanhos por tipo (o ritmo mostra onde estão as provações),
+  atalhos e quedas como arcos pontilhados.
+- ✅ **Terreno** = imagem repetida e espelhada na vertical (qualquer tamanho de tabuleiro, sem emenda); a IA gera só o terreno, e o
+  caminho nunca "quebra" porque quem desenha a estrada é o app.
+- ✅ **Marcos** editáveis no painel (imagem ou emoji, posição em % do caminho, lado, distância e tamanho; até 12), com prévia ao vivo
+  nos três tamanhos; posição por % vale para qualquer tamanho.
+- ✅ Peão que anda **casa a casa** (respeita "reduzir movimento"), câmera que segue o peão da vez, **mini-mapa** lateral e vibração curta
+  na sua vez (online).
+- ⬜ Reações rápidas durante a partida online (cosmético REACTION), imagens de topo/rodapé (largada e chegada) e sons por cenário.
 
 **Depois — modo estilo Kahoot**, reaproveitando a camada de sala da etapa 4 (`BoardRoom` → `PartyRoom`).
 
-## 10. Proposta de design do tabuleiro (para decidir)
+## 10. Design do tabuleiro (decidido e feito na etapa 5)
 
 Hoje as casas formam uma grade de 6 colunas, quase coladas. Funciona, mas parece planilha e esconde a imagem de fundo. A proposta:
 

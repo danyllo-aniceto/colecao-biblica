@@ -11,6 +11,7 @@ import { Field } from '@/components/ui/field';
 import { Input, Textarea } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { Pagination } from '@/components/ui/pagination';
+import { Segmented } from '@/components/ui/segmented';
 import { Select } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { errorMessage, useToast } from '@/components/ui/toast';
@@ -36,6 +37,8 @@ import { AudioUploadField } from '@/components/admin/audio-upload-field';
 import { ImageUploadField } from '../image-upload-field';
 import { QuizBackgroundPreview } from './quiz-background-preview';
 import { BoardImagePreview } from './board-previews';
+import { LandmarksEditor } from './landmarks-editor';
+import { PATH_STYLES, type Landmark, type PathStyle } from '@board/layout';
 import { MapPositionEditor } from './map-position-editor';
 import { usePagedList } from '../use-paged-list';
 
@@ -185,6 +188,8 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
   const [musicUrl, setMusicUrl] = useState(scenario?.musicUrl ?? '');
   const [quizBackgroundUrl, setQuizBackgroundUrl] = useState(scenario?.quizBackgroundUrl ?? '');
   const [boardImageUrl, setBoardImageUrl] = useState(scenario?.boardImageUrl ?? '');
+  const [boardPathStyle, setBoardPathStyle] = useState<PathStyle>(scenario?.boardPathStyle ?? 'MEDIUM');
+  const [boardLandmarks, setBoardLandmarks] = useState<Landmark[]>(scenario?.boardLandmarks ?? []);
   const [characterId, setCharacterId] = useState(scenario?.fragmentCharacterId ? String(scenario.fragmentCharacterId) : '');
   const [sortOrder, setSortOrder] = useState(String(scenario?.sortOrder ?? nextOrder));
   const [active, setActive] = useState(scenario?.active ?? true);
@@ -217,6 +222,8 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
       musicUrl: musicUrl || null,
       quizBackgroundUrl: quizBackgroundUrl || null,
       boardImageUrl: boardImageUrl || null,
+      boardPathStyle,
+      boardLandmarks: boardLandmarks.map((landmark) => ({ ...landmark, imageUrl: landmark.imageUrl || null, emoji: landmark.imageUrl ? null : landmark.emoji?.trim() || null })),
       fragmentCharacterId: characterId ? Number(characterId) : null,
       sortOrder: Number(sortOrder) || 0,
       active,
@@ -234,7 +241,7 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
   }
 
   return (
-    <Modal open size="lg" title={scenario ? `Editar: ${scenario.name}` : 'Novo cenário'} onClose={saving ? undefined : onClose}>
+    <Modal open size="xl" title={scenario ? `Editar: ${scenario.name}` : 'Novo cenário'} onClose={saving ? undefined : onClose}>
       <form className="space-y-4" onSubmit={submit}>
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Nome" required error={errors.name}>
@@ -269,12 +276,36 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
           </Field>
           <QuizBackgroundPreview imageUrl={quizBackgroundUrl || null} color={color} name={name.trim() || undefined} />
         </div>
-        <div className="grid gap-4 md:grid-cols-[1fr_15rem]">
-          <Field label="Imagem do tabuleiro" hint="Jogo de tabuleiro com amigos. Imagem vertical (3:4 ou mais alta), tipo 1536×2048, sem texto. Fica atrás das casas do caminho, com uma película leve para elas continuarem legíveis. Vazio usa o fundo padrão do tema.">
-            <ImageUploadField value={boardImageUrl} onChange={setBoardImageUrl} wide />
-          </Field>
-          <BoardImagePreview imageUrl={boardImageUrl || null} color={color} />
-        </div>
+        <section className="space-y-4 rounded-3xl border-2 border-edge p-4" aria-label="Tabuleiro deste cenário">
+          <div>
+            <h3 className="font-display text-lg font-bold text-ink">Tabuleiro (jogo com amigos)</h3>
+            <p className="text-sm text-muted">O app desenha a estrada e as casas. A imagem é só o terreno, então nunca precisa "bater" com o caminho.</p>
+          </div>
+          <div className="grid gap-5 md:grid-cols-[1fr_17rem]">
+            <div className="space-y-5">
+              <Field
+                label="Imagem do terreno"
+                hint="Vertical 9:16, tipo 1080×1920, vista de cima, sem estrada, casas, texto nem horizonte. Repete de cima para baixo, espelhada de duas em duas. Vazio usa o fundo padrão do tema."
+              >
+                <ImageUploadField value={boardImageUrl} onChange={setBoardImageUrl} wide />
+              </Field>
+              <Field label="Curvas do caminho" hint={PATH_STYLES[boardPathStyle].description}>
+                <Segmented
+                  aria-label="Curvas do caminho"
+                  value={boardPathStyle}
+                  onChange={setBoardPathStyle}
+                  options={(Object.keys(PATH_STYLES) as PathStyle[]).map((value) => ({ value, label: PATH_STYLES[value].label }))}
+                />
+              </Field>
+              <Field label="Marcos do cenário" hint="Árvores, tentas, barcos... ao lado do caminho. A posição é uma porcentagem do caminho, valendo para qualquer tamanho de tabuleiro.">
+                <LandmarksEditor value={boardLandmarks} onChange={setBoardLandmarks} />
+              </Field>
+            </div>
+            <div className="md:sticky md:top-2 md:self-start">
+              <BoardImagePreview imageUrl={boardImageUrl || null} color={color} slug={(scenario?.slug ?? slug).trim().toLowerCase()} pathStyle={boardPathStyle} landmarks={boardLandmarks} />
+            </div>
+          </div>
+        </section>
         <Field label="Música do tema" hint="MP3, M4A, OGG ou WAV de até 12 MB (um MP3 de 3 min em 192 kbps tem ~4,5 MB). Toca no quiz e é liberada ao jogador quando ele chega ao primeiro nível deste cenário. Vazio = cenário sem música.">
           <AudioUploadField value={musicUrl} onChange={setMusicUrl} />
         </Field>

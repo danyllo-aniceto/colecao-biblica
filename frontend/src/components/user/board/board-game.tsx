@@ -178,7 +178,7 @@ export function BoardGame({ game: saved, onExit, onRematch }: GameProps) {
 
   return (
     <BoardScreen
-      theme={{ name: saved.scenario.name, color: saved.scenario.color, background: saved.scenario.background, boardImage: saved.scenario.boardImage }}
+      theme={{ name: saved.scenario.name, color: saved.scenario.color, background: saved.scenario.background, boardImage: saved.scenario.boardImage, pathStyle: saved.scenario.pathStyle, landmarks: saved.scenario.landmarks }}
       state={state}
       log={log}
       flash={flash}

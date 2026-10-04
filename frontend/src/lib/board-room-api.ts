@@ -1,4 +1,5 @@
 import { apiRequest, apiRequestVoid, fetchApi, safeParseJson } from '@/lib/http';
+import type { Landmark, PathStyle } from '@board/layout';
 import type { BoardConfig, BoardState, BotSkill, OptionLetter, PowerUpKind } from '@board/engine';
 import type { SheetQuestion } from '@/components/user/board/board-question';
 
@@ -24,7 +25,7 @@ export type RoomView = {
   serverNow: number;
   hostUserId: number;
   hostName: string;
-  scenario: { id: number; slug: string; name: string; color: string | null; verse: string | null; verseReference: string | null; iconImageUrl: string | null; quizBackgroundUrl: string | null; boardImageUrl: string | null };
+  scenario: { id: number; slug: string; name: string; color: string | null; verse: string | null; verseReference: string | null; iconImageUrl: string | null; quizBackgroundUrl: string | null; boardImageUrl: string | null; boardPathStyle: PathStyle | null; boardLandmarks: Landmark[] | null };
   config: BoardConfig;
   players: RoomPlayer[];
   me: { key: string; userId: number; isHost: boolean; wins: number | null } | null;

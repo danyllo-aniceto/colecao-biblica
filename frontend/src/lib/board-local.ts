@@ -1,10 +1,20 @@
 import type { BoardState } from '@board/engine';
+import type { Landmark, PathStyle } from '@board/layout';
 import type { BoardQuestion } from '@/lib/board-api';
 
 /** Partida local guardada no aparelho, para continuar depois de fechar o app. */
 export type LocalBoardGame = {
-  version: 2;
-  scenario: { id: number; slug: string; name: string; color: string | null; background: string | null; boardImage: string | null };
+  version: 3;
+  scenario: {
+    id: number;
+    slug: string;
+    name: string;
+    color: string | null;
+    background: string | null;
+    boardImage: string | null;
+    pathStyle: PathStyle | null;
+    landmarks: Landmark[] | null;
+  };
   state: BoardState;
   questions: BoardQuestion[];
   log: string[];
@@ -19,7 +29,7 @@ export function loadLocalBoard(): LocalBoardGame | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as LocalBoardGame;
     // Partida de uma versão antiga das regras não serve mais.
-    if (parsed.version !== 2 || parsed.state?.version !== 1 || parsed.state.phase === 'FINISHED') return null;
+    if (parsed.version !== 3 || parsed.state?.version !== 1 || parsed.state.phase === 'FINISHED') return null;
     return parsed;
   } catch {
     return null;

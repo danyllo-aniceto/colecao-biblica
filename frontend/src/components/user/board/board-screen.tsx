@@ -18,16 +18,23 @@ import { Modal } from '@/components/ui/modal';
 import { Spinner } from '@/components/ui/spinner';
 import { Tooltip } from '@/components/ui/tooltip';
 import { cn } from '@/lib/cn';
-import { boardBackgroundStyle } from '@/lib/board-background';
 import { scenarioThemeVars } from '@/lib/campaign-theme';
 import { quizBackgroundStyle } from '@/lib/quiz-background';
 import { BoardHelp } from '@/components/user/board/board-help';
 import { BoardResult } from '@/components/user/board/board-result';
 import { Dice } from '@/components/user/board/dice';
 import { BoardTrack, Pawn } from '@/components/user/board/board-track';
+import type { Landmark, PathStyle } from '@board/layout';
 import { QuestionSheet, type Reveal, type SheetQuestion } from '@/components/user/board/board-question';
 
-export type BoardTheme = { name: string; color: string | null; background: string | null; boardImage: string | null };
+export type BoardTheme = {
+  name: string;
+  color: string | null;
+  background: string | null;
+  boardImage: string | null;
+  pathStyle?: PathStyle | null;
+  landmarks?: Landmark[] | null;
+};
 
 type BoardScreenProps = {
   theme: BoardTheme;
@@ -157,18 +164,16 @@ export function BoardScreen(props: BoardScreenProps) {
       ) : null}
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div style={boardBackgroundStyle(theme.boardImage)}>
-          <BoardTrack state={state} flash={flash} />
-          {log.length > 0 ? (
-            <ul className="mx-auto mb-3 max-w-xl space-y-0.5 px-4 text-xs font-semibold text-muted" aria-label="Últimas jogadas" aria-live="polite">
-              {log.slice(-4).map((line, index, all) => (
-                <li key={`${log.length}-${index}`} className={index === all.length - 1 ? 'text-ink' : undefined}>
-                  {line}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
+        <BoardTrack state={state} flash={flash} image={theme.boardImage} pathStyle={theme.pathStyle} landmarks={theme.landmarks} />
+        {log.length > 0 ? (
+          <ul className="mx-auto my-3 max-w-xl space-y-0.5 px-4 text-xs font-semibold text-muted" aria-label="Últimas jogadas" aria-live="polite">
+            {log.slice(-4).map((line, index, all) => (
+              <li key={`${log.length}-${index}`} className={index === all.length - 1 ? 'text-ink' : undefined}>
+                {line}
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
 
       <div className="mx-auto max-h-[78dvh] w-full max-w-2xl shrink-0 overflow-y-auto pb-[env(safe-area-inset-bottom)]">

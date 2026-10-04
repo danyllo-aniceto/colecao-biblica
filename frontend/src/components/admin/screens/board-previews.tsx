@@ -1,28 +1,51 @@
-import { Pawn } from '@/components/user/board/board-track';
-import { TILE_INFO } from '@/components/user/board/board-meta';
-import { boardBackgroundStyle } from '@/lib/board-background';
+import { useMemo, useState } from 'react';
+import { DEFAULT_CONFIG, buildTiles } from '@board/engine';
+import type { Landmark, PathStyle } from '@board/layout';
+import { boardRulesFor } from '@board/scenarios';
+import { Segmented } from '@/components/ui/segmented';
+import { BoardCanvas, Pawn } from '@/components/user/board/board-track';
 import { scenarioThemeVars } from '@/lib/campaign-theme';
-import { cn } from '@/lib/cn';
 
-const SAMPLE: Array<keyof typeof TILE_INFO> = ['NORMAL', 'POWER', 'NORMAL', 'TRIAL', 'NORMAL', 'SHELTER', 'FALL', 'NORMAL', 'SHORTCUT', 'NORMAL', 'GATE', 'FINISH'];
+const SAMPLE_SIZES = [25, 40, 60] as const;
 
-/** Prévia do tabuleiro de um cenário com a imagem de fundo e a cor do tema (mesma película do jogo). */
-export function BoardImagePreview({ imageUrl, color, pawn }: { imageUrl?: string | null; color?: string | null; pawn?: string }) {
+/**
+ * Prévia do tabuleiro de um cenário, desenhada pelo mesmo código do jogo: terreno (imagem repetida e espelhada), curvas
+ * do caminho, casas e marcos. O que aparece aqui é exatamente o que o jogador vê.
+ */
+export function BoardImagePreview({
+  imageUrl,
+  color,
+  slug,
+  pathStyle,
+  landmarks,
+}: {
+  imageUrl?: string | null;
+  color?: string | null;
+  slug: string;
+  pathStyle?: PathStyle | null;
+  landmarks?: Landmark[] | null;
+}) {
+  const [size, setSize] = useState<number>(25);
+  const rules = useMemo(() => boardRulesFor(slug || 'preview'), [slug]);
+  const tiles = useMemo(() => buildTiles({ ...DEFAULT_CONFIG, size }, rules, { s: { rng: 7 } }), [size, rules]);
+  const pawns = useMemo(
+    () => [
+      { id: 'a', name: 'Jogador A', emoji: '🐑', position: 0 },
+      { id: 'b', name: 'Jogador B', emoji: '🕊️', position: 0 },
+      { id: 'c', name: 'Jogador C', emoji: '🐟', position: Math.round(size * 0.35) },
+      { id: 'd', name: 'Jogador D', emoji: '🦁', position: Math.round(size * 0.72) },
+    ],
+    [size],
+  );
   return (
-    <div className="mx-auto w-full max-w-[15rem] space-y-2">
+    <div className="mx-auto w-full max-w-[17rem] space-y-2">
+      <Segmented aria-label="Tamanho da prévia" value={String(size)} onChange={(value) => setSize(Number(value))} options={SAMPLE_SIZES.map((value) => ({ value: String(value), label: `${value} casas` }))} />
       <div className="contents" style={scenarioThemeVars(color ?? null)}>
-        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-[1.75rem] border-4 border-edge-strong bg-bg p-2 shadow-lg" style={boardBackgroundStyle(imageUrl)}>
-          <div className="grid h-full grid-cols-3 content-center gap-1.5">
-            {SAMPLE.map((kind, index) => (
-              <div key={index} className={cn('relative flex aspect-square items-center justify-center rounded-xl border-2 text-base', TILE_INFO[kind].className)}>
-                <span className={index === 4 ? 'opacity-30' : undefined}>{TILE_INFO[kind].icon}</span>
-                {index === 4 && pawn ? <Pawn emoji={pawn} className="absolute text-xl" /> : null}
-              </div>
-            ))}
-          </div>
+        <div className="h-[30rem] overflow-y-auto rounded-[1.75rem] border-4 border-edge-strong bg-bg shadow-lg" tabIndex={0} aria-label="Prévia do tabuleiro (role para ver o caminho todo)">
+          <BoardCanvas tiles={tiles} rules={rules} size={size} pawns={pawns} activeId="c" image={imageUrl} pathStyle={pathStyle} landmarks={landmarks} animate={false} />
         </div>
       </div>
-      <p className="text-center text-xs font-semibold text-muted">Prévia do tabuleiro</p>
+      <p className="text-center text-xs font-semibold text-muted">Prévia do tabuleiro: role para ver o caminho todo</p>
     </div>
   );
 }

@@ -111,4 +111,41 @@ describe.skipIf(!hasDatabase)("tabuleiro", () => {
     await api.put(`/api/campaign/admin/scenarios/${scenario.id}`).set(bearer(admin)).send({ name: scenario.name, color: scenario.color, sortOrder: scenario.sortOrder, active: true, boardImageUrl: "" });
     expect((await prisma.scenario.findUniqueOrThrow({ where: { id: scenario.id } })).boardImageUrl).toBeNull();
   });
+
+  it("caminho do tabuleiro: estilo das curvas e marcos editáveis por cenário, com validação", async () => {
+    const admin = await login("admin2@email.com");
+    const token = await login("user@email.com");
+    const scenario = await prisma.scenario.findFirstOrThrow({ orderBy: { sortOrder: "asc" } });
+    const put = (body: object) =>
+      api.put(`/api/campaign/admin/scenarios/${scenario.id}`).set(bearer(admin)).send({ name: scenario.name, color: scenario.color, sortOrder: scenario.sortOrder, active: true, ...body });
+    const first = async () => (await api.get("/api/campaign").set(bearer(token))).body.scenarios[0];
+
+    expect(await first()).toMatchObject({ boardPathStyle: null, boardLandmarks: null });
+
+    const landmarks = [
+      { imageUrl: "/api/uploads/file/marcos/arvore.png", at: 20, side: "L", offset: 110, size: 90 },
+      { emoji: "⛺", at: 55.5, side: "R", offset: 120, size: 70 },
+    ];
+    const saved = await put({ boardPathStyle: "WIDE", boardLandmarks: landmarks });
+    expect(saved.status).toBe(200);
+    expect(await first()).toMatchObject({ boardPathStyle: "WIDE", boardLandmarks: landmarks });
+
+    // Validações: estilo inválido, marco sem imagem nem emoji, fora dos limites e acima do máximo.
+    expect((await put({ boardPathStyle: "ONDULADO" })).status).toBe(400);
+    expect((await put({ boardLandmarks: [{ at: 10, side: "L", offset: 100, size: 80 }] })).status).toBe(400);
+    expect((await put({ boardLandmarks: [{ emoji: "🌳", at: 120, side: "L", offset: 100, size: 80 }] })).status).toBe(400);
+    expect((await put({ boardLandmarks: [{ emoji: "🌳", at: 10, side: "X", offset: 100, size: 80 }] })).status).toBe(400);
+    expect((await put({ boardLandmarks: [{ emoji: "🌳", at: 10, side: "L", offset: 10, size: 80 }] })).status).toBe(400);
+    const many = Array.from({ length: 13 }, (_, index) => ({ emoji: "🌳", at: index * 7, side: "L", offset: 100, size: 80 }));
+    expect((await put({ boardLandmarks: many })).status).toBe(400);
+    expect(await first()).toMatchObject({ boardPathStyle: "WIDE" });
+
+    // Ausente mantém; nulo limpa.
+    await put({});
+    expect(await first()).toMatchObject({ boardPathStyle: "WIDE", boardLandmarks: landmarks });
+    await put({ boardPathStyle: null, boardLandmarks: null });
+    expect(await first()).toMatchObject({ boardPathStyle: null, boardLandmarks: null });
+    await put({ boardLandmarks: [] });
+    expect((await first()).boardLandmarks).toEqual([]);
+  });
 });

@@ -83,8 +83,8 @@ export function BoardHub({ playerName }: { playerName: string }) {
         },
       });
       return {
-        version: 2,
-        scenario: { id: scenario.id, slug: scenario.slug, name: scenario.name, color: scenario.color, background: scenario.quizBackgroundUrl ?? null, boardImage: scenario.boardImageUrl ?? null },
+        version: 3,
+        scenario: { id: scenario.id, slug: scenario.slug, name: scenario.name, color: scenario.color, background: scenario.quizBackgroundUrl ?? null, boardImage: scenario.boardImageUrl ?? null, pathStyle: scenario.boardPathStyle ?? null, landmarks: scenario.boardLandmarks ?? null },
         state,
         questions,
         log: [],
