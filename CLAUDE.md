@@ -62,8 +62,10 @@ código em **português do Brasil**.
 - Proposta e fases em `docs/modo-duelo.md` (estilo Marvel Snap: 12 cartas, 6 turnos simultâneos, 3 cenários × 4 espaços, Dons). Atualize o
   checklist a cada etapa. Vocabulário: **Influência** (força), **Vigor** (energia do turno), **Dom** (habilidade), **Cenário**, **Time**.
   Não usar "Fé" nem "Fôlego" (o Tabuleiro já usa).
-- Motor **puro e sem dependências** em `backend/src/duel/` (`engine.ts`, `cards.ts`, `scenarios.ts`, `bots.ts`, `series.ts`, `starter.ts`); o
+- Motor **puro e sem dependências** em `backend/src/duel/` (`engine.ts`, `cards.ts`, `dsl.ts`, `scenarios.ts`, `bots.ts`, `bot-team.ts`, `series.ts`; `starter.ts` é só exemplo de teste); o
   front o importa pelo alias `@duel/*`. Mesmo molde do Tabuleiro: estado serializável, sorteio com semente, nunca importar nada de fora da pasta.
+- Cartas = personagens do painel (tabela `duel_cards`, Dom em texto: `docs/duelo-planilha.md`); cada jogador monta o próprio Time (`duel_decks`), sem Times prontos.
+  Todo evento do motor leva a foto do tabuleiro (`snap`): a tela repete o turno passo a passo, então evento novo precisa de texto claro.
 - **Nenhum cenário nem Dom usa sorte.** Só decisão do jogador. Regras novas entram em `engine.test.ts`; bots só enxergam `viewFor(...)`.
 - Informação escondida (mão e baralho do rival, jogadas não reveladas, cenários que não apareceram) nunca sai do servidor: o online manda só `viewFor`.
 - Nada do modo dá XP, moedas, figurinhas ou mexe em ranking/missões/estatísticas. Único prêmio previsto: versos de carta por vitórias online.

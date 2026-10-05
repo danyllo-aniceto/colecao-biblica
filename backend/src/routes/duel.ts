@@ -8,8 +8,9 @@ import { pageOf, queryText, readPage } from "../lib/pagination";
 import { parseId, z } from "../lib/validation";
 import { requireAdmin } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
-import { normalizeName, readyDecks, toCardDef } from "../services/duel-cards";
+import { normalizeName, toCardDef } from "../services/duel-cards";
 import { isCampaignOnlyRarity } from "../services/game-rules";
+import { currentUser } from "../middleware/auth";
 import { visibleCharacter } from "../services/visibility";
 
 /** Modo Duelo: cartas para o jogo (qualquer jogador) e cadastro/importação (admin). */
@@ -17,17 +18,64 @@ export const duelRouter = Router();
 
 const characterSelect = { id: true, name: true, imageUrl: true } as const;
 
-/** Cartas disponíveis e Times prontos, para montar o duelo. */
+/** Cartas disponíveis (o jogador monta o Time com as que ele tem; o bot usa qualquer uma). */
 duelRouter.get(
   "/cards",
   asyncHandler(async (_req, res) => {
     const rows = await prisma.duelCard.findMany({ where: { available: true, character: visibleCharacter() }, include: { character: { select: characterSelect } }, orderBy: { characterId: "asc" } });
-    const cards = rows.flatMap((row) => {
-      const def = toCardDef(row);
-      return def ? [{ def, teams: row.teams }] : [];
-    });
-    const { decks } = readyDecks(cards);
-    res.json({ cards: cards.map((card) => card.def), decks });
+    res.json({ cards: rows.flatMap((row) => toCardDef(row) ?? []) });
+  }),
+);
+
+// ---------------------------------------------------------------------------
+// Times do jogador
+// ---------------------------------------------------------------------------
+
+const MAX_DECKS = 5;
+const TEAM_SIZE = 12;
+
+const deckInput = z.object({ name: z.string().trim().min(1, "Dê um nome ao Time").max(30), cards: z.array(z.number().int().positive()).length(TEAM_SIZE, `O Time precisa ter ${TEAM_SIZE} cartas`) });
+
+const deckSlot = (value: unknown) => {
+  const slot = Number(value);
+  if (!Number.isInteger(slot) || slot < 1 || slot > MAX_DECKS) throw badRequest(`O Time vai de 1 a ${MAX_DECKS}`);
+  return slot;
+};
+
+duelRouter.get(
+  "/decks",
+  asyncHandler(async (req, res) => {
+    const decks = await prisma.duelDeck.findMany({ where: { userId: currentUser(req).id }, orderBy: { slot: "asc" } });
+    res.json({ decks: decks.map((deck) => ({ slot: deck.slot, name: deck.name, cards: deck.characterIds })) });
+  }),
+);
+
+/** Salva o Time do espaço (1 a 5): 12 cartas diferentes, todas disponíveis e de figurinhas que o jogador já tem. */
+duelRouter.put(
+  "/decks/:slot",
+  asyncHandler(async (req, res) => {
+    const slot = deckSlot(req.params.slot);
+    const input = deckInput.parse(req.body);
+    if (new Set(input.cards).size !== input.cards.length) throw badRequest("O Time não pode ter a mesma carta duas vezes");
+    const userId = currentUser(req).id;
+    const [owned, available] = await Promise.all([
+      prisma.userSticker.findMany({ where: { userId, characterId: { in: input.cards } }, select: { characterId: true } }),
+      prisma.duelCard.findMany({ where: { characterId: { in: input.cards }, available: true, character: visibleCharacter() }, select: { characterId: true } }),
+    ]);
+    const ownedIds = new Set(owned.map((row) => row.characterId));
+    const availableIds = new Set(available.map((row) => row.characterId));
+    if (input.cards.some((id) => !availableIds.has(id))) throw badRequest("Há carta que não está disponível no Duelo");
+    if (input.cards.some((id) => !ownedIds.has(id))) throw badRequest("Você só pode usar figurinhas que já conquistou");
+    await prisma.duelDeck.upsert({ where: { userId_slot: { userId, slot } }, create: { userId, slot, name: input.name, characterIds: input.cards }, update: { name: input.name, characterIds: input.cards } });
+    res.json({ slot, name: input.name, cards: input.cards });
+  }),
+);
+
+duelRouter.delete(
+  "/decks/:slot",
+  asyncHandler(async (req, res) => {
+    await prisma.duelDeck.deleteMany({ where: { userId: currentUser(req).id, slot: deckSlot(req.params.slot) } });
+    res.status(204).end();
   }),
 );
 
@@ -43,7 +91,6 @@ const cardInput = z.object({
   effects: z.string().trim().max(600).optional().nullable(),
   domText: z.string().trim().max(300).optional().nullable(),
   available: z.boolean().default(true),
-  teams: z.array(z.string().trim().min(1).max(40)).max(5).default([]),
 });
 
 type CardInput = z.infer<typeof cardInput>;
@@ -61,7 +108,6 @@ const data = (input: CardInput) => ({
   effects: input.effects?.trim() || null,
   domText: input.domText?.trim() || null,
   available: input.available,
-  teams: [...new Set(input.teams)],
 });
 
 async function ensureCharacter(id: number) {
@@ -71,7 +117,7 @@ async function ensureCharacter(id: number) {
   return character;
 }
 
-const listRow = (character: { id: number; name: string; rarity: string; historicalPeriod: string | null; narrativeRole: string | null; duelCard: { cost: number; power: number; tags: string[]; trigger: string | null; effects: string | null; domText: string | null; available: boolean; teams: string[] } | null }) => ({
+const listRow = (character: { id: number; name: string; rarity: string; historicalPeriod: string | null; narrativeRole: string | null; duelCard: { cost: number; power: number; tags: string[]; trigger: string | null; effects: string | null; domText: string | null; available: boolean } | null }) => ({
   characterId: character.id,
   name: character.name,
   rarity: character.rarity,
@@ -160,7 +206,6 @@ const bulkRow = z.object({
   effects: z.string().trim().max(600).optional(),
   text: z.string().trim().max(300).optional(),
   available: z.string().trim().optional(),
-  teams: z.string().trim().optional(),
 });
 
 const bulkSchema = z.object({ rows: z.array(z.unknown()).min(1).max(300), dryRun: z.boolean().optional() });
@@ -211,7 +256,6 @@ duelRouter.post(
         effects: item.effects || null,
         domText: item.text || null,
         available: !["nao", "n", "false", "0"].includes(flag),
-        teams: splitList(item.teams),
       };
       const built = validate(character.name, input);
       if (!built.ok) return void errors.push({ row, name: item.name, message: built.error });
@@ -223,20 +267,6 @@ duelRouter.post(
       await prisma.$transaction(valid.map((item) => prisma.duelCard.upsert({ where: { characterId: item.characterId }, create: { characterId: item.characterId, ...data(item.input) }, update: data(item.input) })));
     }
 
-    // Times que a planilha deixaria sem exatamente 12 cartas (aviso; o resto do cadastro vale).
-    const afterCards = dryRun || valid.length > 0 ? await prisma.duelCard.findMany({ where: { available: true }, include: { character: { select: characterSelect } } }) : [];
-    const merged = new Map(afterCards.map((row) => [row.characterId, { teams: row.teams, available: row.available }]));
-    if (dryRun) for (const item of valid) merged.set(item.characterId, { teams: item.input.teams, available: item.input.available });
-    const counts = new Map<string, { name: string; count: number }>();
-    for (const { teams, available } of merged.values()) {
-      if (!available) continue;
-      for (const team of teams) {
-        const key = normalizeName(team);
-        counts.set(key, { name: team, count: (counts.get(key)?.count ?? 0) + 1 });
-      }
-    }
-    const teamsReport = [...counts.values()].sort((a, b) => a.name.localeCompare(b.name, "pt-BR")).map((team) => ({ ...team, ready: team.count === 12 }));
-
     res.json({
       dryRun: Boolean(dryRun),
       total: rows.length,
@@ -245,7 +275,6 @@ duelRouter.post(
       updated: valid.filter((item) => !item.created).length,
       errors,
       warnings,
-      teams: teamsReport,
       preview: valid.slice(0, 300).map((item) => ({ name: item.name, cost: item.input.cost, power: item.input.power, tags: item.input.tags, created: item.created, description: item.description, available: item.input.available })),
     });
   }),

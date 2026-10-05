@@ -1,6 +1,6 @@
 # Duelo de Cartas — planilha de cartas e guia de poderes
 
-Painel → **Duelo de Cartas** → *Baixar planilha*: um CSV com **todos os personagens** (Personagem, Raridade, Papel na história, Período,
+Cada jogador monta o próprio Time de 12 cartas com as figurinhas que já conquistou (não há Times prontos). Painel → **Duelo de Cartas** → *Baixar planilha*: um CSV com **todos os personagens** (Personagem, Raridade, Papel na história, Período,
 Testamento, Palavras-chave, Resumo curto) e, nos que já têm carta, os dados dela. Preencha da coluna **Vigor** em diante e use
 *Importar planilha*: a prévia mostra os erros linha a linha antes de gravar. Linhas sem Vigor e Influência são ignoradas; uma linha
 preenchida **substitui** a carta daquele personagem.
@@ -17,7 +17,6 @@ preenchida **substitui** a carta daquele personagem.
 | Efeitos | de 1 a 3 efeitos separados por ` \| ` |
 | Texto do Dom | opcional: texto próprio que aparece no jogo no lugar do gerado |
 | Disponível | Sim/Não (vazio = Sim). Desligada, não entra nos duelos nem nos Times |
-| Times | nomes dos Times prontos de que a carta faz parte, separados por vírgula. **Um Time só aparece no jogo com exatamente 12 cartas disponíveis** |
 
 ## Gatilhos
 
@@ -58,14 +57,14 @@ Formato: `nome chave=valor chave=valor`. Sem espaços nos valores (`_` vira espa
 ## Exemplos (linhas da planilha)
 
 ```
-Personagem;Vigor;Influência;Etiquetas;Gatilho;Efeitos;Disponível;Times
-Davi;2;2;Rei, Pastor;revelar;poder valor=+6 alvo=si se=inimigo-poder:6;Sim;Reis e Juízes
-Moisés;4;5;Profeta, Líder;revelar;mover-inimigos;Sim;Profetas e Patriarcas
-Abraão;4;4;Patriarca;revelar;criar ficha=Descendente onde=cada-cenario;Sim;Profetas e Patriarcas
-Daniel;2;2;Profeta;continuo;proteger;Sim;
-Jonas;1;1;Profeta;revelar;sumir turnos=3 bonus=+3;Sim;
-Elias;4;4;Profeta;revelar;destruir alvo=inimigo-mais-fraco;Sim;
-Paulo;4;5;Apóstolo;revelar;converter | poder-por valor=+1 por=aliados etiqueta=Apóstolo;Sim;
+Personagem;Vigor;Influência;Etiquetas;Gatilho;Efeitos;Disponível
+Davi;2;2;Rei, Pastor;revelar;poder valor=+6 alvo=si se=inimigo-poder:6;Sim
+Moisés;4;5;Profeta, Líder;revelar;mover-inimigos;Sim
+Abraão;4;4;Patriarca;revelar;criar ficha=Descendente onde=cada-cenario;Sim
+Daniel;2;2;Profeta;continuo;proteger;Sim
+Jonas;1;1;Profeta;revelar;sumir turnos=3 bonus=+3;Sim
+Elias;4;4;Profeta;revelar;destruir alvo=inimigo-mais-fraco;Sim
+Paulo;4;5;Apóstolo;revelar;converter | poder-por valor=+1 por=aliados etiqueta=Apóstolo;Sim
 ```
 
 ## Regras que ajudam a equilibrar

@@ -1,8 +1,8 @@
 import type { CardDef, Dom, Effect, TeamCard } from "./types";
 
 /**
- * Cartas de partida (as primeiras, escritas à mão) e os Times prontos. Enquanto o cadastro do painel não existe,
- * é o que o treino contra bot usa; depois, vira o exemplo/semente do painel. Ids em texto curto.
+ * Cartas e Times de EXEMPLO, usados só nos testes (e como referência de equilíbrio). O jogo de verdade usa as cartas
+ * cadastradas no painel e os Times que cada jogador monta. Ids em texto curto.
  *
  * Regra de preço: Influência sem Dom ≈ 2 × Vigor; um Dom bom tira 1 a 3.
  */

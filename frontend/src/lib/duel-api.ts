@@ -2,10 +2,18 @@ import type { CardDef } from '@duel/types';
 import { apiRequest, apiRequestVoid } from '@/lib/http';
 import type { PaginatedResponse } from '@/lib/admin-api';
 
-export type DuelDeckInfo = { id: string; name: string; description: string; cards: string[] };
+/** Cartas disponíveis no Duelo (o jogador monta o Time com as figurinhas que tem). */
+export const getDuelCards = () => apiRequest<{ cards: CardDef[] }>('/duel/cards', { method: 'GET' }, 'Não foi possível carregar as cartas.');
 
-/** Cartas disponíveis e Times prontos (o que o jogo usa). */
-export const getDuelCards = () => apiRequest<{ cards: CardDef[]; decks: DuelDeckInfo[] }>('/duel/cards', { method: 'GET' }, 'Não foi possível carregar as cartas.');
+/** Time salvo do jogador: espaço de 1 a 5, nome e os ids dos personagens (as 12 cartas). */
+export type DuelDeck = { slot: number; name: string; cards: number[] };
+
+export const MAX_DUEL_DECKS = 5;
+
+export const listDuelDecks = () => apiRequest<{ decks: DuelDeck[] }>('/duel/decks', { method: 'GET' }, 'Não foi possível carregar seus Times.');
+export const saveDuelDeck = (slot: number, name: string, cards: number[]) =>
+  apiRequest<DuelDeck>(`/duel/decks/${slot}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, cards }) }, 'Não foi possível salvar o Time.');
+export const deleteDuelDeck = (slot: number) => apiRequestVoid(`/duel/decks/${slot}`, { method: 'DELETE' }, 'Não foi possível excluir o Time.');
 
 export type DuelCardRecord = {
   cost: number;
@@ -15,7 +23,6 @@ export type DuelCardRecord = {
   effects: string | null;
   domText: string | null;
   available: boolean;
-  teams: string[];
 };
 
 export type DuelCharacterRow = {
@@ -44,7 +51,7 @@ export const saveDuelCard = (characterId: number, card: DuelCardRecord) =>
 
 export const deleteDuelCard = (characterId: number) => apiRequestVoid(`/duel/admin/cards/${characterId}`, { method: 'DELETE' }, 'Não foi possível excluir a carta.');
 
-export type DuelImportRow = { name: string; cost: string; power: string; tags?: string; trigger?: string; effects?: string; text?: string; available?: string; teams?: string };
+export type DuelImportRow = { name: string; cost: string; power: string; tags?: string; trigger?: string; effects?: string; text?: string; available?: string };
 
 export type DuelImportResult = {
   dryRun: boolean;
@@ -54,7 +61,6 @@ export type DuelImportResult = {
   updated: number;
   errors: Array<{ row: number; name: string; message: string }>;
   warnings: Array<{ row: number; name: string; message: string }>;
-  teams: Array<{ name: string; count: number; ready: boolean }>;
   preview: Array<{ name: string; cost: number; power: number; tags: string[]; created: boolean; description: string; available: boolean }>;
 };
 

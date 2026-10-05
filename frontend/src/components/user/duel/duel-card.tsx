@@ -1,6 +1,7 @@
 import type { PointerEventHandler, ReactNode } from 'react';
 import { describeDom } from '@duel/cards';
 import type { CardDef } from '@duel/types';
+import { AnimatedNumber } from '@/components/user/duel/duel-anim';
 import { cn } from '@/lib/cn';
 
 /** Imagens das cartas: pelo nome do personagem do álbum (sem acento nem maiúsculas). */
@@ -25,6 +26,10 @@ type FaceProps = {
   selected?: boolean;
   dimmed?: boolean;
   silenced?: boolean;
+  /** Destaque pulsando (a carta que está agindo agora). */
+  focus?: boolean;
+  /** Mostra o número mudando devagar (cartas na mesa). */
+  animate?: boolean;
   className?: string;
   onClick?: () => void;
   onPointerDown?: PointerEventHandler<HTMLElement>;
@@ -38,7 +43,7 @@ const SIZES = {
 } as const;
 
 /** Uma carta: arte, Vigor (azul), Influência (laranja; verde se subiu, vermelho se caiu) e nome. */
-export function DuelCardFace({ def, art, power, size = 'board', selected, dimmed, silenced, className, onClick, onPointerDown, children }: FaceProps) {
+export function DuelCardFace({ def, art, power, size = 'board', selected, dimmed, silenced, focus, animate, className, onClick, onPointerDown, children }: FaceProps) {
   const image = artOf(art, def);
   const shown = power ?? def.power;
   const tone = shown > def.power ? 'text-success' : shown < def.power ? 'text-danger' : 'text-white';
@@ -56,6 +61,7 @@ export function DuelCardFace({ def, art, power, size = 'board', selected, dimmed
         def.token ? 'border-dashed border-edge-strong' : 'border-edge-strong',
         selected && '-translate-y-2 border-primary ring-4 ring-primary/50',
         dimmed && 'opacity-45',
+        focus && 'animate-duel-focus',
         className,
       )}
     >
@@ -66,8 +72,13 @@ export function DuelCardFace({ def, art, power, size = 'board', selected, dimmed
         {def.cost}
       </span>
       <span className={cn('absolute right-0.5 top-0.5 flex items-center justify-center rounded-full bg-black/70 font-display font-bold shadow', badge, tone)} aria-hidden="true">
-        {shown}
+        {animate ? <AnimatedNumber value={shown} /> : shown}
       </span>
+      {def.dom ? (
+        <span className="absolute left-1/2 top-0.5 -translate-x-1/2 rounded-full bg-black/60 px-1 text-[9px] leading-4 text-primary" aria-hidden="true">
+          ✨
+        </span>
+      ) : null}
       {silenced ? <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-black/60 text-center text-[9px] font-bold uppercase tracking-wide text-white/90">calado</span> : null}
       <span className="w-full truncate px-1 pb-0.5 text-center font-display font-bold leading-tight text-white drop-shadow">{def.name}</span>
       {children}

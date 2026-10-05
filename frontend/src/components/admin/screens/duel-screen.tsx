@@ -38,7 +38,7 @@ const TRIGGER_OPTIONS = [
 const COST_OPTIONS = [0, 1, 2, 3, 4, 5, 6].map((value) => ({ value: String(value), label: `Vigor ${value}` }));
 
 /** Cabeçalho da planilha de importação (os mesmos nomes que a importação entende). */
-export const DUEL_CSV_HEADER = ['Personagem', 'Raridade', 'Papel na história', 'Período', 'Testamento', 'Palavras-chave', 'Resumo curto', 'Vigor', 'Influência', 'Etiquetas', 'Gatilho', 'Efeitos', 'Texto do Dom', 'Disponível', 'Times'];
+export const DUEL_CSV_HEADER = ['Personagem', 'Raridade', 'Papel na história', 'Período', 'Testamento', 'Palavras-chave', 'Resumo curto', 'Vigor', 'Influência', 'Etiquetas', 'Gatilho', 'Efeitos', 'Texto do Dom', 'Disponível'];
 
 const RARITY_LABEL: Record<string, string> = { COMMON: 'Comum', RARE: 'Rara', EPIC: 'Épica', LEGENDARY: 'Lendária', SPECIAL: 'Especial' };
 
@@ -73,7 +73,6 @@ export function DuelScreen() {
         row.card?.effects ?? '',
         row.card?.domText ?? '',
         row.card ? (row.card.available ? 'Sim' : 'Não') : '',
-        row.card ? row.card.teams.join(', ') : '',
       ]);
       downloadText('duelo-cartas.csv', toCsv([DUEL_CSV_HEADER, ...table]));
       toast.success(`${rows.length} personagens na planilha.`, { description: 'As colunas de Vigor em diante ficam vazias nos personagens sem carta.' });
@@ -99,7 +98,7 @@ export function DuelScreen() {
   return (
     <AdminPanel
       title="Duelo de Cartas"
-      description="Cada personagem pode virar uma carta: Vigor (custo), Influência (força), etiquetas e um Dom (poder). Cadastre uma por uma ou importe tudo por planilha; baixe a planilha com todos os personagens, preencha as colunas de Vigor em diante e importe de volta. Times prontos: coloque o mesmo nome na coluna Times de 12 cartas."
+      description="Cada personagem pode virar uma carta: Vigor (custo), Influência (força), etiquetas e um Dom (poder). Cadastre uma por uma ou importe tudo por planilha; baixe a planilha com todos os personagens, preencha as colunas de Vigor em diante e importe de volta."
       actions={
         <>
           <Button variant="secondary" onClick={() => setGuide(true)}>
@@ -130,12 +129,12 @@ export function DuelScreen() {
       </div>
 
       <DataTable
-        columns={[{ label: 'Personagem' }, { label: 'Vigor' }, { label: 'Infl.' }, { label: 'Etiquetas' }, { label: 'Dom' }, { label: 'Times' }, { label: 'Status' }, { label: '', className: 'w-28' }]}
+        columns={[{ label: 'Personagem' }, { label: 'Vigor' }, { label: 'Infl.' }, { label: 'Etiquetas' }, { label: 'Dom' }, { label: 'Status' }, { label: '', className: 'w-28' }]}
         loading={list.loading}
         error={list.error}
         isEmpty={list.items.length === 0}
         empty="Nenhum personagem encontrado."
-        minWidth={900}
+        minWidth={820}
       >
         {list.items.map((row) => {
           const built = row.card ? buildCard({ id: String(row.characterId), name: row.name, cost: row.card.cost, power: row.card.power, tags: row.card.tags, trigger: row.card.trigger ?? undefined, effects: row.card.effects ?? undefined, text: row.card.domText ?? undefined }) : null;
@@ -152,7 +151,6 @@ export function DuelScreen() {
               <Cell>{row.card ? row.card.power : '—'}</Cell>
               <Cell className="max-w-40 text-xs text-muted">{row.card?.tags.join(', ') || '—'}</Cell>
               <Cell className="max-w-xs text-xs">{built?.ok ? describeDom(built.card.dom) : built ? <span className="text-danger">{built.error}</span> : '—'}</Cell>
-              <Cell className="max-w-32 text-xs text-muted">{row.card?.teams.join(', ') || '—'}</Cell>
               <Cell>{row.card ? <StatusBadge active={row.card.available} on="Disponível" off="Desligada" /> : <span className="text-xs text-muted">Sem carta</span>}</Cell>
               <Cell>
                 <div className="flex justify-end gap-1">
@@ -205,7 +203,6 @@ function CardModal({ row, onClose, onSaved }: { row: DuelCharacterRow; onClose: 
   const [trigger, setTrigger] = useState(card?.trigger ?? '');
   const [effects, setEffects] = useState(card?.effects ?? '');
   const [domText, setDomText] = useState(card?.domText ?? '');
-  const [teams, setTeams] = useState<string[]>(card?.teams ?? []);
   const [available, setAvailable] = useState(card?.available ?? true);
   const [saving, setSaving] = useState(false);
 
@@ -231,7 +228,7 @@ function CardModal({ row, onClose, onSaved }: { row: DuelCharacterRow; onClose: 
     }
     setSaving(true);
     try {
-      const body: DuelCardRecord = { cost: Number(cost), power: Number(power), tags, trigger: trigger || null, effects: trigger ? effects.trim() || null : null, domText: domText.trim() || null, available, teams };
+      const body: DuelCardRecord = { cost: Number(cost), power: Number(power), tags, trigger: trigger || null, effects: trigger ? effects.trim() || null : null, domText: domText.trim() || null, available };
       const result = await saveDuelCard(row.characterId, body);
       toast.success('Carta salva.', result.warnings.length ? { description: result.warnings[0] } : undefined);
       onSaved();
@@ -299,10 +296,7 @@ function CardModal({ row, onClose, onSaved }: { row: DuelCharacterRow; onClose: 
           )}
         </div>
 
-        <Field label="Times prontos" hint="Nomes dos Times de 12 cartas de que ela faz parte. Um Time só aparece no jogo com exatamente 12 cartas disponíveis.">
-          <ChipInput value={teams} onChange={setTeams} placeholder="Ex.: Reis e Juízes" tone="accent" />
-        </Field>
-        <Switch checked={available} onChange={setAvailable} label="Disponível no jogo" description="Desligada, a carta some dos duelos e dos Times prontos." />
+        <Switch checked={available} onChange={setAvailable} label="Disponível no jogo" description="Desligada, a carta some dos duelos e dos Times dos jogadores." />
         {!card ? <Alert tone="info">Este personagem ainda não é carta do Duelo. Ao salvar, ele passa a ser.</Alert> : null}
 
         <div className="flex justify-end gap-2 border-t border-edge pt-4">

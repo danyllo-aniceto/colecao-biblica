@@ -7,7 +7,7 @@
  * Informação escondida: a mão e o Time do rival, a ordem do baralho, as jogadas ainda não reveladas e os
  * cenários que ainda não apareceram. Quem chama (o servidor) deve mandar ao cliente só `viewFor(...)`.
  */
-import { levelDef } from "./cards";
+import { describeDom, levelDef } from "./cards";
 import { nextRandom, shuffled } from "./rng";
 import { scenarioOf, SCENARIOS } from "./scenarios";
 import {
@@ -30,6 +30,8 @@ import {
   type PlayerState,
   type ScenarioDef,
   type Side,
+  type SnapCard,
+  type Snapshot,
   type Staged,
   type Target,
   type TeamCard,
@@ -215,8 +217,17 @@ function isProtected(state: DuelState, target: Found) {
 // Eventos
 // ---------------------------------------------------------------------------
 
+/** Foto do tabuleiro agora (a tela usa a de antes do turno como ponto de partida da repetição). */
+export function snapshotOf(state: DuelState): Snapshot {
+  return state.lanes.map((lane, index) => {
+    const open = isLaneOpen(state, index);
+    const decorate = (side: Side): SnapCard[] => (open ? lane.cards[side].map((card) => ({ uid: card.uid, def: card.def, power: cardPower(state, index, side, card), silenced: card.silenced })) : []);
+    return { open, cards: [decorate(0), decorate(1)], power: open ? [lanePower(state, index, 0), lanePower(state, index, 1)] : [0, 0] };
+  });
+}
+
 function emit(state: DuelState, event: DuelEvent) {
-  state.events.push(event);
+  state.events.push({ ...event, snap: snapshotOf(state) });
 }
 
 // ---------------------------------------------------------------------------
@@ -417,7 +428,7 @@ function applyEffect(state: DuelState, ctx: Ctx, effect: Effect, isDestroyedHook
       if (target.card.def.token) return;
       if (hand.length < HAND_MAX) hand.push({ uid: target.card.uid, def: target.card.def, bonus: 0 });
       else state.players[target.side].graveyard.push({ uid: target.card.uid, def: target.card.def, bonus: 0 });
-      emit(state, { type: "bounce", side: target.side, lane: target.lane, name: target.card.def.name, text: `${target.card.def.name} voltou para a mão do dono por ${self}.` });
+      emit(state, { type: "bounce", side: target.side, lane: target.lane, uid: target.card.uid, name: target.card.def.name, text: `${target.card.def.name} voltou para a mão do dono por ${self}.` });
       return;
     }
     case "discard": {
@@ -611,7 +622,16 @@ function revealPlay(state: DuelState, side: Side, play: Staged, spent: { value: 
   origin.played[side] += 1;
   const placed: PlacedCard = { uid: card.uid, def: card.def, bonus: card.bonus, silenced: false, order: state.nextOrder++, turn: state.turn };
   state.lanes[target].cards[side].push(placed);
-  emit(state, { type: "reveal", side, lane: target, uid: placed.uid, name: placed.def.name, text: target !== play.lane ? `${placed.def.name} foi levado para ${laneScenario(state, target).name}.` : `${placed.def.name} entrou em ${laneScenario(state, target).name}.` });
+  emit(state, {
+    type: "reveal",
+    side,
+    lane: target,
+    uid: placed.uid,
+    name: placed.def.name,
+    text: target !== play.lane ? `${placed.def.name} foi levado para ${laneScenario(state, target).name}.` : `${placed.def.name} entrou em ${laneScenario(state, target).name}.`,
+    ...(placed.def.dom ? { dom: describeDom(placed.def.dom) } : {}),
+    ...(target !== play.lane ? { fromLane: play.lane } : {}),
+  });
 
   runDom(state, { lane: target, side, card: placed }, "reveal");
   // "Quando uma carta sua é jogada aqui": as outras cartas suas neste cenário reagem.
@@ -684,7 +704,7 @@ function finish(state: DuelState, retreated: Side | null = null) {
 
 function nextTurn(state: DuelState) {
   state.turn += 1;
-  state.events.push({ type: "turn", text: `Turno ${state.turn}` });
+  emit(state, { type: "turn", text: `Turno ${state.turn}` });
   for (const side of [0, 1] as Side[]) {
     const player = state.players[side];
     const back = player.returning.filter((entry) => entry.atTurn <= state.turn);
@@ -740,7 +760,7 @@ export function doubleStakes(state: DuelState, side: Side): DuelState {
   const next = clone(state);
   next.stakes *= 2;
   next.players[side].doubledTurn = next.turn;
-  next.events = [...next.events, { type: "double", side, text: `A aposta dobrou: agora vale ${next.stakes}.` }];
+  emit(next, { type: "double", side, amount: next.stakes, text: `A aposta dobrou: agora vale ${next.stakes}.` });
   return next;
 }
 
@@ -755,7 +775,8 @@ export function retreat(state: DuelState, side: Side): DuelState {
   const why = whyNotRetreat(state, side);
   if (why) throw new Error(why);
   const next = clone(state);
-  next.events = [{ type: "retreat", side, text: "Desistiu da rodada." }];
+  next.events = [];
+  emit(next, { type: "retreat", side, text: "Desistiu da rodada." });
   finish(next, side);
   return next;
 }

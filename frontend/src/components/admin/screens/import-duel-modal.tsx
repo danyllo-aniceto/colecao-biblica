@@ -32,8 +32,6 @@ const HEADER_ALIASES: Record<string, Column> = {
   texto: 'text',
   disponivel: 'available',
   ativo: 'available',
-  times: 'teams',
-  time: 'teams',
 };
 
 const normalize = (value: string) => value.normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
@@ -156,7 +154,7 @@ export function ImportDuelModal({ onClose, onImported }: { onClose: () => void; 
             Escolher arquivo
           </Button>
           <p className="text-xs text-muted">
-            Colunas: Personagem, Vigor, Influência, Etiquetas (separadas por vírgula), Gatilho, Efeitos, Texto do Dom (opcional), Disponível (Sim/Não) e Times (nomes separados por vírgula). Gatilho e Efeitos vazios = carta sem Dom. As outras colunas (Raridade, Papel...) servem só de contexto.
+            Colunas: Personagem, Vigor, Influência, Etiquetas (separadas por vírgula), Gatilho, Efeitos, Texto do Dom (opcional), Disponível (Sim/Não). Gatilho e Efeitos vazios = carta sem Dom. As outras colunas (Raridade, Papel...) servem só de contexto.
           </p>
           <input
             ref={inputRef}
@@ -184,19 +182,6 @@ export function ImportDuelModal({ onClose, onImported }: { onClose: () => void; 
               </div>
             </div>
             {skipped > 0 ? <p className="text-xs text-muted">{skipped} linha(s) sem Vigor/Influência foram ignoradas.</p> : null}
-
-            {preview.teams.length > 0 ? (
-              <div className="space-y-1">
-                <p className="text-sm font-bold text-muted">Times prontos</p>
-                <ul className="flex flex-wrap gap-2">
-                  {preview.teams.map((team) => (
-                    <li key={team.name} className={cn('rounded-full px-3 py-1 text-xs font-bold', team.ready ? 'bg-success/15 text-success-strong dark:text-success' : 'bg-primary/20 text-ink')}>
-                      {team.name}: {team.count}/12 {team.ready ? '✓' : '(precisa de 12)'}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
 
             {preview.errors.length > 0 ? (
               <>

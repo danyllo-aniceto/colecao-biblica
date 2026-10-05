@@ -6,6 +6,8 @@ preguiçoso, sons e música por cenário) e as figurinhas, os cenários e o **n�
 
 ## Decisões confirmadas
 
+0. **Sem Times prontos.** Cada jogador monta o próprio Time de 12 cartas (até 5 salvos) com as figurinhas que já conquistou e que têm carta no Duelo.
+   O rival bot joga com um Time sorteado entre todas as cartas disponíveis.
 1. **Aberto para todos** (sem trava de nível); o marcador "Arena de Duelos" no mapa da campanha fica como atalho decorativo (a fazer).
 2. **Time de 12 cartas.**
 3. **Imagens dos cenários substituíveis pelo painel**, como as outras: campo *Imagem no Duelo de Cartas* em Campanha → cenário
@@ -96,9 +98,7 @@ Galileia: no turno 4 todas as cartas aqui perdem 1 · Jerusalém: o vencedor do 
   (quem não tem conta vê o convite e cria a conta). 2 jogadores; os outros que entrarem **assistem** (fase final).
 - **Bot:** completa a sala ou treina sozinho. Aprendiz (jogadas legais ao acaso), Estudante (usa o Vigor e disputa o cenário com mais diferença),
   Mestre (simula a jogada no motor puro contra jogadas prováveis do rival; não vê a mão dele).
-- **Qual Time:** escolha por sala. **Times prontos** (padrão: 12 cartas temáticas iguais para todos, ex.: *Reis de Israel*, *Profetas*,
-  *Patriarcas*, *Mulheres de coragem*), **Meus times** com os níveis das figurinhas valendo, ou **Meus times equilibrado** (níveis ignorados).
-  Assim quem tem poucas figurinhas também joga, e ninguém é "forçado" a ter coleção grande.
+- **Qual Time:** o do próprio jogador, montado só com as figurinhas que ele tem. Há a opção **usar o nível das figurinhas** (desligada = todas valem como nível 1).
 - **Tempo real na Vercel:** sem websocket. O servidor decide tudo (a mão e o Time do rival nunca saem dele), o app consulta com `?since=versão`
   (1,5 s em jogo), e o prazo do turno (30 s) é verificado a cada consulta (relógio preguiçoso). 3 turnos estourados = o bot assume.
 
@@ -118,7 +118,7 @@ Segue o Tabuleiro: **nada de XP, moedas, figurinhas, baús, ranking, missões ou
 
 Você tinha pedido que o modo abrisse num nível e aparecesse no mapa. Mantive: **abre no nível 10** (fim do 2º cenário), com um marcador
 **"Arena de Duelos"** trancado no mapa da campanha e, depois, aberto. Como o modo é casual, também dá para deixá-lo aberto a todos como o Tabuleiro
-(com "Times prontos" ninguém precisa de coleção). Recomendo: **aberto a todos** com o marcador no mapa só como atalho decorativo, ou
+Recomendo: **aberto a todos** com o marcador no mapa só como atalho decorativo, ou
 trancado no nível 10 se quiser que seja um prêmio da campanha. Sua escolha.
 
 ## 10. Telas (referência: print do Marvel Snap, retrato)
@@ -136,13 +136,13 @@ trancado no nível 10 se quiser que seja um prêmio da campanha. Sua escolha.
 - **Motor puro e testado:** `backend/src/duel/engine.ts` (estado serializável, jogadas, prioridade, Dons) + `scenarios.ts` + `bots.ts` + testes de propriedade
   (milhares de partidas bot×bot sem estado inválido, sem carta duplicada, sem vazar mão). A mesma lógica roda no navegador para o modo "treino"
   (como o Tabuleiro local).
-- **Banco:** `duel_card_stats` (personagem: Vigor, Influência, etiquetas, Dom em JSON, `disponivel`), `duel_ready_decks` (Times prontos), `duel_decks`
+- **Banco:** `duel_cards` (personagem: Vigor, Influência, etiquetas, Dom em texto, `available`), `duel_decks`
   (Times salvos do jogador, até 5), `duel_rooms` + `duel_room_players` (mesmo molde de `board_rooms`, estado do motor em JSON, `version`, `dueAt`), nova coluna de
   vitórias em duelo no usuário, tipo de cosmético `CARD_BACK`. Salas apagadas após 24 h, como no Tabuleiro.
 - **Aproveitar do Tabuleiro** (extrair para `services/rooms/` em vez de copiar): geração de código, convite/link, lobby, bots por nível, relógio preguiçoso,
   polling com versão, substituição por bot, `callouts`.
 - **Painel:** aba **Duelo** no personagem (Vigor, Influência, etiquetas, Dom com prévia do texto e **medidor de orçamento**), importação em lote (CSV, como as
-  perguntas), cadastro de Times prontos e de cenários de duelo, **relatório de equilíbrio** (usos, vitórias por carta e por Time, só de salas com 2 pessoas).
+  perguntas), **relatório de equilíbrio** (usos e vitórias por carta, só de salas com 2 pessoas).
 - **Conteúdo inicial:** eu monto um 1º lote de Dons para os personagens que já existem (~40, os mais conhecidos) a partir do cadastro; você revisa no painel.
 
 ## 12. Fases (cada uma jogável e testada, como no Tabuleiro)
@@ -164,16 +164,18 @@ Legenda: ✅ feito e testado · ⬜ a fazer.
      exportação, edição, remoção e **importação por planilha com prévia** (13 testes de integração em `duel.test.ts`).
    - ✅ Painel → *Duelo de Cartas*: lista, edição com prévia do texto e aviso de equilíbrio, importar/baixar planilha e guia de poderes
      (formato em `docs/duelo-planilha.md`).
-   - ✅ O jogo usa as cartas e os Times prontos cadastrados (sem nenhum, usa os de exemplo).
+   - ✅ O jogo usa as cartas cadastradas no painel.
 3. **Online** ⬜: salas, convite, link, relógio preguiçoso, assistir, série por vidas.
-4. **Meus times e níveis** ⬜: montador de Time (paginado), Times salvos, níveis valendo, modo equilibrado.
-5. **Polimento** ⬜: sons próprios, música do cenário (já toca a do 1º cenário aberto), versos de carta e vitórias online, marcador na campanha, relatório de equilíbrio.
+4. **Meus Times e níveis** ✅ (adiantado na rodada de ajustes): montador de Time paginado com busca e filtro de Vigor, até 5 Times salvos no servidor (só
+   figurinhas conquistadas e cartas disponíveis), nível das figurinhas opcional (migração `20261024090000_duelo_times_do_jogador`; Times prontos removidos).
+5. **Polimento** (parcial): ✅ mesa estilo Snap com a arena no meio (arte editável, nome, regra escrita e placar hexagonal dos dois lados), turno repetido passo a passo
+   com narração, números que contam, cartas que entram/saem animadas, histórico "O que aconteceu" e velocidade normal/rápida. ⬜ sons próprios, música do cenário (já toca a do 1º cenário aberto), versos de carta e vitórias online, marcador na campanha, relatório de equilíbrio.
 6. **Conteúdo** ⬜: novos lotes de cartas e cenários.
 
 ## 13. Riscos
 
 - **Tom:** o tema é bíblico. Duelos são provações entre cartas: efeitos se chamam *afastar*, *silenciar*, *enviar de volta*, não "matar". Jesus fica fora.
-- **Equilíbrio:** com ~25 efeitos combináveis surgem interações inesperadas; por isso Times prontos, motor testado em massa e relatório de uso.
+- **Equilíbrio:** com ~25 efeitos combináveis surgem interações inesperadas; por isso motor testado em massa, bots que medem o equilíbrio e relatório de uso.
 - **Volume de conteúdo:** 88+ cartas com Dom único dá trabalho de design. Mitigação: lotes, o 1º já preenchido por mim, importação em CSV.
 - **Escala:** polling a 1,5 s por duelo. Sem problema para dezenas de salas; se crescer, trocar por SSE/Pusher sem mexer no motor.
 

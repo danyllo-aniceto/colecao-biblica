@@ -21,29 +21,3 @@ export function toCardDef(row: WithCharacter): CardDef | null {
   });
   return built.ok ? built.card : null;
 }
-
-export const slugOf = (name: string) => normalizeName(name).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "time";
-
-export type ReadyDeckInfo = { id: string; name: string; description: string; cards: string[] };
-
-/** Times prontos: cada nome de Time reúne as cartas disponíveis que o citam; só vale com exatamente 12. */
-export function readyDecks(cards: Array<{ def: CardDef; teams: string[] }>): { decks: ReadyDeckInfo[]; incomplete: Array<{ name: string; count: number }> } {
-  const byTeam = new Map<string, { name: string; ids: string[] }>();
-  for (const { def, teams } of cards) {
-    for (const team of teams) {
-      const key = normalizeName(team);
-      if (!key) continue;
-      const entry = byTeam.get(key) ?? { name: team.trim(), ids: [] };
-      entry.ids.push(def.id);
-      byTeam.set(key, entry);
-    }
-  }
-  const decks: ReadyDeckInfo[] = [];
-  const incomplete: Array<{ name: string; count: number }> = [];
-  for (const entry of byTeam.values()) {
-    if (entry.ids.length === 12) decks.push({ id: slugOf(entry.name), name: entry.name, description: "12 cartas escolhidas para jogar juntas.", cards: entry.ids });
-    else incomplete.push({ name: entry.name, count: entry.ids.length });
-  }
-  decks.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
-  return { decks, incomplete };
-}

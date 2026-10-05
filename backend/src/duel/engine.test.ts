@@ -319,6 +319,36 @@ describe("cenários", () => {
   });
 });
 
+describe("passo a passo do turno (para a tela animar)", () => {
+  it("cada acontecimento traz a foto do tabuleiro: a carta entra, depois o Dom muda o número", () => {
+    const state = duel({ mine: ["davi"], turn: 2 });
+    state.lanes[0].cards[1].push({ uid: 901, def: def("saul"), bonus: 0, silenced: false, order: 1, turn: 1 });
+    state.nextOrder = 2;
+    const done = playTurn(state, [["davi", 0]]);
+    const steps = done.events.filter((event) => event.snap);
+    const reveal = steps.find((event) => event.type === "reveal")!;
+    const power = steps.find((event) => event.type === "power")!;
+    expect(reveal.dom).toContain("+6 de Influência para esta carta");
+    expect(reveal.snap![0].cards[0].map((card) => card.power)).toEqual([2]);
+    expect(reveal.snap![0].power).toEqual([2, 6]);
+    expect(power.snap![0].cards[0].map((card) => card.power)).toEqual([8]);
+    expect(power.snap![0].power).toEqual([8, 6]);
+    expect(steps.indexOf(reveal)).toBeLessThan(steps.indexOf(power));
+    // Cenários que ainda não apareceram vêm vazios na foto.
+    expect(reveal.snap![2].open).toBe(false);
+  });
+
+  it("destruir mostra a carta saindo; a foto seguinte já não a tem", () => {
+    const state = duel({ mine: ["elias"], turn: 4 });
+    state.lanes[0].cards[1].push({ uid: 920, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 });
+    state.nextOrder = 2;
+    const done = playTurn(state, [["elias", 0]]);
+    const kill = done.events.find((event) => event.type === "destroy")!;
+    expect(kill.name).toBe("Abel");
+    expect(kill.snap![0].cards[1]).toEqual([]);
+  });
+});
+
 describe("fim do duelo e aposta", () => {
   it("depois do turno 6 o duelo acaba e vence quem ganha 2 cenários", () => {
     let state = duel({ turn: 6 });

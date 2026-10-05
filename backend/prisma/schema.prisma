@@ -193,6 +193,7 @@ model User {
   messagesReceived       Message[]         @relation("MessageReceiver")
   tradesProposed         Trade[]           @relation("TradeProposer")
   tradesReceived         Trade[]           @relation("TradeReceiver")
+  duelDecks              DuelDeck[]
   /// Vitórias em salas online do Tabuleiro (só conta com 2 ou mais pessoas na sala).
   boardWins              Int               @default(0) @map("board_wins")
   hostedBoardRooms       BoardRoom[]       @relation("BoardRoomHost")
@@ -918,12 +919,26 @@ model DuelCard {
   domText     String?  @map("dom_text")
   /// Só cartas disponíveis entram nos Times e nos duelos.
   available   Boolean  @default(true)
-  /// Nomes dos Times prontos de que a carta faz parte.
-  teams       String[]
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   character BiblicalCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@map("duel_cards")
+}
+
+/// Time de 12 cartas montado pelo jogador (até 5 por pessoa) com as figurinhas que ele tem.
+model DuelDeck {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @map("user_id")
+  slot         Int
+  name         String
+  /// Ids dos personagens (as cartas do Time).
+  characterIds Int[]    @map("character_ids")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, slot])
+  @@map("duel_decks")
 }

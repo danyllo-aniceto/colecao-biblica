@@ -187,6 +187,10 @@ export type PlayerState = {
   nextEnergyBonus: number;
 };
 
+/** Foto do tabuleiro num instante (para a tela repetir o turno passo a passo, com os números mudando). */
+export type SnapCard = { uid: number; def: CardDef; power: number; silenced: boolean };
+export type Snapshot = Array<{ cards: [SnapCard[], SnapCard[]]; power: [number, number]; open: boolean }>;
+
 export type DuelEvent = {
   type: "play" | "reveal" | "power" | "destroy" | "move" | "create" | "draw" | "vanish" | "return" | "silence" | "scenario" | "turn" | "double" | "retreat" | "win" | "bounce" | "discard" | "convert" | "energy";
   side?: Side;
@@ -197,6 +201,12 @@ export type DuelEvent = {
   amount?: number;
   /** Texto pronto para o aviso. */
   text: string;
+  /** Como o tabuleiro ficou logo depois deste acontecimento. */
+  snap?: Snapshot;
+  /** Na revelação de uma carta com Dom: o texto do Dom, para a tela explicar antes de agir. */
+  dom?: string;
+  /** Para onde a carta foi (movida) ou de onde veio. */
+  fromLane?: number;
 };
 
 export type DuelResult = {

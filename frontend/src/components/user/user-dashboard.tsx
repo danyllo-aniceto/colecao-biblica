@@ -655,7 +655,7 @@ export function UserDashboard() {
                 {quizSession ? null : (
                   <>
                     <BoardHub playerName={profile?.name ?? ''} />
-                    <DuelHub characters={characters} />
+                    <DuelHub characters={characters} collection={collection} />
                   </>
                 )}
               </div>

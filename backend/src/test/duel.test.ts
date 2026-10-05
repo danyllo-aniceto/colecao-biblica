@@ -9,12 +9,12 @@ describe.skipIf(!hasDatabase)("duelo: cartas e planilha", () => {
     await resetDatabase();
   });
 
-  const row = (name: string, extra: Record<string, string> = {}) => ({ name, cost: "2", power: "4", tags: "Rei, Pastor", trigger: "revelar", effects: "poder valor=+2 alvo=si", available: "Sim", teams: "", ...extra });
+  const row = (name: string, extra: Record<string, string> = {}) => ({ name, cost: "2", power: "4", tags: "Rei, Pastor", trigger: "revelar", effects: "poder valor=+2 alvo=si", available: "Sim", ...extra });
 
   it("só admin cadastra; qualquer jogador lê as cartas disponíveis", async () => {
     const user = await login("user@email.com");
     const davi = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Davi" } });
-    const body = { cost: 2, power: 4, tags: ["Rei"], trigger: "revelar", effects: "comprar qtd=1", available: true, teams: [] };
+    const body = { cost: 2, power: 4, tags: ["Rei"], trigger: "revelar", effects: "comprar qtd=1", available: true };
     expect((await api.put(`/api/duel/admin/cards/${davi.id}`).set(bearer(user)).send(body)).status).toBe(403);
 
     const admin = await login("admin2@email.com");
@@ -61,28 +61,43 @@ describe.skipIf(!hasDatabase)("duelo: cartas e planilha", () => {
     expect(davi.duelCard?.power).toBe(5);
   });
 
-  it("Times prontos: só valem com exatamente 12 cartas disponíveis", async () => {
+  it("Times do jogador: 12 cartas diferentes, disponíveis e de figurinhas que ele tem", async () => {
     const admin = await login("admin2@email.com");
     const user = await login("user@email.com");
-    const names = Array.from({ length: 12 }, (_, index) => `Personagem ${index + 1}`);
-    await prisma.biblicalCharacter.createMany({
-      data: names.map((name) => ({ name, rarity: "COMMON" as const, shortSummary: "x", fullDescription: "y", createdBy: "teste" })),
-    });
-    const rows = names.map((name) => row(name, { trigger: "", effects: "", teams: "Os Doze" }));
-    await api.post("/api/duel/admin/import").set(bearer(admin)).send({ rows: rows.slice(0, 11) });
-    expect((await api.get("/api/duel/cards").set(bearer(user))).body.decks).toEqual([]);
-    const preview = await api.post("/api/duel/admin/import").set(bearer(admin)).send({ rows: rows.slice(0, 12), dryRun: true });
-    expect(preview.body.teams).toEqual([{ name: "Os Doze", count: 12, ready: true }]);
-    await api.post("/api/duel/admin/import").set(bearer(admin)).send({ rows });
-    const decks = (await api.get("/api/duel/cards").set(bearer(user))).body.decks;
-    expect(decks).toEqual([expect.objectContaining({ id: "os-doze", name: "Os Doze" })]);
-    expect(decks[0].cards).toHaveLength(12);
+    const userRow = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
+    const names = Array.from({ length: 13 }, (_, index) => `Personagem ${index + 1}`);
+    await prisma.biblicalCharacter.createMany({ data: names.map((name) => ({ name, rarity: "COMMON" as const, shortSummary: "x", fullDescription: "y", createdBy: "teste" })) });
+    const characters = await prisma.biblicalCharacter.findMany({ where: { name: { in: names } }, orderBy: { id: "asc" } });
+    await api.post("/api/duel/admin/import").set(bearer(admin)).send({ rows: names.slice(0, 12).map((name) => row(name, { trigger: "", effects: "" })) });
+    const ids = characters.map((character) => character.id);
+    const team = ids.slice(0, 12);
+
+    // Sem as figurinhas, não pode.
+    const denied = await api.put("/api/duel/decks/1").set(bearer(user)).send({ name: "Meu Time", cards: team });
+    expect(denied.status).toBe(400);
+    expect(denied.body.message).toMatch(/já conquistou/);
+
+    await prisma.userSticker.createMany({ data: ids.map((characterId) => ({ userId: userRow.id, characterId })) });
+    const saved = await api.put("/api/duel/decks/1").set(bearer(user)).send({ name: "Meu Time", cards: team });
+    expect(saved.status).toBe(200);
+    expect((await api.get("/api/duel/decks").set(bearer(user))).body.decks).toEqual([{ slot: 1, name: "Meu Time", cards: team }]);
+
+    // Regras: 12 cartas, sem repetir, só disponíveis, espaço de 1 a 5.
+    expect((await api.put("/api/duel/decks/2").set(bearer(user)).send({ name: "Curto", cards: team.slice(0, 11) })).status).toBe(400);
+    expect((await api.put("/api/duel/decks/2").set(bearer(user)).send({ name: "Repetido", cards: [...team.slice(0, 11), team[0]] })).body.message).toMatch(/duas vezes/);
+    expect((await api.put("/api/duel/decks/2").set(bearer(user)).send({ name: "Sem carta", cards: [...team.slice(0, 11), ids[12]] })).body.message).toMatch(/não está disponível/);
+    expect((await api.put("/api/duel/decks/6").set(bearer(user)).send({ name: "Fora", cards: team })).status).toBe(400);
+
+    // Cada jogador vê só os seus; apagar libera o espaço.
+    expect((await api.get("/api/duel/decks").set(bearer(admin))).body.decks).toEqual([]);
+    expect((await api.delete("/api/duel/decks/1").set(bearer(user))).status).toBe(204);
+    expect((await api.get("/api/duel/decks").set(bearer(user))).body.decks).toEqual([]);
   });
 
   it("lista do painel é paginada, com busca e filtro, e a exportação traz todos os personagens", async () => {
     const admin = await login("admin2@email.com");
     const davi = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Davi" } });
-    await prisma.duelCard.create({ data: { characterId: davi.id, cost: 2, power: 4, tags: [], teams: [] } });
+    await prisma.duelCard.create({ data: { characterId: davi.id, cost: 2, power: 4, tags: [] } });
     const page = await api.get("/api/duel/admin/cards?size=2&page=0").set(bearer(admin));
     expect(page.body).toMatchObject({ size: 2, number: 0 });
     expect(page.body.content).toHaveLength(2);
