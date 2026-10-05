@@ -278,7 +278,7 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
           </Field>
           <QuizBackgroundPreview imageUrl={quizBackgroundUrl || null} color={color} name={name.trim() || undefined} />
         </div>
-        <Field label="Imagem no Duelo de Cartas" hint="Coluna do cenário na mesa do duelo: vertical e estreita (2:5), tipo 768×1920, sem texto e com o centro calmo (as cartas ficam por cima). Vazio usa o mapa do cenário.">
+        <Field label="Imagem no Duelo de Cartas" hint="Arena do cenário na mesa do duelo: quadrada (1:1), tipo 1024×1024, sem texto, com o assunto no centro (as bordas são cortadas). Prompts em docs/duelo-prompts-de-arena.md. Vazio usa o mapa do cenário.">
           <ImageUploadField value={duelImageUrl} onChange={setDuelImageUrl} wide />
         </Field>
         <section className="space-y-4 rounded-3xl border-2 border-edge p-4" aria-label="Tabuleiro deste cenário">
