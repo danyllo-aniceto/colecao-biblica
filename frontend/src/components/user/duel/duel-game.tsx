@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { playBotTurn, type BotSkill } from '@duel/bots';
 import { doubleStakes, newDuel, retreat, setReady, snapshotOf, stage as stageCard, unstage, viewFor, whyNotStage, type DuelView } from '@duel/engine';
-import { applyRound, damageFor, newSeries, type Series, type SeriesFormat } from '@duel/series';
+import { applyRound, newSeries, type Series, type SeriesFormat } from '@duel/series';
 import type { DuelEvent, DuelState, Side, Snapshot, TeamCard } from '@duel/types';
+import { durationOf, narrate, recordLines, stepsFrom } from '@/components/user/duel/duel-playback';
 import { Button } from '@/components/ui/button';
 import { useDialogs } from '@/components/ui/dialogs';
-import { Modal } from '@/components/ui/modal';
 import { useToast } from '@/components/ui/toast';
 import { useCampaign } from '@/components/user/campaign/campaign-provider';
 import { DuelHelpModal } from '@/components/user/duel/duel-help';
 import { DuelHistoryModal, type HistoryEntry } from '@/components/user/duel/duel-history';
+import { DuelRoundModal } from '@/components/user/duel/duel-round-modal';
 import { DuelTable, type DuelSpeed, type Stage } from '@/components/user/duel/duel-table';
 import type { CardArt } from '@/components/user/duel/duel-card';
 import { scenarioMapSrc, scenarioThemeVars } from '@/lib/campaign-theme';
@@ -30,54 +31,6 @@ type GameProps = {
 
 const SPEED_KEY = 'colecao-biblica:duel-speed';
 const HELP_KEY = 'colecao-biblica:duel-help';
-
-/** Quanto cada passo fica na tela (ms, na velocidade normal): dá tempo de ler o Dom e ver o número mudar. */
-function durationOf(event: DuelEvent): number {
-  switch (event.type) {
-    case 'reveal':
-      return event.dom ? 3200 : 1500;
-    case 'scenario':
-      return 3600;
-    case 'turn':
-      return 1400;
-    case 'double':
-    case 'retreat':
-      return 2600;
-    default:
-      return 2300;
-  }
-}
-
-/** Texto do aviso com quem fez (você ou o rival), sem mexer no motor. */
-function narrate(event: DuelEvent, state: DuelState): string {
-  const who = event.side === 0 ? 'Você' : 'O rival';
-  const arena = event.lane !== undefined ? state.lanes[event.lane]?.scenario : undefined;
-  switch (event.type) {
-    case 'reveal':
-      return `${who} revelou ${event.name}.`;
-    case 'double':
-      return event.side === 0 ? `Você dobrou a aposta: agora vale ${event.amount}.` : `O rival dobrou a aposta! Agora vale ${event.amount}. Você pode seguir ou desistir da rodada.`;
-    case 'retreat':
-      return event.side === 0 ? 'Você desistiu da rodada.' : 'O rival desistiu da rodada.';
-    default:
-      void arena;
-      return event.text;
-  }
-}
-
-/** Passos de um turno: uma foto de "antes" e depois cada acontecimento com a foto do tabuleiro. */
-function stepsFrom(events: DuelEvent[], before: Snapshot): DuelEvent[] {
-  const useful = events.filter((event) => event.snap && !['play', 'draw', 'win'].includes(event.type));
-  if (useful.length === 0) return [];
-  if (useful.some((event) => event.type === 'reveal')) {
-    return [{ type: 'turn', text: 'As cartas vão virar...', snap: before }, ...useful];
-  }
-  return useful;
-}
-
-function recordLines(events: DuelEvent[], state: DuelState) {
-  return events.filter((event) => !['play', 'draw', 'win', 'turn'].includes(event.type)).map((event) => `${narrate(event, state)}${event.dom ? ` (${event.dom})` : ''}`);
-}
 
 /** Treino contra bot: um aparelho, sem XP nem moedas. O motor decide tudo; aqui ficam os turnos, as animações, o bot e a série. */
 export function DuelGame({ team, foeTeam, skill, format, art, onExit }: GameProps) {
@@ -113,7 +66,7 @@ export function DuelGame({ team, foeTeam, skill, format, art, onExit }: GameProp
     const steps = stepsFrom(fresh, snapshotOf(previous));
     if (steps.length > 0) {
       setPlayback({ steps, before: snapshotOf(previous), index: 0 });
-      const lines = recordLines(fresh, next);
+      const lines = recordLines(fresh, 0);
       if (lines.length > 0) {
         historyId.current += 1;
         setHistory((entries) => [...entries, { id: historyId.current, label: `Turno ${previous.turn}${next.status === 'finished' ? ' (fim)' : ''}`, lines }]);
@@ -235,11 +188,9 @@ export function DuelGame({ team, foeTeam, skill, format, art, onExit }: GameProp
   const music = firstScenario ? scenarioSlug(firstScenario.id) : undefined;
   useBoardMusic(music?.musicUnlocked ? music.musicUrl : null);
 
-  const stage: Stage | null = playback && step ? { event: { ...step, text: narrate(step, state) }, snap: step.snap!, prev: playback.index === 0 ? playback.before : (playback.steps[playback.index - 1].snap ?? playback.before), index: playback.index, total: playback.steps.length } : null;
+  const stage: Stage | null = playback && step ? { event: { ...step, text: narrate(step, 0) }, snap: step.snap!, prev: playback.index === 0 ? playback.before : (playback.steps[playback.index - 1].snap ?? playback.before), index: playback.index, total: playback.steps.length } : null;
 
   const result = state.result;
-  const youWon = result?.winner === 0;
-  const lost = result?.winner === 1;
 
   return (
     <div className="contents" style={scenarioThemeVars(current?.color)}>
@@ -282,10 +233,12 @@ export function DuelGame({ team, foeTeam, skill, format, art, onExit }: GameProp
       />
       <DuelHistoryModal open={historyOpen} entries={history} onClose={() => setHistoryOpen(false)} />
 
-      <Modal
-        open={summary && result !== null}
-        size="sm"
-        title={youWon ? 'Você venceu a rodada!' : lost ? (result?.retreated === 0 ? 'Você desistiu' : 'O rival venceu a rodada') : 'Empate'}
+      <DuelRoundModal
+        open={summary}
+        result={result}
+        arenaName={(index) => scenarioSlug(state.lanes[index].scenario)?.name ?? state.lanes[index].scenario}
+        you={0}
+        series={series}
         footer={
           series.over ? (
             <>
@@ -298,38 +251,7 @@ export function DuelGame({ team, foeTeam, skill, format, art, onExit }: GameProp
             <Button onClick={nextRound}>Próxima rodada</Button>
           )
         }
-      >
-        {result ? (
-          <div className="space-y-4">
-            <ul className="space-y-2">
-              {result.lanes.map((lane, index) => {
-                const scenario = scenarioSlug(state.lanes[index].scenario);
-                const mine: Side = 0;
-                return (
-                  <li key={index} className="flex items-center justify-between gap-2 rounded-2xl bg-surface-2 px-3 py-2 text-sm font-semibold text-ink">
-                    <span className="truncate">{scenario?.name ?? state.lanes[index].scenario}</span>
-                    <span className={lane.winner === mine ? 'font-bold text-success' : lane.winner === 1 ? 'font-bold text-danger' : 'text-muted'}>
-                      {lane.power[0]} × {lane.power[1]}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-            <p className="text-center text-sm font-semibold text-muted">
-              {series.format === 'lives'
-                ? `Vidas: você ${Math.max(series.lives[0], 0)} · rival ${Math.max(series.lives[1], 0)}${result.winner !== null ? ` (dano ${damageFor(series.round - 1, result.stakes)})` : ''}`
-                : series.format === 'bo3'
-                  ? `Rodadas vencidas: você ${series.wins[0]} · rival ${series.wins[1]}`
-                  : null}
-            </p>
-            {series.over ? (
-              <p className="text-center font-display text-lg font-bold text-ink">
-                {series.winner === 0 ? '🏆 Você venceu o duelo!' : series.winner === 1 ? 'O rival venceu o duelo.' : 'Duelo empatado.'}
-              </p>
-            ) : null}
-          </div>
-        ) : null}
-      </Modal>
+      />
     </div>
   );
 }

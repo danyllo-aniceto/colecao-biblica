@@ -21,8 +21,9 @@ import { HomeSection } from '@/components/user/sections/home-section';
 import { PlaySection, type QuizFormState } from '@/components/user/sections/play-section';
 import { BoardHub } from '@/components/user/board/board-hub';
 import { DuelHub } from '@/components/user/duel/duel-hub';
-import { BoardInviteWatcher } from '@/components/user/board/board-invite-watcher';
+import { BoardInviteWatcher, RoomInviteWatcher } from '@/components/user/board/board-invite-watcher';
 import { peekPendingRoom, setPendingRoom } from '@/lib/board-room-api';
+import { dismissDuelRoomInvite, listDuelRoomInvites, peekPendingDuelRoom, setPendingDuelRoom } from '@/lib/duel-room-api';
 import { ProfileSection } from '@/components/user/sections/profile-section';
 import { FriendsSection } from '@/components/user/sections/friends-section';
 import { RankingSection } from '@/components/user/sections/ranking-section';
@@ -87,7 +88,7 @@ export function UserDashboard() {
   const { confirm } = useDialogs();
 
   // Quem chegou por um convite de sala abre direto na aba Jogar, onde a sala é aberta.
-  const [section, setSection] = useState<SectionId>(() => (peekPendingRoom() ? 'quiz' : takeReturnSection()));
+  const [section, setSection] = useState<SectionId>(() => (peekPendingRoom() || peekPendingDuelRoom() ? 'quiz' : takeReturnSection()));
   const [profile, setProfile] = useState<UserProfile | null>(user);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -567,6 +568,14 @@ export function UserDashboard() {
     <BoardInviteWatcher
       onAccept={(code) => {
         setPendingRoom(code);
+        navigate('quiz');
+      }}
+    />
+    <RoomInviteWatcher
+      list={async () => (await listDuelRoomInvites()).map((invite) => ({ id: invite.id, code: invite.code, fromName: invite.fromName, title: `${invite.fromName} chamou você para um Duelo de Cartas`, message: `${invite.players} ${invite.players === 1 ? 'jogador' : 'jogadores'} na sala. Quer entrar?` }))}
+      dismiss={dismissDuelRoomInvite}
+      onAccept={(code) => {
+        setPendingDuelRoom(code);
         navigate('quiz');
       }}
     />

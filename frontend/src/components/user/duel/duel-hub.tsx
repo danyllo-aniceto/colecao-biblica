@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import MeetingRoomRoundedIcon from '@mui/icons-material/MeetingRoomRounded';
 import StyleRoundedIcon from '@mui/icons-material/StyleRounded';
 import type { BotSkill } from '@duel/bots';
 import { botTeam } from '@duel/bot-team';
@@ -21,7 +23,10 @@ import { buildCardArt, DuelCardFace } from '@/components/user/duel/duel-card';
 import { DuelDeckBuilder } from '@/components/user/duel/duel-deck-builder';
 import { DuelGame } from '@/components/user/duel/duel-game';
 import { DuelHelpModal } from '@/components/user/duel/duel-help';
+import { OnlineDuel } from '@/components/user/duel/duel-online';
+import { JoinRoomModal } from '@/components/user/board/join-room-modal';
 import { deleteDuelDeck, getDuelCards, listDuelDecks, MAX_DUEL_DECKS, saveDuelDeck, type DuelDeck } from '@/lib/duel-api';
+import { createDuelRoom, joinDuelRoom, myDuelRoom, PENDING_DUEL_EVENT, takePendingDuelRoom, type DuelRoomView } from '@/lib/duel-room-api';
 import type { UserSticker } from '@/lib/user-api';
 
 const SKILLS: Array<{ value: BotSkill; label: string }> = [
@@ -52,6 +57,12 @@ export function DuelHub({ characters, collection }: Props) {
   const [saving, setSaving] = useState(false);
   const [playing, setPlaying] = useState<{ key: number; team: TeamCard[]; foe: TeamCard[] } | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [joinOpen, setJoinOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  /** Sala online aberta na tela (com a visão que veio de criar/entrar, para não piscar vazia). */
+  const [room, setRoom] = useState<{ code: string; initial: DuelRoomView | null } | null>(null);
+  const [current, setCurrent] = useState<{ code: string } | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   const load = useCallback(() => {
     Promise.all([getDuelCards(), listDuelDecks()])
@@ -60,7 +71,8 @@ export function DuelHub({ characters, collection }: Props) {
         setDecks(deckResult.decks);
         setSlot((current) => current ?? deckResult.decks[0]?.slot ?? null);
       })
-      .catch((reason) => setLoadError(errorMessage(reason, 'Não foi possível carregar o Duelo.')));
+      .catch((reason) => setLoadError(errorMessage(reason, 'Não foi possível carregar o Duelo.')))
+      .finally(() => setLoaded(true));
   }, []);
   useEffect(load, [load]);
 
@@ -78,6 +90,60 @@ export function DuelHub({ characters, collection }: Props) {
   const selected = decks.find((deck) => deck.slot === slot) ?? null;
   const selectedTeam = selected ? teamOf(selected) : [];
   const selectedOk = selectedTeam.length === TEAM_SIZE && selected !== null && selected.cards.every((id) => levelOf.has(String(id)));
+
+  // Sala em que a pessoa já está (para voltar a ela) e salas pedidas por link ou convite de amigo.
+  const refreshCurrent = useCallback(() => {
+    myDuelRoom()
+      .then((found) => setCurrent(found ? { code: found.code } : null))
+      .catch(() => setCurrent(null));
+  }, []);
+
+  const deckForRoom = selectedOk ? slot : null;
+  const deckForRoomRef = useRef<number | null>(null);
+  deckForRoomRef.current = deckForRoom;
+
+  const openPending = useCallback(async () => {
+    const code = takePendingDuelRoom();
+    if (!code) return;
+    try {
+      setRoom({ code, initial: await joinDuelRoom(code, deckForRoomRef.current) });
+    } catch (reason) {
+      toast.error(errorMessage(reason, 'Não foi possível entrar na sala.'));
+      refreshCurrent();
+    }
+  }, [toast, refreshCurrent]);
+
+  useEffect(() => {
+    if (!loaded) return;
+    refreshCurrent();
+    void openPending();
+    const listener = () => void openPending();
+    window.addEventListener(PENDING_DUEL_EVENT, listener);
+    return () => window.removeEventListener(PENDING_DUEL_EVENT, listener);
+  }, [loaded, refreshCurrent, openPending]);
+
+  async function createOnline() {
+    setCreating(true);
+    try {
+      const created = await createDuelRoom({ config: { format, levels: useLevels }, deckSlot: deckForRoom });
+      setRoom({ code: created.code, initial: created });
+    } catch (reason) {
+      toast.error(errorMessage(reason, 'Não foi possível criar a sala.'));
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function joinByCode(code: string) {
+    const joined = await joinDuelRoom(code, deckForRoom);
+    setJoinOpen(false);
+    setRoom({ code: joined.code, initial: joined });
+  }
+
+  function closeRoom() {
+    setRoom(null);
+    refreshCurrent();
+  }
 
   function start() {
     if (!selected || !cards) return;
@@ -200,7 +266,7 @@ export function DuelHub({ characters, collection }: Props) {
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-2">
-                <span className="text-sm font-bold text-muted">Rival</span>
+                <span className="text-sm font-bold text-muted">Rival no treino</span>
                 <Segmented aria-label="Nível do bot" value={skill} onChange={setSkill} options={SKILLS} />
               </div>
               <div className="space-y-2">
@@ -210,11 +276,28 @@ export function DuelHub({ characters, collection }: Props) {
             </div>
             <Switch checked={useLevels} onChange={setUseLevels} label="Usar o nível das minhas figurinhas" description="Ligado, cartas de nível 2 a 5 ficam um pouco mais fortes (e o rival também sobe). Desligado, todas valem como nível 1." />
 
+            {current && !room ? (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-accent/15 p-3">
+                <p className="text-sm font-semibold text-ink">
+                  Você está na sala de duelo <b className="tracking-widest">{current.code}</b>
+                </p>
+                <Button size="sm" variant="accent" onClick={() => setRoom({ code: current.code, initial: null })}>
+                  Voltar para a sala
+                </Button>
+              </div>
+            ) : null}
+
             <div className="flex flex-wrap gap-2">
               <Button size="lg" disabled={!selectedOk} onClick={start}>
                 <StyleRoundedIcon /> Jogar contra o bot
               </Button>
-              <Button size="lg" variant="secondary" onClick={() => setHelpOpen(true)}>
+              <Button size="lg" variant="accent" disabled={!selectedOk} loading={creating} onClick={() => void createOnline()}>
+                <GroupsRoundedIcon /> Criar sala online
+              </Button>
+              <Button size="lg" variant="secondary" onClick={() => setJoinOpen(true)}>
+                <MeetingRoomRoundedIcon /> Entrar com código
+              </Button>
+              <Button size="lg" variant="ghost" onClick={() => setHelpOpen(true)}>
                 <HelpOutlineRoundedIcon /> Como jogar
               </Button>
             </div>
@@ -223,6 +306,8 @@ export function DuelHub({ characters, collection }: Props) {
         ) : null}
       </div>
 
+      {joinOpen ? <JoinRoomModal open onClose={() => setJoinOpen(false)} onJoin={joinByCode} /> : null}
+      {room ? <OnlineDuel key={room.code} code={room.code} initial={room.initial} decks={decks} art={art} onClose={closeRoom} /> : null}
       {playing ? <DuelGame key={playing.key} team={playing.team} foeTeam={playing.foe} skill={skill} format={format} art={art} onExit={() => setPlaying(null)} /> : null}
       <DuelHelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
       {editing ? (

@@ -8,6 +8,7 @@ import { authRouter } from "./routes/auth";
 import { boardPublicRouter, boardRouter } from "./routes/board";
 import { campaignRouter } from "./routes/campaign";
 import { duelRouter } from "./routes/duel";
+import { duelPublicRouter, duelRoomRouter } from "./routes/duel-room";
 import { charactersRouter } from "./routes/characters";
 import { collectionRouter } from "./routes/collection";
 import { commentsRouter } from "./routes/comments";
@@ -49,6 +50,7 @@ export function createApp() {
   app.use("/api/users", usersRouter);
   app.use("/api/uploads", uploadsRouter);
   app.use("/api/board-public", boardPublicRouter);
+  app.use("/api/duel-public", duelPublicRouter);
 
   // Daqui em diante tudo exige login.
   app.use("/api/characters", requireAuth, charactersRouter);
@@ -76,6 +78,7 @@ export function createApp() {
   app.use("/api/campaign", requireAuth, campaignRouter);
   app.use("/api/board", requireAuth, boardRouter);
   app.use("/api/duel", requireAuth, duelRouter);
+  app.use("/api/duel-room", requireAuth, duelRoomRouter);
 
   app.use("/api", notFoundHandler);
   app.use(errorHandler);

@@ -12,7 +12,7 @@ import { listFriends, type Friend } from '@/lib/social-api';
 const PAGE_SIZE = 6;
 
 /** Lista de amigos (paginada no servidor) para mandar o convite da sala. */
-export function FriendInviteModal({ open, code, inRoomUserIds, onClose }: { open: boolean; code: string; inRoomUserIds: number[]; onClose: () => void }) {
+export function FriendInviteModal({ open, code, inRoomUserIds, onClose, invite: sendInvite = inviteToRoom }: { open: boolean; code: string; inRoomUserIds: number[]; onClose: () => void; /** Como mandar o convite (padrão: sala do Tabuleiro). */ invite?: (code: string, friendId: number) => Promise<unknown> }) {
   const toast = useToast();
   const [page, setPage] = useState(0);
   const [friends, setFriends] = useState<Friend[] | null>(null);
@@ -41,7 +41,7 @@ export function FriendInviteModal({ open, code, inRoomUserIds, onClose }: { open
   async function invite(friend: Friend) {
     setSending(friend.userId);
     try {
-      await inviteToRoom(code, friend.userId);
+      await sendInvite(code, friend.userId);
       setSent((current) => new Set(current).add(friend.userId));
       toast.success(`Convite enviado para ${friend.name}.`);
     } catch (reason) {

@@ -68,6 +68,8 @@ código em **português do Brasil**.
   Todo evento do motor leva a foto do tabuleiro (`snap`): a tela repete o turno passo a passo, então evento novo precisa de texto claro.
 - **Nenhum cenário nem Dom usa sorte.** Só decisão do jogador. Regras novas entram em `engine.test.ts`; bots só enxergam `viewFor(...)`.
 - Informação escondida (mão e baralho do rival, jogadas não reveladas, cenários que não apareceram) nunca sai do servidor: o online manda só `viewFor`.
+- Online: `services/duel-room.ts` + `routes/duel-room.ts` (mesmo molde do Tabuleiro: sem websocket, `?since=<versão>`, tudo "sozinho" resolvido por `advance()` com a sala trancada).
+  Os bots jogam o turno ao começar; colocar carta não sobe a versão; o prazo só recomeça quando o turno muda. Convite/link: `/duelo/CÓDIGO` (a mesma página de convite do Tabuleiro).
 - Nada do modo dá XP, moedas, figurinhas ou mexe em ranking/missões/estatísticas. Único prêmio previsto: versos de carta por vitórias online.
 
 ## Comandos

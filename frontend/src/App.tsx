@@ -22,6 +22,7 @@ export function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/sala/:code" element={<RoomInvitePage />} />
+              <Route path="/duelo/:code" element={<RoomInvitePage game="duel" />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route
                 path="/dashboard/figurinhas/:characterId"

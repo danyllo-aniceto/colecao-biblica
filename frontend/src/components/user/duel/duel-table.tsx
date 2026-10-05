@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import FastForwardRoundedIcon from '@mui/icons-material/FastForwardRounded';
 import FlagRoundedIcon from '@mui/icons-material/FlagRounded';
@@ -46,6 +46,8 @@ type TableProps = {
   onSpeed: () => void;
   /** Enquanto o bot pensa ou a rodada termina, a mesa fica travada. */
   busy: boolean;
+  /** Extra no cabeçalho (sala online: código, placar da série e cronômetro). */
+  extra?: ReactNode;
 };
 
 type Drag = { uid: number; x: number; y: number; lane: number | null };
@@ -74,7 +76,7 @@ const EVENT_ICON: Partial<Record<DuelEvent['type'], string>> = {
 type LaneCards = { foe: SnapCard[]; me: SnapCard[]; mine: number; theirs: number; open: boolean; scenario: ScenarioDef | null; slots: number };
 
 /** Mesa do Duelo em retrato (como o Marvel Snap): rival em cima, as arenas no meio com o placar, você embaixo. */
-export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onSelect, onStage, onUnstage, onReady, onDouble, onRetreat, onExit, onHelp, onHistory, stage, onAdvance, onSkip, speed, onSpeed, busy }: TableProps) {
+export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onSelect, onStage, onUnstage, onReady, onDouble, onRetreat, onExit, onHelp, onHistory, stage, onAdvance, onSkip, speed, onSpeed, busy, extra }: TableProps) {
   const [detail, setDetail] = useState<{ def: CardDef; power?: number } | null>(null);
   const [arenaInfo, setArenaInfo] = useState<number | null>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
@@ -190,6 +192,7 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
           ×{view.stakes}
         </span>
       </header>
+      {extra ? <div className="flex shrink-0 items-center justify-center gap-2 border-b border-edge bg-surface-2/80 px-3 py-1">{extra}</div> : null}
 
       <main className="grid min-h-0 flex-1 grid-cols-3 gap-2 px-2 py-2" onClick={playing ? onAdvance : undefined}>
         {lanes.map((lane, index) => {

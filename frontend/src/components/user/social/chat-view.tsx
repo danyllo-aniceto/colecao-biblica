@@ -24,8 +24,11 @@ import { blockUser, getChat, listMyReactions, removeFriend, sendChatMessage, sen
 const POLL_MS = 5000;
 
 /** Convite do Tabuleiro: a mensagem leva o caminho da sala, que vira um botão. */
-const ROOM_LINK = /\/sala\/([A-Z0-9]{5})\b/;
-const roomCode = (text: string) => text.match(ROOM_LINK)?.[1] ?? null;
+const ROOM_LINK = /\/(sala|duelo)\/([A-Z0-9]{5})\b/;
+const roomLink = (text: string) => {
+  const found = text.match(ROOM_LINK);
+  return found ? { path: `/${found[1]}/${found[2]}`, code: found[2] } : null;
+};
 
 const time = (iso: string) =>
   new Date(iso).toLocaleTimeString('pt-BR', {
@@ -325,9 +328,9 @@ export function ChatView({
                   ) : (
                     <div className={cn('max-w-[80%] rounded-3xl px-4 py-2', mine ? 'rounded-br-lg bg-primary text-on-primary' : 'rounded-bl-lg bg-surface-3 text-ink')}>
                       <p className="whitespace-pre-wrap break-words text-sm">{ROOM_LINK.test(message.text) ? message.text.replace(ROOM_LINK, '').trim() : message.text}</p>
-                      {roomCode(message.text) ? (
-                        <Link to={`/sala/${roomCode(message.text)}`} className={cn('mt-2 block rounded-2xl px-3 py-2 text-center font-display text-sm font-bold transition', mine ? 'bg-on-primary/20 text-on-primary' : 'bg-primary text-on-primary hover:brightness-110')}>
-                          Entrar na sala {roomCode(message.text)}
+                      {roomLink(message.text) ? (
+                        <Link to={roomLink(message.text)!.path} className={cn('mt-2 block rounded-2xl px-3 py-2 text-center font-display text-sm font-bold transition', mine ? 'bg-on-primary/20 text-on-primary' : 'bg-primary text-on-primary hover:brightness-110')}>
+                          Entrar na sala {roomLink(message.text)!.code}
                         </Link>
                       ) : null}
                       <p className={cn('mt-0.5 text-right text-[10px]', mine ? 'text-on-primary/70' : 'text-muted')}>

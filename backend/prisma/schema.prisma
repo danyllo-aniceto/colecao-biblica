@@ -117,6 +117,12 @@ enum QuizSessionStatus {
 }
 
 /// Sala do Modo Tabuleiro online: LOBBY (reunindo), PLAYING (em jogo) ou FINISHED (pódio na tela).
+enum DuelRoomStatus {
+  LOBBY
+  PLAYING
+  FINISHED
+}
+
 enum BoardRoomStatus {
   LOBBY
   PLAYING
@@ -194,6 +200,10 @@ model User {
   tradesProposed         Trade[]           @relation("TradeProposer")
   tradesReceived         Trade[]           @relation("TradeReceiver")
   duelDecks              DuelDeck[]
+  hostedDuelRooms        DuelRoom[]        @relation("DuelRoomHost")
+  duelPlayers            DuelRoomPlayer[]
+  sentDuelInvites        DuelInvite[]      @relation("DuelInviteFrom")
+  receivedDuelInvites    DuelInvite[]      @relation("DuelInviteTo")
   /// Vitórias em salas online do Tabuleiro (só conta com 2 ou mais pessoas na sala).
   boardWins              Int               @default(0) @map("board_wins")
   hostedBoardRooms       BoardRoom[]       @relation("BoardRoomHost")
@@ -904,7 +914,6 @@ model BoardInvite {
   @@map("board_invites")
 }
 
-
 /// Carta do Modo Duelo de um personagem (Vigor, Influência, etiquetas e o Dom em texto, ver backend/src/duel/dsl.ts).
 model DuelCard {
   id          Int      @id @default(autoincrement())
@@ -941,4 +950,84 @@ model DuelDeck {
 
   @@unique([userId, slot])
   @@map("duel_decks")
+}
+
+/// Sala online do Duelo de Cartas (2 jogadores; o outro lado pode ser um bot). Mesmo molde do Tabuleiro: sem websocket, versão + relógio preguiçoso.
+model DuelRoom {
+  id         Int            @id @default(autoincrement())
+  code       String         @unique
+  hostId     Int            @map("host_id")
+  status     DuelRoomStatus @default(LOBBY)
+  /// Regras da sala: { format: single | bo3 | lives, levels: boolean, turnSeconds }.
+  config     Json
+  /// Estado do motor da rodada (backend/src/duel/engine.ts), com as mãos dos dois: nunca sai inteiro do servidor.
+  state      Json?
+  /// Placar da série (backend/src/duel/series.ts).
+  series     Json?
+  /// Os dois Times da partida (cartas já com a definição e o nível), na ordem das vagas.
+  teams      Json?
+  /// Vagas que já pediram a próxima rodada.
+  acks       Json           @default("[]")
+  /// O que aconteceu, em texto.
+  log        Json           @default("[]")
+  /// Sobe a cada mudança; o cliente só baixa a sala quando muda.
+  version    Int            @default(1)
+  /// Quando o servidor precisa agir sozinho (fim do tempo do turno, próxima rodada).
+  dueAt      DateTime?      @map("due_at")
+  /// Fim do tempo do turno (cronômetro).
+  deadlineAt DateTime?      @map("deadline_at")
+  createdAt  DateTime       @default(now()) @map("created_at")
+  updatedAt  DateTime       @updatedAt @map("updated_at")
+  startedAt  DateTime?      @map("started_at")
+  finishedAt DateTime?      @map("finished_at")
+
+  host    User             @relation("DuelRoomHost", fields: [hostId], references: [id], onDelete: Cascade)
+  players DuelRoomPlayer[]
+  invites DuelInvite[]
+
+  @@index([status, updatedAt])
+  @@map("duel_rooms")
+}
+
+/// Quem está na sala: pessoa (userId) ou bot (bot = nível). Quem sai no meio do jogo vira bot (replaced).
+model DuelRoomPlayer {
+  id         Int      @id @default(autoincrement())
+  roomId     Int      @map("room_id")
+  userId     Int?     @map("user_id")
+  /// 0 ou 1 (o lado da mesa).
+  slot       Int
+  name       String
+  /// APPRENTICE, STUDENT ou MASTER quando é bot.
+  bot        String?
+  replaced   Boolean  @default(false)
+  afkStrikes Int      @default(0) @map("afk_strikes")
+  /// Time salvo (1 a 5) que a pessoa levará ao duelo.
+  deckSlot   Int?     @map("deck_slot")
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+  joinedAt   DateTime @default(now()) @map("joined_at")
+
+  room DuelRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, slot])
+  @@unique([roomId, userId])
+  @@index([userId])
+  @@map("duel_room_players")
+}
+
+/// Convite de um amigo para uma sala do Duelo ainda reunindo gente.
+model DuelInvite {
+  id         Int      @id @default(autoincrement())
+  roomId     Int      @map("room_id")
+  fromUserId Int      @map("from_user_id")
+  toUserId   Int      @map("to_user_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  room DuelRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  from User     @relation("DuelInviteFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  to   User     @relation("DuelInviteTo", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, toUserId])
+  @@index([toUserId, createdAt])
+  @@map("duel_invites")
 }

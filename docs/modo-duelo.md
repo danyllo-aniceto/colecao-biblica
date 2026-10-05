@@ -165,7 +165,14 @@ Legenda: ✅ feito e testado · ⬜ a fazer.
    - ✅ Painel → *Duelo de Cartas*: lista, edição com prévia do texto e aviso de equilíbrio, importar/baixar planilha e guia de poderes
      (formato em `docs/duelo-planilha.md`).
    - ✅ O jogo usa as cartas cadastradas no painel.
-3. **Online** ⬜: salas, convite, link, relógio preguiçoso, assistir, série por vidas.
+3. **Online** ✅ (sem assistir): salas de 2 pessoas, ou 1 pessoa + bot, no molde do Tabuleiro.
+   - ✅ Migração `20261025090000_duelo_salas_online` (`duel_rooms`, `duel_room_players`, `duel_invites`) e API `/api/duel-room` (criar, entrar por código, sair, regras, Time, bots, iniciar,
+     colocar/tirar carta, Pronto, Dobrar, Desistir, próxima rodada, revanche, convites) + prévia pública `/api/duel-public/:code`. Serviço `services/duel-room.ts`; 10 testes de integração (`duel-room.test.ts`).
+   - ✅ Servidor guarda o motor com as duas mãos e só manda `viewFor` do lado de quem pergunta; consulta com `?since=versão`; colocar carta na mesa não sobe a versão (é segredo do dono).
+   - ✅ Relógio preguiçoso: prazo do turno (30/45/60 s, só começa depois da repetição do turno anterior); vencido, o servidor diz "Pronto" pela pessoa; 3 faltas passam o lugar a um bot; entre rodadas
+     espera os dois tocarem em "Próxima rodada" (ou 60 s). Bots jogam o turno assim que ele começa. Série única, melhor de 3 ou vidas, escolhida na sala.
+   - ✅ Telas: sala de espera (código, link `/duelo/CODE`, convite de amigo, chat, Time, regras, bot), mesa online com a repetição passo a passo (mesma do treino), cronômetro, placar da série, resumo da rodada, revanche.
+   - ⬜ Assistir (3ª pessoa) fica para depois.
 4. **Meus Times e níveis** ✅ (adiantado na rodada de ajustes): montador de Time paginado com busca e filtro de Vigor, até 5 Times salvos no servidor (só
    figurinhas conquistadas e cartas disponíveis), nível das figurinhas opcional (migração `20261024090000_duelo_times_do_jogador`; Times prontos removidos).
 5. **Polimento** (parcial): ✅ mesa estilo Snap com a arena no meio (arte editável, nome, regra escrita e placar hexagonal dos dois lados), turno repetido passo a passo

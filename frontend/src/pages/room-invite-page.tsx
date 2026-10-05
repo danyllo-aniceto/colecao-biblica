@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import CasinoRoundedIcon from '@mui/icons-material/CasinoRounded';
+import StyleRoundedIcon from '@mui/icons-material/StyleRounded';
 import { Alert } from '@/components/game/game-ui';
 import { useAuth } from '@/components/providers/auth-provider';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -8,23 +9,29 @@ import { Button } from '@/components/ui/button';
 import { LoadingState } from '@/components/ui/spinner';
 import { ScenarioIcon } from '@/components/user/campaign/scenario-art';
 import { getPublicRoom, setPendingRoom, type PublicRoom } from '@/lib/board-room-api';
+import { getPublicDuelRoom, setPendingDuelRoom } from '@/lib/duel-room-api';
 import { scenarioThemeVars } from '@/lib/campaign-theme';
 
+type InviteRoom = Omit<PublicRoom, 'scenario'> & { scenario?: PublicRoom['scenario'] };
+
 /**
- * Link de convite de uma sala do Tabuleiro (/sala/ABCDE). Quem já tem conta entra direto; quem não tem vê o convite
- * e é levado a criar a conta, que depois abre a sala sozinha.
+ * Link de convite de uma sala do Tabuleiro (/sala/ABCDE) ou do Duelo de Cartas (/duelo/ABCDE). Quem já tem conta entra
+ * direto; quem não tem vê o convite e é levado a criar a conta, que depois abre a sala sozinha.
  */
-export function RoomInvitePage() {
+export function RoomInvitePage({ game = 'board' }: { game?: 'board' | 'duel' }) {
+  const duel = game === 'duel';
+  const fetchRoom: (code: string) => Promise<InviteRoom> = duel ? getPublicDuelRoom : getPublicRoom;
+  const rememberRoom = duel ? setPendingDuelRoom : setPendingRoom;
   const { code = '' } = useParams();
   const navigate = useNavigate();
   const { isHydrated, isAuthenticated } = useAuth();
-  const [room, setRoom] = useState<PublicRoom | null>(null);
+  const [room, setRoom] = useState<InviteRoom | null>(null);
   const [error, setError] = useState<string | null>(null);
   const clean = code.trim().toUpperCase();
 
   useEffect(() => {
     let alive = true;
-    getPublicRoom(clean)
+    fetchRoom(clean)
       .then((found) => alive && setRoom(found))
       .catch((reason: unknown) => alive && setError(reason instanceof Error ? reason.message : 'Sala não encontrada.'));
     return () => {
@@ -37,13 +44,14 @@ export function RoomInvitePage() {
   // Já logado: guarda a sala e segue para o painel, que abre a sala na aba Jogar.
   useEffect(() => {
     if (isHydrated && isAuthenticated && room && open) {
-      setPendingRoom(clean);
+      rememberRoom(clean);
       navigate('/dashboard', { replace: true });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHydrated, isAuthenticated, room, open, clean, navigate]);
 
   function goTo(path: string) {
-    setPendingRoom(clean);
+    rememberRoom(clean);
     navigate(path);
   }
 
@@ -62,17 +70,23 @@ export function RoomInvitePage() {
         </div>
       ) : null}
       {room ? (
-        <section className="panel animate-pop-in space-y-5 p-6 text-center" style={scenarioThemeVars(room.scenario.color)}>
+        <section className="panel animate-pop-in space-y-5 p-6 text-center" style={scenarioThemeVars(room.scenario?.color)}>
           <span className="mx-auto flex w-fit rounded-3xl">
-            <ScenarioIcon scenario={{ slug: room.scenario.slug, iconImageUrl: room.scenario.iconImageUrl }} size={88} />
+            {room.scenario ? (
+              <ScenarioIcon scenario={{ slug: room.scenario.slug, iconImageUrl: room.scenario.iconImageUrl }} size={88} />
+            ) : (
+              <span className="flex h-[88px] w-[88px] items-center justify-center rounded-3xl bg-primary text-on-primary">
+                <StyleRoundedIcon sx={{ fontSize: 52 }} />
+              </span>
+            )}
           </span>
           <div className="space-y-1">
             <p className="flex items-center justify-center gap-1.5 text-sm font-bold text-muted">
-              <CasinoRoundedIcon fontSize="small" /> Tabuleiro Bíblico
+              {duel ? <StyleRoundedIcon fontSize="small" /> : <CasinoRoundedIcon fontSize="small" />} {duel ? 'Duelo de Cartas' : 'Tabuleiro Bíblico'}
             </p>
             <h1 className="font-display text-2xl font-bold text-ink">{room.hostName} chamou você para jogar!</h1>
             <p className="text-sm font-semibold text-muted">
-              {room.scenario.name} · {room.players} de {room.maxPlayers} jogadores · sala <b className="tracking-widest text-ink">{room.code}</b>
+              {room.scenario ? `${room.scenario.name} · ` : ''}{room.players} de {room.maxPlayers} jogadores · sala <b className="tracking-widest text-ink">{room.code}</b>
             </p>
           </div>
 

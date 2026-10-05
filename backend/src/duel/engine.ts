@@ -226,6 +226,15 @@ export function snapshotOf(state: DuelState): Snapshot {
   });
 }
 
+/** Foto do tabuleiro a partir do que um jogador vê (a tela online usa a da visão anterior como ponto de partida da repetição). */
+export function snapshotOfView(view: DuelView): Snapshot {
+  return view.lanes.map((lane) => ({
+    open: lane.open,
+    cards: [lane.cards[0].map((card) => ({ uid: card.uid, def: card.def, power: card.power, silenced: card.silenced })), lane.cards[1].map((card) => ({ uid: card.uid, def: card.def, power: card.power, silenced: card.silenced }))],
+    power: lane.open ? lane.power : [0, 0],
+  }));
+}
+
 function emit(state: DuelState, event: DuelEvent) {
   state.events.push({ ...event, snap: snapshotOf(state) });
 }
