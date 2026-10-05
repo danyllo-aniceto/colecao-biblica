@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
@@ -14,6 +15,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { PLAY_MODES } from '@/components/user/play-hub';
 import { cn } from '@/lib/cn';
 import { useGameModeImages } from '@/lib/game-modes';
+import { apiRequest } from '@/lib/http';
 import logo from '@/assets/logo-completa.webp';
 
 const features = [
@@ -27,15 +29,35 @@ const features = [
   { icon: WifiOffRoundedIcon, title: 'Funciona como app', text: 'Instale no celular e veja sua coleção até sem internet.', tone: 'bg-success/15 text-success' },
 ];
 
-const showcase = [
+type ShowcaseSticker = { name: string; rarity: 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'; imageUrl?: string | null };
+
+/** Figurinhas de exemplo (as imagens vêm do cadastro; sem rede ou sem imagem, aparece só a moldura). */
+const FALLBACK_SHOWCASE: ShowcaseSticker[] = [
   { name: 'Rute', rarity: 'COMMON' },
   { name: 'Davi', rarity: 'RARE' },
   { name: 'Ester', rarity: 'EPIC' },
   { name: 'Paulo', rarity: 'LEGENDARY' },
-] as const;
+];
+
+function useShowcase(): ShowcaseSticker[] {
+  const [stickers, setStickers] = useState<ShowcaseSticker[]>(FALLBACK_SHOWCASE);
+  useEffect(() => {
+    let alive = true;
+    apiRequest<ShowcaseSticker[]>('/landing/stickers', { method: 'GET' }, 'Não foi possível carregar as figurinhas.')
+      .then((list) => {
+        if (alive && list.length > 0) setStickers(list);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return stickers;
+}
 
 export function HomePage() {
   const images = useGameModeImages();
+  const showcase = useShowcase();
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-16 pt-4 sm:px-6">
       <header className="flex items-center justify-between gap-3 py-2">
@@ -62,7 +84,7 @@ export function HomePage() {
           <div className="mt-8 grid grid-cols-4 gap-3 sm:gap-4">
             {showcase.map((item, index) => (
               <div key={item.name} className="animate-pop-in" style={{ animationDelay: `${300 + index * 120}ms`, transform: `rotate(${(index - 1.5) * 4}deg)` }}>
-                <StickerCard name={item.name} rarity={item.rarity} owned size="sm" />
+                <StickerCard name={item.name} rarity={item.rarity} imageUrl={item.imageUrl} owned size="sm" eager />
               </div>
             ))}
           </div>

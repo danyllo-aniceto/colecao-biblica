@@ -125,4 +125,20 @@ describe.skipIf(!hasDatabase)("duelo: figurinhas e planilha", () => {
     await api.put("/api/game-modes/admin/duel").set(bearer(admin)).send({ imageUrl: "" });
     expect((await api.get("/api/game-modes").set(bearer(user))).body).toEqual([{ mode: "DUEL", imageUrl: null }]);
   });
+
+  it("página inicial: figurinhas de exemplo públicas, só as visíveis e na ordem pedida", async () => {
+    await prisma.biblicalCharacter.createMany({
+      data: [
+        { name: "Davi", rarity: "RARE", shortSummary: "x", fullDescription: "y", createdBy: "teste", imageUrl: "https://exemplo.com/davi.png" },
+        { name: "Rute", rarity: "COMMON", shortSummary: "x", fullDescription: "y", createdBy: "teste", imageUrl: "https://exemplo.com/rute.png" },
+        { name: "Ester", rarity: "EPIC", shortSummary: "x", fullDescription: "y", createdBy: "teste", published: false },
+      ],
+    });
+    const response = await api.get("/api/landing/stickers");
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([
+      { name: "Rute", rarity: "COMMON", imageUrl: "https://exemplo.com/rute.png" },
+      { name: "Davi", rarity: "RARE", imageUrl: "https://exemplo.com/davi.png" },
+    ]);
+  });
 });
