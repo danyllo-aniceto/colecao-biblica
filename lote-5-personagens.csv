@@ -1,0 +1,327 @@
+﻿"Nome";"Resumo curto";"História completa";"Curiosidades";"Onde ler";"Papel na história";"Período";"Livros";"Versículos-chave";"Palavras-chave";"Publicado";"Árvore genealógica";"Linha do tempo"
+"Asafe";"Levita e músico escolhido por Davi para liderar o louvor diante da arca, Asafe tocava címbalos, é chamado de vidente e compôs doze salmos, entre eles o 73, sobre a prosperidade dos ímpios, e o 50, que mostra Deus como juiz.";"Asafe era levita, da família de Gérson, filho de Berequias. Quando Davi decidiu trazer a arca da aliança para Jerusalém, mandou que os chefes dos levitas escolhessem entre seus irmãos cantores e músicos, com saltérios, harpas e címbalos, para levantarem a voz com alegria. Foram escolhidos Hemã, filho de Joel, da família de Coate, Asafe, filho de Berequias, da família de Gérson, e Etã, filho de Cusaías, da família de Merari. Eram os três chefes dos cantores, e os três tocavam címbalos de bronze, que davam o tom e o sinal para o louvor.
+Depois que a arca foi colocada numa tenda em Jerusalém, Davi deixou Asafe e seus irmãos diante dela para ministrarem continuamente, conforme a necessidade de cada dia. A Bíblia registra que, naquele dia, Davi entregou pela primeira vez a Asafe e seus irmãos um cântico de ação de graças ao Senhor, e dali em diante o louvor passou a ser organizado, diário e feito por músicos treinados. Asafe ficou diante da arca com seus irmãos para servir, ao passo que Zadoque e os outros sacerdotes cuidavam dos sacrifícios em Gibeão.
+Asafe também é chamado de ""vidente"", título dado a quem recebia visões de Deus. Os Salmos lhe atribuem doze composições, o Salmo 50 e os de 73 a 83. O Salmo 50 apresenta Deus como juiz, que prefere o agradecimento e a obediência a sacrifícios vazios. O Salmo 73 é um dos mais conhecidos: Asafe confessa que quase tropeçou, ao invejar a prosperidade dos ímpios, até entrar no santuário de Deus e entender o destino deles. O poema termina em uma das declarações de fé mais belas da Bíblia: ""A quem tenho eu no céu senão a ti? E na terra não há quem eu deseje além de ti"". O Salmo 74 lamenta a destruição do santuário, o Salmo 78 conta a história de Israel para que as novas gerações não esqueçam as obras do Senhor, e o Salmo 80 repete o pedido ""faze-nos voltar, ó Deus"".
+A família de Asafe não parou nele. Na dedicação do templo de Salomão, os cantores Asafe, Hemã e Jedutum, com seus filhos e irmãos, vestidos de linho fino, estavam ao oriente do altar, com címbalos, saltérios e harpas, e a glória do Senhor encheu a casa. Mais tarde, Jaaziel, descendente de Asafe, recebeu o Espírito do Senhor e anunciou a Josafá que a batalha era de Deus. No reinado de Ezequias, mandou-se louvar ao Senhor com as palavras de Davi e de Asafe, o vidente. No tempo de Josias, os filhos de Asafe estavam nos seus lugares, conforme a ordem de Davi.
+Depois do exílio, cento e vinte e oito filhos de Asafe voltaram da Babilônia com Zorobabel e cantaram quando se lançaram os alicerces do segundo templo. Na inauguração dos muros de Jerusalém, o relato de Neemias lembra que ""nos dias de Davi e de Asafe, desde a antiguidade, havia chefes dos cantores"". Muitos estudiosos entendem que vários dos salmos de Asafe foram escritos por seus descendentes, a ""escola de Asafe"", o que explica como alguns tratam de acontecimentos posteriores, como a destruição do templo.";"Asafe é considerado o autor de doze salmos: o Salmo 50 e os Salmos de 73 a 83.
+Ele tocava címbalos de bronze (1 Crônicas 16:5), instrumento usado para marcar o tempo e dar o sinal do louvor.
+É chamado de ""vidente"" em 2 Crônicas 29:30, título que também é dado a Gade e a Hanani.
+A família de Asafe serviu no louvor por mais de cinco séculos, de Davi até o tempo de Neemias.
+No Salmo 73, Asafe confessa que quase tropeçou ao invejar os ímpios, até entrar no santuário de Deus (Salmos 73:2-3,17).
+Em Esdras 2:41, cento e vinte e oito filhos de Asafe voltaram do exílio, o maior grupo de cantores do retorno.";"1 Crônicas 15:16-19 e 16:4-7,37 (Asafe nomeado por Davi)
+2 Crônicas 5:12-14 (o louvor na dedicação do templo)
+Salmos 50 e 73 a 83 (os salmos de Asafe)
+Esdras 2:41 e Neemias 12:46 (os filhos de Asafe depois do exílio)";"Levita e líder de cantores no tempo de Davi; autor de doze salmos e fundador de uma linhagem de músicos do templo que serviu por séculos";"Monarquia unida (cerca de 1000 a 960 a.C.)";"1 Crônicas, 2 Crônicas, Esdras, Neemias, Salmos";"Salmos 50:14-15; Salmos 73:25-26; Salmos 78:4; 1 Crônicas 16:4-5; 2 Crônicas 29:30";"louvor, música, levita, vidente, salmos, templo, címbalos";"Sim";"graph TD
+  Levi[""Levi""] --> Gerson[""Gérson""]
+  Levi --> Coate[""Coate""]
+  Levi --> Merari[""Merari""]
+  Gerson --> Berequias[""Berequias""]
+  Berequias --> Asafe[""Asafe, chefe dos cantores""]
+  Coate --> Joel[""Joel""]
+  Joel --> Hema[""Hemã, cantor""]
+  Merari --> Cusaias[""Cusaías""]
+  Cusaias --> Eta[""Etã, cantor""]
+  Davi[""Davi""] -.nomeia.-> Asafe
+  Asafe --> Filhos[""Filhos de Asafe, cantores do templo""]
+  Filhos --> Jaaziel[""Jaaziel, o levita que profetizou a Josafá""]";"timeline
+  title A família de Asafe
+  1 Crônicas 15 : Davi escolhe Asafe, Hemã e Etã como chefes dos cantores
+  1 Crônicas 16 : Asafe ministra diante da arca em Jerusalém
+  2 Crônicas 5 : Os filhos de Asafe cantam na dedicação do templo
+  Salmos 73 a 83 : Os salmos de Asafe e de sua família
+  2 Crônicas 20 : Jaaziel, descendente de Asafe, profetiza a Josafá
+  2 Crônicas 29 : Ezequias manda louvar com as palavras de Davi e de Asafe
+  Esdras 2 : Cento e vinte e oito filhos de Asafe voltam do exílio
+  Neemias 12 : Os cantores de Asafe cantam na inauguração dos muros"
+"Bezalel";"Artífice da tribo de Judá, escolhido por Deus e cheio do Espírito para projetar e fazer o tabernáculo e seus objetos, incluindo a arca da aliança; é o primeiro homem da Bíblia descrito como cheio do Espírito para uma obra de arte.";"Bezalel era filho de Uri, filho de Hur, da tribo de Judá. O nome significa ""à sombra de Deus"". Seu avô Hur é o mesmo que, junto com Arão, sustentou os braços de Moisés na batalha contra Amaleque. Enquanto Moisés estava no monte Sinai recebendo o modelo do tabernáculo, Deus separou, entre o povo, um homem que fosse capaz de transformar aquele modelo em obra: ""Eis que chamei pelo nome a Bezalel... e o enchi do Espírito de Deus, de sabedoria, de entendimento e de ciência em todo artifício"".
+A descrição da habilidade de Bezalel é ampla: ele devia projetar obras artísticas, trabalhando em ouro, prata e bronze, lapidar pedras para engaste e entalhar madeira. Foi ele, junto com Aoliabe, filho de Aisamaque, da tribo de Dã, quem recebeu a missão de dirigir toda a obra. Deus também deu a Bezalel o dom de ensinar: ""Pôs-lhe no coração o ensinar"", a ele e a Aoliabe, para que treinassem outros artesãos. Assim, o tabernáculo não foi obra de um só homem, mas de uma equipe de homens e mulheres de coração sábio.
+Quando Moisés desceu do monte, comunicou ao povo o que Deus havia ordenado: uma tenda, com a arca da aliança, a mesa, o candelabro, os altares, a pia e as vestes sacerdotais. Os israelitas trouxeram ouro, prata, bronze, linho fino, peles, madeira de acácia, óleo e pedras preciosas, e as mulheres de coração sábio fiaram os tecidos com as próprias mãos. A generosidade foi tanta que Moisés teve de mandar parar: o povo já havia trazido mais do que o necessário para toda a obra.
+O livro de Êxodo atribui pessoalmente a Bezalel a arca da aliança: ""Fez Bezalel a arca de madeira de acácia"", com dois côvados e meio de comprimento, revestida de ouro puro por dentro e por fora, e com o propiciatório de ouro, sobre o qual dois querubins de ouro batido abriam as asas. Ele fez também a mesa dos pães, o candelabro de ouro batido, o altar do incenso, o altar de bronze dos holocaustos, a pia de bronze e o óleo da unção. O texto repete que Bezalel fez ""tudo quanto o Senhor ordenara a Moisés"".
+Quando a obra terminou e a tenda foi erguida, a nuvem a cobriu e a glória do Senhor encheu o tabernáculo, a ponto de Moisés não poder entrar. Séculos depois, o relato de 2 Crônicas lembra que o altar de bronze feito por Bezalel ainda estava em Gibeão, diante do tabernáculo, quando Salomão foi oferecer sacrifícios. A história de Bezalel mostra que o Espírito de Deus também capacita artistas e artesãos, e que a beleza e o ofício bem feito podem ser formas de adoração.";"O nome Bezalel quer dizer ""à sombra de Deus"" ou ""na proteção de Deus"".
+É a primeira pessoa da Bíblia descrita como cheia do Espírito de Deus, e isso para uma obra artística e artesanal (Êxodo 31:3).
+Seu avô Hur ajudou Moisés a sustentar os braços durante a batalha contra Amaleque (Êxodo 17:10-12).
+Aoliabe, da tribo de Dã, trabalhou com ele, e Deus lhes deu a capacidade de ensinar outros artesãos (Êxodo 35:34).
+O povo trouxe ofertas em tanta quantidade que Moisés teve de mandar parar (Êxodo 36:5-7).
+O altar de bronze feito por Bezalel ainda era usado em Gibeão no início do reinado de Salomão (2 Crônicas 1:5).";"Êxodo 31:1-11 (o chamado de Bezalel e Aoliabe)
+Êxodo 35:30 a 36:7 (as ofertas do povo e o início da obra)
+Êxodo 37 e 38 (os objetos feitos por Bezalel)
+Êxodo 40:34-38 (a glória enche o tabernáculo)
+2 Crônicas 1:5 (o altar de bronze de Bezalel)";"Principal artífice do tabernáculo e construtor da arca da aliança, primeiro homem da Bíblia descrito como cheio do Espírito de Deus para uma obra de arte";"Peregrinação no deserto (cerca de 1450 a 1445 a.C.)";"Êxodo, 1 Crônicas, 2 Crônicas";"Êxodo 31:2-3; Êxodo 35:31-35; Êxodo 37:1; Êxodo 38:22; 2 Crônicas 1:5";"artífice, arte, Espírito de Deus, tabernáculo, arca da aliança, sabedoria, obra";"Sim";"graph TD
+  Juda[""Judá""] --> Perez[""Perez""]
+  Perez --> Hezrom[""Hezrom""]
+  Hezrom --> Calebe[""Calebe, filho de Hezrom""]
+  Calebe --> Hur[""Hur""]
+  Hur --> Uri[""Uri""]
+  Uri --> Bezalel[""Bezalel, o artífice do tabernáculo""]
+  Hur -.apoia os braços de.-> Moises[""Moisés""]
+  Ds[""Deus, que o enche do Espírito""] -->|chama e capacita| Bezalel
+  Bezalel ---|trabalham juntos| Aoliabe[""Aoliabe, da tribo de Dã""]
+  Moises -->|transmite o modelo a| Bezalel";"timeline
+  title A obra de Bezalel
+  Êxodo 17 : Seu avô Hur sustenta os braços de Moisés
+  Êxodo 25 a 30 : Moisés recebe o modelo do tabernáculo no monte
+  Êxodo 31 : Deus chama Bezalel e o enche do Espírito
+  Êxodo 35 : Moisés anuncia as ofertas e confirma o chamado de Bezalel
+  Êxodo 36 : O povo traz mais do que o necessário
+  Êxodo 37 : Bezalel faz a arca, a mesa e o candelabro
+  Êxodo 38 : Faz o altar, a pia e o átrio
+  Êxodo 40 : O tabernáculo é erguido e a glória o enche
+  2 Crônicas 1 : O altar de bronze de Bezalel ainda serve em Gibeão"
+"Caifás";"Sumo sacerdote que presidiu o conselho que condenou Jesus; conspirou para matá-lo, declarou que ""convinha que um homem morresse pelo povo"", sem saber que profetizava, e depois perseguiu os apóstolos.";"José Caifás foi sumo sacerdote de Jerusalém de cerca de 18 a 36 d.C., nomeado pelos romanos, e era genro de Anás, que havia sido sumo sacerdote antes e continuava a ter grande influência. Lucas situa o início do ministério de João Batista ""sendo sumos sacerdotes Anás e Caifás"", e a Bíblia mostra que o poder real era exercido pelos dois. Caifás provavelmente pertencia à classe dos saduceus, o grupo aristocrático e sacerdotal que controlava o templo e a política religiosa, em estreita colaboração com Roma.
+Depois que Jesus ressuscitou Lázaro, em Betânia, muitos creram nele, e os chefes dos sacerdotes e os fariseus reuniram o conselho, preocupados: ""Se o deixamos assim, todos crerão nele, e virão os romanos, e tirar-nos-ão o nosso lugar e a nação"". Foi então que Caifás disse, com desprezo pelos demais: ""Vós nada sabeis, nem considerais que nos convém que um homem morra pelo povo, e que não pereça toda a nação"". João comenta que ele não falou por si mesmo: sendo sumo sacerdote naquele ano, profetizou que Jesus morreria pela nação, e não só por ela, mas também para reunir os filhos de Deus dispersos. Daquele dia em diante, resolveram matá-lo.
+Pouco antes da Páscoa, os chefes dos sacerdotes e os anciãos se reuniram no palácio do sumo sacerdote, que se chamava Caifás, e fizeram um plano para prender Jesus à traição e matá-lo, mas ""não durante a festa, para que não haja alvoroço entre o povo"". Judas ofereceu-se para entregá-lo. Na noite da prisão, Jesus foi levado primeiro a Anás e depois a Caifás, onde se reuniram escribas e anciãos. Procuraram falsos testemunhos contra ele, mas as acusações não coincidiam.
+Caifás levantou-se e disse: ""Conjuro-te pelo Deus vivo que nos digas se tu és o Cristo, o Filho de Deus"". Jesus respondeu: ""Tu o disseste; entretanto, digo-vos que vereis o Filho do Homem assentado à direita do Poder e vindo sobre as nuvens do céu"". O sumo sacerdote rasgou as vestes e declarou que Jesus havia blasfemado. O conselho o condenou como réu de morte, e logo de manhã o levaram atado a Pilatos, a única autoridade que podia executar a pena. Depois da ressurreição, os chefes dos sacerdotes pagaram os soldados da guarda do sepulcro para espalhar que os discípulos haviam roubado o corpo.
+Caifás continuou a se opor ao movimento cristão. Em Atos, ""Anás, o sumo sacerdote, e Caifás"" estão entre os que interrogaram Pedro e João depois da cura do coxo, e ordenaram que não falassem mais em nome de Jesus, mas não conseguiram calá-los. O governador Vitélio o depôs em 36 d.C. Em 1990, arqueólogos acharam em Jerusalém um ossuário, urna de ossos, com a inscrição ""José, filho de Caifás"", que muitos consideram do sumo sacerdote.";"Caifás era genro de Anás, que havia sido sumo sacerdote e continuava poderoso, e cinco filhos de Anás também chegaram ao sumo sacerdócio.
+Ele foi sumo sacerdote por cerca de 18 anos, um período muito longo, o que mostra sua habilidade política e sua boa relação com Roma.
+Em João 11:49-52, Caifás profetizou sem saber que Jesus morreria pelo povo e para reunir os filhos de Deus dispersos.
+Ao rasgar as vestes durante o julgamento, ele agiu contra a regra de Levítico 21:10, que proibia ao sumo sacerdote rasgar as suas roupas.
+Em 1990, foi encontrado em Jerusalém um ossuário com a inscrição ""José, filho de Caifás"", muito provavelmente do sumo sacerdote.
+Seu nome completo, segundo o historiador Josefo, era José, chamado Caifás.";"Lucas 3:1-2 (os sumos sacerdotes Anás e Caifás)
+João 11:45-53 (a reunião do conselho e a profecia de Caifás)
+Mateus 26:3-5 e 26:57-68 (o plano e o julgamento)
+João 18:12-14,24,28 (de Anás a Caifás e de Caifás a Pilatos)
+Atos 4:5-22 (Pedro e João diante do conselho)";"Sumo sacerdote que presidiu o conselho do julgamento de Jesus e liderou a oposição inicial à igreja primitiva";"Época de Jesus e da igreja primitiva (cerca de 18 a 36 d.C.)";"Mateus, Lucas, João, Atos";"João 11:49-50; João 11:51-52; Mateus 26:3-4; Mateus 26:63-65; Atos 4:6";"sumo sacerdote, julgamento de Jesus, Sinédrio, saduceus, profecia, perseguição, Anás";"Sim";"graph TD
+  Anas[""Anás, sumo sacerdote antes dele""] -->|sogro de| Caifas[""Caifás, sumo sacerdote""]
+  Anas --> FilhosAnas[""Cinco filhos de Anás, também sumos sacerdotes""]
+  Caifas -->|preside| Sinedrio[""O Sinédrio, o conselho dos judeus""]
+  Sinedrio -->|condena| Jesus[""Jesus""]
+  Caifas -->|entrega a| Pilatos[""Pilatos, governador romano""]
+  Caifas -.interroga.-> Pedro[""Pedro e João""]";"timeline
+  title A vida de Caifás
+  18 d.C. : Torna-se sumo sacerdote por nomeação dos romanos
+  Lucas 3 : Anás e Caifás são os sumos sacerdotes quando João Batista começa a pregar
+  João 11 : Declara que convém que um homem morra pelo povo
+  Mateus 26 versículos 3 a 5 : Reúne o conselho para planejar a morte de Jesus
+  Mateus 26 versículos 57 a 68 : Preside o julgamento e rasga as vestes
+  João 18 versículo 28 : Leva Jesus atado a Pilatos
+  Mateus 28 : Os chefes dos sacerdotes pagam os soldados para espalhar uma mentira
+  Atos 4 : Interroga Pedro e João
+  36 d.C. : É deposto pelo governador Vitélio"
+"Dalila";"Mulher do vale de Soreque, amada por Sansão, que foi subornada pelos príncipes dos filisteus para descobrir o segredo da sua força; depois de insistir dia após dia, ela o fez revelar que a força estava no cabelo de nazireu e o entregou aos inimigos.";"Depois de Timna e de Gaza, Sansão se apaixonou por uma mulher do vale de Soreque, chamada Dalila. A Bíblia não diz de qual povo ela era, mas o contexto mostra que ela vivia perto dos filisteus e que tinha ligação com eles. Os cinco príncipes dos filisteus foram procurá-la com uma proposta: ""Persuade-o, e vê em que consiste a sua grande força, e como poderemos vencê-lo, para o prendermos e o subjugarmos; e cada um de nós te dará mil e cem moedas de prata"". Era uma fortuna, pois cada príncipe oferecia a mesma quantia, e Dalila aceitou.
+Ela perguntou a Sansão em que consistia sua força. Ele zombou da pergunta e respondeu três vezes de forma falsa: primeiro, que o prenderiam com sete cordas verdes que ainda não estivessem secas; depois, com cordas novas, que nunca tivessem sido usadas; e por fim, que bastaria tecer as sete tranças da sua cabeça na teia do tear e firmá-las com a estaca. Em cada vez, Dalila fazia como ele dizia, gritava ""Os filisteus vêm sobre ti, Sansão!"", e ele rompia as cordas, o tear e a estaca, sem dificuldade. Os emboscados, escondidos no quarto, ficavam sem poder fazer nada.
+Dalila não desistiu. Disse a Sansão: ""Como podes dizer: Amo-te, se o teu coração não está comigo? Já três vezes zombaste de mim"". Como ""importunava todos os dias com as suas palavras e o instigava, a sua alma se angustiou até à morte"", ele finalmente lhe abriu o coração: ""Nunca passou navalha pela minha cabeça, porque sou nazireu de Deus desde o ventre de minha mãe. Se for rapado, a minha força me deixará, e me enfraquecerei, e serei como todos os outros homens"". Dessa vez, Dalila percebeu que ele dizia a verdade e mandou chamar os príncipes dos filisteus: ""Subi esta vez, porque ele me descobriu todo o seu coração"".
+Os príncipes vieram com o dinheiro nas mãos. Dalila fez Sansão adormecer sobre os seus joelhos, chamou um homem, e rapou as sete tranças da sua cabeça. Então começou a atormentá-lo, e a força dele o deixou. Quando ela gritou ""Os filisteus vêm sobre ti, Sansão!"", ele acordou e pensou que se livraria como das outras vezes, ""porém não sabia que já o Senhor se tinha retirado dele"". Os filisteus o prenderam, furaram-lhe os olhos, levaram-no a Gaza e o amarraram com grilhões de bronze, para moer no cárcere.
+A Bíblia não conta mais nada sobre Dalila: ela desaparece da história depois da traição. Sua figura se tornou um símbolo de sedução e de traição, mas o texto mostra também a responsabilidade de Sansão, que, mesmo desconfiado, voltou a brincar com o segredo da sua consagração. Para os leitores, a história de Dalila é um aviso sobre a pressão constante, que pode desgastar até um homem forte, e sobre o perigo de revelar a pessoas erradas o que Deus confiou.";"Dalila é a única mulher da vida de Sansão que a Bíblia cita pelo nome.
+A Bíblia não diz que ela era filisteia, mas ela se alia aos príncipes dos filisteus.
+Cada um dos cinco príncipes prometeu mil e cem moedas de prata, o que dá cinco mil e quinhentas no total.
+Sansão mentiu três vezes sobre o segredo da sua força: cordas verdes, cordas novas e tranças no tear.
+Dalila repetiu o mesmo método quatro vezes, avisando que os filisteus vinham, até que Sansão cedeu.
+O livro de Juízes diz que, ao ser rapado, Sansão ""não sabia que já o Senhor se tinha retirado dele"" (Juízes 16:20).";"Juízes 16:4-22 (a história de Sansão e Dalila)
+Juízes 13 a 15 (a vida de Sansão antes de Dalila)
+Juízes 16:23-31 (a morte de Sansão)";"Mulher que, por dinheiro e por insistência, descobriu o segredo da força de Sansão e o entregou aos filisteus; símbolo de traição e pressão";"Época dos juízes (cerca de 1075 a.C.)";"Juízes";"Juízes 16:4-5; Juízes 16:16-17; Juízes 16:19-20";"traição, sedução, suborno, insistência, segredo, nazireu, filisteus";"Sim";"graph TD
+  Dalila[""Dalila, do vale de Soreque""] ---|amada por| Sansao[""Sansão, juiz de Israel""]
+  Principes[""Os 5 príncipes dos filisteus""] -->|pagam 1100 moedas de prata cada| Dalila
+  Dalila -->|descobre o segredo e entrega| Sansao
+  Principes -->|prendem e cegam| Sansao
+  Sansao ---|nazireu desde o ventre| Cabelo[""O cabelo, sinal do voto""]";"timeline
+  title Dalila e Sansão
+  Juízes 16 versículos 4 e 5 : Sansão ama Dalila e os príncipes filisteus oferecem prata
+  Juízes 16 versículos 6 a 9 : Primeira mentira com sete cordas verdes
+  Juízes 16 versículos 10 a 12 : Segunda mentira com cordas novas
+  Juízes 16 versículos 13 e 14 : Terceira mentira com as tranças no tear
+  Juízes 16 versículos 15 a 17 : Dalila insiste e Sansão revela o segredo
+  Juízes 16 versículos 18 a 20 : Raspa o cabelo e entrega Sansão aos filisteus
+  Juízes 16 versículos 21 e 22 : Sansão é cegado e levado a Gaza"
+"Gabriel";"Anjo mensageiro de Deus que explicou as visões ao profeta Daniel, anunciou o nascimento de João Batista a Zacarias e levou a Maria a notícia de que ela seria mãe de Jesus.";"Gabriel é um dos dois anjos que a Bíblia chama pelo nome, junto com Miguel. O nome hebraico significa ""Deus é minha força"" ou ""homem forte de Deus"". Ele aparece em quatro passagens: duas em Daniel e duas em Lucas, e em todas é um mensageiro enviado por Deus para explicar ou anunciar um plano divino.
+No livro de Daniel, Gabriel aparece primeiro quando Daniel tem a visão do carneiro e do bode e busca entendê-la. Uma voz humana grita: ""Gabriel, faze compreender a este a visão"". Gabriel se aproxima, e Daniel cai com o rosto em terra, mas é levantado e orientado sobre o que aconteceria ""no fim do tempo da ira"". Alguns anos depois, no primeiro ano de Dario, Daniel lê no livro de Jeremias que o cativeiro duraria setenta anos e ora, confessando os pecados do povo. Enquanto orava, ""o homem Gabriel, que eu tinha visto na visão ao princípio, veio voando velozmente e tocou-me"", e lhe disse: ""Daniel, agora saí para fazer-te entender o sentido"". Ele revelou a profecia das setenta semanas.
+No Novo Testamento, Gabriel aparece no templo de Jerusalém, junto ao altar do incenso, a Zacarias, um sacerdote idoso e sem filhos. O anjo disse: ""Não temas, Zacarias, porque a tua oração foi ouvida; Isabel, tua mulher, dar-te-á um filho, e lhe porás o nome de João"". Descreveu como o menino seria grande diante do Senhor, cheio do Espírito Santo desde o ventre e prepararia o caminho do Senhor com o espírito e o poder de Elias. Zacarias duvidou e perguntou como saberia daquilo, e Gabriel respondeu: ""Eu sou Gabriel, que assisto diante de Deus, e fui enviado a falar-te e dar-te estas boas-novas"". Como Zacarias não acreditou, ficou mudo até o nascimento do menino.
+No sexto mês da gravidez de Isabel, Deus enviou Gabriel a uma cidade da Galileia chamada Nazaré, a uma virgem noiva de José, da casa de Davi, chamada Maria. O anjo disse: ""Salve, agraciada; o Senhor é contigo"". Vendo que ela estava perturbada, acalmou-a: ""Não temas, Maria, porque achaste graça diante de Deus. Eis que conceberás no teu ventre e darás à luz um filho, e pôr-lhe-ás o nome de Jesus. Será grande e será chamado Filho do Altíssimo"". Quando Maria perguntou como isso seria, sendo virgem, Gabriel respondeu que o Espírito Santo viria sobre ela. E concluiu: ""Para Deus nada é impossível"". Maria aceitou: ""Eis aqui a serva do Senhor; cumpra-se em mim segundo a tua palavra"".
+A Bíblia nunca chama Gabriel de ""arcanjo"": esse título é dado a Miguel em Judas 9. A tradição cristã, judaica e muçulmana, porém, o conhece como arcanjo e mensageiro de grandes revelações. Nas Escrituras, Gabriel é sempre o anjo que traz uma notícia decisiva: a revelação do fim do cativeiro e da vinda do Messias, e, depois, a chegada do próprio Messias.";"Gabriel e Miguel são os únicos anjos com nome na Bíblia protestante.
+O nome Gabriel significa ""Deus é minha força"" ou ""homem forte de Deus"".
+A Bíblia não o chama de arcanjo, mas essa é a forma como a tradição cristã o conhece.
+Em Lucas 1:19, ele diz: ""Eu sou Gabriel, que assisto diante de Deus"".
+Ele apareceu tanto a Zacarias, no templo, quanto a Maria, em Nazaré, com seis meses de diferença.
+Em Daniel 9, Gabriel chega ""voando velozmente"" na hora do sacrifício da tarde, quando Daniel ainda estava orando.";"Daniel 8:15-27 (Gabriel explica a visão do carneiro e do bode)
+Daniel 9:20-27 (as setenta semanas)
+Lucas 1:5-25 (o anúncio a Zacarias)
+Lucas 1:26-38 (o anúncio a Maria)";"Anjo mensageiro de Deus que traz grandes revelações: as visões de Daniel, o nascimento de João Batista e a chegada do Messias";"Do exílio babilônico (cerca de 550 a.C.) ao nascimento de Jesus (cerca de 6 a.C.)";"Daniel, Lucas";"Daniel 9:21-23; Lucas 1:19; Lucas 1:30-31; Lucas 1:37";"anjo, mensageiro, anúncio, visão, setenta semanas, nascimento de Jesus, Deus é minha força";"Sim";"graph TD
+  Deus[""Deus""] -->|envia| Gabriel[""Gabriel, o anjo mensageiro""]
+  Gabriel -->|explica as visões a| Daniel[""Daniel, no exílio""]
+  Gabriel -->|anuncia o nascimento de João Batista a| Zacarias[""Zacarias, sacerdote""]
+  Zacarias ---|casado com| Isabel[""Isabel""]
+  Isabel --> Joao[""João Batista""]
+  Gabriel -->|anuncia o nascimento de Jesus a| Maria[""Maria, de Nazaré""]
+  Maria --> Jesus[""Jesus""]
+  Isabel -.prima de.- Maria";"timeline
+  title As aparições de Gabriel
+  Daniel 8 : Explica a Daniel a visão do carneiro e do bode
+  Daniel 9 : Revela a Daniel a profecia das setenta semanas
+  Lucas 1 versículos 11 a 20 : Anuncia a Zacarias o nascimento de João Batista
+  Lucas 1 versículos 26 a 38 : Anuncia a Maria o nascimento de Jesus"
+"João";"Filho de Zebedeu e irmão de Tiago, pescador chamado por Jesus, João foi do círculo mais íntimo do Mestre, o ""discípulo amado"", e é o autor tradicional do quarto Evangelho, de três cartas e do Apocalipse.";"João era filho de Zebedeu e de Salomé e irmão de Tiago, o Maior. Pescador do mar da Galileia, estava consertando as redes com o pai quando Jesus o chamou, e ele e o irmão deixaram o barco e o pai para segui-lo. Era sócio de Pedro e André, e com eles formou o círculo mais íntimo do Mestre: só Pedro, Tiago e João viram a transfiguração, a ressurreição da filha de Jairo e a oração no Getsêmani. Jesus lhes deu o apelido de ""Boanerges"", ""filhos do trovão"", por causa do temperamento forte: João e Tiago pediram que descesse fogo do céu sobre uma aldeia samaritana, e foram repreendidos. Também pediram, por meio da mãe, os primeiros lugares no reino de Jesus.
+O Evangelho de João fala de um ""discípulo a quem Jesus amava"". Foi ele quem, na última ceia, estava recostado junto ao peito de Jesus. A tradição o identifica com o próprio João. Foi o único dos doze que, segundo o Evangelho, ficou junto à cruz, ao lado de Maria, a mãe de Jesus, e dali Jesus os entregou um ao outro: ""Mulher, eis aí o teu filho"", e ao discípulo: ""Eis aí tua mãe"". Desde aquela hora, o discípulo a levou para a sua casa.
+No domingo da ressurreição, ao ouvir de Maria Madalena que o corpo havia sido tirado, João e Pedro correram ao túmulo. João, mais ligeiro, chegou primeiro, mas esperou Pedro entrar. Viu as faixas de linho e o lenço dobrado e ""viu e creu"". Mais tarde, junto ao mar da Galileia, foi ele o primeiro a reconhecer o Senhor na praia, depois da pesca milagrosa, e disse a Pedro: ""É o Senhor!"".
+Depois de Pentecostes, João aparece em Atos ao lado de Pedro: os dois curam o coxo na porta do templo, são presos e interrogados pelo conselho e, tendo sido ameaçados, respondem: ""Não podemos deixar de falar do que vimos e ouvimos"". João foi enviado com Pedro a Samaria para orar pelos novos crentes. Paulo o chama, em Gálatas, de uma das ""colunas"" da igreja de Jerusalém.
+A tradição liga a João cinco livros: o Evangelho, as três cartas e o Apocalipse. No Evangelho, declara que ""o Verbo se fez carne e habitou entre nós"" e que ""Deus amou o mundo de tal maneira que deu o seu Filho unigênito"". Nas cartas, insiste no amor: ""Deus é amor"". O Apocalipse, recebido na ilha de Patmos, ""por causa da palavra de Deus"", termina a Bíblia com a visão da vitória final. Segundo a tradição antiga, João viveu em Éfeso até uma idade avançada e foi o único dos doze a não morrer como mártir.";"João e Tiago foram chamados de ""Boanerges"", ""filhos do trovão"" (Marcos 3:17).
+O Evangelho de João nunca cita o nome de João: ele se refere a si mesmo como ""o discípulo a quem Jesus amava"".
+Foi a João que Jesus, da cruz, entregou os cuidados de sua mãe, Maria (João 19:26-27).
+No túmulo vazio, João correu mais rápido que Pedro e chegou primeiro, mas esperou do lado de fora (João 20:4-5).
+Segundo a tradição, foi o único dos doze a morrer de causas naturais, em idade avançada, em Éfeso.
+A autoria do Apocalipse por João, o apóstolo, é a opinião tradicional, mas é discutida por alguns estudiosos.";"Marcos 1:19-20 e 3:17 (o chamado e o apelido)
+João 13:23-26 e 19:25-27 (o discípulo amado, a ceia e a cruz)
+João 20:1-10 e 21:1-8 (o túmulo vazio e a pesca)
+Atos 3 e 4 (João e Pedro no templo)
+1 João 4:7-12 e Apocalipse 1:9-11 (suas cartas e o Apocalipse)";"Apóstolo do círculo íntimo de Jesus, o ""discípulo amado"", líder da igreja primitiva e autor tradicional do quarto Evangelho, de três cartas e do Apocalipse";"Ministério de Jesus e igreja primitiva (cerca de 27 a 100 d.C.)";"Mateus, Marcos, Lucas, João, Atos, 1 João, 2 João, 3 João, Apocalipse, Gálatas";"João 1:14; João 3:16; João 19:26-27; 1 João 4:8; Apocalipse 1:9";"discípulo amado, amor, Evangelho, Apocalipse, Patmos, Éfeso, apóstolo";"Sim";"graph TD
+  Zebedeu[""Zebedeu""] --> Tiago[""Tiago, o Maior""]
+  Zebedeu --> Joao[""João, o discípulo amado""]
+  Salome[""Salomé""] --> Tiago
+  Salome --> Joao
+  Zebedeu ---|casado com| Salome
+  Joao -.sócio e companheiro.- Pedro[""Pedro""]
+  Jesus[""Jesus""] -->|chama e entrega Maria a| Joao
+  Joao -->|escreve| Obras[""O Evangelho, três cartas e o Apocalipse""]";"timeline
+  title A vida de João
+  Marcos 1 : É chamado por Jesus junto com Tiago
+  Marcos 3 : Recebe o apelido de filho do trovão
+  Marcos 9 : Vê a transfiguração
+  João 13 : Está recostado junto a Jesus na última ceia
+  João 19 : Fica junto à cruz e recebe a mãe de Jesus
+  João 20 : Corre ao túmulo vazio e crê
+  João 21 : Reconhece o Senhor na praia
+  Atos 3 e 4 : Cura o coxo com Pedro e é preso
+  Apocalipse 1 : Recebe a visão em Patmos
+  Tradição : Vive em Éfeso até idade avançada"
+"Levi";"Terceiro filho de Jacó e Lia, Levi vingou a irmã Diná com violência, foi repreendido pelo pai, mas seus descendentes se tornaram a tribo consagrada ao serviço de Deus: os sacerdotes e levitas de Israel, de quem vieram Moisés e Arão.";"Levi foi o terceiro filho de Jacó com Lia, nascido em Padã-Arã. Lia, que sofria por não ser amada, deu-lhe o nome de Levi, ligado ao verbo ""unir"", pois disse: ""Agora, desta vez, se unirá meu marido a mim, porque lhe dei três filhos"". Cresceu com os irmãos, filhos de Jacó, na terra de Canaã, e, adulto, esteve ligado a um dos episódios mais violentos da família.
+Em Siquém, o príncipe Siquém, filho de Hamor, violentou Diná, a única filha de Jacó e Lia, e depois quis casar-se com ela. Os filhos de Jacó fingiram aceitar a proposta, sob a condição de que todos os homens da cidade se circuncidassem. No terceiro dia, quando eles estavam com dor, Simeão e Levi, irmãos de Diná, pegaram cada um sua espada, entraram na cidade sem receio e mataram todos os homens, inclusive Hamor e Siquém, e tiraram Diná de lá. Os outros filhos de Jacó saquearam a cidade. Jacó os repreendeu: ""Vós me turbastes, fazendo-me cheirar mal entre os moradores desta terra"".
+Ao final da vida, Jacó abençoou os filhos e se lembrou do que Levi e Simeão fizeram: ""Simeão e Levi são irmãos; as suas espadas são instrumentos de violência. Na sua trama não entre a minha alma... Maldito seja o seu furor, porque é forte, e a sua ira, porque é cruel! Dividi-los-ei em Jacó, e os espalharei em Israel"". A profecia se cumpriu de maneira diferente para cada um: Simeão recebeu território dentro da herança de Judá, mas Levi se tornou a tribo espalhada por todo Israel a serviço de Deus.
+Levi desceu ao Egito com os filhos Gérson, Coate e Merari, e viveu 137 anos, segundo o livro de Êxodo. De Coate nasceram Anrão, e dele Moisés, Arão e Miriã. Séculos depois, quando Moisés desceu do Sinai e encontrou o povo adorando o bezerro de ouro, perguntou: ""Quem é do Senhor? Venha a mim"". Todos os filhos de Levi se ajuntaram a ele, e a tribo foi consagrada ao serviço do Senhor: ""porque cada um foi contra o seu filho e contra o seu irmão"", e então Deus os abençoou.
+A tribo de Levi não recebeu território, pois ""o Senhor é a sua herança"". Seus membros receberam quarenta e oito cidades, espalhadas entre as outras tribos, e cuidaram do tabernáculo e do templo. Arão e seus filhos foram os sacerdotes, e os demais levitas, seus auxiliares. A carta aos Hebreus acrescenta uma reflexão curiosa: em certo sentido, ""Levi, que recebe dízimos, pagou dízimo em Abraão"", pois estava ainda nos lombos do patriarca quando este deu o dízimo a Melquisedeque.";"O nome Levi lembra o verbo hebraico ""unir"", dito por Lia ao nascer o terceiro filho.
+Levi viveu 137 anos, segundo Êxodo 6:16.
+A violência de Levi e Simeão em Siquém foi lembrada por Jacó em sua bênção, em Gênesis 49:5-7.
+Os levitas ficaram do lado de Moisés depois do bezerro de ouro e receberam, por isso, uma bênção especial (Êxodo 32:26-29).
+A tribo de Levi não herdou território, mas recebeu quarenta e oito cidades espalhadas pelas outras tribos (Números 35:7).
+Moisés, Arão e Miriã eram descendentes de Levi, por meio de Coate e de Anrão.";"Gênesis 29:34 (o nascimento de Levi)
+Gênesis 34 (Siquém e a vingança por Diná)
+Gênesis 49:5-7 (as palavras de Jacó sobre Levi)
+Êxodo 6:16-20 (os filhos e os descendentes de Levi)
+Êxodo 32:25-29 (os levitas se unem a Moisés)
+Números 3 e 18 (os levitas e o serviço do tabernáculo)
+Hebreus 7:5-10 (Levi e o dízimo)";"Terceiro filho de Jacó e patriarca da tribo sacerdotal de Israel, de onde vieram Moisés, Arão e todos os levitas";"Período patriarcal (cerca de 1900 a 1750 a.C.)";"Gênesis, Êxodo, Números, Deuteronômio, Hebreus";"Gênesis 29:34; Gênesis 49:5-7; Êxodo 32:26; Números 18:20; Deuteronômio 10:9";"sacerdócio, tribo de Levi, Siquém, Diná, consagração, levitas, Moisés";"Sim";"graph TD
+  Jaco[""Jacó""] ---|casado com| Lia[""Lia""]
+  Jaco --> Levi[""Levi, o terceiro filho""]
+  Lia --> Levi
+  Lia --> Ruben[""Rúben""]
+  Lia --> Simeao[""Simeão""]
+  Lia --> Juda[""Judá""]
+  Lia --> Dina[""Diná""]
+  Levi --> Gerson[""Gérson""]
+  Levi --> Coate[""Coate""]
+  Levi --> Merari[""Merari""]
+  Coate --> Anrao[""Anrão""]
+  Anrao --> Arao[""Arão, primeiro sumo sacerdote""]
+  Anrao --> Moises[""Moisés""]
+  Anrao --> Miria[""Miriã""]";"timeline
+  title Levi e a tribo de Levi
+  Gênesis 29 : Nasce em Padã-Arã, terceiro filho de Jacó e Lia
+  Gênesis 34 : Com Simeão vinga Diná em Siquém
+  Gênesis 46 : Desce ao Egito com os filhos Gérson, Coate e Merari
+  Gênesis 49 : Jacó fala sobre a ira de Levi e Simeão
+  Êxodo 6 : Morre aos 137 anos
+  Êxodo 32 : Seus descendentes ficam ao lado de Moisés depois do bezerro de ouro
+  Números 3 : Os levitas são separados para o serviço do tabernáculo
+  Josué 21 : Os levitas recebem quarenta e oito cidades"
+"Maria Madalena";"Discípula de Jesus, libertada de sete demônios, que o seguiu e serviu com seus bens; ficou junto à cruz, viu o sepultamento e foi a primeira pessoa a ver Jesus ressuscitado e a anunciar a ressurreição aos apóstolos.";"Maria Madalena era de Magdala, cidade da margem oeste do mar da Galileia, conhecida pela pesca e pela salga de peixes. Lucas diz que ela era uma das mulheres que Jesus havia curado de espíritos malignos e enfermidades, ""Maria, chamada Madalena, da qual saíram sete demônios"". Depois da libertação, ela passou a seguir Jesus pelas cidades e aldeias, junto com outras mulheres, como Joana, mulher de Cuza, procurador de Herodes, e Suzana. Todas serviam a Jesus e aos discípulos com seus bens, e fizeram das suas posses um sustento para o ministério.
+Quando Jesus foi crucificado, os discípulos homens, com exceção de João, fugiram, mas as mulheres ficaram. ""Junto à cruz de Jesus estavam sua mãe, e a irmã de sua mãe, Maria, mulher de Clopas, e Maria Madalena"". Os Evangelhos de Mateus e Marcos acrescentam que muitas mulheres olhavam de longe, as que o haviam seguido desde a Galileia. Maria Madalena também acompanhou o sepultamento: viu onde José de Arimateia depositou o corpo e ficou ali sentada, defronte do sepulcro.
+No primeiro dia da semana, ainda de madrugada, quando estava escuro, ela voltou ao túmulo com especiarias, e viu a pedra removida. Correu a avisar Pedro e João: ""Levaram o Senhor do sepulcro, e não sabemos onde o puseram"". Os dois correram, viram o túmulo vazio e voltaram para casa, mas Maria ficou chorando do lado de fora. Inclinando-se, viu dois anjos de branco, que perguntaram: ""Mulher, por que choras?"". Ela respondeu e, voltando-se, viu Jesus em pé, sem reconhecê-lo, pensando que fosse o jardineiro.
+Jesus lhe perguntou também: ""Mulher, por que choras? A quem buscas?"". Ela disse: ""Senhor, se tu o tiraste, dize-me onde o puseste"". Então Jesus a chamou pelo nome: ""Maria!"". Ela se voltou e disse, em hebraico: ""Raboni!"", que quer dizer ""Mestre"". Ele lhe disse: ""Não me detenhas... mas vai para meus irmãos e dize-lhes que eu subo para meu Pai e vosso Pai, meu Deus e vosso Deus"". Maria Madalena foi e anunciou aos discípulos: ""Vi o Senhor"", repetindo o que ele havia dito.
+Por ter sido a primeira testemunha da ressurreição e a primeira a anunciá-la, Maria Madalena recebeu na tradição cristã o título de ""apóstola dos apóstolos"". Seu nome é lembrado com carinho nos quatro Evangelhos. Ao contrário do que a tradição popular e a arte medieval muitas vezes sugerem, os Evangelhos nunca dizem que ela era uma prostituta: essa ideia vem da confusão com a mulher pecadora anônima de Lucas 7, e foi popularizada no século VI. O que a Bíblia mostra é uma mulher livre, fiel, corajosa e profundamente grata, que ficou com Jesus quando muitos se afastaram.";"Maria Madalena é citada pelo nome nos quatro Evangelhos como testemunha da ressurreição, e em vários deles também da cruz e do sepultamento.
+O sobrenome ""Madalena"" indica que ela era de Magdala, cidade da Galileia.
+Os Evangelhos não dizem que ela era prostituta: essa associação vem da confusão com a mulher pecadora de Lucas 7:36-50.
+Foi a primeira pessoa a ver Jesus ressuscitado (Marcos 16:9; João 20:14-16).
+O reconhecimento aconteceu quando Jesus a chamou pelo nome: ""Maria!"" (João 20:16).
+A tradição cristã a chamou ""apóstola dos apóstolos"", por ter levado aos discípulos a notícia da ressurreição.";"Lucas 8:1-3 (a libertação e o serviço com seus bens)
+João 19:25 e Marcos 15:40-41,47 (a cruz e o sepultamento)
+João 20:1-18 (o túmulo vazio e o encontro com Jesus)
+Mateus 28:1-10 e Marcos 16:1-11 (as mulheres no sepulcro)";"Discípula fiel de Jesus, testemunha da cruz e do túmulo vazio, primeira a ver Jesus ressuscitado e a anunciar a ressurreição";"Ministério de Jesus (cerca de 28 a 33 d.C.)";"Mateus, Marcos, Lucas, João";"Lucas 8:2; João 19:25; João 20:16; João 20:17; João 20:18";"discípula, libertação, cruz, túmulo vazio, ressurreição, testemunha, Magdala";"Sim";"graph TD
+  Jesus[""Jesus""] -->|liberta de sete demônios| Madalena[""Maria Madalena, de Magdala""]
+  Madalena ---|servem com seus bens| Joana[""Joana, mulher de Cuza""]
+  Madalena --- Suzana[""Suzana""]
+  Madalena --- Salome[""Salomé""]
+  Madalena --- MariaTiago[""Maria, mãe de Tiago, o Menor""]
+  Madalena -->|anuncia a ressurreição a| Discipulos[""Pedro, João e os discípulos""]
+  Jesus -->|aparece primeiro a| Madalena";"timeline
+  title A vida de Maria Madalena
+  Lucas 8 : É libertada de sete demônios e passa a seguir Jesus
+  Lucas 8 : Serve a Jesus e aos discípulos com seus bens
+  João 19 : Fica junto à cruz com a mãe de Jesus
+  Marcos 15 versículo 47 : Vê onde o corpo de Jesus é sepultado
+  João 20 versículos 1 e 2 : Descobre o túmulo vazio e avisa Pedro e João
+  João 20 versículos 11 a 16 : Jesus a chama pelo nome e ela o reconhece
+  João 20 versículo 18 : Anuncia aos discípulos Vi o Senhor"
+"Mateus";"Cobrador de impostos de Cafarnaum, chamado por Jesus com a ordem ""Segue-me"", Mateus deixou a mesa de arrecadação para se tornar um dos doze apóstolos e é o autor tradicional do primeiro Evangelho do Novo Testamento.";"Mateus, também chamado Levi, era filho de Alfeu e trabalhava como publicano em Cafarnaum, junto ao mar da Galileia, cobrando impostos para o governo romano. Os publicanos eram malvistos pelos judeus: colaboravam com os ocupantes e muitas vezes enriqueciam cobrando mais do que o devido, e por isso eram tidos como pecadores e proscritos. Um dia, Jesus passou pela coletoria, olhou para Mateus, que estava sentado ali, e disse: ""Segue-me"". O texto de Mateus é simples e direto: ""Ele, levantando-se, o seguiu"".
+Para celebrar o chamado, Mateus fez em sua casa um grande banquete para Jesus, ao qual convidou muitos amigos, cobradores de impostos e outros ""pecadores"". Os fariseus e escribas murmuraram contra os discípulos: ""Por que comeis e bebeis com publicanos e pecadores?"". Jesus respondeu: ""Os sãos não precisam de médico, mas, sim, os que estão enfermos. Eu não vim chamar os justos, mas os pecadores, ao arrependimento"". A cena mostra o centro da missão de Jesus e tornou a conversão de Mateus um símbolo da graça.
+Mateus passou a integrar o grupo dos doze. Nas listas dos apóstolos, aparece com a expressão ""Mateus, o publicano"", como uma lembrança honesta de quem tinha sido. Pouco mais se diz dele nos Evangelhos, que o deixam na companhia dos demais. Em Atos, está entre os onze que se reuniam em oração no cenáculo, em Jerusalém, depois da ascensão de Jesus, esperando a promessa do Espírito.
+Segundo a tradição da igreja primitiva, Mateus escreveu o Evangelho que leva o seu nome, que abre o Novo Testamento. É o evangelho mais voltado ao público judeu: começa com a genealogia de Jesus, desde Abraão e Davi, e cita muitas vezes o Antigo Testamento, mostrando como Jesus cumpriu as profecias. Reúne cinco grandes discursos de Jesus, entre eles o Sermão do Monte, as parábolas do reino e o discurso sobre o fim dos tempos, e termina com a grande comissão: ""Ide, fazei discípulos de todas as nações"".
+O que aconteceu com Mateus depois não é dito na Bíblia. Tradições antigas dizem que ele pregou aos judeus e depois a outros povos, mas os relatos variam e não são certos. Sua história permanece como um exemplo de transformação: um homem que fazia dinheiro com a cobrança de impostos passou a escrever, para os séculos seguintes, a vida do Mestre que o chamou.";"Mateus é chamado também Levi nos Evangelhos de Marcos e de Lucas (Marcos 2:14; Lucas 5:27).
+Na lista dos apóstolos, ele se apresenta como ""Mateus, o publicano"", sem esconder o seu passado (Mateus 10:3).
+Seu pai, Alfeu, é citado também como pai de Tiago, o Menor, outro apóstolo, o que não significa que fossem irmãos.
+O nome Mateus quer dizer ""dom de Deus"" ou ""presente do Senhor"".
+O Evangelho de Mateus tem 28 capítulos e traz cinco grandes discursos de Jesus.
+Mateus dá mais ênfase do que os outros Evangelhos ao cumprimento das profecias e ao ""reino dos céus"".";"Mateus 9:9-13 (o chamado e o banquete)
+Marcos 2:13-17 e Lucas 5:27-32 (o mesmo episódio, com o nome Levi)
+Mateus 10:2-4 (a lista dos doze apóstolos)
+Atos 1:12-14 (Mateus entre os que oravam em Jerusalém)
+Mateus 5 a 7 e 28:18-20 (o Sermão do Monte e a grande comissão)";"Apóstolo e ex-cobrador de impostos, símbolo da graça que chama pecadores; autor tradicional do primeiro Evangelho";"Ministério de Jesus e igreja primitiva (cerca de 27 a 70 d.C.)";"Mateus, Marcos, Lucas, Atos";"Mateus 9:9; Mateus 9:12-13; Mateus 10:3; Mateus 28:19-20";"cobrador de impostos, chamado, conversão, Evangelho, reino dos céus, profecias cumpridas, apóstolo";"Sim";"graph TD
+  Alfeu[""Alfeu""] --> Mateus[""Mateus, também chamado Levi""]
+  Jesus[""Jesus""] -->|chama junto à coletoria| Mateus
+  Mateus -->|banquete para| Amigos[""Publicanos e pecadores""]
+  Mateus ---|um dos doze| Doze[""Os doze apóstolos""]
+  Mateus -->|escreve, segundo a tradição| Evangelho[""O Evangelho de Mateus""]";"timeline
+  title A vida de Mateus
+  Mateus 9 versículo 9 : Jesus o chama junto à coletoria em Cafarnaum
+  Lucas 5 : Faz um grande banquete para Jesus em sua casa
+  Mateus 10 : É nomeado entre os doze apóstolos
+  Mateus 28 : Ouve a grande comissão no monte da Galileia
+  Atos 1 : Ora em Jerusalém com os onze esperando o Espírito Santo
+  Tradição : Escreve o Evangelho que leva seu nome"
+"Nicodemos";"Fariseu e membro do Sinédrio que procurou Jesus de noite e ouviu que era preciso ""nascer de novo""; mais tarde defendeu o direito de Jesus a um julgamento justo e ajudou José de Arimateia a sepultá-lo, com cerca de cem libras de especiarias.";"Nicodemos era fariseu e ""príncipe dos judeus"", membro do Sinédrio, o conselho que governava a vida religiosa de Israel. Um homem de prestígio, sabedoria e posição, visitou Jesus à noite, provavelmente para evitar ser visto por seus colegas. Disse: ""Rabi, sabemos que és Mestre, vindo de Deus; porque ninguém pode fazer esses sinais que tu fazes, se Deus não for com ele"". Era uma abertura sincera, mas Jesus foi direto ao ponto: ""Na verdade, na verdade te digo que aquele que não nascer de novo não pode ver o reino de Deus"".
+Nicodemos não entendeu: ""Como pode um homem nascer, sendo velho? Porventura pode tornar a entrar no ventre de sua mãe, e nascer?"". A expressão grega pode significar ""de novo"" ou ""do alto"", o que deu margem ao mal-entendido. Jesus explicou que é preciso nascer da água e do Espírito, e que o Espírito é como o vento, que sopra onde quer. Nicodemos perguntou: ""Como pode ser isso?"". Jesus respondeu: ""Tu és mestre de Israel e não sabes isto?"". Em seguida lhe disse as palavras mais conhecidas do Evangelho: ""Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo aquele que nele crê não pereça, mas tenha a vida eterna"".
+O Evangelho não conta o resultado imediato da conversa, mas Nicodemos reaparece. Na festa dos Tabernáculos, quando os sacerdotes e fariseus queriam prender Jesus e reclamavam de que os guardas voltaram sem ele, Nicodemos disse: ""Porventura condena a nossa lei um homem sem primeiro o ouvir e ter conhecimento do que faz?"". Os colegas o interrompem com ironia: ""És tu também da Galileia?"". Era uma defesa tímida, mas arriscada, num grupo que já tinha decidido matar Jesus.
+Depois da morte de Jesus, quando os discípulos se esconderam, Nicodemos apareceu, ao lado de José de Arimateia, outro membro do conselho e discípulo ""em segredo"". José pediu o corpo a Pilatos, e Nicodemos ""trouxe uma mistura de mirra e de aloés, quase cem libras"". Os dois envolveram o corpo em lençóis de linho com as especiarias, ""como os judeus costumam fazer nos enterros"", e o puseram num sepulcro novo, num jardim perto do Gólgota. A quantidade é impressionante, mais de trinta quilos, uma honra digna de um rei.
+Nicodemos mostra que a fé pode crescer devagar. Começou como visitante noturno, curioso e cauteloso, e acabou por se expor publicamente quando os demais discípulos ainda estavam escondidos. A Bíblia não conta como terminou sua história, mas a tradição cristã o considera um dos que, finalmente, creram. Seu nome é lembrado como símbolo de quem busca a verdade com sinceridade e se deixa transformar.";"Nicodemos é um nome grego que significa ""vencedor do povo"".
+Foi com ele que Jesus falou sobre ""nascer de novo"", e a conversa inclui João 3:16.
+A palavra grega traduzida por ""de novo"" (anothen) também pode significar ""do alto"", o que explica o mal-entendido.
+Nicodemos trouxe cerca de cem libras de mirra e aloés, algo em torno de 33 quilos, para o sepultamento de Jesus (João 19:39).
+Apenas o Evangelho de João fala de Nicodemos: três vezes, em João 3, 7 e 19.
+Ele e José de Arimateia, ambos membros do Sinédrio, foram os que sepultaram Jesus com honra.";"João 3:1-21 (a visita noturna e o ""nascer de novo"")
+João 7:45-52 (Nicodemos defende que Jesus seja ouvido)
+João 19:38-42 (o sepultamento de Jesus com José de Arimateia)";"Fariseu e líder judeu que, de visitante noturno, passou a defender Jesus e a participar do seu sepultamento; protagonista da conversa sobre o novo nascimento";"Ministério de Jesus (cerca de 28 a 33 d.C.)";"João";"João 3:3; João 3:16; João 7:51; João 19:39";"fariseu, nascer de novo, Sinédrio, coragem, sepultamento, fé gradual, noite";"Sim";"graph TD
+  Nicodemos[""Nicodemos, fariseu e membro do Sinédrio""] -->|visita de noite| Jesus[""Jesus""]
+  Jesus -->|ensina sobre o novo nascimento| Nicodemos
+  Nicodemos -->|defende o direito de Jesus ser ouvido| Sinedrio[""O Sinédrio""]
+  Nicodemos ---|sepultam Jesus juntos| JoseArimateia[""José de Arimateia""]
+  Nicodemos -->|traz 100 libras de especiarias| Corpo[""O corpo de Jesus""]";"timeline
+  title A jornada de Nicodemos
+  João 3 versículos 1 a 8 : Visita Jesus de noite e ouve sobre nascer de novo
+  João 3 versículos 9 a 21 : Ouve que Deus amou o mundo de tal maneira
+  João 7 versículos 45 a 52 : Pede que Jesus seja ouvido antes de ser julgado
+  João 19 versículos 38 e 39 : Traz mirra e aloés ao sepultamento
+  João 19 versículos 40 a 42 : Sepulta Jesus com José de Arimateia"
+"Sansão";"Juiz de Israel e nazireu desde o ventre, Sansão tinha força sobre-humana para enfrentar os filisteus; traído por Dalila, perdeu o cabelo e a visão e, no fim da vida, derrubou o templo de Dagom, matando mais inimigos na morte do que na vida.";"Sansão era da tribo de Dã, filho de Manoá, de Zorá. Sua mãe era estéril, e um anjo do Senhor lhe anunciou que teria um filho e que ele seria nazireu desde o ventre: não devia beber vinho nem bebida forte, e navalha jamais passaria sobre a sua cabeça. Ele começaria a livrar Israel das mãos dos filisteus, que oprimiam o povo havia quarenta anos. O menino nasceu e recebeu o nome Sansão. Quando cresceu, o Espírito do Senhor começou a movê-lo.
+Sansão desejou casar-se com uma moça filisteia de Timna. Quando ia à casa dela, um leão novo rugiu contra ele, e o Espírito do Senhor o tomou: ele o despedaçou com as mãos, como se fosse um cabrito. Depois, voltando para o casamento, viu no corpo do leão um enxame de abelhas e mel. No banquete de núpcias, propôs um enigma aos convidados, com uma aposta de trinta camisas e trinta vestes: ""Do comedor saiu comida, e do forte saiu doçura"". Eles obrigaram a esposa a arrancar a resposta, e Sansão, furioso, desceu a Ascalom, matou trinta homens e pagou a aposta.
+Daí em diante, Sansão passou a lutar contra os filisteus. Pegou trezentas raposas, amarrou-as duas a duas, com tochas acesas, e as soltou nas searas, nas vinhas e nos olivais deles. Os filisteus, em retaliação, queimaram a mulher e o sogro dele. Sansão feriu ""pernas e coxas com grande mortandade"". Mais tarde, três mil homens de Judá o entregaram, atado, aos filisteus, mas o Espírito do Senhor veio sobre ele, as cordas se desfizeram, e ele, tomando uma queixada fresca de jumento, matou com ela mil homens. Mesmo sedento, orou ao Senhor, e Deus fez brotar água de uma cova.
+Em Gaza, os filisteus quiseram encurralá-lo, mas Sansão se levantou à meia-noite, arrancou as portas da cidade com suas ombreiras e trancas e as levou nos ombros até o cimo de um monte, defronte de Hebrom. Depois, amou Dalila, no vale de Soreque. Os príncipes dos filisteus a subornaram com mil e cem moedas de prata cada um para descobrir o segredo da sua força. Depois de três mentiras, Sansão cedeu à insistência de Dalila e revelou que era nazireu e que sua força estava no cabelo. Ela o fez dormir, mandou rapar as sete tranças, e ele perdeu a força, ""porque o Senhor se tinha retirado dele"".
+Os filisteus furaram os olhos de Sansão, levaram-no a Gaza e o puseram a moer no cárcere, atado com grilhões de bronze. Mas o cabelo começou a crescer. Numa grande festa em honra de Dagom, o povo o trouxe para divertir os convidados no templo, que estava cheio de homens e mulheres, com três mil no terraço. Sansão orou: ""Senhor Deus, peço-te que te lembres de mim e fortalece-me só esta vez"". Apoiando-se nas duas colunas centrais, disse: ""Morra a minha alma com os filisteus"", e empurrou com toda a força. A casa caiu sobre os príncipes e sobre todo o povo. Foram mais os que matou na sua morte do que os que havia matado em vida. Seus irmãos o sepultaram entre Zorá e Estaol. Ele havia julgado Israel por vinte anos. Hebreus 11 o lista entre os heróis da fé.";"Sansão é o último dos grandes juízes descritos no livro de Juízes, e julgou Israel por vinte anos.
+Foi nazireu desde o ventre, o que incluía não cortar o cabelo, não beber vinho e não tocar em corpo morto.
+Usou trezentas raposas com tochas para queimar as plantações dos filisteus (Juízes 15:4-5).
+Matou mil filisteus com uma queixada de jumento e depois orou pedindo água (Juízes 15:15-19).
+Levou as portas da cidade de Gaza, com as trancas, nas costas, até perto de Hebrom (Juízes 16:3).
+Hebreus 11:32 o inclui entre os que, ""pela fé, ... da fraqueza tiraram forças"".";"Juízes 13 (o anúncio do nascimento e o voto de nazireu)
+Juízes 14 e 15 (Timna, o leão, o enigma e a queixada de jumento)
+Juízes 16 (Gaza, Dalila e a morte no templo de Dagom)
+Hebreus 11:32-34 (Sansão entre os heróis da fé)";"Juiz de Israel e nazireu consagrado a Deus, de força extraordinária; mostra como Deus usa até uma vida cheia de falhas para livrar o seu povo";"Época dos juízes (cerca de 1100 a 1070 a.C.)";"Juízes, Hebreus";"Juízes 13:5; Juízes 14:6; Juízes 16:20; Juízes 16:30; Hebreus 11:32-34";"nazireu, força, cabelo, juiz, filisteus, traição, sacrifício";"Sim";"graph TD
+  Dã[""Tribo de Dã""] --> Manoa[""Manoá, de Zorá""]
+  Manoa ---|casado com| Esposa[""Sua esposa, antes estéril""]
+  Manoa --> Sansao[""Sansão, nazireu e juiz""]
+  Esposa --> Sansao
+  Anjo[""O anjo do Senhor""] -->|anuncia o nascimento| Esposa
+  Sansao ---|amada| Dalila[""Dalila, do vale de Soreque""]
+  Filisteus[""Os príncipes dos filisteus""] -->|oprimem Israel e prendem| Sansao";"timeline
+  title A vida de Sansão
+  Juízes 13 : O anjo anuncia o nascimento de um nazireu
+  Juízes 14 : Despedaça o leão, propõe o enigma e mata trinta homens em Ascalom
+  Juízes 15 : Queima as searas com trezentas raposas e vence mil homens com uma queixada
+  Juízes 16 versículos 1 a 3 : Leva as portas de Gaza até o monte diante de Hebrom
+  Juízes 16 versículos 4 a 20 : Dalila descobre o segredo e rapa o cabelo
+  Juízes 16 versículos 21 a 22 : É cegado e posto a moer no cárcere em Gaza
+  Juízes 16 versículos 23 a 31 : Derruba o templo de Dagom e morre com os filisteus"
