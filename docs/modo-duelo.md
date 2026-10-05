@@ -66,7 +66,7 @@ copiar, trocar de lugar, cancelar Dom, impedir destruição, adiar jogada...
 | Gideão | 2/1 | *Contínuo:* **+1 por cada carta de Vigor 1** que você tenha em jogo (300 homens). |
 | Salomão | 5/5 | *Ao revelar:* **escolha**: +4 aqui, ou compre 2 cartas. |
 | Pedro | 3/3 | *Contínuo:* cartas suas **ao lado** (cenários vizinhos) ganham +1 (a pedra). |
-| Golias | 5/9 | *Ao revelar:* **+2 para cada carta sua** neste cenário... *e perde o Dom se Davi estiver na mesa.* |
+| Golias | 5/12 | *Ao revelar:* **perde 6** se o rival tiver Davi em jogo (carta forte, mas com ponto fraco conhecido). |
 
 **Etiquetas** (sinergia, vêm de *papel na história*, testamento e período, editáveis): Rei, Profeta, Juiz, Apóstolo, Patriarca, Mulher de coragem,
 Adversário... "Dom: +1 para cada Rei seu" cria arquétipos de Time.
