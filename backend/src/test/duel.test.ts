@@ -127,13 +127,13 @@ describe.skipIf(!hasDatabase)("duelo: figurinhas e planilha", () => {
   });
 
   it("página inicial: figurinhas de exemplo públicas, só as visíveis e na ordem pedida", async () => {
-    await prisma.biblicalCharacter.createMany({
-      data: [
-        { name: "Davi", rarity: "RARE", shortSummary: "x", fullDescription: "y", createdBy: "teste", imageUrl: "https://exemplo.com/davi.png" },
-        { name: "Rute", rarity: "COMMON", shortSummary: "x", fullDescription: "y", createdBy: "teste", imageUrl: "https://exemplo.com/rute.png" },
-        { name: "Ester", rarity: "EPIC", shortSummary: "x", fullDescription: "y", createdBy: "teste", published: false },
-      ],
-    });
+    const base = { shortSummary: "x", fullDescription: "y", createdBy: "teste" };
+    const put = (name: string, data: { rarity: "COMMON" | "RARE" | "EPIC"; imageUrl: string | null; published?: boolean }) =>
+      prisma.biblicalCharacter.upsert({ where: { name }, create: { name, ...base, ...data }, update: data });
+    await put("Davi", { rarity: "RARE", imageUrl: "https://exemplo.com/davi.png" });
+    await put("Rute", { rarity: "COMMON", imageUrl: "https://exemplo.com/rute.png" });
+    await put("Ester", { rarity: "EPIC", imageUrl: null, published: false });
+    await prisma.biblicalCharacter.updateMany({ where: { name: "Paulo" }, data: { published: false } });
     const response = await api.get("/api/landing/stickers");
     expect(response.status).toBe(200);
     expect(response.body).toEqual([
