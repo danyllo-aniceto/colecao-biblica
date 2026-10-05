@@ -27,8 +27,8 @@ import { Dice } from '@/components/user/board/dice';
 import { BoardTrack, Pawn } from '@/components/user/board/board-track';
 import type { Landmark, PathStyle } from '@board/layout';
 import { QuestionSheet, type Reveal, type SheetQuestion } from '@/components/user/board/board-question';
-import { CalloutBanner } from '@/components/user/board/callout-banner';
-import { useCalloutPlayer, type FeedEntry } from '@/components/user/board/use-callouts';
+import { MomentCard } from '@/components/user/board/callout-banner';
+import { useCalloutPlayer, useWalkHold, type FeedEntry } from '@/components/user/board/use-callouts';
 
 export type BoardTheme = {
   name: string;
@@ -91,6 +91,9 @@ export function BoardScreen(props: BoardScreenProps) {
   const { theme, state, log, flash, question, reveal, controlledBy, rolling, face, busy = false, deadlineAt, clockOffset, badge, notice, sharedDevice = false } = props;
   const [helpOpen, setHelpOpen] = useState(false);
   const callouts = useCalloutPlayer(props.feed);
+  const walking = useWalkHold(state.players.map((item) => item.position));
+  /** Enquanto o peão anda e os avisos passam (um por vez), o dado e a pergunta esperam. */
+  const holding = !state.winnerId && (walking || callouts.hold);
   /** Power-up com alvo (Cajado, Rede) esperando a escolha do rival. */
   const [picking, setPicking] = useState<PowerUpKind | null>(null);
 
@@ -185,11 +188,14 @@ export function BoardScreen(props: BoardScreenProps) {
             </ul>
           ) : null}
         </div>
-        <CalloutBanner callout={callouts.active} />
       </div>
 
       <div className="mx-auto max-h-[78dvh] w-full max-w-2xl shrink-0 overflow-y-auto pb-[env(safe-area-inset-bottom)]">
-        {finished ? null : asking && question && pending ? (
+        {finished ? null : callouts.active ? (
+          <MomentCard key={callouts.active.key} callout={callouts.active} onSkip={callouts.skip} />
+        ) : holding ? (
+          <div className="h-4" aria-hidden="true" />
+        ) : asking && question && pending ? (
           <div className="space-y-2 px-2">
             {steps !== null && pending.kind === 'MOVE' ? (
               <div className="flex items-center gap-3 rounded-2xl bg-surface/95 px-3 py-2">

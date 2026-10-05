@@ -27,10 +27,11 @@ import {
   type PowerUpKind,
   type QuestionBank,
 } from "../board/engine";
-import { calloutsFor, pickCallouts, type Callout } from "../board/callouts";
+import { calloutsFor, holdMs, pickCallouts, type Callout } from "../board/callouts";
 import { eventMessage } from "../board/messages";
 import { boardRulesFor } from "../board/scenarios";
 import { pickBoardPool, type BoardPoolItem } from "./board";
+import { getSettings } from "./settings";
 import { areFriends } from "./social";
 
 /**
@@ -129,7 +130,7 @@ function lines(events: BoardEvent[], state: BoardState): string[] {
 
 function pushFeed(work: Work, callouts: Callout[], at: number) {
   if (callouts.length === 0) return;
-  const items = pickCallouts(callouts).map((callout, index) => ({ ...callout, id: `${at}-${index}` }));
+  const items = callouts.map((callout, index) => ({ ...callout, id: `${at}-${index}` }));
   work.feed = [...work.feed, ...items].slice(-MAX_FEED);
 }
 
@@ -221,12 +222,14 @@ function applyResult(work: Work, result: EngineResult, at: number, reschedule = 
   work.state = result.state;
   work.touched = true;
   pushLog(work, lines(result.events, result.state));
-  pushFeed(work, calloutsFor(result.events, result.state), at);
+  const callouts = pickCallouts(calloutsFor(result.events, result.state));
+  pushFeed(work, callouts, at);
   if (result.state.phase === "FINISHED" && work.status === "PLAYING") {
     work.status = "FINISHED";
     work.justFinished = true;
   }
-  if (reschedule) scheduleNext(work, at);
+  // As telas passam um tempo mostrando o que aconteceu (peão andando, avisos): a próxima vez só conta depois disso.
+  if (reschedule) scheduleNext(work, at + holdMs(result.events, callouts));
 }
 
 function rowOf(work: Work, playerKey: string) {
@@ -897,6 +900,15 @@ export function inviteFriend(userId: number, code: string, friendId: number) {
         create: { roomId: work.room.id, fromUserId: userId, toUserId: friendId },
         update: { fromUserId: userId, createdAt: new Date() },
       });
+      // O convite também cai na conversa do amigo (com o contador de não lidas e o botão para entrar), porque o aviso
+      // na tela só aparece se ele estiver com o app aberto. Convidar de novo em seguida não repete a mensagem.
+      const settings = await getSettings(tx);
+      if (settings.chatEnabled === 1) {
+        const scenario = await tx.scenario.findUnique({ where: { id: work.scenarioId }, select: { name: true } });
+        const text = `🎲 Te chamei para jogar o Tabuleiro (${scenario?.name ?? "cenário"})! Entre na sala: /sala/${work.room.code}`;
+        const already = await tx.message.findFirst({ where: { senderId: userId, receiverId: friendId, text, createdAt: { gt: new Date(Date.now() - 10 * 60 * 1000) } }, select: { id: true } });
+        if (!already) await tx.message.create({ data: { senderId: userId, receiverId: friendId, text } });
+      }
     }),
   );
 }

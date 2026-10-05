@@ -337,6 +337,11 @@ describe.skipIf(!hasDatabase)("tabuleiro online", () => {
     // Dispensar o convite.
     const second = await newRoom(ana);
     await api.post(`/api/board/rooms/${second.code}/invite`).set(bearer(ana)).send({ friendId: biaId });
+    await api.post(`/api/board/rooms/${second.code}/invite`).set(bearer(ana)).send({ friendId: biaId });
+    // O convite também cai na conversa do amigo (uma vez só, mesmo convidando de novo).
+    const messages = await prisma.message.findMany({ where: { senderId: anaId, receiverId: biaId, text: { contains: `/sala/${second.code}` } } });
+    expect(messages).toHaveLength(1);
+    expect(messages[0].readAt).toBeNull();
     const [invite] = (await api.get("/api/board/invites").set(bearer(bia))).body as Array<{ id: number }>;
     expect((await api.delete(`/api/board/invites/${invite.id}`).set(bearer(bia))).status).toBe(204);
     expect((await api.get("/api/board/invites").set(bearer(bia))).body).toHaveLength(0);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { botAction } from "./bots";
-import { MAX_CALLOUTS, STEP_MS, calloutsFor, pickCallouts, type Callout } from "./callouts";
+import { MAX_CALLOUTS, MOMENT_MS, STEP_MS, calloutsFor, holdMs, pickCallouts, walkMs, type Callout } from "./callouts";
 import { DEFAULT_CONFIG, answerQuestion, answerTrialOffer, createGame, rollDice, usePowerUp, type BoardEvent, type BoardState, type Difficulty, type QuestionBank } from "./engine";
 import { BOARD_SCENARIOS, boardRulesFor } from "./scenarios";
 
@@ -81,6 +81,15 @@ describe("avisos animados do tabuleiro", () => {
     expect(gained.emoji).toBe("🛡️");
     expect(gained.text).toContain("Escudo");
     expect(gained.text).toContain("recuo");
+  });
+
+  it("a pausa da jogada soma o peão andando e um tempo por aviso, com teto", () => {
+    const walk: BoardEvent[] = [{ type: "MOVED", playerId: "p0", from: 3, to: 7, reason: "DICE" }];
+    expect(walkMs(walk)).toBe(4 * STEP_MS + 500);
+    expect(walkMs([{ type: "MOVED", playerId: "p0", from: 7, to: 4, reason: "FALL" }])).toBe(0);
+    expect(holdMs(walk, [callout({}), callout({})])).toBe(4 * STEP_MS + 500 + 2 * MOMENT_MS);
+    expect(holdMs([], [])).toBe(0);
+    expect(holdMs(walk, Array.from({ length: 10 }, () => callout({})))).toBeLessThanOrEqual(9000);
   });
 
   it("limita os avisos de uma jogada e tira primeiro os menos importantes", () => {

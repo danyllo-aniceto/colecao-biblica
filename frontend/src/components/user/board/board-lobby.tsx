@@ -2,6 +2,7 @@ import { useState } from 'react';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import PersonAddRoundedIcon from '@mui/icons-material/PersonAddRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
@@ -18,6 +19,7 @@ import { errorMessage, useToast } from '@/components/ui/toast';
 import { ScenarioIcon } from '@/components/user/campaign/scenario-art';
 import { Pawn } from '@/components/user/board/board-track';
 import { usePawnOptions } from '@/components/user/board/use-pawn-options';
+import { BoardHelp, ScenarioHighlights } from '@/components/user/board/board-help';
 import { FriendInviteModal } from '@/components/user/board/friend-invite-modal';
 import { cn } from '@/lib/cn';
 import { scenarioThemeVars } from '@/lib/campaign-theme';
@@ -56,6 +58,7 @@ export async function shareRoom(code: string, toast: ReturnType<typeof useToast>
 export function BoardLobby({ view, busy, actions, connectionLost }: { view: RoomView; busy: boolean; actions: LobbyActions; connectionLost: boolean }) {
   const toast = useToast();
   const [inviting, setInviting] = useState(false);
+  const [manual, setManual] = useState(false);
   const pawns = usePawnOptions(true);
   const isHost = Boolean(view.me?.isHost);
   const full = view.players.length >= MAX_PLAYERS;
@@ -111,6 +114,16 @@ export function BoardLobby({ view, busy, actions, connectionLost }: { view: Room
               </button>
             </Tooltip>
           ) : null}
+        </section>
+
+        <section className="panel space-y-3 p-4" aria-label="Manual do cenário">
+          <h3 className="font-display text-base font-bold text-ink">O que este cenário tem de diferente</h3>
+          <div className="text-sm leading-6 text-ink">
+            <ScenarioHighlights rules={rules} />
+          </div>
+          <Button size="sm" variant="secondary" className="w-full" onClick={() => setManual(true)}>
+            <MenuBookRoundedIcon fontSize="small" /> Manual completo: casas e power-ups
+          </Button>
         </section>
 
         <section className="space-y-2" aria-label="Jogadores">
@@ -210,6 +223,7 @@ export function BoardLobby({ view, busy, actions, connectionLost }: { view: Room
         </div>
       </div>
 
+      <BoardHelp open={manual} rules={rules} onClose={() => setManual(false)} />
       <FriendInviteModal open={inviting} code={view.code} inRoomUserIds={humanIds} onClose={() => setInviting(false)} />
     </div>
   );

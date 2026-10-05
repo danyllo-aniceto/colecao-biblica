@@ -17,19 +17,8 @@ export function BoardHelp({ open, rules, onClose }: { open: boolean; rules: Scen
         </ol>
 
         <section className="space-y-2">
-          <h3 className="font-display text-base font-bold">Neste cenário</h3>
-          <div className="rounded-2xl bg-surface-2 p-3">
-            <p className="font-bold">
-              {rules.vigil ? '🕯️' : '⚔️'} {rules.trial.name}
-            </p>
-            <p className="text-muted">{rules.trial.description}</p>
-          </div>
-          {rules.event ? (
-            <div className="rounded-2xl bg-surface-2 p-3">
-              <p className="font-bold">✨ {rules.event.name}</p>
-              <p className="text-muted">{rules.event.description}</p>
-            </div>
-          ) : null}
+          <h3 className="font-display text-base font-bold">O que este cenário tem de diferente</h3>
+          <ScenarioHighlights rules={rules} />
         </section>
 
         <section className="space-y-2">
@@ -56,6 +45,7 @@ export function BoardHelp({ open, rules, onClose }: { open: boolean; rules: Scen
                 <b>
                   {POWER_UPS[kind].emoji} {POWER_UPS[kind].name}
                 </b>
+                {kind === rules.exclusive ? <span className="ml-1 rounded-full bg-primary/20 px-2 py-0.5 text-[11px] font-bold">exclusivo do cenário</span> : null}
                 <span className="text-muted"> · {POWER_UPS[kind].description}</span>
               </li>
             ))}
@@ -63,5 +53,27 @@ export function BoardHelp({ open, rules, onClose }: { open: boolean; rules: Scen
         </section>
       </div>
     </Modal>
+  );
+}
+
+/** O que só este cenário tem: a provação, o evento, o power-up exclusivo e o que cada jogador já começa levando. */
+export function ScenarioHighlights({ rules }: { rules: ScenarioRules }) {
+  const items: Array<{ emoji: string; title: string; text: string }> = [
+    { emoji: rules.vigil ? '🕯️' : '⚔️', title: rules.trial.name, text: rules.trial.description },
+  ];
+  if (rules.event) items.push({ emoji: '✨', title: rules.event.name, text: rules.event.description });
+  if (rules.exclusive) items.push({ emoji: POWER_UPS[rules.exclusive].emoji, title: `${POWER_UPS[rules.exclusive].name} (poder exclusivo)`, text: POWER_UPS[rules.exclusive].description });
+  if (rules.startPower) items.push({ emoji: POWER_UPS[rules.startPower].emoji, title: `Todos começam com ${POWER_UPS[rules.startPower].name}`, text: POWER_UPS[rules.startPower].description });
+  return (
+    <ul className="space-y-2">
+      {items.map((item) => (
+        <li key={item.title} className="rounded-2xl bg-surface-2 p-3">
+          <p className="font-bold">
+            {item.emoji} {item.title}
+          </p>
+          <p className="text-muted">{item.text}</p>
+        </li>
+      ))}
+    </ul>
   );
 }

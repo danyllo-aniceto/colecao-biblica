@@ -71,8 +71,8 @@ describe("tabuleiro", () => {
       expect(state.tiles[0].kind).toBe("START");
       expect(state.tiles[size - 1].kind).toBe("GATE");
       expect(state.tiles[size].kind).toBe("FINISH");
-      expect(state.tiles[6].kind).toBe("SHELTER");
-      expect(state.tiles[12].kind).toBe("SHELTER");
+      expect(state.tiles[8].kind).toBe("SHELTER");
+      expect(state.tiles[16].kind).toBe("SHELTER");
     }
   });
 

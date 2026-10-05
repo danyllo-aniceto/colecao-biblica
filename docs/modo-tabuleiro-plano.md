@@ -243,6 +243,12 @@ Legenda: ✅ feito e testado · ⬜ a fazer.
   casa e um movimento no peão (balança, pula, escudo). Esperam o peão terminar de andar; no máximo 3 por jogada, em fila. No
   online o servidor guarda os últimos (`board_rooms.feed`, migração `20261021090000`) e cada aparelho toca só os que ainda não viu.
   Tocar numa casa abre um balão explicando o que ela faz.
+- ✅ **Ritmo: uma coisa de cada vez**: depois de cada jogada o peão anda (a folha de dado/pergunta some) e cada aviso aparece num
+  cartão no lugar da folha, um por vez (3,5 s, com barra e botão "Continuar"); só então vem o dado/pergunta seguinte. Bots e
+  cronômetros esperam esse tempo (`holdMs`, também no servidor). Menos casas especiais no chão (provações, atalhos, quedas e
+  poderes ~⅓ a menos; abrigos a cada 8) e **manual do cenário** na sala de espera (`ScenarioHighlights` + manual completo).
+- ✅ **Convite de amigo** também cai na conversa dele (mensagem com botão "Entrar na sala" e contador de não lidas), não só como
+  aviso na tela (que consulta a cada 6 s).
 - ✅ **Peões básicos editáveis**: os 10 emojis grátis viraram itens `PAWN` de desbloqueio "Grátis" (seed `Peão: Ovelha`...), que o
   painel troca por emoji/imagem ou desativa; a sala usa os ativos (os emojis de fábrica só se nenhum sobrar).
 - ⬜ Reações rápidas durante a partida online (cosmético REACTION), imagens de topo/rodapé (largada e chegada) e sons por cenário.

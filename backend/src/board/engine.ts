@@ -250,7 +250,7 @@ export const PUSH_BACK = 3;
 export const CATCH_UP_GAP = 8;
 export const EXTRA_SECONDS = 10;
 /** Casas de abrigo a cada tantas casas. */
-export const SHELTER_EVERY = 6;
+export const SHELTER_EVERY = 8;
 /** Acertos seguidos para derrubar um muro. */
 export const WALL_NEED = 2;
 export const NET_PULL = 2;
@@ -402,7 +402,7 @@ export function buildTiles(config: BoardConfig, rules: ScenarioRules, rng: { s: 
     }
   }
 
-  place(rules.vigil ? "VIGIL" : "TRIAL", Math.round(size / 10), 5, gate - 3, 5, () => ({ kind: rules.vigil ? "VIGIL" : "TRIAL" }));
+  place(rules.vigil ? "VIGIL" : "TRIAL", Math.max(2, Math.round(size / 13)), 5, gate - 3, 5, () => ({ kind: rules.vigil ? "VIGIL" : "TRIAL" }));
   if (rules.walls) {
     place("WALL", scaled(rules.walls.count, size), 7, gate - 4, 6, () => ({ kind: "WALL" }));
   }
@@ -412,10 +412,10 @@ export function buildTiles(config: BoardConfig, rules: ScenarioRules, rng: { s: 
   if (rules.den) {
     place("DEN", scaled(rules.den.count, size), 5, gate - 3, 5, () => ({ kind: "DEN" }));
   }
-  place("SHORTCUT", Math.max(1, Math.round(size / 14)), 3, gate - 8, 4, (index) => ({ kind: "SHORTCUT", to: index + randInt(rng, 3, 5) }));
-  place("FALL", Math.max(1, Math.round(size / 14)), 7, gate - 3, 4, (index) => ({ kind: "FALL", to: index - randInt(rng, 3, 4) }));
+  place("SHORTCUT", Math.max(1, Math.round(size / 18)), 3, gate - 8, 5, (index) => ({ kind: "SHORTCUT", to: index + randInt(rng, 3, 5) }));
+  place("FALL", Math.max(1, Math.round(size / 18)), 7, gate - 3, 5, (index) => ({ kind: "FALL", to: index - randInt(rng, 3, 4) }));
   if (config.powerUps) {
-    place("POWER", Math.round(size / 6), 2, gate - 2, 2, () => ({ kind: "POWER" }));
+    place("POWER", Math.round(size / 9), 2, gate - 2, 3, () => ({ kind: "POWER" }));
   }
   return tiles;
 }

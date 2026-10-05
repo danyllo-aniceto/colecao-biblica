@@ -26,6 +26,10 @@ export type Callout = {
 export const STEP_MS = 150;
 export const MAX_WALK_STEPS = 16;
 export const MAX_CALLOUTS = 3;
+/** Quanto cada aviso fica na tela (dá para pular com um toque). */
+export const MOMENT_MS = 3500;
+/** Teto da pausa de uma jogada, para o jogo nunca ficar parado esperando aviso. */
+const MAX_HOLD_MS = 9000;
 
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
@@ -173,4 +177,18 @@ export function pickCallouts(list: Callout[], max = MAX_CALLOUTS): Callout[] {
     }
   }
   return result.slice(-max);
+}
+
+/** Tempo do peão andando (para frente, pelo dado) nos eventos de uma jogada, com uma folga no fim. */
+export function walkMs(events: BoardEvent[]): number {
+  const steps = events.reduce((total, event) => (event.type === "MOVED" && event.reason === "DICE" && event.to > event.from ? total + Math.min(event.to - event.from, MAX_WALK_STEPS) : total), 0);
+  return steps > 0 ? steps * STEP_MS + 500 : 0;
+}
+
+/**
+ * Quanto tempo a tela se dedica ao que acabou de acontecer (o peão andar e cada aviso, um de cada vez) antes de a próxima
+ * jogada começar. O servidor empurra bots e cronômetros por esse tempo, para ninguém perder a vez lendo.
+ */
+export function holdMs(events: BoardEvent[], callouts: Callout[]): number {
+  return Math.min(MAX_HOLD_MS, walkMs(events) + callouts.length * MOMENT_MS);
 }

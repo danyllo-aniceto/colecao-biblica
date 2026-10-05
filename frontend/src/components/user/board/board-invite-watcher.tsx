@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useDialogs } from '@/components/ui/dialogs';
 import { dismissRoomInvite, listRoomInvites } from '@/lib/board-room-api';
 
-const CHECK_MS = 12_000;
+const CHECK_MS = 6_000;
 
 /**
  * Fica de olho nos convites de amigos para salas do Tabuleiro enquanto o app está aberto

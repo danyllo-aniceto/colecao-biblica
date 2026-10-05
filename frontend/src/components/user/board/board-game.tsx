@@ -12,7 +12,7 @@ import {
   type QuestionBank,
 } from '@board/engine';
 import { botAction } from '@board/bots';
-import { calloutsFor, pickCallouts } from '@board/callouts';
+import { calloutsFor, holdMs, pickCallouts } from '@board/callouts';
 import { useDialogs } from '@/components/ui/dialogs';
 import { useCampaign } from '@/components/user/campaign/campaign-provider';
 import { playSfx } from '@/lib/sound/sfx';
@@ -45,6 +45,8 @@ export function BoardGame({ game: saved, onExit, onRematch }: GameProps) {
   const [flash, setFlash] = useState<number[]>([]);
   const [feed, setFeed] = useState<FeedEntry[]>([]);
   const feedCount = useRef(0);
+  /** Até quando a tela está mostrando o que aconteceu (os bots esperam, para ninguém perder o que viu). */
+  const holdUntil = useRef(0);
 
   const stateRef = useRef(state);
   const setReveal = useCallback((value: Reveal | null) => {
@@ -87,6 +89,7 @@ export function BoardGame({ game: saved, onExit, onRematch }: GameProps) {
     const lines = result.events.map((event) => eventMessage(event, result.state)).filter((line): line is string => Boolean(line));
     if (lines.length > 0) setLog((current) => [...current, ...lines].slice(-40));
     const callouts = pickCallouts(calloutsFor(result.events, result.state));
+    holdUntil.current = Date.now() + holdMs(result.events, callouts);
     if (callouts.length > 0) setFeed((current) => [...current, ...callouts.map((callout) => ({ ...callout, id: `local-${feedCount.current++}` }))].slice(-20));
     const arrivals = result.events.flatMap((event) => (event.type === 'MOVED' ? [event.to] : event.type === 'PUSHED' ? [event.to] : []));
     if (arrivals.length > 0) {
@@ -151,7 +154,8 @@ export function BoardGame({ game: saved, onExit, onRematch }: GameProps) {
   // Bots: rolam, usam ajudas e respondem sozinhos, com um tempinho de "pensar".
   useEffect(() => {
     if (!isBot || finished || rolling || reveal) return;
-    const delay = state.phase === 'ROLL' ? BOT_ROLL_MS : state.phase === 'TRIAL_OFFER' ? BOT_ACT_MS : 1600 + Math.random() * 2200;
+    const base = state.phase === 'ROLL' ? BOT_ROLL_MS : state.phase === 'TRIAL_OFFER' ? BOT_ACT_MS : 1600 + Math.random() * 2200;
+    const delay = base + Math.max(0, holdUntil.current - Date.now());
     const timer = window.setTimeout(() => {
       const current = stateRef.current;
       const action = botAction(current, bank);
