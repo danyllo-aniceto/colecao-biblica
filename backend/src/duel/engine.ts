@@ -500,6 +500,8 @@ function endOfTurn(state: DuelState) {
         const cards = lane.cards[side];
         if (cards.length === 0) continue;
         const weakest = [...cards].sort((a, b) => cardPower(state, index, side, a) - cardPower(state, index, side, b) || a.order - b.order)[0];
+        // A praga não leva ninguém abaixo de zero.
+        if (cardPower(state, index, side, weakest) <= 0) continue;
         weakest.bonus -= rule.amount;
         emit(state, { type: "power", side, lane: index, uid: weakest.uid, name: weakest.def.name, amount: -rule.amount, text: `${scenarioOf(lane.scenario).name}: ${weakest.def.name} perdeu ${rule.amount}.` });
       }

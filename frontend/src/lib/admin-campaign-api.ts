@@ -23,6 +23,7 @@ export type AdminScenario = {
   /** Imagem de fundo da tela do quiz neste cenário. */
   quizBackgroundUrl?: string | null;
   boardImageUrl?: string | null;
+  duelImageUrl?: string | null;
   boardPathStyle?: PathStyle | null;
   boardLandmarks?: Landmark[] | null;
   fragmentCharacterId: number | null;
@@ -47,6 +48,7 @@ export type ScenarioPayload = {
   /** Imagem de fundo da tela do quiz neste cenário. */
   quizBackgroundUrl?: string | null;
   boardImageUrl?: string | null;
+  duelImageUrl?: string | null;
   boardPathStyle?: PathStyle | null;
   boardLandmarks?: Landmark[] | null;
   fragmentCharacterId: number | null;

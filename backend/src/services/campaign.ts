@@ -92,6 +92,7 @@ export async function getCampaign(userId: number) {
         iconImageUrl: scenario.iconImageUrl,
         quizBackgroundUrl: scenario.quizBackgroundUrl,
         boardImageUrl: scenario.boardImageUrl,
+        duelImageUrl: scenario.duelImageUrl,
         boardPathStyle: scenario.boardPathStyle,
         boardLandmarks: scenario.boardLandmarks,
         hasMusic: Boolean(scenario.musicUrl),

@@ -57,6 +57,17 @@ código em **português do Brasil**.
 - O motor não vê a alternativa marcada, só se acertou. Toda regra nova tem teste em `engine.test.ts`; regras de cenário são
   dados em `scenarios.ts`. Nada do modo dá XP, moedas, figurinhas nem mexe nas estatísticas das perguntas.
 
+## Modo Duelo (jogo de cartas com amigos, sem progresso de perfil)
+
+- Proposta e fases em `docs/modo-duelo.md` (estilo Marvel Snap: 12 cartas, 6 turnos simultâneos, 3 cenários × 4 espaços, Dons). Atualize o
+  checklist a cada etapa. Vocabulário: **Influência** (força), **Vigor** (energia do turno), **Dom** (habilidade), **Cenário**, **Time**.
+  Não usar "Fé" nem "Fôlego" (o Tabuleiro já usa).
+- Motor **puro e sem dependências** em `backend/src/duel/` (`engine.ts`, `cards.ts`, `scenarios.ts`, `bots.ts`, `series.ts`, `starter.ts`); o
+  front o importa pelo alias `@duel/*`. Mesmo molde do Tabuleiro: estado serializável, sorteio com semente, nunca importar nada de fora da pasta.
+- **Nenhum cenário nem Dom usa sorte.** Só decisão do jogador. Regras novas entram em `engine.test.ts`; bots só enxergam `viewFor(...)`.
+- Informação escondida (mão e baralho do rival, jogadas não reveladas, cenários que não apareceram) nunca sai do servidor: o online manda só `viewFor`.
+- Nada do modo dá XP, moedas, figurinhas ou mexe em ranking/missões/estatísticas. Único prêmio previsto: versos de carta por vitórias online.
+
 ## Comandos
 
 ```bash

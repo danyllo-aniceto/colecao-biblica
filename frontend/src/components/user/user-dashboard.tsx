@@ -20,6 +20,7 @@ import { AlbumSection } from '@/components/user/sections/album-section';
 import { HomeSection } from '@/components/user/sections/home-section';
 import { PlaySection, type QuizFormState } from '@/components/user/sections/play-section';
 import { BoardHub } from '@/components/user/board/board-hub';
+import { DuelHub } from '@/components/user/duel/duel-hub';
 import { BoardInviteWatcher } from '@/components/user/board/board-invite-watcher';
 import { peekPendingRoom, setPendingRoom } from '@/lib/board-room-api';
 import { ProfileSection } from '@/components/user/sections/profile-section';
@@ -651,7 +652,12 @@ export function UserDashboard() {
                   onAbandon={handleAbandonQuiz}
                   onStartChallenge={() => void handleStartChallenge()}
                 />
-                {quizSession ? null : <BoardHub playerName={profile?.name ?? ''} />}
+                {quizSession ? null : (
+                  <>
+                    <BoardHub playerName={profile?.name ?? ''} />
+                    <DuelHub characters={characters} />
+                  </>
+                )}
               </div>
             ) : null}
 

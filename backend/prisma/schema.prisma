@@ -749,6 +749,8 @@ model Scenario {
   musicUrl            String?  @map("music_url")
   /// Imagem de fundo da tela do quiz neste cenário (vertical, sem texto).
   quizBackgroundUrl   String?  @map("quiz_background_url")
+  /// Arte da coluna deste cenário na mesa do Duelo (vertical estreita); vazio usa o mapa do cenário.
+  duelImageUrl        String?  @map("duel_image_url")
   /// Imagem de fundo do tabuleiro deste cenário (vertical, sem texto), atrás do caminho do jogo de tabuleiro.
   boardImageUrl       String?  @map("board_image_url")
   /// Curvas do caminho do tabuleiro: SOFT, MEDIUM ou WIDE (vazio = MEDIUM).

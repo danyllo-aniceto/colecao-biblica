@@ -56,6 +56,7 @@ const scenarioSchema = z.object({
   musicUrl: musicRef(),
   quizBackgroundUrl: imageRef(),
   boardImageUrl: imageRef(),
+  duelImageUrl: imageRef(),
   boardPathStyle: z.enum(["SOFT", "MEDIUM", "WIDE"]).nullish(),
   boardLandmarks: z.array(landmarkSchema).max(MAX_LANDMARKS, `No máximo ${MAX_LANDMARKS} marcos`).nullish(),
   fragmentCharacterId: z.number().int().positive().nullish(),
@@ -122,6 +123,7 @@ campaignAdminRouter.post(
         musicUrl: input.musicUrl ?? null,
         quizBackgroundUrl: input.quizBackgroundUrl ?? null,
         boardImageUrl: input.boardImageUrl ?? null,
+        duelImageUrl: input.duelImageUrl ?? null,
         boardPathStyle: input.boardPathStyle ?? null,
         boardLandmarks: input.boardLandmarks ?? Prisma.DbNull,
         fragmentCharacterId: input.fragmentCharacterId ?? null,
@@ -154,6 +156,7 @@ campaignAdminRouter.put(
         musicUrl: input.musicUrl,
         quizBackgroundUrl: input.quizBackgroundUrl,
         boardImageUrl: input.boardImageUrl,
+        duelImageUrl: input.duelImageUrl,
         // Ausente mantém; null limpa (volta ao padrão).
         boardPathStyle: input.boardPathStyle,
         boardLandmarks: input.boardLandmarks === null ? Prisma.DbNull : input.boardLandmarks,

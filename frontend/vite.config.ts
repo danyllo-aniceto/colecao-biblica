@@ -27,6 +27,8 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
       // Motor do tabuleiro: o mesmo arquivo roda aqui (partida local) e no servidor.
       "@board": path.resolve(__dirname, "../backend/src/board"),
+      // Motor do Duelo de Cartas (treino contra bot roda aqui; o online, no servidor).
+      "@duel": path.resolve(__dirname, "../backend/src/duel"),
     },
   },
   plugins: [

@@ -4,7 +4,13 @@ Segundo jogo de **sala** do app, irmão do Tabuleiro: **sem XP, sem moedas, sem 
 amigos (ou treinar contra bots). Reaproveita quase tudo que o Tabuleiro já construiu (salas, convite, link, bots, relógio
 preguiçoso, sons e música por cenário) e as figurinhas, os cenários e o **nível da figurinha** que já existem.
 
-Nada aqui foi implementado ainda. Este documento é a proposta para aprovação.
+## Decisões confirmadas
+
+1. **Aberto para todos** (sem trava de nível); o marcador "Arena de Duelos" no mapa da campanha fica como atalho decorativo (a fazer).
+2. **Time de 12 cartas.**
+3. **Imagens dos cenários substituíveis pelo painel**, como as outras: campo *Imagem no Duelo de Cartas* em Campanha → cenário
+   (`scenarios.duel_image_url`); vazio usa o mapa do cenário.
+4. Casual: **sem XP, moedas, figurinhas, ranking nem missões**.
 
 ## 1. O que o Marvel Snap tem de bom (pesquisa) e o que levamos
 
@@ -37,8 +43,8 @@ Nada aqui foi implementado ainda. Este documento é a proposta para aprovação.
    ordem em que as cartas foram jogadas, e o turno seguinte começa (+1 carta na mão; 2º cenário no turno 2, 3º no turno 3).
 3. **Fim:** depois do turno 6 conta-se a Influência de cada cenário. Quem ganhar 2 vence a rodada (empate de cenários: maior Influência total;
    persistindo, empate).
-4. **Dobrar:** a qualquer momento, **uma vez por pessoa por rodada**, o jogador "dobra a aposta" (1 → 2 → 4 → 8). O rival aceita ou **desiste da
-   rodada** (perde o valor anterior). Quem desistiu não vê o fim. Não pode desistir no mesmo turno em que dobrou.
+4. **Dobrar (como o Snap):** a qualquer momento, **uma vez por pessoa por rodada**, o jogador dobra a aposta na hora (1 → 2 → 4 → 8). Quem não quer
+   arriscar pode **desistir da rodada** e perde só o que estava valendo naquele momento. Não dá para desistir no turno em que você mesmo dobrou.
 5. **Série (escolhida na sala):** *Rodada única* · *Melhor de 3* · *Vidas* (10 vidas; a aposta vira dano; a partir da rodada 5 a aposta vale em dobro).
    Padrão: **Melhor de 3** (~15 min).
 
@@ -108,7 +114,7 @@ Segue o Tabuleiro: **nada de XP, moedas, figurinhas, baús, ranking, missões ou
 (sala com 2+ pessoas, confirmadas pelo servidor; vitória contra bot não conta) que libera **versos de carta** (novo cosmético `CARD_BACK`, como o
 `PAWN`: editável no painel, na loja, por meta ou prêmio). Isso evita farm entre amigos e qualquer corrida por recompensa.
 
-## 9. Desbloqueio e campanha (decisão a confirmar)
+## 9. Desbloqueio e campanha (decidido: aberto a todos)
 
 Você tinha pedido que o modo abrisse num nível e aparecesse no mapa. Mantive: **abre no nível 10** (fim do 2º cenário), com um marcador
 **"Arena de Duelos"** trancado no mapa da campanha e, depois, aberto. Como o modo é casual, também dá para deixá-lo aberto a todos como o Tabuleiro
@@ -141,12 +147,20 @@ trancado no nível 10 se quiser que seja um prêmio da campanha. Sua escolha.
 
 ## 12. Fases (cada uma jogável e testada, como no Tabuleiro)
 
-1. **Motor + cartas + bot (local/treino):** regras, 10 cenários, ~12 Dons, vs bot no navegador, sem servidor. Tela da mesa com arrastar.
-2. **Painel + dados:** aba Duelo, Times prontos, importação, primeiro lote de cartas.
-3. **Online:** salas, convite, link, relógio, assistir, série por vidas, Dobrar/Desistir.
-4. **Meus times e níveis:** montador de Time (paginado), Times salvos, níveis valendo, modo equilibrado.
-5. **Polimento:** sons, música, avisos, versos de carta, vitórias online, marcador na campanha, relatório de equilíbrio.
-6. **Conteúdo:** novos lotes de cartas e cenários.
+Legenda: ✅ feito e testado · ⬜ a fazer.
+
+1. **Motor + cartas + bot (treino local)** ✅
+   - ✅ Motor puro `backend/src/duel/` (3 cenários × 4 espaços, 6 turnos simultâneos, prioridade de revelação, Dons *Ao revelar / Contínuo / Fim do turno /
+     Fim do duelo / Ao ser destruída / Quando uma carta sua é jogada aqui*, 12 efeitos, dobrar e desistir, níveis da figurinha, visão sem informação escondida),
+     10 cenários, 26 cartas de partida e 2 Times prontos, séries (única, melhor de 3, vidas) e 3 bots (Aprendiz, Estudante, Mestre).
+     40 testes (inclui 300 duelos só de bots e equilíbrio dos Times prontos).
+   - ✅ Tela do treino contra bot na aba Jogar: mesa em retrato, arrastar ou tocar para jogar, avisos dos Dons, dobrar/desistir, resumo da rodada, ajuda.
+   - ✅ Imagem do cenário no duelo editável no painel (migração `20261022090000_duelo_cenario_imagem`).
+2. **Painel + dados** ⬜: aba Duelo no personagem (Vigor, Influência, etiquetas, Dom com prévia e medidor de orçamento), importação CSV, Times prontos, 1º lote de cartas.
+3. **Online** ⬜: salas, convite, link, relógio preguiçoso, assistir, série por vidas.
+4. **Meus times e níveis** ⬜: montador de Time (paginado), Times salvos, níveis valendo, modo equilibrado.
+5. **Polimento** ⬜: sons próprios, música do cenário (já toca a do 1º cenário aberto), versos de carta e vitórias online, marcador na campanha, relatório de equilíbrio.
+6. **Conteúdo** ⬜: novos lotes de cartas e cenários.
 
 ## 13. Riscos
 

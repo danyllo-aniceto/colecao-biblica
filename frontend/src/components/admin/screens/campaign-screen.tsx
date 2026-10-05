@@ -187,6 +187,7 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
   const [iconImageUrl, setIconImageUrl] = useState(scenario?.iconImageUrl ?? '');
   const [musicUrl, setMusicUrl] = useState(scenario?.musicUrl ?? '');
   const [quizBackgroundUrl, setQuizBackgroundUrl] = useState(scenario?.quizBackgroundUrl ?? '');
+  const [duelImageUrl, setDuelImageUrl] = useState(scenario?.duelImageUrl ?? '');
   const [boardImageUrl, setBoardImageUrl] = useState(scenario?.boardImageUrl ?? '');
   const [boardPathStyle, setBoardPathStyle] = useState<PathStyle>(scenario?.boardPathStyle ?? 'MEDIUM');
   const [boardLandmarks, setBoardLandmarks] = useState<Landmark[]>(scenario?.boardLandmarks ?? []);
@@ -221,6 +222,7 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
       iconImageUrl: iconImageUrl || null,
       musicUrl: musicUrl || null,
       quizBackgroundUrl: quizBackgroundUrl || null,
+      duelImageUrl: duelImageUrl || null,
       boardImageUrl: boardImageUrl || null,
       boardPathStyle,
       boardLandmarks: boardLandmarks.map((landmark) => ({ ...landmark, imageUrl: landmark.imageUrl || null, emoji: landmark.imageUrl ? null : landmark.emoji?.trim() || null })),
@@ -276,6 +278,9 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
           </Field>
           <QuizBackgroundPreview imageUrl={quizBackgroundUrl || null} color={color} name={name.trim() || undefined} />
         </div>
+        <Field label="Imagem no Duelo de Cartas" hint="Coluna do cenário na mesa do duelo: vertical e estreita (2:5), tipo 768×1920, sem texto e com o centro calmo (as cartas ficam por cima). Vazio usa o mapa do cenário.">
+          <ImageUploadField value={duelImageUrl} onChange={setDuelImageUrl} wide />
+        </Field>
         <section className="space-y-4 rounded-3xl border-2 border-edge p-4" aria-label="Tabuleiro deste cenário">
           <div>
             <h3 className="font-display text-lg font-bold text-ink">Tabuleiro (jogo com amigos)</h3>

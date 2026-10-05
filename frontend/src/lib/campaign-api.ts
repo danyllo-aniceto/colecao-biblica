@@ -39,6 +39,8 @@ export type CampaignScenario = {
   iconImageUrl: string | null;
   /** Imagem de fundo da tela do quiz neste cenário. */
   quizBackgroundUrl?: string | null;
+  /** Arte da coluna do cenário na mesa do Duelo. */
+  duelImageUrl?: string | null;
   /** Imagem de fundo do tabuleiro deste cenário. */
   boardImageUrl?: string | null;
   /** Curvas do caminho do tabuleiro e marcos do cenário (editáveis no painel). */
