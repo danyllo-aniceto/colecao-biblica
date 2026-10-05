@@ -7,6 +7,7 @@ import { adminRouter } from "./routes/admin";
 import { authRouter } from "./routes/auth";
 import { boardPublicRouter, boardRouter } from "./routes/board";
 import { campaignRouter } from "./routes/campaign";
+import { duelRouter } from "./routes/duel";
 import { charactersRouter } from "./routes/characters";
 import { collectionRouter } from "./routes/collection";
 import { commentsRouter } from "./routes/comments";
@@ -74,6 +75,7 @@ export function createApp() {
   app.use("/api/events", requireAuth, eventsRouter);
   app.use("/api/campaign", requireAuth, campaignRouter);
   app.use("/api/board", requireAuth, boardRouter);
+  app.use("/api/duel", requireAuth, duelRouter);
 
   app.use("/api", notFoundHandler);
   app.use(errorHandler);

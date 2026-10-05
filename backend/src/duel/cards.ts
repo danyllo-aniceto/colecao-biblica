@@ -48,6 +48,8 @@ const TARGETS: Record<Target, string> = {
   weakestEnemyHere: "a carta mais fraca do rival aqui",
   strongestEnemyHere: "a carta mais forte do rival aqui",
   weakestAllyHere: "sua carta mais fraca aqui",
+  enemiesAll: "todas as cartas do rival",
+  hand: "as cartas da sua mão",
 };
 
 function describeCond(cond: Cond): string {
@@ -60,6 +62,16 @@ function describeCond(cond: Cond): string {
       return `se você tem ${cond.atLeast}+ outras cartas aqui`;
     case "laneLosing":
       return "se este cenário estiver perdendo";
+    case "laneWinning":
+      return "se este cenário estiver ganhando";
+    case "alone":
+      return "se esta for sua única carta aqui";
+    case "handAtMost":
+      return `se você tem ${cond.count} ou menos cartas na mão`;
+    case "enemyHereTag":
+      return `se o rival tem aqui uma carta ${cond.tag}`;
+    case "allyHereTag":
+      return `se você tem aqui outra carta ${cond.tag}`;
     case "turnAtLeast":
       return `a partir do turno ${cond.turn}`;
   }
@@ -67,6 +79,8 @@ function describeCond(cond: Cond): string {
 
 function describeCount(count: Count): string {
   const what = count.tag ? `carta ${count.tag}` : count.cost !== undefined ? `carta de Vigor ${count.cost}` : "carta";
+  if (count.of === "enemiesHere") return `${what} do rival aqui`;
+  if (count.of === "cardsHere") return `${what} aqui`;
   return `${what} sua${count.of === "alliesHere" ? " aqui" : " em jogo"}`;
 }
 
@@ -80,18 +94,36 @@ function describeEffect(effect: Effect): string {
       return `compre ${effect.count} carta${effect.count > 1 ? "s" : ""}`;
     case "destroy":
       return `${effect.target === "allHere" ? "destrói todas as cartas daqui" : `destrói ${TARGETS[effect.target]}`}${effect.when ? `, ${describeCond(effect.when)}` : ""}`;
+    case "bounce":
+      return `devolve ${TARGETS[effect.target]} à mão do dono`;
+    case "discard":
+      return `o rival descarta ${effect.count} carta${effect.count > 1 ? "s" : ""} de maior Vigor`;
+    case "energy":
+      return `+${effect.amount} de Vigor no próximo turno`;
+    case "cheaper":
+      return `as cartas da sua mão custam ${effect.amount} a menos de Vigor`;
+    case "convert":
+      return "a carta mais fraca do rival aqui passa para o seu lado";
+    case "sacrifice":
+      return `destrói sua carta mais fraca aqui e ganha +${effect.gain} de Influência`;
+    case "multiply":
+      return `multiplica por ${effect.factor} a própria Influência`;
+    case "relocate":
+      return "vai para o seu cenário mais fraco";
+    case "revive":
+      return `${effect.count} carta${effect.count > 1 ? "s" : ""} destruída${effect.count > 1 ? "s" : ""} volta${effect.count > 1 ? "m" : ""} à sua mão`;
     case "moveEnemies":
       return "move as cartas do rival daqui para os outros cenários";
     case "silence":
       return "cancela os Dons contínuos das cartas do rival aqui";
     case "create":
-      return effect.where === "eachLane" ? `cria ${effect.token} em cada cenário com espaço` : `cria ${effect.token} aqui`;
+      return effect.where === "eachLane" ? `cria ${effect.token} em cada cenário com espaço` : effect.where === "neighbors" ? `cria ${effect.token} nos cenários vizinhos` : `cria ${effect.token} aqui`;
     case "vanish":
       return `some e volta à mão ${effect.turns} turnos depois com ${signed(effect.bonus)}`;
     case "protect":
       return "suas cartas aqui não podem ser destruídas nem reduzidas pelo rival";
     case "aura":
-      return `${signed(effect.amount)} de Influência para ${effect.to === "alliesHere" ? "suas cartas aqui" : "suas cartas nos cenários vizinhos"}${effect.tag ? ` com a etiqueta ${effect.tag}` : ""}`;
+      return `${signed(effect.amount)} de Influência para ${effect.to === "alliesHere" ? "suas cartas aqui" : effect.to === "allies" ? "suas outras cartas em jogo" : "suas cartas nos cenários vizinhos"}${effect.tag ? ` com a etiqueta ${effect.tag}` : ""}`;
   }
 }
 

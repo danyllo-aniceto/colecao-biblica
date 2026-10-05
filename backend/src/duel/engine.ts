@@ -42,6 +42,10 @@ import {
 
 export const TOKENS: Record<string, CardDef> = {
   Descendente: { id: "token:descendente", name: "Descendente", cost: 0, power: 1, tags: ["Descendente"], token: true },
+  Ovelha: { id: "token:ovelha", name: "Ovelha", cost: 0, power: 1, tags: ["Pastor"], token: true },
+  Pão: { id: "token:pao", name: "Pão", cost: 0, power: 2, tags: ["Alimento"], token: true },
+  Peixe: { id: "token:peixe", name: "Peixe", cost: 0, power: 1, tags: ["Alimento"], token: true },
+  Soldado: { id: "token:soldado", name: "Soldado", cost: 0, power: 2, tags: ["Guerreiro"], token: true },
 };
 
 // ---------------------------------------------------------------------------
@@ -80,7 +84,7 @@ export function newDuel(input: NewDuelInput): DuelState {
     const cards: Card[] = team.map((entry) => ({ uid: uid++, def: levelDef(entry.def, entry.level), bonus: 0 }));
     const mixed = shuffled(cards, seed);
     seed = mixed.seed;
-    return { deck: mixed.items.slice(START_HAND), hand: mixed.items.slice(0, START_HAND), graveyard: [], returning: [], staged: [], ready: false, doubledTurn: 0 };
+    return { deck: mixed.items.slice(START_HAND), hand: mixed.items.slice(0, START_HAND), graveyard: [], returning: [], staged: [], ready: false, doubledTurn: 0, energyBonus: 0, nextEnergyBonus: 0 };
   };
   const players: [PlayerState, PlayerState] = [build(input.teams[0]), build(input.teams[1])];
 
@@ -104,8 +108,9 @@ export function newDuel(input: NewDuelInput): DuelState {
 // Consultas
 // ---------------------------------------------------------------------------
 
-export function energyOf(state: DuelState) {
-  return state.turn;
+/** Vigor do jogador no turno: o número do turno mais o que um Dom deu a mais. */
+export function energyFor(state: DuelState, side: Side) {
+  return state.turn + state.players[side].energyBonus;
 }
 
 export function isLaneOpen(state: DuelState, lane: number) {
@@ -135,14 +140,17 @@ function findCard(state: DuelState, uid: number): Found | null {
 }
 
 function countMatching(state: DuelState, source: Found, count: Count) {
-  const lanes = count.of === "alliesHere" ? [source.lane] : state.lanes.map((_, index) => index);
+  const lanes = count.of === "alliesHere" || count.of === "enemiesHere" || count.of === "cardsHere" ? [source.lane] : state.lanes.map((_, index) => index);
+  const sides: Side[] = count.of === "enemiesHere" ? [other(source.side)] : count.of === "cardsHere" ? [0, 1] : [source.side];
   let total = 0;
   for (const laneIndex of lanes) {
-    for (const card of state.lanes[laneIndex].cards[source.side]) {
-      if (card.uid === source.card.uid) continue;
-      if (count.tag && !card.def.tags.includes(count.tag)) continue;
-      if (count.cost !== undefined && card.def.cost !== count.cost) continue;
-      total += 1;
+    for (const side of sides) {
+      for (const card of state.lanes[laneIndex].cards[side]) {
+        if (card.uid === source.card.uid) continue;
+        if (count.tag && !card.def.tags.includes(count.tag)) continue;
+        if (count.cost !== undefined && card.def.cost !== count.cost) continue;
+        total += 1;
+      }
     }
   }
   return total;
@@ -167,6 +175,7 @@ export function cardPower(state: DuelState, laneIndex: number, side: Side, card:
         if (effect.tag && !card.def.tags.includes(effect.tag)) continue;
         if (effect.to === "alliesHere" && index === laneIndex) power += effect.amount;
         if (effect.to === "adjacent" && Math.abs(index - laneIndex) === 1) power += effect.amount;
+        if (effect.to === "allies") power += effect.amount;
       }
     }
   });
@@ -227,6 +236,16 @@ function checkCond(state: DuelState, ctx: Ctx, cond: Cond | undefined): boolean 
       return state.lanes[ctx.lane].cards[ctx.side].filter((card) => card.uid !== ctx.card.uid).length >= cond.atLeast;
     case "laneLosing":
       return lanePower(state, ctx.lane, ctx.side) < lanePower(state, ctx.lane, other(ctx.side));
+    case "laneWinning":
+      return lanePower(state, ctx.lane, ctx.side) > lanePower(state, ctx.lane, other(ctx.side));
+    case "alone":
+      return state.lanes[ctx.lane].cards[ctx.side].every((card) => card.uid === ctx.card.uid);
+    case "handAtMost":
+      return state.players[ctx.side].hand.length <= cond.count;
+    case "enemyHereTag":
+      return state.lanes[ctx.lane].cards[other(ctx.side)].some((card) => card.def.tags.includes(cond.tag));
+    case "allyHereTag":
+      return state.lanes[ctx.lane].cards[ctx.side].some((card) => card.uid !== ctx.card.uid && card.def.tags.includes(cond.tag));
     case "turnAtLeast":
       return state.turn >= cond.turn;
   }
@@ -250,6 +269,10 @@ function targetsOf(state: DuelState, ctx: Ctx, target: Target): Found[] {
       return byPower(here(other(ctx.side))).slice(-1);
     case "weakestAllyHere":
       return byPower(here(ctx.side).filter((entry) => entry.card.uid !== ctx.card.uid)).slice(0, 1);
+    case "enemiesAll":
+      return allCards(state).filter((entry) => entry.side === other(ctx.side));
+    case "hand":
+      return [];
   }
 }
 
@@ -311,6 +334,13 @@ function applyEffect(state: DuelState, ctx: Ctx, effect: Effect, isDestroyedHook
   switch (effect.kind) {
     case "power": {
       if (!checkCond(state, ctx, effect.when)) return;
+      if (effect.to === "hand") {
+        const hand = state.players[ctx.side].hand;
+        if (hand.length === 0) return;
+        for (const card of hand) card.bonus += effect.amount;
+        emit(state, { type: "power", side: ctx.side, lane: ctx.lane, uid: ctx.card.uid, name: self, amount: effect.amount, text: `${self}: ${effect.amount >= 0 ? "+" : ""}${effect.amount} de Influência nas cartas da mão.` });
+        return;
+      }
       const targets = targetsOf(state, ctx, effect.to).filter((entry) => !(effect.amount < 0 && entry.side !== ctx.side && isProtected(state, entry)));
       if (targets.length === 0) return;
       for (const entry of targets) entry.card.bonus += effect.amount;
@@ -356,7 +386,12 @@ function applyEffect(state: DuelState, ctx: Ctx, effect: Effect, isDestroyedHook
     case "create": {
       const token = TOKENS[effect.token];
       if (!token) return;
-      const lanes = effect.where === "here" ? [ctx.lane] : state.lanes.map((_, index) => index).filter((index) => isLaneOpen(state, index));
+      const lanes =
+        effect.where === "here"
+          ? [ctx.lane]
+          : effect.where === "neighbors"
+            ? [ctx.lane - 1, ctx.lane + 1].filter((index) => isLaneOpen(state, index))
+            : state.lanes.map((_, index) => index).filter((index) => isLaneOpen(state, index));
       for (const index of lanes) {
         if (state.lanes[index].cards[ctx.side].length >= slotsOf(laneScenario(state, index))) continue;
         state.lanes[index].cards[ctx.side].push({ uid: state.nextUid++, def: token, bonus: 0, silenced: false, order: state.nextOrder++, turn: state.turn });
@@ -371,6 +406,103 @@ function applyEffect(state: DuelState, ctx: Ctx, effect: Effect, isDestroyedHook
       list.splice(index, 1);
       state.players[ctx.side].returning.push({ card: { uid: ctx.card.uid, def: ctx.card.def, bonus: ctx.card.bonus + effect.bonus }, atTurn: state.turn + effect.turns });
       emit(state, { type: "vanish", side: ctx.side, lane: ctx.lane, uid: ctx.card.uid, name: self, text: `${self} sumiu e volta em ${effect.turns} turnos.` });
+      return;
+    }
+    case "bounce": {
+      const target = targetsOf(state, ctx, effect.target).find((entry) => !isProtected(state, entry));
+      if (!target) return;
+      const list = state.lanes[target.lane].cards[target.side];
+      list.splice(list.findIndex((card) => card.uid === target.card.uid), 1);
+      const hand = state.players[target.side].hand;
+      if (target.card.def.token) return;
+      if (hand.length < HAND_MAX) hand.push({ uid: target.card.uid, def: target.card.def, bonus: 0 });
+      else state.players[target.side].graveyard.push({ uid: target.card.uid, def: target.card.def, bonus: 0 });
+      emit(state, { type: "bounce", side: target.side, lane: target.lane, name: target.card.def.name, text: `${target.card.def.name} voltou para a mão do dono por ${self}.` });
+      return;
+    }
+    case "discard": {
+      const foe = state.players[other(ctx.side)];
+      let dropped = 0;
+      for (let step = 0; step < effect.count; step += 1) {
+        const target = [...foe.hand].sort((a, b) => b.def.cost - a.def.cost || b.def.power - a.def.power || a.uid - b.uid)[0];
+        if (!target) break;
+        foe.hand.splice(foe.hand.findIndex((card) => card.uid === target.uid), 1);
+        foe.graveyard.push(target);
+        dropped += 1;
+      }
+      if (dropped > 0) emit(state, { type: "discard", side: other(ctx.side), name: self, amount: dropped, text: `${self}: o rival descartou ${dropped} carta${dropped > 1 ? "s" : ""}.` });
+      return;
+    }
+    case "energy": {
+      state.players[ctx.side].nextEnergyBonus += effect.amount;
+      emit(state, { type: "energy", side: ctx.side, name: self, amount: effect.amount, text: `${self}: +${effect.amount} de Vigor no próximo turno.` });
+      return;
+    }
+    case "cheaper": {
+      const hand = state.players[ctx.side].hand;
+      if (hand.length === 0) return;
+      for (const card of hand) card.def = { ...card.def, cost: Math.max(0, card.def.cost - effect.amount) };
+      emit(state, { type: "energy", side: ctx.side, name: self, amount: effect.amount, text: `${self}: as cartas da mão custam ${effect.amount} a menos de Vigor.` });
+      return;
+    }
+    case "convert": {
+      const target = targetsOf(state, ctx, "weakestEnemyHere").find((entry) => !isProtected(state, entry));
+      if (!target || state.lanes[ctx.lane].cards[ctx.side].length >= slotsOf(laneScenario(state, ctx.lane))) return;
+      const foe = state.lanes[ctx.lane].cards[target.side];
+      foe.splice(foe.findIndex((card) => card.uid === target.card.uid), 1);
+      target.card.order = state.nextOrder++;
+      target.card.silenced = false;
+      state.lanes[ctx.lane].cards[ctx.side].push(target.card);
+      emit(state, { type: "convert", side: ctx.side, lane: ctx.lane, uid: target.card.uid, name: target.card.def.name, text: `${self} trouxe ${target.card.def.name} para o seu lado.` });
+      return;
+    }
+    case "sacrifice": {
+      const target = targetsOf(state, ctx, "weakestAllyHere")[0];
+      if (!target) return;
+      destroyCard(state, target, "");
+      ctx.card.bonus += effect.gain;
+      emit(state, { type: "power", side: ctx.side, lane: ctx.lane, uid: ctx.card.uid, name: self, amount: effect.gain, text: `${self}: ofereceu ${target.card.def.name} e ganhou +${effect.gain} de Influência.` });
+      return;
+    }
+    case "multiply": {
+      const now = cardPower(state, ctx.lane, ctx.side, ctx.card);
+      const extra = Math.round(now * (effect.factor - 1));
+      if (extra === 0) return;
+      ctx.card.bonus += extra;
+      emit(state, { type: "power", side: ctx.side, lane: ctx.lane, uid: ctx.card.uid, name: self, amount: extra, text: `${self}: ${effect.factor}× de Influência (${extra >= 0 ? "+" : ""}${extra}).` });
+      return;
+    }
+    case "relocate": {
+      if (laneScenario(state, ctx.lane).rule.kind === "noMove") return;
+      let best = -1;
+      let bestPower = Infinity;
+      for (let index = 0; index < LANES; index += 1) {
+        if (index === ctx.lane || !isLaneOpen(state, index) || state.lanes[index].cards[ctx.side].length >= slotsOf(laneScenario(state, index))) continue;
+        const power = lanePower(state, index, ctx.side);
+        if (power < bestPower) {
+          best = index;
+          bestPower = power;
+        }
+      }
+      if (best < 0) return;
+      const from = state.lanes[ctx.lane].cards[ctx.side];
+      const [card] = from.splice(from.findIndex((entry) => entry.uid === ctx.card.uid), 1);
+      if (!card) return;
+      state.lanes[best].cards[ctx.side].push(card);
+      emit(state, { type: "move", side: ctx.side, lane: best, uid: card.uid, name: card.def.name, text: `${card.def.name} foi reforçar ${laneScenario(state, best).name}.` });
+      return;
+    }
+    case "revive": {
+      const player = state.players[ctx.side];
+      let back = 0;
+      for (let step = 0; step < effect.count; step += 1) {
+        const index = [...player.graveyard].reverse().findIndex((card) => !card.def.token);
+        if (index < 0 || player.hand.length >= HAND_MAX) break;
+        const [card] = player.graveyard.splice(player.graveyard.length - 1 - index, 1);
+        player.hand.push({ uid: card.uid, def: card.def, bonus: 0 });
+        back += 1;
+      }
+      if (back > 0) emit(state, { type: "return", side: ctx.side, name: self, amount: back, text: `${self}: ${back} carta${back > 1 ? "s" : ""} voltou à mão.` });
       return;
     }
     case "protect":
@@ -409,7 +541,7 @@ export function whyNotStage(state: DuelState, side: Side, uid: number, lane: num
   const slots = slotsOf(laneScenario(state, lane));
   const used = state.lanes[lane].cards[side].length + player.staged.filter((play) => play.lane === lane).length;
   if (used >= slots) return "Esse cenário está cheio.";
-  if (stagedCost(state, side) + card.def.cost > energyOf(state)) return "Vigor insuficiente.";
+  if (stagedCost(state, side) + card.def.cost > energyFor(state, side)) return "Vigor insuficiente.";
   return null;
 }
 
@@ -459,7 +591,7 @@ function revealPlay(state: DuelState, side: Side, play: Staged, spent: { value: 
   const handIndex = player.hand.findIndex((card) => card.uid === play.uid);
   if (handIndex < 0) return;
   const card = player.hand[handIndex];
-  if (spent.value + card.def.cost > energyOf(state)) return;
+  if (spent.value + card.def.cost > energyFor(state, side)) return;
   if (!isLaneOpen(state, play.lane)) return;
 
   let target = play.lane;
@@ -568,6 +700,8 @@ function nextTurn(state: DuelState) {
     drawCards(state, side, 1);
     player.staged = [];
     player.ready = false;
+    player.energyBonus = player.nextEnergyBonus;
+    player.nextEnergyBonus = 0;
   }
   if (state.turn <= LANES) {
     const scenario = laneScenario(state, state.turn - 1);
@@ -681,7 +815,7 @@ export function viewFor(state: DuelState, side: Side): DuelView {
   return {
     you: side,
     turn: state.turn,
-    energy: energyOf(state),
+    energy: energyFor(state, side),
     status: state.status,
     stakes: state.stakes,
     priority: state.priority,
@@ -690,7 +824,7 @@ export function viewFor(state: DuelState, side: Side): DuelView {
     deckCount: me.deck.length,
     staged: clone(me.staged),
     ready: me.ready,
-    energyLeft: energyOf(state) - stagedCost(state, side),
+    energyLeft: energyFor(state, side) - stagedCost(state, side),
     canDouble: whyNotDouble(state, side) === null,
     canRetreat: whyNotRetreat(state, side) === null,
     opponent: { handCount: state.players[foe].hand.length, deckCount: state.players[foe].deck.length, ready: state.players[foe].ready, doubled: state.players[foe].doubledTurn > 0 },
@@ -715,7 +849,7 @@ export function stateFromView(view: DuelView, seed: number): DuelState {
     cards: [lane.cards[0].map(({ power: _power, ...card }) => card), lane.cards[1].map(({ power: _power, ...card }) => card)],
     played: [lane.cards[0].length, lane.cards[1].length],
   }));
-  const empty = (): PlayerState => ({ deck: [], hand: [], graveyard: [], returning: [], staged: [], ready: false, doubledTurn: 0 });
+  const empty = (): PlayerState => ({ deck: [], hand: [], graveyard: [], returning: [], staged: [], ready: false, doubledTurn: 0, energyBonus: 0, nextEnergyBonus: 0 });
   const players: [PlayerState, PlayerState] = [empty(), empty()];
   players[side] = { ...empty(), hand: clone(view.hand), deck: [] };
   const maxOrder = lanes.flatMap((lane) => [...lane.cards[0], ...lane.cards[1]]).reduce((max, card) => Math.max(max, card.order), 0);

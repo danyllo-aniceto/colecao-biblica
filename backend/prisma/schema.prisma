@@ -238,6 +238,7 @@ model BiblicalCharacter {
   stickerReward     RewardDefinition[]
   collections       CharacterCollection[] @relation("CollectionCharacters")
   campaignScenarios Scenario[]            @relation("ScenarioFragmentCharacter")
+  duelCard          DuelCard?
 
   @@map("biblical_characters")
 }
@@ -900,4 +901,29 @@ model BoardInvite {
   @@unique([roomId, toUserId])
   @@index([toUserId, createdAt])
   @@map("board_invites")
+}
+
+
+/// Carta do Modo Duelo de um personagem (Vigor, Influência, etiquetas e o Dom em texto, ver backend/src/duel/dsl.ts).
+model DuelCard {
+  id          Int      @id @default(autoincrement())
+  characterId Int      @unique @map("character_id")
+  cost        Int
+  power       Int
+  tags        String[]
+  /// Gatilho e efeitos do Dom em texto (vazios = carta sem Dom).
+  trigger     String?
+  effects     String?
+  /// Texto do Dom escrito à mão (substitui o gerado).
+  domText     String?  @map("dom_text")
+  /// Só cartas disponíveis entram nos Times e nos duelos.
+  available   Boolean  @default(true)
+  /// Nomes dos Times prontos de que a carta faz parte.
+  teams       String[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  character BiblicalCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@map("duel_cards")
 }

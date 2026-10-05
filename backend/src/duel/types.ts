@@ -31,32 +31,66 @@ export type Trigger =
   /** Quando outra carta sua é revelada no mesmo cenário. */
   | "allyPlayed";
 
-export type Target = "self" | "alliesHere" | "enemiesHere" | "otherAllies" | "weakestEnemyHere" | "strongestEnemyHere" | "weakestAllyHere";
+export type Target =
+  | "self"
+  | "alliesHere"
+  | "enemiesHere"
+  | "otherAllies"
+  | "weakestEnemyHere"
+  | "strongestEnemyHere"
+  | "weakestAllyHere"
+  /** Todas as cartas do rival em jogo, em qualquer cenário. */
+  | "enemiesAll"
+  /** As cartas da sua mão (só vale para somar Influência). */
+  | "hand";
 
 export type Cond =
   | { type: "enemyHerePower"; atLeast: number }
   | { type: "enemyHereNamed"; name: string }
   | { type: "alliesHere"; atLeast: number }
   | { type: "laneLosing" }
+  | { type: "laneWinning" }
+  | { type: "alone" }
+  | { type: "handAtMost"; count: number }
+  | { type: "enemyHereTag"; tag: string }
+  | { type: "allyHereTag"; tag: string }
   | { type: "turnAtLeast"; turn: number };
 
 /** O que contar nas cartas "por cada...": cartas suas aqui ou em jogo, com etiqueta ou Vigor específico. */
-export type Count = { of: "alliesHere" | "alliesAll"; tag?: string; cost?: number };
+export type Count = { of: "alliesHere" | "alliesAll" | "enemiesHere" | "cardsHere"; tag?: string; cost?: number };
 
 export type Effect =
   | { kind: "power"; amount: number; to: Target; when?: Cond }
   | { kind: "powerPer"; amount: number; per: Count }
   | { kind: "draw"; count: number }
-  | { kind: "destroy"; target: "weakestEnemyHere" | "strongestEnemyHere" | "allHere"; when?: Cond }
+  | { kind: "destroy"; target: "weakestEnemyHere" | "strongestEnemyHere" | "weakestAllyHere" | "allHere"; when?: Cond }
   | { kind: "moveEnemies" }
   | { kind: "silence"; target: "enemiesHere" }
-  | { kind: "create"; token: string; where: "eachLane" | "here" }
+  | { kind: "create"; token: string; where: "eachLane" | "here" | "neighbors" }
+  /** A carta do rival volta à mão dele (sem os bônus). */
+  | { kind: "bounce"; target: "weakestEnemyHere" | "strongestEnemyHere" }
+  /** O rival descarta as cartas de maior Vigor da mão dele. */
+  | { kind: "discard"; count: number }
+  /** Mais Vigor no próximo turno. */
+  | { kind: "energy"; amount: number }
+  /** As cartas da sua mão custam `amount` a menos de Vigor (mínimo 0). */
+  | { kind: "cheaper"; amount: number }
+  /** A carta mais fraca do rival aqui passa para o seu lado, se houver espaço. */
+  | { kind: "convert" }
+  /** Destrói a sua carta mais fraca aqui e esta carta ganha `gain`. */
+  | { kind: "sacrifice"; gain: number }
+  /** Multiplica a Influência atual desta carta. */
+  | { kind: "multiply"; factor: number }
+  /** Esta carta vai para o seu cenário mais fraco com espaço. */
+  | { kind: "relocate" }
+  /** Uma carta destruída sua volta à mão. */
+  | { kind: "revive"; count: number }
   /** A carta some e volta à mão `turns` turnos depois, com `bonus` de Influência. */
   | { kind: "vanish"; turns: number; bonus: number }
   /** Contínuo: as cartas suas neste cenário não podem ser destruídas nem reduzidas por cartas do rival. */
   | { kind: "protect" }
   /** Contínuo: +amount nas cartas suas neste cenário ou nos cenários vizinhos (de uma etiqueta, se informada). */
-  | { kind: "aura"; amount: number; to: "alliesHere" | "adjacent"; tag?: string };
+  | { kind: "aura"; amount: number; to: "alliesHere" | "adjacent" | "allies"; tag?: string };
 
 export type Dom = { trigger: Trigger; effects: Effect[]; /** Texto manual (o do painel); sem ele, o motor descreve. */ text?: string };
 
@@ -148,10 +182,13 @@ export type PlayerState = {
   ready: boolean;
   /** Turno em que dobrou a aposta (0 = ainda não dobrou). */
   doubledTurn: number;
+  /** Vigor a mais neste turno (de um Dom do turno anterior) e no próximo. */
+  energyBonus: number;
+  nextEnergyBonus: number;
 };
 
 export type DuelEvent = {
-  type: "play" | "reveal" | "power" | "destroy" | "move" | "create" | "draw" | "vanish" | "return" | "silence" | "scenario" | "turn" | "double" | "retreat" | "win";
+  type: "play" | "reveal" | "power" | "destroy" | "move" | "create" | "draw" | "vanish" | "return" | "silence" | "scenario" | "turn" | "double" | "retreat" | "win" | "bounce" | "discard" | "convert" | "energy";
   side?: Side;
   lane?: number;
   uid?: number;
