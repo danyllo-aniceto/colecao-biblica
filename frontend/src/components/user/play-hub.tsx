@@ -9,7 +9,7 @@ import { useGameModeImages, type GameMode } from '@/lib/game-modes';
 
 export type PlayMode = 'quiz' | 'board' | 'duel';
 
-const MODES: Array<{ id: PlayMode; design: GameMode; title: string; text: string; tags: string[]; icon: ReactNode; fallback: string }> = [
+export const PLAY_MODES: Array<{ id: PlayMode; design: GameMode; title: string; text: string; tags: string[]; icon: ReactNode; fallback: string }> = [
   {
     id: 'quiz',
     design: 'QUIZ',
@@ -46,7 +46,7 @@ export function PlayHub({ onOpen, quizRunning }: { onOpen: (mode: PlayMode) => v
     <section className="space-y-4" aria-label="Jogos">
       <SectionHeading title="Jogar" subtitle="Escolha um jogo. Cada um tem a sua tela." />
       <ul className="grid gap-4 lg:grid-cols-3">
-        {MODES.map((mode) => {
+        {PLAY_MODES.map((mode) => {
           const image = images[mode.design];
           return (
             <li key={mode.id}>

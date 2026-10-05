@@ -15,7 +15,7 @@ function publish(next: GameModeImages) {
 }
 
 function load() {
-  loading ??= apiRequest<GameModeDesign[]>('/game-modes', { method: 'GET' }, 'Não foi possível carregar as capas dos jogos.')
+  loading ??= apiRequest<GameModeDesign[]>('/game-modes-public', { method: 'GET' }, 'Não foi possível carregar as capas dos jogos.')
     .then((list) => publish(Object.fromEntries(list.map((design) => [design.mode, design.imageUrl]))))
     .catch(() => publish({}))
     .finally(() => {

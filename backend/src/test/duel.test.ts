@@ -119,6 +119,8 @@ describe.skipIf(!hasDatabase)("duelo: figurinhas e planilha", () => {
     const saved = await api.put("/api/game-modes/admin/duel").set(bearer(admin)).send({ imageUrl: "https://exemplo.com/a.png" });
     expect(saved.body).toEqual({ mode: "DUEL", imageUrl: "https://exemplo.com/a.png" });
     expect((await api.get("/api/game-modes").set(bearer(user))).body).toEqual([{ mode: "DUEL", imageUrl: "https://exemplo.com/a.png" }]);
+    // A página inicial lê as capas sem login.
+    expect((await api.get("/api/game-modes-public")).body).toEqual([{ mode: "DUEL", imageUrl: "https://exemplo.com/a.png" }]);
     // Remover a imagem volta ao fundo padrão.
     await api.put("/api/game-modes/admin/duel").set(bearer(admin)).send({ imageUrl: "" });
     expect((await api.get("/api/game-modes").set(bearer(user))).body).toEqual([{ mode: "DUEL", imageUrl: null }]);
