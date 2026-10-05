@@ -30,6 +30,8 @@ const startSchema = z.object({
   quizType: z.enum(["GENERAL", "CHARACTER_STUDY", "DAILY_CHALLENGE"]),
   characterId: z.number().int().positive().nullish(),
   questionLimit: z.number().int().min(1).max(100).nullish(),
+  /** Quiz geral em treino (número de perguntas escolhido, sem baú). Sem isso, é a maratona até as vidas acabarem. */
+  training: z.boolean().nullish(),
 });
 
 // selectedOption nulo indica que o tempo acabou sem resposta.

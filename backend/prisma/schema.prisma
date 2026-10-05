@@ -46,6 +46,10 @@ enum RewardType {
   DOUBLE_COINS
   COMBO_SHIELD
   COSMETIC
+  /// Baús vendidos na loja (o de diamante nunca é vendido).
+  CHEST_BRONZE
+  CHEST_SILVER
+  CHEST_GOLD
 }
 
 /// Item visual do jogador.
@@ -55,6 +59,10 @@ enum CosmeticType {
   TITLE
   NAME_COLOR
   REACTION
+  PROFILE_BG
+  ALBUM_COVER
+  /// Peão do tabuleiro (emoji ou imagem); não se equipa, escolhe-se em cada partida.
+  PAWN
 }
 
 /// Como o item é obtido: grátis para todos, comprado, por meta ou só como prêmio (admin, baú, coleção, passe).
@@ -108,6 +116,13 @@ enum QuizSessionStatus {
   ABANDONED
 }
 
+/// Sala do Modo Tabuleiro online: LOBBY (reunindo), PLAYING (em jogo) ou FINISHED (pódio na tela).
+enum BoardRoomStatus {
+  LOBBY
+  PLAYING
+  FINISHED
+}
+
 model User {
   id                 Int       @id @default(autoincrement())
   name               String
@@ -143,6 +158,8 @@ model User {
   frameId            Int?      @map("frame_id")
   titleId            Int?      @map("title_id")
   nameColorId        Int?      @map("name_color_id")
+  profileBgId        Int?      @map("profile_bg_id")
+  albumCoverId       Int?      @map("album_cover_id")
   /// Figurinhas escolhidas para a vitrine do perfil (até 3).
   showcase           Int[]     @default([])
   createdAt          DateTime  @default(now()) @map("created_at")
@@ -154,6 +171,7 @@ model User {
   deletedBy          String?   @map("deleted_by")
 
   stickers     UserSticker[]
+  studies      CharacterStudy[]
   comments     UserComment[]
   quizMatches  QuizMatch[]
   quizSessions QuizSession[]
@@ -162,17 +180,25 @@ model User {
   reports      QuestionReport[]
   cosmetics    UserCosmetic[]
 
-  avatar    Cosmetic? @relation("UserAvatar", fields: [avatarId], references: [id], onDelete: SetNull)
-  frame     Cosmetic? @relation("UserFrame", fields: [frameId], references: [id], onDelete: SetNull)
-  title     Cosmetic? @relation("UserTitle", fields: [titleId], references: [id], onDelete: SetNull)
-  nameColor Cosmetic? @relation("UserNameColor", fields: [nameColorId], references: [id], onDelete: SetNull)
+  avatar     Cosmetic? @relation("UserAvatar", fields: [avatarId], references: [id], onDelete: SetNull)
+  frame      Cosmetic? @relation("UserFrame", fields: [frameId], references: [id], onDelete: SetNull)
+  title      Cosmetic? @relation("UserTitle", fields: [titleId], references: [id], onDelete: SetNull)
+  nameColor  Cosmetic? @relation("UserNameColor", fields: [nameColorId], references: [id], onDelete: SetNull)
+  profileBg  Cosmetic? @relation("UserProfileBg", fields: [profileBgId], references: [id], onDelete: SetNull)
+  albumCover Cosmetic? @relation("UserAlbumCover", fields: [albumCoverId], references: [id], onDelete: SetNull)
 
-  friendRequestsSent     Friendship[] @relation("FriendshipRequester")
-  friendRequestsReceived Friendship[] @relation("FriendshipAddressee")
-  messagesSent           Message[]    @relation("MessageSender")
-  messagesReceived       Message[]    @relation("MessageReceiver")
-  tradesProposed         Trade[]      @relation("TradeProposer")
-  tradesReceived         Trade[]      @relation("TradeReceiver")
+  friendRequestsSent     Friendship[]      @relation("FriendshipRequester")
+  friendRequestsReceived Friendship[]      @relation("FriendshipAddressee")
+  messagesSent           Message[]         @relation("MessageSender")
+  messagesReceived       Message[]         @relation("MessageReceiver")
+  tradesProposed         Trade[]           @relation("TradeProposer")
+  tradesReceived         Trade[]           @relation("TradeReceiver")
+  /// Vitórias em salas online do Tabuleiro (só conta com 2 ou mais pessoas na sala).
+  boardWins              Int               @default(0) @map("board_wins")
+  hostedBoardRooms       BoardRoom[]       @relation("BoardRoomHost")
+  boardPlayers           BoardRoomPlayer[]
+  sentBoardInvites       BoardInvite[]     @relation("BoardInviteFrom")
+  receivedBoardInvites   BoardInvite[]     @relation("BoardInviteTo")
 
   @@index([totalScore, xp])
   @@map("users")
@@ -204,6 +230,7 @@ model BiblicalCharacter {
 
   questions         Question[]
   stickers          UserSticker[]
+  studies           CharacterStudy[]
   tradesOffered     Trade[]               @relation("TradeOffered")
   tradesRequested   Trade[]               @relation("TradeRequested")
   comments          UserComment[]
@@ -266,11 +293,13 @@ model RewardDefinition {
   active             Boolean        @default(true)
   system             Boolean        @default(false)
 
-  stickerCharacter BiblicalCharacter? @relation(fields: [stickerCharacterId], references: [id], onDelete: SetNull)
-  cosmetic         Cosmetic?          @relation(fields: [cosmeticId], references: [id], onDelete: SetNull)
-  shopItems        ShopItem[]
-  passTiers        PassTier[]
-  scenarioNodes    ScenarioNode[]
+  stickerCharacter   BiblicalCharacter? @relation(fields: [stickerCharacterId], references: [id], onDelete: SetNull)
+  cosmetic           Cosmetic?          @relation(fields: [cosmeticId], references: [id], onDelete: SetNull)
+  shopItems          ShopItem[]
+  passTiers          PassTier[]
+  passTierDuplicates PassTier[]         @relation("PassTierDuplicate")
+  scenarioNodes      ScenarioNode[]
+  missions           Mission[]
 
   @@map("reward_definitions")
 }
@@ -295,14 +324,32 @@ model UserSticker {
   userId      Int      @map("user_id")
   characterId Int      @map("character_id")
   acquiredAt  DateTime @default(now()) @map("acquired_at")
-  /// Cópias repetidas guardadas para vender ou fundir.
+  /// Cópias repetidas guardadas para vender, trocar, fundir ou subir o nível.
   duplicates  Int      @default(0)
+  /// Nível da figurinha (1 a 5), sobe gastando repetidas dela. Hoje só enfeita; vai valer no modo de cartas.
+  level       Int      @default(1)
 
   user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   character BiblicalCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@unique([userId, characterId])
   @@map("user_stickers")
+}
+
+/// Estudo de personagem: só acumula acertos por personagem (vira um status, sem prêmios).
+model CharacterStudy {
+  id                Int      @id @default(autoincrement())
+  userId            Int      @map("user_id")
+  characterId       Int      @map("character_id")
+  correctAnswers    Int      @default(0) @map("correct_answers")
+  questionsAnswered Int      @default(0) @map("questions_answered")
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  character BiblicalCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, characterId])
+  @@map("character_studies")
 }
 
 model UserComment {
@@ -334,6 +381,8 @@ model QuizMatch {
   coinsGained       Int       @default(0) @map("coins_gained")
   rewardGranted     Boolean   @default(false) @map("reward_granted")
   rewardGrantedName String?   @map("reward_granted_name")
+  /// Baú da partida ganho (BRONZE, SILVER, GOLD ou DIAMOND).
+  chestTier         String?   @map("chest_tier")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -362,6 +411,8 @@ model QuizSession {
   fiftyFiftyUsed              Boolean           @default(false) @map("fifty_fifty_used")
   fiftyFiftyQuestionId        Int?              @map("fifty_fifty_question_id")
   fiftyFiftyRemoved           String?           @map("fifty_fifty_removed")
+  /// Treino (número de perguntas escolhido): não rende baú. Sem o treino, a partida vai até as vidas acabarem.
+  training                    Boolean           @default(false)
   questionIds                 Int[]             @map("question_ids")
   currentQuestionStartedAt    DateTime?         @map("current_question_started_at")
   currentQuestionExtraSeconds Int               @default(0) @map("current_question_extra_seconds")
@@ -493,6 +544,9 @@ model Trade {
   offeredCharacterId   Int?        @map("offered_character_id")
   requestedCharacterId Int?        @map("requested_character_id")
   message              String?
+  /// Venda a amigo: preço padrão da raridade (o comprador paga) e o que o vendedor recebe já sem a taxa.
+  priceCoins           Int?        @map("price_coins")
+  sellerCoins          Int?        @map("seller_coins")
   status               TradeStatus @default(PENDING)
   createdAt            DateTime    @default(now()) @map("created_at")
   respondedAt          DateTime?   @map("responded_at")
@@ -521,6 +575,10 @@ model Cosmetic {
   color            String?
   /// Efeito: títulos (plain, glow, rainbow, pulse) e molduras (solid, wood, silver, gold, fire, rainbow).
   style            String?
+  /// Reações: como a figurinha entra no chat (pop, bounce, shake, spin, rise, pulse).
+  animation        String?
+  /// Reações: grupo/pacote (ex.: "Natal"); o seletor do chat agrupa por ele.
+  pack             String?
   unlock           CosmeticUnlock
   priceCoins       Int?           @map("price_coins")
   /// Meta para os de unlock REQUIREMENT (ex.: LEVEL, ALBUM_COMPLETE, BEST_COMBO).
@@ -542,6 +600,8 @@ model Cosmetic {
   frameOf           User[]                @relation("UserFrame")
   titleOf           User[]                @relation("UserTitle")
   nameColorOf       User[]                @relation("UserNameColor")
+  profileBgOf       User[]                @relation("UserProfileBg")
+  albumCoverOf      User[]                @relation("UserAlbumCover")
   messages          Message[]
   rewards           RewardDefinition[]
   collections       CharacterCollection[]
@@ -585,20 +645,68 @@ model CharacterCollection {
   @@map("character_collections")
 }
 
-/// Degrau do passe da temporada (a trilha recomeça todo mês; o progresso é o XP do mês).
+/// Passe temático (Natal, Páscoa...). Um passe vale por mês: o fixado naquele mês ou, senão, o sorteado em rodízio entre os ativos.
+model Pass {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  /// Cor do tema, em #rrggbb.
+  color       String?
+  imageUrl    String?  @map("image_url")
+  /// Fixa o passe num mês ("AAAA-MM"), ex.: Natal em dezembro.
+  pinnedMonth String?  @map("pinned_month")
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  tiers PassTier[]
+
+  @@map("passes")
+}
+
+/// Degrau de um passe (a trilha recomeça todo mês; o progresso é o XP do mês).
 model PassTier {
+  id                          Int     @id @default(autoincrement())
+  passId                      Int     @map("pass_id")
+  level                       Int
+  requiredXp                  Int     @map("required_xp")
+  rewardCoins                 Int     @default(0) @map("reward_coins")
+  rewardDefinitionId          Int?    @map("reward_definition_id")
+  rewardCosmeticId            Int?    @map("reward_cosmetic_id")
+  /// Moedas quando o jogador já tem o item visual do degrau (vazio = valor padrão da raridade).
+  duplicateCoins              Int?    @map("duplicate_coins")
+  /// Recompensa extra quando o item visual já é do jogador (ajuda, pacote...).
+  duplicateRewardDefinitionId Int?    @map("duplicate_reward_definition_id")
+  active                      Boolean @default(true)
+
+  pass                      Pass              @relation(fields: [passId], references: [id], onDelete: Cascade)
+  rewardDefinition          RewardDefinition? @relation(fields: [rewardDefinitionId], references: [id], onDelete: SetNull)
+  rewardCosmetic            Cosmetic?         @relation(fields: [rewardCosmeticId], references: [id], onDelete: SetNull)
+  duplicateRewardDefinition RewardDefinition? @relation("PassTierDuplicate", fields: [duplicateRewardDefinitionId], references: [id], onDelete: SetNull)
+
+  @@unique([passId, level])
+  @@map("pass_tiers")
+}
+
+/// Missão diária ou semanal. `metric` diz o que é contado (partidas, acertos...); o prêmio é moedas e/ou uma recompensa.
+model Mission {
   id                 Int     @id @default(autoincrement())
-  level              Int     @unique
-  requiredXp         Int     @map("required_xp")
+  code               String  @unique
+  /// DAILY ou WEEKLY.
+  period             String
+  metric             String
+  title              String
+  target             Int
   rewardCoins        Int     @default(0) @map("reward_coins")
   rewardDefinitionId Int?    @map("reward_definition_id")
-  rewardCosmeticId   Int?    @map("reward_cosmetic_id")
   active             Boolean @default(true)
+  /// As do seed não são excluíveis (só desativadas); as criadas no painel têm system = false.
+  system             Boolean @default(false)
+  sortOrder          Int     @default(0) @map("sort_order")
 
   rewardDefinition RewardDefinition? @relation(fields: [rewardDefinitionId], references: [id], onDelete: SetNull)
-  rewardCosmetic   Cosmetic?         @relation(fields: [rewardCosmeticId], references: [id], onDelete: SetNull)
 
-  @@map("pass_tiers")
+  @@map("missions")
 }
 
 /// Evento por tempo limitado (Páscoa, Natal...): multiplica XP/moedas e libera itens na loja.
@@ -639,6 +747,14 @@ model Scenario {
   iconImageUrl        String?  @map("icon_image_url")
   /// Música do tema do cenário (liberada quando o jogador chega ao primeiro nível dele).
   musicUrl            String?  @map("music_url")
+  /// Imagem de fundo da tela do quiz neste cenário (vertical, sem texto).
+  quizBackgroundUrl   String?  @map("quiz_background_url")
+  /// Imagem de fundo do tabuleiro deste cenário (vertical, sem texto), atrás do caminho do jogo de tabuleiro.
+  boardImageUrl       String?  @map("board_image_url")
+  /// Curvas do caminho do tabuleiro: SOFT, MEDIUM ou WIDE (vazio = MEDIUM).
+  boardPathStyle      String?  @map("board_path_style")
+  /// Marcos do cenário ao lado do caminho: [{ imageUrl?, emoji?, at (0-100), side (L/R), offset, size }].
+  boardLandmarks      Json?    @map("board_landmarks")
   /// Personagem cujos fragmentos este cenário dá (a carta especial).
   fragmentCharacterId Int?     @map("fragment_character_id")
   /// Ícone de perfil (avatar) com a arte do cenário, entregue junto com a relíquia.
@@ -653,6 +769,7 @@ model Scenario {
   avatarCosmetic    Cosmetic?          @relation("ScenarioAvatar", fields: [avatarCosmeticId], references: [id], onDelete: SetNull)
   nodes             ScenarioNode[]
   questions         Question[]
+  boardRooms        BoardRoom[]
 
   @@index([sortOrder])
   @@map("scenarios")
@@ -681,4 +798,104 @@ model ScenarioNode {
 
   @@index([scenarioId])
   @@map("scenario_nodes")
+}
+
+/// Visual de cada baú da partida (BRONZE, SILVER, GOLD, DIAMOND), cadastrado no painel.
+model ChestDesign {
+  id           Int      @id @default(autoincrement())
+  tier         String   @unique
+  /// Arte do baú fechado (quadrada, fundo transparente fica melhor).
+  imageUrl     String?  @map("image_url")
+  /// Arte do baú aberto (mesmo enquadramento do fechado): aparece no instante em que ele abre.
+  openImageUrl String?  @map("open_image_url")
+  /// Nome exibido (vazio usa o padrão) e cor de destaque do brilho.
+  name         String?
+  color        String?
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("chest_designs")
+}
+
+/// Sala online do Tabuleiro. Dura pouco: o servidor apaga as de mais de um dia. O motor (state) e as
+/// respostas certas (pool) ficam aqui; o cliente nunca recebe a alternativa certa antes do gabarito.
+model BoardRoom {
+  id         Int             @id @default(autoincrement())
+  /// Código curto para entrar (sem letras que se confundem).
+  code       String          @unique
+  hostId     Int             @map("host_id")
+  scenarioId Int             @map("scenario_id")
+  status     BoardRoomStatus @default(LOBBY)
+  /// Regras da sala (tamanho, tempo, power-ups, empurrão, ajuda).
+  config     Json
+  /// Estado do motor (backend/src/board/engine.ts).
+  state      Json?
+  /// Perguntas da partida com a alternativa certa: [{ id, difficulty, correct }].
+  pool       Json?
+  /// Resposta dada e ainda não aplicada (todos veem o gabarito antes de seguir).
+  reveal     Json?
+  /// Últimas jogadas, em texto.
+  log        Json            @default("[]")
+  /// Avisos animados recentes (calloutsFor): [{ id, emoji, title, text, tone, tiles, playerId, fx, delayMs }].
+  feed       Json            @default("[]")
+  /// Sobe a cada mudança; o cliente só baixa a sala quando muda.
+  version    Int             @default(1)
+  /// Quando o servidor precisa agir sozinho (bot, tempo esgotado, fim do gabarito).
+  dueAt      DateTime?       @map("due_at")
+  /// Fim do tempo do jogador da vez (cronômetro).
+  deadlineAt DateTime?       @map("deadline_at")
+  createdAt  DateTime        @default(now()) @map("created_at")
+  updatedAt  DateTime        @updatedAt @map("updated_at")
+  startedAt  DateTime?       @map("started_at")
+  finishedAt DateTime?       @map("finished_at")
+
+  host     User              @relation("BoardRoomHost", fields: [hostId], references: [id], onDelete: Cascade)
+  scenario Scenario          @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  players  BoardRoomPlayer[]
+  invites  BoardInvite[]
+
+  @@index([status, updatedAt])
+  @@map("board_rooms")
+}
+
+/// Quem está na sala: pessoa (userId) ou bot (bot = nível). Quem sai no meio do jogo vira bot (replaced).
+model BoardRoomPlayer {
+  id         Int      @id @default(autoincrement())
+  roomId     Int      @map("room_id")
+  userId     Int?     @map("user_id")
+  slot       Int
+  name       String
+  /// Emoji ou endereço da imagem do peão.
+  pawn       String
+  /// APPRENTICE, STUDENT ou MASTER quando é bot.
+  bot        String?
+  /// Era uma pessoa e um bot assumiu o lugar (saiu ou ficou ausente).
+  replaced   Boolean  @default(false)
+  afkStrikes Int      @default(0) @map("afk_strikes")
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+  joinedAt   DateTime @default(now()) @map("joined_at")
+
+  room BoardRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, slot])
+  @@unique([roomId, userId])
+  @@index([userId])
+  @@map("board_room_players")
+}
+
+/// Convite de um amigo para uma sala ainda reunindo gente.
+model BoardInvite {
+  id         Int      @id @default(autoincrement())
+  roomId     Int      @map("room_id")
+  fromUserId Int      @map("from_user_id")
+  toUserId   Int      @map("to_user_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  room BoardRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  from User      @relation("BoardInviteFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  to   User      @relation("BoardInviteTo", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, toUserId])
+  @@index([toUserId, createdAt])
+  @@map("board_invites")
 }

@@ -5,7 +5,7 @@ import { env } from "../lib/env";
 import { checkAchievements } from "./achievements";
 import { grantCosmetic, toCosmeticResponse } from "./cosmetics";
 import { activeEvent } from "./events";
-import { chestCoins, monthKeyInTimeZone, monthRangeInTimeZone } from "./game-rules";
+import { chestCoins, duplicateCosmeticCoins, monthKeyInTimeZone, monthRangeInTimeZone, nextMonthKey, passForMonth } from "./game-rules";
 import { HELPERS } from "./helpers";
 import { toUserResponse } from "./mappers";
 import { applyReward, walletData } from "./rewards";
@@ -16,7 +16,7 @@ import { visibleCharacter } from "./visibility";
 const CHEST_FULL_BOOSTS_COINS = 25;
 
 /** Todas as ajudas que o baú pode trazer (as antigas e as novas). */
-const CHEST_BOOSTS = [
+export const CHEST_BOOSTS = [
   { field: "extraLifeBoosts", maxSetting: "maxExtraLifeBoosts", name: "Vida extra" },
   { field: "extraTimeBoosts", maxSetting: "maxExtraTimeBoosts", name: "Tempo extra" },
   { field: "doubleXpBoosts", maxSetting: "maxDoubleXpBoosts", name: "XP em dobro" },
@@ -139,35 +139,60 @@ async function monthXp(userId: number, monthKey: string) {
 
 const tierInclude = { rewardDefinition: { select: { id: true, name: true, rewardType: true } }, rewardCosmetic: true } as const;
 
+const passSummary = (pass: { id: number; name: string; description: string | null; color: string | null; imageUrl: string | null }) => ({
+  id: pass.id,
+  name: pass.name,
+  description: pass.description,
+  color: pass.color,
+  imageUrl: pass.imageUrl,
+});
+
+/** Passe que vale agora (o fixado neste mês ou o do rodízio) e o do mês seguinte. */
+async function currentPasses(monthKey: string) {
+  const passes = await prisma.pass.findMany({ where: { active: true }, orderBy: { id: "asc" } });
+  return { current: passForMonth(passes, monthKey), next: passForMonth(passes, nextMonthKey(monthKey)) };
+}
+
 export async function getPass(userId: number) {
   const monthKey = monthKeyInTimeZone(new Date(), env.timezone);
-  const [tiers, xp, claims] = await Promise.all([
-    prisma.passTier.findMany({ where: { active: true }, include: tierInclude, orderBy: { level: "asc" } }),
+  const { current, next } = await currentPasses(monthKey);
+  const [tiers, xp, claims, owned] = await Promise.all([
+    current ? prisma.passTier.findMany({ where: { passId: current.id, active: true }, include: tierInclude, orderBy: { level: "asc" } }) : Promise.resolve([]),
     monthXp(userId, monthKey),
     prisma.userClaim.findMany({ where: { userId, kind: "PASS", periodKey: monthKey }, select: { code: true } }).then((rows) => new Set(rows.map((row) => row.code))),
+    prisma.userCosmetic.findMany({ where: { userId }, select: { cosmeticId: true } }).then((rows) => new Set(rows.map((row) => row.cosmeticId))),
   ]);
   return {
     monthKey,
     endsAt: monthRangeInTimeZone(monthKey, env.timezone).end,
     xp,
-    tiers: tiers.map((tier) => ({
-      id: tier.id,
-      level: tier.level,
-      requiredXp: tier.requiredXp,
-      rewardCoins: tier.rewardCoins,
-      reward: tier.rewardDefinition,
-      cosmetic: tier.rewardCosmetic ? toCosmeticResponse(tier.rewardCosmetic) : null,
-      reached: xp >= tier.requiredXp,
-      claimed: claims.has(String(tier.id)),
-    })),
+    pass: current ? passSummary(current) : null,
+    nextPass: next && next.id !== current?.id ? { name: next.name, color: next.color, imageUrl: next.imageUrl } : null,
+    tiers: tiers.map((tier) => {
+      const alreadyOwned = tier.rewardCosmeticId !== null && owned.has(tier.rewardCosmeticId);
+      return {
+        id: tier.id,
+        level: tier.level,
+        requiredXp: tier.requiredXp,
+        rewardCoins: tier.rewardCoins,
+        reward: tier.rewardDefinition,
+        cosmetic: tier.rewardCosmetic ? toCosmeticResponse(tier.rewardCosmetic) : null,
+        // O item já é do jogador: o degrau paga moedas no lugar (avisado na trilha).
+        cosmeticOwned: alreadyOwned,
+        duplicateCoins: alreadyOwned && tier.rewardCosmetic ? (tier.duplicateCoins ?? duplicateCosmeticCoins(tier.rewardCosmetic.rarity)) : null,
+        reached: xp >= tier.requiredXp,
+        claimed: claims.has(String(tier.id)),
+      };
+    }),
   };
 }
 
 export async function claimPassTier(userId: number, tierId: number) {
   const monthKey = monthKeyInTimeZone(new Date(), env.timezone);
   const xp = await monthXp(userId, monthKey);
+  const { current } = await currentPasses(monthKey);
   return transaction(async (tx) => {
-    const tier = await tx.passTier.findFirst({ where: { id: tierId, active: true }, include: { rewardDefinition: true } });
+    const tier = await tx.passTier.findFirst({ where: { id: tierId, active: true, passId: current?.id ?? -1 }, include: { rewardDefinition: true, rewardCosmetic: true, duplicateRewardDefinition: true } });
     if (!tier) throw notFound("Degrau do passe não encontrado");
     if (xp < tier.requiredXp) throw badRequest(`Faltam ${tier.requiredXp - xp} XP neste mês para este prêmio`);
     await lockUser(tx, userId);
@@ -177,11 +202,20 @@ export async function claimPassTier(userId: number, tierId: number) {
     const settings = await getSettings(tx);
     const wallet = { ...user, coins: user.coins + tier.rewardCoins };
     const applied = tier.rewardDefinition ? await applyReward(tx, wallet, tier.rewardDefinition, settings) : null;
-    await tx.user.update({ where: { id: userId }, data: walletData(wallet) });
+
+    // Item visual repetido (de um passe que voltou): vira moedas e, se o degrau definir, uma recompensa extra.
     const cosmeticGranted = tier.rewardCosmeticId ? await grantCosmetic(tx, userId, tier.rewardCosmeticId, "PASS") : false;
+    let duplicate: { coins: number; reward: { rewardName: string; characterName: string | null } | null } | null = null;
+    if (tier.rewardCosmetic && !cosmeticGranted) {
+      const coins = tier.duplicateCoins ?? duplicateCosmeticCoins(tier.rewardCosmetic.rarity);
+      wallet.coins += coins;
+      const extra = tier.duplicateRewardDefinition ? await applyReward(tx, wallet, tier.duplicateRewardDefinition, settings) : null;
+      duplicate = { coins, reward: extra ? { rewardName: extra.rewardName, characterName: extra.characterName } : null };
+    }
+    await tx.user.update({ where: { id: userId }, data: walletData(wallet) });
     const unlockedAchievements = await checkAchievements(tx, userId);
     const saved = await tx.user.findUniqueOrThrow({ where: { id: userId } });
-    return { coins: tier.rewardCoins, reward: applied, cosmeticGranted, unlockedAchievements, user: toUserResponse(saved) };
+    return { coins: tier.rewardCoins, reward: applied, cosmeticGranted, duplicate, unlockedAchievements, user: toUserResponse(saved) };
   });
 }
 

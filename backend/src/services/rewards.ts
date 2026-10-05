@@ -49,7 +49,7 @@ export async function grantStickerOrDuplicate(db: Db, userId: number, characterI
   if (await grantStickerIfMissing(db, userId, characterId)) {
     return true;
   }
-  // A carta especial é única: não acumula repetidas (não dá para trocar, vender nem fundir).
+  // A figurinha especial é única: não acumula repetidas (não dá para trocar, vender nem fundir).
   const character = await db.biblicalCharacter.findUnique({ where: { id: characterId }, select: { rarity: true } });
   if (character && isCampaignOnlyRarity(character.rarity)) {
     return false;
@@ -58,7 +58,7 @@ export async function grantStickerOrDuplicate(db: Db, userId: number, characterI
   return false;
 }
 
-async function randomCharacterOfRarity(db: Db, userId: number, rarity: StickerRarity, random: () => number): Promise<BiblicalCharacter | null> {
+async function randomCharacterOfRarity(db: Db, userId: number, rarity: StickerRarity, random: () => number, newPercent = 100): Promise<BiblicalCharacter | null> {
   const byRarity = await db.biblicalCharacter.findMany({ where: { rarity, ...visible() }, orderBy: { id: "asc" } });
   if (byRarity.length === 0) {
     return null;
@@ -66,7 +66,9 @@ async function randomCharacterOfRarity(db: Db, userId: number, rarity: StickerRa
   // Prefere figurinhas que o usuário ainda não tem.
   const owned = await ownedCharacterIds(db, userId);
   const missing = byRarity.filter((character) => !owned.has(character.id));
-  const pool = missing.length > 0 ? missing : byRarity;
+  // `newPercent` < 100: nos baús, às vezes a figurinha vem repetida mesmo faltando outras (as repetidas têm uso).
+  const preferMissing = missing.length > 0 && (newPercent >= 100 || random() * 100 < newPercent);
+  const pool = preferMissing ? missing : byRarity;
   return pool[Math.floor(random() * pool.length)];
 }
 
@@ -81,10 +83,11 @@ async function pickStickerCharacter(
   reward: RewardDefinition,
   settings: GameSettings,
   random: () => number,
+  newPercent = 100,
 ): Promise<BiblicalCharacter> {
   if (reward.rewardType === "STICKER_PACK") {
     const rarity = pickPackRarity(settings, await publishedRarities(db), random);
-    const character = rarity ? await randomCharacterOfRarity(db, userId, rarity, random) : null;
+    const character = rarity ? await randomCharacterOfRarity(db, userId, rarity, random, newPercent) : null;
     if (character) {
       return character;
     }
@@ -99,7 +102,7 @@ async function pickStickerCharacter(
   }
 
   if (reward.stickerRarity) {
-    const character = await randomCharacterOfRarity(db, userId, reward.stickerRarity, random);
+    const character = await randomCharacterOfRarity(db, userId, reward.stickerRarity, random, newPercent);
     if (character) {
       return character;
     }
@@ -118,6 +121,7 @@ export async function applyReward(
   reward: RewardDefinition,
   settings: GameSettings,
   random: () => number = Math.random,
+  options: { newStickerPercent?: number } = {},
 ): Promise<RewardApplication> {
   const base: RewardApplication = {
     rewardType: reward.rewardType,
@@ -169,7 +173,7 @@ export async function applyReward(
       return base;
     case "STICKER":
     case "STICKER_PACK": {
-      const character = await pickStickerCharacter(db, wallet.id, reward, settings, random);
+      const character = await pickStickerCharacter(db, wallet.id, reward, settings, random, options.newStickerPercent);
       const unlocked = await grantStickerOrDuplicate(db, wallet.id, character.id);
       return {
         ...base,
@@ -290,16 +294,20 @@ type FixedReward = {
 };
 
 export const FIXED_REWARDS: FixedReward[] = [
-  { name: "Figurinha Comum", rewardType: "STICKER", stickerRarity: "COMMON", coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 20 },
-  { name: "Figurinha Rara", rewardType: "STICKER", stickerRarity: "RARE", coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 8 },
-  { name: "Figurinha Épica", rewardType: "STICKER", stickerRarity: "EPIC", coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 3 },
-  { name: "Figurinha Lendária", rewardType: "STICKER", stickerRarity: "LEGENDARY", coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 1 },
-  { name: "Moedas", rewardType: "COINS", stickerRarity: null, coinAmount: 50, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 30 },
+  { name: "Figurinha Comum", rewardType: "STICKER", stickerRarity: "COMMON", coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 9 },
+  { name: "Figurinha Rara", rewardType: "STICKER", stickerRarity: "RARE", coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 3.5 },
+  { name: "Figurinha Épica", rewardType: "STICKER", stickerRarity: "EPIC", coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 1.2 },
+  { name: "Figurinha Lendária", rewardType: "STICKER", stickerRarity: "LEGENDARY", coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 0.4 },
+  { name: "Moedas", rewardType: "COINS", stickerRarity: null, coinAmount: 40, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 30 },
   { name: "XP em dobro", rewardType: "XP_MULTIPLIER", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 2, dropChance: 6 },
   { name: "Vida extra", rewardType: "EXTRA_LIFE", stickerRarity: null, coinAmount: 0, extraLives: 1, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 5 },
   { name: "Tempo extra", rewardType: "EXTRA_TIME", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 1, xpMultiplier: 1, dropChance: 4 },
   { name: "Dica 50/50", rewardType: "FIFTY_FIFTY", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, hintAmount: 1, dropChance: 5 },
-  { name: "Pacote surpresa", rewardType: "STICKER_PACK", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 2 },
+  // Baús vendidos na loja (não entram em sorteio nenhum: dropChance 0).
+  { name: "Baú de Bronze", rewardType: "CHEST_BRONZE", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 0 },
+  { name: "Baú de Prata", rewardType: "CHEST_SILVER", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 0 },
+  { name: "Baú de Ouro", rewardType: "CHEST_GOLD", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 0 },
+  { name: "Pacote surpresa", rewardType: "STICKER_PACK", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 1.5 },
   { name: "Protetor de sequência", rewardType: "STREAK_FREEZE", stickerRarity: null, coinAmount: 0, extraLives: 0, extraTimeSeconds: 0, xpMultiplier: 1, dropChance: 3 },
   ...HELPERS.map((helper) => ({
     name: helper.name,
@@ -317,44 +325,47 @@ export const FIXED_REWARDS: FixedReward[] = [
 type FixedShopItem = { name: string; description: string; itemType: ShopItemType; priceCoins: number; rewardName: string };
 
 export const FIXED_SHOP_ITEMS: FixedShopItem[] = [
-  { name: "Figurinha Comum", description: "Compra uma figurinha comum aleatória", itemType: "STICKER", priceCoins: 200, rewardName: "Figurinha Comum" },
-  { name: "Figurinha Rara", description: "Compra uma figurinha rara aleatória", itemType: "STICKER", priceCoins: 450, rewardName: "Figurinha Rara" },
-  { name: "Figurinha Épica", description: "Compra uma figurinha épica aleatória", itemType: "STICKER", priceCoins: 900, rewardName: "Figurinha Épica" },
-  { name: "XP em dobro", description: "Ativa um multiplicador de XP para a próxima partida", itemType: "GAME_BONUS", priceCoins: 220, rewardName: "XP em dobro" },
-  { name: "Vida extra", description: "Adiciona uma vida extra consumível", itemType: "GAME_BONUS", priceCoins: 180, rewardName: "Vida extra" },
-  { name: "Tempo extra", description: "Adiciona tempo extra consumível", itemType: "GAME_BONUS", priceCoins: 150, rewardName: "Tempo extra" },
-  { name: "Dica 50/50", description: "Elimina duas alternativas erradas de uma pergunta", itemType: "GAME_BONUS", priceCoins: 140, rewardName: "Dica 50/50" },
+  { name: "Figurinha Comum", description: "Compra uma figurinha comum aleatória", itemType: "STICKER", priceCoins: 450, rewardName: "Figurinha Comum" },
+  { name: "Figurinha Rara", description: "Compra uma figurinha rara aleatória", itemType: "STICKER", priceCoins: 1100, rewardName: "Figurinha Rara" },
+  { name: "Figurinha Épica", description: "Compra uma figurinha épica aleatória", itemType: "STICKER", priceCoins: 2800, rewardName: "Figurinha Épica" },
+  { name: "XP em dobro", description: "Ativa um multiplicador de XP para a próxima partida", itemType: "GAME_BONUS", priceCoins: 300, rewardName: "XP em dobro" },
+  { name: "Vida extra", description: "Adiciona uma vida extra consumível", itemType: "GAME_BONUS", priceCoins: 250, rewardName: "Vida extra" },
+  { name: "Tempo extra", description: "Adiciona tempo extra consumível", itemType: "GAME_BONUS", priceCoins: 200, rewardName: "Tempo extra" },
+  { name: "Dica 50/50", description: "Elimina duas alternativas erradas de uma pergunta", itemType: "GAME_BONUS", priceCoins: 190, rewardName: "Dica 50/50" },
+  { name: "Baú de Bronze", description: "Moedas, uma ajuda e, com sorte, uma figurinha. Abre na hora.", itemType: "STICKER", priceCoins: 600, rewardName: "Baú de Bronze" },
+  { name: "Baú de Prata", description: "Moedas, duas ajudas, boa chance de figurinha e, às vezes, um item visual.", itemType: "STICKER", priceCoins: 1100, rewardName: "Baú de Prata" },
+  { name: "Baú de Ouro", description: "Moedas, ajudas, figurinha garantida (com chance de rara ou épica) e chance de item visual.", itemType: "STICKER", priceCoins: 2000, rewardName: "Baú de Ouro" },
   {
     name: "Pacote surpresa",
     description: "Uma figurinha de raridade sorteada, que pode até ser lendária. Repetida fica guardada para vender ou fundir.",
     itemType: "STICKER",
-    priceCoins: 300,
+    priceCoins: 750,
     rewardName: "Pacote surpresa",
   },
   {
     name: "Protetor de sequência",
     description: "Se você esquecer um dia, o prêmio diário não volta para o 1º dia. É usado sozinho.",
     itemType: "GAME_BONUS",
-    priceCoins: 250,
+    priceCoins: 350,
     rewardName: "Protetor de sequência",
   },
-  { name: "Pular pergunta", description: "Troca a pergunta por outra, sem perder vida.", itemType: "GAME_BONUS", priceCoins: 160, rewardName: "Pular pergunta" },
+  { name: "Pular pergunta", description: "Troca a pergunta por outra, sem perder vida.", itemType: "GAME_BONUS", priceCoins: 220, rewardName: "Pular pergunta" },
   {
     name: "Segunda chance",
     description: "Ative antes de responder: se errar, tenta de novo na mesma pergunta sem perder vida.",
     itemType: "GAME_BONUS",
-    priceCoins: 200,
+    priceCoins: 270,
     rewardName: "Segunda chance",
   },
-  { name: "Voz da multidão", description: "Mostra quantos % dos jogadores escolheram cada alternativa.", itemType: "GAME_BONUS", priceCoins: 150, rewardName: "Voz da multidão" },
-  { name: "Pista do versículo", description: "Mostra a referência bíblica que leva à resposta.", itemType: "GAME_BONUS", priceCoins: 130, rewardName: "Pista do versículo" },
-  { name: "Ampulheta", description: "Congela o cronômetro da pergunta atual.", itemType: "GAME_BONUS", priceCoins: 170, rewardName: "Ampulheta" },
-  { name: "Bênção dobrada", description: "A partida em que você usar rende o dobro de moedas.", itemType: "GAME_BONUS", priceCoins: 240, rewardName: "Bênção dobrada" },
+  { name: "Voz da multidão", description: "Mostra quantos % dos jogadores escolheram cada alternativa.", itemType: "GAME_BONUS", priceCoins: 200, rewardName: "Voz da multidão" },
+  { name: "Pista do versículo", description: "Mostra a referência bíblica que leva à resposta.", itemType: "GAME_BONUS", priceCoins: 180, rewardName: "Pista do versículo" },
+  { name: "Ampulheta", description: "Congela o cronômetro da pergunta atual.", itemType: "GAME_BONUS", priceCoins: 230, rewardName: "Ampulheta" },
+  { name: "Bênção dobrada", description: "A partida em que você usar rende o dobro de moedas.", itemType: "GAME_BONUS", priceCoins: 330, rewardName: "Bênção dobrada" },
   {
     name: "Escudo de sequência",
     description: "Um erro não zera a sua sequência de acertos (você ainda perde a vida).",
     itemType: "GAME_BONUS",
-    priceCoins: 150,
+    priceCoins: 200,
     rewardName: "Escudo de sequência",
   },
 ];

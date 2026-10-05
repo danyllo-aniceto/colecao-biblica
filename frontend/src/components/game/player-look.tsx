@@ -70,10 +70,10 @@ export function PlayerName({ name, look, className, nameClassName }: { name: str
 }
 
 /** Reação do chat: imagem enviada pelo admin ou emoji. */
-export function ReactionGlyph({ reaction, size = 'md', animate = false }: { reaction: { name: string; imageUrl?: string | null; style?: string | null }; size?: 'sm' | 'md' | 'lg'; animate?: boolean }) {
+export function ReactionGlyph({ reaction, size = 'md', animate = false }: { reaction: { name: string; imageUrl?: string | null; style?: string | null; animation?: string | null }; size?: 'sm' | 'md' | 'lg'; animate?: boolean }) {
   const box = size === 'lg' ? 'h-24 w-24 text-7xl' : size === 'md' ? 'h-12 w-12 text-4xl' : 'h-8 w-8 text-2xl';
   return (
-    <span className={cn('inline-flex items-center justify-center leading-none', box, animate && 'reaction-pop')} role="img" aria-label={reaction.name}>
+    <span className={cn('inline-flex items-center justify-center leading-none', box, animate && `reaction-${reaction.animation && /^[a-z]+$/.test(reaction.animation) ? reaction.animation : 'pop'}`)} role="img" aria-label={reaction.name}>
       {reaction.imageUrl ? <img src={reaction.imageUrl} alt="" className="h-full w-full object-contain" /> : reaction.style}
     </span>
   );

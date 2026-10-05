@@ -99,3 +99,11 @@ export const imageRef = () =>
     .refine((value) => value === undefined || value === null || (value.startsWith("data:image/") ? value.length <= 5_500_000 : value.length <= 2048), {
       message: "Endereço da imagem muito longo",
     });
+
+/** Chave de comparação de textos digitados em planilhas: sem acento, sem espaços nas pontas e em minúsculas. */
+export const normalizeKey = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .trim()
+    .toLowerCase();

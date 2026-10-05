@@ -5,16 +5,18 @@ import { ThemeCollections } from '@/components/user/rewards/theme-collections';
 import { AlbumBook } from '@/components/user/album-book';
 import { DuplicatesModal } from '@/components/user/duplicates-modal';
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import { Button } from '@/components/ui/button';
 import { Pagination, usePagination } from '@/components/ui/pagination';
 import { Segmented } from '@/components/ui/segmented';
 import { Select } from '@/components/ui/select';
-import { EmptyState, ProgressBar, SectionHeading } from '@/components/game/game-ui';
-import { Modal } from '@/components/game/modal';
+import { EmptyState } from '@/components/game/game-ui';
 import { StickerCard } from '@/components/game/sticker-card';
 import type { StickerRarity, Testament } from '@/lib/admin-api';
 import { sortBooks } from '@/lib/bible-books';
+import { albumCoverStyle } from '@/lib/look-background';
+import type { PlayerLook } from '@/lib/rewards-api';
 import { HISTORICAL_PERIODS, TESTAMENT_LABELS } from '@/lib/labels';
 import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
 import { saveAlbumView, takeAlbumReturn } from '@/lib/sticker-return';
@@ -47,8 +49,12 @@ type AlbumSectionProps = {
   gameRules: GameRules | null;
   onOpenSticker: (id: number) => void;
   onWallet: (wallet: { userCoins: number }) => void;
+  /** Depois de subir o nível de uma figurinha (recarrega o álbum). */
+  onUpgraded: () => void;
   onFused: (result: FuseResult) => void;
   playerName: string;
+  /** Aparência do jogador: a capa equipada vira a capa do livro. */
+  look?: PlayerLook | null;
 };
 
 /** "em 3 dias", "amanhã", "hoje às 18:00". */
@@ -60,7 +66,7 @@ function untilLabel(date: string) {
   return `em ${days} dias`;
 }
 
-export function AlbumSection({ characters, ownedIds, collection, gameRules, onOpenSticker, onWallet, onFused, playerName }: AlbumSectionProps) {
+export function AlbumSection({ characters, ownedIds, collection, gameRules, onOpenSticker, onWallet, onUpgraded, onFused, playerName, look }: AlbumSectionProps) {
   // Ao voltar da ficha de uma figurinha, o álbum reabre com os mesmos filtros e na folha dela.
   const [restored] = useState(() => takeAlbumReturn());
   const [focusId, setFocusId] = useState<number | null>(restored?.characterId ?? null);
@@ -74,6 +80,7 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [duplicatesOpen, setDuplicatesOpen] = useState(false);
   const [upcoming, setUpcoming] = useState<UpcomingSticker[]>([]);
+  const levelsById = useMemo(() => new Map(collection.map((sticker) => [sticker.characterId, sticker.level])), [collection]);
   const duplicatesById = useMemo(() => new Map(collection.map((sticker) => [sticker.characterId, sticker.duplicates])), [collection]);
   const totalDuplicates = collection.reduce((sum, sticker) => sum + sticker.duplicates, 0);
 
@@ -117,7 +124,7 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
   const paging = usePagination(lockedFiltered, PAGE_SIZE);
   const shown = paging.pageItems;
   const resetKey = [rarity, sortBy, testament, period, books.join('|')].join(';');
-  const extraFilters = books.length + (sortBy !== 'rarityAsc' ? 1 : 0) + (testament ? 1 : 0) + (period ? 1 : 0);
+  const extraFilters = (rarity !== 'ALL' ? 1 : 0) + books.length + (sortBy !== 'rarityAsc' ? 1 : 0) + (testament ? 1 : 0) + (period ? 1 : 0);
 
   function resetPaging<T>(setter: (value: T) => void) {
     return (value: T) => {
@@ -126,38 +133,116 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
     };
   }
 
+  const filtersPanel = (
+    <section className="panel animate-pop-in space-y-4 p-4 sm:p-5" aria-label="Filtros e ordem">
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <span className="text-sm font-bold text-muted">Raridade</span>
+            <div className="flex flex-wrap gap-2">
+              <FilterPill active={rarity === 'ALL'} onClick={() => resetPaging(setRarity)('ALL')}>
+                Todas
+              </FilterPill>
+              {RARITY_ORDER.map((item) => (
+                <FilterPill key={item} active={rarity === item} onClick={() => resetPaging(setRarity)(item)} rarity={item}>
+                  {getRarityLabel(item)}
+                </FilterPill>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <span className="text-sm font-bold text-muted">Ordenar por</span>
+            <Select<SortOption>
+              aria-label="Ordenar por"
+              value={sortBy}
+              onChange={(value) => resetPaging(setSortBy)(value)}
+              options={[
+                { value: 'rarityAsc', label: 'Mais comuns primeiro' },
+                { value: 'rarityDesc', label: 'Mais raras primeiro' },
+                { value: 'period', label: 'Ordem da história bíblica' },
+                { value: 'alphabetical', label: 'Nome (A–Z)' },
+              ]}
+            />
+          </div>
+          <div className="space-y-2">
+            <span className="text-sm font-bold text-muted">Testamento</span>
+            <div className="flex flex-wrap gap-2">
+              <FilterPill active={testament === ''} onClick={() => resetPaging(setTestament)('')}>
+                Todos
+              </FilterPill>
+              {(Object.keys(TESTAMENT_LABELS) as Testament[]).map((item) => (
+                <FilterPill key={item} active={testament === item} onClick={() => resetPaging(setTestament)(item)}>
+                  {TESTAMENT_LABELS[item]}
+                </FilterPill>
+              ))}
+            </div>
+          </div>
+          {uniquePeriods.length > 0 ? (
+            <div className="space-y-2">
+              <span className="text-sm font-bold text-muted">Período</span>
+              <Select
+                aria-label="Período"
+                value={period}
+                onChange={(value) => resetPaging(setPeriod)(value)}
+                options={[{ value: '', label: 'Todos os períodos' }, ...uniquePeriods.map((item) => ({ value: item, label: item }))]}
+              />
+            </div>
+          ) : null}
+          <div className="space-y-2">
+            <span className="text-sm font-bold text-muted">Livros da Bíblia</span>
+            {uniqueBooks.length === 0 ? <p className="text-sm text-muted">Nenhum livro cadastrado nos personagens.</p> : null}
+            <div className="flex flex-wrap gap-2">
+              {uniqueBooks.map((book) => (
+                <FilterPill
+                  key={book}
+                  active={books.includes(book)}
+                  onClick={() => resetPaging(setBooks)(books.includes(book) ? books.filter((item) => item !== book) : [...books, book])}
+                >
+                  {book}
+                </FilterPill>
+              ))}
+            </div>
+          </div>
+        </div>
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            setRarity('ALL');
+            setBooks([]);
+            setSortBy('rarityAsc');
+            setTestament('');
+            setPeriod('');
+            paging.reset();
+          }}
+        >
+          Limpar
+        </Button>
+        <Button size="sm" onClick={() => setFiltersOpen(false)}>
+          Ver figurinhas
+        </Button>
+      </div>
+    </section>
+  );
+
   return (
     <div className="space-y-5">
-      <section className="panel space-y-4 p-5 sm:p-6">
-        <SectionHeading
-          title="Meu álbum"
-          subtitle={`${ownedCount} de ${characters.length} figurinhas conquistadas`}
-          action={
-            <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" size="sm" onClick={() => setDuplicatesOpen(true)}>
-                <AutoAwesomeRoundedIcon fontSize="small" />
-                Repetidas{totalDuplicates ? ` (${totalDuplicates})` : ''}
-              </Button>
-              <Button variant="secondary" size="sm" onClick={() => setFiltersOpen(true)}>
-                <TuneRoundedIcon fontSize="small" />
-                Filtros{extraFilters ? ` (${extraFilters})` : ''}
-              </Button>
-            </div>
-          }
-        />
-        <ProgressBar value={characters.length ? (ownedCount / characters.length) * 100 : 0} className="h-4" />
-
-        <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-          <FilterPill active={rarity === 'ALL'} onClick={() => resetPaging(setRarity)('ALL')}>
-            Todas
-          </FilterPill>
-          {RARITY_ORDER.map((item) => (
-            <FilterPill key={item} active={rarity === item} onClick={() => resetPaging(setRarity)(item)} rarity={item}>
-              {getRarityLabel(item)}
-            </FilterPill>
-          ))}
+      <div className="flex items-center justify-between gap-3">
+        <p className="min-w-0 truncate text-sm font-bold text-muted">
+          <span className="font-display text-lg text-ink">{ownedCount}</span>/{characters.length} figurinhas
+        </p>
+        <div className="flex shrink-0 gap-2">
+          <Button variant="secondary" size="sm" onClick={() => setDuplicatesOpen(true)}>
+            <AutoAwesomeRoundedIcon fontSize="small" />
+            Repetidas{totalDuplicates ? ` (${totalDuplicates})` : ''}
+          </Button>
+          <Button variant={filtersOpen ? 'primary' : 'secondary'} size="sm" onClick={() => setFiltersOpen((open) => !open)} aria-expanded={filtersOpen}>
+            <TuneRoundedIcon fontSize="small" />
+            Filtros{extraFilters ? ` (${extraFilters})` : ''}
+            <ExpandMoreRoundedIcon fontSize="small" className={cn('transition-transform', filtersOpen && 'rotate-180')} />
+          </Button>
         </div>
-      </section>
+      </div>
 
       <Segmented
         aria-label="Parte do álbum"
@@ -170,10 +255,12 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
         ]}
       />
 
+      {filtersOpen ? filtersPanel : null}
+
       {tab === 'collections' ? <ThemeCollections playerName={playerName} onCoins={(coins) => onWallet({ userCoins: coins })} refreshKey={collection.length} /> : null}
 
       {tab === 'album' ? (
-        <AlbumBook items={ownedFiltered} totalCharacters={characters.length} ownedCount={ownedCount} duplicatesById={duplicatesById} onOpenSticker={(id) => {
+        <AlbumBook coverStyle={albumCoverStyle(look?.albumCover)} coverImage={look?.albumCover?.imageUrl} items={ownedFiltered} totalCharacters={characters.length} ownedCount={ownedCount} duplicatesById={duplicatesById} levelsById={levelsById} onOpenSticker={(id) => {
             saveAlbumView(albumView);
             onOpenSticker(id);
           }} resetKey={resetKey} focusId={focusId} onFocused={() => setFocusId(null)} />
@@ -234,90 +321,13 @@ export function AlbumSection({ characters, ownedIds, collection, gameRules, onOp
         collection={collection}
         rules={gameRules}
         onChanged={onWallet}
+        onUpgraded={onUpgraded}
         onFused={(result) => {
           setDuplicatesOpen(false);
           onFused(result);
         }}
       />
 
-      <Modal
-        open={filtersOpen}
-        title="Filtros e ordem"
-        onClose={() => setFiltersOpen(false)}
-        footer={
-          <>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setBooks([]);
-                setSortBy('rarityAsc');
-                setTestament('');
-                setPeriod('');
-                paging.reset();
-              }}
-            >
-              Limpar
-            </Button>
-            <Button onClick={() => setFiltersOpen(false)}>Ver figurinhas</Button>
-          </>
-        }
-      >
-        <div className="space-y-5">
-          <div className="space-y-2">
-            <span className="text-sm font-bold text-muted">Ordenar por</span>
-            <Select<SortOption>
-              aria-label="Ordenar por"
-              value={sortBy}
-              onChange={(value) => resetPaging(setSortBy)(value)}
-              options={[
-                { value: 'rarityAsc', label: 'Mais comuns primeiro' },
-                { value: 'rarityDesc', label: 'Mais raras primeiro' },
-                { value: 'period', label: 'Ordem da história bíblica' },
-                { value: 'alphabetical', label: 'Nome (A–Z)' },
-              ]}
-            />
-          </div>
-          <div className="space-y-2">
-            <span className="text-sm font-bold text-muted">Testamento</span>
-            <div className="flex flex-wrap gap-2">
-              <FilterPill active={testament === ''} onClick={() => resetPaging(setTestament)('')}>
-                Todos
-              </FilterPill>
-              {(Object.keys(TESTAMENT_LABELS) as Testament[]).map((item) => (
-                <FilterPill key={item} active={testament === item} onClick={() => resetPaging(setTestament)(item)}>
-                  {TESTAMENT_LABELS[item]}
-                </FilterPill>
-              ))}
-            </div>
-          </div>
-          {uniquePeriods.length > 0 ? (
-            <div className="space-y-2">
-              <span className="text-sm font-bold text-muted">Período</span>
-              <Select
-                aria-label="Período"
-                value={period}
-                onChange={(value) => resetPaging(setPeriod)(value)}
-                options={[{ value: '', label: 'Todos os períodos' }, ...uniquePeriods.map((item) => ({ value: item, label: item }))]}
-              />
-            </div>
-          ) : null}
-          <div className="space-y-2">
-            <span className="text-sm font-bold text-muted">Livros da Bíblia</span>
-            {uniqueBooks.length === 0 ? <p className="text-sm text-muted">Nenhum livro cadastrado nos personagens.</p> : null}
-            <div className="flex flex-wrap gap-2">
-              {uniqueBooks.map((book) => (
-                <FilterPill
-                  key={book}
-                  active={books.includes(book)}
-                  onClick={() => resetPaging(setBooks)(books.includes(book) ? books.filter((item) => item !== book) : [...books, book])}
-                >
-                  {book}
-                </FilterPill>
-              ))}
-            </div>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }

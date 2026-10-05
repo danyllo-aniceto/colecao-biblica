@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
@@ -21,6 +21,8 @@ import { ReportQuestionModal } from '@/components/user/report-question-modal';
 import FlagRoundedIcon from '@mui/icons-material/FlagRounded';
 import { cn } from '@/lib/cn';
 import { QUIZ_HELPERS, type HelperField } from '@/lib/quiz-helpers';
+import { quizBackgroundStyle } from '@/lib/quiz-background';
+import { useCampaign } from '@/components/user/campaign/campaign-provider';
 import type { QuizHelperAction, QuizSessionStatus } from '@/lib/user-api';
 
 type AnswerOption = 'A' | 'B' | 'C' | 'D';
@@ -79,6 +81,18 @@ const optionStyles: Record<AnswerOption, { tile: string; letter: string }> = {
   D: { tile: 'bg-success text-white [--btn-edge:var(--success-strong)]', letter: 'bg-white/25' },
 };
 
+const SLOT_LETTERS: AnswerOption[] = ['A', 'B', 'C', 'D'];
+
+/** Embaralha (Fisher-Yates) sem alterar o array original. */
+function shuffled<T>(items: readonly T[]): T[] {
+  const copy = [...items];
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const other = Math.floor(Math.random() * (index + 1));
+    [copy[index], copy[other]] = [copy[other], copy[index]];
+  }
+  return copy;
+}
+
 function secondsUntil(deadline: number, now: number) {
   return Math.max(0, Math.ceil((deadline - now) / 1000));
 }
@@ -105,6 +119,9 @@ export function QuizAnswerScreen({
   boosts,
 }: QuizAnswerScreenProps) {
   const question = session.currentQuestion ?? null;
+  // Cada cenário da campanha pode ter a própria imagem de fundo no quiz.
+  const { current: scenario } = useCampaign();
+  const backgroundStyle = quizBackgroundStyle(session.quizType === 'DAILY_CHALLENGE' ? null : scenario?.quizBackgroundUrl);
 
   const [selected, setSelected] = useState<AnswerOption | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -116,6 +133,7 @@ export function QuizAnswerScreen({
   const [now, setNow] = useState(() => Date.now());
   const [reporting, setReporting] = useState(false);
   const [reported, setReported] = useState(false);
+  const [powersOpen, setPowersOpen] = useState(false);
 
   const submittingRef = useRef(false);
   const autoSubmittedRef = useRef(false);
@@ -226,6 +244,11 @@ export function QuizAnswerScreen({
     }
   }
 
+  // Ordem das alternativas sorteada a cada pergunta, para ninguém decorar "a resposta é a letra X".
+  // O id real (A-D) continua sendo o que vai para a API; a letra exibida segue a posição na tela.
+  const questionId = question?.id;
+  const order = useMemo(() => shuffled<AnswerOption>(SLOT_LETTERS), [questionId]);
+
   if (!question) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg p-4">
@@ -235,12 +258,9 @@ export function QuizAnswerScreen({
   }
 
   const busy = isLoading || submitting;
-  const options = [
-    { id: 'A', text: question.optionA },
-    { id: 'B', text: question.optionB },
-    { id: 'C', text: question.optionC },
-    { id: 'D', text: question.optionD },
-  ] as const;
+  const textById: Record<AnswerOption, string> = { A: question.optionA, B: question.optionB, C: question.optionC, D: question.optionD };
+  const options = order.map((id, index) => ({ id, text: textById[id], slot: SLOT_LETTERS[index] }));
+  const correctSlot = reveal ? (options.find((option) => option.id === reveal.correctOption)?.slot ?? reveal.correctOption) : '';
 
   const locked = busy || Boolean(reveal);
   const extraTimeDisabled = session.extraTimeUsed || boosts.extraTime <= 0 || timeLeft === 0 || locked || usingBoost !== null;
@@ -248,10 +268,18 @@ export function QuizAnswerScreen({
   const extraLifeDisabled = session.extraLifeUsed || boosts.extraLife <= 0 || locked;
   const xpDisabled = session.xpMultiplierUsed || boosts.doubleXp <= 0 || locked;
   const timerColor = timeProgress > 50 ? 'var(--accent)' : timeProgress > 20 ? 'var(--primary)' : 'var(--danger)';
+  // Só entram no painel os poderes que o jogador tem (ou que já estão em uso nesta pergunta).
+  const availablePowers =
+    [
+      boosts.extraTime > 0 && !session.extraTimeUsed,
+      boosts.hint > 0 && !session.fiftyFiftyUsed,
+      boosts.extraLife > 0 && !session.extraLifeUsed,
+      boosts.doubleXp > 0 && !session.xpMultiplierUsed,
+    ].filter(Boolean).length + QUIZ_HELPERS.filter((helper) => helpers[helper.field] > 0 && !session[helper.usedKey]).length;
   const answeredCount = session.currentQuestionIndex + (reveal ? 1 : 0);
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-bg" role="dialog" aria-modal="true" aria-label="Pergunta do quiz">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-bg" style={backgroundStyle} role="dialog" aria-modal="true" aria-label="Pergunta do quiz">
       <form className="mx-auto flex min-h-full max-w-3xl flex-col gap-4 px-4 pb-36 pt-[max(1rem,env(safe-area-inset-top))] sm:pb-10" onSubmit={handleSubmit}>
         <div className="flex items-center gap-3">
           <Tooltip content="Voltar ao painel (o tempo continua correndo)" side="bottom">
@@ -265,24 +293,31 @@ export function QuizAnswerScreen({
               <CloseRoundedIcon />
             </button>
           </Tooltip>
-          <div className="flex flex-1 gap-1" aria-label={`Questão ${session.currentQuestionIndex + 1} de ${session.totalQuestions}`}>
-            {Array.from({ length: session.totalQuestions }, (_, index) => (
-              <span
-                key={index}
-                className={cn(
-                  'h-2.5 flex-1 rounded-full transition-colors',
-                  index < answeredCount ? 'bg-accent' : index === session.currentQuestionIndex ? 'bg-primary' : 'bg-surface-3',
-                )}
-              />
-            ))}
-          </div>
+          {session.marathon ? (
+            <div className="flex flex-1 items-center gap-2 rounded-full bg-surface-3 px-4 py-2 font-display text-sm font-bold text-ink" aria-label={`Maratona: ${session.correctAnswers} acertos`}>
+              <span className="text-primary-strong dark:text-primary">Maratona</span>
+              <span className="text-success">{session.correctAnswers} acertos</span>
+            </div>
+          ) : (
+            <div className="flex flex-1 gap-1" aria-label={`Questão ${session.currentQuestionIndex + 1} de ${session.totalQuestions}`}>
+              {Array.from({ length: session.totalQuestions }, (_, index) => (
+                <span
+                  key={index}
+                  className={cn(
+                    'h-2.5 flex-1 rounded-full transition-colors',
+                    index < answeredCount ? 'bg-accent' : index === session.currentQuestionIndex ? 'bg-primary' : 'bg-surface-3',
+                  )}
+                />
+              ))}
+            </div>
+          )}
           <Hearts lives={session.livesRemaining} max={maxLives} />
         </div>
 
         <div className="flex items-center justify-between gap-3">
           <span className="font-display text-lg font-bold text-ink">
             Questão {session.currentQuestionIndex + 1}
-            <span className="text-muted">/{session.totalQuestions}</span>
+            {session.marathon ? null : <span className="text-muted">/{session.totalQuestions}</span>}
           </span>
           <span className="flex flex-wrap items-center justify-end gap-2 text-sm font-bold text-muted">
             {session.doubleCoinsUsed ? (
@@ -355,10 +390,10 @@ export function QuizAnswerScreen({
                 onClick={() => setSelected(option.id)}
                 disabled={locked || isRemoved}
                 aria-pressed={isSelected}
-                aria-label={isRemoved ? `${option.id}: eliminada pela dica` : undefined}
+                aria-label={isRemoved ? `${option.slot}: eliminada pela dica` : undefined}
                 className={cn(
                   'btn-3d animate-fade-up relative flex min-h-16 items-center gap-3 rounded-3xl p-3 text-left font-display text-lg font-semibold transition sm:min-h-20 sm:p-4',
-                  optionStyles[option.id].tile,
+                  optionStyles[option.slot].tile,
                   isRemoved && 'opacity-25 line-through grayscale',
                   !reveal && isSelected && 'ring-4 ring-ink/80 ring-offset-2 ring-offset-bg',
                   !reveal && selected && !isSelected && !isRemoved && 'opacity-60',
@@ -368,7 +403,7 @@ export function QuizAnswerScreen({
                 )}
                 style={{ animationDelay: reveal ? undefined : `${index * 60}ms` }}
               >
-                <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-xl font-bold', optionStyles[option.id].letter)}>{option.id}</span>
+                <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-xl font-bold', optionStyles[option.slot].letter)}>{option.slot}</span>
                 <span className="flex-1 leading-snug">{option.text}</span>
                 {question.crowd && !reveal && !isRemoved ? (
                   <span className="flex shrink-0 flex-col items-end gap-1" aria-label={`${question.crowd[option.id]}% dos jogadores`}>
@@ -387,7 +422,7 @@ export function QuizAnswerScreen({
 
         {reveal ? (
           <>
-            <RevealPanel reveal={reveal} />
+            <RevealPanel reveal={reveal} correctLetter={correctSlot} />
             {question.id && !reported ? (
               <button type="button" onClick={() => setReporting(true)} className="inline-flex items-center gap-1.5 self-center text-sm font-semibold text-muted underline-offset-4 hover:text-ink hover:underline">
                 <FlagRoundedIcon fontSize="small" /> Reportar problema nesta pergunta
@@ -404,8 +439,10 @@ export function QuizAnswerScreen({
               />
             ) : null}
           </>
-        ) : (
-          <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+        ) : null}
+
+        {reveal ? null : (
+          <PowerPanel open={powersOpen} onToggle={() => setPowersOpen((value) => !value)} availableCount={availablePowers}>
             <PowerUp
               icon={<TimerRoundedIcon />}
               label={session.extraTimeUsed ? 'Usado' : usingBoost === 'time' ? 'Aplicando' : `+${extraTimeSeconds}s`}
@@ -473,7 +510,7 @@ export function QuizAnswerScreen({
                 />
               );
             })}
-          </div>
+          </PowerPanel>
         )}
 
         {errorMessage ? (
@@ -504,7 +541,32 @@ export function QuizAnswerScreen({
   );
 }
 
-function RevealPanel({ reveal }: { reveal: AnswerReveal }) {
+/** Botão flutuante que expande o painel com os poderes disponíveis. */
+function PowerPanel({ open, onToggle, availableCount, children }: { open: boolean; onToggle: () => void; availableCount: number; children: ReactNode }) {
+  return (
+    <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-20 flex flex-col items-end gap-2 sm:bottom-6">
+      {open ? (
+        <div className="animate-pop-in panel grid w-[min(18rem,calc(100vw-2rem))] grid-cols-3 gap-2 p-3" role="group" aria-label="Poderes disponíveis">
+          {children}
+          {availableCount === 0 ? <p className="col-span-3 py-2 text-center text-sm font-semibold text-muted">Você não tem poderes disponíveis agora.</p> : null}
+        </div>
+      ) : null}
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        aria-label={open ? 'Fechar poderes' : `Abrir poderes (${availableCount} disponíveis)`}
+        className="btn-3d relative flex h-14 items-center gap-2 rounded-full bg-primary px-5 font-display text-base font-bold text-on-primary [--btn-edge:var(--primary-strong)]"
+      >
+        {open ? <CloseRoundedIcon /> : <BoltRoundedIcon />}
+        Poderes
+        {open ? null : <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-surface px-1.5 text-xs font-bold text-ink">{availableCount}</span>}
+      </button>
+    </div>
+  );
+}
+
+function RevealPanel({ reveal, correctLetter }: { reveal: AnswerReveal; correctLetter: string }) {
   const headline = reveal.correct ? 'Resposta certa!' : reveal.timedOut ? 'O tempo acabou' : 'Não foi dessa vez';
   return (
     <div
@@ -520,7 +582,7 @@ function RevealPanel({ reveal }: { reveal: AnswerReveal }) {
       </p>
       {!reveal.correct ? (
         <p className="text-sm font-semibold text-ink">
-          A resposta certa é a letra <strong>{reveal.correctOption}</strong>.{reveal.extraLifeSaved ? ' Sua vida extra te protegeu.' : ''}
+          A resposta certa é a letra <strong>{correctLetter}</strong>.{reveal.extraLifeSaved ? ' Sua vida extra te protegeu.' : ''}
         </p>
       ) : null}
       {reveal.explanation ? <p className="text-sm leading-6 text-ink">{reveal.explanation}</p> : null}
@@ -556,6 +618,7 @@ function PowerUp({
   tone: 'info' | 'danger' | 'primary' | 'violet' | 'accent' | 'success';
   hint: string;
 }) {
+  if (count <= 0 && !active) return null;
   const toneClass = {
     info: active ? 'bg-info text-white' : 'bg-info/15 text-info',
     danger: active ? 'bg-danger text-white' : 'bg-danger/15 text-danger',

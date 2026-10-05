@@ -20,7 +20,7 @@ type DefaultScenario = {
 
 /**
  * Caminho de lançamento: 10 cenários e 50 níveis. O XP por nível cresce (200 + 50 por nível),
- * então os cenários começam curtos e ficam maiores; o 10º entrega a carta especial (Jesus).
+ * então os cenários começam curtos e ficam maiores; o 10º entrega a figurinha especial (Jesus).
  */
 export const DEFAULT_SCENARIOS: DefaultScenario[] = [
   { slug: "eden", name: "Jardim do Éden", description: "O começo de tudo: o jardim que Deus plantou.", verse: "Deus viu tudo o que havia feito, e tudo havia ficado muito bom.", verseReference: "Gênesis 1:31", color: "#3fa34d", startLevel: 1, endLevel: 4, relicTitle: "Guardião do Éden", frameStyle: "laurel", reaction: "🍎" },
@@ -35,7 +35,7 @@ export const DEFAULT_SCENARIOS: DefaultScenario[] = [
   { slug: "jerusalem", name: "Jerusalém", description: "Do Monte das Oliveiras ao túmulo vazio.", verse: "Ele não está aqui; ressuscitou, como tinha dito.", verseReference: "Mateus 28:6", color: "#8e6bd1", startLevel: 45, endLevel: 50, relicTitle: "Testemunha da Ressurreição", frameStyle: "pearl", reaction: "🕊️" },
 ];
 
-/** Nome da carta especial entregue pelos fragmentos. */
+/** Nome da figurinha especial entregue pelos fragmentos. */
 export const SPECIAL_CHARACTER_NAME = "Jesus";
 
 /** Recompensas de ajuda que entram de vez em quando no caminho (se existirem no catálogo). */
@@ -55,7 +55,7 @@ function scenarioCosmetics(scenario: DefaultScenario, index: number) {
 
 /** Moedas da parada: sobem com o nível; a relíquia paga em dobro. */
 export function nodeCoins(level: number, relic: boolean): number {
-  const base = Math.round((20 + level * 2) / 5) * 5;
+  const base = Math.round((15 + level * 1.5) / 5) * 5;
   return relic ? base * 2 : base;
 }
 

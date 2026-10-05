@@ -6,10 +6,13 @@ import { currentUser } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
 import { claimLeaguePrize, getLeague } from "../services/league";
 import { claimMission, listMissions } from "../services/missions";
+import { missionsAdminRouter } from "./missions-admin";
 
 /** Missões (/api/missions) e liga semanal (/api/league). */
 export const missionsRouter = Router();
 export const leagueRouter = Router();
+
+missionsRouter.use("/admin", missionsAdminRouter);
 
 missionsRouter.get(
   "/",

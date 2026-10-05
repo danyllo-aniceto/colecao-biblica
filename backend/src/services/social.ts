@@ -5,7 +5,7 @@ import { HttpError, badRequest, forbidden, notFound } from "../lib/errors";
 import { env } from "../lib/env";
 import { pageOf } from "../lib/pagination";
 import { checkAchievements } from "./achievements";
-import { dayRangeInTimeZone, isCampaignOnlyRarity } from "./game-rules";
+import { dayRangeInTimeZone, friendSalePrice, friendSaleSellerCoins, isCampaignOnlyRarity } from "./game-rules";
 import { moderateText } from "./moderation";
 import { grantStickerOrDuplicate } from "./rewards";
 import { getSettings } from "./settings";
@@ -269,7 +269,9 @@ export async function friendAlbum(userId: number, friendId: number) {
   ]);
   const mineById = new Map(mine.map((sticker) => [sticker.characterId, sticker]));
   const theirsById = new Map(theirs.map((sticker) => [sticker.characterId, sticker]));
+  const settings = await getSettings(prisma);
   const card = (sticker: (typeof mine)[number]) => ({
+    salePrice: friendSalePrice(sticker.character.rarity, settings),
     characterId: sticker.characterId,
     name: sticker.character.name,
     rarity: sticker.character.rarity,
@@ -308,6 +310,9 @@ function toTrade(trade: TradeWithCharacters) {
     respondedAt: trade.respondedAt,
     offered: trade.offeredCharacter,
     requested: trade.requestedCharacter,
+    // Venda a amigo: o comprador paga priceCoins e o vendedor recebe sellerCoins (já sem a taxa).
+    priceCoins: trade.priceCoins,
+    sellerCoins: trade.sellerCoins,
   };
 }
 
@@ -348,14 +353,14 @@ export async function getMessages(userId: number, friendId: number, before: numb
   };
 }
 
-const reactionSelect = { id: true, name: true, imageUrl: true, style: true } as const;
+const reactionSelect = { id: true, name: true, imageUrl: true, style: true, animation: true, pack: true } as const;
 
 /** Reações que o jogador pode mandar (as que ele tem). */
 export async function myReactions(userId: number) {
   const rows = await prisma.userCosmetic.findMany({
     where: { userId, cosmetic: { type: "REACTION", active: true } },
     select: { cosmetic: { select: reactionSelect } },
-    orderBy: { cosmetic: { sortOrder: "asc" } },
+    orderBy: [{ cosmetic: { pack: "asc" } }, { cosmetic: { sortOrder: "asc" } }, { cosmeticId: "asc" }],
   });
   return rows.map((row) => row.cosmetic);
 }
@@ -370,8 +375,8 @@ export async function sendReaction(userId: number, friendId: number, reactionId:
   const recent = await prisma.message.count({ where: { senderId: userId, tradeId: null, createdAt: { gte: new Date(Date.now() - 60_000) } } });
   if (recent >= MESSAGES_PER_MINUTE) throw new HttpError(429, "Muitas mensagens seguidas. Espere um pouco.");
   const message = await prisma.message.create({ data: { senderId: userId, receiverId: friendId, text: `Reação: ${owned.cosmetic.name}`, reactionId } });
-  const { id, name, imageUrl, style } = owned.cosmetic;
-  return { id: message.id, senderId: userId, text: message.text, createdAt: message.createdAt, readAt: null, trade: null, reaction: { id, name, imageUrl, style } };
+  const { id, name, imageUrl, style, animation, pack } = owned.cosmetic;
+  return { id: message.id, senderId: userId, text: message.text, createdAt: message.createdAt, readAt: null, trade: null, reaction: { id, name, imageUrl, style, animation, pack } };
 }
 
 export async function sendMessage(userId: number, friendId: number, text: string) {
@@ -401,9 +406,10 @@ async function duplicateOf(db: Db, userId: number, characterId: number) {
   return db.userSticker.findFirst({ where: { userId, characterId, character: visibleCharacter() }, include: { character: { select: { name: true, rarity: true } } } });
 }
 
-type TradeInput = { toUserId: number; offeredCharacterId?: number | null; requestedCharacterId?: number | null; message?: string | null };
+type TradeInput = { toUserId: number; offeredCharacterId?: number | null; requestedCharacterId?: number | null; message?: string | null; sale?: boolean | null };
 
-function tradeSummary(offered: string | null, requested: string | null) {
+function tradeSummary(offered: string | null, requested: string | null, price: number | null = null) {
+  if (price !== null && offered) return `Venda: ${offered} por ${price} moedas`;
   if (offered && requested) return `Proposta de troca: ${offered} por ${requested}`;
   if (offered) return `Presente: ${offered}`;
   return `Pedido de figurinha: ${requested}`;
@@ -414,6 +420,7 @@ export async function createTrade(userId: number, input: TradeInput) {
   const requestedId = input.requestedCharacterId ?? null;
   if (!offeredId && !requestedId) throw badRequest("Escolha uma figurinha para oferecer ou pedir");
   if (offeredId && offeredId === requestedId) throw badRequest("Escolha figurinhas diferentes");
+  if (input.sale && (!offeredId || requestedId)) throw badRequest("Na venda, escolha só a repetida que você quer vender");
   await requireFriends(prisma, userId, input.toUserId);
 
   const settings = await getSettings(prisma);
@@ -423,11 +430,18 @@ export async function createTrade(userId: number, input: TradeInput) {
 
   let offeredName: string | null = null;
   let requestedName: string | null = null;
+  let price: number | null = null;
+  let sellerCoins: number | null = null;
   if (offeredId) {
     const mine = await duplicateOf(prisma, userId, offeredId);
     if (mine && isCampaignOnlyRarity(mine.character.rarity)) throw badRequest("A figurinha especial é intransferível");
     if (!mine || mine.duplicates <= 0) throw badRequest("Você só pode oferecer figurinhas repetidas");
     offeredName = mine.character.name;
+    if (input.sale) {
+      price = friendSalePrice(mine.character.rarity, settings);
+      if (price <= 0) throw badRequest("Esta figurinha não pode ser vendida");
+      sellerCoins = friendSaleSellerCoins(price, settings.friendSaleFeePercent);
+    }
   }
   if (requestedId) {
     const theirs = await duplicateOf(prisma, input.toUserId, requestedId);
@@ -438,10 +452,10 @@ export async function createTrade(userId: number, input: TradeInput) {
 
   const note = input.message?.trim() ? moderateText(input.message.trim()) : null;
   const trade = await prisma.trade.create({
-    data: { proposerId: userId, receiverId: input.toUserId, offeredCharacterId: offeredId, requestedCharacterId: requestedId, message: note },
+    data: { proposerId: userId, receiverId: input.toUserId, offeredCharacterId: offeredId, requestedCharacterId: requestedId, message: note, priceCoins: price, sellerCoins },
     include: tradeInclude,
   });
-  await prisma.message.create({ data: { senderId: userId, receiverId: input.toUserId, text: tradeSummary(offeredName, requestedName), tradeId: trade.id } });
+  await prisma.message.create({ data: { senderId: userId, receiverId: input.toUserId, text: tradeSummary(offeredName, requestedName, price), tradeId: trade.id } });
   return toTrade(trade);
 }
 
@@ -488,12 +502,23 @@ export async function respondTrade(userId: number, tradeId: number, action: "acc
     if ((await acceptedToday(tx, trade.proposerId)) >= settings.tradesPerDay) throw badRequest("Seu amigo já atingiu o limite de trocas de hoje");
     if (!(await areFriends(tx, trade.proposerId, trade.receiverId))) throw forbidden("Vocês não são mais amigos");
 
+    // Venda a amigo: o comprador paga o preço padrão e o vendedor recebe sem a taxa.
+    if (trade.priceCoins) {
+      const buyer = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { coins: true } });
+      if (buyer.coins < trade.priceCoins) throw badRequest(`Moedas insuficientes: esta figurinha custa ${trade.priceCoins}`);
+    }
+
     let receivedUnlocked: boolean | null = null;
     if (trade.offeredCharacterId) receivedUnlocked = await moveDuplicate(tx, trade.proposerId, userId, trade.offeredCharacterId);
     if (trade.requestedCharacterId) await moveDuplicate(tx, userId, trade.proposerId, trade.requestedCharacterId);
 
+    if (trade.priceCoins) {
+      await tx.user.update({ where: { id: userId }, data: { coins: { decrement: trade.priceCoins } } });
+      await tx.user.update({ where: { id: trade.proposerId }, data: { coins: { increment: trade.sellerCoins ?? 0 } } });
+    }
+
     const saved = await tx.trade.update({ where: { id: trade.id }, data: { status: "ACCEPTED", respondedAt: new Date() }, include: tradeInclude });
-    await tx.message.create({ data: { senderId: userId, receiverId: trade.proposerId, text: "Troca aceita!", tradeId: trade.id } });
+    await tx.message.create({ data: { senderId: userId, receiverId: trade.proposerId, text: trade.priceCoins ? "Venda aceita!" : "Troca aceita!", tradeId: trade.id } });
     const unlockedAchievements = await checkAchievements(tx, userId);
     await checkAchievements(tx, trade.proposerId);
     return {

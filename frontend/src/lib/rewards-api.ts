@@ -3,7 +3,7 @@ import type { StickerRarity } from '@/lib/admin-api';
 import type { UnlockedAchievement } from '@/lib/user-api';
 import type { UserProfile } from '@/types/auth';
 
-export type CosmeticType = 'AVATAR' | 'FRAME' | 'TITLE' | 'NAME_COLOR' | 'REACTION';
+export type CosmeticType = 'AVATAR' | 'FRAME' | 'TITLE' | 'NAME_COLOR' | 'REACTION' | 'PROFILE_BG' | 'ALBUM_COVER' | 'PAWN';
 export type CosmeticUnlock = 'FREE' | 'SHOP' | 'REQUIREMENT' | 'REWARD';
 
 export type Cosmetic = {
@@ -14,8 +14,12 @@ export type Cosmetic = {
   rarity: StickerRarity;
   imageUrl?: string | null;
   color?: string | null;
-  /** Título: plain/glow/rainbow/pulse/shimmer/wave. Moldura: solid/wood/copper/silver/gold/fire/rainbow/ice/sunset/laurel/aurora/neon/royal/galaxy/pearl/pentecost. Reação: emoji. */
+  /** Título: plain/glow/rainbow/pulse/shimmer/wave. Moldura: solid/wood/copper/silver/gold/fire/rainbow/ice/sunset/laurel/aurora/neon/royal/galaxy/pearl/pentecost/emerald. Reação: emoji. */
   style?: string | null;
+  /** Reação: como entra no chat (pop, bounce, shake, spin, rise, pulse). */
+  animation?: string | null;
+  /** Reação: pacote/grupo. */
+  pack?: string | null;
   unlock: CosmeticUnlock;
   priceCoins?: number | null;
   requirement?: string | null;
@@ -41,7 +45,7 @@ export type UnlockedCosmetic = { id: number; name: string; type: CosmeticType; r
 
 export type Inventory = {
   unlocked: UnlockedCosmetic[];
-  equipped: { avatarId: number | null; frameId: number | null; titleId: number | null; nameColorId: number | null };
+  equipped: { avatarId: number | null; frameId: number | null; titleId: number | null; nameColorId: number | null; profileBgId: number | null; albumCoverId: number | null };
   coins: number;
   items: InventoryItem[];
 };
@@ -52,6 +56,9 @@ export type PlayerLook = {
   frame: { imageUrl: string | null; color: string | null; style: string | null } | null;
   title: { name: string; color: string | null; style: string | null; rarity: string } | null;
   nameColor: string | null;
+  /** Fundo do cartão de perfil e capa do álbum. */
+  profileBg?: { imageUrl: string | null; color: string | null; style: string | null } | null;
+  albumCover?: { imageUrl: string | null; color: string | null; style: string | null } | null;
 };
 
 export type PlayerProfile = {
@@ -90,6 +97,23 @@ export type ThemeCollection = {
   claimed: boolean;
 };
 
+/** O que uma recompensa entregou (figurinha sorteada, ajuda, item visual...), como o servidor devolve. */
+export type RewardResult = {
+  rewardType?: string;
+  rewardName: string;
+  characterId: number | null;
+  characterName: string | null;
+  characterRarity: StickerRarity | null;
+  characterImageUrl: string | null;
+  /** A figurinha é nova no álbum. */
+  characterUnlocked: boolean;
+  /** A figurinha já era do jogador: a cópia foi para as repetidas. */
+  duplicate: boolean;
+  cosmeticId?: number | null;
+  cosmeticName: string | null;
+  cosmeticConvertedCoins?: number;
+};
+
 export type PassTierView = {
   id: number;
   level: number;
@@ -97,11 +121,23 @@ export type PassTierView = {
   rewardCoins: number;
   reward: { id: number; name: string; rewardType: string } | null;
   cosmetic: Cosmetic | null;
+  /** O jogador já tem o item visual (de um passe que voltou): o degrau paga moedas no lugar. */
+  cosmeticOwned: boolean;
+  duplicateCoins: number | null;
   reached: boolean;
   claimed: boolean;
 };
 
-export type SeasonPass = { monthKey: string; endsAt: string; xp: number; tiers: PassTierView[] };
+export type PassInfo = { id: number; name: string; description: string | null; color: string | null; imageUrl: string | null };
+
+export type SeasonPass = {
+  monthKey: string;
+  endsAt: string;
+  xp: number;
+  pass: PassInfo | null;
+  nextPass: { name: string; color: string | null; imageUrl: string | null } | null;
+  tiers: PassTierView[];
+};
 
 export type GameEvent = {
   id: number;
@@ -131,7 +167,7 @@ export const claimThemeCollection = (id: number) =>
   apiRequest<{ coins: number; cosmeticGranted: boolean; userCoins: number }>(`/collections/${id}/claim`, { method: 'POST' }, 'Não foi possível resgatar a coleção.');
 export const getSeasonPass = () => apiRequest<SeasonPass>('/pass', { method: 'GET' }, 'Não foi possível carregar o passe.');
 export const claimPassTier = (id: number) =>
-  apiRequest<{ coins: number; reward: { rewardName: string; characterName: string | null } | null; cosmeticGranted: boolean; unlockedAchievements: UnlockedAchievement[]; user: UserProfile }>(
+  apiRequest<{ coins: number; reward: RewardResult | null; cosmeticGranted: boolean; duplicate: { coins: number; reward: RewardResult | null } | null; unlockedAchievements: UnlockedAchievement[]; user: UserProfile }>(
     `/pass/tiers/${id}/claim`,
     { method: 'POST' },
     'Não foi possível resgatar o prêmio do passe.',

@@ -5,6 +5,7 @@ import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 import { achievementsRouter } from "./routes/achievements";
 import { adminRouter } from "./routes/admin";
 import { authRouter } from "./routes/auth";
+import { boardPublicRouter, boardRouter } from "./routes/board";
 import { campaignRouter } from "./routes/campaign";
 import { charactersRouter } from "./routes/characters";
 import { collectionRouter } from "./routes/collection";
@@ -46,6 +47,7 @@ export function createApp() {
   app.use("/api/auth", authRouter);
   app.use("/api/users", usersRouter);
   app.use("/api/uploads", uploadsRouter);
+  app.use("/api/board-public", boardPublicRouter);
 
   // Daqui em diante tudo exige login.
   app.use("/api/characters", requireAuth, charactersRouter);
@@ -71,6 +73,7 @@ export function createApp() {
   app.use("/api/pass", requireAuth, passRouter);
   app.use("/api/events", requireAuth, eventsRouter);
   app.use("/api/campaign", requireAuth, campaignRouter);
+  app.use("/api/board", requireAuth, boardRouter);
 
   app.use("/api", notFoundHandler);
   app.use(errorHandler);

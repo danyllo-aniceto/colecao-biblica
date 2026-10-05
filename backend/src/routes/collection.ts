@@ -3,7 +3,8 @@ import { prisma } from "../db/prisma";
 import { currentUser } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
 import { z } from "../lib/validation";
-import { fuseDuplicates, sellDuplicates } from "../services/collection";
+import { fuseDuplicates, sellDuplicates, upgradeSticker } from "../services/collection";
+import { stickerUpgradeCost, studyStatus } from "../services/game-rules";
 import { visibleCharacter } from "../services/visibility";
 
 export const collectionRouter = Router();
@@ -17,6 +18,8 @@ collectionRouter.get(
       include: { character: { select: { id: true, name: true, imageUrl: true, rarity: true } } },
       orderBy: { acquiredAt: "asc" },
     });
+    const studies = await prisma.characterStudy.findMany({ where: { userId: currentUser(req).id, characterId: { in: stickers.map((sticker) => sticker.characterId) } } });
+    const studyByCharacter = new Map(studies.map((study) => [study.characterId, study.correctAnswers]));
     res.json(
       stickers.map((sticker) => ({
         characterId: sticker.character.id,
@@ -25,6 +28,9 @@ collectionRouter.get(
         rarity: sticker.character.rarity,
         acquiredAt: sticker.acquiredAt,
         duplicates: sticker.duplicates,
+        level: sticker.level,
+        upgradeCost: stickerUpgradeCost(sticker.level),
+        study: studyStatus(studyByCharacter.get(sticker.characterId) ?? 0),
       })),
     );
   }),
@@ -49,6 +55,13 @@ collectionRouter.post(
   asyncHandler(async (req, res) => {
     const input = sellSchema.parse(req.body);
     res.json(await sellDuplicates(currentUser(req).id, input.characterId, input.quantity));
+  }),
+);
+
+collectionRouter.post(
+  "/upgrade",
+  asyncHandler(async (req, res) => {
+    res.json(await upgradeSticker(currentUser(req).id, z.object({ characterId: z.number().int().positive() }).parse(req.body).characterId));
   }),
 );
 

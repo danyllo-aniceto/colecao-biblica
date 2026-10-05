@@ -14,10 +14,14 @@ import { MusicController } from '@/components/sound/music-controller';
 import { playSfx } from '@/lib/sound/sfx';
 import { clearStickerReturn, saveStickerReturn, takeReturnSection } from '@/lib/sticker-return';
 import { MatchResult, type MatchSummary } from '@/components/user/match-result';
+import { ChestOpening } from '@/components/user/chest-opening';
 import { QuizAnswerScreen, type AnswerReveal, type QuizAnswerPayload } from '@/components/user/quiz-answer-screen';
 import { AlbumSection } from '@/components/user/sections/album-section';
 import { HomeSection } from '@/components/user/sections/home-section';
 import { PlaySection, type QuizFormState } from '@/components/user/sections/play-section';
+import { BoardHub } from '@/components/user/board/board-hub';
+import { BoardInviteWatcher } from '@/components/user/board/board-invite-watcher';
+import { peekPendingRoom, setPendingRoom } from '@/lib/board-room-api';
 import { ProfileSection } from '@/components/user/sections/profile-section';
 import { FriendsSection } from '@/components/user/sections/friends-section';
 import { RankingSection } from '@/components/user/sections/ranking-section';
@@ -43,6 +47,8 @@ import {
   startQuizSession,
   updateCurrentUser,
   type AnswerQuizQuestionResult,
+  type ChestPrize,
+  type ChestTierName,
   type CharacterEntry,
   type CollectionProgress,
   type GameRules,
@@ -68,7 +74,7 @@ import { QUIZ_HELPERS, helperCounts, spentHelpers } from '@/lib/quiz-helpers';
 type StickerReveal = Pick<ShopPurchaseResult, 'characterId' | 'characterName' | 'characterRarity' | 'characterImageUrl' | 'characterUnlocked' | 'duplicate'> & { title?: string };
 
 const emptyQuizForm: QuizFormState = {
-  quizType: 'GENERAL',
+  quizType: 'MARATHON',
   characterId: '',
   questionLimit: '10',
 };
@@ -79,7 +85,8 @@ export function UserDashboard() {
   const toast = useToast();
   const { confirm } = useDialogs();
 
-  const [section, setSection] = useState<SectionId>(() => takeReturnSection());
+  // Quem chegou por um convite de sala abre direto na aba Jogar, onde a sala é aberta.
+  const [section, setSection] = useState<SectionId>(() => (peekPendingRoom() ? 'quiz' : takeReturnSection()));
   const [profile, setProfile] = useState<UserProfile | null>(user);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -102,6 +109,8 @@ export function UserDashboard() {
   const [shopError, setShopError] = useState<string | null>(null);
   const [buyingItemId, setBuyingItemId] = useState<number | null>(null);
   const [purchase, setPurchase] = useState<StickerReveal | null>(null);
+  // Baú comprado na loja: abre com a mesma animação do baú da partida.
+  const [shopChest, setShopChest] = useState<{ tier: ChestTierName; prizes: ChestPrize[] } | null>(null);
   const [accountForm, setAccountForm] = useState({ name: user?.name ?? '', email: user?.email ?? '', password: '' });
   const [accountSubmitting, setAccountSubmitting] = useState(false);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
@@ -234,9 +243,11 @@ export function UserDashboard() {
 
     try {
       const payload: StartQuizSessionPayload = {
-        quizType: quizForm.quizType,
+        quizType: quizForm.quizType === 'CHARACTER_STUDY' ? 'CHARACTER_STUDY' : 'GENERAL',
         characterId: quizForm.quizType === 'CHARACTER_STUDY' ? Number(quizForm.characterId) : null,
-        questionLimit: Number(quizForm.questionLimit),
+        // A maratona não escolhe quantidade: vai até as 3 vidas acabarem.
+        ...(quizForm.quizType === 'MARATHON' ? {} : { questionLimit: Number(quizForm.questionLimit) }),
+        ...(quizForm.quizType === 'TRAINING' ? { training: true } : {}),
       };
 
       const session = await startQuizSession(payload);
@@ -449,7 +460,10 @@ export function UserDashboard() {
           : current,
       );
 
-      if (result.characterName) {
+      if (result.chestTier && result.chestPrizes?.length) {
+        setShopChest({ tier: result.chestTier, prizes: result.chestPrizes });
+        void refreshCollection();
+      } else if (result.characterName) {
         setPurchase(result);
         void refreshCollection();
       } else {
@@ -540,6 +554,7 @@ export function UserDashboard() {
     <PlayerProfileProvider>
     <CampaignProvider
       level={profile?.level ?? 1}
+      xp={profile?.xp ?? 0}
       playerName={profile?.name ?? 'Você'}
       onUserUpdate={(updated, achievements) => {
         setProfile((current) => (current ? { ...current, ...updated } : updated));
@@ -548,6 +563,12 @@ export function UserDashboard() {
       }}
     >
     <MusicController inQuiz={Boolean(quizSession && showQuizAnswer)} />
+    <BoardInviteWatcher
+      onAccept={(code) => {
+        setPendingRoom(code);
+        navigate('quiz');
+      }}
+    />
     <div className="min-h-dvh pb-28 sm:pb-10">
       <PlayerHud look={myLook} profile={profile} section={section} onNavigate={navigate} socialNotices={socialSummary ? socialSummary.pendingRequests + socialSummary.pendingTrades + socialSummary.unreadMessages : 0} onSignOut={signOut} />
 
@@ -592,11 +613,13 @@ export function UserDashboard() {
 
             {section === 'stickers' ? (
               <AlbumSection
+                look={myLook}
                 playerName={profile?.name ?? 'Você'}
                 characters={characters}
                 ownedIds={ownedIds}
                 collection={collection}
                 gameRules={gameRules}
+                onUpgraded={() => void refreshCollection()}
                 onOpenSticker={openSticker}
                 onWallet={(wallet) => {
                   updateWallet(wallet);
@@ -611,21 +634,25 @@ export function UserDashboard() {
             ) : null}
 
             {section === 'quiz' ? (
-              <PlaySection
-                profile={profile}
-                characters={characters}
-                ownedIds={ownedIds}
-                gameRules={gameRules}
-                quizForm={quizForm}
-                onChangeForm={setQuizForm}
-                quizSession={quizSession}
-                submitting={quizSubmitting}
-                error={quizError}
-                onStart={handleStartQuiz}
-                onResume={handleResumeQuiz}
-                onAbandon={handleAbandonQuiz}
-                onStartChallenge={() => void handleStartChallenge()}
-              />
+              <div className="space-y-8">
+                <PlaySection
+                  profile={profile}
+                  characters={characters}
+                  ownedIds={ownedIds}
+                  collection={collection}
+                  gameRules={gameRules}
+                  quizForm={quizForm}
+                  onChangeForm={setQuizForm}
+                  quizSession={quizSession}
+                  submitting={quizSubmitting}
+                  error={quizError}
+                  onStart={handleStartQuiz}
+                  onResume={handleResumeQuiz}
+                  onAbandon={handleAbandonQuiz}
+                  onStartChallenge={() => void handleStartChallenge()}
+                />
+                {quizSession ? null : <BoardHub playerName={profile?.name ?? ''} />}
+              </div>
             ) : null}
 
             {section === 'shop' ? (
@@ -688,6 +715,17 @@ export function UserDashboard() {
           }}
         />
         </QuizThemeFrame>
+      ) : null}
+
+      {shopChest ? (
+        <ChestOpening
+          tier={shopChest.tier}
+          prizes={shopChest.prizes}
+          onDone={() => {
+            setShopChest(null);
+            void refreshCollection();
+          }}
+        />
       ) : null}
 
       <MatchResult

@@ -1,4 +1,6 @@
+import type { ChestPrize } from '@/lib/user-api';
 import { apiRequest } from '@/lib/http';
+import type { Landmark, PathStyle } from '@board/layout';
 import type { StickerRarity } from '@/lib/admin-api';
 import type { Cosmetic } from '@/lib/rewards-api';
 import type { UnlockedAchievement } from '@/lib/user-api';
@@ -12,7 +14,7 @@ export type CampaignNode = {
   title: string | null;
   /** Última parada do cenário: a relíquia. */
   relic: boolean;
-  /** Dá um fragmento da carta especial. */
+  /** Dá um fragmento da figurinha especial. */
   fragment: boolean;
   rewardCoins: number;
   reward: { id: number; name: string; rewardType: string } | null;
@@ -35,11 +37,20 @@ export type CampaignScenario = {
   color: string | null;
   mapImageUrl: string | null;
   iconImageUrl: string | null;
+  /** Imagem de fundo da tela do quiz neste cenário. */
+  quizBackgroundUrl?: string | null;
+  /** Imagem de fundo do tabuleiro deste cenário. */
+  boardImageUrl?: string | null;
+  /** Curvas do caminho do tabuleiro e marcos do cenário (editáveis no painel). */
+  boardPathStyle?: PathStyle | null;
+  boardLandmarks?: Landmark[] | null;
   /** Música do tema: liberada ao chegar ao primeiro nível do cenário. */
   /** Tem música cadastrada (mesmo bloqueada). */
   hasMusic: boolean;
   musicUnlocked: boolean;
   musicUrl: string | null;
+  /** Música do tema usada no tabuleiro (não depende do nível do jogador). */
+  boardMusicUrl?: string | null;
   startLevel: number | null;
   endLevel: number | null;
   total: number;
@@ -59,6 +70,8 @@ export type Campaign = {
   level: number;
   currentScenarioId: number | null;
   special: CampaignSpecial | null;
+  /** O que o Baú de Esmeralda traz (prêmio da figurinha especial). */
+  emeraldChest: { coins: number; helpers: number; stickerRarities: StickerRarity[]; cosmetics: Cosmetic[] };
   scenarios: CampaignScenario[];
 };
 
@@ -72,6 +85,8 @@ export type ClaimNodeResult = {
   fragments: { claimed: number; total: number } | null;
   specialUnlocked: boolean;
   special: { id: number; name: string; imageUrl: string | null } | null;
+  /** Ao conquistar a figurinha especial: o Baú de Esmeralda e tudo que ele trouxe. */
+  emeraldChest?: { tier: 'EMERALD'; prizes: ChestPrize[] } | null;
   unlockedAchievements: UnlockedAchievement[];
   user: UserProfile;
 };

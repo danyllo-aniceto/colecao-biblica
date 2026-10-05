@@ -10,10 +10,10 @@ function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ');
 }
 
-/** Mesma curva do backend: sair do nível 1 custa 200 XP e cada nível seguinte pede 50 XP a mais. */
+/** Mesma curva do backend: sair do nível 1 custa 300 XP e cada nível seguinte pede 100 XP a mais. */
 export function xpForLevel(level: number) {
   const steps = Math.max(0, level - 1);
-  return 200 * steps + (50 * steps * (steps - 1)) / 2;
+  return 300 * steps + (100 * steps * (steps - 1)) / 2;
 }
 
 /** Progresso dentro do nível atual. */

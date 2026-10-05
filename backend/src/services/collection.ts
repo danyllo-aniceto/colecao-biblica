@@ -2,7 +2,7 @@ import type { StickerRarity } from "@prisma/client";
 import { lockUser, transaction } from "../db/prisma";
 import { badRequest, notFound } from "../lib/errors";
 import { checkAchievements } from "./achievements";
-import { duplicateStickerCoins, isCampaignOnlyRarity } from "./game-rules";
+import { duplicateStickerCoins, isCampaignOnlyRarity, stickerUpgradeCost } from "./game-rules";
 import { grantStickerOrDuplicate } from "./rewards";
 import { getSettings } from "./settings";
 import { visibleCharacter } from "./visibility";
@@ -82,6 +82,30 @@ export async function fuseDuplicates(userId: number, rarity: StickerRarity, rand
       duplicate: !unlocked,
       unlockedAchievements,
       userCoins: saved.coins,
+    };
+  });
+}
+
+/**
+ * Sobe o nível da figurinha gastando repetidas dela mesma (1, 2, 3 e 5 até o nível 5).
+ * Por enquanto o nível só enfeita; vai valer no futuro modo de cartas.
+ */
+export async function upgradeSticker(userId: number, characterId: number) {
+  return transaction(async (tx) => {
+    await lockUser(tx, userId);
+    const sticker = await tx.userSticker.findUnique({ where: { userId_characterId: { userId, characterId } }, include: { character: { select: { name: true, rarity: true } } } });
+    if (!sticker) throw notFound("Você não tem esta figurinha");
+    const cost = stickerUpgradeCost(sticker.level);
+    if (cost === null) throw badRequest("Esta figurinha já está no nível máximo");
+    if (sticker.duplicates < cost) throw badRequest(`Faltam repetidas: subir para o nível ${sticker.level + 1} custa ${cost} (você tem ${sticker.duplicates})`);
+    const saved = await tx.userSticker.update({ where: { id: sticker.id }, data: { level: { increment: 1 }, duplicates: { decrement: cost } } });
+    return {
+      characterId,
+      characterName: sticker.character.name,
+      level: saved.level,
+      duplicates: saved.duplicates,
+      spent: cost,
+      nextCost: stickerUpgradeCost(saved.level),
     };
   });
 }

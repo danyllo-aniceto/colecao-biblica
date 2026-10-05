@@ -1,8 +1,10 @@
+import { Prisma } from "@prisma/client";
 import { Router } from "express";
 import { prisma } from "../db/prisma";
 import { badRequest, notFound } from "../lib/errors";
 import { pageOf, readPage } from "../lib/pagination";
 import { clearableText, imageRef, parseId, requiredText, z } from "../lib/validation";
+import { MAX_LANDMARKS } from "../board/layout";
 import { requireAdmin } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
 import { ensureScenarioAvatar } from "../services/scenario-avatar";
@@ -26,6 +28,18 @@ const musicRef = () =>
       message: "Use o link de um arquivo de áudio ou envie o arquivo",
     });
 
+/** Marco ao lado do caminho do tabuleiro: imagem (ou emoji), posição em % do caminho, lado, distância e tamanho. */
+const landmarkSchema = z
+  .object({
+    imageUrl: imageRef(),
+    emoji: z.string().trim().max(8).nullish(),
+    at: z.number().min(0).max(100),
+    side: z.enum(["L", "R"]),
+    offset: z.number().min(40).max(170),
+    size: z.number().min(30).max(160),
+  })
+  .refine((landmark) => Boolean(landmark.imageUrl) || Boolean(landmark.emoji?.trim()), { message: "Cada marco precisa de uma imagem ou de um emoji" });
+
 const scenarioSchema = z.object({
   slug: z
     .string()
@@ -40,6 +54,10 @@ const scenarioSchema = z.object({
   mapImageUrl: imageRef(),
   iconImageUrl: imageRef(),
   musicUrl: musicRef(),
+  quizBackgroundUrl: imageRef(),
+  boardImageUrl: imageRef(),
+  boardPathStyle: z.enum(["SOFT", "MEDIUM", "WIDE"]).nullish(),
+  boardLandmarks: z.array(landmarkSchema).max(MAX_LANDMARKS, `No máximo ${MAX_LANDMARKS} marcos`).nullish(),
   fragmentCharacterId: z.number().int().positive().nullish(),
   sortOrder: z.number().int().min(0).max(100_000),
   active: z.boolean(),
@@ -102,6 +120,10 @@ campaignAdminRouter.post(
         mapImageUrl: input.mapImageUrl ?? null,
         iconImageUrl: input.iconImageUrl ?? null,
         musicUrl: input.musicUrl ?? null,
+        quizBackgroundUrl: input.quizBackgroundUrl ?? null,
+        boardImageUrl: input.boardImageUrl ?? null,
+        boardPathStyle: input.boardPathStyle ?? null,
+        boardLandmarks: input.boardLandmarks ?? Prisma.DbNull,
         fragmentCharacterId: input.fragmentCharacterId ?? null,
       },
     });
@@ -130,6 +152,11 @@ campaignAdminRouter.put(
         mapImageUrl: input.mapImageUrl,
         iconImageUrl: input.iconImageUrl,
         musicUrl: input.musicUrl,
+        quizBackgroundUrl: input.quizBackgroundUrl,
+        boardImageUrl: input.boardImageUrl,
+        // Ausente mantém; null limpa (volta ao padrão).
+        boardPathStyle: input.boardPathStyle,
+        boardLandmarks: input.boardLandmarks === null ? Prisma.DbNull : input.boardLandmarks,
       },
     });
     // O ícone de perfil acompanha a arte do ícone do cenário.

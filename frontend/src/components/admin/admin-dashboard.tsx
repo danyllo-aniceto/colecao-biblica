@@ -28,25 +28,31 @@ import { CosmeticsScreen } from './screens/cosmetics-screen';
 import { CollectionsScreen } from './screens/collections-screen';
 import { SeasonScreen } from './screens/season-screen';
 import { CampaignScreen } from './screens/campaign-screen';
+import { ChestsScreen } from './screens/chests-screen';
+import { MissionsScreen } from './screens/missions-screen';
+import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
+import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
 import PaletteRoundedIcon from '@mui/icons-material/PaletteRounded';
 import WorkspacesRoundedIcon from '@mui/icons-material/WorkspacesRounded';
 import MilitaryTechRoundedIcon from '@mui/icons-material/MilitaryTechRounded';
 import { UsersScreen } from './screens/users-screen';
 
-export type AdminScreen = 'visao-geral' | 'usuarios' | 'personagens' | 'perguntas' | 'reportes' | 'recompensas' | 'loja' | 'visual' | 'colecoes' | 'temporada' | 'campanha' | 'configuracoes';
+export type AdminScreen = 'visao-geral' | 'usuarios' | 'personagens' | 'perguntas' | 'reportes' | 'recompensas' | 'loja' | 'visual' | 'colecoes' | 'temporada' | 'campanha' | 'missoes' | 'baus' | 'configuracoes';
 
 const SCREENS: Array<{ id: AdminScreen; label: string; description: string; icon: ReactNode }> = [
   { id: 'visao-geral', label: 'Visão geral', description: 'Números do jogo e o que falta no conteúdo.', icon: <DashboardRoundedIcon fontSize="inherit" /> },
   { id: 'personagens', label: 'Personagens', description: 'Figurinhas do álbum: textos, imagens, diagramas e publicação.', icon: <ExtensionRoundedIcon fontSize="inherit" /> },
   { id: 'perguntas', label: 'Perguntas', description: 'Banco de perguntas das partidas, com explicação e referência.', icon: <QuizRoundedIcon fontSize="inherit" /> },
   { id: 'reportes', label: 'Reportes', description: 'Perguntas que os jogadores marcaram como erradas ou confusas.', icon: <FlagRoundedIcon fontSize="inherit" /> },
-  { id: 'recompensas', label: 'Recompensas', description: 'Prêmios sorteados no fim das partidas e usados pela loja.', icon: <EmojiEventsRoundedIcon fontSize="inherit" /> },
+  { id: 'recompensas', label: 'Recompensas', description: 'Prêmios usados pela loja e pelos baús. Nos baús, só as recompensas de figurinha e o pacote surpresa entram no sorteio (moedas e ajudas vêm direto de cada baú).', icon: <EmojiEventsRoundedIcon fontSize="inherit" /> },
   { id: 'loja', label: 'Loja', description: 'Itens que os jogadores compram com moedas.', icon: <StorefrontRoundedIcon fontSize="inherit" /> },
-  { id: 'visual', label: 'Visual', description: 'Ícones, molduras, títulos, cores do nome e reações dos jogadores.', icon: <PaletteRoundedIcon fontSize="inherit" /> },
+  { id: 'visual', label: 'Visual', description: 'Ícones, molduras, títulos, cores do nome, reações, fundos, capas e peões do tabuleiro.', icon: <PaletteRoundedIcon fontSize="inherit" /> },
   { id: 'colecoes', label: 'Coleções', description: 'Grupos de figurinhas com prêmio para quem completar.', icon: <WorkspacesRoundedIcon fontSize="inherit" /> },
   { id: 'temporada', label: 'Passe e eventos', description: 'Trilha mensal de prêmios e eventos com bônus por tempo limitado.', icon: <MilitaryTechRoundedIcon fontSize="inherit" /> },
-  { id: 'campanha', label: 'Campanha', description: 'Cenários do caminho, paradas por nível, mapas e recompensas.', icon: <MapRoundedIcon fontSize="inherit" /> },
+  { id: 'campanha', label: 'Campanha', description: 'Cenários do caminho, paradas por nível, mapas, imagem do tabuleiro e recompensas.', icon: <MapRoundedIcon fontSize="inherit" /> },
+  { id: 'missoes', label: 'Missões', description: 'Metas diárias e semanais com prêmios variados.', icon: <TaskAltRoundedIcon fontSize="inherit" /> },
+  { id: 'baus', label: 'Simulador de baús', description: 'Abre baús de teste e mostra o que cada nível entrega, com as regras de agora.', icon: <Inventory2RoundedIcon fontSize="inherit" /> },
   { id: 'usuarios', label: 'Usuários', description: 'Contas, papéis e ajustes de saldo.', icon: <PeopleAltRoundedIcon fontSize="inherit" /> },
   { id: 'configuracoes', label: 'Configurações', description: 'Regras do jogo, economia e prêmio diário.', icon: <SettingsRoundedIcon fontSize="inherit" /> },
 ];
@@ -156,11 +162,13 @@ export function AdminDashboard() {
             {screen === 'perguntas' ? <QuestionsScreen params={params} /> : null}
             {screen === 'reportes' ? <ReportsScreen onChanged={refreshReports} /> : null}
             {screen === 'recompensas' ? <RewardsScreen /> : null}
+            {screen === 'missoes' ? <MissionsScreen /> : null}
             {screen === 'loja' ? <ShopScreen /> : null}
             {screen === 'visual' ? <CosmeticsScreen /> : null}
             {screen === 'colecoes' ? <CollectionsScreen /> : null}
             {screen === 'temporada' ? <SeasonScreen /> : null}
             {screen === 'campanha' ? <CampaignScreen /> : null}
+            {screen === 'baus' ? <ChestsScreen /> : null}
             {screen === 'usuarios' ? <UsersScreen /> : null}
             {screen === 'configuracoes' ? <SettingsScreen /> : null}
           </>

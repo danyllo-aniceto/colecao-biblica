@@ -27,6 +27,9 @@ export const REWARD_TYPE_LABELS: Record<RewardType, string> = {
   DOUBLE_COINS: 'Bênção dobrada',
   COMBO_SHIELD: 'Escudo de sequência',
   COSMETIC: 'Item visual',
+  CHEST_BRONZE: 'Baú de Bronze',
+  CHEST_SILVER: 'Baú de Prata',
+  CHEST_GOLD: 'Baú de Ouro',
 };
 
 export const REPORT_REASON_LABELS: Record<ReportReason, string> = {
@@ -88,4 +91,14 @@ export const QUIZ_TYPE_LABELS: Record<string, string> = {
   GENERAL: 'Quiz geral',
   CHARACTER_STUDY: 'Estudo de personagem',
   DAILY_CHALLENGE: 'Desafio do dia',
+};
+
+/** Como a reação entra no chat (valor guardado -> nome no painel). */
+export const REACTION_ANIMATION_LABELS: Record<string, string> = {
+  pop: 'Pulo',
+  bounce: 'Quicar',
+  shake: 'Tremer',
+  spin: 'Girar',
+  rise: 'Subir',
+  pulse: 'Pulsar',
 };

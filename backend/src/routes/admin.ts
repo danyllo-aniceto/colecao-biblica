@@ -3,6 +3,8 @@ import { prisma } from "../db/prisma";
 import { env } from "../lib/env";
 import { asyncHandler } from "../middleware/errorHandler";
 import { dayRangeInTimeZone, suggestedDifficulty } from "../services/game-rules";
+import { simulateChests } from "../services/chest-simulator";
+import { z } from "../lib/validation";
 import { uploadsConfigured } from "../services/uploads";
 import { scheduledCharacter, visibleCharacter } from "../services/visibility";
 
@@ -80,5 +82,14 @@ adminRouter.get(
       stickersGranted,
       uploads: uploadsConfigured() ? "blob" : "inline",
     });
+  }),
+);
+
+/** Simulador dos baús da partida: abre milhares de baús em memória e mostra o que cada um entrega (não grava nada). */
+adminRouter.post(
+  "/chests/simulate",
+  asyncHandler(async (req, res) => {
+    const { runs } = z.object({ runs: z.number().int().min(100).max(50_000).default(5000) }).parse(req.body ?? {});
+    res.json(await simulateChests(runs));
   }),
 );

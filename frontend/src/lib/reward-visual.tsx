@@ -3,6 +3,7 @@ import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 import ContentCutRoundedIcon from '@mui/icons-material/ContentCutRounded';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
+import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import PaletteRoundedIcon from '@mui/icons-material/PaletteRounded';
 import ShieldRoundedIcon from '@mui/icons-material/ShieldRounded';
@@ -39,6 +40,10 @@ export function rewardVisual(type?: string | null, size = 40): { icon: ReactNode
       return { icon: <ShieldRoundedIcon sx={sx} />, tint: TINTS.info };
     case 'COINS':
       return { icon: <CoinIcon className="h-[1em] w-[1em]" />, tint: TINTS.primary };
+    case 'CHEST_BRONZE':
+    case 'CHEST_SILVER':
+    case 'CHEST_GOLD':
+      return { icon: <Inventory2RoundedIcon sx={sx} />, tint: TINTS.primary };
     case 'COSMETIC':
       return { icon: <PaletteRoundedIcon sx={sx} />, tint: TINTS.accent };
     default:

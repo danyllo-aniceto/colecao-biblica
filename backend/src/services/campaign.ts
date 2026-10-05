@@ -2,6 +2,8 @@ import { lockUser, prisma, transaction, type Db } from "../db/prisma";
 import { badRequest, notFound } from "../lib/errors";
 import { checkAchievements } from "./achievements";
 import { campaignNodeState, currentScenarioId, defaultNodePosition, fragmentsComplete } from "./game-rules";
+import { EMERALD_CHEST, openEmeraldChest } from "./chests";
+import { EMERALD_SET_NAMES } from "./default-cosmetics";
 import { grantCosmetic, toCosmeticResponse } from "./cosmetics";
 import { toUserResponse } from "./mappers";
 import { applyReward, grantStickerIfMissing, walletData } from "./rewards";
@@ -17,7 +19,7 @@ async function claimedNodeIds(userId: number): Promise<Set<number>> {
   return new Set(rows.map((row) => Number(row.code)));
 }
 
-/** Campanha do jogador: cenários na ordem do caminho, paradas com situação e progresso da carta especial. */
+/** Campanha do jogador: cenários na ordem do caminho, paradas com situação e progresso da figurinha especial. */
 export async function getCampaign(userId: number) {
   const [user, scenarios, claimed] = await Promise.all([
     prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { level: true } }),
@@ -32,14 +34,23 @@ export async function getCampaign(userId: number) {
   const allNodes = scenarios.flatMap((scenario) => scenario.nodes.map((node) => ({ level: node.level, scenarioId: scenario.id, id: node.id })));
   const currentId = currentScenarioId(scenarios, allNodes, user.level);
 
-  // A carta especial: um fragmento por parada marcada, de qualquer cenário que aponte para ela.
+  // A figurinha especial: um fragmento por parada marcada, de qualquer cenário que aponte para ela.
   const fragmentNodes = scenarios.flatMap((scenario) => (scenario.fragmentCharacterId ? scenario.nodes.filter((node) => node.fragment) : []));
   const fragmentCharacter = scenarios.find((scenario) => scenario.fragmentCharacter)?.fragmentCharacter ?? null;
   const owned = fragmentCharacter ? (await prisma.userSticker.count({ where: { userId, characterId: fragmentCharacter.id } })) > 0 : false;
 
+  // Prévia do Baú de Esmeralda (o prêmio da figurinha especial): o que ele traz, para o mapa mostrar bloqueado.
+  const emeraldCosmetics = await prisma.cosmetic.findMany({ where: { name: { in: [...EMERALD_SET_NAMES] }, active: true }, orderBy: { id: "asc" } });
+
   return {
     level: user.level,
     currentScenarioId: currentId,
+    emeraldChest: {
+      coins: EMERALD_CHEST.coins,
+      helpers: EMERALD_CHEST.helpers,
+      stickerRarities: ["EPIC", "LEGENDARY"] as const,
+      cosmetics: emeraldCosmetics.map(toCosmeticResponse),
+    },
     special: fragmentCharacter
       ? {
           character: fragmentCharacter,
@@ -79,9 +90,15 @@ export async function getCampaign(userId: number) {
         color: scenario.color,
         mapImageUrl: scenario.mapImageUrl,
         iconImageUrl: scenario.iconImageUrl,
+        quizBackgroundUrl: scenario.quizBackgroundUrl,
+        boardImageUrl: scenario.boardImageUrl,
+        boardPathStyle: scenario.boardPathStyle,
+        boardLandmarks: scenario.boardLandmarks,
         hasMusic: Boolean(scenario.musicUrl),
         musicUnlocked,
         musicUrl: musicUnlocked ? scenario.musicUrl : null,
+        /** Música do tema para o tabuleiro: lá o cenário é escolhido, então toca mesmo sem ter chegado ao nível. */
+        boardMusicUrl: scenario.musicUrl,
         startLevel,
         endLevel: nodes[nodes.length - 1]?.level ?? null,
         total: nodes.length,
@@ -103,7 +120,7 @@ export async function currentScenarioIdFor(db: Db, userId: number): Promise<numb
   return currentScenarioId(scenarios, nodes, user.level);
 }
 
-/** Resgata a parada (precisa ter chegado ao nível): moedas, ajuda, item visual e fragmento da carta especial. */
+/** Resgata a parada (precisa ter chegado ao nível): moedas, ajuda, item visual e fragmento da figurinha especial. */
 export async function claimNode(userId: number, nodeId: number) {
   return transaction(async (tx) => {
     const node = await tx.scenarioNode.findFirst({ where: { id: nodeId, scenario: { active: true } }, include: { rewardDefinition: true, scenario: true } });
@@ -122,10 +139,11 @@ export async function claimNode(userId: number, nodeId: number) {
     const avatarId = node.relic ? node.scenario.avatarCosmeticId : null;
     const avatarGranted = avatarId ? await grantCosmetic(tx, userId, avatarId, "CAMPAIGN") : false;
 
-    // Fragmento: ao juntar todos, a carta especial é entregue (uma única vez).
+    // Fragmento: ao juntar todos, a figurinha especial é entregue (uma única vez).
     let fragments: { claimed: number; total: number } | null = null;
     let specialUnlocked = false;
     let special: { id: number; name: string; imageUrl: string | null } | null = null;
+    let emeraldChest: Awaited<ReturnType<typeof openEmeraldChest>> | null = null;
     const characterId = node.fragment ? node.scenario.fragmentCharacterId : null;
     if (characterId) {
       const fragmentNodes = await tx.scenarioNode.findMany({ where: { fragment: true, scenario: { fragmentCharacterId: characterId, active: true } }, select: { id: true } });
@@ -135,6 +153,11 @@ export async function claimNode(userId: number, nodeId: number) {
       if (fragmentsComplete(mine.length, ids.size)) {
         specialUnlocked = await grantStickerIfMissing(tx, userId, characterId);
         special = await tx.biblicalCharacter.findUnique({ where: { id: characterId }, select: { id: true, name: true, imageUrl: true } });
+        // Conquistar a figurinha especial abre o Baú de Esmeralda (uma única vez, junto com a carta).
+        if (specialUnlocked && special) {
+          emeraldChest = await openEmeraldChest(tx, wallet, settings, Math.random, special);
+          await tx.user.update({ where: { id: userId }, data: walletData(wallet) });
+        }
       }
     }
 
@@ -150,6 +173,7 @@ export async function claimNode(userId: number, nodeId: number) {
       fragments,
       specialUnlocked,
       special: specialUnlocked ? special : null,
+      emeraldChest,
       unlockedAchievements,
       user: toUserResponse(saved),
     };

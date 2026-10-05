@@ -17,6 +17,7 @@ export type CosmeticStats = AchievementStats & {
   achievements: number;
   allLegendary: boolean;
   collectionsCompleted: number;
+  boardWins: number;
 };
 
 type RequirementDefinition = {
@@ -48,25 +49,30 @@ export const REQUIREMENTS: RequirementDefinition[] = [
   { code: "TRADES", label: "Trocas concluídas", needsValue: true, progress: (s, v) => ({ current: s.trades, target: v }) },
   { code: "ACHIEVEMENTS", label: "Conquistas desbloqueadas", needsValue: true, progress: (s, v) => ({ current: s.achievements, target: v }) },
   { code: "COLLECTIONS", label: "Coleções temáticas completas", needsValue: true, progress: (s, v) => ({ current: s.collectionsCompleted, target: v }) },
+  { code: "BOARD_WINS", label: "Vencer partidas online do Tabuleiro", needsValue: true, progress: (s, v) => ({ current: s.boardWins, target: v }) },
 ];
 
 export const requirementByCode = (code: string | null) => REQUIREMENTS.find((requirement) => requirement.code === code);
 
 export const TITLE_STYLES = ["plain", "glow", "rainbow", "pulse", "shimmer", "wave"] as const;
+/** Como a reação entra no chat. `pop` é a padrão. */
+export const REACTION_ANIMATIONS = ["pop", "bounce", "shake", "spin", "rise", "pulse"] as const;
 export const FRAME_STYLES = ["solid", "wood", "silver", "gold", "fire", "rainbow", "copper", "ice", "sunset", "laurel", "aurora", "neon", "royal", "galaxy", "pearl", "pentecost"] as const;
 
 /** Campo do usuário que guarda o item equipado de cada tipo (reações não se equipam). */
-const EQUIP_FIELD: Partial<Record<CosmeticType, "avatarId" | "frameId" | "titleId" | "nameColorId">> = {
+const EQUIP_FIELD: Partial<Record<CosmeticType, "avatarId" | "frameId" | "titleId" | "nameColorId" | "profileBgId" | "albumCoverId">> = {
   AVATAR: "avatarId",
   FRAME: "frameId",
   TITLE: "titleId",
   NAME_COLOR: "nameColorId",
+  PROFILE_BG: "profileBgId",
+  ALBUM_COVER: "albumCoverId",
 };
 
 export async function loadCosmeticStats(db: Db, userId: number): Promise<CosmeticStats> {
   const [base, user, correct, leagueWins, achievements, legendaryTotal, legendaryOwned, collections] = await Promise.all([
     loadStats(db, userId),
-    db.user.findUniqueOrThrow({ where: { id: userId }, select: { bestCombo: true } }),
+    db.user.findUniqueOrThrow({ where: { id: userId }, select: { bestCombo: true, boardWins: true } }),
     db.quizMatch.aggregate({ where: { userId }, _sum: { correctAnswers: true } }),
     db.userClaim.count({ where: { userId, kind: "LEAGUE", code: "POS1" } }),
     db.userAchievement.count({ where: { userId } }),
@@ -78,6 +84,7 @@ export async function loadCosmeticStats(db: Db, userId: number): Promise<Cosmeti
     ...base,
     correctAnswers: correct._sum.correctAnswers ?? 0,
     bestCombo: user.bestCombo,
+    boardWins: user.boardWins,
     leagueWins,
     achievements,
     allLegendary: legendaryTotal > 0 && legendaryOwned >= legendaryTotal,
@@ -140,6 +147,8 @@ export function toCosmeticResponse(cosmetic: Cosmetic) {
     imageUrl: cosmetic.imageUrl,
     color: cosmetic.color,
     style: cosmetic.style,
+    animation: cosmetic.animation,
+    pack: cosmetic.pack,
     unlock: cosmetic.unlock,
     priceCoins: cosmetic.priceCoins,
     requirement: cosmetic.requirement,
@@ -160,13 +169,13 @@ export async function getInventory(userId: number) {
   const [cosmetics, owned, user, stats] = await Promise.all([
     prisma.cosmetic.findMany({ where: { active: true }, include: { event: true }, orderBy: [{ type: "asc" }, { sortOrder: "asc" }, { id: "asc" }] }),
     prisma.userCosmetic.findMany({ where: { userId }, select: { cosmeticId: true, acquiredAt: true } }),
-    prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { avatarId: true, frameId: true, titleId: true, nameColorId: true, coins: true } }),
+    prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { avatarId: true, frameId: true, titleId: true, nameColorId: true, profileBgId: true, albumCoverId: true, coins: true } }),
     loadCosmeticStats(prisma, userId),
   ]);
   const ownedAt = new Map(owned.map((row) => [row.cosmeticId, row.acquiredAt]));
   return {
     unlocked,
-    equipped: { avatarId: user.avatarId, frameId: user.frameId, titleId: user.titleId, nameColorId: user.nameColorId },
+    equipped: { avatarId: user.avatarId, frameId: user.frameId, titleId: user.titleId, nameColorId: user.nameColorId, profileBgId: user.profileBgId, albumCoverId: user.albumCoverId },
     coins: user.coins,
     items: cosmetics
       // Itens de evento fora do período só aparecem para quem já tem.
@@ -225,6 +234,8 @@ const lookSelect = {
   frame: { select: { imageUrl: true, color: true, style: true } },
   title: { select: { name: true, color: true, style: true, rarity: true } },
   nameColor: { select: { color: true } },
+  profileBg: { select: { imageUrl: true, color: true, style: true } },
+  albumCover: { select: { imageUrl: true, color: true, style: true } },
 } satisfies Prisma.UserSelect;
 
 type LookRow = Prisma.UserGetPayload<{ select: typeof lookSelect }>;
@@ -234,6 +245,9 @@ export type PlayerLook = {
   frame: { imageUrl: string | null; color: string | null; style: string | null } | null;
   title: { name: string; color: string | null; style: string | null; rarity: string } | null;
   nameColor: string | null;
+  /** Fundo do cartão de perfil e capa do álbum (imagem e/ou cor). */
+  profileBg: { imageUrl: string | null; color: string | null; style: string | null } | null;
+  albumCover: { imageUrl: string | null; color: string | null; style: string | null } | null;
 };
 
 function toLook(row: LookRow | undefined): PlayerLook {
@@ -242,6 +256,8 @@ function toLook(row: LookRow | undefined): PlayerLook {
     frame: row?.frame ?? null,
     title: row?.title ?? null,
     nameColor: row?.nameColor?.color ?? null,
+    profileBg: row?.profileBg ?? null,
+    albumCover: row?.albumCover ?? null,
   };
 }
 

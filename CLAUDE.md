@@ -39,6 +39,24 @@ código em **português do Brasil**.
   `default-campaign.ts`; guia de arte em `docs/campanha-prompts-de-arte.md`.
 - Toda mudança de schema vira migração em `backend/prisma/migrations` (o deploy roda `migrate deploy`).
 
+## Modo Tabuleiro (jogo com amigos, sem progresso de perfil)
+
+- Plano e checklist por etapas em `docs/modo-tabuleiro-plano.md`; atualize o checklist a cada etapa.
+- O motor é **puro e sem dependências** em `backend/src/board/` (`engine.ts`, `bots.ts`, `scenarios.ts`) e roda igual no navegador
+  (partida local) e no servidor (online). O front o importa pelo alias `@board/*` (`vite.config.ts` e `tsconfig.json`): nunca
+  importe nada de fora dessa pasta dentro dela.
+- Online: `services/board-room.ts` (salas, lobby, convites, jogadas) e `routes/board.ts`. Sem websocket: o cliente consulta com
+  `?since=<versão>`; tudo que acontece "sozinho" (bots, tempo esgotado, gabarito, ausência) é resolvido de forma preguiçosa por
+  `advance()` na próxima consulta/jogada, sempre com a linha da sala trancada (`FOR UPDATE`). Nunca devolva a alternativa certa nem o
+  sorteio ao cliente antes do gabarito. A tela da partida é a mesma no local e no online (`board-screen.tsx`).
+- O caminho do tabuleiro é desenhado pelo app (`board/layout.ts`: casas equidistantes ao longo de curvas, testado) sobre um terreno
+  em imagem repetida e espelhada; marcos e curvas são dados do cenário editáveis no painel. A arte nunca desenha a estrada.
+- Avisos animados: `board/callouts.ts` (puro, testado) transforma os eventos do motor em cartazes; local e online usam a mesma lista
+  (`FeedEntry`, tocada uma vez por `id` em `use-callouts.ts`). Todo evento novo do motor que mereça aviso entra ali.
+- Os peões básicos (grátis) são itens `PAWN` do painel (`unlock = FREE`); `FREE_PAWNS` do motor é só o reserva.
+- O motor não vê a alternativa marcada, só se acertou. Toda regra nova tem teste em `engine.test.ts`; regras de cenário são
+  dados em `scenarios.ts`. Nada do modo dá XP, moedas, figurinhas nem mexe nas estatísticas das perguntas.
+
 ## Comandos
 
 ```bash

@@ -4,6 +4,7 @@ import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 import ContentCutRoundedIcon from '@mui/icons-material/ContentCutRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
@@ -19,7 +20,7 @@ import { Segmented } from '@/components/ui/segmented';
 import { Select } from '@/components/ui/select';
 import { errorMessage, useToast } from '@/components/ui/toast';
 import { CoinIcon } from '@/components/game/game-ui';
-import { createUser, deleteUser, grantUser, listUsers, updateUser, type GrantPayload, type Role } from '@/lib/admin-api';
+import { createUser, deleteUser, grantUser, listUsers, resetAllUsers, resetUser, updateUser, type GrantPayload, type Role } from '@/lib/admin-api';
 import type { UserProfile } from '@/types/auth';
 import { AdminPanel, Cell, DataTable, IconAction, Row, SearchInput } from '../admin-ui';
 import { useDebouncedValue, usePagedList } from '../use-paged-list';
@@ -31,7 +32,7 @@ const fetchUsers = (params: { page: number; size: number; search?: string; role?
 
 export function UsersScreen() {
   const { user: me } = useAuth();
-  const { confirm } = useDialogs();
+  const { confirm, prompt } = useDialogs();
   const toast = useToast();
   const [search, setSearch] = useState('');
   const [role, setRole] = useState('');
@@ -39,6 +40,60 @@ export function UsersScreen() {
   const [granting, setGranting] = useState<UserProfile | null>(null);
   const debouncedSearch = useDebouncedValue(search);
   const list = usePagedList(fetchUsers, { search: debouncedSearch, role });
+
+  /** Pergunta se amizades e conversas também devem sumir (por padrão ficam). */
+  const askSocial = () =>
+    confirm({
+      title: 'Apagar também amigos e conversas?',
+      message: 'Se escolher manter, a pessoa continua com os amigos e o histórico de conversas; só o progresso do jogo volta ao começo.',
+      confirmLabel: 'Apagar também',
+      cancelLabel: 'Manter amigos e conversas',
+    });
+
+  async function reset(target: UserProfile) {
+    const ok = await confirm({
+      title: `Voltar ${target.name} ao começo?`,
+      message: (
+        <>
+          Zera moedas, XP, nível, ajudas, <strong>figurinhas</strong>, estudos, anotações, partidas, conquistas, missões, campanha e itens visuais, como se a conta fosse nova. O login continua o mesmo.{' '}
+          <strong>Não dá para desfazer.</strong>
+        </>
+      ),
+      confirmLabel: 'Resetar jogador',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    try {
+      await resetUser(target.id, await askSocial());
+      toast.success(`${target.name} voltou ao começo.`);
+      list.reload();
+    } catch (reason) {
+      toast.error(errorMessage(reason));
+    }
+  }
+
+  async function resetEveryone() {
+    const typed = await prompt({
+      title: 'Resetar TODOS os jogadores?',
+      message: (
+        <>
+          Todos os jogadores (menos os administradores) voltam ao começo: sem moedas, XP, figurinhas, conquistas ou qualquer progresso. <strong>Não dá para desfazer.</strong> Digite RESETAR para confirmar.
+        </>
+      ),
+      label: 'Confirmação',
+      placeholder: 'RESETAR',
+      confirmLabel: 'Resetar todos',
+      validate: (value) => (value.trim() === 'RESETAR' ? null : 'Digite RESETAR para confirmar.'),
+    });
+    if (typed?.trim() !== 'RESETAR') return;
+    try {
+      const result = await resetAllUsers(await askSocial());
+      toast.success(`${result.reset} jogador(es) voltaram ao começo.`);
+      list.reload();
+    } catch (reason) {
+      toast.error(errorMessage(reason));
+    }
+  }
 
   async function remove(target: UserProfile) {
     const ok = await confirm({
@@ -60,10 +115,16 @@ export function UsersScreen() {
   return (
     <AdminPanel
       actions={
-        <Button onClick={() => setEditing('new')}>
-          <AddRoundedIcon fontSize="small" />
-          Novo usuário
-        </Button>
+        <>
+          <Button variant="secondary" onClick={() => void resetEveryone()}>
+            <RestartAltRoundedIcon fontSize="small" />
+            Resetar todos os jogadores
+          </Button>
+          <Button onClick={() => setEditing('new')}>
+            <AddRoundedIcon fontSize="small" />
+            Novo usuário
+          </Button>
+        </>
       }
     >
       <div className="grid gap-3 md:grid-cols-[2fr_1fr]">
@@ -127,6 +188,11 @@ export function UsersScreen() {
                 <IconAction label="Ajustar saldo" onClick={() => setGranting(account)}>
                   <CardGiftcardRoundedIcon fontSize="small" />
                 </IconAction>
+                {account.role !== 'ADMIN' ? (
+                  <IconAction label="Voltar ao começo (resetar progresso)" onClick={() => void reset(account)}>
+                    <RestartAltRoundedIcon fontSize="small" />
+                  </IconAction>
+                ) : null}
                 {account.id !== me?.id ? (
                   <IconAction label="Excluir conta" tone="danger" onClick={() => void remove(account)}>
                     <DeleteOutlineRoundedIcon fontSize="small" />

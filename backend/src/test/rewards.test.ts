@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "../db/prisma";
+import { transaction } from "../db/prisma";
+import { finalizeMatch } from "../services/quiz";
+import { getSettings } from "../services/settings";
 import { api, bearer, login, resetDatabase } from "./helpers";
 
 const hasDatabase = Boolean(process.env.TEST_DATABASE_URL);
@@ -10,7 +13,7 @@ async function correctOf(questionId: number) {
 const wrong = (correct: string) => (correct === "A" ? "B" : "A");
 
 async function start(token: string, questionLimit = 2) {
-  const started = await api.post("/api/quiz/sessions/start").set(bearer(token)).send({ quizType: "GENERAL", questionLimit });
+  const started = await api.post("/api/quiz/sessions/start").set(bearer(token)).send({ quizType: "GENERAL", questionLimit, training: true });
   expect(started.status).toBe(200);
   return started.body as { sessionId: number; currentQuestion: { id: number } };
 }
@@ -134,19 +137,18 @@ describe.skipIf(!hasDatabase)("recompensas novas", () => {
       const pack = shop.body.find((item: { name: string }) => item.name === "Pacote surpresa");
       const crowd = shop.body.find((item: { name: string }) => item.name === "Voz da multidão");
       expect((await api.post(`/api/shop/buy/${pack.id}`).set(bearer(token))).status).toBe(200);
-      expect((await api.post(`/api/shop/buy/${pack.id}`).set(bearer(token))).status).toBe(200);
-      const third = await api.post(`/api/shop/buy/${pack.id}`).set(bearer(token));
-      expect(third.status).toBe(400);
-      expect(third.body.message).toContain("2 figurinha(s) hoje");
+      const second = await api.post(`/api/shop/buy/${pack.id}`).set(bearer(token));
+      expect(second.status).toBe(400);
+      expect(second.body.message).toContain("1 figurinha(s) hoje");
       expect((await api.post(`/api/shop/buy/${crowd.id}`).set(bearer(token))).status).toBe(200);
-      expect((await api.get("/api/shop/limits").set(bearer(token))).body).toEqual({ stickerLimitPerDay: 2, stickersBoughtToday: 2 });
+      expect((await api.get("/api/shop/limits").set(bearer(token))).body).toEqual({ stickerLimitPerDay: 1, stickersBoughtToday: 1 });
     });
 
     it("nível sobe por curva progressiva", async () => {
-      const player = await prisma.user.update({ where: { email: "user@email.com" }, data: { xp: 430 } });
+      const player = await prisma.user.update({ where: { email: "user@email.com" }, data: { xp: 680 } });
       const token = await login("user@email.com");
       const session = await start(token, 1);
-      // 1 acerto em 1 pergunta = 10 + 12 de bônus = 22 XP → 452 XP = nível 3 (450).
+      // 1 acerto em 1 pergunta = 10 + 12 de bônus = 22 XP → 702 XP = nível 3 (700).
       const result = await answer(token, session.sessionId, session.currentQuestion.id, await correctOf(session.currentQuestion.id));
       expect(result.body.matchResult.userLevel).toBe(3);
       expect((await prisma.user.findUniqueOrThrow({ where: { id: player.id } })).level).toBe(3);
@@ -219,14 +221,14 @@ describe.skipIf(!hasDatabase)("recompensas novas", () => {
       const player = await prisma.user.update({ where: { email: "user@email.com" }, data: { level: 3, chestLevel: 1, coins: 0 } });
       const token = await login("user@email.com");
       const first = await api.post("/api/chests/open").set(bearer(token));
-      expect(first.body).toMatchObject({ level: 2, coins: 40, chestsPending: 1 });
+      expect(first.body).toMatchObject({ level: 2, coins: 26, chestsPending: 1 });
       expect(first.body.boost).not.toBeNull();
       await api.post("/api/chests/open").set(bearer(token));
       const none = await api.post("/api/chests/open").set(bearer(token));
       expect(none.status).toBe(400);
       const after = await prisma.user.findUniqueOrThrow({ where: { id: player.id } });
       expect(after.chestLevel).toBe(3);
-      expect(after.coins).toBe(85);
+      expect(after.coins).toBe(55);
     });
 
     it("coleção temática: esconde as que faltam e paga uma vez ao completar", async () => {
@@ -269,6 +271,131 @@ describe.skipIf(!hasDatabase)("recompensas novas", () => {
       expect(claimed.body.user.hintBoosts).toBe(1);
       expect(claimed.body.user).not.toHaveProperty("password");
       expect((await api.post(`/api/pass/tiers/${second.id}/claim`).set(bearer(token))).status).toBe(400);
+    });
+  });
+
+  describe("nível da figurinha e baú de diamante", () => {
+    it("repetidas sobem o nível da figurinha (1, 2, 3 e 5 repetidas) até o nível 5", async () => {
+      const token = await login("user@email.com");
+      const player = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
+      const davi = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Davi" } });
+      await prisma.userSticker.create({ data: { userId: player.id, characterId: davi.id, duplicates: 1 } });
+
+      expect((await api.get("/api/collection/my").set(bearer(token))).body[0]).toMatchObject({ level: 1, upgradeCost: 1, duplicates: 1 });
+      const first = await api.post("/api/collection/upgrade").set(bearer(token)).send({ characterId: davi.id });
+      expect(first.body).toMatchObject({ level: 2, duplicates: 0, spent: 1, nextCost: 2 });
+
+      // Faltam repetidas para o próximo nível.
+      const short = await api.post("/api/collection/upgrade").set(bearer(token)).send({ characterId: davi.id });
+      expect(short.status).toBe(400);
+      expect(short.body.message).toMatch(/Faltam repetidas/);
+
+      await prisma.userSticker.update({ where: { userId_characterId: { userId: player.id, characterId: davi.id } }, data: { duplicates: 10 } });
+      expect((await api.post("/api/collection/upgrade").set(bearer(token)).send({ characterId: davi.id })).body).toMatchObject({ level: 3, duplicates: 8 });
+      expect((await api.post("/api/collection/upgrade").set(bearer(token)).send({ characterId: davi.id })).body).toMatchObject({ level: 4, duplicates: 5 });
+      expect((await api.post("/api/collection/upgrade").set(bearer(token)).send({ characterId: davi.id })).body).toMatchObject({ level: 5, duplicates: 0, nextCost: null });
+      expect((await api.post("/api/collection/upgrade").set(bearer(token)).send({ characterId: davi.id })).body.message).toMatch(/nível máximo/);
+    });
+
+    it("loja vende baús (nunca o de diamante), abre na hora e conta no limite diário de figurinhas", async () => {
+      const token = await login("user@email.com");
+      await prisma.user.update({ where: { email: "user@email.com" }, data: { coins: 10_000 } });
+      const shop = (await api.get("/api/shop").set(bearer(token))).body as Array<{ id: number; name: string; rewardType: string; priceCoins: number; itemType: string }>;
+      const chests = shop.filter((item) => item.rewardType.startsWith("CHEST_"));
+      expect(chests.map((item) => item.name)).toEqual(["Baú de Bronze", "Baú de Prata", "Baú de Ouro"]);
+      expect(chests.map((item) => item.priceCoins)).toEqual([600, 1100, 2000]);
+      expect(chests.every((item) => item.itemType === "STICKER")).toBe(true);
+      expect(shop.some((item) => /diamante/i.test(item.name))).toBe(false);
+
+      const bought = await api.post(`/api/shop/buy/${chests[1].id}`).set(bearer(token));
+      expect(bought.status).toBe(200);
+      expect(bought.body.chestTier).toBe("SILVER");
+      expect(bought.body.chestPrizes[0]).toEqual({ kind: "COINS", amount: 25 });
+      expect(bought.body.chestPrizes.filter((prize: { kind: string }) => prize.kind === "HELPER")).toHaveLength(2);
+      // Pagou 1.100 e recebeu as moedas do baú.
+      expect(bought.body.userCoins).toBeGreaterThanOrEqual(10_000 - 1100 + 25);
+
+      // Baú conta no limite de 1 figurinha comprada por dia.
+      const second = await api.post(`/api/shop/buy/${chests[0].id}`).set(bearer(token));
+      expect(second.status).toBe(400);
+      expect(second.body.message).toContain("1 figurinha(s) hoje");
+    });
+
+    it("visual dos baús: admin cadastra imagem, nome e cor; todos leem; cor inválida é recusada", async () => {
+      const admin = await login("admin2@email.com");
+      const player = await login("user@email.com");
+      expect((await api.get("/api/chests/designs").set(bearer(player))).body).toEqual([]);
+      expect((await api.put("/api/chests/admin/designs/gold").set(bearer(player)).send({ name: "x" })).status).toBe(403);
+      expect((await api.put("/api/chests/admin/designs/gold").set(bearer(admin)).send({ color: "azul" })).status).toBe(400);
+
+      const saved = await api.put("/api/chests/admin/designs/gold").set(bearer(admin)).send({ imageUrl: "https://exemplo.com/ouro.png", openImageUrl: "https://exemplo.com/ouro-aberto.png", name: "Tesouro de Ouro", color: "#ffcc00" });
+      expect(saved.body).toEqual({ tier: "GOLD", imageUrl: "https://exemplo.com/ouro.png", openImageUrl: "https://exemplo.com/ouro-aberto.png", name: "Tesouro de Ouro", color: "#ffcc00" });
+      expect((await api.get("/api/chests/designs").set(bearer(player))).body).toEqual([saved.body]);
+      expect((await api.put("/api/chests/admin/designs/rubi").set(bearer(admin)).send({})).status).toBe(400);
+      // Limpar os campos volta ao desenho padrão.
+      const cleared = await api.put("/api/chests/admin/designs/gold").set(bearer(admin)).send({ imageUrl: null, openImageUrl: null, name: "", color: null });
+      expect(cleared.body).toEqual({ tier: "GOLD", imageUrl: null, openImageUrl: null, name: null, color: null });
+    });
+
+    it("simulador de baús do painel: só admin, números coerentes e nada é gravado", async () => {
+      const admin = await login("admin2@email.com");
+      const player = await login("user@email.com");
+      expect((await api.post("/api/admin/chests/simulate").set(bearer(player)).send({ runs: 500 })).status).toBe(403);
+      const before = await prisma.userSticker.count();
+
+      const simulation = await api.post("/api/admin/chests/simulate").set(bearer(admin)).send({ runs: 1000 });
+      expect(simulation.status).toBe(200);
+      const { tiers, thresholds } = simulation.body;
+      expect(thresholds).toMatchObject({ bronze: 7, silver: 15, gold: 40, diamond: 70, dailyLimit: 5 });
+      // Ouro e diamante sempre trazem figurinha; o bronze, só às vezes.
+      expect(tiers.GOLD.chanceSticker).toBe(1);
+      expect(tiers.BRONZE.chanceSticker).toBeGreaterThan(0.3);
+      expect(tiers.BRONZE.chanceSticker).toBeLessThan(0.6);
+      expect(tiers.BRONZE.avgCoins).toBe(10);
+      expect(tiers.DIAMOND.avgCoins).toBe(100);
+      expect(tiers.GOLD.samples).toHaveLength(3);
+      expect(tiers.GOLD.samples[0][0]).toMatchObject({ kind: "COINS", amount: 50 });
+      expect(await prisma.userSticker.count()).toBe(before);
+    });
+
+    it("diamante: figurinha épica ou lendária, extras, e só um por dia (o resto vira ouro)", async () => {
+      const player = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
+      await prisma.biblicalCharacter.createMany({
+        data: [
+          { name: "Épico de teste", rarity: "EPIC", shortSummary: "<p>x</p>", fullDescription: "<p>x</p>", published: true, createdBy: "teste" },
+          { name: "Lendário de teste", rarity: "LEGENDARY", shortSummary: "<p>x</p>", fullDescription: "<p>x</p>", published: true, createdBy: "teste" },
+        ],
+      });
+      const play = (correctAnswers: number) =>
+        transaction(async (tx) => {
+          const user = await tx.user.findUniqueOrThrow({ where: { id: player.id } });
+          const settings = await getSettings(tx);
+          return finalizeMatch(tx, user, settings, {
+            quizType: "GENERAL",
+            questionsAnswered: correctAnswers + 3,
+            correctAnswers,
+            wrongAnswers: 3,
+            characterId: null,
+            xpMultiplier: 1,
+            startedAt: new Date(),
+          }, () => 0.1);
+        });
+
+      const first = await play(70);
+      expect(first).toMatchObject({ chestTier: "DIAMOND", chestCoins: 100, rewardCharacterRarity: "EPIC" });
+      const prizes = first.chestPrizes as Array<{ kind: string; rarity?: string }>;
+      expect(prizes.filter((prize) => prize.kind === "HELPER")).toHaveLength(3);
+      const stickers = prizes.filter((prize) => prize.kind === "STICKER");
+      expect(stickers.length).toBeGreaterThanOrEqual(1);
+      expect(stickers.every((prize) => prize.rarity === "EPIC" || prize.rarity === "LEGENDARY")).toBe(true);
+      expect((await prisma.quizMatch.findUniqueOrThrow({ where: { id: first.matchId } })).chestTier).toBe("DIAMOND");
+
+      // O limite é de 1 diamante por dia: o segundo vira baú de ouro.
+      const second = await play(75);
+      expect(second.chestTier).toBe("GOLD");
+
+      // Abaixo do corte não é diamante.
+      expect((await play(45)).chestTier).toBe("GOLD");
     });
   });
 });

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
@@ -7,6 +7,7 @@ import { playSfx } from '@/lib/sound/sfx';
 import { StickerCard } from '@/components/game/sticker-card';
 import type { StickerRarity } from '@/lib/admin-api';
 import { cn } from '@/lib/cn';
+import { coverImageStyle } from '@/lib/look-background';
 import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
 import type { CharacterEntry } from '@/lib/user-api';
 
@@ -17,6 +18,23 @@ const FLIP_MS = 650;
 const TILTS = [-2.2, 1.6, -0.8, 2.4, -1.4, 0.9];
 
 type Flip = { from: number; to: number };
+
+/**
+ * Folha "fantasma" com todas as vagas de uma folha cheia. Fica invisível por trás de cada página para todas
+ * terem exatamente a mesma altura (folha cheia, folha com poucas figurinhas, capa e fim do álbum).
+ */
+function PageSizer({ wide }: { wide: boolean }) {
+  return (
+    <div aria-hidden className="pointer-events-none invisible col-start-1 row-start-1 flex flex-col">
+      <div className={cn('grid gap-3 sm:gap-4', wide ? 'grid-cols-3' : 'grid-cols-2')}>
+        {Array.from({ length: wide ? PER_PAGE_WIDE : PER_PAGE_NARROW }, (_, index) => (
+          <StickerCard key={index} name="Figurinha" rarity="COMMON" owned size="sm" />
+        ))}
+      </div>
+      <p className="mt-3 text-xs">0</p>
+    </div>
+  );
+}
 
 function useWide() {
   const query = '(min-width: 768px)';
@@ -36,19 +54,24 @@ type AlbumBookProps = {
   totalCharacters: number;
   ownedCount: number;
   duplicatesById: Map<number, number>;
+  levelsById?: Map<number, number>;
   onOpenSticker: (id: number) => void;
   /** Muda quando os filtros mudam: o álbum volta para a primeira folha. */
   resetKey: string;
   /** Figurinha a mostrar ao abrir (volta da ficha): o álbum abre na folha dela. */
   focusId?: number | null;
   onFocused?: () => void;
+  /** Capa equipada pelo jogador (cores e imagem da capa do livro). */
+  coverStyle?: CSSProperties;
+  /** Imagem da capa equipada: preenche a folha de abertura. */
+  coverImage?: string | null;
 };
 
 /**
  * Álbum de verdade: capa, folhas de papel e a folha virando ao trocar de página
  * (setas, arrastar no celular, setas do teclado ou a paginação embaixo).
  */
-export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, onOpenSticker, resetKey, focusId = null, onFocused }: AlbumBookProps) {
+export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, levelsById, onOpenSticker, resetKey, focusId = null, onFocused, coverStyle, coverImage }: AlbumBookProps) {
   const wide = useWide();
   const perPage = wide ? PER_PAGE_WIDE : PER_PAGE_NARROW;
   const [view, setView] = useState(0);
@@ -97,18 +120,23 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
   }
 
   function renderPage(index: number, side: 'left' | 'right' | 'single') {
-    const paper = cn('album-paper relative flex min-h-full w-full flex-col p-3 sm:p-5', side === 'left' && 'album-paper-left', side === 'right' && 'album-paper-right');
+    const paper = cn('album-paper relative grid min-h-full w-full grid-cols-1 content-start p-3 sm:p-5', side === 'left' && 'album-paper-left', side === 'right' && 'album-paper-right');
     if (index === 0) {
       return (
         <div className={paper}>
-          <AlbumIntro items={items} ownedCount={ownedCount} totalCharacters={totalCharacters} />
+          <PageSizer wide={wide} />
+          <div className="col-start-1 row-start-1 flex">
+            <AlbumIntro items={items} ownedCount={ownedCount} totalCharacters={totalCharacters} coverImage={coverImage} />
+          </div>
         </div>
       );
     }
     const stickers = stickerPages[index - 1];
     if (!stickers) {
       return (
-        <div className={cn(paper, 'items-center justify-center text-center')}>
+        <div className={paper}>
+          <PageSizer wide={wide} />
+          <div className="col-start-1 row-start-1 flex flex-col items-center justify-center text-center">
           {items.length === 0 ? (
             <>
               <CollectionsBookmarkRoundedIcon className="text-muted/60" sx={{ fontSize: 56 }} />
@@ -118,11 +146,14 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
           ) : (
             <p className="font-display text-sm font-semibold text-muted/70">Fim do álbum (por enquanto)</p>
           )}
+          </div>
         </div>
       );
     }
     return (
       <div className={paper}>
+        <PageSizer wide={wide} />
+        <div className="col-start-1 row-start-1 flex flex-col">
         <div className={cn('grid flex-1 content-start gap-3 sm:gap-4', wide ? 'grid-cols-3' : 'grid-cols-2')}>
           {stickers.map((character, position) => (
             <div key={character.id} className="relative" style={{ transform: `rotate(${TILTS[(character.id + position) % TILTS.length]}deg)` }}>
@@ -136,12 +167,14 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
                 owned
                 size="sm"
                 duplicates={duplicatesById.get(character.id) ?? 0}
+                level={levelsById?.get(character.id) ?? 1}
                 onClick={() => onOpenSticker(character.id)}
               />
             </div>
           ))}
         </div>
         <p className={cn('mt-3 font-display text-xs font-bold text-muted', side === 'left' ? 'text-left' : side === 'right' ? 'text-right' : 'text-center')}>{index}</p>
+        </div>
       </div>
     );
   }
@@ -159,8 +192,8 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
     const rightPage = flip ? (forward ? right(flip.to) : right(flip.from)) : right(view);
     base = (
       <div className="grid grid-cols-2">
-        <div className="flex min-h-[34rem]">{renderPage(leftPage, 'left')}</div>
-        <div className="flex min-h-[34rem]">{renderPage(rightPage, 'right')}</div>
+        <div className="flex">{renderPage(leftPage, 'left')}</div>
+        <div className="flex">{renderPage(rightPage, 'right')}</div>
       </div>
     );
     if (flip) {
@@ -172,7 +205,7 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
       );
     }
   } else {
-    base = <div className="flex min-h-[31rem]">{renderPage(flip ? (forward ? flip.to : flip.from) : view, 'single')}</div>;
+    base = <div className="flex">{renderPage(flip ? (forward ? flip.to : flip.from) : view, 'single')}</div>;
     if (flip) {
       leaf = (
         <div className={cn('album-leaf pointer-events-none absolute inset-0 z-20', forward ? 'album-leaf-next' : 'album-leaf-in')} onAnimationEnd={(event) => event.target === event.currentTarget && done?.()}>
@@ -207,6 +240,7 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
             if (delta < -50) go(view + 1);
             if (delta > 50) go(view - 1);
           }}
+          style={coverStyle}
           className="album-cover rounded-[1.75rem] p-2 outline-none focus-visible:ring-4 focus-visible:ring-primary/40 sm:p-3"
         >
           <div className="relative overflow-hidden rounded-2xl [perspective:1800px]">
@@ -245,9 +279,25 @@ function TurnButton({ side, disabled, onClick }: { side: 'left' | 'right'; disab
   );
 }
 
-function AlbumIntro({ items, ownedCount, totalCharacters }: { items: CharacterEntry[]; ownedCount: number; totalCharacters: number }) {
+export function AlbumIntro({ items, ownedCount, totalCharacters, coverImage }: { items: CharacterEntry[]; ownedCount: number; totalCharacters: number; coverImage?: string | null }) {
   const byRarity = (rarity: StickerRarity) => items.filter((item) => item.rarity === rarity).length;
   const percent = totalCharacters ? Math.round((ownedCount / totalCharacters) * 100) : 0;
+  if (coverImage) {
+    // Capa equipada: a arte preenche a folha e os números ficam num selo embaixo.
+    return (
+      <div className="relative flex flex-1 flex-col justify-end overflow-hidden rounded-xl text-center text-white" style={coverImageStyle(coverImage)}>
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+        <div className="relative space-y-1 p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/80">Coleção Bíblica</p>
+          <h3 className="font-display text-3xl font-bold drop-shadow">Meu álbum</h3>
+          <p className="font-display text-lg font-bold drop-shadow">
+            {ownedCount}/{totalCharacters} · {percent}% completo
+          </p>
+          <p className="text-xs text-white/80">Arraste para o lado ou use as setas para virar a página.</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
       <img src="/icons/icon-192.png" alt="" width={72} height={72} className="h-18 w-18 drop-shadow-md" />

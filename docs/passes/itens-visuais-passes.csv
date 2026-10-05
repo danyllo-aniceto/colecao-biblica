@@ -1,0 +1,81 @@
+﻿Tipo;Nome;Raridade;Cor;Efeito;Emoji;Imagem;Animação;Pacote;Preço;Descrição
+Reação;Estrela de Belém;Comum;;;⭐;;Girar;Noite de Belém;;Exclusivo do passe Noite de Belém
+Reação;Glória nas alturas;Rara;;;👼;;Subir;Noite de Belém;;Exclusivo do passe Noite de Belém
+Cor do nome;Dourado de Belém;Rara;#f2c94c;;;;;;;Exclusivo do passe Noite de Belém
+Ícone;Manjedoura;Rara;;;;;;;;Exclusivo do passe Noite de Belém (envie a imagem e ative)
+Moldura;Moldura Estrela de Belém;Épica;#f2c94c;solid;;;;;;Exclusivo do passe Noite de Belém
+Título;Pastor de Belém;Épica;#f2c94c;Cintilar;;;;;;Exclusivo do passe Noite de Belém
+Fundo de perfil;Noite em Belém;Épica;#1b2a5c;;;;;;;Exclusivo do passe Noite de Belém
+Capa do álbum;Capa Noite de Belém;Lendária;#1b2a5c;;;;;;;Exclusivo do passe Noite de Belém
+Reação;Tumba vazia;Comum;;;🪨;;Pulo;Aleluia, Ele Vive!;;Exclusivo do passe Aleluia, Ele Vive!
+Reação;Aleluia;Rara;;;🕊️;;Subir;Aleluia, Ele Vive!;;Exclusivo do passe Aleluia, Ele Vive!
+Cor do nome;Alvorada;Rara;#f4b942;;;;;;;Exclusivo do passe Aleluia, Ele Vive!
+Ícone;Cruz da Alvorada;Rara;;;;;;;;Exclusivo do passe Aleluia, Ele Vive! (envie a imagem e ative)
+Moldura;Moldura Luz da Ressurreição;Épica;#f4b942;solid;;;;;;Exclusivo do passe Aleluia, Ele Vive!
+Título;Testemunha da Alvorada;Épica;#f4b942;Cintilar;;;;;;Exclusivo do passe Aleluia, Ele Vive!
+Fundo de perfil;Manhã da Ressurreição;Épica;#8e6bd1;;;;;;;Exclusivo do passe Aleluia, Ele Vive!
+Capa do álbum;Capa da Ressurreição;Lendária;#8e6bd1;;;;;;;Exclusivo do passe Aleluia, Ele Vive!
+Reação;Línguas de fogo;Comum;;;🔥;;Pulsar;Fogo do Espírito;;Exclusivo do passe Fogo do Espírito
+Reação;Vento do Espírito;Rara;;;🌬️;;Girar;Fogo do Espírito;;Exclusivo do passe Fogo do Espírito
+Cor do nome;Vermelho Pentecostes;Rara;#e4572e;;;;;;;Exclusivo do passe Fogo do Espírito
+Ícone;Chama do Espírito;Rara;;;;;;;;Exclusivo do passe Fogo do Espírito (envie a imagem e ative)
+Moldura;Moldura Línguas de Fogo;Épica;#f2994a;solid;;;;;;Exclusivo do passe Fogo do Espírito
+Título;Cheio do Espírito;Épica;#f2994a;Pulsar;;;;;;Exclusivo do passe Fogo do Espírito
+Fundo de perfil;Cenáculo em Chamas;Épica;#e4572e;;;;;;;Exclusivo do passe Fogo do Espírito
+Capa do álbum;Capa Pentecostes;Lendária;#e4572e;;;;;;;Exclusivo do passe Fogo do Espírito
+Reação;Mar aberto;Comum;;;🌊;;Pulo;Travessia do Mar Vermelho;;Exclusivo do passe Travessia do Mar Vermelho
+Reação;Maná do céu;Rara;;;🍞;;Subir;Travessia do Mar Vermelho;;Exclusivo do passe Travessia do Mar Vermelho
+Cor do nome;Azul do Mar Vermelho;Rara;#0e8fb8;;;;;;;Exclusivo do passe Travessia do Mar Vermelho
+Ícone;Cajado de Moisés;Rara;;;;;;;;Exclusivo do passe Travessia do Mar Vermelho (envie a imagem e ative)
+Moldura;Moldura Muralhas de Água;Épica;#d6a540;solid;;;;;;Exclusivo do passe Travessia do Mar Vermelho
+Título;Libertado pelas Águas;Épica;#0e8fb8;Onda;;;;;;Exclusivo do passe Travessia do Mar Vermelho
+Fundo de perfil;Mar que se abriu;Épica;#0e6b8f;;;;;;;Exclusivo do passe Travessia do Mar Vermelho
+Capa do álbum;Capa da Travessia;Lendária;#0e6b8f;;;;;;;Exclusivo do passe Travessia do Mar Vermelho
+Reação;Harpa de Davi;Comum;;;🎶;;Pulo;Davi, o Pastor-Rei;;Exclusivo do passe Davi, o Pastor-Rei
+Reação;Coroa do pastor;Rara;;;👑;;Pulsar;Davi, o Pastor-Rei;;Exclusivo do passe Davi, o Pastor-Rei
+Cor do nome;Verde dos Pastos;Rara;#6b8e23;;;;;;;Exclusivo do passe Davi, o Pastor-Rei
+Ícone;Funda de Davi;Rara;;;;;;;;Exclusivo do passe Davi, o Pastor-Rei (envie a imagem e ative)
+Moldura;Moldura Coroa de Davi;Épica;#f2c94c;solid;;;;;;Exclusivo do passe Davi, o Pastor-Rei
+Título;Salmista de Israel;Épica;#f2c94c;Brilho;;;;;;Exclusivo do passe Davi, o Pastor-Rei
+Fundo de perfil;Vale de Elá;Épica;#6b8e23;;;;;;;Exclusivo do passe Davi, o Pastor-Rei
+Capa do álbum;Capa Pastor-Rei;Lendária;#6b8e23;;;;;;;Exclusivo do passe Davi, o Pastor-Rei
+Reação;Navio de Paulo;Comum;;;⛵;;Quicar;Viagens de Paulo;;Exclusivo do passe Viagens de Paulo
+Reação;Carta aos romanos;Rara;;;📜;;Subir;Viagens de Paulo;;Exclusivo do passe Viagens de Paulo
+Cor do nome;Azul do Mediterrâneo;Rara;#2a6f97;;;;;;;Exclusivo do passe Viagens de Paulo
+Ícone;Rolo de Cartas;Rara;;;;;;;;Exclusivo do passe Viagens de Paulo (envie a imagem e ative)
+Moldura;Moldura Corda e Leme;Épica;#c8693a;solid;;;;;;Exclusivo do passe Viagens de Paulo
+Título;Apóstolo dos Gentios;Épica;#c8693a;Brilho;;;;;;Exclusivo do passe Viagens de Paulo
+Fundo de perfil;Estrada de Damasco;Épica;#2a6f97;;;;;;;Exclusivo do passe Viagens de Paulo
+Capa do álbum;Capa Viagens de Paulo;Lendária;#2a6f97;;;;;;;Exclusivo do passe Viagens de Paulo
+Reação;Fogo do Carmelo;Comum;;;🔥;;Pulsar;Elias, o Profeta de Fogo;;Exclusivo do passe Elias, o Profeta de Fogo
+Reação;Corvos de Elias;Rara;;;🐦;;Subir;Elias, o Profeta de Fogo;;Exclusivo do passe Elias, o Profeta de Fogo
+Cor do nome;Laranja do Carmelo;Rara;#e8590c;;;;;;;Exclusivo do passe Elias, o Profeta de Fogo
+Ícone;Carruagem de Fogo;Rara;;;;;;;;Exclusivo do passe Elias, o Profeta de Fogo (envie a imagem e ative)
+Moldura;Moldura Fogo do Carmelo;Épica;#f59e0b;solid;;;;;;Exclusivo do passe Elias, o Profeta de Fogo
+Título;Profeta do Carmelo;Épica;#f59e0b;Pulsar;;;;;;Exclusivo do passe Elias, o Profeta de Fogo
+Fundo de perfil;Monte Carmelo;Épica;#c2410c;;;;;;;Exclusivo do passe Elias, o Profeta de Fogo
+Capa do álbum;Capa Elias, o Profeta;Lendária;#c2410c;;;;;;;Exclusivo do passe Elias, o Profeta de Fogo
+Reação;Leão manso;Comum;;;🦁;;Pulo;Daniel e os Leões;;Exclusivo do passe Daniel e os Leões
+Reação;Oração de Daniel;Rara;;;🙏;;Subir;Daniel e os Leões;;Exclusivo do passe Daniel e os Leões
+Cor do nome;Âmbar de Babilônia;Rara;#d9a441;;;;;;;Exclusivo do passe Daniel e os Leões
+Ícone;Leão de Daniel;Rara;;;;;;;;Exclusivo do passe Daniel e os Leões (envie a imagem e ative)
+Moldura;Moldura Cova dos Leões;Épica;#e0b43a;solid;;;;;;Exclusivo do passe Daniel e os Leões
+Título;Fiel entre os Leões;Épica;#e0b43a;Brilho;;;;;;Exclusivo do passe Daniel e os Leões
+Fundo de perfil;Cova dos Leões;Épica;#7c5a2b;;;;;;;Exclusivo do passe Daniel e os Leões
+Capa do álbum;Capa Daniel e os Leões;Lendária;#7c5a2b;;;;;;;Exclusivo do passe Daniel e os Leões
+Reação;Grande peixe;Comum;;;🐋;;Quicar;Jonas e o Grande Peixe;;Exclusivo do passe Jonas e o Grande Peixe
+Reação;Nínive ouviu;Rara;;;📣;;Tremer;Jonas e o Grande Peixe;;Exclusivo do passe Jonas e o Grande Peixe
+Cor do nome;Verde-água de Társis;Rara;#2a9d8f;;;;;;;Exclusivo do passe Jonas e o Grande Peixe
+Ícone;Baleia de Jonas;Rara;;;;;;;;Exclusivo do passe Jonas e o Grande Peixe (envie a imagem e ative)
+Moldura;Moldura Ondas de Társis;Épica;#f4a259;solid;;;;;;Exclusivo do passe Jonas e o Grande Peixe
+Título;Mensageiro de Nínive;Épica;#2a9d8f;Onda;;;;;;Exclusivo do passe Jonas e o Grande Peixe
+Fundo de perfil;Mar de Társis;Épica;#3b6ea5;;;;;;;Exclusivo do passe Jonas e o Grande Peixe
+Capa do álbum;Capa Jonas e o Grande Peixe;Lendária;#3b6ea5;;;;;;;Exclusivo do passe Jonas e o Grande Peixe
+Reação;Espiga dourada;Comum;;;🌾;;Subir;Rute e Noemi;;Exclusivo do passe Rute e Noemi
+Reação;Fidelidade;Rara;;;🤝;;Pulsar;Rute e Noemi;;Exclusivo do passe Rute e Noemi
+Cor do nome;Trigo de Belém;Rara;#c9a227;;;;;;;Exclusivo do passe Rute e Noemi
+Ícone;Feixe de Trigo;Rara;;;;;;;;Exclusivo do passe Rute e Noemi (envie a imagem e ative)
+Moldura;Moldura Campos de Boaz;Épica;#e9c46a;solid;;;;;;Exclusivo do passe Rute e Noemi
+Título;Fiel como Rute;Épica;#c9a227;Brilho;;;;;;Exclusivo do passe Rute e Noemi
+Fundo de perfil;Campos de Boaz;Épica;#b8860b;;;;;;;Exclusivo do passe Rute e Noemi
+Capa do álbum;Capa Rute e Noemi;Lendária;#b8860b;;;;;;;Exclusivo do passe Rute e Noemi

@@ -137,6 +137,214 @@ charactersRouter.get(
   }),
 );
 
+// ---------------------------------------------------------------------------
+// Importação em lote (planilha)
+// ---------------------------------------------------------------------------
+
+const normalizeKey = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+
+const RARITY_ALIASES: Record<string, z.infer<typeof rarity>> = {
+  comum: "COMMON",
+  rara: "RARE",
+  epica: "EPIC",
+  lendaria: "LEGENDARY",
+  especial: "SPECIAL",
+};
+
+const TESTAMENT_ALIASES: Record<string, z.infer<typeof testament>> = {
+  at: "OLD",
+  antigo: "OLD",
+  "antigo testamento": "OLD",
+  nt: "NEW",
+  novo: "NEW",
+  "novo testamento": "NEW",
+};
+
+/** Texto puro da planilha vira HTML do editor rico (cada linha vira um parágrafo); HTML pronto passa direto. */
+export function toRichHtml(value: string) {
+  const text = value.trim();
+  if (/<\/?[a-z][^>]*>/i.test(text)) return text;
+  const escape = (line: string) => line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return text
+    .split(/\r?\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => `<p>${escape(line)}</p>`)
+    .join("");
+}
+
+/** Mesma limpeza do painel: o desenho "timeline" do Mermaid não aceita classDef/class. */
+function cleanDiagram(code: string) {
+  const source = code.trim();
+  if (!/^timeline\b/i.test(source)) return source;
+  return source
+    .split(/\r?\n/)
+    .filter((line) => !/^\s*(classDef|class)\b/i.test(line.trim()))
+    .join("\n")
+    .trim();
+}
+
+/** Aceita "25/12/2026", "25/12/2026 18:30" (horário de Brasília) ou ISO 8601. */
+function parsePublishAt(value: string): Date | null {
+  const br = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/);
+  const date = br
+    ? new Date(`${br[3]}-${br[2].padStart(2, "0")}-${br[1].padStart(2, "0")}T${(br[4] ?? "00").padStart(2, "0")}:${br[5] ?? "00"}:00-03:00`)
+    : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+const bulkRow = z.object({
+  name: requiredText(150),
+  rarity: z.string().trim().optional(),
+  testament: z.string().trim().optional(),
+  shortSummary: z.string().trim().optional(),
+  fullDescription: z.string().trim().optional(),
+  curiosities: z.string().trim().optional(),
+  bibleReferences: z.string().trim().optional(),
+  narrativeRole: z.string().trim().max(200).optional(),
+  historicalPeriod: z.string().trim().max(200).optional(),
+  bibleBooks: z.string().trim().optional(),
+  keyVerses: z.string().trim().max(1000).optional(),
+  keywords: z.string().trim().max(1000).optional(),
+  published: z.string().trim().optional(),
+  imageUrl: z.string().trim().max(2048).optional(),
+  publishAt: z.string().trim().optional(),
+  genealogy: z.string().trim().optional(),
+  importantEvents: z.string().trim().optional(),
+});
+
+const bulkSchema = z.object({ rows: z.array(z.unknown()).min(1).max(300), dryRun: z.boolean().optional() });
+
+/**
+ * Importa personagens de uma planilha. Nome que já existe é ATUALIZADO (só as colunas preenchidas;
+ * célula vazia não apaga nada); nome novo é criado (exige raridade, resumo e história).
+ * Cada linha é validada separadamente; com dryRun só mostra a prévia.
+ */
+charactersRouter.post(
+  "/admin/bulk",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const { rows, dryRun } = bulkSchema.parse(req.body);
+    const existing = await prisma.biblicalCharacter.findMany({ select: { id: true, name: true } });
+    const idByName = new Map(existing.map((character) => [normalizeKey(character.name), character.id]));
+
+    const errors: Array<{ row: number; message: string }> = [];
+    const toCreate: Prisma.BiblicalCharacterCreateManyInput[] = [];
+    const toUpdate: Array<{ id: number; data: Prisma.BiblicalCharacterUpdateInput }> = [];
+    const seen = new Set<string>();
+
+    rows.forEach((raw, index) => {
+      const row = index + 1;
+      const parsed = bulkRow.safeParse(raw);
+      if (!parsed.success) {
+        const issue = parsed.error.issues[0];
+        errors.push({ row, message: `${issue.path.join(".") || "linha"}: ${issue.message}` });
+        return;
+      }
+      const input = parsed.data;
+      const key = normalizeKey(input.name);
+      if (seen.has(key)) {
+        errors.push({ row, message: "nome repetido na planilha" });
+        return;
+      }
+      seen.add(key);
+
+      const data: Record<string, unknown> = {};
+      if (input.rarity) {
+        const level = RARITY_ALIASES[normalizeKey(input.rarity)] ?? (rarity.safeParse(input.rarity.toUpperCase()).data);
+        if (!level) {
+          errors.push({ row, message: `raridade "${input.rarity}" inválida (use Comum, Rara, Épica, Lendária ou Especial)` });
+          return;
+        }
+        if (level === "SPECIAL") {
+          errors.push({ row, message: "a raridade Especial só vem da campanha" });
+          return;
+        }
+        data.rarity = level;
+      }
+      if (input.testament) {
+        const value = TESTAMENT_ALIASES[normalizeKey(input.testament)];
+        if (!value) {
+          errors.push({ row, message: `testamento "${input.testament}" inválido (use Antigo ou Novo)` });
+          return;
+        }
+        data.testament = value;
+      }
+      if (input.published) {
+        const flag = normalizeKey(input.published);
+        if (["sim", "s", "true", "1", "publicado"].includes(flag)) data.published = true;
+        else if (["nao", "n", "false", "0", "rascunho"].includes(flag)) data.published = false;
+        else {
+          errors.push({ row, message: `publicado "${input.published}" inválido (use Sim ou Não)` });
+          return;
+        }
+      }
+      if (input.imageUrl) data.imageUrl = input.imageUrl;
+      if (input.publishAt) {
+        const when = parsePublishAt(input.publishAt);
+        if (!when) {
+          errors.push({ row, message: `data de publicação "${input.publishAt}" inválida (use 25/12/2026 ou 25/12/2026 18:30)` });
+          return;
+        }
+        data.publishAt = when;
+      }
+      for (const field of ["genealogy", "importantEvents"] as const) {
+        const code = input[field] ? cleanDiagram(input[field]) : "";
+        if (!code) continue;
+        const expected = field === "genealogy" ? /^(graph|flowchart)\b/i : /^timeline\b/i;
+        if (!expected.test(code)) {
+          errors.push({ row, message: `${field === "genealogy" ? "árvore genealógica" : "linha do tempo"} deve começar com ${field === "genealogy" ? "graph TD" : "timeline"} (código Mermaid)` });
+          return;
+        }
+        data[field] = code;
+      }
+      for (const field of ["shortSummary", "fullDescription", "curiosities", "bibleReferences"] as const) {
+        if (input[field]) data[field] = toRichHtml(input[field]);
+      }
+      for (const field of ["narrativeRole", "historicalPeriod", "bibleBooks", "keyVerses", "keywords"] as const) {
+        if (input[field]) data[field] = input[field];
+      }
+
+      const id = idByName.get(key);
+      if (id) {
+        if (Object.keys(data).length === 0) {
+          errors.push({ row, message: "nenhum campo preenchido para atualizar" });
+          return;
+        }
+        toUpdate.push({ id, data: data as Prisma.BiblicalCharacterUpdateInput });
+        return;
+      }
+      const missing = (["rarity", "shortSummary", "fullDescription"] as const).filter((field) => !data[field]);
+      if (missing.length > 0) {
+        const labels = { rarity: "raridade", shortSummary: "resumo curto", fullDescription: "história completa" };
+        errors.push({ row, message: `personagem novo precisa de: ${missing.map((field) => labels[field]).join(", ")}` });
+        return;
+      }
+      toCreate.push({ ...data, name: input.name, published: (data.published as boolean | undefined) ?? false, createdBy: currentUser(req).email } as Prisma.BiblicalCharacterCreateManyInput);
+    });
+
+    if (!dryRun) {
+      await prisma.$transaction([
+        ...(toCreate.length > 0 ? [prisma.biblicalCharacter.createMany({ data: toCreate })] : []),
+        ...toUpdate.map((item) => prisma.biblicalCharacter.update({ where: { id: item.id }, data: item.data })),
+      ]);
+    }
+    res.json({
+      valid: toCreate.length + toUpdate.length,
+      created: dryRun ? 0 : toCreate.length,
+      updated: dryRun ? 0 : toUpdate.length,
+      willCreate: toCreate.length,
+      willUpdate: toUpdate.length,
+      errors,
+    });
+  }),
+);
+
 charactersRouter.get(
   "/admin/:id",
   requireAdmin,

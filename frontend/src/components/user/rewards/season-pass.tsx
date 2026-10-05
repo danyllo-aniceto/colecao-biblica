@@ -5,12 +5,12 @@ import MilitaryTechRoundedIcon from '@mui/icons-material/MilitaryTechRounded';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { Pagination, usePagination } from '@/components/ui/pagination';
-import { LoadingState, Spinner } from '@/components/ui/spinner';
 import { errorMessage, useToast } from '@/components/ui/toast';
 import { CoinIcon, ProgressBar } from '@/components/game/game-ui';
 import { CosmeticPreview } from '@/components/user/rewards/cosmetic-preview';
 import { cn } from '@/lib/cn';
 import { rewardVisual } from '@/lib/reward-visual';
+import { RewardRevealModal, worthRevealing, type RewardReveal } from '@/components/user/rewards/reward-reveal';
 import { claimPassTier, getSeasonPass, type PassTierView, type SeasonPass } from '@/lib/rewards-api';
 import type { UnlockedAchievement } from '@/lib/user-api';
 import type { UserProfile } from '@/types/auth';
@@ -36,14 +36,95 @@ function TierReward({ tier, playerName }: { tier: PassTierView; playerName: stri
         </span>
       ) : null}
       {tier.cosmetic ? (
-        <span className="inline-flex items-center gap-1.5">
+        <span className={cn('inline-flex items-center gap-1.5', tier.cosmeticOwned && 'opacity-60')}>
           <span className="inline-flex max-w-[9rem] items-center">
             <CosmeticPreview item={tier.cosmetic} playerName={playerName} size="md" />
           </span>
           {tier.cosmetic.type === 'TITLE' ? null : tier.cosmetic.name}
         </span>
       ) : null}
+      {tier.cosmeticOwned && tier.duplicateCoins !== null ? (
+        <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary-strong dark:text-primary">
+          Você já tem este item: vira <CoinIcon className="h-3.5 w-3.5" /> +{tier.duplicateCoins}
+        </span>
+      ) : null}
     </span>
+  );
+}
+
+/** Cartão do passe (nome, tema, XP do mês, progresso). Só apresentação: serve ao jogador e à prévia do painel. */
+export function PassCardView({ pass, onOpenTrail }: { pass: SeasonPass; onOpenTrail?: () => void }) {
+  const info = pass.pass;
+  if (!info) return null;
+  const top = Math.max(pass.tiers.at(-1)?.requiredXp ?? 1, 1);
+  const next = pass.tiers.find((tier) => !tier.reached);
+  const ready = pass.tiers.filter((tier) => tier.reached && !tier.claimed).length;
+  const month = MONTHS[Number(pass.monthKey.slice(5, 7)) - 1];
+
+  return (
+    <section className="panel relative space-y-3 overflow-hidden p-5" style={info.color ? { borderColor: info.color } : undefined}>
+      {info.imageUrl ? (
+        <>
+          <img src={info.imageUrl} alt="" aria-hidden="true" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-25" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-surface/90 to-surface/30" />
+        </>
+      ) : null}
+      <div className="relative flex items-start justify-between gap-3">
+        <div>
+          <h3 className="flex items-center gap-2 font-display text-lg font-bold text-ink">
+            <MilitaryTechRoundedIcon style={info.color ? { color: info.color } : undefined} className="text-violet" /> {info.name}
+          </h3>
+          <p className="text-sm text-muted">
+            {pass.xp.toLocaleString('pt-BR')} XP em {month} · acaba em {daysLeft(pass.endsAt)} dias
+          </p>
+          {info.description ? <p className="mt-0.5 text-xs font-semibold text-muted">{info.description}</p> : null}
+        </div>
+        <Button size="sm" variant={ready ? 'primary' : 'secondary'} onClick={onOpenTrail} className={cn('shrink-0 whitespace-nowrap', !onOpenTrail && 'pointer-events-none')} tabIndex={onOpenTrail ? undefined : -1}>
+          {ready ? `Resgatar (${ready})` : 'Ver trilha'}
+        </Button>
+      </div>
+      <ProgressBar className="relative" value={Math.min(100, (pass.xp / top) * 100)} />
+      <p className="relative text-xs font-semibold text-muted">
+        {pass.tiers.length === 0
+          ? 'Este passe ainda não tem degraus.'
+          : next
+            ? `Próximo prêmio com ${next.requiredXp.toLocaleString('pt-BR')} XP (faltam ${(next.requiredXp - pass.xp).toLocaleString('pt-BR')}).`
+            : 'Você completou a trilha deste mês!'}
+        {pass.nextPass ? ` · No mês que vem: ${pass.nextPass.name}.` : ''}
+      </p>
+    </section>
+  );
+}
+
+/** Lista de degraus do passe, paginada. Sem `onClaim` (prévia do painel) o botão de resgate não aparece. */
+export function PassTrail({ pass, playerName, claiming, onClaim, pageSize = 5 }: { pass: SeasonPass; playerName: string; claiming?: number | null; onClaim?: (tier: PassTierView) => void; pageSize?: number }) {
+  const paging = usePagination(pass.tiers, pageSize);
+  return (
+    <>
+      <ol className="space-y-2">
+        {paging.pageItems.map((tier) => (
+          <li key={tier.id} className={cn('flex items-center gap-3 rounded-2xl border-2 p-3', tier.claimed ? 'border-success/40 bg-success/5' : tier.reached ? 'border-primary bg-primary/10' : 'border-edge')}>
+            <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-display font-bold', tier.reached ? 'bg-primary text-on-primary' : 'bg-surface-3 text-muted')}>{tier.level}</span>
+            <div className="min-w-0 flex-1 space-y-1">
+              <TierReward tier={tier} playerName={playerName} />
+              <p className="text-xs font-semibold text-muted">{tier.requiredXp.toLocaleString('pt-BR')} XP</p>
+            </div>
+            {tier.claimed ? (
+              <CheckCircleRoundedIcon className="text-success" />
+            ) : tier.reached && onClaim ? (
+              <Button size="sm" onClick={() => onClaim(tier)} loading={claiming === tier.id} disabled={claiming !== null && claiming !== undefined}>
+                Resgatar
+              </Button>
+            ) : tier.reached ? (
+              <span className="text-xs font-bold text-primary-strong dark:text-primary">Liberado</span>
+            ) : (
+              <LockRoundedIcon className="text-muted" fontSize="small" />
+            )}
+          </li>
+        ))}
+      </ol>
+      {paging.totalPages > 1 ? <Pagination className="mt-3" page={paging.page} totalPages={paging.totalPages} totalElements={paging.totalElements} onPageChange={paging.setPage} itemLabel="degraus" /> : null}
+    </>
   );
 }
 
@@ -53,7 +134,7 @@ export function SeasonPassCard({ profile, onClaimed }: { profile: UserProfile | 
   const [pass, setPass] = useState<SeasonPass | null>(null);
   const [open, setOpen] = useState(false);
   const [claiming, setClaiming] = useState<number | null>(null);
-  const paging = usePagination(pass?.tiers ?? [], 5);
+  const [reveal, setReveal] = useState<RewardReveal | null>(null);
 
   const load = useCallback(() => {
     getSeasonPass()
@@ -63,10 +144,7 @@ export function SeasonPassCard({ profile, onClaimed }: { profile: UserProfile | 
 
   useEffect(load, [load]);
 
-  if (!pass || pass.tiers.length === 0) return null;
-  const top = pass.tiers.at(-1)!.requiredXp;
-  const next = pass.tiers.find((tier) => !tier.reached);
-  const ready = pass.tiers.filter((tier) => tier.reached && !tier.claimed).length;
+  if (!pass || !pass.pass || pass.tiers.length === 0) return null;
   const month = MONTHS[Number(pass.monthKey.slice(5, 7)) - 1];
 
   async function claim(tier: PassTierView) {
@@ -74,9 +152,16 @@ export function SeasonPassCard({ profile, onClaimed }: { profile: UserProfile | 
     try {
       const result = await claimPassTier(tier.id);
       onClaimed(result.user, result.unlockedAchievements);
-      toast.success(`Prêmio do degrau ${tier.level} resgatado!`, {
-        description: [result.coins ? `+${result.coins} moedas` : null, result.reward?.characterName ?? result.reward?.rewardName, result.cosmeticGranted ? tier.cosmetic?.name : null].filter(Boolean).join(' · '),
-      });
+      const rewards = [result.reward, result.duplicate?.reward].filter((reward): reward is NonNullable<typeof reward> => Boolean(reward));
+      const summary: RewardReveal = {
+        title: `Degrau ${tier.level} resgatado!`,
+        coins: result.coins + (result.duplicate?.coins ?? 0),
+        rewards,
+        cosmeticName: result.cosmeticGranted ? tier.cosmetic?.name : null,
+        note: result.duplicate ? `Você já tinha ${tier.cosmetic?.name ?? 'este item'}: ele virou +${result.duplicate.coins} moedas.` : null,
+      };
+      if (worthRevealing(summary)) setReveal(summary);
+      else toast.success(`Prêmio do degrau ${tier.level} resgatado!`, { description: [summary.coins ? `+${summary.coins} moedas` : null, result.reward?.rewardName, summary.note].filter(Boolean).join(' · ') });
       load();
     } catch (reason) {
       toast.error(errorMessage(reason));
@@ -86,50 +171,18 @@ export function SeasonPassCard({ profile, onClaimed }: { profile: UserProfile | 
   }
 
   return (
-    <section className="panel space-y-3 p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="flex items-center gap-2 font-display text-lg font-bold text-ink">
-            <MilitaryTechRoundedIcon className="text-violet" /> Passe de {month}
-          </h3>
-          <p className="text-sm text-muted">
-            {pass.xp.toLocaleString('pt-BR')} XP no mês · acaba em {daysLeft(pass.endsAt)} dias
-          </p>
-        </div>
-        <Button size="sm" variant={ready ? 'primary' : 'secondary'} onClick={() => setOpen(true)}>
-          {ready ? `Resgatar (${ready})` : 'Ver trilha'}
-        </Button>
-      </div>
-      <ProgressBar value={Math.min(100, (pass.xp / top) * 100)} />
-      <p className="text-xs font-semibold text-muted">
-        {next ? `Próximo prêmio com ${next.requiredXp.toLocaleString('pt-BR')} XP (faltam ${(next.requiredXp - pass.xp).toLocaleString('pt-BR')}).` : 'Você completou a trilha deste mês!'}
-      </p>
-
-      <Modal open={open} size="md" title={`Passe de ${month}`} description="Todo XP que você ganha no mês sobe a trilha. Ela recomeça no dia 1º." onClose={() => setOpen(false)}>
-        {!pass ? <LoadingState /> : null}
-        <ol className="space-y-2">
-          {paging.pageItems.map((tier) => (
-            <li key={tier.id} className={cn('flex items-center gap-3 rounded-2xl border-2 p-3', tier.claimed ? 'border-success/40 bg-success/5' : tier.reached ? 'border-primary bg-primary/10' : 'border-edge')}>
-              <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-display font-bold', tier.reached ? 'bg-primary text-on-primary' : 'bg-surface-3 text-muted')}>{tier.level}</span>
-              <div className="min-w-0 flex-1 space-y-1">
-                <TierReward tier={tier} playerName={profile?.name ?? 'Você'} />
-                <p className="text-xs font-semibold text-muted">{tier.requiredXp.toLocaleString('pt-BR')} XP</p>
-              </div>
-              {tier.claimed ? (
-                <CheckCircleRoundedIcon className="text-success" />
-              ) : tier.reached ? (
-                <Button size="sm" onClick={() => void claim(tier)} loading={claiming === tier.id} disabled={claiming !== null}>
-                  Resgatar
-                </Button>
-              ) : (
-                <LockRoundedIcon className="text-muted" fontSize="small" />
-              )}
-            </li>
-          ))}
-        </ol>
-        {claiming !== null ? <Spinner className="sr-only" /> : null}
-        {paging.totalPages > 1 ? <Pagination className="mt-3" page={paging.page} totalPages={paging.totalPages} totalElements={paging.totalElements} onPageChange={paging.setPage} itemLabel="degraus" /> : null}
+    <>
+      <PassCardView pass={pass} onOpenTrail={() => setOpen(true)} />
+      <Modal
+        open={open}
+        size="md"
+        title={pass.pass.name}
+        description={`Todo XP que você ganha em ${month} sobe a trilha. No dia 1º vem o próximo passe${pass.nextPass ? `: ${pass.nextPass.name}` : ''}.`}
+        onClose={() => setOpen(false)}
+      >
+        <PassTrail pass={pass} playerName={profile?.name ?? 'Você'} claiming={claiming} onClaim={(tier) => void claim(tier)} />
       </Modal>
-    </section>
+      <RewardRevealModal reveal={reveal} onClose={() => setReveal(null)} />
+    </>
   );
 }

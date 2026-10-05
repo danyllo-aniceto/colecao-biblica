@@ -180,7 +180,7 @@ vazio com a pedra rolada e uma luz dourada, como destaque. Tom reverente e esper
 amanhecer, pedra clara, verde-oliva e dourado.
 **Ícone:** `[ESTILO BASE]` Ícone 1:1: um túmulo de pedra com a pedra rolada e raios de luz dourada, fundo violeta sólido `#8e6bd1`.
 
-## 7. Carta especial de Jesus
+## 7. Figurinha especial de Jesus
 
 A carta fica no mesmo formato das outras figurinhas do álbum (use a mesma proporção das demais cartas) e
 tem a raridade **Especial**, com moldura **verde-água** (`#14b8a6`). Sugestão de prompt, com o mesmo estilo:

@@ -7,6 +7,9 @@ import {
   pickGeneralQuestionIds,
   isCampaignOnlyRarity,
   chestCoins,
+  duplicateCosmeticCoins,
+  nextMonthKey,
+  passForMonth,
   comboBonus,
   monthKeyInTimeZone,
   monthRangeInTimeZone,
@@ -14,7 +17,15 @@ import {
   multiplyCoins,
   nextCombo,
   accuracyBonus,
-  applyCharacterStudyPercent,
+  applyDailyXpLimit,
+  CHEST_BONUS_COINS,
+  CHEST_HELPER_FALLBACK_COINS,
+  chestStickerWeight,
+  planChest,
+  chestTierFor,
+  friendSalePrice,
+  friendSaleSellerCoins,
+  stickerUpgradeCost,
   calculateLevel,
   xpForLevel,
   calculateMatchCoins,
@@ -37,7 +48,7 @@ import {
   dayRangeInTimeZone,
   defaultTimeByDifficulty,
   isTimeExpired,
-  reachedStickerAccuracy,
+  studyStatus,
   remainingSeconds,
   requiredCorrectAnswersForReward,
   shuffle,
@@ -60,34 +71,161 @@ describe("XP, pontos e nível", () => {
     expect(calculateXp(3, 10, 1)).toBe(30);
   });
 
-  it("estudo de personagem rende só a porcentagem configurada (arredonda para baixo)", () => {
-    expect(applyCharacterStudyPercent(126, 35)).toBe(44);
-    expect(applyCharacterStudyPercent(0, 35)).toBe(0);
-  });
-
   it("pontua acertos e desconta erros", () => {
     expect(calculateScore(7, 3)).toBe(610);
     expect(calculateScore(0, 3)).toBe(-90);
   });
 
-  it("sobe um nível a cada 200 XP", () => {
+  it("curva de nível: 300 XP para o nível 2 e +100 XP a cada nível seguinte", () => {
     expect(calculateLevel(0)).toBe(1);
-    expect(calculateLevel(199)).toBe(1);
-    expect(calculateLevel(200)).toBe(2);
-    // Curva progressiva: 200, 250, 300... XP por nível.
-    expect(calculateLevel(449)).toBe(2);
-    expect(calculateLevel(450)).toBe(3);
-    expect(calculateLevel(750)).toBe(4);
-    expect(xpForLevel(10)).toBe(3600);
+    expect(calculateLevel(299)).toBe(1);
+    expect(calculateLevel(300)).toBe(2);
+    // Curva progressiva: 300, 400, 500... XP por nível.
+    expect(calculateLevel(699)).toBe(2);
+    expect(calculateLevel(700)).toBe(3);
+    expect(xpForLevel(10)).toBe(6300);
+    expect(xpForLevel(50)).toBe(132300);
+  });
+
+  it("freio diário de XP: cheio nas primeiras partidas, só uma parte depois", () => {
+    expect(applyDailyXpLimit(100, 0, 6, 25)).toBe(100);
+    expect(applyDailyXpLimit(100, 5, 6, 25)).toBe(100);
+    expect(applyDailyXpLimit(100, 6, 6, 25)).toBe(25);
+    expect(applyDailyXpLimit(150, 9, 6, 25)).toBe(37);
+    expect(applyDailyXpLimit(100, 20, 0, 25)).toBe(100); // 0 desliga o freio
+    expect(applyDailyXpLimit(100, 6, 6, 150)).toBe(100); // porcentagem limitada a 100
+  });
+});
+
+describe("baús da partida", () => {
+  it("o nível do baú vem dos acertos: abaixo do mínimo não há baú", () => {
+    expect(chestTierFor(6, 7, 12, 20)).toBeNull();
+    expect(chestTierFor(7, 7, 12, 20)).toBe("BRONZE");
+    expect(chestTierFor(11, 7, 12, 20)).toBe("BRONZE");
+    expect(chestTierFor(12, 7, 12, 20)).toBe("SILVER");
+    expect(chestTierFor(19, 7, 12, 20)).toBe("SILVER");
+    expect(chestTierFor(20, 7, 12, 20)).toBe("GOLD");
+    // Configuração fora de ordem não quebra: prata e ouro ficam acima do mínimo e em sequência.
+    expect(chestTierFor(8, 7, 3, 3)).toBe("SILVER");
+    expect(chestTierFor(9, 7, 3, 3)).toBe("GOLD");
+    expect(CHEST_BONUS_COINS.GOLD).toBeGreaterThan(CHEST_BONUS_COINS.SILVER);
+  });
+
+  it("o peso das figurinhas no baú: só conta figurinha e o ouro favorece as raras", () => {
+    const common = { rewardType: "STICKER", stickerRarity: "COMMON" as const, dropChance: 9 };
+    const epic = { rewardType: "STICKER", stickerRarity: "EPIC" as const, dropChance: 1.2 };
+    const coins = { rewardType: "COINS", stickerRarity: null, dropChance: 30 };
+    expect(chestStickerWeight("BRONZE", coins)).toBe(0);
+    expect(chestStickerWeight("GOLD", coins)).toBe(0);
+    expect(chestStickerWeight("BRONZE", common)).toBe(9);
+    // Quanto melhor o baú, maior a fatia da épica em relação à comum.
+    const share = (tier: "BRONZE" | "SILVER" | "GOLD") => chestStickerWeight(tier, epic) / (chestStickerWeight(tier, epic) + chestStickerWeight(tier, common));
+    expect(share("SILVER")).toBeGreaterThan(share("BRONZE"));
+    expect(share("GOLD")).toBeGreaterThan(share("SILVER"));
+  });
+
+  const stickers = [
+    { id: 1, name: "Figurinha Comum", rewardType: "STICKER", stickerRarity: "COMMON" as const, dropChance: 9 },
+    { id: 2, name: "Figurinha Épica", rewardType: "STICKER", stickerRarity: "EPIC" as const, dropChance: 1.2 },
+    { id: 3, name: "Figurinha Lendária", rewardType: "STICKER", stickerRarity: "LEGENDARY" as const, dropChance: 0.4 },
+  ];
+  const helperPool = ["A", "B", "C", "D"].map((name) => ({ field: `f${name}`, name }));
+
+  it("o baú traz moedas, ajudas sem repetir e figurinha conforme o nível", () => {
+    const always = () => 0; // sempre "sorte"
+    const never = () => 0.999;
+    const bronze = planChest("BRONZE", { stickerRewards: stickers, helperPool, forceSticker: false, cosmeticRarities: ["RARE", "EPIC", "LEGENDARY"] }, always);
+    expect(bronze.coins).toBe(CHEST_BONUS_COINS.BRONZE);
+    expect(bronze.helpers).toHaveLength(1);
+    expect(bronze.stickers).toHaveLength(1);
+    expect(planChest("BRONZE", { stickerRewards: stickers, helperPool, forceSticker: false, cosmeticRarities: ["RARE", "EPIC", "LEGENDARY"] }, never).stickers).toHaveLength(0);
+    // A garantia contra azar força a figurinha mesmo no azar.
+    expect(planChest("BRONZE", { stickerRewards: stickers, helperPool, forceSticker: true, cosmeticRarities: [] }, never).stickers).toHaveLength(1);
+
+    const diamond = planChest("DIAMOND", { stickerRewards: stickers, helperPool, forceSticker: false, cosmeticRarities: ["RARE", "EPIC", "LEGENDARY"] }, always);
+    expect(diamond.helpers).toHaveLength(3);
+    expect(new Set(diamond.helpers.map((helper) => helper.name)).size).toBe(3);
+    // Diamante: sempre figurinha épica ou lendária, nunca a comum.
+    expect(diamond.stickers.every((picked) => picked.rewardId !== 1)).toBe(true);
+    expect(diamond.stickers.length).toBeGreaterThanOrEqual(1);
+    // Diamante com sorte traz item visual de raridade alta (nunca comum).
+    expect(diamond.cosmeticRarity).not.toBeNull();
+    expect(diamond.cosmeticRarity).not.toBe("COMMON");
+  });
+
+  it("item visual no baú: nada no bronze; a prata traz comum e rara; só o diamante chega ao lendário com folga", () => {
+    const base = { stickerRewards: stickers, helperPool, forceSticker: false, cosmeticRarities: ["COMMON", "RARE", "EPIC", "LEGENDARY"] as Array<"COMMON" | "RARE" | "EPIC" | "LEGENDARY"> };
+    // Com "sorte" máxima: bronze nunca traz item visual; prata e acima sim.
+    expect(planChest("BRONZE", base, () => 0).cosmeticRarity).toBeNull();
+    expect(planChest("SILVER", base, () => 0).cosmeticRarity).not.toBeNull();
+    const counts = (tier: "SILVER" | "GOLD" | "DIAMOND") => {
+      const found: Record<string, number> = {};
+      let seed = 7;
+      const random = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      for (let index = 0; index < 4000; index += 1) {
+        const rarity = planChest(tier, base, random).cosmeticRarity;
+        if (rarity) found[rarity] = (found[rarity] ?? 0) + 1;
+      }
+      return found;
+    };
+    const silver = counts("SILVER");
+    const diamond = counts("DIAMOND");
+    expect(silver.COMMON).toBeGreaterThan(silver.RARE ?? 0);
+    expect(silver.LEGENDARY ?? 0).toBe(0);
+    expect(diamond.COMMON ?? 0).toBe(0);
+    expect(diamond.LEGENDARY ?? 0).toBeGreaterThan(0);
+    // Se o jogador já tem todos os itens de uma raridade, ela sai do sorteio.
+    expect(planChest("SILVER", { ...base, cosmeticRarities: [] }, () => 0).cosmeticRarity).toBeNull();
+  });
+
+  it("ajuda que não cabe mais vira moedas e sem figurinha disponível o baú vem sem figurinha", () => {
+    const full = planChest("SILVER", { stickerRewards: [], helperPool: [], forceSticker: true, cosmeticRarities: [] }, () => 0);
+    expect(full.helpers).toHaveLength(0);
+    expect(full.stickers).toHaveLength(0);
+    expect(full.coins).toBe(CHEST_BONUS_COINS.SILVER + 2 * CHEST_HELPER_FALLBACK_COINS);
+  });
+});
+
+describe("diamante, venda a amigos e nível da figurinha", () => {
+  it("diamante só com muitos acertos e sempre acima do ouro", () => {
+    expect(chestTierFor(69, 7, 15, 40, 70)).toBe("GOLD");
+    expect(chestTierFor(70, 7, 15, 40, 70)).toBe("DIAMOND");
+    expect(chestTierFor(500, 7, 15, 40, 70)).toBe("DIAMOND");
+    // Sem corte de diamante configurado (ou fora de ordem), nunca vira diamante abaixo do ouro.
+    expect(chestTierFor(80, 7, 15, 40)).toBe("GOLD");
+    expect(chestTierFor(41, 7, 15, 40, 10)).toBe("DIAMOND");
+    expect(chestStickerWeight("DIAMOND", { rewardType: "STICKER", stickerRarity: "EPIC", dropChance: 1 })).toBe(75);
+    expect(chestStickerWeight("DIAMOND", { rewardType: "STICKER", stickerRarity: "LEGENDARY", dropChance: 1 })).toBe(25);
+    expect(chestStickerWeight("DIAMOND", { rewardType: "STICKER", stickerRarity: "COMMON", dropChance: 50 })).toBe(0);
+    expect(chestStickerWeight("DIAMOND", { rewardType: "STICKER_PACK", stickerRarity: null, dropChance: 50 })).toBe(0);
+  });
+
+  it("venda a amigo: preço único por raridade e taxa que some do jogo", () => {
+    const rules = { friendSalePriceCommon: 225, friendSalePriceRare: 550, friendSalePriceEpic: 1400, friendSalePriceLegendary: 4000, friendSaleFeePercent: 10 };
+    expect(friendSalePrice("COMMON", rules)).toBe(225);
+    expect(friendSalePrice("LEGENDARY", rules)).toBe(4000);
+    expect(friendSalePrice("SPECIAL", rules)).toBe(0);
+    expect(friendSaleSellerCoins(550, 10)).toBe(495);
+    expect(friendSaleSellerCoins(225, 10)).toBe(202); // arredonda para baixo
+    expect(friendSaleSellerCoins(225, 0)).toBe(225);
+    expect(friendSaleSellerCoins(225, 150)).toBe(0);
+  });
+
+  it("nível da figurinha: 1, 2, 3 e 5 repetidas até o nível 5", () => {
+    expect([1, 2, 3, 4].map(stickerUpgradeCost)).toEqual([1, 2, 3, 5]);
+    expect(stickerUpgradeCost(5)).toBeNull();
+    expect(stickerUpgradeCost(9)).toBeNull();
   });
 });
 
 describe("prêmios", () => {
-  it("exige aproveitamento mínimo e ao menos um acerto para a figurinha do personagem", () => {
-    expect(reachedStickerAccuracy(7, 10, 70)).toBe(true);
-    expect(reachedStickerAccuracy(6, 10, 70)).toBe(false);
-    expect(reachedStickerAccuracy(0, 0, 0)).toBe(false);
-    expect(reachedStickerAccuracy(0, 3, 0)).toBe(false);
+  it("estudo de personagem: status sobe com os acertos acumulados", () => {
+    expect(studyStatus(0)).toMatchObject({ label: "Iniciante", nextLabel: "Aprendiz", nextAt: 10 });
+    expect(studyStatus(9).label).toBe("Iniciante");
+    expect(studyStatus(10)).toMatchObject({ level: 1, label: "Aprendiz", nextAt: 30 });
+    expect(studyStatus(59).label).toBe("Estudioso");
+    expect(studyStatus(100)).toMatchObject({ level: 4, label: "Mestre", nextLabel: null, nextAt: null });
+    expect(studyStatus(-5).correctAnswers).toBe(0);
   });
 
   it("limita os acertos exigidos ao tamanho do banco de perguntas", () => {
@@ -286,7 +424,7 @@ describe("baú e passe", () => {
   });
 });
 
-describe("campanha e carta especial", () => {
+describe("campanha e figurinha especial", () => {
   const rules = { packOddsCommon: 60, packOddsRare: 25, packOddsEpic: 12, packOddsLegendary: 3 };
 
   it("a raridade especial nunca sai em pacote nem vale moedas de repetida", () => {
@@ -325,7 +463,7 @@ describe("campanha e carta especial", () => {
     expect(currentScenarioId([], nodes, 5)).toBeNull();
   });
 
-  it("a carta especial só é entregue com todos os fragmentos", () => {
+  it("a figurinha especial só é entregue com todos os fragmentos", () => {
     expect(fragmentsComplete(9, 10)).toBe(false);
     expect(fragmentsComplete(10, 10)).toBe(true);
     expect(fragmentsComplete(0, 0)).toBe(false);
@@ -355,5 +493,69 @@ describe("campanha e carta especial", () => {
     // Poucas gerais: o cenário cobre o resto.
     expect(pickGeneralQuestionIds(scenario, [10], 6)).toHaveLength(6);
     expect(pickGeneralQuestionIds(scenario, others, 2)).toHaveLength(2);
+  });
+});
+
+describe("passes temáticos", () => {
+  const passes = [{ id: 1 }, { id: 2 }, { id: 3 }];
+  const months = Array.from({ length: 36 }, (_, index) => `${2026 + Math.floor((index + 9) / 12)}-${String(((index + 9) % 12) + 1).padStart(2, "0")}`);
+
+  it("sem passes não há passe no mês", () => {
+    expect(passForMonth([], "2026-10")).toBeNull();
+  });
+
+  it("um passe só vale em todos os meses", () => {
+    expect(passForMonth([{ id: 7 }], "2027-02")?.id).toBe(7);
+  });
+
+  it("o passe fixado num mês vence o rodízio", () => {
+    const withNatal = [...passes, { id: 9, pinnedMonth: "2026-12" }];
+    expect(passForMonth(withNatal, "2026-12")?.id).toBe(9);
+    expect(passForMonth(withNatal, "2026-11")?.id).not.toBe(9);
+  });
+
+  it("passe fixado em \"MM\" vale todo ano; o mês exato vence", () => {
+    const base = [...passes, { id: 9, pinnedMonth: "12" }];
+    expect(passForMonth(base, "2026-12")?.id).toBe(9);
+    expect(passForMonth(base, "2031-12")?.id).toBe(9);
+    expect(passForMonth(base, "2031-11")?.id).not.toBe(9);
+    expect(passForMonth([...base, { id: 10, pinnedMonth: "2027-12" }], "2027-12")?.id).toBe(10);
+  });
+
+  it("meses fixados não gastam a vez de ninguém no rodízio", () => {
+    const withPins = [...Array.from({ length: 5 }, (_, index) => ({ id: index + 1 })), { id: 90, pinnedMonth: "12" }, { id: 91, pinnedMonth: "04" }];
+    const free = months.filter((month) => !["12", "04"].includes(month.slice(5, 7)));
+    const chosen = free.map((month) => passForMonth(withPins, month)!.id);
+    // Com 5 passes livres, existe um alinhamento em que cada 5 meses livres seguidos trazem os 5 passes, sem repetir.
+    const aligned = [0, 1, 2, 3, 4].some((offset) => {
+      for (let start = offset; start + 5 <= chosen.length; start += 5) if (new Set(chosen.slice(start, start + 5)).size !== 5) return false;
+      return true;
+    });
+    expect(aligned).toBe(true);
+    for (let index = 1; index < chosen.length; index += 1) expect(chosen[index]).not.toBe(chosen[index - 1]);
+  });
+
+  it("o rodízio é estável e passa por todos antes de repetir", () => {
+    const chosen = months.map((month) => passForMonth(passes, month)!.id);
+    expect(chosen).toEqual(months.map((month) => passForMonth(passes, month)!.id));
+    // Outubro de 2026 abre uma volta de 3 meses: cada volta tem os 3 passes.
+    for (let start = 0; start + 3 <= chosen.length; start += 3) expect(new Set(chosen.slice(start, start + 3)).size).toBe(3);
+  });
+
+  it("nunca repete o mesmo passe em dois meses seguidos", () => {
+    const chosen = months.map((month) => passForMonth(passes, month)!.id);
+    for (let index = 1; index < chosen.length; index += 1) expect(chosen[index]).not.toBe(chosen[index - 1]);
+    const two = months.map((month) => passForMonth([{ id: 1 }, { id: 2 }], month)!.id);
+    for (let index = 1; index < two.length; index += 1) expect(two[index]).not.toBe(two[index - 1]);
+  });
+
+  it("passa o ano ao pedir o mês seguinte", () => {
+    expect(nextMonthKey("2026-12")).toBe("2027-01");
+    expect(nextMonthKey("2026-03")).toBe("2026-04");
+  });
+
+  it("item repetido vira mais moedas quanto mais raro", () => {
+    expect(duplicateCosmeticCoins("COMMON")).toBeLessThan(duplicateCosmeticCoins("EPIC"));
+    expect(duplicateCosmeticCoins("LEGENDARY")).toBe(400);
   });
 });

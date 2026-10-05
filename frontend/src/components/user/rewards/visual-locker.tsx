@@ -12,8 +12,8 @@ import { cn } from '@/lib/cn';
 import { getRarityLabel } from '@/lib/rarity-theme';
 import { equipCosmetic, getInventory, type CosmeticType, type Inventory, type InventoryItem, type PlayerLook } from '@/lib/rewards-api';
 
-const TYPES: CosmeticType[] = ['AVATAR', 'FRAME', 'TITLE', 'NAME_COLOR', 'REACTION'];
-const EQUIP_KEY: Partial<Record<CosmeticType, keyof Inventory['equipped']>> = { AVATAR: 'avatarId', FRAME: 'frameId', TITLE: 'titleId', NAME_COLOR: 'nameColorId' };
+const TYPES: CosmeticType[] = ['AVATAR', 'FRAME', 'TITLE', 'NAME_COLOR', 'REACTION', 'PROFILE_BG', 'ALBUM_COVER', 'PAWN'];
+const EQUIP_KEY: Partial<Record<CosmeticType, keyof Inventory['equipped']>> = { AVATAR: 'avatarId', FRAME: 'frameId', TITLE: 'titleId', NAME_COLOR: 'nameColorId', PROFILE_BG: 'profileBgId', ALBUM_COVER: 'albumCoverId' };
 
 /** Armário do jogador: todos os itens, os que tem para equipar e como ganhar os que faltam. */
 export function VisualLocker({ playerName, onLookChange }: { playerName: string; onLookChange: (look: PlayerLook) => void }) {
@@ -65,7 +65,7 @@ export function VisualLocker({ playerName, onLookChange }: { playerName: string;
 
   return (
     <section className="panel space-y-4 p-5 sm:p-6">
-      <SectionHeading title="Meu visual" subtitle="Ícone, moldura, título que brilha, cor do nome e reações do chat." />
+      <SectionHeading title="Meu visual" subtitle="Ícone, moldura, título que brilha, cor do nome, reações do chat, fundo do perfil e capa do álbum." />
       {error ? <Alert tone="danger">{error}</Alert> : null}
       {!inventory && !error ? <LoadingState label="Abrindo seu armário..." /> : null}
       {inventory ? (
@@ -73,7 +73,7 @@ export function VisualLocker({ playerName, onLookChange }: { playerName: string;
           <div className="no-scrollbar -mx-1 overflow-x-auto px-1">
             <Segmented
               aria-label="Tipo de item"
-              className="min-w-[30rem]"
+              className="min-w-[52rem]"
               value={type}
               onChange={(next) => {
                 setType(next);
@@ -94,6 +94,7 @@ export function VisualLocker({ playerName, onLookChange }: { playerName: string;
             ) : null}
           </div>
           {type === 'REACTION' ? <p className="text-sm text-muted">As reações que você tem aparecem no botão de reação da conversa com os amigos.</p> : null}
+          {type === 'PAWN' ? <p className="text-sm text-muted">Os peões que você tem ficam disponíveis ao montar uma partida de tabuleiro com amigos.</p> : null}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {paging.pageItems.map((item) => {
               const equipped = equippedId === item.id;

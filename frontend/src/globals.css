@@ -691,6 +691,12 @@ input:-webkit-autofill:focus {
   --frame-speed: 8s;
 }
 
+.frame-emerald {
+  --frame-bg: conic-gradient(#ccfbf1, #14b8a6, #fef3c7, #059669, #5eead4, #14b8a6, #ccfbf1);
+  --frame-speed: 3.5s;
+  filter: drop-shadow(0 0 6px #14b8a699);
+}
+
 .frame-pentecost {
   --frame-bg: conic-gradient(#fff3b0, #ff8c42, #ff3d2e, #ffd23f, #ff8c42, #fff3b0);
   --frame-speed: 1.8s;
@@ -786,6 +792,113 @@ input:-webkit-autofill:focus {
   }
   100% {
     transform: scale(1) rotate(0);
+  }
+}
+
+.reaction-bounce {
+  animation: reaction-bounce 1000ms ease-out both;
+}
+.reaction-shake {
+  animation: reaction-shake 800ms ease-in-out both;
+}
+.reaction-spin {
+  animation: reaction-spin 900ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+.reaction-rise {
+  animation: reaction-rise 1000ms ease-out both;
+}
+.reaction-pulse {
+  animation: reaction-pulse 1100ms ease-in-out both;
+}
+
+@keyframes reaction-bounce {
+  0% {
+    transform: translateY(-60%) scale(0.8);
+    opacity: 0;
+  }
+  35% {
+    transform: translateY(0) scale(1.05);
+    opacity: 1;
+  }
+  55% {
+    transform: translateY(-22%);
+  }
+  75% {
+    transform: translateY(0);
+  }
+  88% {
+    transform: translateY(-7%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes reaction-shake {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(1.1) rotate(-12deg);
+    opacity: 1;
+  }
+  45% {
+    transform: rotate(12deg);
+  }
+  65% {
+    transform: rotate(-8deg);
+  }
+  85% {
+    transform: rotate(5deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes reaction-spin {
+  0% {
+    transform: scale(0.1) rotate(-540deg);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
+@keyframes reaction-rise {
+  0% {
+    transform: translateY(70%) scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(-12%) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes reaction-pulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  70% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
@@ -914,7 +1027,204 @@ input:-webkit-autofill:focus {
   }
 }
 
+/* ---------- Abertura de baú ---------- */
+@keyframes chest-shake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  15% { transform: translateX(-8px) rotate(-4deg); }
+  30% { transform: translateX(8px) rotate(4deg); }
+  45% { transform: translateX(-10px) rotate(-5deg); }
+  60% { transform: translateX(10px) rotate(5deg); }
+  75% { transform: translateX(-6px) rotate(-3deg); }
+}
+
+@keyframes chest-idle {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-6px) scale(1.03); }
+}
+
+@keyframes screen-flash {
+  0% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+@keyframes rays-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orb-charge {
+  0% { transform: scale(0.35); opacity: 0.2; filter: blur(6px); }
+  70% { transform: scale(1); opacity: 1; filter: blur(0); }
+  100% { transform: scale(1.35); opacity: 1; }
+}
+
+@keyframes burst-out {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0.2) rotate(var(--rot, 0deg)); opacity: 0; }
+}
+
+@keyframes ring-grow {
+  0% { transform: scale(0.3); opacity: 0.9; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+@keyframes reveal-card {
+  0% { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+  60% { transform: scale(1.12) rotate(2deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); }
+}
+
+.animate-chest-shake { animation: chest-shake 0.9s ease-in-out both; }
+.animate-chest-idle { animation: chest-idle 2.2s ease-in-out infinite; }
+.animate-screen-flash { animation: screen-flash 0.7s ease-out forwards; }
+.animate-rays-spin { animation: rays-spin 6s linear infinite; }
+.animate-orb-charge { animation: orb-charge var(--charge, 1s) ease-out forwards; }
+.animate-burst-out { animation: burst-out var(--dur, 1s) cubic-bezier(0.2, 0.7, 0.3, 1) forwards; }
+.animate-ring-grow { animation: ring-grow 0.9s ease-out forwards; }
+.animate-reveal-card { animation: reveal-card 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+
+/* ---------- Modo Tabuleiro: avisos do que acontece ---------- */
+/* Cartaz que entra, fica e sai (a duração vem de --dur). */
+@keyframes board-callout {
+  0% {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.9);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0) scale(1.04);
+  }
+  16% {
+    transform: translateY(0) scale(1);
+  }
+  88% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+
+/* Anel que se abre na casa e emoji que sobe e some. */
+@keyframes board-ring {
+  0% {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.1);
+  }
+}
+
+@keyframes board-rise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -30%) scale(0.5);
+  }
+  25% {
+    opacity: 1;
+    transform: translate(-50%, -80%) scale(1.25);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -190%) scale(1);
+  }
+}
+
+/* Movimentos do peão. */
+@keyframes pawn-shake {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0);
+  }
+  15%,
+  55% {
+    transform: translateX(-0.3em) rotate(-14deg);
+  }
+  35%,
+  75% {
+    transform: translateX(0.3em) rotate(14deg);
+  }
+}
+
+@keyframes pawn-hop {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  30% {
+    transform: translateY(-0.7em) scale(1.25);
+  }
+  55% {
+    transform: translateY(0) scale(0.9);
+  }
+  75% {
+    transform: translateY(-0.3em) scale(1.1);
+  }
+}
+
+@keyframes pawn-cheer {
+  0% {
+    transform: rotate(0) scale(1);
+  }
+  30% {
+    transform: rotate(-18deg) scale(1.3);
+  }
+  60% {
+    transform: rotate(18deg) scale(1.3);
+  }
+  100% {
+    transform: rotate(0) scale(1);
+  }
+}
+
+@keyframes pawn-shield {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--info) 0%, transparent);
+  }
+  30%,
+  70% {
+    box-shadow: 0 0 0 0.35em color-mix(in srgb, var(--info) 55%, transparent);
+  }
+}
+
+.board-callout {
+  animation: board-callout var(--dur, 2.4s) ease both;
+}
+.board-ring {
+  animation: board-ring 1.1s ease-out both;
+}
+.board-rise {
+  animation: board-rise 1.6s ease-out both;
+}
+.pawn-fx-shake {
+  animation: pawn-shake 0.8s ease-in-out both;
+}
+.pawn-fx-hop {
+  animation: pawn-hop 0.9s ease-out both;
+}
+.pawn-fx-cheer {
+  animation: pawn-cheer 0.9s ease-in-out both;
+}
+.pawn-fx-shield {
+  animation: pawn-shield 1.4s ease-in-out both;
+  border-radius: 9999px;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  /* O cartaz do tabuleiro não pode sumir de cara: some pelo cronômetro da tela. */
+  .board-callout {
+    animation: none !important;
+    opacity: 1;
+  }
+  .board-ring,
+  .board-rise {
+    display: none;
+  }
+
   *,
   *::before,
   *::after {

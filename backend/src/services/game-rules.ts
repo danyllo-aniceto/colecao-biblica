@@ -11,8 +11,8 @@ const XP_PER_CORRECT = 10;
 const POINTS_PER_CORRECT = 100;
 const POINTS_PER_WRONG = 30;
 /** XP para sair do nível 1; cada nível seguinte pede mais LEVEL_XP_STEP. */
-const LEVEL_BASE_XP = 200;
-const LEVEL_XP_STEP = 50;
+const LEVEL_BASE_XP = 300;
+const LEVEL_XP_STEP = 100;
 
 export function defaultTimeByDifficulty(difficulty: QuestionDifficulty): number {
   switch (difficulty) {
@@ -44,16 +44,20 @@ export function calculateXp(correctAnswers: number, questionsAnswered: number, x
   return Math.round(base * xpMultiplier);
 }
 
-/** XP do estudo de personagem: só uma porcentagem do XP normal (divisão inteira). */
-export function applyCharacterStudyPercent(xp: number, percent: number): number {
-  return Math.trunc((xp * percent) / 100);
+/**
+ * Freio diário de XP: as primeiras partidas do dia rendem XP cheio; depois, só uma porcentagem.
+ * Evita subir de nível (e destravar baús e a campanha) só jogando sem parar num único dia.
+ */
+export function applyDailyXpLimit(xp: number, matchesToday: number, fullMatchesPerDay: number, percentAfterLimit: number): number {
+  if (fullMatchesPerDay <= 0 || matchesToday < fullMatchesPerDay) return xp;
+  return Math.trunc((xp * Math.min(100, Math.max(0, percentAfterLimit))) / 100);
 }
 
 export function calculateScore(correctAnswers: number, wrongAnswers: number): number {
   return correctAnswers * POINTS_PER_CORRECT - wrongAnswers * POINTS_PER_WRONG;
 }
 
-/** XP total para chegar ao nível (curva progressiva: cada nível pede 50 XP a mais que o anterior). */
+/** XP total para chegar ao nível (curva progressiva: cada nível pede 100 XP a mais que o anterior). */
 export function xpForLevel(level: number): number {
   const steps = Math.max(0, level - 1);
   return LEVEL_BASE_XP * steps + (LEVEL_XP_STEP * steps * (steps - 1)) / 2;
@@ -65,18 +69,180 @@ export function calculateLevel(xp: number): number {
   return level;
 }
 
-/** A figurinha do estudo de personagem exige aproveitamento mínimo e ao menos um acerto. */
-export function reachedStickerAccuracy(correctAnswers: number, questionsAnswered: number, minPercent: number): boolean {
-  if (questionsAnswered <= 0 || correctAnswers <= 0) {
-    return false;
-  }
-  return correctAnswers * 100 >= minPercent * questionsAnswered;
+/**
+ * Estudo de personagem: não dá XP, moedas nem prêmios. Só acumula acertos naquele personagem
+ * e, a cada marco, o jogador sobe de status (apenas um selo de dedicação).
+ */
+export const STUDY_STATUSES = [
+  { level: 0, label: "Iniciante", minCorrect: 0 },
+  { level: 1, label: "Aprendiz", minCorrect: 10 },
+  { level: 2, label: "Estudioso", minCorrect: 30 },
+  { level: 3, label: "Conhecedor", minCorrect: 60 },
+  { level: 4, label: "Mestre", minCorrect: 100 },
+] as const;
+
+export function studyStatus(correctAnswers: number) {
+  const total = Math.max(0, Math.trunc(correctAnswers));
+  const current = [...STUDY_STATUSES].reverse().find((status) => total >= status.minCorrect) ?? STUDY_STATUSES[0];
+  const next = STUDY_STATUSES.find((status) => status.minCorrect > total) ?? null;
+  return { level: current.level, label: current.label, correctAnswers: total, nextLabel: next?.label ?? null, nextAt: next?.minCorrect ?? null };
 }
 
 /** Acertos mínimos no quiz geral, limitados ao banco de perguntas para bancos pequenos continuarem premiando. */
 export function requiredCorrectAnswersForReward(configured: number, activeQuestionCount: number): number {
   const minimum = Math.max(1, configured);
   return activeQuestionCount > 0 ? Math.min(minimum, activeQuestionCount) : minimum;
+}
+
+export type ChestTier = "BRONZE" | "SILVER" | "GOLD" | "DIAMOND";
+
+/**
+ * Baú da partida (quiz geral em maratona): o nível depende dos acertos. Abaixo do mínimo não há baú.
+ * Prata e ouro nunca ficam abaixo do mínimo nem fora de ordem.
+ */
+export function chestTierFor(correctAnswers: number, minCorrect: number, silverMin: number, goldMin: number, diamondMin = Number.POSITIVE_INFINITY): ChestTier | null {
+  const bronze = Math.max(1, minCorrect);
+  if (correctAnswers < bronze) return null;
+  const silver = Math.max(bronze + 1, silverMin);
+  const gold = Math.max(silver + 1, goldMin);
+  const diamond = Math.max(gold + 1, diamondMin);
+  if (correctAnswers >= diamond) return "DIAMOND";
+  if (correctAnswers >= gold) return "GOLD";
+  if (correctAnswers >= silver) return "SILVER";
+  return "BRONZE";
+}
+
+/**
+ * O que cada baú traz. Todos dão moedas e ajudas; a figurinha vem por chance (ouro e diamante: garantida).
+ * Os números aqui valem para o jogo e para o simulador do painel.
+ */
+export type ChestSpec = {
+  coins: number;
+  /** Ajudas sortidas (sem repetir). Se o jogador já está no limite de uma ajuda, ela é trocada por moedas. */
+  helpers: number;
+  /** Chance (0 a 1) de vir uma figurinha. */
+  stickerChance: number;
+  /** Chance (0 a 1) de vir uma segunda figurinha, quando a primeira veio. */
+  extraStickerChance: number;
+  /** Item visual: chance (0 a 1) de vir e peso de cada raridade (a raridade sorteada precisa ter item disponível). */
+  cosmetic: { chance: number; weights: Partial<Record<StickerRarity, number>> };
+};
+
+export const CHEST_SPECS: Record<ChestTier, ChestSpec> = {
+  // Itens visuais só a partir da prata; quanto melhor o baú, mais raro o item que pode vir.
+  BRONZE: { coins: 10, helpers: 1, stickerChance: 0.45, extraStickerChance: 0, cosmetic: { chance: 0, weights: {} } },
+  SILVER: { coins: 25, helpers: 2, stickerChance: 0.65, extraStickerChance: 0, cosmetic: { chance: 0.12, weights: { COMMON: 60, RARE: 35, EPIC: 5 } } },
+  GOLD: { coins: 50, helpers: 2, stickerChance: 1, extraStickerChance: 0.1, cosmetic: { chance: 0.22, weights: { COMMON: 30, RARE: 45, EPIC: 22, LEGENDARY: 3 } } },
+  DIAMOND: { coins: 100, helpers: 3, stickerChance: 1, extraStickerChance: 0.2, cosmetic: { chance: 0.35, weights: { RARE: 40, EPIC: 45, LEGENDARY: 15 } } },
+};
+
+/** Moedas garantidas de cada baú, além do restante. */
+export const CHEST_BONUS_COINS: Record<ChestTier, number> = { BRONZE: CHEST_SPECS.BRONZE.coins, SILVER: CHEST_SPECS.SILVER.coins, GOLD: CHEST_SPECS.GOLD.coins, DIAMOND: CHEST_SPECS.DIAMOND.coins };
+
+/** Moedas no lugar de uma ajuda que o jogador não pode mais receber (já está no limite). */
+export const CHEST_HELPER_FALLBACK_COINS = 15;
+
+type StickerRewardLike = { rewardType: string; stickerRarity: StickerRarity | null; dropChance: number };
+
+const STICKER_WEIGHT_BOOST: Record<Exclude<ChestTier, "DIAMOND">, { COMMON: number; RARE: number; EPIC: number; LEGENDARY: number; PACK: number }> = {
+  BRONZE: { COMMON: 1, RARE: 1, EPIC: 1, LEGENDARY: 1, PACK: 1 },
+  SILVER: { COMMON: 0.8, RARE: 1.3, EPIC: 1.6, LEGENDARY: 1.3, PACK: 1.2 },
+  GOLD: { COMMON: 1, RARE: 1.6, EPIC: 2.2, LEGENDARY: 1.5, PACK: 1.5 },
+};
+
+/** Peso de cada recompensa de figurinha no sorteio do baú (zero para o que não é figurinha). Quanto melhor o baú, mais raras. */
+export function chestStickerWeight(tier: ChestTier, reward: StickerRewardLike): number {
+  const isPack = reward.rewardType === "STICKER_PACK";
+  if (reward.rewardType !== "STICKER" && !isPack) return 0;
+  // Diamante: só figurinha épica (75%) ou lendária (25%).
+  if (tier === "DIAMOND") return !isPack && reward.stickerRarity === "EPIC" ? 75 : !isPack && reward.stickerRarity === "LEGENDARY" ? 25 : 0;
+  const boost = STICKER_WEIGHT_BOOST[tier];
+  const multiplier = isPack ? boost.PACK : (boost[(reward.stickerRarity ?? "COMMON") as keyof typeof boost] ?? 1);
+  return reward.dropChance * multiplier;
+}
+
+export type ChestRollContext = {
+  /** Recompensas de figurinha que podem sair (pacote incluído). */
+  stickerRewards: Array<StickerRewardLike & { id: number; name: string }>;
+  /** Ajudas que ainda cabem no inventário do jogador. */
+  helperPool: Array<{ field: string; name: string }>;
+  /** Garantia contra azar: depois de N baús sem figurinha, este traz uma. */
+  forceSticker: boolean;
+  /** Raridades de item visual que o jogador ainda pode ganhar (as que têm algum item no baú que ele não tem). */
+  cosmeticRarities: StickerRarity[];
+};
+
+export type ChestPlan = {
+  coins: number;
+  helpers: Array<{ field: string; name: string }>;
+  stickers: Array<{ rewardId: number; rewardName: string }>;
+  /** Raridade do item visual que vem no baú (null: nenhum). */
+  cosmeticRarity: StickerRarity | null;
+};
+
+function pickChestCosmeticRarity(spec: ChestSpec, available: StickerRarity[], random: () => number): StickerRarity | null {
+  if (spec.cosmetic.chance <= 0 || available.length === 0 || random() >= spec.cosmetic.chance) return null;
+  return weightedPick(available, (rarity) => spec.cosmetic.weights[rarity] ?? 0, random);
+}
+
+/** Sorteia o conteúdo de um baú. Pura: o jogo e o simulador do painel usam esta mesma função. */
+export function planChest(tier: ChestTier, context: ChestRollContext, random: () => number = Math.random): ChestPlan {
+  const spec = CHEST_SPECS[tier];
+  const pool = [...context.helperPool];
+  const helpers: ChestPlan["helpers"] = [];
+  while (helpers.length < spec.helpers && pool.length > 0) {
+    helpers.push(pool.splice(Math.floor(random() * pool.length), 1)[0]);
+  }
+  const missingHelpers = spec.helpers - helpers.length;
+
+  const stickers: ChestPlan["stickers"] = [];
+  const pickSticker = () => {
+    const weighted = weightedPick(context.stickerRewards, (reward) => chestStickerWeight(tier, reward), random);
+    // Sem nenhuma figurinha elegível para este nível, usa a chance normal do sorteio.
+    return weighted ?? weightedPick(context.stickerRewards, (reward) => reward.dropChance, random);
+  };
+  if (context.stickerRewards.length > 0 && (context.forceSticker || spec.stickerChance >= 1 || random() < spec.stickerChance)) {
+    const first = pickSticker();
+    if (first) stickers.push({ rewardId: first.id, rewardName: first.name });
+    if (first && spec.extraStickerChance > 0 && random() < spec.extraStickerChance) {
+      const second = pickSticker();
+      if (second) stickers.push({ rewardId: second.id, rewardName: second.name });
+    }
+  }
+
+  return {
+    coins: spec.coins + Math.max(0, missingHelpers) * CHEST_HELPER_FALLBACK_COINS,
+    helpers,
+    stickers,
+    cosmeticRarity: pickChestCosmeticRarity(spec, context.cosmeticRarities, random),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Venda a amigos e nível da figurinha
+// ---------------------------------------------------------------------------
+
+type SaleRules = { friendSalePriceCommon: number; friendSalePriceRare: number; friendSalePriceEpic: number; friendSalePriceLegendary: number; friendSaleFeePercent: number };
+
+/** Preço padrão da figurinha vendida a um amigo (único por raridade; a especial não se vende). */
+export function friendSalePrice(rarity: StickerRarity, rules: SaleRules): number {
+  const price = { COMMON: rules.friendSalePriceCommon, RARE: rules.friendSalePriceRare, EPIC: rules.friendSalePriceEpic, LEGENDARY: rules.friendSalePriceLegendary, SPECIAL: 0 }[rarity];
+  return Math.max(0, price);
+}
+
+/** O que o vendedor recebe: o preço sem a taxa (que some do jogo, evitando criar moedas). */
+export function friendSaleSellerCoins(price: number, feePercent: number): number {
+  return Math.floor((Math.max(0, price) * (100 - Math.min(100, Math.max(0, feePercent)))) / 100);
+}
+
+export const STICKER_MAX_LEVEL = 5;
+/** Repetidas gastas para chegar ao nível 2, 3, 4 e 5 (11 no total). */
+const STICKER_LEVEL_COSTS = [1, 2, 3, 5];
+
+/** Custo (em repetidas) de subir do nível atual para o próximo; null no nível máximo. */
+export function stickerUpgradeCost(level: number): number | null {
+  if (level >= STICKER_MAX_LEVEL) return null;
+  return STICKER_LEVEL_COSTS[Math.max(1, level) - 1] ?? null;
 }
 
 /** Partida "perfeita" para o bônus de moedas: sem erros e com um mínimo de perguntas. */
@@ -490,7 +656,7 @@ export function currentScenarioId(scenarios: Array<{ id: number }>, nodes: Campa
   return current;
 }
 
-/** A carta especial é entregue quando todos os fragmentos do caminho foram resgatados. */
+/** A figurinha especial é entregue quando todos os fragmentos do caminho foram resgatados. */
 export function fragmentsComplete(claimedFragments: number, totalFragments: number): boolean {
   return totalFragments > 0 && claimedFragments >= totalFragments;
 }
@@ -524,4 +690,62 @@ export function pickGeneralQuestionIds(
   const fromScenario = shuffle(scenarioIds, random).slice(0, Math.min(Math.ceil(limit * share), limit));
   const rest = shuffle([...otherIds, ...scenarioIds.filter((id) => !fromScenario.includes(id))], random);
   return shuffle([...fromScenario, ...rest.slice(0, limit - fromScenario.length)], random);
+}
+
+// ---------------------------------------------------------------------------
+// Passes temáticos
+// ---------------------------------------------------------------------------
+
+/** Moedas dadas no lugar de um item visual que o jogador já tem, por raridade. */
+export const DUPLICATE_COSMETIC_COINS_BY_RARITY: Record<StickerRarity, number> = { COMMON: 50, RARE: 100, EPIC: 200, LEGENDARY: 400, SPECIAL: 400 };
+
+export function duplicateCosmeticCoins(rarity: StickerRarity): number {
+  return DUPLICATE_COSMETIC_COINS_BY_RARITY[rarity] ?? 50;
+}
+
+/** Índice absoluto do mês ("AAAA-MM"): janeiro de 2000 = 0. */
+function monthNumber(monthKey: string): number {
+  const [year, month] = monthKey.split("-").map(Number);
+  return (year - 2000) * 12 + (month - 1);
+}
+
+/** Próximo mês ("AAAA-MM") depois de `monthKey`. */
+export function nextMonthKey(monthKey: string): string {
+  const [year, month] = monthKey.split("-").map(Number);
+  return month >= 12 ? `${year + 1}-01` : `${year}-${String(month + 1).padStart(2, "0")}`;
+}
+
+/**
+ * Qual passe vale no mês. O passe fixado naquele mês ("pinnedMonth": "AAAA-MM" ou "MM" para todo ano) vence; senão os passes livres entram em
+ * rodízio: cada "volta" sorteia a ordem de todos (estável, pelo número da volta) e nunca repete o último da volta
+ * anterior no começo da seguinte. Com mais passes cadastrados, cada um volta mais raramente.
+ */
+export function passForMonth<T extends { id: number; pinnedMonth?: string | null }>(passes: T[], monthKey: string): T | null {
+  const pinnedFor = (key: string) => passes.find((pass) => pass.pinnedMonth === key) ?? passes.find((pass) => pass.pinnedMonth === key.slice(5, 7));
+  const pinned = pinnedFor(monthKey);
+  if (pinned) return pinned;
+  const pool = passes.filter((pass) => !pass.pinnedMonth).sort((left, right) => left.id - right.id);
+  if (pool.length === 0) return null;
+  if (pool.length === 1) return pool[0];
+
+  // O rodízio só conta os meses livres: meses com passe fixado não gastam a vez de ninguém.
+  const target = monthNumber(monthKey);
+  let freeIndex = 0;
+  for (let month = 0; month < target; month += 1) {
+    const year = 2000 + Math.floor(month / 12);
+    if (!pinnedFor(`${year}-${String((month % 12) + 1).padStart(2, "0")}`)) freeIndex += 1;
+  }
+
+  const round = Math.floor(freeIndex / pool.length);
+  // Cada volta sorteia a ordem; os últimos passes da volta anterior (2 se houver 4 ou mais) vão para o fim da nova volta,
+  // assim nenhum passe reaparece logo depois de passar.
+  const keepApart = pool.length >= 4 ? 2 : 1;
+  let recent = new Set<number>();
+  let order = pool;
+  for (let current = 0; current <= round; current += 1) {
+    const shuffled = shuffle(pool, seededRandom(hashString(`passes:${current}`)));
+    order = [...shuffled.filter((pass) => !recent.has(pass.id)), ...shuffled.filter((pass) => recent.has(pass.id))];
+    recent = new Set(order.slice(-keepApart).map((pass) => pass.id));
+  }
+  return order[freeIndex % pool.length];
 }

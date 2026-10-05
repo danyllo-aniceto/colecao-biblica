@@ -9,7 +9,7 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     await resetDatabase();
   });
 
-  it("o seed cria os cenários e a carta especial Jesus", async () => {
+  it("o seed cria os cenários e a figurinha especial Jesus", async () => {
     const jesus = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Jesus" } });
     expect(jesus.rarity).toBe("SPECIAL");
     const scenarios = await prisma.scenario.findMany({ include: { nodes: true }, orderBy: { sortOrder: "asc" } });
@@ -40,6 +40,9 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     const before = await api.get("/api/campaign").set(bearer(token));
     expect(before.body.scenarios[0]).toMatchObject({ musicUnlocked: true, musicUrl: "https://exemplo.com/tema-eden.mp3" });
     expect(before.body.scenarios[1]).toMatchObject({ musicUnlocked: false, musicUrl: null });
+    // Fundo do quiz de cada cenário: o admin cadastra e o jogador recebe na campanha.
+    await api.put(`/api/campaign/admin/scenarios/${first.id}`).set(bearer(admin)).send({ name: first.name, color: first.color, sortOrder: first.sortOrder, active: true, musicUrl: "https://exemplo.com/tema-eden.mp3", quizBackgroundUrl: "https://exemplo.com/fundo-eden.jpg" });
+    expect((await api.get("/api/campaign").set(bearer(token))).body.scenarios[0].quizBackgroundUrl).toBe("https://exemplo.com/fundo-eden.jpg");
 
     await prisma.user.update({ where: { email: "user@email.com" }, data: { level: second.nodes[0].level } });
     const after = await api.get("/api/campaign").set(bearer(token));
@@ -84,14 +87,29 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     const jesus = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Jesus" } });
 
     let last: Awaited<ReturnType<typeof api.post>> | null = null;
+    const emeralds: Array<{ tier: string; prizes: Array<{ kind: string; amount?: number; name?: string; rarity?: string }> }> = [];
     for (const node of nodes) {
       last = await api.post(`/api/campaign/nodes/${node.id}/claim`).set(bearer(token));
       expect(last.status).toBe(200);
+      if (last.body.emeraldChest) emeralds.push(last.body.emeraldChest);
       const owned = await prisma.userSticker.findUnique({ where: { userId_characterId: { userId: user.id, characterId: jesus.id } } });
       const lastFragment = nodes.filter((item) => item.fragment).at(-1)!;
       expect(Boolean(owned)).toBe(node.id === lastFragment.id || (owned !== null && node.id > lastFragment.id));
     }
     expect(last!.body.user.coins).toBeGreaterThan(0);
+
+    // Ao conquistar a figurinha especial abre o Baú de Esmeralda (uma única vez) com prêmios muito bons.
+    expect(emeralds).toHaveLength(1);
+    const [emerald] = emeralds;
+    expect(emerald.tier).toBe("EMERALD");
+    expect(emerald.prizes[0]).toEqual({ kind: "COINS", amount: 1000 });
+    expect(emerald.prizes.filter((prize) => prize.kind === "HELPER")).toHaveLength(4);
+    expect(emerald.prizes.filter((prize) => prize.kind === "COSMETIC").map((prize) => prize.name).sort()).toEqual(["Luz da manhã", "Luz esmeralda", "Ovelha do Bom Pastor", "Pastor das ovelhas", "Verde celestial"]);
+    const stickerPrizes = emerald.prizes.filter((prize) => prize.kind === "STICKER");
+    // A figurinha especial vem por último; antes dela, uma épica e uma lendária.
+    expect(stickerPrizes.at(-1)).toMatchObject({ name: "Jesus", rarity: "SPECIAL" });
+    expect(emerald.prizes.at(-1)).toMatchObject({ kind: "STICKER", rarity: "SPECIAL" });
+    expect(await prisma.userCosmetic.count({ where: { userId: user.id, cosmetic: { name: { in: ["Pastor das ovelhas", "Luz esmeralda", "Ovelha do Bom Pastor", "Verde celestial", "Luz da manhã"] } } } })).toBe(5);
     // Cada relíquia entrega também o ícone de perfil do cenário.
     const avatars = await prisma.userCosmetic.findMany({ where: { userId: user.id, cosmetic: { type: "AVATAR", name: { startsWith: "Ícone: " } } }, include: { cosmetic: true } });
     expect(avatars).toHaveLength(10);
@@ -110,7 +128,7 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     expect(trade.status).toBe(400);
   });
 
-  it("pacote surpresa e recompensa do painel nunca entregam a carta especial", async () => {
+  it("pacote surpresa e recompensa do painel nunca entregam a figurinha especial", async () => {
     const admin = await login("admin2@email.com");
     const jesus = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Jesus" } });
     const reward = await api
@@ -197,7 +215,7 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     }
     expect(base.scenarioId).toBeNull();
     const token = await login("user@email.com");
-    const started = await api.post("/api/quiz/sessions/start").set(bearer(token)).send({ quizType: "GENERAL", questionLimit: 6 });
+    const started = await api.post("/api/quiz/sessions/start").set(bearer(token)).send({ quizType: "GENERAL", questionLimit: 6, training: true });
     expect(started.status).toBe(200);
     const session = await prisma.quizSession.findUniqueOrThrow({ where: { id: started.body.sessionId } });
     const ids = session.questionIds as number[];

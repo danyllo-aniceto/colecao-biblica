@@ -3,7 +3,6 @@ import { lockUser, prisma, transaction, type Db } from "../db/prisma";
 import { badRequest, notFound } from "../lib/errors";
 import { env } from "../lib/env";
 import {
-  applyCharacterStudyPercent,
   availableSeconds,
   calculateLevel,
   calculateMatchCoins,
@@ -14,6 +13,9 @@ import {
   calculateXp,
   comboBonus,
   crowdPercentages,
+  applyDailyXpLimit,
+  chestTierFor,
+  type ChestTier,
   dayRangeInTimeZone,
   isCampaignOnlyRarity,
   multiplyCoins,
@@ -21,10 +23,10 @@ import {
   nextCombo,
   isTimeExpired,
   pickFiftyFiftyRemovals,
-  reachedStickerAccuracy,
   remainingSeconds,
   requiredCorrectAnswersForReward,
   shuffle,
+  studyStatus,
   weightedPick,
 } from "./game-rules";
 import { currentScenarioIdFor } from "./campaign";
@@ -34,8 +36,11 @@ import { getSettings, type GameSettings } from "./settings";
 import { pageOf } from "../lib/pagination";
 import { visibleCharacter } from "./visibility";
 import { activeEvent } from "./events";
-import { checkCosmetics, playerLooks } from "./cosmetics";
+import { checkCosmetics, grantCosmetic, playerLooks } from "./cosmetics";
+import { RARITY_RANK, openChestRewards, type ChestPrizeView } from "./chests";
 import type { HelperField } from "./helpers";
+
+
 
 type Tx = Prisma.TransactionClient;
 
@@ -115,6 +120,8 @@ function toStatusResponse(session: QuizSession, currentQuestion: Question | null
     bestCombo: session.bestCombo,
     comboPoints: session.comboPoints,
     characterId: session.characterId,
+    training: session.training,
+    marathon: session.quizType === "GENERAL" && !session.training,
     currentQuestion: currentQuestion ? toQuestionView(session, currentQuestion) : null,
   };
 }
@@ -169,13 +176,15 @@ function ensureInProgress(session: QuizSession) {
   }
 }
 
-type StartInput = { quizType: QuizType; characterId?: number | null; questionLimit?: number | null };
+type StartInput = { quizType: QuizType; characterId?: number | null; questionLimit?: number | null; training?: boolean | null };
 
 export async function startSession(user: User, input: StartInput) {
   const settings = await getSettings(prisma);
   const maxQuestions = settings.maxQuestionsPerMatch;
   const requested = input.questionLimit ?? Math.min(10, maxQuestions);
-  const questionLimit = Math.max(1, Math.min(requested, maxQuestions));
+  // Quiz geral sem treino é a maratona: sorteia o máximo de perguntas e acaba quando as vidas zeram.
+  const marathon = input.quizType === "GENERAL" && !input.training;
+  const questionLimit = marathon ? maxQuestions : Math.max(1, Math.min(requested, maxQuestions));
 
   let characterId: number | null = null;
   if (input.quizType === "CHARACTER_STUDY") {
@@ -185,6 +194,11 @@ export async function startSession(user: User, input: StartInput) {
     const character = await prisma.biblicalCharacter.findFirst({ where: { id: input.characterId, ...visibleCharacter() }, select: { id: true } });
     if (!character) {
       throw notFound("Personagem não encontrado");
+    }
+    // O estudo é só para quem já tem a figurinha: não libera nada, apenas acumula acertos.
+    const owned = await prisma.userSticker.findUnique({ where: { userId_characterId: { userId: user.id, characterId: character.id } }, select: { id: true } });
+    if (!owned) {
+      throw badRequest("Conquiste a figurinha deste personagem para estudá-lo");
     }
     characterId = character.id;
   }
@@ -233,6 +247,7 @@ export async function startSession(user: User, input: StartInput) {
         userId: user.id,
         quizType: input.quizType,
         characterId,
+        training: input.quizType === "GENERAL" && Boolean(input.training),
         status: "IN_PROGRESS",
         startedAt: now,
         totalQuestions: selected.length,
@@ -405,6 +420,7 @@ export async function answerQuestion(userId: number, sessionId: number, input: A
           correctAnswers: saved.correctAnswers,
           wrongAnswers: saved.wrongAnswers,
           characterId: saved.characterId,
+          training: saved.training,
           xpMultiplier: saved.xpMultiplier,
           startedAt: saved.startedAt,
           comboPoints: saved.comboPoints,
@@ -718,6 +734,8 @@ type MatchStats = {
   correctAnswers: number;
   wrongAnswers: number;
   characterId: number | null;
+  /** Treino do quiz geral: não rende baú. */
+  training?: boolean;
   xpMultiplier: number;
   startedAt: Date;
   comboPoints?: number;
@@ -734,6 +752,11 @@ async function rewardedMatchesToday(tx: Tx, userId: number) {
   });
 }
 
+async function diamondChestsToday(tx: Tx, userId: number) {
+  const { start, end } = dayRangeInTimeZone(new Date(), env.timezone);
+  return tx.quizMatch.count({ where: { userId, chestTier: "DIAMOND", finishedAt: { gte: start, lt: end } } });
+}
+
 async function coinMatchesToday(tx: Tx, userId: number) {
   const { start, end } = dayRangeInTimeZone(new Date(), env.timezone);
   return tx.quizMatch.count({ where: { userId, coinsGained: { gt: 0 }, finishedAt: { gte: start, lt: end } } });
@@ -741,8 +764,10 @@ async function coinMatchesToday(tx: Tx, userId: number) {
 
 export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, stats: MatchStats, random: () => number = Math.random) {
   const event = await activeEvent(tx);
-  let xp = calculateXp(stats.correctAnswers, stats.questionsAnswered, stats.xpMultiplier);
-  const score = calculateScore(stats.correctAnswers, stats.wrongAnswers) + (stats.comboPoints ?? 0);
+  // Estudo de personagem não rende XP, pontos, moedas nem prêmios: só acumula acertos (status do personagem).
+  const isStudy = stats.quizType === "CHARACTER_STUDY";
+  let xp = isStudy ? 0 : calculateXp(stats.correctAnswers, stats.questionsAnswered, stats.xpMultiplier);
+  const score = isStudy ? 0 : calculateScore(stats.correctAnswers, stats.wrongAnswers) + (stats.comboPoints ?? 0);
 
   let rewardGranted = false;
   let rewardName: string | null = null;
@@ -756,21 +781,27 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
   let pityGuaranteed = false;
   let stickerPity = user.stickerPity;
 
-  if (stats.quizType === "CHARACTER_STUDY") {
-    xp = applyCharacterStudyPercent(xp, settings.characterStudyXpPercent);
+  let study: ReturnType<typeof studyStatus> | null = null;
+  let studyLevelUp = false;
+  if (isStudy && stats.characterId) {
+    const before = await tx.characterStudy.findUnique({ where: { userId_characterId: { userId: user.id, characterId: stats.characterId } } });
+    const saved = await tx.characterStudy.upsert({
+      where: { userId_characterId: { userId: user.id, characterId: stats.characterId } },
+      create: { userId: user.id, characterId: stats.characterId, correctAnswers: stats.correctAnswers, questionsAnswered: stats.questionsAnswered },
+      update: { correctAnswers: { increment: stats.correctAnswers }, questionsAnswered: { increment: stats.questionsAnswered } },
+    });
+    study = studyStatus(saved.correctAnswers);
+    studyLevelUp = study.level > studyStatus(before?.correctAnswers ?? 0).level;
+  }
 
-    // A figurinha do personagem só é liberada com aproveitamento mínimo.
-    if (stats.characterId && reachedStickerAccuracy(stats.correctAnswers, stats.questionsAnswered, settings.characterStickerMinAccuracyPercent)) {
-      const character = await tx.biblicalCharacter.findUnique({ where: { id: stats.characterId } });
-      if (character && !isCampaignOnlyRarity(character.rarity)) {
-        rewardType = "STICKER";
-        rewardCharacterId = character.id;
-        rewardCharacterName = character.name;
-        rewardCharacterRarity = character.rarity;
-        rewardCharacterImageUrl = character.imageUrl;
-        rewardCharacterUnlocked = await grantStickerIfMissing(tx, user.id, character.id);
-      }
-    }
+  // Freio diário: depois das primeiras partidas do dia o XP cai (não vale para o estudo, que não dá XP).
+  let xpReduced = false;
+  if (!isStudy && settings.xpFullMatchesPerDay > 0) {
+    const { start, end } = dayRangeInTimeZone(new Date(), env.timezone);
+    const playedToday = await tx.quizMatch.count({ where: { userId: user.id, quizType: { not: "CHARACTER_STUDY" }, finishedAt: { gte: start, lt: end } } });
+    const limited = applyDailyXpLimit(xp, playedToday, settings.xpFullMatchesPerDay, settings.xpAfterLimitPercent);
+    xpReduced = limited < xp;
+    xp = limited;
   }
 
   // Evento ativo multiplica o XP da partida.
@@ -781,38 +812,46 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
 
   // Moedas por acerto: toda partida conta, até o limite diário (evita "farmar" o mesmo quiz).
   let coinsGained = 0;
-  if (stats.correctAnswers > 0 && (await coinMatchesToday(tx, user.id)) < settings.coinMatchLimitPerDay) {
+  if (!isStudy && stats.correctAnswers > 0 && (await coinMatchesToday(tx, user.id)) < settings.coinMatchLimitPerDay) {
     coinsGained = calculateMatchCoins(stats.correctAnswers, stats.wrongAnswers, settings) + (stats.comboCoins ?? 0);
-    if (stats.quizType === "CHARACTER_STUDY") {
-      coinsGained = applyCharacterStudyPercent(coinsGained, settings.characterStudyXpPercent);
-    }
     coinsGained = multiplyCoins(coinsGained, stats.coinMultiplier ?? 1, event?.coinMultiplier ?? 1);
     wallet.coins += coinsGained;
   }
 
   const dailyLimit = settings.rewardMatchLimitPerDay;
-  if (stats.quizType === "GENERAL") {
+  // Baú da partida: só no quiz geral em maratona (o treino não rende). O nível vem dos acertos.
+  let chestTier: ChestTier | null = null;
+  let chestCoins = 0;
+  const chestPrizes: ChestPrizeView[] = [];
+  if (stats.quizType === "GENERAL" && !stats.training) {
     const activeQuestions = await tx.question.count({ where: { active: true } });
     const required = requiredCorrectAnswersForReward(settings.rewardMinCorrectAnswers, activeQuestions);
-    if (stats.correctAnswers >= required && (await rewardedMatchesToday(tx, user.id)) < dailyLimit) {
-      const rewards = await availableRewards(tx, await tx.rewardDefinition.findMany({ where: { active: true }, orderBy: { id: "asc" } }));
-      // Garantia contra azar: depois de N prêmios sem figurinha, só concorrem figurinhas.
-      const stickerRewards = rewards.filter((reward) => reward.rewardType === "STICKER" || reward.rewardType === "STICKER_PACK");
-      pityGuaranteed = pityActive(stickerPity, settings.pityThreshold) && stickerRewards.length > 0;
-      const drawn = weightedPick(pityGuaranteed ? stickerRewards : rewards, (reward) => reward.dropChance, random);
-      if (drawn) {
-        const applied = await applyReward(tx, wallet, drawn, settings, random);
-        rewardGranted = true;
-        rewardName = drawn.name;
-        rewardType = applied.rewardType;
-        rewardCharacterId = applied.characterId;
-        rewardCharacterName = applied.characterName;
-        rewardCharacterRarity = applied.characterRarity;
-        rewardCharacterImageUrl = applied.characterImageUrl;
-        rewardCharacterUnlocked = applied.characterUnlocked;
-        rewardDuplicate = applied.duplicate;
-        stickerPity = applied.characterId ? 0 : stickerPity + 1;
+    let tier = chestTierFor(stats.correctAnswers, required, settings.chestSilverMinCorrect, settings.chestGoldMinCorrect, settings.chestDiamondMinCorrect);
+    // Diamante tem limite próprio por dia; acima dele, vira ouro.
+    if (tier === "DIAMOND" && (settings.chestDiamondLimitPerDay <= 0 || (await diamondChestsToday(tx, user.id)) >= settings.chestDiamondLimitPerDay)) tier = "GOLD";
+    if (tier && (await rewardedMatchesToday(tx, user.id)) < dailyLimit) {
+      const opened = await openChestRewards(tx, wallet, tier, settings, random, { stickerPity });
+      chestTier = opened.tier;
+      chestCoins = opened.coins;
+      chestPrizes.push(...opened.prizes);
+      pityGuaranteed = opened.pityUsed;
+
+      // Compatibilidade com a tela antiga: a melhor figurinha do baú vira o "prêmio" da partida.
+      const best = chestPrizes
+        .filter((prize): prize is Extract<ChestPrizeView, { kind: "STICKER" }> => prize.kind === "STICKER")
+        .sort((left, right) => RARITY_RANK[right.rarity ?? "COMMON"] - RARITY_RANK[left.rarity ?? "COMMON"])[0];
+      rewardGranted = true;
+      rewardName = `Baú ${opened.tier}`;
+      rewardType = best ? "STICKER" : "CHEST";
+      if (best) {
+        rewardCharacterId = best.characterId;
+        rewardCharacterName = best.name;
+        rewardCharacterRarity = best.rarity;
+        rewardCharacterImageUrl = best.imageUrl;
+        rewardCharacterUnlocked = best.unlocked;
+        rewardDuplicate = best.duplicate;
       }
+      stickerPity = opened.gotSticker ? 0 : stickerPity + 1;
     }
   }
 
@@ -842,6 +881,7 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
       coinsGained,
       rewardGranted,
       rewardGrantedName: rewardName,
+      chestTier,
     },
   });
 
@@ -871,12 +911,18 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
     bestCombo: stats.bestCombo ?? 0,
     comboBonusPoints: stats.comboPoints ?? 0,
     coinMultiplier: stats.coinMultiplier ?? 1,
+    xpReduced,
+    studyStatus: study,
+    studyLevelUp,
     eventName: event && (event.xpMultiplier > 1 || event.coinMultiplier > 1) ? event.name : null,
     levelUp: updated.level > user.level,
     chestsPending: Math.max(0, updated.level - updated.chestLevel),
     userXp: updated.xp,
     userLevel: updated.level,
     userCoins: updated.coins + achievementCoins,
+    chestTier,
+    chestCoins,
+    chestPrizes,
     rewardMatchesUsedToday: await rewardedMatchesToday(tx, user.id),
     rewardMatchesLimitPerDay: dailyLimit,
   };

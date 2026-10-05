@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
@@ -13,7 +13,9 @@ type AuthMode = 'login' | 'register';
 export function LoginForm() {
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
-  const [mode, setMode] = useState<AuthMode>('login');
+  // O link de convite de uma sala leva direto para criar a conta (?conta=criar).
+  const [params] = useSearchParams();
+  const [mode, setMode] = useState<AuthMode>(params.get('conta') === 'criar' ? 'register' : 'login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

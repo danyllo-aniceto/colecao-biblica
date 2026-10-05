@@ -1,7 +1,16 @@
 import { apiRequest, apiRequestVoid } from '@/lib/http';
 import type { UserProfile } from '@/types/auth';
 import type { PaginatedResponse, StickerRarity, Testament } from '@/lib/admin-api';
-import type { PlayerLook, UnlockedCosmetic } from '@/lib/rewards-api';
+import type { PlayerLook, RewardResult, UnlockedCosmetic } from '@/lib/rewards-api';
+
+/** Status de estudo do personagem (só acumula acertos; não rende prêmios). */
+export type StudyStatus = {
+  level: number;
+  label: string;
+  correctAnswers: number;
+  nextLabel: string | null;
+  nextAt: number | null;
+};
 
 export type UserSticker = {
   characterId: number;
@@ -11,6 +20,11 @@ export type UserSticker = {
   acquiredAt?: string;
   /** Cópias repetidas guardadas (vender ou fundir). */
   duplicates: number;
+  /** Nível da figurinha (1 a 5), sobe gastando repetidas dela. */
+  level: number;
+  /** Repetidas para o próximo nível; null no nível máximo. */
+  upgradeCost: number | null;
+  study?: StudyStatus;
 };
 
 export type CollectionProgress = {
@@ -77,6 +91,8 @@ export type StartQuizSessionPayload = {
   quizType: QuizType;
   characterId?: number | null;
   questionLimit?: number | null;
+  /** Quiz geral em treino (número de perguntas escolhido, sem baú). Sem isso, é a maratona. */
+  training?: boolean;
 };
 
 export type QuizQuestionView = {
@@ -103,6 +119,10 @@ export type QuizQuestionView = {
 
 export type QuizSessionStatus = {
   sessionId: number;
+  /** Treino do quiz geral (sem baú). */
+  training?: boolean;
+  /** Maratona: vai até as vidas acabarem (não tem total de perguntas fixo). */
+  marathon?: boolean;
   quizType: QuizType;
   status: string;
   totalQuestions: number;
@@ -147,6 +167,15 @@ export type AnswerQuizQuestionPayload = {
   useXpMultiplier?: boolean;
 };
 
+/** O que um baú trouxe, na ordem em que aparece na animação. */
+export type ChestPrize =
+  | { kind: 'COINS'; amount: number }
+  | { kind: 'HELPER'; name: string; amount: number }
+  | { kind: 'STICKER'; characterId: number | null; name: string | null; rarity: StickerRarity | string | null; imageUrl: string | null; unlocked: boolean; duplicate: boolean }
+  | { kind: 'COSMETIC'; name: string; rarity?: string };
+
+export type ChestTierName = 'BRONZE' | 'SILVER' | 'GOLD' | 'DIAMOND' | 'EMERALD';
+
 export type QuizMatchResult = {
   matchId: number;
   xpGained: number;
@@ -171,6 +200,16 @@ export type QuizMatchResult = {
   coinMultiplier?: number;
   eventName?: string | null;
   levelUp?: boolean;
+  /** O XP desta partida foi reduzido pelo limite diário. */
+  xpReduced?: boolean;
+  /** Baú da partida (quiz geral em maratona): o nível vem dos acertos. */
+  chestTier?: ChestTierName | null;
+  chestCoins?: number;
+  /** Tudo que o baú trouxe: moedas, ajudas, figurinhas e (no diamante) item visual. */
+  chestPrizes?: ChestPrize[];
+  /** Só no estudo de personagem: acertos acumulados e status do personagem. */
+  studyStatus?: StudyStatus | null;
+  studyLevelUp?: boolean;
   chestsPending?: number;
   userXp: number;
   userLevel: number;
@@ -239,10 +278,8 @@ export type GameRules = {
   maxQuestionsPerMatch: number;
   startingLives: number;
   rewardMatchLimitPerDay: number;
-  characterStudyXpPercent: number;
   extraTimeSeconds: number;
   rewardMinCorrectAnswers: number;
-  characterStickerMinAccuracyPercent: number;
   coinsPerCorrectAnswer: number;
   perfectMatchBonusCoins: number;
   coinMatchLimitPerDay: number;
@@ -325,6 +362,9 @@ export type ShopPurchaseResult = {
   doubleXpBoosts: number;
   hintBoosts: number;
   streakFreezes: number;
+  /** Baú comprado: o nível e tudo que ele trouxe (abre com a animação). */
+  chestTier?: ChestTierName | null;
+  chestPrizes?: ChestPrize[];
   skipBoosts?: number;
   secondChanceBoosts?: number;
   crowdBoosts?: number;
@@ -465,7 +505,8 @@ export type Mission = {
   period: 'DAILY' | 'WEEKLY';
   title: string;
   coins: number;
-  hints: number;
+  /** Recompensa extra além das moedas (ajuda, pacote, item visual...). */
+  reward: { id: number; name: string; rewardType: string } | null;
   current: number;
   target: number;
   completed: boolean;
@@ -513,7 +554,7 @@ export async function listMissions(): Promise<Mission[]> {
   return apiRequest<Mission[]>('/missions', { method: 'GET' }, 'Não foi possível carregar as missões.');
 }
 
-export async function claimMission(code: string): Promise<{ code: string; coins: number; hints: number; userCoins: number; hintBoosts: number }> {
+export async function claimMission(code: string): Promise<{ code: string; coins: number; reward: RewardResult | null; user: UserProfile }> {
   return apiRequest(`/missions/${code}/claim`, { method: 'POST' }, 'Não foi possível resgatar a missão.');
 }
 
@@ -535,6 +576,12 @@ export async function listUpcoming(): Promise<UpcomingSticker[]> {
 
 export async function sellDuplicates(characterId: number, quantity: number): Promise<{ sold: number; coins: number; userCoins: number }> {
   return apiRequest('/collection/sell', { method: 'POST', body: JSON.stringify({ characterId, quantity }) }, 'Não foi possível vender as repetidas.');
+}
+
+export type UpgradeResult = { characterId: number; characterName: string; level: number; duplicates: number; spent: number; nextCost: number | null };
+
+export async function upgradeSticker(characterId: number): Promise<UpgradeResult> {
+  return apiRequest<UpgradeResult>('/collection/upgrade', { method: 'POST', body: JSON.stringify({ characterId }) }, 'Não foi possível subir o nível da figurinha.');
 }
 
 export async function fuseDuplicates(rarity: StickerRarity): Promise<FuseResult> {

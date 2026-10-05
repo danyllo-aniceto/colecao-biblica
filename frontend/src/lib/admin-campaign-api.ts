@@ -1,3 +1,4 @@
+import type { Landmark, PathStyle } from '@board/layout';
 import { apiRequest, apiRequestVoid } from '@/lib/http';
 import type { PaginatedResponse, StickerRarity } from '@/lib/admin-api';
 
@@ -19,6 +20,11 @@ export type AdminScenario = {
   mapImageUrl: string | null;
   iconImageUrl: string | null;
   musicUrl: string | null;
+  /** Imagem de fundo da tela do quiz neste cenário. */
+  quizBackgroundUrl?: string | null;
+  boardImageUrl?: string | null;
+  boardPathStyle?: PathStyle | null;
+  boardLandmarks?: Landmark[] | null;
   fragmentCharacterId: number | null;
   fragmentCharacter: { id: number; name: string } | null;
   sortOrder: number;
@@ -38,6 +44,11 @@ export type ScenarioPayload = {
   mapImageUrl: string | null;
   iconImageUrl: string | null;
   musicUrl: string | null;
+  /** Imagem de fundo da tela do quiz neste cenário. */
+  quizBackgroundUrl?: string | null;
+  boardImageUrl?: string | null;
+  boardPathStyle?: PathStyle | null;
+  boardLandmarks?: Landmark[] | null;
   fragmentCharacterId: number | null;
   sortOrder: number;
   active: boolean;

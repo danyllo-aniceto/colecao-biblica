@@ -1,5 +1,6 @@
 import { apiRequest, apiRequestVoid } from '@/lib/http';
 import type { UserProfile } from '@/types/auth';
+import type { ChestPrize } from '@/lib/user-api';
 
 export type Role = 'ADMIN' | 'USER';
 export type StickerRarity = 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY' | 'SPECIAL';
@@ -21,7 +22,10 @@ export type RewardType =
   | 'FREEZE_TIME'
   | 'DOUBLE_COINS'
   | 'COMBO_SHIELD'
-  | 'COSMETIC';
+  | 'COSMETIC'
+  | 'CHEST_BRONZE'
+  | 'CHEST_SILVER'
+  | 'CHEST_GOLD';
 export type ReportStatus = 'OPEN' | 'RESOLVED' | 'DISMISSED';
 export type ReportReason = 'WRONG_ANSWER' | 'TYPO' | 'CONFUSING' | 'OTHER';
 export type ShopItemType = 'STICKER' | 'GAME_BONUS' | 'ECONOMY';
@@ -144,7 +148,17 @@ export type GameSettings = {
   maxQuestionsPerMatch: number;
   startingLives: number;
   rewardMatchLimitPerDay: number;
-  characterStudyXpPercent: number;
+  chestDiamondMinCorrect: number;
+  chestDiamondLimitPerDay: number;
+  friendSalePriceCommon: number;
+  friendSalePriceRare: number;
+  friendSalePriceEpic: number;
+  friendSalePriceLegendary: number;
+  friendSaleFeePercent: number;
+  chestSilverMinCorrect: number;
+  chestGoldMinCorrect: number;
+  xpFullMatchesPerDay: number;
+  xpAfterLimitPercent: number;
   maxExtraLifeBoosts: number;
   maxExtraTimeBoosts: number;
   maxDoubleXpBoosts: number;
@@ -152,7 +166,6 @@ export type GameSettings = {
   doubleXpMultiplier: number;
   extraTimeSeconds: number;
   rewardMinCorrectAnswers: number;
-  characterStickerMinAccuracyPercent: number;
   coinsPerCorrectAnswer: number;
   perfectMatchBonusCoins: number;
   coinMatchLimitPerDay: number;
@@ -351,6 +364,14 @@ export function grantUser(id: number, payload: GrantPayload) {
   return apiRequest<UserProfile>(`/users/${id}/grant`, json('POST', payload), 'Não foi possível ajustar o saldo.');
 }
 
+export function resetUser(id: number, includeSocial: boolean) {
+  return apiRequest<UserProfile>(`/users/${id}/reset`, json('POST', { includeSocial }), 'Não foi possível resetar o jogador.');
+}
+
+export function resetAllUsers(includeSocial: boolean) {
+  return apiRequest<{ reset: number }>('/users/reset-all', json('POST', { includeSocial, confirm: 'RESETAR' }), 'Não foi possível resetar os jogadores.');
+}
+
 export function deleteUser(id: number) {
   return apiRequestVoid(`/users/${id}`, { method: 'DELETE' }, 'Não foi possível excluir o usuário.');
 }
@@ -409,6 +430,16 @@ export function deleteQuestion(id: number) {
 
 export function importQuestions(rows: BulkQuestionRow[], dryRun: boolean) {
   return apiRequest<BulkImportResult>('/questions/admin/bulk', json('POST', { rows, dryRun }), 'Não foi possível importar as perguntas.');
+}
+
+export type BulkCharacterRow = Partial<
+  Record<'name' | 'rarity' | 'testament' | 'shortSummary' | 'fullDescription' | 'curiosities' | 'bibleReferences' | 'narrativeRole' | 'historicalPeriod' | 'bibleBooks' | 'keyVerses' | 'keywords' | 'published' | 'imageUrl' | 'publishAt' | 'genealogy' | 'importantEvents', string>
+>;
+
+export type BulkCharacterResult = BulkImportResult & { updated: number; willCreate: number; willUpdate: number };
+
+export function importCharacters(rows: BulkCharacterRow[], dryRun: boolean) {
+  return apiRequest<BulkCharacterResult>('/characters/admin/bulk', json('POST', { rows, dryRun }), 'Não foi possível importar os personagens.');
 }
 
 export function applySuggestedDifficulty(ids: number[]) {
@@ -475,4 +506,99 @@ export function updateSettings(payload: Partial<GameSettings>) {
 
 export function getAdminStats() {
   return apiRequest<AdminStats>('/admin/stats', { method: 'GET' }, 'Não foi possível carregar a visão geral.');
+}
+
+// Simulador de baús ------------------------------------------------------
+
+export type SimulatedChestTier = {
+  possible: boolean;
+  spec: { coins: number; helpers: number; stickerChance: number; extraStickerChance: number; cosmetic: { chance: number; weights: Record<string, number> } };
+  avgCoins: number;
+  avgHelpers: number;
+  avgStickers: number;
+  chanceSticker: number;
+  chanceTwoStickers: number;
+  chanceCosmetic: number;
+  cosmeticByRarity: Record<string, number>;
+  rarityPerChest: Record<'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY', number>;
+  helpers: Record<string, number>;
+  samples: ChestPrize[][];
+};
+
+export type ChestSimulation = {
+  runs: number;
+  publishedByRarity: Record<string, number>;
+  cosmeticsInChestPool: Record<string, number>;
+  thresholds: {
+    bronze: number;
+    silver: number;
+    gold: number;
+    diamond: number;
+    dailyLimit: number;
+    diamondPerDay: number;
+    newStickerPercent: number;
+    pityThreshold: number;
+    startingLives: number;
+  };
+  tiers: Record<'BRONZE' | 'SILVER' | 'GOLD' | 'DIAMOND', SimulatedChestTier>;
+};
+
+export function simulateChests(runs: number) {
+  return apiRequest<ChestSimulation>('/admin/chests/simulate', json('POST', { runs }), 'Não foi possível simular os baús.');
+}
+
+// Missões ----------------------------------------------------------------
+
+export type MissionPeriod = 'DAILY' | 'WEEKLY';
+
+export type AdminMission = {
+  id: number;
+  code: string;
+  period: MissionPeriod;
+  metric: string;
+  title: string;
+  target: number;
+  rewardCoins: number;
+  rewardDefinitionId: number | null;
+  reward: { id: number; name: string; rewardType: string } | null;
+  active: boolean;
+  system: boolean;
+};
+
+export type AdminMissionPayload = {
+  title: string;
+  target: number;
+  rewardCoins: number;
+  rewardDefinitionId: number | null;
+  active: boolean;
+  period?: MissionPeriod;
+  metric?: string;
+};
+
+export function listMissionsAdmin() {
+  return apiRequest<{ metrics: Array<{ value: string; label: string }>; missions: AdminMission[] }>('/missions/admin', { method: 'GET' }, 'Não foi possível carregar as missões.');
+}
+
+export function createMission(payload: AdminMissionPayload) {
+  return apiRequest<AdminMission>('/missions/admin', json('POST', payload), 'Não foi possível criar a missão.');
+}
+
+export function updateMission(id: number, payload: Partial<AdminMissionPayload>) {
+  return apiRequest<AdminMission>(`/missions/admin/${id}`, json('PUT', payload), 'Não foi possível atualizar a missão.');
+}
+
+export function deleteMission(id: number) {
+  return apiRequestVoid(`/missions/admin/${id}`, { method: 'DELETE' }, 'Não foi possível excluir a missão.');
+}
+
+export function importMissions(rows: Array<Record<string, string>>, dryRun: boolean) {
+  return apiRequest<BulkImportResult>('/missions/admin/bulk', json('POST', { rows, dryRun }), 'Não foi possível importar as missões.');
+}
+
+export function importReactions(rows: Array<Record<string, string>>, dryRun: boolean) {
+  return apiRequest<BulkImportResult>('/cosmetics/admin/bulk-reactions', json('POST', { rows, dryRun }), 'Não foi possível importar as reações.');
+}
+
+export function importCosmetics(rows: Array<Record<string, string>>, dryRun: boolean) {
+  return apiRequest<BulkImportResult>('/cosmetics/admin/bulk', json('POST', { rows, dryRun }), 'Não foi possível importar os itens visuais.');
 }
