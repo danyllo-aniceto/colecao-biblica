@@ -2,8 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { playBotTurn, type BotSkill } from '@duel/bots';
 import { doubleStakes, newDuel, retreat, setReady, stage, unstage, viewFor, whyNotStage, type DuelView } from '@duel/engine';
 import { applyRound, damageFor, newSeries, type Series, type SeriesFormat } from '@duel/series';
-import { readyTeam } from '@duel/starter';
-import type { DuelEvent, DuelState } from '@duel/types';
+import type { DuelEvent, DuelState, TeamCard } from '@duel/types';
 import { Button } from '@/components/ui/button';
 import { useDialogs } from '@/components/ui/dialogs';
 import { Modal } from '@/components/ui/modal';
@@ -19,7 +18,9 @@ import { playSfx } from '@/lib/sound/sfx';
 export const BOT_NAMES: Record<BotSkill, string> = { APPRENTICE: 'Bot Aprendiz', STUDENT: 'Bot Estudante', MASTER: 'Bot Mestre' };
 
 type GameProps = {
-  deckId: string;
+  /** Seu Time e o do rival (12 cartas cada). */
+  team: TeamCard[];
+  foeTeam: TeamCard[];
   skill: BotSkill;
   format: SeriesFormat;
   art: CardArt;
@@ -35,12 +36,11 @@ function eventsAfter(prev: DuelState, next: DuelState): DuelEvent[] {
 }
 
 /** Treino contra bot: um aparelho, sem XP nem moedas. O motor decide tudo; aqui ficam os turnos, o bot e a série. */
-export function DuelGame({ deckId, skill, format, art, onExit }: GameProps) {
+export function DuelGame({ team, foeTeam, skill, format, art, onExit }: GameProps) {
   const { campaign, current } = useCampaign();
   const dialogs = useDialogs();
   const toast = useToast();
-  const team = useMemo(() => readyTeam(deckId), [deckId]);
-  const newRound = useCallback(() => newDuel({ teams: [team, team], seed: Math.floor(Math.random() * 2 ** 31) }), [team]);
+  const newRound = useCallback(() => newDuel({ teams: [team, foeTeam], seed: Math.floor(Math.random() * 2 ** 31) }), [team, foeTeam]);
 
   const [state, setState] = useState<DuelState>(newRound);
   const [series, setSeries] = useState<Series>(() => newSeries(format));

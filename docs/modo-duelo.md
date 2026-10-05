@@ -156,7 +156,15 @@ Legenda: ✅ feito e testado · ⬜ a fazer.
      40 testes (inclui 300 duelos só de bots e equilíbrio dos Times prontos).
    - ✅ Tela do treino contra bot na aba Jogar: mesa em retrato, arrastar ou tocar para jogar, avisos dos Dons, dobrar/desistir, resumo da rodada, ajuda.
    - ✅ Imagem do cenário no duelo editável no painel (migração `20261022090000_duelo_cenario_imagem`).
-2. **Painel + dados** ⬜: aba Duelo no personagem (Vigor, Influência, etiquetas, Dom com prévia e medidor de orçamento), importação CSV, Times prontos, 1º lote de cartas.
+2. **Painel + dados** ✅
+   - ✅ Vocabulário ampliado: 19 efeitos (os 12 do começo + devolver, descartar, vigor-extra, custo-menos, converter, sacrificar, multiplicar, mover-se,
+     ressuscitar, poder na mão, aura em todos, fichas novas), 10 condições; tudo testado (`dsl.test.ts`, 15 testes).
+   - ✅ Dom em texto (`backend/src/duel/dsl.ts`): gatilho + efeitos, com erros em português; mesmo código no servidor (importação) e no painel (prévia).
+   - ✅ Tabela `duel_cards` (migração `20261023090000_duelo_cartas`) e API `/api/duel`: cartas e Times para o jogo, lista paginada do painel com busca,
+     exportação, edição, remoção e **importação por planilha com prévia** (13 testes de integração em `duel.test.ts`).
+   - ✅ Painel → *Duelo de Cartas*: lista, edição com prévia do texto e aviso de equilíbrio, importar/baixar planilha e guia de poderes
+     (formato em `docs/duelo-planilha.md`).
+   - ✅ O jogo usa as cartas e os Times prontos cadastrados (sem nenhum, usa os de exemplo).
 3. **Online** ⬜: salas, convite, link, relógio preguiçoso, assistir, série por vidas.
 4. **Meus times e níveis** ⬜: montador de Time (paginado), Times salvos, níveis valendo, modo equilibrado.
 5. **Polimento** ⬜: sons próprios, música do cenário (já toca a do 1º cenário aberto), versos de carta e vitórias online, marcador na campanha, relatório de equilíbrio.
