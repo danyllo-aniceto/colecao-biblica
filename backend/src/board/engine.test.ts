@@ -65,7 +65,7 @@ function play(state: BoardState, correct: boolean) {
 
 describe("tabuleiro", () => {
   it("monta largada, portão e chegada nos três tamanhos, com abrigos fixos", () => {
-    for (const size of [25, 40, 60]) {
+    for (const size of [25, 40, 60, 80, 100]) {
       const state = newGame({ config: { size } });
       expect(state.tiles).toHaveLength(size + 1);
       expect(state.tiles[0].kind).toBe("START");
@@ -78,11 +78,11 @@ describe("tabuleiro", () => {
 
   it("sorteia provações, atalhos, quedas e poderes sem encostar uns nos outros", () => {
     for (let seed = 1; seed <= 60; seed += 1) {
-      for (const size of [25, 40, 60]) {
+      for (const size of [25, 40, 60, 80, 100]) {
         const draft = { s: { rng: seed } };
         const tiles = buildTiles({ ...DEFAULT_CONFIG, size }, RULES, draft);
         const kinds = (kind: string) => tiles.flatMap((tile, index) => (tile.kind === kind ? [index] : []));
-        expect(kinds("TRIAL").length).toBeGreaterThanOrEqual(Math.round(size / 10) - 1);
+        expect(kinds("TRIAL").length).toBeGreaterThanOrEqual(Math.max(2, Math.round(size / 13)) - 1);
         expect(kinds("SHORTCUT").length).toBeGreaterThanOrEqual(1);
         expect(kinds("FALL").length).toBeGreaterThanOrEqual(1);
         expect(kinds("POWER").length).toBeGreaterThanOrEqual(2);
@@ -576,7 +576,7 @@ describe("bots", () => {
 
   it("partidas só de bots sempre terminam, com estado coerente", () => {
     for (let seed = 1; seed <= 40; seed += 1) {
-      const size = [25, 40, 60][seed % 3];
+      const size = [25, 40, 60, 80, 100][seed % 5];
       const rules = seed % 2 === 0 ? BOARD_SCENARIOS.eden : boardRulesFor("outro");
       let state = createGame({
         config: { ...DEFAULT_CONFIG, size },

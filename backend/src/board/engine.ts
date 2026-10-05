@@ -241,7 +241,7 @@ export class BoardRuleError extends Error {}
 // Constantes e catálogo
 // ---------------------------------------------------------------------------
 
-export const BOARD_SIZES = [25, 40, 60] as const;
+export const BOARD_SIZES = [25, 40, 60, 80, 100] as const;
 export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 6;
 export const MAX_POWER_UPS = 2;
@@ -254,7 +254,7 @@ export const SHELTER_EVERY = 8;
 /** Acertos seguidos para derrubar um muro. */
 export const WALL_NEED = 2;
 export const NET_PULL = 2;
-export const TIME_OPTIONS = [15, 20, 30] as const;
+export const TIME_OPTIONS = [15, 20, 30, 60] as const;
 export const DEFAULT_CONFIG: BoardConfig = { size: 40, timeSeconds: 20, powerUps: true, push: true, catchUp: true };
 
 export type PowerUpInfo = { name: string; emoji: string; description: string; passive: boolean };

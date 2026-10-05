@@ -89,7 +89,7 @@ describe("avisos animados do tabuleiro", () => {
     expect(walkMs([{ type: "MOVED", playerId: "p0", from: 7, to: 4, reason: "FALL" }])).toBe(0);
     expect(holdMs(walk, [callout({}), callout({})])).toBe(4 * STEP_MS + 500 + 2 * MOMENT_MS);
     expect(holdMs([], [])).toBe(0);
-    expect(holdMs(walk, Array.from({ length: 10 }, () => callout({})))).toBeLessThanOrEqual(9000);
+    expect(holdMs(walk, Array.from({ length: 10 }, () => callout({})))).toBeLessThanOrEqual(30_000);
   });
 
   it("limita os avisos de uma jogada e tira primeiro os menos importantes", () => {

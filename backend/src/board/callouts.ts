@@ -27,9 +27,9 @@ export const STEP_MS = 150;
 export const MAX_WALK_STEPS = 16;
 export const MAX_CALLOUTS = 3;
 /** Quanto cada aviso fica na tela (dá para pular com um toque). */
-export const MOMENT_MS = 3500;
+export const MOMENT_MS = 10_000;
 /** Teto da pausa de uma jogada, para o jogo nunca ficar parado esperando aviso. */
-const MAX_HOLD_MS = 9000;
+const MAX_HOLD_MS = 30_000;
 
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 

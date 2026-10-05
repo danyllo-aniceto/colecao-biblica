@@ -247,6 +247,8 @@ Legenda: ✅ feito e testado · ⬜ a fazer.
   cartão no lugar da folha, um por vez (3,5 s, com barra e botão "Continuar"); só então vem o dado/pergunta seguinte. Bots e
   cronômetros esperam esse tempo (`holdMs`, também no servidor). Menos casas especiais no chão (provações, atalhos, quedas e
   poderes ~⅓ a menos; abrigos a cada 8) e **manual do cenário** na sala de espera (`ScenarioHighlights` + manual completo).
+- ✅ Avisos ficam 10 s (com "Continuar" para pular quando já leu); tempo por pergunta ganhou **60 s** e o tabuleiro ganhou **Maratona (80)** e
+  **Jornada (100)**.
 - ✅ **Convite de amigo** também cai na conversa dele (mensagem com botão "Entrar na sala" e contador de não lidas), não só como
   aviso na tela (que consulta a cada 6 s).
 - ✅ **Peões básicos editáveis**: os 10 emojis grátis viraram itens `PAWN` de desbloqueio "Grátis" (seed `Peão: Ovelha`...), que o

@@ -52,7 +52,7 @@ const PRESETS: Record<Exclude<PresetKey, 'custom'>, { label: string; hint: strin
 const sameConfig = (left: BoardConfig, right: BoardConfig) =>
   left.size === right.size && left.timeSeconds === right.timeSeconds && left.powerUps === right.powerUps && left.push === right.push && left.catchUp === right.catchUp;
 
-const SIZE_LABEL: Record<number, string> = { 25: 'Rápido', 40: 'Clássico', 60: 'Épico' };
+const SIZE_LABEL: Record<number, string> = { 25: 'Rápido', 40: 'Clássico', 60: 'Épico', 80: 'Maratona', 100: 'Jornada' };
 const PAGE_SIZE = 6;
 
 type Props = {
@@ -379,11 +379,11 @@ export function BoardSetupModal({ open, scenarios, defaultScenarioId, playerName
           </Field>
 
           <Field label="Tamanho do tabuleiro" hint="Quantas casas até a chegada.">
-            <Segmented
+            <Select
               aria-label="Tamanho do tabuleiro"
               value={String(config.size)}
               onChange={(value) => setConfig((current) => ({ ...current, size: Number(value) }))}
-              options={BOARD_SIZES.map((size) => ({ value: String(size), label: `${SIZE_LABEL[size]} · ${size}` }))}
+              options={BOARD_SIZES.map((size) => ({ value: String(size), label: `${SIZE_LABEL[size]} · ${size} casas` }))}
             />
           </Field>
 

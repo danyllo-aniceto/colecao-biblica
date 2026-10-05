@@ -106,7 +106,7 @@ describe("os 10 cenários", () => {
   });
 
   it("cada cenário monta o tabuleiro com as casas dele (e só as dele)", () => {
-    for (const size of [25, 40, 60]) {
+    for (const size of [25, 40, 60, 80, 100]) {
       for (const slug of SLUGS) {
         const state = newGame(slug, { config: { size } });
         const rules = BOARD_SCENARIOS[slug];
@@ -122,7 +122,7 @@ describe("os 10 cenários", () => {
 
   it("partidas só de bots em todos os cenários e tamanhos sempre terminam", () => {
     for (const slug of SLUGS) {
-      for (const [index, size] of [25, 40, 60].entries()) {
+      for (const [index, size] of [25, 40, 60, 80, 100].entries()) {
         for (let seed = 1; seed <= 4; seed += 1) {
           let state = createGame({
             config: { ...DEFAULT_CONFIG, size },
