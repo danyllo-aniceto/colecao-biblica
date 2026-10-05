@@ -28,7 +28,7 @@ import {
   updateConfig,
 } from "../services/duel-room";
 
-/** Salas online do Duelo de Cartas (autenticado). */
+/** Salas online do Duelo de Figurinhas (autenticado). */
 export const duelRoomRouter = Router();
 /** Prévia do convite: sem login (o link é aberto por quem ainda não tem conta). */
 export const duelPublicRouter = Router();

@@ -18,19 +18,19 @@ type CostFilter = 'all' | 'cheap' | 'mid' | 'strong';
 const normalize = (value: string) => value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 type BuilderProps = {
-  /** Só as cartas que o jogador tem (figurinha conquistada e carta disponível). */
+  /** Só as figurinhas que o jogador tem (conquistadas e disponíveis no Duelo). */
   cards: CardDef[];
   art: CardArt;
   initialName: string;
   initialIds: string[];
   saving: boolean;
-  /** Quantas cartas do Duelo ainda não foram conquistadas. */
+  /** Quantas figurinhas do Duelo ainda não foram conquistadas. */
   missing: number;
   onSave: (name: string, ids: string[]) => void;
   onClose: () => void;
 };
 
-/** Montador de Time: escolha 12 das cartas das figurinhas que você já conquistou. */
+/** Montador de Time: escolha 12 das figurinhas que você já conquistou. */
 export function DuelDeckBuilder({ cards, art, initialName, initialIds, saving, missing, onSave, onClose }: BuilderProps) {
   const [name, setName] = useState(initialName);
   const [picked, setPicked] = useState<string[]>(initialIds);
@@ -73,7 +73,7 @@ export function DuelDeckBuilder({ cards, art, initialName, initialIds, saving, m
       open
       size="xl"
       title="Montar Time"
-      description={`Escolha ${TEAM_SIZE} cartas entre as das figurinhas que você já conquistou.`}
+      description={`Escolha ${TEAM_SIZE} entre as figurinhas que você já conquistou.`}
       onClose={saving ? undefined : onClose}
       footer={
         <>
@@ -91,7 +91,7 @@ export function DuelDeckBuilder({ cards, art, initialName, initialIds, saving, m
           <Input value={name} onChange={(event) => setName(event.target.value)} maxLength={30} placeholder="Ex.: Reis em fila" />
         </Field>
 
-        <section className="space-y-2" aria-label="Cartas do Time">
+        <section className="space-y-2" aria-label="Figurinhas do Time">
           <div className="flex items-center justify-between gap-2">
             <p className="text-sm font-bold text-muted">Seu Time ({chosen.length}/{TEAM_SIZE})</p>
             <div className="flex items-end gap-1" aria-label="Curva de Vigor do Time">
@@ -103,7 +103,7 @@ export function DuelDeckBuilder({ cards, art, initialName, initialIds, saving, m
               ))}
             </div>
           </div>
-          <ul className="grid grid-cols-6 gap-1.5 sm:grid-cols-12" aria-label="Cartas escolhidas">
+          <ul className="grid grid-cols-6 gap-1.5 sm:grid-cols-12" aria-label="Figurinhas escolhidas">
             {Array.from({ length: TEAM_SIZE }, (_, index) => {
               const card = chosen[index];
               return (
@@ -122,13 +122,13 @@ export function DuelDeckBuilder({ cards, art, initialName, initialIds, saving, m
               );
             })}
           </ul>
-          {full && cheap < 3 ? <Alert tone="info">Poucas cartas baratas (Vigor 0 a 2): no começo você pode ficar sem o que jogar.</Alert> : null}
-          {full && strong < 2 ? <Alert tone="info">Poucas cartas fortes (Vigor 4 ou mais): no fim do duelo falta força para virar.</Alert> : null}
+          {full && cheap < 3 ? <Alert tone="info">Poucas figurinhas baratas (Vigor 0 a 2): no começo você pode ficar sem o que jogar.</Alert> : null}
+          {full && strong < 2 ? <Alert tone="info">Poucas figurinhas fortes (Vigor 4 ou mais): no fim do duelo falta força para virar.</Alert> : null}
         </section>
 
-        <section className="space-y-3" aria-label="Suas cartas">
+        <section className="space-y-3" aria-label="Suas figurinhas">
           <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-            <Input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar carta ou etiqueta" aria-label="Buscar carta" />
+            <Input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar figurinha ou etiqueta" aria-label="Buscar figurinha" />
             <Segmented<CostFilter>
               aria-label="Filtrar por Vigor"
               value={filter}
@@ -143,8 +143,8 @@ export function DuelDeckBuilder({ cards, art, initialName, initialIds, saving, m
             />
           </div>
 
-          {cards.length === 0 ? <Alert tone="info">Você ainda não tem figurinhas com carta no Duelo. Conquiste mais figurinhas jogando!</Alert> : null}
-          {missing > 0 && cards.length > 0 ? <p className="text-xs font-semibold text-muted">Há mais {missing} carta(s) do Duelo esperando você conquistar a figurinha.</p> : null}
+          {cards.length === 0 ? <Alert tone="info">Você ainda não tem figurinhas no Duelo. Conquiste mais figurinhas jogando!</Alert> : null}
+          {missing > 0 && cards.length > 0 ? <p className="text-xs font-semibold text-muted">Faltam {missing} figurinha(s) do Duelo para você conquistar.</p> : null}
 
           <ul className="grid gap-2 sm:grid-cols-2">
             {paging.pageItems.map((card) => {
@@ -175,8 +175,8 @@ export function DuelDeckBuilder({ cards, art, initialName, initialIds, saving, m
               );
             })}
           </ul>
-          {visible.length === 0 && cards.length > 0 ? <p className="text-center text-sm font-semibold text-muted">Nenhuma carta com esse filtro.</p> : null}
-          <Pagination page={paging.page} totalPages={paging.totalPages} totalElements={paging.totalElements} onPageChange={paging.setPage} itemLabel="cartas" pageSizeOptions={[8]} />
+          {visible.length === 0 && cards.length > 0 ? <p className="text-center text-sm font-semibold text-muted">Nenhuma figurinha com esse filtro.</p> : null}
+          <Pagination page={paging.page} totalPages={paging.totalPages} totalElements={paging.totalElements} onPageChange={paging.setPage} itemLabel="figurinhas" pageSizeOptions={[8]} />
         </section>
       </div>
     </Modal>

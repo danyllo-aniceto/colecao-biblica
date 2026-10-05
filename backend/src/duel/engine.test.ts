@@ -42,7 +42,7 @@ const board = (state: DuelState, lane: number, side: Side) => state.lanes[lane].
 const named = (state: DuelState, lane: number, side: Side, name: string): PlacedCard => board(state, lane, side).find((card) => card.def.name === name)!;
 
 describe("criação", () => {
-  it("12 cartas por Time: 3 na mão e 9 no baralho; mesma semente, mesma partida", () => {
+  it("12 figurinhas por Time: 3 na mão e 9 no baralho; mesma semente, mesma partida", () => {
     const a = newDuel({ teams: [readyTeam("reis-e-juizes"), readyTeam("profetas-e-patriarcas")], seed: 42 });
     const b = newDuel({ teams: [readyTeam("reis-e-juizes"), readyTeam("profetas-e-patriarcas")], seed: 42 });
     const c = newDuel({ teams: [readyTeam("reis-e-juizes"), readyTeam("profetas-e-patriarcas")], seed: 43 });
@@ -55,7 +55,7 @@ describe("criação", () => {
 
   it("Times prontos são válidos", () => {
     for (const deck of READY_DECKS) expect(validateTeam(readyTeam(deck.id))).toBeNull();
-    expect(validateTeam(readyTeam("reis-e-juizes").slice(0, 11))).toMatch(/12 cartas/);
+    expect(validateTeam(readyTeam("reis-e-juizes").slice(0, 11))).toMatch(/12 figurinhas/);
     const repeated = readyTeam("reis-e-juizes");
     repeated[1] = repeated[0];
     expect(validateTeam(repeated)).toMatch(/duas vezes/);
@@ -73,18 +73,18 @@ describe("criação", () => {
   });
 
   it("descreve o Dom em português", () => {
-    expect(describeDom(def("moises").dom)).toBe("Ao revelar: move as cartas do rival daqui para os outros cenários.");
-    expect(describeDom(def("davi").dom)).toContain("+6 de Influência para esta carta, se o rival tem aqui uma carta de 6+");
+    expect(describeDom(def("moises").dom)).toBe("Ao revelar: move as figurinhas do rival daqui para os outros cenários.");
+    expect(describeDom(def("davi").dom)).toContain("+6 de Influência para esta figurinha, se o rival tem aqui uma figurinha de 6+");
     expect(describeDom(undefined)).toBe("Sem Dom.");
   });
 });
 
 describe("jogadas", () => {
-  it("só dá para jogar com Vigor, em cenário aberto, com espaço e carta da mão", () => {
+  it("só dá para jogar com Vigor, em cenário aberto, com espaço e figurinha da mão", () => {
     const state = duel({ mine: ["davi", "elias", "rute"] });
     expect(whyNotStage(state, 0, uidOf(state, 0, "elias"), 0)).toBe("Vigor insuficiente.");
     expect(whyNotStage(state, 0, uidOf(state, 0, "rute"), 1)).toBe("Esse cenário ainda não apareceu.");
-    expect(whyNotStage(state, 0, 9999, 0)).toBe("Essa carta não está na sua mão.");
+    expect(whyNotStage(state, 0, 9999, 0)).toBe("Essa figurinha não está na sua mão.");
     expect(whyNotStage(state, 0, uidOf(state, 0, "rute"), 0)).toBeNull();
     const staged = stage(state, 0, uidOf(state, 0, "rute"), 0);
     // O Vigor do turno 1 (1) já foi gasto.
@@ -99,7 +99,7 @@ describe("jogadas", () => {
     expect(whyNotStage(state, 0, uidOf(state, 0, "rute"), 0)).toBe("Você já terminou o turno.");
   });
 
-  it("os dois prontos: cartas viram, turno avança, compra 1 carta e o 2º cenário aparece", () => {
+  it("os dois prontos: figurinhas viram, turno avança, compra 1 figurinha e o 2º cenário aparece", () => {
     const state = playTurn(duel({ mine: ["rute", "abel", "davi"], theirs: ["abel", "rute", "davi"] }), [["abel", 0]], [["rute", 0]]);
     expect(state.turn).toBe(2);
     expect(board(state, 0, 0)).toHaveLength(1);
@@ -111,7 +111,7 @@ describe("jogadas", () => {
     expect(viewFor(state, 0).lanes[1].scenario?.id).toBe("arca");
   });
 
-  it("quem está ganhando revela primeiro (a carta dele entra antes)", () => {
+  it("quem está ganhando revela primeiro (a figurinha dele entra antes)", () => {
     const setup = (leader: Side) => {
       const state = duel({ mine: ["abel"], theirs: ["abel"], turn: 2, scenarios: ["jerico", "arca", "canaa"] });
       state.lanes[0].cards[leader].push({ uid: 900, def: def("saul"), bonus: 0, silenced: false, order: 1, turn: 1 });
@@ -128,7 +128,7 @@ describe("jogadas", () => {
 });
 
 describe("Dons", () => {
-  it("Davi ganha +6 contra carta forte já na mesa; Golias perde 6 diante de Davi", () => {
+  it("Davi ganha +6 contra figurinha forte já na mesa; Golias perde 6 diante de Davi", () => {
     const a = duel({ mine: ["davi"], turn: 2 });
     a.lanes[0].cards[1].push({ uid: 901, def: def("saul"), bonus: 0, silenced: false, order: 1, turn: 1 });
     a.nextOrder = 2;
@@ -145,7 +145,7 @@ describe("Dons", () => {
     expect(named(done, 0, 1, "Golias").bonus).toBe(-6);
   });
 
-  it("Moisés move as cartas do rival para outros cenários abertos com espaço", () => {
+  it("Moisés move as figurinhas do rival para outros cenários abertos com espaço", () => {
     const state = duel({ mine: ["moises"], turn: 4, scenarios: ["eden", "arca", "canaa"] });
     state.lanes[0].cards[1].push({ uid: 910, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 911, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 1 });
     state.nextOrder = 3;
@@ -161,7 +161,7 @@ describe("Dons", () => {
     expect(board(playTurn(state, [["moises", 0]]), 0, 1)).toHaveLength(1);
   });
 
-  it("Elias afasta a carta mais fraca do rival; Daniel protege", () => {
+  it("Elias afasta a figurinha mais fraca do rival; Daniel protege", () => {
     const base = () => {
       const state = duel({ mine: ["elias"], turn: 4 });
       state.lanes[0].cards[1].push({ uid: 920, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 921, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 1 });
@@ -175,7 +175,7 @@ describe("Dons", () => {
     const guarded = base();
     guarded.lanes[0].cards[1].push({ uid: 922, def: def("daniel"), bonus: 0, silenced: false, order: 3, turn: 1 });
     guarded.nextOrder = 4;
-    // Daniel protege as cartas do rival aqui: a mais fraca continua protegida.
+    // Daniel protege as figurinhas do rival aqui: a mais fraca continua protegida.
     const after = playTurn(guarded, [["elias", 0]]);
     expect(board(after, 0, 1)).toHaveLength(3);
   });
@@ -189,7 +189,7 @@ describe("Dons", () => {
     expect(cardPower(done, 0, 1, named(done, 0, 1, "Daniel"))).toBe(2);
   });
 
-  it("Pedro dá +1 às cartas dos cenários vizinhos; Isaías, aos Profetas daqui", () => {
+  it("Pedro dá +1 às figurinhas dos cenários vizinhos; Isaías, aos Profetas daqui", () => {
     const state = duel({ mine: ["pedro", "abel"], turn: 3 });
     state.lanes[1].cards[0].push({ uid: 940, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 });
     state.lanes[0].cards[0].push({ uid: 941, def: def("daniel"), bonus: 0, silenced: false, order: 2, turn: 1 });
@@ -224,14 +224,14 @@ describe("Dons", () => {
     expect(back.bonus).toBe(3);
   });
 
-  it("Rute cresce quando outra carta sua é jogada no mesmo cenário", () => {
+  it("Rute cresce quando outra figurinha sua é jogada no mesmo cenário", () => {
     let state = playTurn(duel({ mine: ["rute", "abel"] }), [["rute", 0]]);
     state.players[0].hand = [{ uid: 960, def: def("abel"), bonus: 0 }];
     state = playTurn(state, [["abel", 0]]);
     expect(named(state, 0, 0, "Rute").bonus).toBe(1);
   });
 
-  it("Gideão soma +1 por carta de Vigor 1 em jogo", () => {
+  it("Gideão soma +1 por figurinha de Vigor 1 em jogo", () => {
     const state = duel({ mine: ["gideao"], turn: 2 });
     state.lanes[1].cards[0].push({ uid: 970, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 971, def: def("rute"), bonus: 0, silenced: false, order: 2, turn: 1 });
     state.nextOrder = 3;
@@ -250,7 +250,7 @@ describe("Dons", () => {
     expect(board(done, 0, 1)).toHaveLength(0);
   });
 
-  it("Salomão e José compram cartas", () => {
+  it("Salomão e José compram figurinhas", () => {
     const state = duel({ mine: ["jose"], turn: 3 });
     const before = state.players[0].deck.length;
     const done = playTurn(state, [["jose", 0]]);
@@ -265,13 +265,13 @@ describe("cenários", () => {
     expect(lanePower(state, 0, 0)).toBe(4);
   });
 
-  it("Arca: etiqueta repetida dá +1 a cada carta", () => {
+  it("Arca: etiqueta repetida dá +1 a cada figurinha", () => {
     const state = duel({ turn: 3, scenarios: ["eden", "arca", "canaa"] });
     state.lanes[1].cards[0].push({ uid: 1, def: def("daniel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("samuel"), bonus: 0, silenced: false, order: 2, turn: 1 }, { uid: 3, def: def("abel"), bonus: 0, silenced: false, order: 3, turn: 1 });
     expect(lanePower(state, 1, 0)).toBe(2 + 1 + (4 + 1) + 2);
   });
 
-  it("Canaã: quem tem mais cartas aqui ganha +3", () => {
+  it("Canaã: quem tem mais figurinhas aqui ganha +3", () => {
     const state = duel({ turn: 3, scenarios: ["eden", "arca", "canaa"] });
     state.lanes[2].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 });
     state.lanes[2].cards[1].push({ uid: 3, def: def("saul"), bonus: 0, silenced: false, order: 3, turn: 1 });
@@ -279,7 +279,7 @@ describe("cenários", () => {
     expect(lanePower(state, 2, 1)).toBe(6);
   });
 
-  it("Egito: a carta mais fraca de cada lado perde 1 no fim do turno", () => {
+  it("Egito: a figurinha mais fraca de cada lado perde 1 no fim do turno", () => {
     const state = playTurn(duel({ mine: ["abel", "rute"], theirs: ["abel", "rute"], scenarios: ["egito", "arca", "canaa"] }), [["abel", 0]], [["abel", 0]]);
     expect(named(state, 0, 0, "Abel").bonus).toBe(-1);
     expect(named(state, 0, 1, "Abel").bonus).toBe(-1);
@@ -297,13 +297,13 @@ describe("cenários", () => {
     expect(lanePower(state, 0, 0)).toBe(6 + 4 + 2);
   });
 
-  it("Babilônia: a primeira carta de cada lado vai para o cenário da direita", () => {
+  it("Babilônia: a primeira figurinha de cada lado vai para o cenário da direita", () => {
     const state = playTurn(duel({ turn: 2, mine: ["abel", "rute"], scenarios: ["babilonia", "arca", "canaa"] }), [["abel", 0]]);
     expect(board(state, 0, 0)).toHaveLength(0);
     expect(board(state, 1, 0).map((card) => card.def.name)).toEqual(["Abel"]);
   });
 
-  it("Galileia: no fim do turno 4 todas as cartas perdem 1", () => {
+  it("Galileia: no fim do turno 4 todas as figurinhas perdem 1", () => {
     const state = duel({ mine: ["abel"], turn: 4, scenarios: ["galileia", "arca", "canaa"] });
     const done = playTurn(state, [["abel", 0]]);
     expect(named(done, 0, 0, "Abel").bonus).toBe(-1);
@@ -320,7 +320,7 @@ describe("cenários", () => {
 });
 
 describe("passo a passo do turno (para a tela animar)", () => {
-  it("cada acontecimento traz a foto do tabuleiro: a carta entra, depois o Dom muda o número", () => {
+  it("cada acontecimento traz a foto do tabuleiro: a figurinha entra, depois o Dom muda o número", () => {
     const state = duel({ mine: ["davi"], turn: 2 });
     state.lanes[0].cards[1].push({ uid: 901, def: def("saul"), bonus: 0, silenced: false, order: 1, turn: 1 });
     state.nextOrder = 2;
@@ -328,7 +328,7 @@ describe("passo a passo do turno (para a tela animar)", () => {
     const steps = done.events.filter((event) => event.snap);
     const reveal = steps.find((event) => event.type === "reveal")!;
     const power = steps.find((event) => event.type === "power")!;
-    expect(reveal.dom).toContain("+6 de Influência para esta carta");
+    expect(reveal.dom).toContain("+6 de Influência para esta figurinha");
     expect(reveal.snap![0].cards[0].map((card) => card.power)).toEqual([2]);
     expect(reveal.snap![0].power).toEqual([2, 6]);
     expect(power.snap![0].cards[0].map((card) => card.power)).toEqual([8]);
@@ -338,7 +338,7 @@ describe("passo a passo do turno (para a tela animar)", () => {
     expect(reveal.snap![2].open).toBe(false);
   });
 
-  it("destruir mostra a carta saindo; a foto seguinte já não a tem", () => {
+  it("destruir mostra a figurinha saindo; a foto seguinte já não a tem", () => {
     const state = duel({ mine: ["elias"], turn: 4 });
     state.lanes[0].cards[1].push({ uid: 920, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 });
     state.nextOrder = 2;
@@ -422,8 +422,8 @@ describe("informação escondida", () => {
   });
 });
 
-describe("conservação das cartas", () => {
-  it("nenhuma carta se perde ou duplica durante uma partida inteira", () => {
+describe("conservação das figurinhas", () => {
+  it("nenhuma figurinha se perde ou duplica durante uma partida inteira", () => {
     let state = newDuel({ teams: [readyTeam("reis-e-juizes"), readyTeam("profetas-e-patriarcas")], seed: 5 });
     const total = (side: Side) => {
       const player = state.players[side];

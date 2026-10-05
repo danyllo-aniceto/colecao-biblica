@@ -10,7 +10,6 @@ import { errorMessage, useToast } from '@/components/ui/toast';
 import { JoinRoomModal } from '@/components/user/board/join-room-modal';
 import { OnlineRoom } from '@/components/user/board/online-room';
 import { PENDING_ROOM_EVENT, createRoom, joinRoom, myRoom, takePendingRoom, type RoomView } from '@/lib/board-room-api';
-import { SectionHeading } from '@/components/game/game-ui';
 import { useCampaign } from '@/components/user/campaign/campaign-provider';
 import { BoardGame } from '@/components/user/board/board-game';
 import { BoardSetupModal, type BoardSetup } from '@/components/user/board/board-setup';
@@ -159,14 +158,12 @@ export function BoardHub({ playerName }: { playerName: string }) {
 
   return (
     <section className="space-y-3" aria-label="Tabuleiro">
-      <SectionHeading title="Jogue com amigos" subtitle="Partidas sem XP nem moedas: é só diversão." />
       <div className="panel space-y-4 p-4 sm:p-6">
         <div className="flex items-start gap-4">
           <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet text-white" aria-hidden="true">
             <CasinoRoundedIcon sx={{ fontSize: 32 }} />
           </span>
           <div className="min-w-0 space-y-1">
-            <h3 className="font-display text-xl font-bold text-ink">Tabuleiro</h3>
             <p className="text-sm font-semibold text-muted">
               Role o dado, responda a pergunta e só anda quem acerta. Chegue primeiro no fim do caminho de um cenário! De 2 a 6 jogadores, no mesmo aparelho ou online com os amigos, com bots para completar a mesa.
             </p>

@@ -39,7 +39,7 @@ import {
 } from "./types";
 
 // ---------------------------------------------------------------------------
-// Cartas-ficha (criadas por Dons)
+// Figurinhas-ficha (criadas por Dons)
 // ---------------------------------------------------------------------------
 
 export const TOKENS: Record<string, CardDef> = {
@@ -158,7 +158,7 @@ function countMatching(state: DuelState, source: Found, count: Count) {
   return total;
 }
 
-/** Influência atual de uma carta: base + bônus permanentes + Dons contínuos + regra do cenário. */
+/** Influência atual de uma figurinha: base + bônus permanentes + Dons contínuos + regra do cenário. */
 export function cardPower(state: DuelState, laneIndex: number, side: Side, card: PlacedCard): number {
   let power = card.def.power + card.bonus;
   const here = state.lanes[laneIndex].cards[side];
@@ -168,7 +168,7 @@ export function cardPower(state: DuelState, laneIndex: number, side: Side, card:
       if (effect.kind === "powerPer") power += effect.amount * countMatching(state, { lane: laneIndex, side, card }, effect.per);
     }
   }
-  // Auras de outras cartas suas.
+  // Auras de outras figurinhas suas.
   state.lanes.forEach((lane, index) => {
     for (const source of lane.cards[side]) {
       if (source.uid === card.uid || source.silenced || source.def.dom?.trigger !== "ongoing") continue;
@@ -181,14 +181,14 @@ export function cardPower(state: DuelState, laneIndex: number, side: Side, card:
       }
     }
   });
-  // Regras de cenário que mexem em cada carta.
+  // Regras de cenário que mexem em cada figurinha.
   const rule = laneScenario(state, laneIndex).rule;
   if (rule.kind === "cheapBonus" && card.def.cost === 1) power += rule.amount;
   if (rule.kind === "sharedTag" && here.some((mate) => mate.uid !== card.uid && mate.def.tags.some((tag) => card.def.tags.includes(tag)))) power += rule.amount;
   return power;
 }
 
-/** Bônus do cenário que vale para o lado todo (não é de uma carta). */
+/** Bônus do cenário que vale para o lado todo (não é de uma figurinha). */
 function laneBonus(state: DuelState, laneIndex: number, side: Side): number {
   const rule = laneScenario(state, laneIndex).rule;
   const mine = state.lanes[laneIndex].cards[side];
@@ -317,7 +317,7 @@ function destroyCard(state: DuelState, target: Found, cause: string) {
   const index = list.findIndex((card) => card.uid === target.card.uid);
   if (index < 0) return;
   list.splice(index, 1);
-  // Cartas-ficha (Descendente) simplesmente desaparecem; as do Time vão para o cemitério.
+  // Figurinhas-ficha (Descendente) simplesmente desaparecem; as do Time vão para o cemitério.
   if (!target.card.def.token) state.players[target.side].graveyard.push({ uid: target.card.uid, def: target.card.def, bonus: 0 });
   emit(state, { type: "destroy", side: target.side, lane: target.lane, uid: target.card.uid, name: target.card.def.name, text: `${target.card.def.name} foi afastado${cause ? ` por ${cause}` : ""}.` });
   if (target.card.def.dom?.trigger === "destroyed") {
@@ -358,13 +358,13 @@ function applyEffect(state: DuelState, ctx: Ctx, effect: Effect, isDestroyedHook
         const hand = state.players[ctx.side].hand;
         if (hand.length === 0) return;
         for (const card of hand) card.bonus += effect.amount;
-        emit(state, { type: "power", side: ctx.side, lane: ctx.lane, uid: ctx.card.uid, name: self, amount: effect.amount, text: `${self}: ${effect.amount >= 0 ? "+" : ""}${effect.amount} de Influência nas cartas da mão.` });
+        emit(state, { type: "power", side: ctx.side, lane: ctx.lane, uid: ctx.card.uid, name: self, amount: effect.amount, text: `${self}: ${effect.amount >= 0 ? "+" : ""}${effect.amount} de Influência nas figurinhas da mão.` });
         return;
       }
       const targets = targetsOf(state, ctx, effect.to).filter((entry) => !(effect.amount < 0 && entry.side !== ctx.side && isProtected(state, entry)));
       if (targets.length === 0) return;
       for (const entry of targets) entry.card.bonus += effect.amount;
-      const who = effect.to === "self" ? "" : ` em ${targets.length} carta${targets.length > 1 ? "s" : ""}`;
+      const who = effect.to === "self" ? "" : ` em ${targets.length} figurinha${targets.length > 1 ? "s" : ""}`;
       emit(state, { type: "power", side: ctx.side, lane: ctx.lane, uid: ctx.card.uid, name: self, amount: effect.amount, text: `${self}: ${effect.amount >= 0 ? "+" : ""}${effect.amount} de Influência${who}.` });
       return;
     }
@@ -379,7 +379,7 @@ function applyEffect(state: DuelState, ctx: Ctx, effect: Effect, isDestroyedHook
     case "draw": {
       if (isDestroyedHook) return;
       const drawn = drawCards(state, ctx.side, effect.count);
-      if (drawn > 0) emit(state, { type: "draw", side: ctx.side, name: self, amount: drawn, text: `${self}: comprou ${drawn} carta${drawn > 1 ? "s" : ""}.` });
+      if (drawn > 0) emit(state, { type: "draw", side: ctx.side, name: self, amount: drawn, text: `${self}: comprou ${drawn} figurinha${drawn > 1 ? "s" : ""}.` });
       return;
     }
     case "destroy": {
@@ -450,7 +450,7 @@ function applyEffect(state: DuelState, ctx: Ctx, effect: Effect, isDestroyedHook
         foe.graveyard.push(target);
         dropped += 1;
       }
-      if (dropped > 0) emit(state, { type: "discard", side: other(ctx.side), name: self, amount: dropped, text: `${self}: o rival descartou ${dropped} carta${dropped > 1 ? "s" : ""}.` });
+      if (dropped > 0) emit(state, { type: "discard", side: other(ctx.side), name: self, amount: dropped, text: `${self}: o rival descartou ${dropped} figurinha${dropped > 1 ? "s" : ""}.` });
       return;
     }
     case "energy": {
@@ -462,7 +462,7 @@ function applyEffect(state: DuelState, ctx: Ctx, effect: Effect, isDestroyedHook
       const hand = state.players[ctx.side].hand;
       if (hand.length === 0) return;
       for (const card of hand) card.def = { ...card.def, cost: Math.max(0, card.def.cost - effect.amount) };
-      emit(state, { type: "energy", side: ctx.side, name: self, amount: effect.amount, text: `${self}: as cartas da mão custam ${effect.amount} a menos de Vigor.` });
+      emit(state, { type: "energy", side: ctx.side, name: self, amount: effect.amount, text: `${self}: as figurinhas da mão custam ${effect.amount} a menos de Vigor.` });
       return;
     }
     case "convert": {
@@ -522,7 +522,7 @@ function applyEffect(state: DuelState, ctx: Ctx, effect: Effect, isDestroyedHook
         player.hand.push({ uid: card.uid, def: card.def, bonus: 0 });
         back += 1;
       }
-      if (back > 0) emit(state, { type: "return", side: ctx.side, name: self, amount: back, text: `${self}: ${back} carta${back > 1 ? "s" : ""} voltou à mão.` });
+      if (back > 0) emit(state, { type: "return", side: ctx.side, name: self, amount: back, text: `${self}: ${back} figurinha${back > 1 ? "s" : ""} voltou à mão.` });
       return;
     }
     case "protect":
@@ -549,14 +549,14 @@ function stagedCost(state: DuelState, side: Side) {
   return player.staged.reduce((sum, play) => sum + (player.hand.find((card) => card.uid === play.uid)?.def.cost ?? 0), 0);
 }
 
-/** Motivo pelo qual não dá para jogar a carta no cenário agora, ou null se dá. */
+/** Motivo pelo qual não dá para jogar a figurinha no cenário agora, ou null se dá. */
 export function whyNotStage(state: DuelState, side: Side, uid: number, lane: number): string | null {
   if (state.status !== "playing") return "O duelo terminou.";
   const player = state.players[side];
   if (player.ready) return "Você já terminou o turno.";
   const card = player.hand.find((entry) => entry.uid === uid);
-  if (!card) return "Essa carta não está na sua mão.";
-  if (player.staged.some((play) => play.uid === uid)) return "Essa carta já foi colocada.";
+  if (!card) return "Essa figurinha não está na sua mão.";
+  if (player.staged.some((play) => play.uid === uid)) return "Essa figurinha já foi colocada.";
   if (!isLaneOpen(state, lane)) return "Esse cenário ainda não apareceu.";
   const slots = slotsOf(laneScenario(state, lane));
   const used = state.lanes[lane].cards[side].length + player.staged.filter((play) => play.lane === lane).length;
@@ -617,7 +617,7 @@ function revealPlay(state: DuelState, side: Side, play: Staged, spent: { value: 
   let target = play.lane;
   const origin = state.lanes[target];
   const rule = scenarioOf(origin.scenario).rule;
-  // Babilônia: a primeira carta de cada lado vai para o cenário da direita, se houver espaço.
+  // Babilônia: a primeira figurinha de cada lado vai para o cenário da direita, se houver espaço.
   if (rule.kind === "shiftFirst" && origin.played[side] === 0 && isLaneOpen(state, target + 1) && state.lanes[target + 1].cards[side].length < slotsOf(laneScenario(state, target + 1))) {
     target += 1;
   }
@@ -643,7 +643,7 @@ function revealPlay(state: DuelState, side: Side, play: Staged, spent: { value: 
   });
 
   runDom(state, { lane: target, side, card: placed }, "reveal");
-  // "Quando uma carta sua é jogada aqui": as outras cartas suas neste cenário reagem.
+  // "Quando uma figurinha sua é jogada aqui": as outras figurinhas suas neste cenário reagem.
   const current = findCard(state, placed.uid);
   if (current) {
     for (const mate of [...state.lanes[current.lane].cards[side]]) {
@@ -669,7 +669,7 @@ function endOfTurn(state: DuelState) {
     }
     if (rule.kind === "stormAt" && state.turn === rule.turn) {
       for (const side of [0, 1] as Side[]) for (const card of lane.cards[side]) card.bonus -= rule.amount;
-      emit(state, { type: "power", lane: index, amount: -rule.amount, text: `${scenarioOf(lane.scenario).emoji} Tempestade em ${scenarioOf(lane.scenario).name}: todas as cartas perderam ${rule.amount}.` });
+      emit(state, { type: "power", lane: index, amount: -rule.amount, text: `${scenarioOf(lane.scenario).emoji} Tempestade em ${scenarioOf(lane.scenario).name}: todas as figurinhas perderam ${rule.amount}.` });
     }
   });
   for (const entry of allCards(state)) {
@@ -817,7 +817,7 @@ export type DuelView = {
   deckCount: number;
   staged: Staged[];
   ready: boolean;
-  /** Vigor ainda disponível neste turno, descontando as cartas já colocadas. */
+  /** Vigor ainda disponível neste turno, descontando as figurinhas já colocadas. */
   energyLeft: number;
   canDouble: boolean;
   canRetreat: boolean;

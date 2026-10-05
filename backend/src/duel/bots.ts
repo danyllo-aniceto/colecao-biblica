@@ -15,7 +15,7 @@ function openLanes(view: DuelView) {
   return view.lanes.map((lane, index) => ({ lane, index })).filter((entry) => entry.lane.open);
 }
 
-/** Cenários abertos em que ainda cabe uma carta (descontando o que o bot já colocou neste turno). */
+/** Cenários abertos em que ainda cabe uma figurinha (descontando o que o bot já colocou neste turno). */
 function freeLanes(view: DuelView, plays: Staged[]) {
   return openLanes(view).filter(({ lane, index }) => lane.cards[view.you].length + plays.filter((play) => play.lane === index).length < lane.slots);
 }
@@ -49,7 +49,7 @@ function apprentice(view: DuelView, seed: number): Staged[] {
 function student(view: DuelView): Staged[] {
   const plays: Staged[] = [];
   let left = view.energyLeft;
-  // Cartas mais caras primeiro (usa melhor o Vigor), cada uma no cenário mais disputado onde ainda dá para vencer.
+  // Figurinhas mais caras primeiro (usa melhor o Vigor), cada uma no cenário mais disputado onde ainda dá para vencer.
   const hand = [...view.hand].sort((a, b) => b.def.cost - a.def.cost || b.def.power - a.def.power);
   const added: number[] = [0, 0, 0];
   for (const card of hand) {
@@ -135,7 +135,7 @@ export function botMove(view: DuelView, skill: BotSkill, seed: number): BotMove 
   return { plays, double: wantsDouble, retreat: wantsRetreat };
 }
 
-/** Aplica ao estado a jogada do bot de `side` (colocar cartas, dobrar/desistir e dizer "Pronto"). */
+/** Aplica ao estado a jogada do bot de `side` (colocar figurinhas, dobrar/desistir e dizer "Pronto"). */
 export function playBotTurn(state: DuelState, side: Side, skill: BotSkill): DuelState {
   if (state.status !== "playing" || state.players[side].ready) return state;
   const view = viewFor(state, side);

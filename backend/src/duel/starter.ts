@@ -1,7 +1,7 @@
 import type { CardDef, Dom, Effect, TeamCard } from "./types";
 
 /**
- * Cartas e Times de EXEMPLO, usados só nos testes (e como referência de equilíbrio). O jogo de verdade usa as cartas
+ * Figurinhas e Times de EXEMPLO, usados só nos testes (e como referência de equilíbrio). O jogo de verdade usa as figurinhas
  * cadastradas no painel e os Times que cada jogador monta. Ids em texto curto.
  *
  * Regra de preço: Influência sem Dom ≈ 2 × Vigor; um Dom bom tira 1 a 3.
@@ -49,25 +49,25 @@ const BY_ID = new Map(STARTER_CARDS.map((card) => [card.id, card]));
 function team(ids: string[]): TeamCard[] {
   return ids.map((id) => {
     const def = BY_ID.get(id);
-    if (!def) throw new Error(`Carta desconhecida: ${id}`);
+    if (!def) throw new Error(`Figurinha desconhecida: ${id}`);
     return { def, level: 1 };
   });
 }
 
 export type ReadyDeck = { id: string; name: string; description: string; cards: string[] };
 
-/** Times prontos: 12 cartas temáticas iguais para todos, para ninguém depender da coleção. */
+/** Times prontos: 12 figurinhas temáticas iguais para todos, para ninguém depender da coleção. */
 export const READY_DECKS: ReadyDeck[] = [
   {
     id: "reis-e-juizes",
     name: "Reis e Juízes",
-    description: "Cartas fortes de Vigor 2 e 3, e finalizadores: Salomão, Golias e Faraó.",
+    description: "Figurinhas fortes de Vigor 2 e 3, e finalizadores: Salomão, Golias e Faraó.",
     cards: ["rute", "gideao", "davi", "debora", "samuel", "ester", "saul", "sansao", "josue", "salomao", "golias", "farao"],
   },
   {
     id: "profetas-e-patriarcas",
     name: "Profetas e Patriarcas",
-    description: "Dons que mexem na mesa: mover, afastar e criar cartas.",
+    description: "Dons que mexem na mesa: mover, afastar e criar figurinhas.",
     cards: ["jonas", "miria", "abel", "daniel", "samuel", "jose", "joao-batista", "pedro", "moises", "elias", "abraao", "isaias"],
   },
 ];

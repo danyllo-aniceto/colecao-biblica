@@ -11,7 +11,7 @@ import { botTeam } from '@duel/bot-team';
 import { SERIES_FORMATS, type SeriesFormat } from '@duel/series';
 import type { CardDef, TeamCard } from '@duel/types';
 import { TEAM_SIZE } from '@duel/types';
-import { Alert, SectionHeading } from '@/components/game/game-ui';
+import { Alert } from '@/components/game/game-ui';
 import { Button } from '@/components/ui/button';
 import { useDialogs } from '@/components/ui/dialogs';
 import { LoadingState } from '@/components/ui/spinner';
@@ -41,7 +41,7 @@ type Props = {
   collection: UserSticker[];
 };
 
-/** Cartão "Duelo de Cartas" da aba Jogar: monte seu Time com as figurinhas que você tem e treine contra um bot. Sem XP nem moedas. */
+/** Cartão "Duelo de Figurinhas" da aba Jogar: monte seu Time com as figurinhas que você tem e treine contra um bot. Sem XP nem moedas. */
 export function DuelHub({ characters, collection }: Props) {
   const toast = useToast();
   const { confirm } = useDialogs();
@@ -76,7 +76,7 @@ export function DuelHub({ characters, collection }: Props) {
   }, []);
   useEffect(load, [load]);
 
-  // Só vale carta de figurinha conquistada.
+  // Só valem as figurinhas conquistadas que têm Dom cadastrado no Duelo.
   const levelOf = useMemo(() => new Map(collection.map((sticker) => [String(sticker.characterId), sticker.level])), [collection]);
   const ownedCards = useMemo(() => (cards ?? []).filter((card) => levelOf.has(card.id)), [cards, levelOf]);
   const cardById = useMemo(() => new Map((cards ?? []).map((card) => [card.id, card])), [cards]);
@@ -147,11 +147,11 @@ export function DuelHub({ characters, collection }: Props) {
 
   function start() {
     if (!selected || !cards) return;
-    // O rival joga com um Time sorteado entre todas as cartas, no nível médio do seu (se os níveis valem).
+    // O rival joga com um Time sorteado entre todas as figurinhas, no nível médio do seu (se os níveis valem).
     const average = selectedTeam.length ? Math.round(selectedTeam.reduce((sum, card) => sum + (card.level ?? 1), 0) / selectedTeam.length) : 1;
     const foe = botTeam(cards, Math.floor(Math.random() * 2 ** 31), useLevels ? average : 1);
     if (!foe) {
-      toast.error('Ainda não há cartas suficientes no Duelo para o rival montar um Time.');
+      toast.error('Ainda não há figurinhas suficientes no Duelo para o rival montar um Time.');
       return;
     }
     setPlaying({ key: Date.now(), team: selectedTeam, foe });
@@ -178,7 +178,7 @@ export function DuelHub({ characters, collection }: Props) {
   }
 
   async function remove(deck: DuelDeck) {
-    const ok = await confirm({ title: `Excluir o Time "${deck.name}"?`, message: 'As cartas continuam com você; só o Time é apagado.', confirmLabel: 'Excluir', tone: 'danger' });
+    const ok = await confirm({ title: `Excluir o Time "${deck.name}"?`, message: 'As figurinhas continuam com você; só o Time é apagado.', confirmLabel: 'Excluir', tone: 'danger' });
     if (!ok) return;
     try {
       await deleteDuelDeck(deck.slot);
@@ -193,31 +193,29 @@ export function DuelHub({ characters, collection }: Props) {
   const freeSlot = Array.from({ length: MAX_DUEL_DECKS }, (_, index) => index + 1).find((candidate) => !decks.some((deck) => deck.slot === candidate));
 
   return (
-    <section className="space-y-3" aria-label="Duelo de Cartas">
-      <SectionHeading title="Duelo de Cartas" subtitle="Cartas com poderes, 3 arenas e 6 turnos. Sem XP nem moedas: é só diversão." />
+    <section className="space-y-3" aria-label="Duelo de Figurinhas">
       <div className="panel space-y-4 p-4 sm:p-6">
         <div className="flex items-start gap-4">
           <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-on-primary" aria-hidden="true">
             <StyleRoundedIcon sx={{ fontSize: 32 }} />
           </span>
           <div className="min-w-0 space-y-1">
-            <h3 className="font-display text-xl font-bold text-ink">Duelo das Eras</h3>
             <p className="text-sm font-semibold text-muted">
-              Monte um Time de {TEAM_SIZE} cartas com as figurinhas que você já conquistou, use o Vigor do turno para colocá-las nas arenas e ganhe 2 das 3. Cada personagem tem um Dom ligado à história dele.
+              Monte um Time de {TEAM_SIZE} figurinhas com as figurinhas que você já conquistou, use o Vigor do turno para colocá-las nas arenas e ganhe 2 das 3. Cada personagem tem um Dom ligado à história dele.
             </p>
           </div>
         </div>
 
-        {cards === null && !loadError ? <LoadingState label="Carregando as cartas..." /> : null}
+        {cards === null && !loadError ? <LoadingState label="Carregando as figurinhas..." /> : null}
         {loadError ? <Alert tone="danger">{loadError}</Alert> : null}
-        {cards !== null && cards.length === 0 ? <Alert tone="info">O Duelo ainda não tem cartas cadastradas. Volte em breve!</Alert> : null}
+        {cards !== null && cards.length === 0 ? <Alert tone="info">O Duelo ainda não tem figurinhas cadastradas. Volte em breve!</Alert> : null}
 
         {cards !== null && cards.length > 0 ? (
           <>
             <Alert tone={ownedCards.length >= TEAM_SIZE ? 'success' : 'info'}>
               {ownedCards.length >= TEAM_SIZE
-                ? `Você tem ${ownedCards.length} carta(s) do Duelo${missing > 0 ? ` (faltam ${missing} para conquistar)` : ''}.`
-                : `Você tem ${ownedCards.length} de ${TEAM_SIZE} cartas para montar um Time. Conquiste mais figurinhas jogando, na loja ou trocando com amigos.`}
+                ? `Você tem ${ownedCards.length} figurinha(s) do Duelo${missing > 0 ? ` (faltam ${missing} para conquistar)` : ''}.`
+                : `Você tem ${ownedCards.length} de ${TEAM_SIZE} figurinhas para montar um Time. Conquiste mais figurinhas jogando, na loja ou trocando com amigos.`}
             </Alert>
 
             <div className="space-y-2">
@@ -236,7 +234,7 @@ export function DuelHub({ characters, collection }: Props) {
                           </span>
                           <span className="min-w-0">
                             <span className="block truncate font-display text-base font-bold text-ink">{deck.name}</span>
-                            <span className="block text-xs font-semibold text-muted">{team.length === TEAM_SIZE ? `${TEAM_SIZE} cartas` : `${team.length} cartas (algumas saíram do jogo)`}</span>
+                            <span className="block text-xs font-semibold text-muted">{team.length === TEAM_SIZE ? `${TEAM_SIZE} figurinhas` : `${team.length} figurinhas (algumas saíram do jogo)`}</span>
                           </span>
                           <span className="no-scrollbar hidden min-w-0 gap-1 overflow-x-auto sm:flex">
                             {team.slice(0, 6).map((card) => (
@@ -274,7 +272,7 @@ export function DuelHub({ characters, collection }: Props) {
                 <Segmented aria-label="Tipo de série" value={format} onChange={setFormat} options={SERIES_FORMATS.map((entry) => ({ value: entry.id, label: entry.name }))} />
               </div>
             </div>
-            <Switch checked={useLevels} onChange={setUseLevels} label="Usar o nível das minhas figurinhas" description="Ligado, cartas de nível 2 a 5 ficam um pouco mais fortes (e o rival também sobe). Desligado, todas valem como nível 1." />
+            <Switch checked={useLevels} onChange={setUseLevels} label="Usar o nível das minhas figurinhas" description="Ligado, figurinhas de nível 2 a 5 ficam um pouco mais fortes (e o rival também sobe). Desligado, todas valem como nível 1." />
 
             {current && !room ? (
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-accent/15 p-3">

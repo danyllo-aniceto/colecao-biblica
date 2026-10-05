@@ -38,7 +38,7 @@ export function stepsFrom(events: DuelEvent[], before: Snapshot): DuelEvent[] {
   const useful = events.filter((event) => event.snap && !['play', 'draw', 'win'].includes(event.type));
   if (useful.length === 0) return [];
   if (useful.some((event) => event.type === 'reveal')) {
-    return [{ type: 'turn', text: 'As cartas vão virar...', snap: before }, ...useful];
+    return [{ type: 'turn', text: 'As figurinhas vão virar...', snap: before }, ...useful];
   }
   return useful;
 }

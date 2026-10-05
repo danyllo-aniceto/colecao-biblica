@@ -57,7 +57,7 @@ function toRows(table: string[][]) {
 
 const MISSING_LABELS: Record<string, string> = { name: 'Personagem', cost: 'Vigor', power: 'Influência' };
 
-/** Importar cartas do Duelo de uma planilha CSV: prévia com erros por linha antes de gravar. */
+/** Importar figurinhas do Duelo de uma planilha CSV: prévia com erros por linha antes de gravar. */
 export function ImportDuelModal({ onClose, onImported }: { onClose: () => void; onImported: () => void }) {
   const toast = useToast();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -87,7 +87,7 @@ export function ImportDuelModal({ onClose, onImported }: { onClose: () => void; 
         return;
       }
       if (parsed.length > MAX_BATCH) {
-        setProblem(`A planilha tem ${parsed.length} cartas; importe no máximo ${MAX_BATCH} por vez.`);
+        setProblem(`A planilha tem ${parsed.length} figurinhas; importe no máximo ${MAX_BATCH} por vez.`);
         return;
       }
       setRows(parsed);
@@ -104,7 +104,7 @@ export function ImportDuelModal({ onClose, onImported }: { onClose: () => void; 
     setBusy('importing');
     try {
       const result = await importDuelCards(rows, false);
-      toast.success(`${result.created} carta(s) criada(s) e ${result.updated} atualizada(s).`, result.errors.length ? { description: `${result.errors.length} linha(s) com erro foram ignoradas.` } : undefined);
+      toast.success(`${result.created} figurinha(s) criada(s) e ${result.updated} atualizada(s).`, result.errors.length ? { description: `${result.errors.length} linha(s) com erro foram ignoradas.` } : undefined);
       onImported();
     } catch (error) {
       toast.error(errorMessage(error));
@@ -124,8 +124,8 @@ export function ImportDuelModal({ onClose, onImported }: { onClose: () => void; 
     <Modal
       open
       size="lg"
-      title="Importar cartas do Duelo"
-      description="Planilha CSV (a mesma que o botão Baixar planilha gera). Cada linha com Vigor e Influência vira (ou substitui) a carta daquele personagem; linhas em branco são ignoradas."
+      title="Importar figurinhas do Duelo"
+      description="Planilha CSV (a mesma que o botão Baixar planilha gera). Cada linha com Vigor e Influência vira (ou substitui) a figurinha daquele personagem; linhas em branco são ignoradas."
       onClose={busy === 'importing' ? undefined : onClose}
       footer={
         <>
@@ -133,7 +133,7 @@ export function ImportDuelModal({ onClose, onImported }: { onClose: () => void; 
             Cancelar
           </Button>
           <Button onClick={() => void confirm()} disabled={!preview || preview.valid === 0} loading={busy === 'importing'}>
-            {busy === 'importing' ? 'Importando...' : `Importar ${preview?.valid ?? 0} carta(s)`}
+            {busy === 'importing' ? 'Importando...' : `Importar ${preview?.valid ?? 0} figurinha(s)`}
           </Button>
         </>
       }
@@ -154,7 +154,7 @@ export function ImportDuelModal({ onClose, onImported }: { onClose: () => void; 
             Escolher arquivo
           </Button>
           <p className="text-xs text-muted">
-            Colunas: Personagem, Vigor, Influência, Etiquetas (separadas por vírgula), Gatilho, Efeitos, Texto do Dom (opcional), Disponível (Sim/Não). Gatilho e Efeitos vazios = carta sem Dom. As outras colunas (Raridade, Papel...) servem só de contexto.
+            Colunas: Personagem, Vigor, Influência, Etiquetas (separadas por vírgula), Gatilho, Efeitos, Texto do Dom (opcional), Disponível (Sim/Não). Gatilho e Efeitos vazios = figurinha sem Dom. As outras colunas (Raridade, Papel...) servem só de contexto.
           </p>
           <input
             ref={inputRef}
@@ -197,7 +197,7 @@ export function ImportDuelModal({ onClose, onImported }: { onClose: () => void; 
                   ))}
                 </ul>
                 <Pagination page={errors.page} totalPages={errors.totalPages} totalElements={errors.totalElements} onPageChange={errors.setPage} itemLabel="erros" pageSizeOptions={[6]} />
-                <p className="text-xs text-muted">A numeração conta só as linhas com carta preenchida. Linhas com erro são ignoradas; corrija e importe de novo.</p>
+                <p className="text-xs text-muted">A numeração conta só as linhas com figurinha preenchida. Linhas com erro são ignoradas; corrija e importe de novo.</p>
               </>
             ) : null}
 
@@ -209,7 +209,7 @@ export function ImportDuelModal({ onClose, onImported }: { onClose: () => void; 
 
             {preview.preview.length > 0 ? (
               <div className="space-y-2">
-                <p className="text-sm font-bold text-muted">Como ficam as cartas</p>
+                <p className="text-sm font-bold text-muted">Como ficam as figurinhas</p>
                 <ul className="divide-y divide-edge overflow-hidden rounded-2xl border border-edge">
                   {cards.pageItems.map((item) => (
                     <li key={item.name} className="px-4 py-2.5 text-sm">
@@ -220,7 +220,7 @@ export function ImportDuelModal({ onClose, onImported }: { onClose: () => void; 
                     </li>
                   ))}
                 </ul>
-                <Pagination page={cards.page} totalPages={cards.totalPages} totalElements={cards.totalElements} onPageChange={cards.setPage} itemLabel="cartas" pageSizeOptions={[6]} />
+                <Pagination page={cards.page} totalPages={cards.totalPages} totalElements={cards.totalElements} onPageChange={cards.setPage} itemLabel="figurinhas" pageSizeOptions={[6]} />
               </div>
             ) : null}
           </div>

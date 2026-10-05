@@ -56,7 +56,7 @@ export function DuelGuideModal({ onClose }: { onClose: () => void }) {
             Fichas que o efeito <code>criar</code> aceita: {Object.values(TOKENS).map((token) => `${token.name} (Influência ${token.power})`).join(', ')}.
           </p>
           <p>
-            Preço justo: carta <b>sem Dom</b> tem Influência ≈ 2 × Vigor (Vigor 1 = 2, Vigor 3 = 6, Vigor 5 = 10). Um Dom bom tira 1 a 3 de Influência; um Dom fraco, 0 a 1. Cartas de Vigor 5 e 6 devem ser fortes: são as finalizadoras.
+            Preço justo: figurinha <b>sem Dom</b> tem Influência ≈ 2 × Vigor (Vigor 1 = 2, Vigor 3 = 6, Vigor 5 = 10). Um Dom bom tira 1 a 3 de Influência; um Dom fraco, 0 a 1. Figurinhas de Vigor 5 e 6 devem ser fortes: são as finalizadoras.
           </p>
         </section>
       </div>

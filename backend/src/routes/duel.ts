@@ -13,12 +13,12 @@ import { isCampaignOnlyRarity } from "../services/game-rules";
 import { currentUser } from "../middleware/auth";
 import { visibleCharacter } from "../services/visibility";
 
-/** Modo Duelo: cartas para o jogo (qualquer jogador) e cadastro/importação (admin). */
+/** Modo Duelo: figurinhas para o jogo (qualquer jogador) e cadastro/importação (admin). */
 export const duelRouter = Router();
 
 const characterSelect = { id: true, name: true, imageUrl: true } as const;
 
-/** Cartas disponíveis (o jogador monta o Time com as que ele tem; o bot usa qualquer uma). */
+/** Figurinhas disponíveis (o jogador monta o Time com as que ele tem; o bot usa qualquer uma). */
 duelRouter.get(
   "/cards",
   asyncHandler(async (_req, res) => {
@@ -34,7 +34,7 @@ duelRouter.get(
 const MAX_DECKS = 5;
 const TEAM_SIZE = 12;
 
-const deckInput = z.object({ name: z.string().trim().min(1, "Dê um nome ao Time").max(30), cards: z.array(z.number().int().positive()).length(TEAM_SIZE, `O Time precisa ter ${TEAM_SIZE} cartas`) });
+const deckInput = z.object({ name: z.string().trim().min(1, "Dê um nome ao Time").max(30), cards: z.array(z.number().int().positive()).length(TEAM_SIZE, `O Time precisa ter ${TEAM_SIZE} figurinhas`) });
 
 const deckSlot = (value: unknown) => {
   const slot = Number(value);
@@ -50,13 +50,13 @@ duelRouter.get(
   }),
 );
 
-/** Salva o Time do espaço (1 a 5): 12 cartas diferentes, todas disponíveis e de figurinhas que o jogador já tem. */
+/** Salva o Time do espaço (1 a 5): 12 figurinhas diferentes, todas disponíveis e de figurinhas que o jogador já tem. */
 duelRouter.put(
   "/decks/:slot",
   asyncHandler(async (req, res) => {
     const slot = deckSlot(req.params.slot);
     const input = deckInput.parse(req.body);
-    if (new Set(input.cards).size !== input.cards.length) throw badRequest("O Time não pode ter a mesma carta duas vezes");
+    if (new Set(input.cards).size !== input.cards.length) throw badRequest("O Time não pode ter a mesma figurinha duas vezes");
     const userId = currentUser(req).id;
     const [owned, available] = await Promise.all([
       prisma.userSticker.findMany({ where: { userId, characterId: { in: input.cards } }, select: { characterId: true } }),
@@ -64,7 +64,7 @@ duelRouter.put(
     ]);
     const ownedIds = new Set(owned.map((row) => row.characterId));
     const availableIds = new Set(available.map((row) => row.characterId));
-    if (input.cards.some((id) => !availableIds.has(id))) throw badRequest("Há carta que não está disponível no Duelo");
+    if (input.cards.some((id) => !availableIds.has(id))) throw badRequest("Há figurinha que não está disponível no Duelo");
     if (input.cards.some((id) => !ownedIds.has(id))) throw badRequest("Você só pode usar figurinhas que já conquistou");
     await prisma.duelDeck.upsert({ where: { userId_slot: { userId, slot } }, create: { userId, slot, name: input.name, characterIds: input.cards }, update: { name: input.name, characterIds: input.cards } });
     res.json({ slot, name: input.name, cards: input.cards });
@@ -126,7 +126,7 @@ const listRow = (character: { id: number; name: string; rarity: string; historic
   card: character.duelCard,
 });
 
-/** Personagens com a carta do duelo (quando já existe), paginado e com busca. */
+/** Personagens com a figurinha do duelo (quando já existe), paginado e com busca. */
 duelRouter.get(
   "/admin/cards",
   requireAdmin,
@@ -153,7 +153,7 @@ duelRouter.get(
   }),
 );
 
-/** Tudo de uma vez para montar a planilha (nome, contexto do personagem e a carta atual). */
+/** Tudo de uma vez para montar a planilha (nome, contexto do personagem e a figurinha atual). */
 duelRouter.get(
   "/admin/export",
   requireAdmin,
@@ -213,7 +213,7 @@ const bulkSchema = z.object({ rows: z.array(z.unknown()).min(1).max(300), dryRun
 const splitList = (value: string | undefined) => (value ?? "").split(/[,|]/).map((part) => part.trim()).filter(Boolean);
 
 /**
- * Importa cartas de uma planilha. O personagem é achado pelo nome (sem acento); a carta que já existe é SUBSTITUÍDA pela linha.
+ * Importa figurinhas de uma planilha. O personagem é achado pelo nome (sem acento); a figurinha que já existe é SUBSTITUÍDA pela linha.
  * Cada linha é validada separadamente (com o mesmo código do painel); com dryRun só mostra a prévia.
  */
 duelRouter.post(

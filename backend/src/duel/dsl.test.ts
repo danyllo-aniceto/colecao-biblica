@@ -37,7 +37,7 @@ function turn(state: DuelState, mine: Array<[number, number]>, theirs: Array<[nu
 }
 
 describe("texto dos Dons", () => {
-  it("todas as cartas de partida sobrevivem a ida e volta (texto → Dom → texto)", () => {
+  it("todas as figurinhas de partida sobrevivem a ida e volta (texto → Dom → texto)", () => {
     for (const starter of STARTER_CARDS) {
       const text = domToText(starter.dom);
       const parsed = parseDom(text.trigger, text.effects);
@@ -77,7 +77,7 @@ describe("texto dos Dons", () => {
     expect(error("revelar", "comprar | comprar | comprar | comprar")).toMatch(/No máximo 3/);
   });
 
-  it("monta a carta e avisa quando está acima do preço", () => {
+  it("monta a figurinha e avisa quando está acima do preço", () => {
     const ok = buildCard({ id: "x", name: "Teste", cost: 2, power: 4, tags: ["Rei", " Rei ", "Juiz"], trigger: "revelar", effects: "comprar qtd=1" });
     expect(ok.ok && ok.card.tags).toEqual(["Rei", "Juiz"]);
     expect(ok.ok && ok.warnings).toEqual([]);
@@ -100,14 +100,14 @@ describe("texto dos Dons", () => {
       const parsed = parseDom(trigger, effects);
       return parsed.ok ? describeDom(parsed.dom ?? undefined) : "";
     };
-    expect(text("revelar", "devolver alvo=inimigo-mais-forte")).toBe("Ao revelar: devolve a carta mais forte do rival aqui à mão do dono.");
-    expect(text("revelar", "ressuscitar qtd=1")).toBe("Ao revelar: 1 carta destruída volta à sua mão.");
-    expect(text("revelar", "poder valor=+1 alvo=mao")).toBe("Ao revelar: +1 de Influência para as cartas da sua mão.");
+    expect(text("revelar", "devolver alvo=inimigo-mais-forte")).toBe("Ao revelar: devolve a figurinha mais forte do rival aqui à mão do dono.");
+    expect(text("revelar", "ressuscitar qtd=1")).toBe("Ao revelar: 1 figurinha destruída volta à sua mão.");
+    expect(text("revelar", "poder valor=+1 alvo=mao")).toBe("Ao revelar: +1 de Influência para as figurinhas da sua mão.");
   });
 });
 
 describe("efeitos novos no motor", () => {
-  it("devolver: a carta do rival volta à mão dele, sem bônus, e pode ser jogada de novo", () => {
+  it("devolver: a figurinha do rival volta à mão dele, sem bônus, e pode ser jogada de novo", () => {
     const state = duel([card("Anjo", "revelar", "devolver alvo=inimigo-mais-forte")]);
     place(state, 1, 0, card("Forte", "revelar", "comprar", { power: 8 }), 5);
     place(state, 1, 0, card("Fraca", "revelar", "comprar", { power: 1 }));
@@ -117,7 +117,7 @@ describe("efeitos novos no motor", () => {
     expect(back?.bonus).toBe(0);
   });
 
-  it("descartar: o rival perde a carta de maior Vigor da mão", () => {
+  it("descartar: o rival perde a figurinha de maior Vigor da mão", () => {
     const state = duel([card("Peste", "revelar", "descartar qtd=1")], [card("Barata", "revelar", "comprar", { cost: 1, power: 1 }), card("Cara", "revelar", "comprar", { cost: 5, power: 9 })]);
     const done = turn(state, [[0, 0]]);
     expect(done.players[1].hand.map((c) => c.def.name)).toContain("Barata");
@@ -139,7 +139,7 @@ describe("efeitos novos no motor", () => {
     expect(cheap.players[0].hand.find((c) => c.def.name === "Cara")?.def.cost).toBe(4);
   });
 
-  it("converter: a carta mais fraca do rival passa para o seu lado", () => {
+  it("converter: a figurinha mais fraca do rival passa para o seu lado", () => {
     const state = duel([card("Paulo", "revelar", "converter")]);
     place(state, 1, 0, card("Fraca", "revelar", "comprar", { power: 1 }));
     place(state, 1, 0, card("Forte", "revelar", "comprar", { power: 7 }));
@@ -167,7 +167,7 @@ describe("efeitos novos no motor", () => {
     expect(done.lanes[1].cards[0].map((c) => c.def.name).sort()).toEqual(["Anjo", "Mais fraca"]);
   });
 
-  it("ressuscitar traz de volta a última carta destruída", () => {
+  it("ressuscitar traz de volta a última figurinha destruída", () => {
     const state = duel([card("Lázaro", "revelar", "ressuscitar qtd=1")]);
     state.players[0].graveyard.push({ uid: 9001, def: card("Antiga", "revelar", "comprar"), bonus: 4 });
     const done = turn(state, [[0, 0]]);
@@ -176,7 +176,7 @@ describe("efeitos novos no motor", () => {
     expect(done.players[0].graveyard).toHaveLength(0);
   });
 
-  it("poder na mão e aura em todas as cartas aliadas", () => {
+  it("poder na mão e aura em todas as figurinhas aliadas", () => {
     let state = duel([card("Líder", "revelar", "poder valor=+2 alvo=mao"), card("Reserva", "revelar", "comprar", { power: 3 })]);
     let done = turn(state, [[0, 0]]);
     expect(done.players[0].hand.find((c) => c.def.name === "Reserva")?.bonus).toBe(2);
@@ -207,7 +207,7 @@ describe("efeitos novos no motor", () => {
     expect(done.lanes[0].cards[0][0].bonus).toBe(3);
   });
 
-  it("criar fichas nos vizinhos e contar cartas do rival", () => {
+  it("criar fichas nos vizinhos e contar figurinhas do rival", () => {
     let state = duel([card("Semeador", "revelar", "criar ficha=Ovelha onde=vizinhos")]);
     let done = turn(state, [[0, 1]]);
     expect(done.lanes[0].cards[0].map((c) => c.def.name)).toEqual(["Ovelha"]);

@@ -100,7 +100,7 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
     return { foe: decorate(foe), me: decorate(view.you), mine: lane.power[view.you], theirs: lane.power[foe], open: lane.open, scenario: lane.scenario, slots: lane.slots };
   });
 
-  // Carta saindo (afastada, devolvida ou que sumiu): aparece uma última vez, desaparecendo.
+  // Figurinha saindo (afastada, devolvida ou que sumiu): aparece uma última vez, desaparecendo.
   const leaving = useMemo(() => {
     if (!stage || !['destroy', 'vanish', 'bounce'].includes(stage.event.type) || stage.event.uid === undefined) return null;
     const uid = stage.event.uid;
@@ -129,7 +129,7 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
     return element ? Number(element.dataset.lane) : null;
   }
 
-  // Arrastar a carta da mão para uma arena (mouse: qualquer direção; dedo: para cima, para a rolagem da mão continuar livre).
+  // Arrastar a figurinha da mão para uma arena (mouse: qualquer direção; dedo: para cima, para a rolagem da mão continuar livre).
   useEffect(() => {
     function move(event: PointerEvent) {
       const start = press.current;
@@ -170,7 +170,7 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
   const focusLane = stage && focusUid === undefined ? stage.event.lane : undefined;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-bg" role="dialog" aria-modal="true" aria-label="Duelo de Cartas">
+    <div className="fixed inset-0 z-50 flex flex-col bg-bg" role="dialog" aria-modal="true" aria-label="Duelo de Figurinhas">
       <header className="flex shrink-0 items-center gap-2 border-b border-edge bg-surface/90 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur">
         <Tooltip content="Sair do duelo" side="bottom">
           <button type="button" onClick={onExit} aria-label="Sair do duelo" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-surface-3 text-muted hover:text-ink">
@@ -236,7 +236,7 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
             <CardReadout def={selected.def} power={selected.def.power + selected.bonus} />
           ) : (
             <p className="flex h-full min-h-[4.25rem] items-center text-sm font-semibold leading-snug text-muted">
-              {view.status !== 'playing' ? 'Fim da rodada.' : view.ready ? 'Pronto! Esperando o rival...' : busy ? 'Aguarde...' : 'Toque numa carta da mão para ler o poder dela. Depois toque numa arena (ou arraste a carta até ela).'}
+              {view.status !== 'playing' ? 'Fim da rodada.' : view.ready ? 'Pronto! Esperando o rival...' : busy ? 'Aguarde...' : 'Toque numa figurinha da mão para ler o poder dela. Depois toque numa arena (ou arraste a figurinha até ela).'}
             </p>
           )}
           </div>
@@ -323,7 +323,7 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
         {arenaInfo !== null && lanes[arenaInfo]?.scenario ? (
           <div className="space-y-3 text-sm font-semibold text-ink">
             <p>{lanes[arenaInfo].scenario!.text}</p>
-            <p className="text-muted">Cabem {lanes[arenaInfo].slots} cartas de cada lado. Vence a arena quem tiver mais Influência nela.</p>
+            <p className="text-muted">Cabem {lanes[arenaInfo].slots} figurinhas de cada lado. Vence a arena quem tiver mais Influência nela.</p>
           </div>
         ) : null}
       </Modal>
@@ -354,7 +354,7 @@ function Narration({ stage, art, onSkip }: { stage: Stage; art: CardArt; onSkip:
   );
 }
 
-/** Leitura da carta escolhida na mão: nome, números, etiquetas e o texto do Dom por inteiro. */
+/** Leitura da figurinha escolhida na mão: nome, números, etiquetas e o texto do Dom por inteiro. */
 function CardReadout({ def, power }: { def: CardDef; power: number }) {
   return (
     <div className="animate-duel-narration space-y-0.5">

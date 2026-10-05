@@ -2,7 +2,7 @@ import { shuffled } from "./rng";
 import { TEAM_SIZE, type CardDef, type TeamCard } from "./types";
 
 /**
- * Time do bot: 12 cartas sorteadas entre as disponíveis, com uma curva de Vigor razoável (ao menos 3 cartas baratas de Vigor
+ * Time do bot: 12 figurinhas sorteadas entre as disponíveis, com uma curva de Vigor razoável (ao menos 3 figurinhas baratas de Vigor
  * 1 a 2 e 2 de Vigor 4 ou mais, quando existirem), para o bot não travar a mão. `level` é o nível das figurinhas (1 a 5).
  */
 export function botTeam(cards: CardDef[], seed: number, level = 1): TeamCard[] | null {

@@ -1,5 +1,5 @@
 /**
- * Tipos do Modo Duelo (jogo de cartas estilo Marvel Snap). Tudo aqui é puro e serializável:
+ * Tipos do Modo Duelo (jogo de figurinhas estilo Marvel Snap). Tudo aqui é puro e serializável:
  * o mesmo motor roda no navegador (treino contra bot) e no servidor (salas online).
  */
 
@@ -14,21 +14,21 @@ export const START_HAND = 3;
 export const MAX_STAKES = 8;
 
 // ---------------------------------------------------------------------------
-// Dons (habilidades das cartas)
+// Dons (habilidades das figurinhas)
 // ---------------------------------------------------------------------------
 
 export type Trigger =
-  /** Quando a carta é revelada. */
+  /** Quando a figurinha é revelada. */
   | "reveal"
-  /** Vale enquanto a carta estiver em jogo (e sem ser silenciada). */
+  /** Vale enquanto a figurinha estiver em jogo (e sem ser silenciada). */
   | "ongoing"
   /** No fim de cada turno. */
   | "turnEnd"
   /** Depois do último turno, antes de contar os cenários. */
   | "gameEnd"
-  /** Quando a carta é destruída. */
+  /** Quando a figurinha é destruída. */
   | "destroyed"
-  /** Quando outra carta sua é revelada no mesmo cenário. */
+  /** Quando outra figurinha sua é revelada no mesmo cenário. */
   | "allyPlayed";
 
 export type Target =
@@ -39,9 +39,9 @@ export type Target =
   | "weakestEnemyHere"
   | "strongestEnemyHere"
   | "weakestAllyHere"
-  /** Todas as cartas do rival em jogo, em qualquer cenário. */
+  /** Todas as figurinhas do rival em jogo, em qualquer cenário. */
   | "enemiesAll"
-  /** As cartas da sua mão (só vale para somar Influência). */
+  /** As figurinhas da sua mão (só vale para somar Influência). */
   | "hand";
 
 export type Cond =
@@ -56,7 +56,7 @@ export type Cond =
   | { type: "allyHereTag"; tag: string }
   | { type: "turnAtLeast"; turn: number };
 
-/** O que contar nas cartas "por cada...": cartas suas aqui ou em jogo, com etiqueta ou Vigor específico. */
+/** O que contar nas figurinhas "por cada...": figurinhas suas aqui ou em jogo, com etiqueta ou Vigor específico. */
 export type Count = { of: "alliesHere" | "alliesAll" | "enemiesHere" | "cardsHere"; tag?: string; cost?: number };
 
 export type Effect =
@@ -67,39 +67,39 @@ export type Effect =
   | { kind: "moveEnemies" }
   | { kind: "silence"; target: "enemiesHere" }
   | { kind: "create"; token: string; where: "eachLane" | "here" | "neighbors" }
-  /** A carta do rival volta à mão dele (sem os bônus). */
+  /** A figurinha do rival volta à mão dele (sem os bônus). */
   | { kind: "bounce"; target: "weakestEnemyHere" | "strongestEnemyHere" }
-  /** O rival descarta as cartas de maior Vigor da mão dele. */
+  /** O rival descarta as figurinhas de maior Vigor da mão dele. */
   | { kind: "discard"; count: number }
   /** Mais Vigor no próximo turno. */
   | { kind: "energy"; amount: number }
-  /** As cartas da sua mão custam `amount` a menos de Vigor (mínimo 0). */
+  /** As figurinhas da sua mão custam `amount` a menos de Vigor (mínimo 0). */
   | { kind: "cheaper"; amount: number }
-  /** A carta mais fraca do rival aqui passa para o seu lado, se houver espaço. */
+  /** A figurinha mais fraca do rival aqui passa para o seu lado, se houver espaço. */
   | { kind: "convert" }
-  /** Destrói a sua carta mais fraca aqui e esta carta ganha `gain`. */
+  /** Destrói a sua figurinha mais fraca aqui e esta figurinha ganha `gain`. */
   | { kind: "sacrifice"; gain: number }
-  /** Multiplica a Influência atual desta carta. */
+  /** Multiplica a Influência atual desta figurinha. */
   | { kind: "multiply"; factor: number }
-  /** Esta carta vai para o seu cenário mais fraco com espaço. */
+  /** Esta figurinha vai para o seu cenário mais fraco com espaço. */
   | { kind: "relocate" }
-  /** Uma carta destruída sua volta à mão. */
+  /** Uma figurinha destruída sua volta à mão. */
   | { kind: "revive"; count: number }
-  /** A carta some e volta à mão `turns` turnos depois, com `bonus` de Influência. */
+  /** A figurinha some e volta à mão `turns` turnos depois, com `bonus` de Influência. */
   | { kind: "vanish"; turns: number; bonus: number }
-  /** Contínuo: as cartas suas neste cenário não podem ser destruídas nem reduzidas por cartas do rival. */
+  /** Contínuo: as figurinhas suas neste cenário não podem ser destruídas nem reduzidas por figurinhas do rival. */
   | { kind: "protect" }
-  /** Contínuo: +amount nas cartas suas neste cenário ou nos cenários vizinhos (de uma etiqueta, se informada). */
+  /** Contínuo: +amount nas figurinhas suas neste cenário ou nos cenários vizinhos (de uma etiqueta, se informada). */
   | { kind: "aura"; amount: number; to: "alliesHere" | "adjacent" | "allies"; tag?: string };
 
 export type Dom = { trigger: Trigger; effects: Effect[]; /** Texto manual (o do painel); sem ele, o motor descreve. */ text?: string };
 
 // ---------------------------------------------------------------------------
-// Cartas
+// Figurinhas
 // ---------------------------------------------------------------------------
 
 export type CardDef = {
-  /** Identificador estável (id do personagem no banco, ou um nome curto nas cartas de teste). */
+  /** Identificador estável (id do personagem no banco, ou um nome curto nas figurinhas de teste). */
   id: string;
   name: string;
   /** Vigor para jogar (0 a 6). */
@@ -108,14 +108,14 @@ export type CardDef = {
   tags: string[];
   dom?: Dom;
   imageUrl?: string | null;
-  /** Só para cartas criadas por Dons (não entram em Times). */
+  /** Só para figurinhas criadas por Dons (não entram em Times). */
   token?: boolean;
 };
 
-/** Uma carta do Time de um jogador, com o nível da figurinha (1 a 5) que ajusta os números. */
+/** Uma figurinha do Time de um jogador, com o nível da figurinha (1 a 5) que ajusta os números. */
 export type TeamCard = { def: CardDef; level?: number };
 
-/** Instância de uma carta na partida. A definição já vem ajustada pelo nível. */
+/** Instância de uma figurinha na partida. A definição já vem ajustada pelo nível. */
 export type Card = { uid: number; def: CardDef; /** Bônus permanente carregado (ex.: Jonas voltando). */ bonus: number };
 
 export type PlacedCard = {
@@ -162,9 +162,9 @@ export type ScenarioDef = {
 
 export type Lane = {
   scenario: string;
-  /** Cartas de cada lado. */
+  /** Figurinhas de cada lado. */
   cards: [PlacedCard[], PlacedCard[]];
-  /** Quantas cartas cada lado já revelou aqui (para a regra "primeira carta"). */
+  /** Quantas figurinhas cada lado já revelou aqui (para a regra "primeira figurinha"). */
   played: [number, number];
 };
 
@@ -196,16 +196,16 @@ export type DuelEvent = {
   side?: Side;
   lane?: number;
   uid?: number;
-  /** Nome da carta que causou (ou sofreu) o acontecimento. */
+  /** Nome da figurinha que causou (ou sofreu) o acontecimento. */
   name?: string;
   amount?: number;
   /** Texto pronto para o aviso. */
   text: string;
   /** Como o tabuleiro ficou logo depois deste acontecimento. */
   snap?: Snapshot;
-  /** Na revelação de uma carta com Dom: o texto do Dom, para a tela explicar antes de agir. */
+  /** Na revelação de uma figurinha com Dom: o texto do Dom, para a tela explicar antes de agir. */
   dom?: string;
-  /** Para onde a carta foi (movida) ou de onde veio. */
+  /** Para onde a figurinha foi (movida) ou de onde veio. */
   fromLane?: number;
 };
 

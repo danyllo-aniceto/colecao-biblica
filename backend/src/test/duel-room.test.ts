@@ -47,7 +47,7 @@ describe.skipIf(!hasDatabase)("duelo online", () => {
     anaId = (await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } })).id;
     biaId = (await prisma.user.findUniqueOrThrow({ where: { email: "outro@email.com" } })).id;
 
-    // 16 cartas do Duelo (Vigor de 1 a 5, sem Dom) e as mesmas figurinhas para os dois jogadores, com um Time de 12 salvo.
+    // 16 figurinhas do Duelo (Vigor de 1 a 5, sem Dom) e as mesmas figurinhas para os dois jogadores, com um Time de 12 salvo.
     const names = Array.from({ length: 16 }, (_, index) => `Personagem ${index + 1}`);
     await prisma.biblicalCharacter.createMany({ data: names.map((name) => ({ name, rarity: "COMMON" as const, shortSummary: "x", fullDescription: "y", createdBy: "teste" })) });
     const characters = await prisma.biblicalCharacter.findMany({ where: { name: { in: names } }, orderBy: { id: "asc" }, select: { id: true } });
@@ -78,7 +78,7 @@ describe.skipIf(!hasDatabase)("duelo online", () => {
     return { code: room.code, started: started.body as View };
   }
 
-  /** Coloca a carta mais cara que cabe no primeiro cenário aberto com espaço e diz "Pronto". */
+  /** Coloca a figurinha mais cara que cabe no primeiro cenário aberto com espaço e diz "Pronto". */
   async function playTurn(token: string, code: string, stageOne: boolean) {
     const current = await view(token, code);
     if (stageOne) {
@@ -136,11 +136,11 @@ describe.skipIf(!hasDatabase)("duelo online", () => {
     for (const card of theirs.hand) expect(raw).not.toContain(`"uid":${card.uid},"def"`);
   });
 
-  it("colocar carta é segredo (a versão não sobe); jogar o turno só vale com os dois prontos", async () => {
+  it("colocar figurinha é segredo (a versão não sobe); jogar o turno só vale com os dois prontos", async () => {
     const { code, started } = await startedRoom();
     const before = await view(bia, code);
     const card = started.duel!.hand.find((entry) => entry.def.cost <= 1)!;
-    // O turno 1 tem 1 de Vigor: uma carta de Vigor 1 cabe, e uma de Vigor maior não.
+    // O turno 1 tem 1 de Vigor: uma figurinha de Vigor 1 cabe, e uma de Vigor maior não.
     const costly = started.duel!.hand.find((entry) => entry.def.cost > 1);
     if (costly) expect((await post(ana, `${code}/stage`, { uid: costly.uid, lane: 0 })).body.message).toMatch(/Vigor insuficiente/);
     if (card) {

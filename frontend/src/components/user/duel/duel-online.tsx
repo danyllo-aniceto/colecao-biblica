@@ -123,7 +123,7 @@ export function OnlineDuel({ code, initial = null, decks, art, onClose }: Props)
     };
   }, [poll]);
 
-  /** Roda uma ação no servidor e já mostra o que ele devolveu. `quiet` não trava a mesa (colocar carta). */
+  /** Roda uma ação no servidor e já mostra o que ele devolveu. `quiet` não trava a mesa (colocar figurinha). */
   const act = useCallback(
     async (fn: () => Promise<DuelRoomView>, options: { quiet?: boolean } = {}) => {
       inFlight.current += 1;
@@ -371,7 +371,7 @@ function OnlineMatch({ room, art, busy, offline, clockOffset, onStage, onUnstage
   const remaining = room.deadlineAt === null || roundOver ? null : Math.max(0, Math.ceil((room.deadlineAt - (now + clockOffset)) / 1000));
   const showTimer = remaining !== null && remaining <= room.config.turnSeconds && !duel.ready;
 
-  /** Coloca ou tira carta já na tela e confirma no servidor, na mesma ordem em que a pessoa fez. */
+  /** Coloca ou tira figurinha já na tela e confirma no servidor, na mesma ordem em que a pessoa fez. */
   const enqueue = useCallback((optimistic: Staged[], send: () => Promise<void>) => {
     pending.current += 1;
     setLocal(optimistic);

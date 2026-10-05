@@ -1031,3 +1031,14 @@ model DuelInvite {
   @@index([toUserId, createdAt])
   @@map("duel_invites")
 }
+
+
+/// Capa de cada modo de jogo na aba Jogar (QUIZ, BOARD, DUEL). Sem imagem, o app usa um fundo padrão.
+model GameModeDesign {
+  id        Int      @id @default(autoincrement())
+  mode      String   @unique
+  imageUrl  String?  @map("image_url")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("game_mode_designs")
+}

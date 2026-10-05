@@ -1,4 +1,4 @@
-# Modo Duelo — jogo de cartas com amigos (versão 2: casual, estilo Marvel Snap)
+# Modo Duelo — jogo de figurinhas com amigos (versão 2: casual, estilo Marvel Snap)
 
 Segundo jogo de **sala** do app, irmão do Tabuleiro: **sem XP, sem moedas, sem baús, sem ranking, sem missões**. É para jogar com
 amigos (ou treinar contra bots). Reaproveita quase tudo que o Tabuleiro já construiu (salas, convite, link, bots, relógio
@@ -6,11 +6,11 @@ preguiçoso, sons e música por cenário) e as figurinhas, os cenários e o **n�
 
 ## Decisões confirmadas
 
-0. **Sem Times prontos.** Cada jogador monta o próprio Time de 12 cartas (até 5 salvos) com as figurinhas que já conquistou e que têm carta no Duelo.
-   O rival bot joga com um Time sorteado entre todas as cartas disponíveis.
+0. **Sem Times prontos.** Cada jogador monta o próprio Time de 12 figurinhas (até 5 salvos) com as figurinhas que já conquistou e que têm figurinha no Duelo.
+   O rival bot joga com um Time sorteado entre todas as figurinhas disponíveis.
 1. **Aberto para todos** (sem trava de nível); o marcador "Arena de Duelos" no mapa da campanha fica como atalho decorativo (a fazer).
-2. **Time de 12 cartas.**
-3. **Imagens dos cenários substituíveis pelo painel**, como as outras: campo *Imagem no Duelo de Cartas* em Campanha → cenário
+2. **Time de 12 figurinhas.**
+3. **Imagens dos cenários substituíveis pelo painel**, como as outras: campo *Imagem no Duelo de Figurinhas* em Campanha → cenário
    (`scenarios.duel_image_url`); vazio usa o mapa do cenário.
 4. Casual: **sem XP, moedas, figurinhas, ranking nem missões**.
 
@@ -18,31 +18,31 @@ preguiçoso, sons e música por cenário) e as figurinhas, os cenários e o **n�
 
 | No Marvel Snap | No Duelo |
 |---|---|
-| Baralho de **12 cartas**, mão inicial de 3, compra 1 por turno; só se vê ~8 das 12 | Igual: **Time de 12**. Poucas cartas = cada carta importa |
+| Baralho de **12 figurinhas**, mão inicial de 3, compra 1 por turno; só se vê ~8 das 12 | Igual: **Time de 12**. Poucas figurinhas = cada figurinha importa |
 | **6 turnos**, partida de ~5 min | Igual. Cabe numa conversa de WhatsApp |
 | **Turnos simultâneos**: todos jogam ao mesmo tempo e viram juntos | Igual. Ninguém espera ninguém; funciona sem tempo real (polling) |
 | **Energia** = número do turno (turno 3 = 3 de energia) | **Vigor** (não pode ser "Fôlego": o Tabuleiro já usa essa palavra) |
 | **3 locais × 4 espaços**; vence quem ganhar 2 locais | **3 cenários × 4 espaços**, vence quem ganhar 2 |
 | Locais aparecem no turno 1, 2 e 3; cada um tem uma regra | Idem, e os cenários são os da campanha (arte, cor e **música** já existem) |
 | **Prioridade:** quem está ganhando revela primeiro (empate: maior poder total; depois sorteio) | Igual. A ordem de revelação é a parte mais "esperta" do jogo |
-| Quantidade de **Dons** variados: *Ao revelar*, *Contínuo*, *Ao fim do turno*, *Ao ser destruída*, mover, destruir, descartar, criar cartas, devolver à mão | Mesmo catálogo, com nomes e histórias bíblicas |
-| Cartas **vanilla** (sem habilidade) definem o "preço justo"; habilidade custa Influência | Mesma ideia: a **Influência** depende do Vigor, **não da raridade** (ninguém vence só por ter mais lendárias) |
+| Quantidade de **Dons** variados: *Ao revelar*, *Contínuo*, *Ao fim do turno*, *Ao ser destruída*, mover, destruir, descartar, criar figurinhas, devolver à mão | Mesmo catálogo, com nomes e histórias bíblicas |
+| Figurinhas **vanilla** (sem habilidade) definem o "preço justo"; habilidade custa Influência | Mesma ideia: a **Influência** depende do Vigor, **não da raridade** (ninguém vence só por ter mais lendárias) |
 | **Snap** (dobrar a aposta) e **Retirada**: blefe e saída honrosa | **Dobrar** e **Desistir da rodada** (perde só 1) |
 | **Modo Batalha com amigos**: código de 5 dígitos, **10 de vida**, a aposta vira dano, **sem recompensa**, para testar baralhos | Igual em espírito: série por **vidas**, sem recompensa nenhuma |
-| Críticas: **locais aleatórios demais** decidem o jogo (ex.: "25% de destruir cartas") | **Regra de ouro: nenhum cenário nem Dom usa dado.** Só decisão do jogador |
-| Lançamento **lento de cartas** (para dar tempo de explorar) | Cartas entram **em lotes** (campo "disponível no duelo" + publicação agendada que já existem) |
+| Críticas: **locais aleatórios demais** decidem o jogo (ex.: "25% de destruir figurinhas") | **Regra de ouro: nenhum cenário nem Dom usa dado.** Só decisão do jogador |
+| Lançamento **lento de figurinhas** (para dar tempo de explorar) | Figurinhas entram **em lotes** (campo "disponível no duelo" + publicação agendada que já existem) |
 
 ## 2. Vocabulário (nenhum termo pressupõe fé)
 
-**Influência** (força da carta) · **Vigor** (energia do turno) · **Dom** (habilidade) · **Cenário** (cada coluna) · **Time** (baralho de 12) ·
+**Influência** (força da figurinha) · **Vigor** (energia do turno) · **Dom** (habilidade) · **Cenário** (cada coluna) · **Time** (baralho de 12) ·
 **Vida** (da série) · **Pronto** (terminar o turno). Evitar "Fé" e "Fôlego" (já usado no Tabuleiro).
 
 ## 3. A partida
 
-1. **Preparação:** cada um tem o Time embaralhado (semente guardada no servidor) e 3 cartas na mão. O 1º cenário já aparece.
-2. **Turnos 1 a 6:** Vigor = nº do turno. O jogador arrasta cartas da mão para um cenário (até 4 por lado) e toca em **Pronto 3/6**
-   (30 s, relógio preguiçoso do servidor). Quando os dois terminam, as cartas **viram na ordem de prioridade**, cada **Ao revelar** resolve na
-   ordem em que as cartas foram jogadas, e o turno seguinte começa (+1 carta na mão; 2º cenário no turno 2, 3º no turno 3).
+1. **Preparação:** cada um tem o Time embaralhado (semente guardada no servidor) e 3 figurinhas na mão. O 1º cenário já aparece.
+2. **Turnos 1 a 6:** Vigor = nº do turno. O jogador arrasta figurinhas da mão para um cenário (até 4 por lado) e toca em **Pronto 3/6**
+   (30 s, relógio preguiçoso do servidor). Quando os dois terminam, as figurinhas **viram na ordem de prioridade**, cada **Ao revelar** resolve na
+   ordem em que as figurinhas foram jogadas, e o turno seguinte começa (+1 figurinha na mão; 2º cenário no turno 2, 3º no turno 3).
 3. **Fim:** depois do turno 6 conta-se a Influência de cada cenário. Quem ganhar 2 vence a rodada (empate de cenários: maior Influência total;
    persistindo, empate).
 4. **Dobrar (como o Snap):** a qualquer momento, **uma vez por pessoa por rodada**, o jogador dobra a aposta na hora (1 → 2 → 4 → 8). Quem não quer
@@ -51,46 +51,46 @@ preguiçoso, sons e música por cenário) e as figurinhas, os cenários e o **n�
    Padrão: **Melhor de 3** (~15 min).
 
 Interação que dá "mais lances": decidir o que **segurar** para um cenário ainda escondido, o que jogar **antes/depois** da prioridade, mover/destruir
-cartas do rival, copiar, criar cartas, **blefar** com Dobrar.
+figurinhas do rival, copiar, criar figurinhas, **blefar** com Dobrar.
 
 ## 4. Dons (o coração do modo)
 
 Gatilhos: **Ao revelar · Contínuo · Início/Fim do turno · Ao fim do duelo · Ao ser destruída · Ao ser movida · Ao ser descartada**.
-Efeitos (vocabulário fixo, ~25, o painel monta sem programar): ±Influência, comprar, descartar, mover, destruir, devolver à mão, criar carta,
+Efeitos (vocabulário fixo, ~25, o painel monta sem programar): ±Influência, comprar, descartar, mover, destruir, devolver à mão, criar figurinha,
 copiar, trocar de lugar, cancelar Dom, impedir destruição, adiar jogada...
 
-| Carta | Vigor/Infl. | Dom |
+| Figurinha | Vigor/Infl. | Dom |
 |---|---|---|
-| Davi | 2/2 | *Ao revelar:* se o rival tem aqui carta de 6+ de Influência, **+6** (Golias). |
-| Sansão | 3/4 | *Ao fim do duelo:* se este cenário estiver perdendo, **destrói todas as cartas daqui** (colunas do templo). |
-| Moisés | 4/4 | *Ao revelar:* **move as cartas rivais deste cenário** para os outros (Mar Vermelho). |
-| Josué | 3/3 | *Ao revelar:* **cancela os Dons contínuos** das cartas rivais aqui (muros de Jericó). |
-| Daniel | 2/2 | *Contínuo:* suas cartas **neste cenário** não podem ser destruídas nem reduzidas (cova dos leões). |
+| Davi | 2/2 | *Ao revelar:* se o rival tem aqui figurinha de 6+ de Influência, **+6** (Golias). |
+| Sansão | 3/4 | *Ao fim do duelo:* se este cenário estiver perdendo, **destrói todas as figurinhas daqui** (colunas do templo). |
+| Moisés | 4/4 | *Ao revelar:* **move as figurinhas rivais deste cenário** para os outros (Mar Vermelho). |
+| Josué | 3/3 | *Ao revelar:* **cancela os Dons contínuos** das figurinhas rivais aqui (muros de Jericó). |
+| Daniel | 2/2 | *Contínuo:* suas figurinhas **neste cenário** não podem ser destruídas nem reduzidas (cova dos leões). |
 | Jonas | 1/1 | *Ao revelar:* some e **volta à mão 3 turnos depois com +3**. |
 | Abraão | 4/3 | *Ao revelar:* cria um **Descendente** (0 Vigor, Influência 1) em cada cenário com espaço. |
-| Elias | 4/3 | *Ao revelar:* **destrói a carta de menor Influência** do rival aqui (fogo do céu). |
-| José | 3/3 | *Ao revelar:* veja as 2 próximas cartas do Time e **compre uma** (sonhos). |
-| Rute | 1/1 | *Contínuo:* **+1** cada vez que outra carta sua é jogada neste cenário. |
-| Gideão | 2/1 | *Contínuo:* **+1 por cada carta de Vigor 1** que você tenha em jogo (300 homens). |
-| Salomão | 5/5 | *Ao revelar:* **escolha**: +4 aqui, ou compre 2 cartas. |
-| Pedro | 3/3 | *Contínuo:* cartas suas **ao lado** (cenários vizinhos) ganham +1 (a pedra). |
-| Golias | 5/12 | *Ao revelar:* **perde 6** se o rival tiver Davi em jogo (carta forte, mas com ponto fraco conhecido). |
+| Elias | 4/3 | *Ao revelar:* **destrói a figurinha de menor Influência** do rival aqui (fogo do céu). |
+| José | 3/3 | *Ao revelar:* veja as 2 próximas figurinhas do Time e **compre uma** (sonhos). |
+| Rute | 1/1 | *Contínuo:* **+1** cada vez que outra figurinha sua é jogada neste cenário. |
+| Gideão | 2/1 | *Contínuo:* **+1 por cada figurinha de Vigor 1** que você tenha em jogo (300 homens). |
+| Salomão | 5/5 | *Ao revelar:* **escolha**: +4 aqui, ou compre 2 figurinhas. |
+| Pedro | 3/3 | *Contínuo:* figurinhas suas **ao lado** (cenários vizinhos) ganham +1 (a pedra). |
+| Golias | 5/12 | *Ao revelar:* **perde 6** se o rival tiver Davi em jogo (figurinha forte, mas com ponto fraco conhecido). |
 
 **Etiquetas** (sinergia, vêm de *papel na história*, testamento e período, editáveis): Rei, Profeta, Juiz, Apóstolo, Patriarca, Mulher de coragem,
 Adversário... "Dom: +1 para cada Rei seu" cria arquétipos de Time.
 
-**Orçamento (como as cartas "vanilla" do Snap):** Influência sem Dom ≈ **2 × Vigor** (1→2, 2→4, 3→6, 4→8, 5→10, 6→12). Um Dom bom tira 1 a 3 de
-Influência; um Dom fraco, 0 a 1. O painel mostra o "orçamento usado" de cada carta e avisa quando foge da faixa.
-**Cartas de custo 5 e 6** devem ser fortes (aprendizado do Snap), são os "finalizadores".
+**Orçamento (como as figurinhas "vanilla" do Snap):** Influência sem Dom ≈ **2 × Vigor** (1→2, 2→4, 3→6, 4→8, 5→10, 6→12). Um Dom bom tira 1 a 3 de
+Influência; um Dom fraco, 0 a 1. O painel mostra o "orçamento usado" de cada figurinha e avisa quando foge da faixa.
+**Figurinhas de custo 5 e 6** devem ser fortes (aprendizado do Snap), são os "finalizadores".
 
 ## 5. Cenários do Duelo
 
 Reaproveitam os 10 cenários da campanha (arte do terreno, cor e música). Nenhum usa sorte. O painel permite criar mais.
 
-Éden: cartas de Vigor 1 ganham +2 · Arca: duas cartas com a mesma etiqueta lado a lado ganham +1 cada · Canaã: quem tem mais cartas aqui ganha +3 ·
-Egito: no fim de cada turno a carta mais fraca de cada lado perde 1 · Sinai: só 2 espaços por lado · Jericó: cartas não podem ser movidas ·
-Templo: +1 para cada Rei ou Sacerdote seu · Babilônia: a 1ª carta jogada por turno vai para outro cenário (você escolhe qual na revelação) ·
-Galileia: no turno 4 todas as cartas aqui perdem 1 · Jerusalém: o vencedor do cenário ganha +2 de Influência total.
+Éden: figurinhas de Vigor 1 ganham +2 · Arca: duas figurinhas com a mesma etiqueta lado a lado ganham +1 cada · Canaã: quem tem mais figurinhas aqui ganha +3 ·
+Egito: no fim de cada turno a figurinha mais fraca de cada lado perde 1 · Sinai: só 2 espaços por lado · Jericó: figurinhas não podem ser movidas ·
+Templo: +1 para cada Rei ou Sacerdote seu · Babilônia: a 1ª figurinha jogada por turno vai para outro cenário (você escolhe qual na revelação) ·
+Galileia: no turno 4 todas as figurinhas aqui perdem 1 · Jerusalém: o vencedor do cenário ganha +2 de Influência total.
 
 ## 6. Quem joga com quem
 
@@ -104,14 +104,14 @@ Galileia: no turno 4 todas as cartas aqui perdem 1 · Jerusalém: o vencedor do 
 
 ## 7. Níveis da figurinha (já existem, só ganham função)
 
-Hoje o nível 1 a 5 sobe com **repetidas da própria carta** (1, 2, 3 e 5) e só enfeita. No Duelo (em "Meus times"):
+Hoje o nível 1 a 5 sobe com **repetidas da própria figurinha** (1, 2, 3 e 5) e só enfeita. No Duelo (em "Meus times"):
 **Nv2 +1 Influência · Nv3 número do Dom +1 · Nv4 +1 Influência · Nv5 número do Dom +1 e moldura dourada.** Teto de +2 de Influência ≈ meio Vigor,
 então melhora sem quebrar o equilíbrio, e "equilibrado" ignora tudo. Nada a mudar na economia (as repetidas já têm uso: vender, trocar, fundir).
 
 ## 8. Sem recompensa de progresso
 
 Segue o Tabuleiro: **nada de XP, moedas, figurinhas, baús, ranking, missões ou estatística de pergunta**. Único prêmio: um contador de **vitórias online**
-(sala com 2+ pessoas, confirmadas pelo servidor; vitória contra bot não conta) que libera **versos de carta** (novo cosmético `CARD_BACK`, como o
+(sala com 2+ pessoas, confirmadas pelo servidor; vitória contra bot não conta) que libera **versos de figurinha** (novo cosmético `CARD_BACK`, como o
 `PAWN`: editável no painel, na loja, por meta ou prêmio). Isso evita farm entre amigos e qualquer corrida por recompensa.
 
 ## 9. Desbloqueio e campanha (decidido: aberto a todos)
@@ -124,17 +124,17 @@ trancado no nível 10 se quiser que seja um prêmio da campanha. Sua escolha.
 ## 10. Telas (referência: print do Marvel Snap, retrato)
 
 - **Topo:** adversário (nome, peão/avatar), **turno atual** no centro; você embaixo.
-- **Meio:** 3 colunas de cenário (arte do terreno, nome, regra em ícone). Em cima as 4 cartas do rival, embaixo as suas; **Influência total de cada lado** em
+- **Meio:** 3 colunas de cenário (arte do terreno, nome, regra em ícone). Em cima as 4 figurinhas do rival, embaixo as suas; **Influência total de cada lado** em
   números grandes nas bordas do cenário; o lado que vence brilha.
-- **Rodapé:** **sua mão** (3 a 7 cartas) em leque, **Vigor** no centro, **Pronto 3/6** à direita, **Desistir** à esquerda, **Dobrar** ao lado.
-- **Arrastar** a carta para o cenário (com som de papel/arrasto) ou tocar na carta e tocar no cenário. **Segurar** a carta abre o Dom em texto grande.
-- **Avisos animados** de cada Dom (o mesmo sistema de `callouts` do Tabuleiro: "Moisés separou as cartas do rival!").
+- **Rodapé:** **sua mão** (3 a 7 figurinhas) em leque, **Vigor** no centro, **Pronto 3/6** à direita, **Desistir** à esquerda, **Dobrar** ao lado.
+- **Arrastar** a figurinha para o cenário (com som de papel/arrasto) ou tocar na figurinha e tocar no cenário. **Segurar** a figurinha abre o Dom em texto grande.
+- **Avisos animados** de cada Dom (o mesmo sistema de `callouts` do Tabuleiro: "Moisés separou as figurinhas do rival!").
 - Sons e **música do cenário da rodada**, `Dialog`/`Modal`/componentes do app, mobile primeiro.
 
 ## 11. Técnica
 
 - **Motor puro e testado:** `backend/src/duel/engine.ts` (estado serializável, jogadas, prioridade, Dons) + `scenarios.ts` + `bots.ts` + testes de propriedade
-  (milhares de partidas bot×bot sem estado inválido, sem carta duplicada, sem vazar mão). A mesma lógica roda no navegador para o modo "treino"
+  (milhares de partidas bot×bot sem estado inválido, sem figurinha duplicada, sem vazar mão). A mesma lógica roda no navegador para o modo "treino"
   (como o Tabuleiro local).
 - **Banco:** `duel_cards` (personagem: Vigor, Influência, etiquetas, Dom em texto, `available`), `duel_decks`
   (Times salvos do jogador, até 5), `duel_rooms` + `duel_room_players` (mesmo molde de `board_rooms`, estado do motor em JSON, `version`, `dueAt`), nova coluna de
@@ -142,17 +142,17 @@ trancado no nível 10 se quiser que seja um prêmio da campanha. Sua escolha.
 - **Aproveitar do Tabuleiro** (extrair para `services/rooms/` em vez de copiar): geração de código, convite/link, lobby, bots por nível, relógio preguiçoso,
   polling com versão, substituição por bot, `callouts`.
 - **Painel:** aba **Duelo** no personagem (Vigor, Influência, etiquetas, Dom com prévia do texto e **medidor de orçamento**), importação em lote (CSV, como as
-  perguntas), **relatório de equilíbrio** (usos e vitórias por carta, só de salas com 2 pessoas).
+  perguntas), **relatório de equilíbrio** (usos e vitórias por figurinha, só de salas com 2 pessoas).
 - **Conteúdo inicial:** eu monto um 1º lote de Dons para os personagens que já existem (~40, os mais conhecidos) a partir do cadastro; você revisa no painel.
 
 ## 12. Fases (cada uma jogável e testada, como no Tabuleiro)
 
 Legenda: ✅ feito e testado · ⬜ a fazer.
 
-1. **Motor + cartas + bot (treino local)** ✅
+1. **Motor + figurinhas + bot (treino local)** ✅
    - ✅ Motor puro `backend/src/duel/` (3 cenários × 4 espaços, 6 turnos simultâneos, prioridade de revelação, Dons *Ao revelar / Contínuo / Fim do turno /
-     Fim do duelo / Ao ser destruída / Quando uma carta sua é jogada aqui*, 12 efeitos, dobrar e desistir, níveis da figurinha, visão sem informação escondida),
-     10 cenários, 26 cartas de partida e 2 Times prontos, séries (única, melhor de 3, vidas) e 3 bots (Aprendiz, Estudante, Mestre).
+     Fim do duelo / Ao ser destruída / Quando uma figurinha sua é jogada aqui*, 12 efeitos, dobrar e desistir, níveis da figurinha, visão sem informação escondida),
+     10 cenários, 26 figurinhas de partida e 2 Times prontos, séries (única, melhor de 3, vidas) e 3 bots (Aprendiz, Estudante, Mestre).
      40 testes (inclui 300 duelos só de bots e equilíbrio dos Times prontos).
    - ✅ Tela do treino contra bot na aba Jogar: mesa em retrato, arrastar ou tocar para jogar, avisos dos Dons, dobrar/desistir, resumo da rodada, ajuda.
    - ✅ Imagem do cenário no duelo editável no painel (migração `20261022090000_duelo_cenario_imagem`).
@@ -160,30 +160,30 @@ Legenda: ✅ feito e testado · ⬜ a fazer.
    - ✅ Vocabulário ampliado: 19 efeitos (os 12 do começo + devolver, descartar, vigor-extra, custo-menos, converter, sacrificar, multiplicar, mover-se,
      ressuscitar, poder na mão, aura em todos, fichas novas), 10 condições; tudo testado (`dsl.test.ts`, 15 testes).
    - ✅ Dom em texto (`backend/src/duel/dsl.ts`): gatilho + efeitos, com erros em português; mesmo código no servidor (importação) e no painel (prévia).
-   - ✅ Tabela `duel_cards` (migração `20261023090000_duelo_cartas`) e API `/api/duel`: cartas e Times para o jogo, lista paginada do painel com busca,
+   - ✅ Tabela `duel_cards` (migração `20261023090000_duelo_cartas`) e API `/api/duel`: figurinhas e Times para o jogo, lista paginada do painel com busca,
      exportação, edição, remoção e **importação por planilha com prévia** (13 testes de integração em `duel.test.ts`).
-   - ✅ Painel → *Duelo de Cartas*: lista, edição com prévia do texto e aviso de equilíbrio, importar/baixar planilha e guia de poderes
+   - ✅ Painel → *Duelo de Figurinhas*: lista, edição com prévia do texto e aviso de equilíbrio, importar/baixar planilha e guia de poderes
      (formato em `docs/duelo-planilha.md`).
-   - ✅ O jogo usa as cartas cadastradas no painel.
+   - ✅ O jogo usa as figurinhas cadastradas no painel.
 3. **Online** ✅ (sem assistir): salas de 2 pessoas, ou 1 pessoa + bot, no molde do Tabuleiro.
    - ✅ Migração `20261025090000_duelo_salas_online` (`duel_rooms`, `duel_room_players`, `duel_invites`) e API `/api/duel-room` (criar, entrar por código, sair, regras, Time, bots, iniciar,
-     colocar/tirar carta, Pronto, Dobrar, Desistir, próxima rodada, revanche, convites) + prévia pública `/api/duel-public/:code`. Serviço `services/duel-room.ts`; 10 testes de integração (`duel-room.test.ts`).
-   - ✅ Servidor guarda o motor com as duas mãos e só manda `viewFor` do lado de quem pergunta; consulta com `?since=versão`; colocar carta na mesa não sobe a versão (é segredo do dono).
+     colocar/tirar figurinha, Pronto, Dobrar, Desistir, próxima rodada, revanche, convites) + prévia pública `/api/duel-public/:code`. Serviço `services/duel-room.ts`; 10 testes de integração (`duel-room.test.ts`).
+   - ✅ Servidor guarda o motor com as duas mãos e só manda `viewFor` do lado de quem pergunta; consulta com `?since=versão`; colocar figurinha na mesa não sobe a versão (é segredo do dono).
    - ✅ Relógio preguiçoso: prazo do turno (30/45/60 s, só começa depois da repetição do turno anterior); vencido, o servidor diz "Pronto" pela pessoa; 3 faltas passam o lugar a um bot; entre rodadas
      espera os dois tocarem em "Próxima rodada" (ou 60 s). Bots jogam o turno assim que ele começa. Série única, melhor de 3 ou vidas, escolhida na sala.
    - ✅ Telas: sala de espera (código, link `/duelo/CODE`, convite de amigo, chat, Time, regras, bot), mesa online com a repetição passo a passo (mesma do treino), cronômetro, placar da série, resumo da rodada, revanche.
    - ⬜ Assistir (3ª pessoa) fica para depois.
 4. **Meus Times e níveis** ✅ (adiantado na rodada de ajustes): montador de Time paginado com busca e filtro de Vigor, até 5 Times salvos no servidor (só
-   figurinhas conquistadas e cartas disponíveis), nível das figurinhas opcional (migração `20261024090000_duelo_times_do_jogador`; Times prontos removidos).
+   figurinhas conquistadas e figurinhas disponíveis), nível das figurinhas opcional (migração `20261024090000_duelo_times_do_jogador`; Times prontos removidos).
 5. **Polimento** (parcial): ✅ mesa estilo Snap com a arena no meio (arte editável, nome, regra escrita e placar hexagonal dos dois lados), turno repetido passo a passo
-   com narração, números que contam, cartas que entram/saem animadas, histórico "O que aconteceu" e velocidade normal/rápida. ⬜ sons próprios, música do cenário (já toca a do 1º cenário aberto), versos de carta e vitórias online, marcador na campanha, relatório de equilíbrio.
-6. **Conteúdo** ⬜: novos lotes de cartas e cenários.
+   com narração, números que contam, figurinhas que entram/saem animadas, histórico "O que aconteceu" e velocidade normal/rápida. ⬜ sons próprios, música do cenário (já toca a do 1º cenário aberto), versos de figurinha e vitórias online, marcador na campanha, relatório de equilíbrio.
+6. **Conteúdo** ⬜: novos lotes de figurinhas e cenários.
 
 ## 13. Riscos
 
-- **Tom:** o tema é bíblico. Duelos são provações entre cartas: efeitos se chamam *afastar*, *silenciar*, *enviar de volta*, não "matar". Jesus fica fora.
+- **Tom:** o tema é bíblico. Duelos são provações entre figurinhas: efeitos se chamam *afastar*, *silenciar*, *enviar de volta*, não "matar". Jesus fica fora.
 - **Equilíbrio:** com ~25 efeitos combináveis surgem interações inesperadas; por isso motor testado em massa, bots que medem o equilíbrio e relatório de uso.
-- **Volume de conteúdo:** 88+ cartas com Dom único dá trabalho de design. Mitigação: lotes, o 1º já preenchido por mim, importação em CSV.
+- **Volume de conteúdo:** 88+ figurinhas com Dom único dá trabalho de design. Mitigação: lotes, o 1º já preenchido por mim, importação em CSV.
 - **Escala:** polling a 1,5 s por duelo. Sem problema para dezenas de salas; se crescer, trocar por SSE/Pusher sem mexer no motor.
 
 Fontes da pesquisa: [Marvel Snap (visão geral)](https://en.wikipedia.org/wiki/Marvel_Snap), [prioridade e ordem de revelação](https://marvelsnapzone.com/how-priority-changes-the-value-of-tech-cards-in-marvel-snap/), [empates](https://www.pcgamer.com/marvel-snap-how-ties-work/), [tipos de habilidade](https://marvelsnapzone.com/marvel-snap-abilities-guide/), [Modo Batalha](https://www.digitaltrends.com/gaming/marvel-snap-multiplayer-how-to-play-with-friends/), [Snap e Retirada](https://marvelsnapzone.com/snapping/), [locais](https://www.thegamer.com/marvel-snap-complete-locations-guide/), [filosofia de design](https://www.dexerto.com/gaming/how-are-marvel-snap-cards-designed-ben-brode-breaks-down-dev-process-1983450/).

@@ -4,7 +4,7 @@ import type { CardDef } from '@duel/types';
 import { AnimatedNumber } from '@/components/user/duel/duel-anim';
 import { cn } from '@/lib/cn';
 
-/** Imagens das cartas: pelo nome do personagem do álbum (sem acento nem maiúsculas). */
+/** Imagens das figurinhas: pelo nome do personagem do álbum (sem acento nem maiúsculas). */
 export type CardArt = Map<string, string>;
 
 const normalize = (value: string) => value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
@@ -26,9 +26,9 @@ type FaceProps = {
   selected?: boolean;
   dimmed?: boolean;
   silenced?: boolean;
-  /** Destaque pulsando (a carta que está agindo agora). */
+  /** Destaque pulsando (a figurinha que está agindo agora). */
   focus?: boolean;
-  /** Mostra o número mudando devagar (cartas na mesa). */
+  /** Mostra o número mudando devagar (figurinhas na mesa). */
   animate?: boolean;
   className?: string;
   onClick?: () => void;
@@ -42,7 +42,7 @@ const SIZES = {
   big: 'h-72 w-52 text-base rounded-3xl',
 } as const;
 
-/** Uma carta: arte, Vigor (azul), Influência (laranja; verde se subiu, vermelho se caiu) e nome. */
+/** Uma figurinha: arte, Vigor (azul), Influência (laranja; verde se subiu, vermelho se caiu) e nome. */
 export function DuelCardFace({ def, art, power, size = 'board', selected, dimmed, silenced, focus, animate, className, onClick, onPointerDown, children }: FaceProps) {
   const image = artOf(art, def);
   const shown = power ?? def.power;
@@ -86,7 +86,7 @@ export function DuelCardFace({ def, art, power, size = 'board', selected, dimmed
   );
 }
 
-/** Detalhe da carta: cartão grande, etiquetas e o texto do Dom. */
+/** Detalhe da figurinha: cartão grande, etiquetas e o texto do Dom. */
 export function DuelCardDetail({ def, art, power }: { def: CardDef; art: CardArt; power?: number }) {
   return (
     <div className="flex flex-col items-center gap-3 text-center">

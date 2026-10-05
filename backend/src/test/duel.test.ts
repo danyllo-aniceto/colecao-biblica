@@ -4,14 +4,14 @@ import { api, bearer, login, resetDatabase } from "./helpers";
 
 const hasDatabase = Boolean(process.env.TEST_DATABASE_URL);
 
-describe.skipIf(!hasDatabase)("duelo: cartas e planilha", () => {
+describe.skipIf(!hasDatabase)("duelo: figurinhas e planilha", () => {
   beforeEach(async () => {
     await resetDatabase();
   });
 
   const row = (name: string, extra: Record<string, string> = {}) => ({ name, cost: "2", power: "4", tags: "Rei, Pastor", trigger: "revelar", effects: "poder valor=+2 alvo=si", available: "Sim", ...extra });
 
-  it("só admin cadastra; qualquer jogador lê as cartas disponíveis", async () => {
+  it("só admin cadastra; qualquer jogador lê as figurinhas disponíveis", async () => {
     const user = await login("user@email.com");
     const davi = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Davi" } });
     const body = { cost: 2, power: 4, tags: ["Rei"], trigger: "revelar", effects: "comprar qtd=1", available: true };
@@ -61,7 +61,7 @@ describe.skipIf(!hasDatabase)("duelo: cartas e planilha", () => {
     expect(davi.duelCard?.power).toBe(5);
   });
 
-  it("Times do jogador: 12 cartas diferentes, disponíveis e de figurinhas que ele tem", async () => {
+  it("Times do jogador: 12 figurinhas diferentes, disponíveis e de figurinhas que ele tem", async () => {
     const admin = await login("admin2@email.com");
     const user = await login("user@email.com");
     const userRow = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
@@ -82,10 +82,10 @@ describe.skipIf(!hasDatabase)("duelo: cartas e planilha", () => {
     expect(saved.status).toBe(200);
     expect((await api.get("/api/duel/decks").set(bearer(user))).body.decks).toEqual([{ slot: 1, name: "Meu Time", cards: team }]);
 
-    // Regras: 12 cartas, sem repetir, só disponíveis, espaço de 1 a 5.
+    // Regras: 12 figurinhas, sem repetir, só disponíveis, espaço de 1 a 5.
     expect((await api.put("/api/duel/decks/2").set(bearer(user)).send({ name: "Curto", cards: team.slice(0, 11) })).status).toBe(400);
     expect((await api.put("/api/duel/decks/2").set(bearer(user)).send({ name: "Repetido", cards: [...team.slice(0, 11), team[0]] })).body.message).toMatch(/duas vezes/);
-    expect((await api.put("/api/duel/decks/2").set(bearer(user)).send({ name: "Sem carta", cards: [...team.slice(0, 11), ids[12]] })).body.message).toMatch(/não está disponível/);
+    expect((await api.put("/api/duel/decks/2").set(bearer(user)).send({ name: "Sem figurinha", cards: [...team.slice(0, 11), ids[12]] })).body.message).toMatch(/não está disponível/);
     expect((await api.put("/api/duel/decks/6").set(bearer(user)).send({ name: "Fora", cards: team })).status).toBe(400);
 
     // Cada jogador vê só os seus; apagar libera o espaço.
@@ -108,5 +108,19 @@ describe.skipIf(!hasDatabase)("duelo: cartas e planilha", () => {
     const all = await api.get("/api/duel/admin/export").set(bearer(admin));
     expect(all.body.rows.length).toBeGreaterThanOrEqual(3);
     expect(all.body.rows.find((item: { name: string }) => item.name === "Davi").card.power).toBe(4);
+  });
+
+  it("capas dos modos de jogo: qualquer jogador lê, só o admin troca", async () => {
+    const user = await login("user@email.com");
+    const admin = await login("admin2@email.com");
+    expect((await api.get("/api/game-modes").set(bearer(user))).body).toEqual([]);
+    expect((await api.put("/api/game-modes/admin/duel").set(bearer(user)).send({ imageUrl: "https://exemplo.com/a.png" })).status).toBe(403);
+    expect((await api.put("/api/game-modes/admin/xadrez").set(bearer(admin)).send({ imageUrl: null })).status).toBe(400);
+    const saved = await api.put("/api/game-modes/admin/duel").set(bearer(admin)).send({ imageUrl: "https://exemplo.com/a.png" });
+    expect(saved.body).toEqual({ mode: "DUEL", imageUrl: "https://exemplo.com/a.png" });
+    expect((await api.get("/api/game-modes").set(bearer(user))).body).toEqual([{ mode: "DUEL", imageUrl: "https://exemplo.com/a.png" }]);
+    // Remover a imagem volta ao fundo padrão.
+    await api.put("/api/game-modes/admin/duel").set(bearer(admin)).send({ imageUrl: "" });
+    expect((await api.get("/api/game-modes").set(bearer(user))).body).toEqual([{ mode: "DUEL", imageUrl: null }]);
   });
 });

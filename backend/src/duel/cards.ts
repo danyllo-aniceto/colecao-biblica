@@ -12,7 +12,7 @@ function bumpEffect(effect: Effect): Effect {
 }
 
 /**
- * Ajusta a carta ao nível da figurinha: Nv2 e Nv4 dão +1 de Influência; Nv3 e Nv5 dão +1 no número do Dom
+ * Ajusta a figurinha ao nível da figurinha: Nv2 e Nv4 dão +1 de Influência; Nv3 e Nv5 dão +1 no número do Dom
  * (o primeiro efeito que soma). Teto de +2 de Influência: meio Vigor, melhora sem quebrar o equilíbrio.
  */
 export function levelDef(def: CardDef, level: number | undefined): CardDef {
@@ -41,44 +41,44 @@ export function levelDef(def: CardDef, level: number | undefined): CardDef {
 const signed = (amount: number) => (amount >= 0 ? `+${amount}` : `${amount}`);
 
 const TARGETS: Record<Target, string> = {
-  self: "esta carta",
-  alliesHere: "suas cartas aqui",
-  enemiesHere: "as cartas do rival aqui",
-  otherAllies: "suas outras cartas",
-  weakestEnemyHere: "a carta mais fraca do rival aqui",
-  strongestEnemyHere: "a carta mais forte do rival aqui",
-  weakestAllyHere: "sua carta mais fraca aqui",
-  enemiesAll: "todas as cartas do rival",
-  hand: "as cartas da sua mão",
+  self: "esta figurinha",
+  alliesHere: "suas figurinhas aqui",
+  enemiesHere: "as figurinhas do rival aqui",
+  otherAllies: "suas outras figurinhas",
+  weakestEnemyHere: "a figurinha mais fraca do rival aqui",
+  strongestEnemyHere: "a figurinha mais forte do rival aqui",
+  weakestAllyHere: "sua figurinha mais fraca aqui",
+  enemiesAll: "todas as figurinhas do rival",
+  hand: "as figurinhas da sua mão",
 };
 
 function describeCond(cond: Cond): string {
   switch (cond.type) {
     case "enemyHerePower":
-      return `se o rival tem aqui uma carta de ${cond.atLeast}+ de Influência`;
+      return `se o rival tem aqui uma figurinha de ${cond.atLeast}+ de Influência`;
     case "enemyHereNamed":
       return `se o rival tem ${cond.name} aqui`;
     case "alliesHere":
-      return `se você tem ${cond.atLeast}+ outras cartas aqui`;
+      return `se você tem ${cond.atLeast}+ outras figurinhas aqui`;
     case "laneLosing":
       return "se este cenário estiver perdendo";
     case "laneWinning":
       return "se este cenário estiver ganhando";
     case "alone":
-      return "se esta for sua única carta aqui";
+      return "se esta for sua única figurinha aqui";
     case "handAtMost":
-      return `se você tem ${cond.count} ou menos cartas na mão`;
+      return `se você tem ${cond.count} ou menos figurinhas na mão`;
     case "enemyHereTag":
-      return `se o rival tem aqui uma carta ${cond.tag}`;
+      return `se o rival tem aqui uma figurinha ${cond.tag}`;
     case "allyHereTag":
-      return `se você tem aqui outra carta ${cond.tag}`;
+      return `se você tem aqui outra figurinha ${cond.tag}`;
     case "turnAtLeast":
       return `a partir do turno ${cond.turn}`;
   }
 }
 
 function describeCount(count: Count): string {
-  const what = count.tag ? `carta ${count.tag}` : count.cost !== undefined ? `carta de Vigor ${count.cost}` : "carta";
+  const what = count.tag ? `figurinha ${count.tag}` : count.cost !== undefined ? `figurinha de Vigor ${count.cost}` : "figurinha";
   if (count.of === "enemiesHere") return `${what} do rival aqui`;
   if (count.of === "cardsHere") return `${what} aqui`;
   return `${what} sua${count.of === "alliesHere" ? " aqui" : " em jogo"}`;
@@ -91,39 +91,39 @@ function describeEffect(effect: Effect): string {
     case "powerPer":
       return `${signed(effect.amount)} de Influência por cada ${describeCount(effect.per)}`;
     case "draw":
-      return `compre ${effect.count} carta${effect.count > 1 ? "s" : ""}`;
+      return `compre ${effect.count} figurinha${effect.count > 1 ? "s" : ""}`;
     case "destroy":
-      return `${effect.target === "allHere" ? "destrói todas as cartas daqui" : `destrói ${TARGETS[effect.target]}`}${effect.when ? `, ${describeCond(effect.when)}` : ""}`;
+      return `${effect.target === "allHere" ? "destrói todas as figurinhas daqui" : `destrói ${TARGETS[effect.target]}`}${effect.when ? `, ${describeCond(effect.when)}` : ""}`;
     case "bounce":
       return `devolve ${TARGETS[effect.target]} à mão do dono`;
     case "discard":
-      return `o rival descarta ${effect.count} carta${effect.count > 1 ? "s" : ""} de maior Vigor`;
+      return `o rival descarta ${effect.count} figurinha${effect.count > 1 ? "s" : ""} de maior Vigor`;
     case "energy":
       return `+${effect.amount} de Vigor no próximo turno`;
     case "cheaper":
-      return `as cartas da sua mão custam ${effect.amount} a menos de Vigor`;
+      return `as figurinhas da sua mão custam ${effect.amount} a menos de Vigor`;
     case "convert":
-      return "a carta mais fraca do rival aqui passa para o seu lado";
+      return "a figurinha mais fraca do rival aqui passa para o seu lado";
     case "sacrifice":
-      return `destrói sua carta mais fraca aqui e ganha +${effect.gain} de Influência`;
+      return `destrói sua figurinha mais fraca aqui e ganha +${effect.gain} de Influência`;
     case "multiply":
       return `multiplica por ${effect.factor} a própria Influência`;
     case "relocate":
       return "vai para o seu cenário mais fraco";
     case "revive":
-      return `${effect.count} carta${effect.count > 1 ? "s" : ""} destruída${effect.count > 1 ? "s" : ""} volta${effect.count > 1 ? "m" : ""} à sua mão`;
+      return `${effect.count} figurinha${effect.count > 1 ? "s" : ""} destruída${effect.count > 1 ? "s" : ""} volta${effect.count > 1 ? "m" : ""} à sua mão`;
     case "moveEnemies":
-      return "move as cartas do rival daqui para os outros cenários";
+      return "move as figurinhas do rival daqui para os outros cenários";
     case "silence":
-      return "cancela os Dons contínuos das cartas do rival aqui";
+      return "cancela os Dons contínuos das figurinhas do rival aqui";
     case "create":
       return effect.where === "eachLane" ? `cria ${effect.token} em cada cenário com espaço` : effect.where === "neighbors" ? `cria ${effect.token} nos cenários vizinhos` : `cria ${effect.token} aqui`;
     case "vanish":
       return `some e volta à mão ${effect.turns} turnos depois com ${signed(effect.bonus)}`;
     case "protect":
-      return "suas cartas aqui não podem ser destruídas nem reduzidas pelo rival";
+      return "suas figurinhas aqui não podem ser destruídas nem reduzidas pelo rival";
     case "aura":
-      return `${signed(effect.amount)} de Influência para ${effect.to === "alliesHere" ? "suas cartas aqui" : effect.to === "allies" ? "suas outras cartas em jogo" : "suas cartas nos cenários vizinhos"}${effect.tag ? ` com a etiqueta ${effect.tag}` : ""}`;
+      return `${signed(effect.amount)} de Influência para ${effect.to === "alliesHere" ? "suas figurinhas aqui" : effect.to === "allies" ? "suas outras figurinhas em jogo" : "suas figurinhas nos cenários vizinhos"}${effect.tag ? ` com a etiqueta ${effect.tag}` : ""}`;
   }
 }
 
@@ -133,7 +133,7 @@ const TRIGGER_LABEL: Record<Dom["trigger"], string> = {
   turnEnd: "Fim do turno",
   gameEnd: "Fim do duelo",
   destroyed: "Ao ser destruída",
-  allyPlayed: "Quando uma carta sua é jogada aqui",
+  allyPlayed: "Quando uma figurinha sua é jogada aqui",
 };
 
 export function describeDom(dom: Dom | undefined): string {
@@ -147,19 +147,19 @@ export function describeDom(dom: Dom | undefined): string {
 // Time
 // ---------------------------------------------------------------------------
 
-/** Confere o Time: 12 cartas diferentes, Vigor de 0 a 6 e nada de carta-ficha. */
+/** Confere o Time: 12 figurinhas diferentes, Vigor de 0 a 6 e nada de figurinha-ficha. */
 export function validateTeam(team: TeamCard[]): string | null {
-  if (team.length !== TEAM_SIZE) return `O Time precisa ter ${TEAM_SIZE} cartas.`;
+  if (team.length !== TEAM_SIZE) return `O Time precisa ter ${TEAM_SIZE} figurinhas.`;
   const ids = new Set(team.map((card) => card.def.id));
-  if (ids.size !== team.length) return "O Time não pode ter a mesma carta duas vezes.";
-  if (team.some((card) => card.def.token)) return "Cartas criadas por Dons não entram no Time.";
-  if (team.some((card) => card.def.cost < 0 || card.def.cost > 6)) return "Há carta com Vigor fora de 0 a 6.";
+  if (ids.size !== team.length) return "O Time não pode ter a mesma figurinha duas vezes.";
+  if (team.some((card) => card.def.token)) return "Figurinhas criadas por Dons não entram no Time.";
+  if (team.some((card) => card.def.cost < 0 || card.def.cost > 6)) return "Há figurinha com Vigor fora de 0 a 6.";
   return null;
 }
 
 /**
- * "Orçamento" de uma carta: Influência sem Dom vale ~2 × Vigor; um Dom bom tira 1 a 3.
- * Positivo = carta acima do preço; negativo = abaixo. O painel mostra isso para o admin equilibrar.
+ * "Orçamento" de uma figurinha: Influência sem Dom vale ~2 × Vigor; um Dom bom tira 1 a 3.
+ * Positivo = figurinha acima do preço; negativo = abaixo. O painel mostra isso para o admin equilibrar.
  */
 export function budgetOf(def: CardDef): number {
   return def.power - def.cost * 2;

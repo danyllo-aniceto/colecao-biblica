@@ -13,7 +13,7 @@ import { areFriends } from "./social";
 import { visibleCharacter } from "./visibility";
 
 /**
- * Salas online do Duelo de Cartas.
+ * Salas online do Duelo de Figurinhas.
  *
  * Mesmo molde do Tabuleiro: sem WebSocket (a API roda em funções da Vercel), o cliente consulta a sala a cada poucos
  * segundos e só baixa o estado quando a versão muda. O motor roda aqui, com as mãos dos dois, e cada jogador recebe só
@@ -67,7 +67,7 @@ type Work = {
   deadlineAt: number | null;
   dirtyPlayers: Set<number>;
   touched: boolean;
-  /** Mudança que só o dono vê (colocar carta na mesa): não sobe a versão. */
+  /** Mudança que só o dono vê (colocar figurinha na mesa): não sobe a versão. */
   quiet: boolean;
   deleted: boolean;
 };
@@ -152,7 +152,7 @@ function commit(work: Work, next: DuelState, at: number) {
       pushLog(work, [champion ? `${champion.name} venceu o duelo!` : "O duelo terminou empatado."]);
     }
   }
-  // O prazo só recomeça quando o turno (ou a rodada) muda; colocar carta, dobrar ou dizer "Pronto" não estica o tempo.
+  // O prazo só recomeça quando o turno (ou a rodada) muda; colocar figurinha, dobrar ou dizer "Pronto" não estica o tempo.
   const advanced = !previous || previous.turn !== next.turn || previous.status !== next.status || previous.nextUid > next.nextUid;
   if (advanced) scheduleNext(work, at + playbackMs(next.events));
   if (work.status === "FINISHED") {
@@ -585,7 +585,7 @@ export function removePlayer(userId: number, code: string, slot: number) {
   );
 }
 
-/** Time de um jogador para a partida: cartas do Time salvo (todas disponíveis e ainda dele) com o nível das figurinhas. */
+/** Time de um jogador para a partida: figurinhas do Time salvo (todas disponíveis e ainda dele) com o nível das figurinhas. */
 async function humanTeam(tx: Tx, row: DuelRoomPlayer, config: DuelRoomConfig): Promise<TeamCard[]> {
   if (row.deckSlot === null || row.userId === null) throw badRequest(`${row.name} ainda não escolheu um Time`);
   const deck = await tx.duelDeck.findUnique({ where: { userId_slot: { userId: row.userId, slot: row.deckSlot } } });
@@ -599,10 +599,10 @@ async function humanTeam(tx: Tx, row: DuelRoomPlayer, config: DuelRoomConfig): P
   const team: TeamCard[] = [];
   for (const id of deck.characterIds) {
     const def = defs.get(String(id));
-    if (!def || !levels.has(id)) throw badRequest(`${row.name}: o Time "${deck.name}" tem carta que saiu do jogo ou que não é mais dele. Edite o Time.`);
+    if (!def || !levels.has(id)) throw badRequest(`${row.name}: o Time "${deck.name}" tem figurinha que saiu do jogo ou que não é mais dele. Edite o Time.`);
     team.push({ def, level: config.levels ? (levels.get(id) ?? 1) : 1 });
   }
-  if (team.length !== TEAM_SIZE) throw badRequest(`${row.name}: o Time "${deck.name}" precisa de ${TEAM_SIZE} cartas`);
+  if (team.length !== TEAM_SIZE) throw badRequest(`${row.name}: o Time "${deck.name}" precisa de ${TEAM_SIZE} figurinhas`);
   return team;
 }
 
@@ -622,7 +622,7 @@ export function startGame(userId: number, code: string) {
         const pool: CardDef[] = rows.flatMap((row) => toCardDef(row) ?? []);
         for (const bot of bots) {
           const built = botTeam(pool, randomInt(2 ** 31 - 1), work.config.levels ? average : 1);
-          if (!built) throw badRequest("Ainda não há cartas suficientes no Duelo para o bot montar um Time.");
+          if (!built) throw badRequest("Ainda não há figurinhas suficientes no Duelo para o bot montar um Time.");
           teams[bot.slot] = built;
         }
       }
@@ -681,7 +681,7 @@ export function stageCard(userId: number, code: string, uid: number, lane: numbe
     const { state, side } = requireRound(work, me);
     const why = whyNotStage(state, side, uid, lane);
     if (why) throw badRequest(why);
-    // Colocar carta na mesa é segredo do dono: o rival não vê, então a versão só sobe se algo mais mudou antes.
+    // Colocar figurinha na mesa é segredo do dono: o rival não vê, então a versão só sobe se algo mais mudou antes.
     const secret = !work.touched;
     commit(work, stage(state, side, uid, lane), now);
     work.quiet = secret;
@@ -761,7 +761,7 @@ export function inviteFriend(userId: number, code: string, friendId: number) {
       // O convite também cai na conversa do amigo (com o botão para entrar), porque o aviso na tela só aparece com o app aberto.
       const settings = await getSettings(tx);
       if (settings.chatEnabled === 1) {
-        const text = `⚔️ Te chamei para um Duelo de Cartas! Entre na sala: /duelo/${work.room.code}`;
+        const text = `⚔️ Te chamei para um Duelo de Figurinhas! Entre na sala: /duelo/${work.room.code}`;
         const already = await tx.message.findFirst({ where: { senderId: userId, receiverId: friendId, text, createdAt: { gt: new Date(Date.now() - 10 * 60 * 1000) } }, select: { id: true } });
         if (!already) await tx.message.create({ data: { senderId: userId, receiverId: friendId, text } });
       }

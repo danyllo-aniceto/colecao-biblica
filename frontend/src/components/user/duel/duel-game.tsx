@@ -20,7 +20,7 @@ import { playSfx } from '@/lib/sound/sfx';
 export const BOT_NAMES: Record<BotSkill, string> = { APPRENTICE: 'Bot Aprendiz', STUDENT: 'Bot Estudante', MASTER: 'Bot Mestre' };
 
 type GameProps = {
-  /** Seu Time e o do rival (12 cartas cada). */
+  /** Seu Time e o do rival (12 figurinhas cada). */
   team: TeamCard[];
   foeTeam: TeamCard[];
   skill: BotSkill;
@@ -74,7 +74,7 @@ export function DuelGame({ team, foeTeam, skill, format, art, onExit }: GameProp
     }
   }, []);
 
-  // O bot joga no começo de cada turno (sem ver as cartas do jogador); pode dobrar ou desistir. Espera a repetição terminar.
+  // O bot joga no começo de cada turno (sem ver as figurinhas do jogador); pode dobrar ou desistir. Espera a repetição terminar.
   useEffect(() => {
     if (state.status !== 'playing' || state.players[1].ready || playback) return;
     const timer = window.setTimeout(() => {

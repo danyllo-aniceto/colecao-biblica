@@ -28,7 +28,7 @@ function checkInvariants(state: DuelState) {
     const placed = state.lanes.flatMap((lane) => lane.cards[side]);
     uids.push(...placed.map((card) => card.uid));
     state.lanes.forEach((lane) => expect(lane.cards[side].length).toBeLessThanOrEqual(slotsOf(scenarioOf(lane.scenario))));
-    // Nunca há mais de 12 cartas de Time + fichas.
+    // Nunca há mais de 12 figurinhas de Time + fichas.
     expect(zones.length + placed.filter((card) => !card.def.token).length).toBe(12);
   }
   expect(new Set(uids).size).toBe(uids.length);

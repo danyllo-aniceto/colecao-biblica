@@ -31,6 +31,8 @@ import { CampaignScreen } from './screens/campaign-screen';
 import { ChestsScreen } from './screens/chests-screen';
 import { MissionsScreen } from './screens/missions-screen';
 import { DuelScreen } from './screens/duel-screen';
+import { GameModesScreen } from './screens/game-modes-screen';
+import SportsEsportsRoundedIcon from '@mui/icons-material/SportsEsportsRounded';
 import StyleRoundedIcon from '@mui/icons-material/StyleRounded';
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
@@ -40,7 +42,7 @@ import WorkspacesRoundedIcon from '@mui/icons-material/WorkspacesRounded';
 import MilitaryTechRoundedIcon from '@mui/icons-material/MilitaryTechRounded';
 import { UsersScreen } from './screens/users-screen';
 
-export type AdminScreen = 'visao-geral' | 'usuarios' | 'personagens' | 'perguntas' | 'reportes' | 'recompensas' | 'loja' | 'visual' | 'colecoes' | 'temporada' | 'campanha' | 'missoes' | 'baus' | 'duelo' | 'configuracoes';
+export type AdminScreen = 'visao-geral' | 'usuarios' | 'personagens' | 'perguntas' | 'reportes' | 'recompensas' | 'loja' | 'visual' | 'colecoes' | 'temporada' | 'campanha' | 'missoes' | 'baus' | 'duelo' | 'modos' | 'configuracoes';
 
 const SCREENS: Array<{ id: AdminScreen; label: string; description: string; icon: ReactNode }> = [
   { id: 'visao-geral', label: 'Visão geral', description: 'Números do jogo e o que falta no conteúdo.', icon: <DashboardRoundedIcon fontSize="inherit" /> },
@@ -54,7 +56,8 @@ const SCREENS: Array<{ id: AdminScreen; label: string; description: string; icon
   { id: 'temporada', label: 'Passe e eventos', description: 'Trilha mensal de prêmios e eventos com bônus por tempo limitado.', icon: <MilitaryTechRoundedIcon fontSize="inherit" /> },
   { id: 'campanha', label: 'Campanha', description: 'Cenários do caminho, paradas por nível, mapas, imagem do tabuleiro e recompensas.', icon: <MapRoundedIcon fontSize="inherit" /> },
   { id: 'missoes', label: 'Missões', description: 'Metas diárias e semanais com prêmios variados.', icon: <TaskAltRoundedIcon fontSize="inherit" /> },
-  { id: 'duelo', label: 'Duelo de Cartas', description: 'Cartas, poderes e Times prontos do Duelo; cadastro por personagem ou por planilha.', icon: <StyleRoundedIcon fontSize="inherit" /> },
+  { id: 'duelo', label: 'Duelo de Figurinhas', description: 'Figurinhas, poderes e Times prontos do Duelo; cadastro por personagem ou por planilha.', icon: <StyleRoundedIcon fontSize="inherit" /> },
+  { id: 'modos', label: 'Capas dos jogos', description: 'Imagens dos cartões de Quiz, Tabuleiro e Duelo na aba Jogar.', icon: <SportsEsportsRoundedIcon fontSize="inherit" /> },
   { id: 'baus', label: 'Simulador de baús', description: 'Abre baús de teste e mostra o que cada nível entrega, com as regras de agora.', icon: <Inventory2RoundedIcon fontSize="inherit" /> },
   { id: 'usuarios', label: 'Usuários', description: 'Contas, papéis e ajustes de saldo.', icon: <PeopleAltRoundedIcon fontSize="inherit" /> },
   { id: 'configuracoes', label: 'Configurações', description: 'Regras do jogo, economia e prêmio diário.', icon: <SettingsRoundedIcon fontSize="inherit" /> },
@@ -173,6 +176,7 @@ export function AdminDashboard() {
             {screen === 'campanha' ? <CampaignScreen /> : null}
             {screen === 'baus' ? <ChestsScreen /> : null}
             {screen === 'duelo' ? <DuelScreen /> : null}
+            {screen === 'modos' ? <GameModesScreen /> : null}
             {screen === 'usuarios' ? <UsersScreen /> : null}
             {screen === 'configuracoes' ? <SettingsScreen /> : null}
           </>

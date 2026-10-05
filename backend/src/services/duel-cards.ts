@@ -6,7 +6,7 @@ export const normalizeName = (value: string) => value.normalize("NFD").replace(/
 
 type WithCharacter = DuelCard & { character: { id: number; name: string; imageUrl: string | null } };
 
-/** Carta pronta para o motor a partir da linha do banco (null se o texto do Dom estiver inválido). */
+/** Figurinha pronta para o motor a partir da linha do banco (null se o texto do Dom estiver inválido). */
 export function toCardDef(row: WithCharacter): CardDef | null {
   const built = buildCard({
     id: String(row.characterId),

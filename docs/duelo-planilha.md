@@ -1,27 +1,27 @@
-# Duelo de Cartas — planilha de cartas e guia de poderes
+# Duelo de Figurinhas — planilha de figurinhas e guia de poderes
 
-Cada jogador monta o próprio Time de 12 cartas com as figurinhas que já conquistou (não há Times prontos). Painel → **Duelo de Cartas** → *Baixar planilha*: um CSV com **todos os personagens** (Personagem, Raridade, Papel na história, Período,
-Testamento, Palavras-chave, Resumo curto) e, nos que já têm carta, os dados dela. Preencha da coluna **Vigor** em diante e use
+Cada jogador monta o próprio Time de 12 figurinhas com as figurinhas que já conquistou (não há Times prontos). Painel → **Duelo de Figurinhas** → *Baixar planilha*: um CSV com **todos os personagens** (Personagem, Raridade, Papel na história, Período,
+Testamento, Palavras-chave, Resumo curto) e, nos que já têm figurinha, os dados dela. Preencha da coluna **Vigor** em diante e use
 *Importar planilha*: a prévia mostra os erros linha a linha antes de gravar. Linhas sem Vigor e Influência são ignoradas; uma linha
-preenchida **substitui** a carta daquele personagem.
+preenchida **substitui** a figurinha daquele personagem.
 
 ## Colunas
 
 | Coluna | O que é |
 |---|---|
 | Personagem | nome igual ao do cadastro (acento e maiúscula não importam) |
-| Vigor | custo da carta, de 0 a 6 |
-| Influência | força da carta, de 0 a 30. **Preço justo sem Dom: 2 × Vigor** (1→2, 3→6, 5→10). Um Dom bom tira 1 a 3 |
+| Vigor | custo da figurinha, de 0 a 6 |
+| Influência | força da figurinha, de 0 a 30. **Preço justo sem Dom: 2 × Vigor** (1→2, 3→6, 5→10). Um Dom bom tira 1 a 3 |
 | Etiquetas | até 6, separadas por vírgula: Rei, Profeta, Juiz, Apóstolo, Patriarca, Mulher, Líder, Sacerdote, Pastor, Adversário... |
-| Gatilho | quando o Dom acontece (abaixo). Vazio = carta sem Dom |
+| Gatilho | quando o Dom acontece (abaixo). Vazio = figurinha sem Dom |
 | Efeitos | de 1 a 3 efeitos separados por ` \| ` |
 | Texto do Dom | opcional: texto próprio que aparece no jogo no lugar do gerado |
 | Disponível | Sim/Não (vazio = Sim). Desligada, não entra nos duelos nem nos Times |
 
 ## Gatilhos
 
-`revelar` (quando a carta vira) · `continuo` (enquanto estiver em jogo; só aura, proteger e poder-por) · `fim-do-turno` ·
-`fim-do-duelo` (depois do turno 6, antes de contar) · `destruida` · `aliado-jogado` (outra carta sua vira no mesmo cenário).
+`revelar` (quando a figurinha vira) · `continuo` (enquanto estiver em jogo; só aura, proteger e poder-por) · `fim-do-turno` ·
+`fim-do-duelo` (depois do turno 6, antes de contar) · `destruida` · `aliado-jogado` (outra figurinha sua vira no mesmo cenário).
 
 ## Efeitos
 
@@ -30,24 +30,24 @@ Formato: `nome chave=valor chave=valor`. Sem espaços nos valores (`_` vira espa
 | Efeito | Faz | Parâmetros |
 |---|---|---|
 | `poder` | soma/tira Influência | `valor=±N` `alvo=` si · aliados-aqui · inimigos-aqui · outros-aliados · inimigo-mais-fraco · inimigo-mais-forte · aliado-mais-fraco · inimigos-todos · mao `se=` |
-| `poder-por` | Influência por cada carta que combine | `valor=N` `por=` aliados-aqui · aliados · inimigos-aqui · cartas-aqui `etiqueta=` `vigor=` |
-| `comprar` | compra cartas | `qtd=1..3` |
-| `destruir` | afasta cartas | `alvo=` inimigo-mais-fraco · inimigo-mais-forte · aliado-mais-fraco · todos-aqui `se=` |
-| `mover-inimigos` | leva as cartas do rival deste cenário para outros | — |
+| `poder-por` | Influência por cada figurinha que combine | `valor=N` `por=` aliados-aqui · aliados · inimigos-aqui · figurinhas-aqui `etiqueta=` `vigor=` |
+| `comprar` | compra figurinhas | `qtd=1..3` |
+| `destruir` | afasta figurinhas | `alvo=` inimigo-mais-fraco · inimigo-mais-forte · aliado-mais-fraco · todos-aqui `se=` |
+| `mover-inimigos` | leva as figurinhas do rival deste cenário para outros | — |
 | `calar` | cancela os Dons contínuos do rival aqui | — |
 | `criar` | cria fichas | `ficha=` Descendente · Ovelha · Pão · Peixe · Soldado `onde=` cada-cenario · aqui · vizinhos |
 | `sumir` | some e volta à mão depois, mais forte | `turnos=1..5` `bonus=N` |
-| `proteger` | (contínuo) suas cartas aqui não são destruídas nem reduzidas pelo rival | — |
-| `aura` | (contínuo) Influência para outras cartas suas | `valor=N` `em=` aliados-aqui · vizinhos · aliados `etiqueta=` |
-| `devolver` | devolve uma carta do rival à mão dele | `alvo=` inimigo-mais-fraco · inimigo-mais-forte |
-| `descartar` | o rival descarta as cartas de maior Vigor da mão | `qtd=1..3` |
+| `proteger` | (contínuo) suas figurinhas aqui não são destruídas nem reduzidas pelo rival | — |
+| `aura` | (contínuo) Influência para outras figurinhas suas | `valor=N` `em=` aliados-aqui · vizinhos · aliados `etiqueta=` |
+| `devolver` | devolve uma figurinha do rival à mão dele | `alvo=` inimigo-mais-fraco · inimigo-mais-forte |
+| `descartar` | o rival descarta as figurinhas de maior Vigor da mão | `qtd=1..3` |
 | `vigor-extra` | mais Vigor no próximo turno | `valor=1..3` |
-| `custo-menos` | as cartas da sua mão custam menos Vigor | `valor=1..2` |
-| `converter` | a carta mais fraca do rival aqui passa para o seu lado | — |
-| `sacrificar` | afasta sua carta mais fraca aqui para ganhar Influência | `ganho=N` |
+| `custo-menos` | as figurinhas da sua mão custam menos Vigor | `valor=1..2` |
+| `converter` | a figurinha mais fraca do rival aqui passa para o seu lado | — |
+| `sacrificar` | afasta sua figurinha mais fraca aqui para ganhar Influência | `ganho=N` |
 | `multiplicar` | multiplica a Influência atual | `fator=2..3` |
 | `mover-se` | vai para o seu cenário mais fraco com espaço | — |
-| `ressuscitar` | uma carta afastada sua volta à mão | `qtd=1..2` |
+| `ressuscitar` | uma figurinha afastada sua volta à mão | `qtd=1..2` |
 
 ## Condições (`se=`)
 
@@ -71,5 +71,5 @@ Paulo;4;5;Apóstolo;revelar;converter | poder-por valor=+1 por=aliados etiqueta=
 
 - Nenhum Dom usa sorte: o resultado é sempre o mesmo para as mesmas jogadas.
 - Dom sem condição que afeta o rival (destruir, converter, devolver) deve custar Influência.
-- Cartas de Vigor 5 e 6 são as finalizadoras e devem ser fortes (12 a 14 de Influência no Vigor 6 só com uma desvantagem clara).
-- Lançar as cartas em lotes (campo *Disponível*) deixa os jogadores descobrirem aos poucos.
+- Figurinhas de Vigor 5 e 6 são as finalizadoras e devem ser fortes (12 a 14 de Influência no Vigor 6 só com uma desvantagem clara).
+- Lançar as figurinhas em lotes (campo *Disponível*) deixa os jogadores descobrirem aos poucos.

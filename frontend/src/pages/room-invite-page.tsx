@@ -15,7 +15,7 @@ import { scenarioThemeVars } from '@/lib/campaign-theme';
 type InviteRoom = Omit<PublicRoom, 'scenario'> & { scenario?: PublicRoom['scenario'] };
 
 /**
- * Link de convite de uma sala do Tabuleiro (/sala/ABCDE) ou do Duelo de Cartas (/duelo/ABCDE). Quem já tem conta entra
+ * Link de convite de uma sala do Tabuleiro (/sala/ABCDE) ou do Duelo de Figurinhas (/duelo/ABCDE). Quem já tem conta entra
  * direto; quem não tem vê o convite e é levado a criar a conta, que depois abre a sala sozinha.
  */
 export function RoomInvitePage({ game = 'board' }: { game?: 'board' | 'duel' }) {
@@ -82,7 +82,7 @@ export function RoomInvitePage({ game = 'board' }: { game?: 'board' | 'duel' }) 
           </span>
           <div className="space-y-1">
             <p className="flex items-center justify-center gap-1.5 text-sm font-bold text-muted">
-              {duel ? <StyleRoundedIcon fontSize="small" /> : <CasinoRoundedIcon fontSize="small" />} {duel ? 'Duelo de Cartas' : 'Tabuleiro Bíblico'}
+              {duel ? <StyleRoundedIcon fontSize="small" /> : <CasinoRoundedIcon fontSize="small" />} {duel ? 'Duelo de Figurinhas' : 'Tabuleiro Bíblico'}
             </p>
             <h1 className="font-display text-2xl font-bold text-ink">{room.hostName} chamou você para jogar!</h1>
             <p className="text-sm font-semibold text-muted">

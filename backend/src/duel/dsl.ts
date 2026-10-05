@@ -40,7 +40,7 @@ const COUNT_OF: Array<[string, Count["of"]]> = [
   ["aliados-aqui", "alliesHere"],
   ["aliados", "alliesAll"],
   ["inimigos-aqui", "enemiesHere"],
-  ["cartas-aqui", "cardsHere"],
+  ["figurinhas-aqui", "cardsHere"],
 ];
 
 const WHERE: Array<[string, "eachLane" | "here" | "neighbors"]> = [
@@ -316,7 +316,7 @@ const ONGOING_ALLOWED: Array<Effect["kind"]> = ["protect", "aura", "powerPer"];
 
 export type ParsedDom = { ok: true; dom: Dom | null } | { ok: false; error: string };
 
-/** Lê gatilho + efeitos (de uma planilha ou do painel). Vazios nos dois = carta sem Dom. */
+/** Lê gatilho + efeitos (de uma planilha ou do painel). Vazios nos dois = figurinha sem Dom. */
 export function parseDom(triggerText: string | undefined, effectsText: string | undefined, text?: string): ParsedDom {
   const trigger = (triggerText ?? "").trim();
   const effects = (effectsText ?? "").trim();
@@ -348,14 +348,14 @@ export function domToText(dom: Dom | undefined | null): { trigger: string; effec
 }
 
 // ---------------------------------------------------------------------------
-// Carta inteira
+// Figurinha inteira
 // ---------------------------------------------------------------------------
 
 export type CardInput = { id: string; name: string; cost: number; power: number; tags: string[]; trigger?: string; effects?: string; text?: string; imageUrl?: string | null };
 
-/** Monta a carta a partir de texto; devolve o erro em português quando algo está errado. */
+/** Monta a figurinha a partir de texto; devolve o erro em português quando algo está errado. */
 export function buildCard(input: CardInput): { ok: true; card: CardDef; warnings: string[] } | { ok: false; error: string } {
-  if (!input.name.trim()) return { ok: false, error: "A carta precisa de um personagem." };
+  if (!input.name.trim()) return { ok: false, error: "A figurinha precisa de um personagem." };
   if (!Number.isInteger(input.cost) || input.cost < 0 || input.cost > 6) return { ok: false, error: "Vigor precisa ser um número de 0 a 6." };
   if (!Number.isInteger(input.power) || input.power < 0 || input.power > 30) return { ok: false, error: "Influência precisa ser um número de 0 a 30." };
   const tags = [...new Set(input.tags.map((tag) => tag.trim()).filter(Boolean))];
@@ -381,43 +381,43 @@ export type GuideEntry = { name: string; summary: string; params: string; exampl
 
 export const EFFECT_GUIDE: GuideEntry[] = [
   { name: "poder", summary: "Soma ou tira Influência.", params: "valor=±N  alvo=(si, aliados-aqui, inimigos-aqui, outros-aliados, inimigo-mais-fraco, inimigo-mais-forte, aliado-mais-fraco, inimigos-todos, mao)  se=condição", example: "poder valor=+6 alvo=si se=inimigo-poder:6" },
-  { name: "poder-por", summary: "Soma Influência por cada carta que combine.", params: "valor=N  por=(aliados-aqui, aliados, inimigos-aqui, cartas-aqui)  etiqueta=Tag  vigor=N", example: "poder-por valor=+1 por=aliados etiqueta=Apóstolo" },
-  { name: "comprar", summary: "Compra cartas do Time.", params: "qtd=1 a 3", example: "comprar qtd=1" },
-  { name: "destruir", summary: "Afasta cartas.", params: "alvo=(inimigo-mais-fraco, inimigo-mais-forte, aliado-mais-fraco, todos-aqui)  se=condição", example: "destruir alvo=todos-aqui se=perdendo" },
-  { name: "mover-inimigos", summary: "Leva as cartas do rival deste cenário para outros.", params: "(sem parâmetros)", example: "mover-inimigos" },
+  { name: "poder-por", summary: "Soma Influência por cada figurinha que combine.", params: "valor=N  por=(aliados-aqui, aliados, inimigos-aqui, figurinhas-aqui)  etiqueta=Tag  vigor=N", example: "poder-por valor=+1 por=aliados etiqueta=Apóstolo" },
+  { name: "comprar", summary: "Compra figurinhas do Time.", params: "qtd=1 a 3", example: "comprar qtd=1" },
+  { name: "destruir", summary: "Afasta figurinhas.", params: "alvo=(inimigo-mais-fraco, inimigo-mais-forte, aliado-mais-fraco, todos-aqui)  se=condição", example: "destruir alvo=todos-aqui se=perdendo" },
+  { name: "mover-inimigos", summary: "Leva as figurinhas do rival deste cenário para outros.", params: "(sem parâmetros)", example: "mover-inimigos" },
   { name: "calar", summary: "Cancela os Dons contínuos do rival neste cenário.", params: "(sem parâmetros)", example: "calar" },
-  { name: "criar", summary: "Cria cartas-ficha (Descendente, Ovelha, Pão, Peixe, Soldado).", params: "ficha=Nome  onde=(cada-cenario, aqui, vizinhos)", example: "criar ficha=Descendente onde=cada-cenario" },
-  { name: "sumir", summary: "A carta some e volta à mão depois, mais forte.", params: "turnos=1 a 5  bonus=N", example: "sumir turnos=3 bonus=+3" },
-  { name: "proteger", summary: "(contínuo) Suas cartas aqui não podem ser destruídas nem reduzidas pelo rival.", params: "(sem parâmetros)", example: "proteger" },
-  { name: "aura", summary: "(contínuo) Dá Influência a outras cartas suas.", params: "valor=N  em=(aliados-aqui, vizinhos, aliados)  etiqueta=Tag", example: "aura valor=+1 em=vizinhos" },
-  { name: "devolver", summary: "Devolve uma carta do rival à mão dele.", params: "alvo=(inimigo-mais-fraco, inimigo-mais-forte)", example: "devolver alvo=inimigo-mais-forte" },
-  { name: "descartar", summary: "O rival descarta as cartas de maior Vigor da mão.", params: "qtd=1 a 3", example: "descartar qtd=1" },
+  { name: "criar", summary: "Cria figurinhas-ficha (Descendente, Ovelha, Pão, Peixe, Soldado).", params: "ficha=Nome  onde=(cada-cenario, aqui, vizinhos)", example: "criar ficha=Descendente onde=cada-cenario" },
+  { name: "sumir", summary: "A figurinha some e volta à mão depois, mais forte.", params: "turnos=1 a 5  bonus=N", example: "sumir turnos=3 bonus=+3" },
+  { name: "proteger", summary: "(contínuo) Suas figurinhas aqui não podem ser destruídas nem reduzidas pelo rival.", params: "(sem parâmetros)", example: "proteger" },
+  { name: "aura", summary: "(contínuo) Dá Influência a outras figurinhas suas.", params: "valor=N  em=(aliados-aqui, vizinhos, aliados)  etiqueta=Tag", example: "aura valor=+1 em=vizinhos" },
+  { name: "devolver", summary: "Devolve uma figurinha do rival à mão dele.", params: "alvo=(inimigo-mais-fraco, inimigo-mais-forte)", example: "devolver alvo=inimigo-mais-forte" },
+  { name: "descartar", summary: "O rival descarta as figurinhas de maior Vigor da mão.", params: "qtd=1 a 3", example: "descartar qtd=1" },
   { name: "vigor-extra", summary: "Mais Vigor no próximo turno.", params: "valor=1 a 3", example: "vigor-extra valor=1" },
-  { name: "custo-menos", summary: "As cartas da sua mão custam menos Vigor.", params: "valor=1 ou 2", example: "custo-menos valor=1" },
-  { name: "converter", summary: "A carta mais fraca do rival neste cenário passa para o seu lado.", params: "(sem parâmetros)", example: "converter" },
-  { name: "sacrificar", summary: "Afasta sua carta mais fraca aqui para ganhar Influência.", params: "ganho=N", example: "sacrificar ganho=+5" },
-  { name: "multiplicar", summary: "Multiplica a Influência atual da carta.", params: "fator=2 ou 3", example: "multiplicar fator=2" },
-  { name: "mover-se", summary: "A carta vai para o seu cenário mais fraco com espaço.", params: "(sem parâmetros)", example: "mover-se" },
-  { name: "ressuscitar", summary: "Uma carta afastada sua volta à mão.", params: "qtd=1 ou 2", example: "ressuscitar qtd=1" },
+  { name: "custo-menos", summary: "As figurinhas da sua mão custam menos Vigor.", params: "valor=1 ou 2", example: "custo-menos valor=1" },
+  { name: "converter", summary: "A figurinha mais fraca do rival neste cenário passa para o seu lado.", params: "(sem parâmetros)", example: "converter" },
+  { name: "sacrificar", summary: "Afasta sua figurinha mais fraca aqui para ganhar Influência.", params: "ganho=N", example: "sacrificar ganho=+5" },
+  { name: "multiplicar", summary: "Multiplica a Influência atual da figurinha.", params: "fator=2 ou 3", example: "multiplicar fator=2" },
+  { name: "mover-se", summary: "A figurinha vai para o seu cenário mais fraco com espaço.", params: "(sem parâmetros)", example: "mover-se" },
+  { name: "ressuscitar", summary: "Uma figurinha afastada sua volta à mão.", params: "qtd=1 ou 2", example: "ressuscitar qtd=1" },
 ];
 
 export const TRIGGER_GUIDE: Array<{ name: string; summary: string }> = [
-  { name: "revelar", summary: "Acontece quando a carta vira." },
-  { name: "continuo", summary: "Vale enquanto a carta estiver em jogo (só aura, proteger e poder-por)." },
+  { name: "revelar", summary: "Acontece quando a figurinha vira." },
+  { name: "continuo", summary: "Vale enquanto a figurinha estiver em jogo (só aura, proteger e poder-por)." },
   { name: "fim-do-turno", summary: "Acontece no fim de cada turno." },
   { name: "fim-do-duelo", summary: "Acontece depois do turno 6, antes de contar os cenários." },
-  { name: "destruida", summary: "Acontece quando a carta é afastada." },
-  { name: "aliado-jogado", summary: "Acontece quando outra carta sua vira no mesmo cenário." },
+  { name: "destruida", summary: "Acontece quando a figurinha é afastada." },
+  { name: "aliado-jogado", summary: "Acontece quando outra figurinha sua vira no mesmo cenário." },
 ];
 
 export const CONDITION_GUIDE: Array<{ name: string; summary: string }> = [
-  { name: "inimigo-poder:N", summary: "O rival tem aqui uma carta com N ou mais de Influência." },
-  { name: "inimigo-nomeado:Nome", summary: "O rival tem aqui a carta com esse nome (use _ no lugar de espaço)." },
-  { name: "inimigo-etiqueta:Tag", summary: "O rival tem aqui uma carta com essa etiqueta." },
-  { name: "aliado-etiqueta:Tag", summary: "Você tem aqui outra carta com essa etiqueta." },
-  { name: "aliados-aqui:N", summary: "Você tem N ou mais outras cartas aqui." },
-  { name: "sozinho", summary: "Esta é sua única carta neste cenário." },
+  { name: "inimigo-poder:N", summary: "O rival tem aqui uma figurinha com N ou mais de Influência." },
+  { name: "inimigo-nomeado:Nome", summary: "O rival tem aqui a figurinha com esse nome (use _ no lugar de espaço)." },
+  { name: "inimigo-etiqueta:Tag", summary: "O rival tem aqui uma figurinha com essa etiqueta." },
+  { name: "aliado-etiqueta:Tag", summary: "Você tem aqui outra figurinha com essa etiqueta." },
+  { name: "aliados-aqui:N", summary: "Você tem N ou mais outras figurinhas aqui." },
+  { name: "sozinho", summary: "Esta é sua única figurinha neste cenário." },
   { name: "perdendo / ganhando", summary: "O cenário está perdendo / ganhando para você." },
-  { name: "mao-max:N", summary: "Você tem N ou menos cartas na mão." },
+  { name: "mao-max:N", summary: "Você tem N ou menos figurinhas na mão." },
   { name: "turno:N", summary: "A partir do turno N." },
 ];

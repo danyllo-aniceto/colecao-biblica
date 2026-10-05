@@ -32,7 +32,7 @@ const TRIGGER_OPTIONS = [
   { value: 'fim-do-turno', label: 'Fim do turno' },
   { value: 'fim-do-duelo', label: 'Fim do duelo' },
   { value: 'destruida', label: 'Ao ser destruída' },
-  { value: 'aliado-jogado', label: 'Quando uma carta sua é jogada aqui' },
+  { value: 'aliado-jogado', label: 'Quando uma figurinha sua é jogada aqui' },
 ];
 
 const COST_OPTIONS = [0, 1, 2, 3, 4, 5, 6].map((value) => ({ value: String(value), label: `Vigor ${value}` }));
@@ -74,8 +74,8 @@ export function DuelScreen() {
         row.card?.domText ?? '',
         row.card ? (row.card.available ? 'Sim' : 'Não') : '',
       ]);
-      downloadText('duelo-cartas.csv', toCsv([DUEL_CSV_HEADER, ...table]));
-      toast.success(`${rows.length} personagens na planilha.`, { description: 'As colunas de Vigor em diante ficam vazias nos personagens sem carta.' });
+      downloadText('duelo-figurinhas.csv', toCsv([DUEL_CSV_HEADER, ...table]));
+      toast.success(`${rows.length} personagens na planilha.`, { description: 'As colunas de Vigor em diante ficam vazias nos personagens sem figurinha.' });
     } catch (reason) {
       toast.error(errorMessage(reason));
     } finally {
@@ -84,11 +84,11 @@ export function DuelScreen() {
   }
 
   async function remove(row: DuelCharacterRow) {
-    const ok = await confirm({ title: `Remover a carta de ${row.name}?`, message: 'O personagem continua no álbum; só deixa de ser carta do Duelo.', confirmLabel: 'Remover', tone: 'danger' });
+    const ok = await confirm({ title: `Remover a figurinha de ${row.name}?`, message: 'O personagem continua no álbum; só deixa de ser figurinha do Duelo.', confirmLabel: 'Remover', tone: 'danger' });
     if (!ok) return;
     try {
       await deleteDuelCard(row.characterId);
-      toast.success('Carta removida.');
+      toast.success('Figurinha removida.');
       list.reload();
     } catch (reason) {
       toast.error(errorMessage(reason));
@@ -97,8 +97,8 @@ export function DuelScreen() {
 
   return (
     <AdminPanel
-      title="Duelo de Cartas"
-      description="Cada personagem pode virar uma carta: Vigor (custo), Influência (força), etiquetas e um Dom (poder). Cadastre uma por uma ou importe tudo por planilha; baixe a planilha com todos os personagens, preencha as colunas de Vigor em diante e importe de volta."
+      title="Duelo de Figurinhas"
+      description="Cada personagem pode virar uma figurinha: Vigor (custo), Influência (força), etiquetas e um Dom (poder). Cadastre uma por uma ou importe tudo por planilha; baixe a planilha com todos os personagens, preencha as colunas de Vigor em diante e importe de volta."
       actions={
         <>
           <Button variant="secondary" onClick={() => setGuide(true)}>
@@ -122,8 +122,8 @@ export function DuelScreen() {
           className="sm:w-96"
           options={[
             { value: 'all', label: 'Todos' },
-            { value: 'with', label: 'Com carta' },
-            { value: 'without', label: 'Sem carta' },
+            { value: 'with', label: 'Com figurinha' },
+            { value: 'without', label: 'Sem figurinha' },
           ]}
         />
       </div>
@@ -151,14 +151,14 @@ export function DuelScreen() {
               <Cell>{row.card ? row.card.power : '—'}</Cell>
               <Cell className="max-w-40 text-xs text-muted">{row.card?.tags.join(', ') || '—'}</Cell>
               <Cell className="max-w-xs text-xs">{built?.ok ? describeDom(built.card.dom) : built ? <span className="text-danger">{built.error}</span> : '—'}</Cell>
-              <Cell>{row.card ? <StatusBadge active={row.card.available} on="Disponível" off="Desligada" /> : <span className="text-xs text-muted">Sem carta</span>}</Cell>
+              <Cell>{row.card ? <StatusBadge active={row.card.available} on="Disponível" off="Desligada" /> : <span className="text-xs text-muted">Sem figurinha</span>}</Cell>
               <Cell>
                 <div className="flex justify-end gap-1">
-                  <IconAction label="Editar carta" onClick={() => setEditing(row)}>
+                  <IconAction label="Editar figurinha" onClick={() => setEditing(row)}>
                     <EditRoundedIcon fontSize="small" />
                   </IconAction>
                   {row.card ? (
-                    <IconAction label="Remover carta" tone="danger" onClick={() => void remove(row)}>
+                    <IconAction label="Remover figurinha" tone="danger" onClick={() => void remove(row)}>
                       <DeleteOutlineRoundedIcon fontSize="small" />
                     </IconAction>
                   ) : null}
@@ -230,7 +230,7 @@ function CardModal({ row, onClose, onSaved }: { row: DuelCharacterRow; onClose: 
     try {
       const body: DuelCardRecord = { cost: Number(cost), power: Number(power), tags, trigger: trigger || null, effects: trigger ? effects.trim() || null : null, domText: domText.trim() || null, available };
       const result = await saveDuelCard(row.characterId, body);
-      toast.success('Carta salva.', result.warnings.length ? { description: result.warnings[0] } : undefined);
+      toast.success('Figurinha salva.', result.warnings.length ? { description: result.warnings[0] } : undefined);
       onSaved();
     } catch (reason) {
       toast.error(errorMessage(reason));
@@ -244,7 +244,7 @@ function CardModal({ row, onClose, onSaved }: { row: DuelCharacterRow; onClose: 
   const roundTrip = normalized.ok && normalized.dom ? domToText(normalized.dom) : null;
 
   return (
-    <Modal open size="lg" title={`Carta: ${row.name}`} description={row.narrativeRole ?? undefined} onClose={saving ? undefined : onClose}>
+    <Modal open size="lg" title={`Figurinha: ${row.name}`} description={row.narrativeRole ?? undefined} onClose={saving ? undefined : onClose}>
       <form className="space-y-4" onSubmit={submit}>
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="Vigor (custo)" hint="Número de 0 a 6.">
@@ -296,15 +296,15 @@ function CardModal({ row, onClose, onSaved }: { row: DuelCharacterRow; onClose: 
           )}
         </div>
 
-        <Switch checked={available} onChange={setAvailable} label="Disponível no jogo" description="Desligada, a carta some dos duelos e dos Times dos jogadores." />
-        {!card ? <Alert tone="info">Este personagem ainda não é carta do Duelo. Ao salvar, ele passa a ser.</Alert> : null}
+        <Switch checked={available} onChange={setAvailable} label="Disponível no jogo" description="Desligada, a figurinha some dos duelos e dos Times dos jogadores." />
+        {!card ? <Alert tone="info">Este personagem ainda não é figurinha do Duelo. Ao salvar, ele passa a ser.</Alert> : null}
 
         <div className="flex justify-end gap-2 border-t border-edge pt-4">
           <Button variant="secondary" onClick={onClose} disabled={saving}>
             Cancelar
           </Button>
           <Button type="submit" loading={saving} disabled={!built.ok}>
-            Salvar carta
+            Salvar figurinha
           </Button>
         </div>
       </form>

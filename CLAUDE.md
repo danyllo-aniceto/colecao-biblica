@@ -57,20 +57,20 @@ código em **português do Brasil**.
 - O motor não vê a alternativa marcada, só se acertou. Toda regra nova tem teste em `engine.test.ts`; regras de cenário são
   dados em `scenarios.ts`. Nada do modo dá XP, moedas, figurinhas nem mexe nas estatísticas das perguntas.
 
-## Modo Duelo (jogo de cartas com amigos, sem progresso de perfil)
+## Modo Duelo (jogo de figurinhas com amigos, sem progresso de perfil)
 
-- Proposta e fases em `docs/modo-duelo.md` (estilo Marvel Snap: 12 cartas, 6 turnos simultâneos, 3 cenários × 4 espaços, Dons). Atualize o
+- Proposta e fases em `docs/modo-duelo.md` (estilo Marvel Snap: 12 figurinhas, 6 turnos simultâneos, 3 cenários × 4 espaços, Dons). Atualize o
   checklist a cada etapa. Vocabulário: **Influência** (força), **Vigor** (energia do turno), **Dom** (habilidade), **Cenário**, **Time**.
   Não usar "Fé" nem "Fôlego" (o Tabuleiro já usa).
 - Motor **puro e sem dependências** em `backend/src/duel/` (`engine.ts`, `cards.ts`, `dsl.ts`, `scenarios.ts`, `bots.ts`, `bot-team.ts`, `series.ts`; `starter.ts` é só exemplo de teste); o
   front o importa pelo alias `@duel/*`. Mesmo molde do Tabuleiro: estado serializável, sorteio com semente, nunca importar nada de fora da pasta.
-- Cartas = personagens do painel (tabela `duel_cards`, Dom em texto: `docs/duelo-planilha.md`); cada jogador monta o próprio Time (`duel_decks`), sem Times prontos.
+- Figurinhas = personagens do painel (tabela `duel_cards`, Dom em texto: `docs/duelo-planilha.md`); cada jogador monta o próprio Time (`duel_decks`), sem Times prontos.
   Todo evento do motor leva a foto do tabuleiro (`snap`): a tela repete o turno passo a passo, então evento novo precisa de texto claro.
 - **Nenhum cenário nem Dom usa sorte.** Só decisão do jogador. Regras novas entram em `engine.test.ts`; bots só enxergam `viewFor(...)`.
 - Informação escondida (mão e baralho do rival, jogadas não reveladas, cenários que não apareceram) nunca sai do servidor: o online manda só `viewFor`.
 - Online: `services/duel-room.ts` + `routes/duel-room.ts` (mesmo molde do Tabuleiro: sem websocket, `?since=<versão>`, tudo "sozinho" resolvido por `advance()` com a sala trancada).
-  Os bots jogam o turno ao começar; colocar carta não sobe a versão; o prazo só recomeça quando o turno muda. Convite/link: `/duelo/CÓDIGO` (a mesma página de convite do Tabuleiro).
-- Nada do modo dá XP, moedas, figurinhas ou mexe em ranking/missões/estatísticas. Único prêmio previsto: versos de carta por vitórias online.
+  Os bots jogam o turno ao começar; colocar figurinha não sobe a versão; o prazo só recomeça quando o turno muda. Convite/link: `/duelo/CÓDIGO` (a mesma página de convite do Tabuleiro).
+- Nada do modo dá XP, moedas, figurinhas ou mexe em ranking/missões/estatísticas. Único prêmio previsto: versos de figurinha por vitórias online.
 
 ## Comandos
 

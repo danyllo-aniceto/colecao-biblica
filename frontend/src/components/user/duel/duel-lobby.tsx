@@ -36,7 +36,7 @@ export type DuelLobbyActions = {
 /** Copia (ou compartilha) o link da sala; é o jeito de chamar quem ainda não está nos amigos. */
 export async function shareDuelRoom(code: string, toast: ReturnType<typeof useToast>) {
   const url = duelRoomLink(code);
-  const text = `Vem jogar Duelo de Cartas comigo! Código da sala: ${code}`;
+  const text = `Vem jogar Duelo de Figurinhas comigo! Código da sala: ${code}`;
   try {
     if (typeof navigator.share === 'function') {
       await navigator.share({ title: 'Coleção Bíblica', text, url });
@@ -95,14 +95,14 @@ export function DuelLobby({ view, decks, busy, actions, connectionLost }: { view
         <section className="panel space-y-3 p-4" aria-label="Seu Time">
           <h3 className="font-display text-base font-bold text-ink">Seu Time</h3>
           {decks.length === 0 ? (
-            <Alert tone="info">Você ainda não montou um Time. Saia da sala, monte um Time de 12 cartas no Duelo e volte com o código.</Alert>
+            <Alert tone="info">Você ainda não montou um Time. Saia da sala, monte um Time de 12 figurinhas no Duelo e volte com o código.</Alert>
           ) : (
             <Select
               aria-label="Time que você vai usar"
               value={view.me?.deckSlot ? String(view.me.deckSlot) : ''}
               placeholder="Escolha um Time"
               onChange={(value) => actions.onDeck(Number(value))}
-              options={decks.map((deck) => ({ value: String(deck.slot), label: deck.name, description: `${deck.cards.length} cartas` }))}
+              options={decks.map((deck) => ({ value: String(deck.slot), label: deck.name, description: `${deck.cards.length} figurinhas` }))}
             />
           )}
           {view.me && view.me.deckSlot === null && decks.length > 0 ? <p className="text-xs font-semibold text-danger">Escolha o Time para o anfitrião poder começar.</p> : null}
@@ -121,7 +121,7 @@ export function DuelLobby({ view, decks, busy, actions, connectionLost }: { view
                 <span className="text-sm font-bold text-muted">Tempo por turno</span>
                 <Segmented aria-label="Tempo por turno" value={String(view.config.turnSeconds)} onChange={(value) => actions.onConfig({ turnSeconds: Number(value) })} options={TURN_OPTIONS.map((seconds) => ({ value: String(seconds), label: `${seconds}s` }))} />
               </div>
-              <Switch checked={view.config.levels} onChange={(levels) => actions.onConfig({ levels })} label="Valer o nível das figurinhas" description="Ligado, cartas de nível 2 a 5 ficam um pouco mais fortes. Desligado, todas valem como nível 1." />
+              <Switch checked={view.config.levels} onChange={(levels) => actions.onConfig({ levels })} label="Valer o nível das figurinhas" description="Ligado, figurinhas de nível 2 a 5 ficam um pouco mais fortes. Desligado, todas valem como nível 1." />
             </div>
           ) : (
             <p className="text-sm font-semibold text-ink">
