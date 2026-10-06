@@ -147,7 +147,10 @@ export type ScenarioRule =
   | { kind: "winnerBonus"; amount: number }
   | { kind: "decayStrongest"; amount: number }
   | { kind: "growWeakest"; amount: number }
-  | { kind: "underdog"; amount: number };
+  | { kind: "underdog"; amount: number }
+  | { kind: "lone"; amount: number }
+  | { kind: "firstBonus"; amount: number }
+  | { kind: "costBonus"; min: number; amount: number };
 
 export type ScenarioDef = {
   /** Mesmo identificador (slug) do cenário da campanha. */

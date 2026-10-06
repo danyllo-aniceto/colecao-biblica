@@ -187,6 +187,11 @@ export function cardPower(state: DuelState, laneIndex: number, side: Side, card:
   // Regras de cenário que mexem em cada figurinha.
   const rule = laneScenario(state, laneIndex).rule;
   if (rule.kind === "cheapBonus" && card.def.cost === 1) power += rule.amount;
+  // Sozinha do lado dela aqui.
+  if (rule.kind === "lone" && here.length === 1) power += rule.amount;
+  // A primeira que o lado colocou aqui (as primícias).
+  if (rule.kind === "firstBonus" && here.length > 0 && [...here].sort((a, b) => a.order - b.order)[0].uid === card.uid) power += rule.amount;
+  if (rule.kind === "costBonus" && card.def.cost >= rule.min) power += rule.amount;
   if (rule.kind === "sharedTag" && here.some((mate) => mate.uid !== card.uid && mate.def.tags.some((tag) => card.def.tags.includes(tag)))) power += rule.amount;
   return power;
 }

@@ -15,20 +15,20 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     const jesus = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Jesus" } });
     expect(jesus.rarity).toBe("SPECIAL");
     const scenarios = await prisma.scenario.findMany({ include: { nodes: true }, orderBy: { sortOrder: "asc" } });
-    expect(scenarios.length).toBe(13);
+    expect(scenarios.length).toBe(16);
     // Uma parada por nível, sem buracos, e a última de cada cenário é a relíquia.
     const levels = scenarios.flatMap((scenario) => scenario.nodes.map((node) => node.level)).sort((a, b) => a - b);
-    expect(levels).toEqual(Array.from({ length: 62 }, (_, index) => index + 1));
+    expect(levels).toEqual(Array.from({ length: 74 }, (_, index) => index + 1));
     for (const scenario of scenarios) {
       const last = [...scenario.nodes].sort((a, b) => b.level - a.level)[0];
       expect(last.relic).toBe(true);
-      // Os 10 de lançamento dão o fragmento de Jesus; os 3 das Pedras (depois dele) têm 4 paradas e nenhum fragmento.
+      // Os 10 de lançamento dão o fragmento de Jesus; os das Pedras (depois dele) têm 4 paradas e nenhum fragmento.
       const launch = scenario.sortOrder <= 100;
       expect(last.fragment).toBe(launch);
       expect(scenario.fragmentCharacterId).toBe(launch ? jesus.id : null);
       if (!launch) expect(scenario.nodes).toHaveLength(4);
     }
-    expect(scenarios.slice(10).map((scenario) => scenario.slug)).toEqual(["babel", "betel", "peniel"]);
+    expect(scenarios.slice(10).map((scenario) => scenario.slug)).toEqual(["babel", "betel", "peniel", "horebe", "tabernaculo", "cidade-davi"]);
   });
 
   it("música do tema: o admin cadastra e só chega ao jogador no nível do cenário", async () => {
@@ -177,13 +177,13 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     const repeated = await api.post("/api/campaign/admin/scenarios").set(bearer(admin)).send({ ...created.body, slug: "mar-vermelho" });
     expect(repeated.status).toBe(400);
 
-    const node = { level: 71, title: "Travessia", relic: false, fragment: false, rewardCoins: 100, rewardDefinitionId: null, rewardCosmeticId: null, posX: null, posY: null };
+    const node = { level: 171, title: "Travessia", relic: false, fragment: false, rewardCoins: 100, rewardDefinitionId: null, rewardCosmeticId: null, posX: null, posY: null };
     const made = await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send(node);
     expect(made.status).toBe(201);
     // Nível já usado (em qualquer cenário), fragmento sem carta e parada vazia são recusados.
     expect((await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send(node)).status).toBe(400);
-    expect((await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send({ ...node, level: 72, fragment: true })).status).toBe(400);
-    expect((await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send({ ...node, level: 73, rewardCoins: 0 })).status).toBe(400);
+    expect((await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send({ ...node, level: 172, fragment: true })).status).toBe(400);
+    expect((await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send({ ...node, level: 173, rewardCoins: 0 })).status).toBe(400);
     expect((await api.put(`/api/campaign/admin/nodes/${made.body.id}`).set(bearer(admin)).send({ ...node, rewardCoins: 150 })).body.rewardCoins).toBe(150);
 
     // Trocar o ícone do cenário troca a arte do ícone de perfil.
@@ -248,7 +248,7 @@ describe.skipIf(!hasDatabase)("campanha", () => {
 
     const bands = await loadXpBands(prisma);
     expect(bands[0]).toEqual({ fromLevel: 1, cost: 500 });
-    expect(bands.length).toBe(13);
+    expect(bands.length).toBe(16);
 
     // Quem já tem XP é reposicionado pela curva nova (e ninguém perde XP).
     const user = await prisma.user.update({ where: { email: "user@email.com" }, data: { xp: 3000, level: 40, chestLevel: 35 } });

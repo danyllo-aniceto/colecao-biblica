@@ -92,7 +92,8 @@ Egito: no fim de cada turno a figurinha mais fraca de cada lado perde 1 · Sinai
 Templo: +1 para cada Rei ou Sacerdote seu · Babilônia: a 1ª figurinha jogada por turno vai para outro cenário (você escolhe qual na revelação) ·
 Galileia: no turno 4 todas as figurinhas aqui perdem 1 · Jerusalém: o vencedor do cenário ganha +2 de Influência total ·
 Torre de Babel: no fim de cada turno a mais forte de cada lado perde 1 · Betel: no fim de cada turno a mais fraca de cada lado ganha +1 ·
-Peniel: quem tem menos figurinhas aqui (ao menos 1) ganha +3. (Cenários das 12 Pedras: toda pedra nova traz a regra do cenário aqui.)
+Peniel: quem tem menos figurinhas aqui (ao menos 1) ganha +3 · Sarça ardente em Horebe: figurinha sozinha do lado ganha +3 ·
+Tabernáculo: a primeira figurinha de cada lado aqui ganha +2 · Cidade de Davi: Vigor 4 ou mais ganha +2. (Cenários das 12 Pedras: toda pedra nova traz a regra do cenário aqui.)
 
 ## 6. Quem joga com quem
 

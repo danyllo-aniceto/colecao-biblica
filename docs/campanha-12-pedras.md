@@ -61,13 +61,16 @@ Páscoa) valendo como bônus fora da contagem.
 ## 2.1 Regra de cada cenário no Duelo
 
 Cada cenário novo traz uma regra de duelo, **sem sorte**, com tema do lugar. Regras existentes: `cheapBonus`, `sharedTag`,
-`majority`, `decay`, `slots`, `noMove`, `tagBonus`, `shiftFirst`, `stormAt`, `winnerBonus`; `decayStrongest`, `growWeakest` e `underdog` entraram com os cenários das Pedras (testes em `engine.test.ts`).
+`majority`, `decay`, `slots`, `noMove`, `tagBonus`, `shiftFirst`, `stormAt`, `winnerBonus`; `decayStrongest`, `growWeakest`, `underdog`, `lone`, `firstBonus` e `costBonus` entraram com os cenários das Pedras (testes em `engine.test.ts`).
 
 | Cenário | Regra proposta |
 |---|---|
 | Torre de Babel | ✅ A figurinha mais forte de cada lado perde 1 no fim de cada turno (a soberba da torre) |
 | Betel | ✅ No fim de cada turno, a figurinha mais fraca de cada lado ganha +1 (a escada sobe) |
 | Peniel | ✅ Quem tem menos figurinhas aqui (ao menos 1) ganha +3 (a luta com o anjo: quem resiste é abençoado) |
+| Sarça ardente em Horebe | ✅ Uma figurinha sozinha do seu lado aqui ganha +3 (Moisés a sós diante da sarça) |
+| Tabernáculo | ✅ A primeira figurinha de cada lado aqui (as primícias) ganha +2 |
+| Cidade de Davi | ✅ Figurinhas de Vigor 4 ou mais aqui ganham +2 (a fortaleza dos grandes) |
 
 (Os próximos trios ganham a regra na hora do cadastro.)
 
@@ -142,7 +145,7 @@ Os 10 cenários de lançamento mantêm as paradas que já têm (4 a 6) para não
 - [x] **3.** Agrupar cenários por pedra; liberar pedra + cosmético + brasão ao concluir o 3º cenário (transação).
 - [x] **4.** Tela do Peitoral (12 engastes em 4 fileiras, pedra conquistada brilha) e aviso/animação ao ganhar.
 - [x] **5.** Conquista Peitoral Completo (brasão, moldura de prestígio e 2.000 moedas, entregues junto com a 12ª pedra).
-- [ ] **6.** Cadastro dos cenários aos poucos, pedra por pedra. ✅ Trio 1 (Sardônio): Torre de Babel, Betel e Peniel (níveis 51–62, já no seed, sem arte). Faltam os trios 2 a 12.
+- [ ] **6.** Cadastro dos cenários aos poucos, pedra por pedra. ✅ Trio 1 (Sardônio): Torre de Babel, Betel e Peniel (níveis 51–62, já no seed, sem arte). ✅ Trio 2 (Topázio): Sarça ardente em Horebe, Tabernáculo e Cidade de Davi (níveis 63–74, no seed, sem arte). Faltam os trios 3 a 12.
 - [ ] **7.** Arte das 12 pedras, 12 brasões, 12 cosméticos e o prêmio final.
 
 ### Prompts de arte extras desta campanha (peças novas)

@@ -315,6 +315,30 @@ describe("cenários", () => {
     expect(lanePower(state, 0, 0)).toBe(0);
   });
 
+  it("Horebe: figurinha sozinha do lado ganha +3; com companhia, não", () => {
+    const state = duel({ turn: 3, scenarios: ["horebe", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(2 + 3);
+    state.lanes[0].cards[0].push({ uid: 2, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(2 + 6);
+  });
+
+  it("Tabernáculo: só a primeira figurinha de cada lado ganha +2", () => {
+    const state = duel({ turn: 3, scenarios: ["tabernaculo", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("saul"), bonus: 0, silenced: false, order: 5, turn: 1 }, { uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    // Abel entrou primeiro (order 2): ele leva o bônus, Saul não.
+    expect(lanePower(state, 0, 0)).toBe(6 + 2 + 2);
+    state.lanes[0].cards[1].push({ uid: 3, def: def("abel"), bonus: 0, silenced: false, order: 3, turn: 1 });
+    expect(lanePower(state, 0, 1)).toBe(2 + 2);
+  });
+
+  it("Cidade de Davi: Vigor 4 ou mais ganha +2 (Vigor 3 não)", () => {
+    const state = duel({ turn: 3, scenarios: ["cidade-davi", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("moises"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    // Moisés (Vigor 4, Influência 5) ganha +2; Saul (Vigor 3, Influência 6) não.
+    expect(lanePower(state, 0, 0)).toBe(5 + 2 + 6);
+  });
+
   it("Sinai: só 2 espaços por lado", () => {
     const state = duel({ turn: 4, scenarios: ["sinai", "arca", "canaa"], mine: ["abel", "rute", "miria"] });
     state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 });

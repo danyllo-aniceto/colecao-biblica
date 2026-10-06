@@ -18,6 +18,9 @@ export const SCENARIOS: ScenarioDef[] = [
   { id: "babel", name: "Torre de Babel", emoji: "🧱", rule: { kind: "decayStrongest", amount: 1 }, text: "No fim de cada turno, a figurinha mais forte de cada lado perde 1." },
   { id: "betel", name: "Betel", emoji: "🪜", rule: { kind: "growWeakest", amount: 1 }, text: "No fim de cada turno, a figurinha mais fraca de cada lado ganha +1." },
   { id: "peniel", name: "Peniel", emoji: "🌅", rule: { kind: "underdog", amount: 3 }, text: "Quem tem menos figurinhas aqui (ao menos 1) ganha +3." },
+  { id: "horebe", name: "Sarça ardente em Horebe", emoji: "🔥", rule: { kind: "lone", amount: 3 }, text: "Uma figurinha sozinha do seu lado aqui ganha +3." },
+  { id: "tabernaculo", name: "Tabernáculo", emoji: "🪔", rule: { kind: "firstBonus", amount: 2 }, text: "A primeira figurinha de cada lado aqui (as primícias) ganha +2." },
+  { id: "cidade-davi", name: "Cidade de Davi", emoji: "🎵", rule: { kind: "costBonus", min: 4, amount: 2 }, text: "Figurinhas de Vigor 4 ou mais aqui ganham +2." },
 ];
 
 export const SCENARIO_BY_ID = new Map(SCENARIOS.map((scenario) => [scenario.id, scenario]));
