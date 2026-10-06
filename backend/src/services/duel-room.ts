@@ -175,7 +175,7 @@ function botsPlay(work: Work, at: number) {
 function startRound(work: Work, at: number) {
   if (!work.teams || !work.series) return;
   work.acks = [];
-  commit(work, newDuel({ teams: work.teams, seed: randomInt(2 ** 31 - 1) }), at);
+  commit(work, newDuel({ teams: work.teams, seed: randomInt(2 ** 31 - 1), stakesMatter: work.config.format !== "single" }), at);
   botsPlay(work, at);
 }
 

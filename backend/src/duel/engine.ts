@@ -59,6 +59,8 @@ export type NewDuelInput = {
   seed: number;
   /** Cenários dos três lugares (identificadores); sem isso, são sorteados. */
   scenarios?: [string, string, string];
+  /** A aposta (Dobrar) vale algo nesta partida? Falso na rodada única. Padrão: sim. */
+  stakesMatter?: boolean;
 };
 
 const other = (side: Side): Side => (side === 0 ? 1 : 0);
@@ -101,6 +103,7 @@ export function newDuel(input: NewDuelInput): DuelState {
     nextOrder: 1,
     priority: null,
     stakes: 1,
+    stakesMatter: input.stakesMatter !== false,
     events: [{ type: "scenario", lane: 0, text: `${scenarioOf(scenarioIds[0]).emoji} ${scenarioOf(scenarioIds[0]).name}: ${scenarioOf(scenarioIds[0]).text}` }],
     result: null,
   };
@@ -221,7 +224,8 @@ function isProtected(state: DuelState, target: Found) {
 export function snapshotOf(state: DuelState): Snapshot {
   return state.lanes.map((lane, index) => {
     const open = isLaneOpen(state, index);
-    const decorate = (side: Side): SnapCard[] => (open ? lane.cards[side].map((card) => ({ uid: card.uid, def: card.def, power: cardPower(state, index, side, card), silenced: card.silenced })) : []);
+    // Arena ainda fechada: as figurinhas jogadas lá já aparecem, mas só com a Influência própria (a regra do cenário é segredo).
+    const decorate = (side: Side): SnapCard[] => lane.cards[side].map((card) => ({ uid: card.uid, def: card.def, power: open ? cardPower(state, index, side, card) : card.def.power + card.bonus, silenced: card.silenced }));
     return { open, cards: [decorate(0), decorate(1)], power: open ? [lanePower(state, index, 0), lanePower(state, index, 1)] : [0, 0] };
   });
 }
@@ -550,6 +554,11 @@ function stagedCost(state: DuelState, side: Side) {
 }
 
 /** Motivo pelo qual não dá para jogar a figurinha no cenário agora, ou null se dá. */
+/** Nome da arena para os textos: o do cenário se já apareceu; senão só o número (o cenário ainda é segredo). */
+function arenaName(state: DuelState, lane: number) {
+  return isLaneOpen(state, lane) ? laneScenario(state, lane).name : `a arena ${lane + 1}`;
+}
+
 export function whyNotStage(state: DuelState, side: Side, uid: number, lane: number): string | null {
   if (state.status !== "playing") return "O duelo terminou.";
   const player = state.players[side];
@@ -557,8 +566,9 @@ export function whyNotStage(state: DuelState, side: Side, uid: number, lane: num
   const card = player.hand.find((entry) => entry.uid === uid);
   if (!card) return "Essa figurinha não está na sua mão.";
   if (player.staged.some((play) => play.uid === uid)) return "Essa figurinha já foi colocada.";
-  if (!isLaneOpen(state, lane)) return "Esse cenário ainda não apareceu.";
-  const slots = slotsOf(laneScenario(state, lane));
+  if (!Number.isInteger(lane) || lane < 0 || lane >= LANES) return "Essa arena não existe.";
+  // Dá para jogar numa arena que ainda não apareceu (às cegas): o espaço só é conferido de verdade na revelação.
+  const slots = isLaneOpen(state, lane) ? slotsOf(laneScenario(state, lane)) : MAX_SLOTS;
   const used = state.lanes[lane].cards[side].length + player.staged.filter((play) => play.lane === lane).length;
   if (used >= slots) return "Esse cenário está cheio.";
   if (stagedCost(state, side) + card.def.cost > energyFor(state, side)) return "Vigor insuficiente.";
@@ -612,7 +622,7 @@ function revealPlay(state: DuelState, side: Side, play: Staged, spent: { value: 
   if (handIndex < 0) return;
   const card = player.hand[handIndex];
   if (spent.value + card.def.cost > energyFor(state, side)) return;
-  if (!isLaneOpen(state, play.lane)) return;
+  if (play.lane < 0 || play.lane >= LANES) return;
 
   let target = play.lane;
   const origin = state.lanes[target];
@@ -637,7 +647,7 @@ function revealPlay(state: DuelState, side: Side, play: Staged, spent: { value: 
     lane: target,
     uid: placed.uid,
     name: placed.def.name,
-    text: target !== play.lane ? `${placed.def.name} foi levado para ${laneScenario(state, target).name}.` : `${placed.def.name} entrou em ${laneScenario(state, target).name}.`,
+    text: target !== play.lane ? `${placed.def.name} foi levado para ${arenaName(state, target)}.` : `${placed.def.name} entrou em ${arenaName(state, target)}.`,
     ...(placed.def.dom ? { dom: describeDom(placed.def.dom) } : {}),
     ...(target !== play.lane ? { fromLane: play.lane } : {}),
   });
@@ -757,6 +767,7 @@ function resolveTurn(state: DuelState) {
 
 export function whyNotDouble(state: DuelState, side: Side): string | null {
   if (state.status !== "playing") return "O duelo terminou.";
+  if (state.stakesMatter === false) return "Na rodada única a aposta não vale nada. Dobrar só vale em Melhor de 3 e Vidas.";
   if (state.players[side].doubledTurn > 0) return "Você já dobrou a aposta.";
   if (state.stakes >= MAX_STAKES) return "A aposta já está no máximo.";
   return null;
@@ -779,11 +790,18 @@ export function whyNotRetreat(state: DuelState, side: Side): string | null {
   return null;
 }
 
-/** Desiste da rodada: perde o que está em jogo (a aposta atual). */
+/** Quanto custa desistir agora: a aposta atual; se o rival acabou de dobrar neste turno, só o que valia antes dele dobrar (como no Snap). */
+export function retreatCost(state: DuelState, side: Side): number {
+  const foeDoubledNow = state.players[other(side)].doubledTurn === state.turn;
+  return foeDoubledNow ? Math.max(1, state.stakes / 2) : state.stakes;
+}
+
+/** Desiste da rodada: perde o que está em jogo (veja `retreatCost`). */
 export function retreat(state: DuelState, side: Side): DuelState {
   const why = whyNotRetreat(state, side);
   if (why) throw new Error(why);
   const next = clone(state);
+  next.stakes = retreatCost(state, side);
   next.events = [];
   emit(next, { type: "retreat", side, text: "Desistiu da rodada." });
   finish(next, side);
@@ -821,6 +839,12 @@ export type DuelView = {
   energyLeft: number;
   canDouble: boolean;
   canRetreat: boolean;
+  /** A aposta vale algo nesta partida? (Falso na rodada única.) */
+  stakesMatter: boolean;
+  /** Quanto se perde ao desistir agora (se o rival acabou de dobrar, só o que valia antes). */
+  retreatCost: number;
+  /** O rival dobrou a aposta neste turno e você ainda decide: seguir ou desistir. */
+  foeDoubledNow: boolean;
   opponent: { handCount: number; deckCount: number; ready: boolean; doubled: boolean };
   you_doubled: boolean;
   events: DuelEvent[];
@@ -833,7 +857,8 @@ export function viewFor(state: DuelState, side: Side): DuelView {
   const lanes: ViewLane[] = state.lanes.map((lane, index) => {
     const open = isLaneOpen(state, index);
     const scenario = open || state.status === "finished" ? scenarioOf(lane.scenario) : null;
-    const decorate = (list: PlacedCard[], who: Side): ViewCard[] => list.map((card) => ({ ...clone(card), power: cardPower(state, index, who, card) }));
+    // Arena fechada: só a Influência própria da figurinha (a do cenário é segredo até a arena aparecer).
+    const decorate = (list: PlacedCard[], who: Side): ViewCard[] => list.map((card) => ({ ...clone(card), power: open || state.status === "finished" ? cardPower(state, index, who, card) : card.def.power + card.bonus }));
     return {
       open,
       scenario,
@@ -857,6 +882,9 @@ export function viewFor(state: DuelState, side: Side): DuelView {
     energyLeft: energyFor(state, side) - stagedCost(state, side),
     canDouble: whyNotDouble(state, side) === null,
     canRetreat: whyNotRetreat(state, side) === null,
+    stakesMatter: state.stakesMatter !== false,
+    retreatCost: retreatCost(state, side),
+    foeDoubledNow: state.status === "playing" && state.players[foe].doubledTurn === state.turn && state.players[side].doubledTurn !== state.turn,
     opponent: { handCount: state.players[foe].hand.length, deckCount: state.players[foe].deck.length, ready: state.players[foe].ready, doubled: state.players[foe].doubledTurn > 0 },
     you_doubled: me.doubledTurn > 0,
     events: state.events,
@@ -884,7 +912,7 @@ export function stateFromView(view: DuelView, seed: number): DuelState {
   players[side] = { ...empty(), hand: clone(view.hand), deck: [] };
   const maxOrder = lanes.flatMap((lane) => [...lane.cards[0], ...lane.cards[1]]).reduce((max, card) => Math.max(max, card.order), 0);
   const maxUid = lanes.flatMap((lane) => [...lane.cards[0], ...lane.cards[1]]).reduce((max, card) => Math.max(max, card.uid), 1000);
-  return { rng: seed, turn: view.turn, status: "playing", lanes, players, nextUid: maxUid + 1, nextOrder: maxOrder + 1, priority: view.priority, stakes: view.stakes, events: [], result: null };
+  return { rng: seed, turn: view.turn, status: "playing", lanes, players, nextUid: maxUid + 1, nextOrder: maxOrder + 1, priority: view.priority, stakes: view.stakes, stakesMatter: view.stakesMatter, events: [], result: null };
 }
 
 /** Revela só as jogadas de `side` (sem fim de turno nem jogadas do rival) e devolve o estado resultante. */

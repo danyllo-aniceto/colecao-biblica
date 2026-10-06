@@ -39,7 +39,7 @@ export function DuelRoundModal({ open, result, arenaName, you, series, foeName =
             {series.format === 'lives'
               ? `Vidas: você ${Math.max(series.lives[you], 0)} · ${foeName} ${Math.max(series.lives[foe], 0)}${result.winner !== null ? ` (dano ${damageFor(series.round - 1, result.stakes)})` : ''}`
               : series.format === 'bo3'
-                ? `Rodadas vencidas: você ${series.wins[you]} · ${foeName} ${series.wins[foe]}`
+                ? `Pontos: você ${series.wins[you]} · ${foeName} ${series.wins[foe]}`
                 : null}
           </p>
           {series.over ? (

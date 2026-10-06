@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import FastForwardRoundedIcon from '@mui/icons-material/FastForwardRounded';
 import FlagRoundedIcon from '@mui/icons-material/FlagRounded';
@@ -14,6 +14,7 @@ import { Modal } from '@/components/ui/modal';
 import { Tooltip } from '@/components/ui/tooltip';
 import { AnimatedNumber, NeutralHex, PowerHex } from '@/components/user/duel/duel-anim';
 import { DuelCardDetail, DuelCardFace, type CardArt } from '@/components/user/duel/duel-card';
+import { MotionLayer, useCardMotion } from '@/components/user/duel/use-card-motion';
 import { cn } from '@/lib/cn';
 import { playSfx } from '@/lib/sound/sfx';
 
@@ -32,6 +33,8 @@ type TableProps = {
   onSelect: (uid: number | null) => void;
   onStage: (uid: number, lane: number) => void;
   onUnstage: (uid: number) => void;
+  /** Muda uma figurinha já colocada para outra arena. */
+  onRestage: (uid: number, lane: number) => void;
   onReady: () => void;
   onDouble: () => void;
   onRetreat: () => void;
@@ -46,11 +49,16 @@ type TableProps = {
   onSpeed: () => void;
   /** Enquanto o bot pensa ou a rodada termina, a mesa fica travada. */
   busy: boolean;
-  /** Extra no cabeçalho (sala online: código, placar da série e cronômetro). */
+  /** O que a aposta vale nesta série ("2 pontos", "4 de dano"); vazio quando a aposta não vale nada. */
+  stakesText?: string | null;
+  /** Relógio do turno (só na sala online): segundos que restam e o total. */
+  timer?: { remaining: number; total: number; waiting: boolean } | null;
+  /** Extra no cabeçalho (sala online: código e placar da série). */
   extra?: ReactNode;
 };
 
-type Drag = { uid: number; x: number; y: number; lane: number | null };
+type Drag = { uid: number; x: number; y: number; lane: number | null; from: 'hand' | 'staged'; origin: number | null };
+type Press = { uid: number; x: number; y: number; type: string; from: 'hand' | 'staged'; origin: number | null };
 
 const EVENT_ICON: Partial<Record<DuelEvent['type'], string>> = {
   reveal: '🃏',
@@ -75,13 +83,15 @@ const EVENT_ICON: Partial<Record<DuelEvent['type'], string>> = {
 
 type LaneCards = { foe: SnapCard[]; me: SnapCard[]; mine: number; theirs: number; open: boolean; scenario: ScenarioDef | null; slots: number };
 
-/** Mesa do Duelo em retrato (como o Marvel Snap): rival em cima, as arenas no meio com o placar, você embaixo. */
-export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onSelect, onStage, onUnstage, onReady, onDouble, onRetreat, onExit, onHelp, onHistory, stage, onAdvance, onSkip, speed, onSpeed, busy, extra }: TableProps) {
+/** A mesa do Duelo: o rival em cima, as arenas no meio (com o placar de cada lado) e a sua mão embaixo. */
+export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onSelect, onStage, onUnstage, onRestage, onReady, onDouble, onRetreat, onExit, onHelp, onHistory, stage, onAdvance, onSkip, speed, onSpeed, busy, stakesText, timer, extra }: TableProps) {
   const [detail, setDetail] = useState<{ def: CardDef; power?: number } | null>(null);
   const [arenaInfo, setArenaInfo] = useState<number | null>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
   const dragRef = useRef<Drag | null>(null);
-  const press = useRef<{ uid: number; x: number; y: number; type: string } | null>(null);
+  const press = useRef<Press | null>(null);
+  const justDragged = useRef(false);
+  const boardRef = useRef<HTMLElement | null>(null);
 
   const foe = view.you === 0 ? 1 : 0;
   const stagedUids = useMemo(() => new Set(view.staged.map((play) => play.uid)), [view.staged]);
@@ -100,36 +110,37 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
     return { foe: decorate(foe), me: decorate(view.you), mine: lane.power[view.you], theirs: lane.power[foe], open: lane.open, scenario: lane.scenario, slots: lane.slots };
   });
 
-  // Figurinha saindo (afastada, devolvida ou que sumiu): aparece uma última vez, desaparecendo.
-  const leaving = useMemo(() => {
-    if (!stage || !['destroy', 'vanish', 'bounce'].includes(stage.event.type) || stage.event.uid === undefined) return null;
-    const uid = stage.event.uid;
-    for (let laneIndex = 0; laneIndex < (stage.prev?.length ?? 0); laneIndex += 1) {
-      for (const side of [0, 1] as const) {
-        const card = stage.prev![laneIndex].cards[side].find((entry) => entry.uid === uid);
-        if (card) return { lane: laneIndex, side, card };
-      }
-    }
-    return null;
-  }, [stage]);
+  // Movimento das figurinhas: voos, entradas, saídas e números subindo (ver use-card-motion.tsx).
+  const layoutKey = [lanes.map((lane) => `${lane.foe.map((card) => card.uid).join(',')}/${lane.me.map((card) => card.uid).join(',')}`).join('|'), view.staged.map((play) => `${play.uid}@${play.lane}`).join(','), stage ? `s${stage.index}` : 'n'].join('#');
+  const lookup = useCallback(
+    (uid: number) => {
+      const fromSnap = (snap: Snapshot | null | undefined) => snap?.flatMap((lane) => [...lane.cards[0], ...lane.cards[1]]).find((card) => card.uid === uid);
+      return fromSnap(stage?.prev) ?? fromSnap(stage?.snap) ?? view.lanes.flatMap((lane) => [...lane.cards[0], ...lane.cards[1]]).find((card) => card.uid === uid);
+    },
+    [stage, view.lanes],
+  );
+  const pace = speed === 'rapido' ? 0.5 : 1;
+  const motion = useCardMotion(boardRef, { layoutKey, event: stage?.event ?? null, stageIndex: stage ? stage.index : null, lookup, pace });
 
   const canPlace = useCallback(
-    (uid: number, lane: number) => {
+    (uid: number, lane: number, moving = false) => {
       const card = view.hand.find((entry) => entry.uid === uid);
       const info = view.lanes[lane];
-      if (!card || !info?.open) return false;
-      const used = info.cards[view.you].length + view.staged.filter((play) => play.lane === lane).length;
-      return used < info.slots && card.def.cost <= view.energyLeft;
+      if (!card || !info) return false;
+      // Dá para jogar numa arena que ainda não apareceu (às cegas); o espaço só é conferido de verdade na revelação.
+      const used = info.cards[view.you].length + view.staged.filter((play) => play.lane === lane && play.uid !== uid).length;
+      return used < info.slots && (moving || card.def.cost <= view.energyLeft);
     },
     [view],
   );
 
   function laneUnder(x: number, y: number): number | null {
-    const element = document.elementsFromPoint(x, y).find((node) => (node as HTMLElement).dataset?.lane !== undefined) as HTMLElement | undefined;
+    const element = document.elementsFromPoint(x, y).find((node) => (node as HTMLElement).dataset?.lane !== undefined && (node as HTMLElement).tagName === 'SECTION') as HTMLElement | undefined;
     return element ? Number(element.dataset.lane) : null;
   }
 
-  // Arrastar a figurinha da mão para uma arena (mouse: qualquer direção; dedo: para cima, para a rolagem da mão continuar livre).
+  // Arrastar uma figurinha: da mão para uma arena, ou de uma arena para outra (ou de volta à mão para tirar).
+  // Mouse: qualquer direção. Dedo: da mão só para cima (a rolagem da mão continua livre); das arenas, qualquer direção.
   useEffect(() => {
     function move(event: PointerEvent) {
       const start = press.current;
@@ -137,13 +148,13 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
       const dx = event.clientX - start.x;
       const dy = event.clientY - start.y;
       if (!dragRef.current) {
-        const far = Math.hypot(dx, dy) > 10;
-        const upward = start.type === 'mouse' || (dy < -10 && Math.abs(dy) > Math.abs(dx));
+        const far = Math.hypot(dx, dy) > 9;
+        const upward = start.type === 'mouse' || start.from === 'staged' || (dy < -9 && Math.abs(dy) > Math.abs(dx) * 0.8);
         if (!far || !upward) return;
         playSfx('swipe');
-        onSelect(start.uid);
+        if (start.from === 'hand') onSelect(start.uid);
       }
-      const next: Drag = { uid: start.uid, x: event.clientX, y: event.clientY, lane: laneUnder(event.clientX, event.clientY) };
+      const next: Drag = { uid: start.uid, x: event.clientX, y: event.clientY, lane: laneUnder(event.clientX, event.clientY), from: start.from, origin: start.origin };
       dragRef.current = next;
       setDrag(next);
     }
@@ -153,7 +164,17 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
       press.current = null;
       dragRef.current = null;
       setDrag(null);
-      if (current && start && current.lane !== null && canPlace(current.uid, current.lane)) onStage(current.uid, current.lane);
+      if (!current || !start) return;
+      // O toque que vem depois de arrastar não pode contar como clique.
+      justDragged.current = true;
+      window.setTimeout(() => (justDragged.current = false), 80);
+      if (current.from === 'hand') {
+        if (current.lane !== null && canPlace(current.uid, current.lane)) onStage(current.uid, current.lane);
+      } else if (current.lane === null) {
+        onUnstage(current.uid);
+      } else if (current.lane !== current.origin && canPlace(current.uid, current.lane, true)) {
+        onRestage(current.uid, current.lane);
+      }
     }
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
@@ -163,11 +184,12 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
       window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', up);
     };
-  }, [canPlace, onSelect, onStage]);
+  }, [canPlace, onSelect, onStage, onUnstage, onRestage]);
 
   const dragCard = drag ? view.hand.find((card) => card.uid === drag.uid) : null;
   const focusUid = stage?.event.uid;
   const focusLane = stage && focusUid === undefined ? stage.event.lane : undefined;
+  const youCanDouble = view.stakesMatter && view.canDouble && !busy && !playing;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-bg" role="dialog" aria-modal="true" aria-label="Duelo de Figurinhas">
@@ -177,7 +199,7 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
             <CloseRoundedIcon />
           </button>
         </Tooltip>
-        <div className={cn('min-w-0 flex-1 rounded-2xl px-2 py-0.5 transition', view.priority === foe && 'bg-primary/20 ring-2 ring-primary/60')}>
+        <div data-foe-zone className={cn('min-w-0 flex-1 rounded-2xl px-2 py-0.5 transition', view.priority === foe && 'bg-primary/20 ring-2 ring-primary/60')}>
           <p className="truncate font-display text-base font-bold text-ink">{opponentName}</p>
           <p className="truncate text-xs font-semibold text-muted">
             Mão {view.opponent.handCount} · Baralho {view.opponent.deckCount} · {view.status === 'finished' ? 'fim' : view.opponent.ready ? '✓ pronto' : 'pensando...'}
@@ -188,18 +210,19 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
           <span className="text-lg font-bold">{view.turn}</span>
           <span className="text-[9px] font-bold opacity-70">de {TURNS}</span>
         </span>
-        <span className={cn('flex h-10 min-w-10 items-center justify-center rounded-2xl px-2 font-display text-sm font-bold', view.stakes > 1 ? 'bg-danger text-white' : 'bg-surface-3 text-muted')} aria-label={`Aposta ${view.stakes}`}>
-          ×{view.stakes}
-        </span>
       </header>
-      {extra ? <div className="flex shrink-0 items-center justify-center gap-2 border-b border-edge bg-surface-2/80 px-3 py-1">{extra}</div> : null}
 
-      <main className="grid min-h-0 flex-1 grid-cols-3 gap-2 px-2 py-2" onClick={playing ? onAdvance : undefined}>
+      <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 border-b border-edge bg-surface-2/80 px-3 py-1.5">
+        <StakesBadge stakes={view.stakes} matter={view.stakesMatter} text={stakesText} />
+        {timer ? <TurnClock timer={timer} /> : null}
+        {extra}
+      </div>
+
+      <main ref={boardRef} className="grid min-h-0 flex-1 grid-cols-3 gap-2 px-2 py-2" onClick={playing ? onAdvance : undefined}>
         {lanes.map((lane, index) => {
           const stagedHere = view.staged.filter((play) => play.lane === index).map((play) => view.hand.find((card) => card.uid === play.uid)).filter((card): card is NonNullable<typeof card> => Boolean(card));
-          const droppable = drag ? canPlace(drag.uid, index) : false;
+          const droppable = drag ? (drag.from === 'staged' ? drag.origin !== index && canPlace(drag.uid, index, true) : canPlace(drag.uid, index)) : false;
           const targetable = selected && !locked ? canPlace(selected.uid, index) : false;
-          const leavingHere = leaving?.lane === index ? leaving : null;
           return (
             <section
               key={index}
@@ -210,17 +233,24 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
               }}
               className={cn('flex min-h-0 flex-col items-stretch rounded-2xl transition', (droppable || targetable) && 'bg-primary/10 ring-2 ring-primary/60', droppable && drag?.lane === index && 'bg-primary/25 ring-4')}
             >
-              <CardsArea side="foe" cards={lane.foe} art={art} focusUid={focusUid} leaving={leavingHere?.side === foe ? leavingHere.card : null} onOpen={(card) => setDetail({ def: card.def, power: card.power })} />
-              <Arena lane={lane} index={index} image={lane.scenario ? laneImage(lane.scenario.id) : null} focus={focusLane === index} onInfo={() => setArenaInfo(index)} />
+              <CardsArea side="foe" lane={index} cards={lane.foe} art={art} focusUid={focusUid} onOpen={(card) => setDetail({ def: card.def, power: card.power })} />
+              <Arena lane={lane} index={index} image={lane.scenario ? laneImage(lane.scenario.id) : null} focus={focusLane === index} dropHint={droppable && drag?.lane === index} blindHint={targetable || droppable} onInfo={() => setArenaInfo(index)} />
               <CardsArea
                 side="me"
+                lane={index}
                 cards={lane.me}
                 staged={playing ? [] : stagedHere}
                 art={art}
                 focusUid={focusUid}
-                leaving={leavingHere?.side === view.you ? leavingHere.card : null}
                 onOpen={(card) => setDetail({ def: card.def, power: card.power })}
                 onUnstage={locked ? undefined : onUnstage}
+                canDragStaged={!locked}
+                suppressClick={justDragged}
+                dragging={drag?.uid ?? null}
+                onStagedPointerDown={(uid, event) => {
+                  if (locked) return;
+                  press.current = { uid, x: event.clientX, y: event.clientY, type: event.pointerType, from: 'staged', origin: index };
+                }}
               />
             </section>
           );
@@ -228,17 +258,36 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
       </main>
 
       <footer className="shrink-0 space-y-1.5 border-t border-edge bg-surface/90 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur">
-        <div className="flex min-h-[5.25rem] items-stretch gap-2 rounded-2xl bg-surface-2 px-3 py-2">
-          <div className="min-w-0 flex-1" aria-live="polite">
-          {stage ? (
-            <Narration stage={stage} art={art} onSkip={onSkip} />
-          ) : selected ? (
-            <CardReadout def={selected.def} power={selected.def.power + selected.bonus} />
-          ) : (
-            <p className="flex h-full min-h-[4.25rem] items-center text-sm font-semibold leading-snug text-muted">
-              {view.status !== 'playing' ? 'Fim da rodada.' : view.ready ? 'Pronto! Esperando o rival...' : busy ? 'Aguarde...' : 'Toque numa figurinha da mão para ler o poder dela. Depois toque numa arena (ou arraste a figurinha até ela).'}
+        {view.foeDoubledNow && view.status === 'playing' && !playing ? (
+          <div className="animate-duel-narration flex items-center gap-2 rounded-2xl border-2 border-danger bg-danger/10 px-2.5 py-1.5" role="alert">
+            <span className="text-xl" aria-hidden="true">
+              🎲
+            </span>
+            <p className="min-w-0 flex-1 text-xs font-bold leading-tight text-ink">
+              O rival dobrou: vale <b className="text-danger">×{view.stakes}</b>. Siga jogando ou desista perdendo só <b>×{view.retreatCost}</b>.
             </p>
-          )}
+            <Button size="sm" variant="secondary" className="shrink-0 text-danger" onClick={onRetreat} disabled={!view.canRetreat || busy}>
+              <FlagRoundedIcon fontSize="small" /> Desistir
+            </Button>
+          </div>
+        ) : null}
+        <div className="flex min-h-[4.75rem] items-stretch gap-2 rounded-2xl bg-surface-2 px-3 py-2">
+          <div className="min-w-0 flex-1" aria-live="polite">
+            {stage ? (
+              <Narration stage={stage} art={art} onSkip={onSkip} />
+            ) : selected ? (
+              <CardReadout def={selected.def} power={selected.def.power + selected.bonus} />
+            ) : (
+              <p className="flex h-full min-h-[4.25rem] items-center text-sm font-semibold leading-snug text-muted">
+                {view.status !== 'playing'
+                  ? 'Fim da rodada.'
+                  : view.ready
+                    ? 'Pronto! Esperando o rival...'
+                    : busy
+                      ? 'Aguarde...'
+                      : 'Toque numa figurinha para ler o Dom. Depois toque numa arena ou arraste até ela (vale até arena fechada). Arrastar de uma arena para outra também vale.'}
+              </p>
+            )}
           </div>
           {stage ? null : (
             <div className="flex shrink-0 flex-col justify-center gap-1">
@@ -260,7 +309,7 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
             </div>
           )}
         </div>
-        <div className="no-scrollbar flex items-end justify-start gap-1.5 overflow-x-auto px-1 pb-1 pt-3 sm:justify-center">
+        <div data-hand-zone className="no-scrollbar flex items-end justify-start gap-1.5 overflow-x-auto px-1 pb-1 pt-3 sm:justify-center">
           {hand.length === 0 ? <p className="w-full px-2 py-6 text-center text-sm font-semibold text-muted">Mão vazia</p> : null}
           {hand.map((card) => {
             const affordable = card.def.cost <= view.energyLeft;
@@ -275,11 +324,12 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
                 dimmed={!affordable || locked}
                 className={cn('cursor-pointer touch-pan-x', drag?.uid === card.uid && 'opacity-30')}
                 onClick={() => {
+                  if (justDragged.current) return;
                   if (!locked) onSelect(selectedUid === card.uid ? null : card.uid);
                 }}
                 onPointerDown={(event) => {
                   if (locked) return;
-                  press.current = { uid: card.uid, x: event.clientX, y: event.clientY, type: event.pointerType };
+                  press.current = { uid: card.uid, x: event.clientX, y: event.clientY, type: event.pointerType, from: 'hand', origin: null };
                 }}
               />
             );
@@ -288,24 +338,26 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
         <div className="flex items-center gap-2">
           <Button size="sm" variant="ghost" onClick={onRetreat} disabled={!view.canRetreat || busy || playing || view.status !== 'playing'} className="text-danger">
             <FlagRoundedIcon fontSize="small" /> Desistir
+            <span className="text-[11px] font-bold opacity-80">−{view.retreatCost}</span>
           </Button>
-          <span className="flex h-11 min-w-11 items-center justify-center rounded-full bg-info px-2 font-display text-lg font-bold text-white shadow-md" aria-label={`Vigor ${view.energyLeft} de ${view.energy}`}>
-            <AnimatedNumber value={view.energyLeft} />
-            <span className="text-[10px] font-semibold opacity-80">/{view.energy}</span>
-          </span>
+          <VigorOrb left={view.energyLeft} total={view.energy} />
           <span className="flex-1" />
-          <Button size="sm" variant="secondary" onClick={onDouble} disabled={!view.canDouble || busy || playing}>
-            Dobrar
-          </Button>
+          {view.stakesMatter ? (
+            <Button size="sm" variant="secondary" onClick={onDouble} disabled={!youCanDouble} aria-label={`Dobrar a aposta para ${view.stakes * 2}`}>
+              Dobrar <b className="text-danger">×{Math.min(view.stakes * 2, 16)}</b>
+            </Button>
+          ) : null}
           <Button size="md" onClick={onReady} disabled={locked} aria-label={`Pronto, turno ${view.turn} de ${TURNS}`}>
             Pronto {view.turn}/{TURNS}
           </Button>
         </div>
       </footer>
 
+      <MotionLayer ghosts={motion.ghosts} floats={motion.floats} trail={motion.trail} art={art} pace={pace} onGhostDone={motion.dropGhost} />
+
       {drag && dragCard ? (
         <div className="pointer-events-none fixed z-[70]" style={{ left: drag.x, top: drag.y, transform: 'translate(-50%, -60%) scale(1.1) rotate(-4deg)' }}>
-          <DuelCardFace def={dragCard.def} art={art} size="hand" power={dragCard.def.power + dragCard.bonus} />
+          <DuelCardFace def={dragCard.def} art={art} size="hand" power={dragCard.def.power + dragCard.bonus} className="shadow-2xl ring-4 ring-primary/60" />
         </div>
       ) : null}
 
@@ -328,6 +380,60 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
         ) : null}
       </Modal>
     </div>
+  );
+}
+
+/** Quanto vale a rodada, bem à vista: o número da aposta e o que ele significa na série (pontos, dano). */
+function StakesBadge({ stakes, matter, text }: { stakes: number; matter: boolean; text?: string | null }) {
+  if (!matter) {
+    return <span className="rounded-2xl bg-surface-3 px-3 py-1 text-xs font-bold text-muted">Sem aposta nesta partida</span>;
+  }
+  return (
+    <div
+      key={stakes}
+      className={cn('flex items-center gap-2 rounded-2xl px-3 py-1 font-display shadow-sm', stakes > 1 ? 'animate-duel-stakes bg-danger text-white' : 'bg-surface-3 text-ink')}
+      aria-label={`Esta rodada vale ${stakes}${text ? `: ${text}` : ''}`}
+    >
+      <span className="flex flex-col items-center leading-none">
+        <span className="text-[9px] font-bold uppercase tracking-wider opacity-80">Vale</span>
+        <span className="text-3xl font-black">×{stakes}</span>
+      </span>
+      {text ? <span className="max-w-[7rem] text-xs font-bold leading-tight">{text}</span> : null}
+    </div>
+  );
+}
+
+/** Relógio do turno (sala online): anel que esvazia, vermelho e pulsando nos últimos segundos. */
+function TurnClock({ timer }: { timer: { remaining: number; total: number; waiting: boolean } }) {
+  const { remaining, total, waiting } = timer;
+  const fraction = Math.max(0, Math.min(1, remaining / Math.max(total, 1)));
+  const urgent = remaining <= 10;
+  const radius = 17;
+  const circumference = 2 * Math.PI * radius;
+  return (
+    <div className="flex items-center gap-2" role="timer" aria-label={`${remaining} segundos para o turno terminar`}>
+      <span className={cn('relative flex h-12 w-12 items-center justify-center', urgent && remaining > 0 && 'animate-duel-tick')}>
+        <svg viewBox="0 0 44 44" className="absolute inset-0 h-full w-full -rotate-90">
+          <circle cx="22" cy="22" r={radius} fill="none" strokeWidth="5" className="stroke-surface-3" />
+          <circle cx="22" cy="22" r={radius} fill="none" strokeWidth="5" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={circumference * (1 - fraction)} className={cn('transition-[stroke-dashoffset] duration-500 ease-linear', urgent ? 'stroke-danger' : fraction < 0.5 ? 'stroke-primary' : 'stroke-success')} />
+        </svg>
+        <span className={cn('relative font-display text-base font-black tabular-nums', urgent ? 'text-danger' : 'text-ink')}>{remaining}</span>
+      </span>
+      <span className="text-[11px] font-bold leading-tight text-muted">{waiting ? 'Esperando\no rival' : 'Tempo do\nturno'}</span>
+    </div>
+  );
+}
+
+/** O Vigor que sobra no turno, bem grande: é o que limita as jogadas. */
+function VigorOrb({ left, total }: { left: number; total: number }) {
+  return (
+    <span className="relative flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-full bg-info font-display leading-none text-white shadow-[0_4px_0_rgba(0,0,0,0.25),0_0_0_3px_rgba(255,255,255,0.25)_inset]" aria-label={`Vigor ${left} de ${total}`}>
+      <span className="text-2xl font-black">
+        <AnimatedNumber value={left} />
+      </span>
+      <span className="text-[9px] font-bold opacity-90">de {total}</span>
+      <span className="absolute -bottom-2 rounded-full bg-black/70 px-1.5 py-px text-[8px] font-bold uppercase tracking-wide">Vigor</span>
+    </span>
   );
 }
 
@@ -374,7 +480,7 @@ function CardReadout({ def, power }: { def: CardDef; power: number }) {
 }
 
 /** A arena (centro da coluna): arte, nome, o que ela faz e o placar dos dois lados. */
-function Arena({ lane, index, image, focus, onInfo }: { lane: LaneCards; index: number; image: string | null; focus: boolean; onInfo: () => void }) {
+function Arena({ lane, index, image, focus, dropHint, blindHint, onInfo }: { lane: LaneCards; index: number; image: string | null; focus: boolean; dropHint: boolean; blindHint: boolean; onInfo: () => void }) {
   return (
     <div className="relative my-3 shrink-0">
       <div className="absolute inset-x-0 -top-3.5 z-10 flex justify-center">
@@ -392,6 +498,7 @@ function Arena({ lane, index, image, focus, onInfo }: { lane: LaneCards; index: 
           lane.open ? 'border-primary-strong' : 'border-edge-strong',
           focus && 'animate-duel-focus',
           lane.open && 'animate-duel-arena',
+          dropHint && 'scale-[1.03] border-primary',
         )}
         aria-label={lane.scenario ? `${lane.scenario.name}: ${lane.scenario.text}` : `Arena ${index + 1}, aparece no turno ${index + 1}`}
       >
@@ -405,8 +512,12 @@ function Arena({ lane, index, image, focus, onInfo }: { lane: LaneCards; index: 
             <span className="relative text-[11px] font-semibold leading-tight text-white/95 drop-shadow">{lane.scenario.text}</span>
           </>
         ) : (
-          <span className="relative font-display text-sm font-bold text-white/90">🔒 Aparece no turno {index + 1}</span>
+          <>
+            <span className="relative font-display text-sm font-bold text-white/90">🔒 Aparece no turno {index + 1}</span>
+            <span className="relative text-[10px] font-semibold leading-tight text-white/80">{blindHint ? 'Solte aqui: jogada às cegas' : 'Dá para jogar aqui às cegas'}</span>
+          </>
         )}
+        {dropHint ? <span className="relative mt-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-on-primary">Soltar aqui</span> : null}
       </button>
       <div className="absolute inset-x-0 -bottom-3.5 z-10 flex justify-center">
         {lane.open ? lane.mine > lane.theirs ? <PowerHex value={lane.mine} tone="me" /> : <NeutralHex value={lane.mine} /> : null}
@@ -420,28 +531,54 @@ function CardsArea({
   staged = [],
   art,
   side,
+  lane,
   focusUid,
-  leaving,
+  dragging,
+  canDragStaged,
+  suppressClick,
   onOpen,
   onUnstage,
+  onStagedPointerDown,
 }: {
   cards: SnapCard[];
   staged?: Array<{ uid: number; def: CardDef }>;
   art: CardArt;
   side: 'me' | 'foe';
+  lane: number;
   focusUid?: number;
-  leaving?: SnapCard | null;
+  dragging?: number | null;
+  canDragStaged?: boolean;
+  suppressClick?: { current: boolean };
   onOpen: (card: SnapCard) => void;
   onUnstage?: (uid: number) => void;
+  onStagedPointerDown?: (uid: number, event: ReactPointerEvent<HTMLElement>) => void;
 }) {
   return (
     <div className={cn('flex min-h-0 flex-1 flex-wrap content-start justify-center gap-1 px-0.5 py-1', side === 'foe' ? 'content-end' : 'content-start')}>
       {cards.map((card) => (
-        <DuelCardFace key={card.uid} def={card.def} art={art} power={card.power} silenced={card.silenced} animate focus={focusUid === card.uid} onClick={() => onOpen(card)} className="animate-duel-in" />
+        <DuelCardFace key={card.uid} def={card.def} art={art} power={card.power} silenced={card.silenced} animate focus={focusUid === card.uid} data={{ 'card-uid': card.uid, zone: side, lane }} onClick={() => onOpen(card)} />
       ))}
-      {leaving ? <DuelCardFace key={`leaving-${leaving.uid}`} def={leaving.def} art={art} power={leaving.power} className="animate-duel-leave" /> : null}
       {staged.map((card) => (
-        <DuelCardFace key={card.uid} def={card.def} art={art} className="opacity-70 ring-2 ring-primary" onClick={onUnstage ? () => onUnstage(card.uid) : undefined} />
+        <DuelCardFace
+          key={card.uid}
+          def={card.def}
+          art={art}
+          data={{ 'card-uid': card.uid, zone: 'staged', lane }}
+          className={cn('opacity-80 ring-2 ring-primary ring-offset-1', canDragStaged && 'cursor-grab touch-none', dragging === card.uid && 'opacity-25')}
+          onClick={
+            onUnstage
+              ? () => {
+                  if (suppressClick?.current) return;
+                  onUnstage(card.uid);
+                }
+              : undefined
+          }
+          onPointerDown={canDragStaged && onStagedPointerDown ? (event) => onStagedPointerDown(card.uid, event) : undefined}
+        >
+          <span className="absolute -right-0.5 bottom-3 flex h-4 w-4 items-center justify-center rounded-full bg-danger text-[10px] font-black leading-none text-white shadow" aria-hidden="true">
+            ✕
+          </span>
+        </DuelCardFace>
       ))}
     </div>
   );

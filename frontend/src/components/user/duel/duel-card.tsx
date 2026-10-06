@@ -33,6 +33,8 @@ type FaceProps = {
   className?: string;
   onClick?: () => void;
   onPointerDown?: PointerEventHandler<HTMLElement>;
+  /** Atributos `data-*` (a mesa usa para achar cada figurinha e animar o voo dela). */
+  data?: Record<string, string | number>;
   children?: ReactNode;
 };
 
@@ -43,7 +45,8 @@ const SIZES = {
 } as const;
 
 /** Uma figurinha: arte, Vigor (azul), Influência (laranja; verde se subiu, vermelho se caiu) e nome. */
-export function DuelCardFace({ def, art, power, size = 'board', selected, dimmed, silenced, focus, animate, className, onClick, onPointerDown, children }: FaceProps) {
+export function DuelCardFace({ def, art, power, size = 'board', selected, dimmed, silenced, focus, animate, className, onClick, onPointerDown, data, children }: FaceProps) {
+  const dataProps = Object.fromEntries(Object.entries(data ?? {}).map(([key, value]) => [`data-${key}`, value]));
   const image = artOf(art, def);
   const shown = power ?? def.power;
   const tone = shown > def.power ? 'text-success' : shown < def.power ? 'text-danger' : 'text-white';
@@ -53,6 +56,7 @@ export function DuelCardFace({ def, art, power, size = 'board', selected, dimmed
     <Wrapper
       {...(onClick ? { type: 'button' as const, onClick } : {})}
       onPointerDown={onPointerDown}
+      {...dataProps}
       aria-label={`${def.name}, Vigor ${def.cost}, Influência ${shown}`}
       data-sound="off"
       className={cn(

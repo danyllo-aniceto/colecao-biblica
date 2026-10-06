@@ -220,18 +220,26 @@ describe.skipIf(!hasDatabase)("duelo online", () => {
     expect(current).toMatchObject({ status: "FINISHED", series: { over: true, winner: 0, wins: [2, 0] } });
   });
 
-  it("dobrar vale para todos e desistir dá a rodada ao rival", async () => {
-    const { code } = await startedRoom({ format: "single" });
+  it("dobrar vale para todos; quem desiste do dobro perde só o que valia antes; na rodada única não dá para dobrar", async () => {
+    const single = await startedRoom({ format: "single" });
+    const blocked = await post(ana, `${single.code}/double`);
+    expect(blocked.status).toBe(400);
+    expect(blocked.body.message).toMatch(/rodada única/i);
+    expect((await view(ana, single.code)).duel).toMatchObject({ canDouble: false, stakesMatter: false });
+    await post(bia, `${single.code}/leave`);
+
+    const { code } = await startedRoom({ format: "bo3" });
     const doubled = await post(ana, `${code}/double`);
     expect(doubled.body.duel.stakes).toBe(2);
     expect((await post(ana, `${code}/double`)).status).toBe(400);
-    expect((await view(bia, code)).duel!.stakes).toBe(2);
-    // No turno em que dobrou, ana não pode desistir; bia pode.
+    const foeSees = (await view(bia, code)).duel!;
+    expect(foeSees).toMatchObject({ stakes: 2, foeDoubledNow: true, retreatCost: 1, canRetreat: true });
+    // No turno em que dobrou, ana não pode desistir; bia pode, e perde só o que valia antes (1 ponto).
     expect((await post(ana, `${code}/retreat`)).status).toBe(400);
     const gave = await post(bia, `${code}/retreat`);
     expect(gave.status).toBe(200);
-    expect(gave.body).toMatchObject({ status: "FINISHED", series: { over: true, winner: 0 } });
-    expect(gave.body.duel.result).toMatchObject({ winner: 0, retreated: 1, stakes: 2 });
+    expect(gave.body.duel.result).toMatchObject({ winner: 0, retreated: 1, stakes: 1 });
+    expect(gave.body.series).toMatchObject({ over: false, wins: [1, 0] });
   });
 
   it("contra bot: o bot já jogou, então basta dizer Pronto; o tempo esgotado joga pela pessoa e 3 faltas passam o lugar a um bot", async () => {

@@ -179,6 +179,17 @@ Legenda: ✅ feito e testado · ⬜ a fazer.
    com narração, números que contam, figurinhas que entram/saem animadas, histórico "O que aconteceu" e velocidade normal/rápida. ⬜ sons próprios, música do cenário (já toca a do 1º cenário aberto), versos de figurinha e vitórias online, marcador na campanha, relatório de equilíbrio.
 6. **Conteúdo** ⬜: novos lotes de figurinhas e cenários.
 
+## 12b. Rodada de experiência de jogo (regras e telas que mudaram)
+
+- **Jogada às cegas:** dá para colocar figurinha numa arena que ainda não apareceu. Ela entra na revelação do turno, mas o cenário (nome, regra) segue escondido até o turno dele; a figurinha só mostra a Influência própria
+  e, ao abrir a arena, a regra passa a valer. Arena fechada confere o espaço só na revelação (a figurinha que não couber volta à mão, sem dizer o nome do cenário).
+- **Aposta com efeito de verdade:** *Melhor de 3* agora é em **pontos** (cada rodada vale a aposta: dobrada vale 2 pontos e já decide); *Vidas* continua com a aposta virando dano (dobra a partir da rodada 5);
+  na *Rodada única* a aposta não vale nada, então **não dá para dobrar**. Desistir depois que o rival dobrou **neste turno** custa só o que valia antes dele dobrar (`retreatCost`, como no Snap).
+- **Mesa:** selo grande "VALE ×N" com o que a aposta vale (pontos ou dano), relógio do turno em anel (sala online), aviso destacado quando o rival dobra, Vigor em destaque.
+- **Arrastar:** da mão para a arena (inclusive fechada), de uma arena para outra e de volta à mão (para tirar).
+- **Animações do turno:** figurinha empurrada/levada/convertida voa para o novo lugar com uma seta; afastada treme e estoura; devolvida à mão voa até a mão do dono; some sobe e desaparece;
+  criada surge com brilho; revelada chega virando; mudança de Influência mostra "+3" ou "−2" subindo (`use-card-motion.tsx`).
+
 ## 13. Riscos
 
 - **Tom:** o tema é bíblico. Duelos são provações entre figurinhas: efeitos se chamam *afastar*, *silenciar*, *enviar de volta*, não "matar". Jesus fica fora.

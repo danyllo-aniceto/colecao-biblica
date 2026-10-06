@@ -131,6 +131,12 @@ export function botMove(view: DuelView, skill: BotSkill, seed: number): BotMove 
     wantsDouble = view.canDouble && view.turn >= 5 && mine >= 2 && margin >= 8;
   }
 
+  // O rival dobrou agora: seguir ou desistir (custa só o que valia antes). Desiste quem está bem atrás.
+  if (view.foeDoubledNow && view.canRetreat) {
+    if (skill === "MASTER" && view.turn >= 3 && theirs > mine && margin <= -6) wantsRetreat = true;
+    if (skill === "STUDENT" && view.turn >= 4 && mine === 0 && margin <= -10) wantsRetreat = true;
+  }
+
   const plays = skill === "APPRENTICE" ? apprentice(view, seed) : skill === "STUDENT" ? student(view) : master(view, seed);
   return { plays, double: wantsDouble, retreat: wantsRetreat };
 }

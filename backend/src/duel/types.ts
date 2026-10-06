@@ -230,6 +230,8 @@ export type DuelState = {
   /** Quem revela primeiro no turno em resolução (guardado para a tela). */
   priority: Side | null;
   stakes: number;
+  /** Falso na rodada única: a aposta não vale nada, então não dá para dobrar. Ausente = vale (estados antigos). */
+  stakesMatter?: boolean;
   events: DuelEvent[];
   result: DuelResult | null;
 };

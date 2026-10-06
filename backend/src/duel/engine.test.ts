@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { describeDom, levelDef, validateTeam } from "./cards";
-import { cardPower, doubleStakes, lanePower, newDuel, retreat, setReady, stage, unstage, viewFor, whyNotStage } from "./engine";
+import { cardPower, doubleStakes, lanePower, newDuel, retreat, retreatCost, setReady, snapshotOf, stage, unstage, viewFor, whyNotDouble, whyNotStage } from "./engine";
 import { applyRound, damageFor, newSeries } from "./series";
 import { READY_DECKS, STARTER_CARDS, readyTeam } from "./starter";
 import { type Card, type CardDef, type DuelState, type PlacedCard, type Side } from "./types";
@@ -80,10 +80,12 @@ describe("criação", () => {
 });
 
 describe("jogadas", () => {
-  it("só dá para jogar com Vigor, em cenário aberto, com espaço e figurinha da mão", () => {
+  it("só dá para jogar com Vigor, em arena que exista, com espaço e figurinha da mão", () => {
     const state = duel({ mine: ["davi", "elias", "rute"] });
     expect(whyNotStage(state, 0, uidOf(state, 0, "elias"), 0)).toBe("Vigor insuficiente.");
-    expect(whyNotStage(state, 0, uidOf(state, 0, "rute"), 1)).toBe("Esse cenário ainda não apareceu.");
+    expect(whyNotStage(state, 0, uidOf(state, 0, "rute"), 3)).toBe("Essa arena não existe.");
+    // Arena que ainda não apareceu: pode jogar às cegas.
+    expect(whyNotStage(state, 0, uidOf(state, 0, "rute"), 1)).toBeNull();
     expect(whyNotStage(state, 0, 9999, 0)).toBe("Essa figurinha não está na sua mão.");
     expect(whyNotStage(state, 0, uidOf(state, 0, "rute"), 0)).toBeNull();
     const staged = stage(state, 0, uidOf(state, 0, "rute"), 0);
@@ -394,6 +396,9 @@ describe("fim do duelo e aposta", () => {
     bo3 = applyRound(bo3, win(null));
     bo3 = applyRound(bo3, win(0));
     expect(bo3).toMatchObject({ over: true, winner: 0 });
+    // Melhor de 3 em pontos: a rodada vale a aposta, então uma rodada dobrada já decide.
+    expect(applyRound(newSeries("bo3"), win(1, 2))).toMatchObject({ over: true, winner: 1, wins: [0, 2] });
+    expect(applyRound(newSeries("bo3"), win(1, 1))).toMatchObject({ over: false, wins: [0, 1] });
 
     let lives = newSeries("lives");
     lives = applyRound(lives, win(0, 4));
@@ -402,6 +407,69 @@ describe("fim do duelo e aposta", () => {
     const near: ReturnType<typeof newSeries> = { ...lives, lives: [10, 3], round: 5 };
     expect(applyRound(near, win(0, 2))).toMatchObject({ over: true, winner: 0 });
     expect(applyRound(newSeries("single"), win(1))).toMatchObject({ over: true, winner: 1 });
+  });
+});
+
+describe("jogar numa arena que ainda não apareceu", () => {
+  it("a figurinha entra às cegas: aparece na arena fechada, sem revelar o cenário nem a regra dele", () => {
+    let state = duel({ mine: ["rute", "rute", "rute"], theirs: ["abel"], scenarios: ["eden", "canaa", "sinai"] });
+    state.players[0].energyBonus = 3;
+    for (let i = 0; i < 3; i += 1) state = stage(state, 0, state.players[0].hand[i].uid, 2);
+    state = setReady(setReady(state, 0), 1);
+    // Sinai só tem 2 espaços: a terceira não coube e voltou à mão (sem dizer o nome do cenário).
+    expect(board(state, 2, 0)).toHaveLength(2);
+    expect(state.players[0].hand.some((card) => card.def.id === "rute")).toBe(true);
+    const spilled = state.events.find((event) => event.text.includes("não coube"));
+    expect(spilled?.text).not.toMatch(/Sinai/);
+    const reveal = state.events.find((event) => event.type === "reveal" && event.lane === 2);
+    expect(reveal?.text).toContain("arena 3");
+    expect(reveal?.text).not.toMatch(/Sinai/);
+    // O rival vê as figurinhas na arena fechada, só com a Influência própria; o cenário segue escondido.
+    const foeView = viewFor(state, 1);
+    expect(foeView.lanes[2].scenario).toBeNull();
+    expect(foeView.lanes[2].cards[0]).toHaveLength(2);
+    const shown = foeView.lanes[2].cards[0][0];
+    expect(shown.power).toBe(shown.def.power + shown.bonus);
+    expect(foeView.lanes[2].power).toEqual([0, 0]);
+    expect(snapshotOf(state)[2].cards[0]).toHaveLength(2);
+    expect(JSON.stringify(foeView)).not.toMatch(/sinai/i);
+  });
+
+  it("quando a arena aparece, a regra dela passa a valer para o que já estava lá", () => {
+    let state = duel({ mine: ["rute"], theirs: ["abel"], scenarios: ["eden", "eden", "canaa"] });
+    state = stage(state, 0, uidOf(state, 0, "rute"), 1);
+    state = setReady(setReady(state, 0), 1);
+    // Turno 2: a arena 2 (Éden: Vigor 1 ganha +2) abriu e a Rute dela já conta o bônus.
+    expect(state.turn).toBe(2);
+    expect(viewFor(state, 0).lanes[1].cards[0][0].power).toBe(def("rute").power + 2);
+  });
+});
+
+describe("aposta", () => {
+  it("rival dobrou neste turno: desistir custa só o que valia antes; depois do turno custa a aposta cheia", () => {
+    let state = duel({});
+    state = doubleStakes(state, 0);
+    expect(state.stakes).toBe(2);
+    expect(retreatCost(state, 1)).toBe(1);
+    expect(viewFor(state, 1)).toMatchObject({ foeDoubledNow: true, retreatCost: 1, canRetreat: true });
+    expect(viewFor(state, 0)).toMatchObject({ foeDoubledNow: false, retreatCost: 2, canRetreat: false });
+    // Os dois dobraram no mesmo turno: quem desiste do segundo dobro perde o que valia antes dele.
+    const both = doubleStakes(state, 1);
+    expect(both.stakes).toBe(4);
+    expect(retreatCost(both, 0)).toBe(2);
+    expect(retreat(state, 1).result).toMatchObject({ winner: 0, retreated: 1, stakes: 1 });
+    // Turno seguinte: sem dobro novo, desistir custa a aposta inteira.
+    const next = setReady(setReady(state, 0), 1);
+    expect(retreatCost(next, 1)).toBe(2);
+    expect(retreat(next, 1).result).toMatchObject({ winner: 0, stakes: 2 });
+  });
+
+  it("rodada única: a aposta não vale nada, então não dá para dobrar", () => {
+    const state = newDuel({ teams: [fillerTeam(), fillerTeam()], seed: 3, stakesMatter: false });
+    expect(whyNotDouble(state, 0)).toMatch(/rodada única/i);
+    expect(() => doubleStakes(state, 0)).toThrow(/rodada única/i);
+    expect(viewFor(state, 0)).toMatchObject({ canDouble: false, stakesMatter: false });
+    expect(viewFor(duel({}), 0)).toMatchObject({ canDouble: true, stakesMatter: true });
   });
 });
 

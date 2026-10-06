@@ -1,3 +1,4 @@
+import { damageFor, type Series } from '@duel/series';
 import type { DuelEvent, Side, Snapshot } from '@duel/types';
 
 /** Quanto cada passo fica na tela (ms, na velocidade normal): dá tempo de ler o Dom e ver o número mudar. */
@@ -47,3 +48,13 @@ export function recordLines(events: DuelEvent[], you: Side = 0) {
   return events.filter((event) => !['play', 'draw', 'win', 'turn'].includes(event.type)).map((event) => `${narrate(event, you)}${event.dom ? ` (${event.dom})` : ''}`);
 }
 
+
+/** O que a aposta da rodada vale na série em andamento (null quando não vale nada). */
+export function stakesText(series: Series, stakes: number): string | null {
+  if (series.format === 'bo3') return `${stakes} ponto${stakes > 1 ? 's' : ''}`;
+  if (series.format === 'lives') {
+    const damage = damageFor(series.round, stakes);
+    return `${damage} de dano`;
+  }
+  return null;
+}

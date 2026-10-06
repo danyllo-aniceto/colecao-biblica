@@ -11,7 +11,7 @@ import type { CardArt } from '@/components/user/duel/duel-card';
 import { DuelHelpModal } from '@/components/user/duel/duel-help';
 import { DuelHistoryModal, type HistoryEntry } from '@/components/user/duel/duel-history';
 import { DuelLobby, shareDuelRoom } from '@/components/user/duel/duel-lobby';
-import { durationOf, narrate, recordLines, stepsFrom } from '@/components/user/duel/duel-playback';
+import { durationOf, narrate, recordLines, stakesText, stepsFrom } from '@/components/user/duel/duel-playback';
 import { DuelRoundModal } from '@/components/user/duel/duel-round-modal';
 import { DuelTable, type DuelSpeed, type Stage } from '@/components/user/duel/duel-table';
 import type { DuelDeck } from '@/lib/duel-api';
@@ -288,6 +288,8 @@ function OnlineMatch({ room, art, busy, offline, clockOffset, onStage, onUnstage
 
   const [selected, setSelected] = useState<number | null>(null);
   const [local, setLocal] = useState<Staged[] | null>(null);
+  /** Lista de jogadas colocadas já com as mudanças que ainda estão a caminho do servidor (para várias jogadas seguidas). */
+  const stagedNow = useRef<Staged[]>([]);
   const [playback, setPlayback] = useState<{ steps: DuelEvent[]; before: Snapshot; index: number } | null>(null);
   const [summary, setSummary] = useState(false);
   const [helpOpen, setHelpOpen] = useState(() => !localStorage.getItem(HELP_KEY));
@@ -369,11 +371,19 @@ function OnlineMatch({ room, art, busy, offline, clockOffset, onStage, onUnstage
     return () => window.clearInterval(timer);
   }, [room.deadlineAt]);
   const remaining = room.deadlineAt === null || roundOver ? null : Math.max(0, Math.ceil((room.deadlineAt - (now + clockOffset)) / 1000));
-  const showTimer = remaining !== null && remaining <= room.config.turnSeconds && !duel.ready;
+  // Durante a repetição do turno o prazo ainda inclui o tempo dela: o anel fica cheio até o relógio de verdade começar.
+  const timer = remaining === null ? null : { remaining: Math.min(remaining, room.config.turnSeconds), total: room.config.turnSeconds, waiting: duel.ready };
+  const alarm = timer && !timer.waiting && !playback && timer.remaining > 0 && timer.remaining <= 5 ? timer.remaining : null;
+  useEffect(() => {
+    if (alarm === null) return;
+    playSfx('reelTick');
+    navigator.vibrate?.(30);
+  }, [alarm]);
 
   /** Coloca ou tira figurinha já na tela e confirma no servidor, na mesma ordem em que a pessoa fez. */
   const enqueue = useCallback((optimistic: Staged[], send: () => Promise<void>) => {
     pending.current += 1;
+    stagedNow.current = optimistic;
     setLocal(optimistic);
     chain.current = chain.current.then(() =>
       send()
@@ -386,9 +396,11 @@ function OnlineMatch({ room, art, busy, offline, clockOffset, onStage, onUnstage
   }, []);
 
   const shown = useMemo(() => (local ? withStaged(duel, local) : duel), [duel, local]);
+  // Sem nada a caminho, o que vale é o que o servidor disse.
+  const baseStaged = () => (pending.current > 0 ? stagedNow.current : duel.staged);
 
   function handleStage(uid: number, lane: number) {
-    const base = local ?? duel.staged;
+    const base = baseStaged();
     if (base.some((play) => play.uid === uid)) return;
     playSfx('soft');
     enqueue([...base, { uid, lane }], () => onStage(uid, lane));
@@ -396,15 +408,23 @@ function OnlineMatch({ room, art, busy, offline, clockOffset, onStage, onUnstage
   }
 
   function handleUnstage(uid: number) {
-    const base = local ?? duel.staged;
     enqueue(
-      base.filter((play) => play.uid !== uid),
+      baseStaged().filter((play) => play.uid !== uid),
       () => onUnstage(uid),
     );
   }
 
+  /** Muda uma figurinha já colocada para outra arena (tira e coloca de novo, na ordem). */
+  function handleRestage(uid: number, lane: number) {
+    playSfx('soft');
+    enqueue([...baseStaged().filter((play) => play.uid !== uid), { uid, lane }], async () => {
+      await onUnstage(uid);
+      await onStage(uid, lane);
+    });
+  }
+
   async function handleRetreat() {
-    const ok = await dialogs.confirm({ title: 'Desistir da rodada?', message: `Você perde o que está valendo (${duel.stakes}) e o rival vence esta rodada.`, confirmLabel: 'Desistir', tone: 'danger' });
+    const ok = await dialogs.confirm({ title: 'Desistir da rodada?', message: `Você perde o que está valendo (×${duel.retreatCost}) e o rival vence esta rodada.`, confirmLabel: 'Desistir', tone: 'danger' });
     if (ok) onRetreat();
   }
 
@@ -448,11 +468,6 @@ function OnlineMatch({ room, art, busy, offline, clockOffset, onStage, onUnstage
     <>
       {offline ? <span className="rounded-2xl bg-danger/15 px-2 py-1 text-xs font-bold text-danger">Sem conexão</span> : null}
       {score}
-      {showTimer ? (
-        <span className={cn('rounded-2xl px-2 py-1 font-display text-xs font-bold tabular-nums', remaining! <= 10 ? 'bg-danger text-white' : 'bg-surface-3 text-ink')} aria-label={`${remaining} segundos para terminar o turno`}>
-          ⏱ {remaining}s
-        </span>
-      ) : null}
       <button type="button" onClick={onShare} aria-label={`Sala ${room.code}: tocar para compartilhar o link`} className="rounded-xl bg-surface-3 px-2 py-1 font-display text-xs font-bold tracking-widest text-ink transition hover:bg-surface-2">
         {room.code}
       </button>
@@ -470,6 +485,9 @@ function OnlineMatch({ room, art, busy, offline, clockOffset, onStage, onUnstage
         onSelect={setSelected}
         onStage={handleStage}
         onUnstage={handleUnstage}
+        onRestage={handleRestage}
+        stakesText={stakesText(series, shown.stakes)}
+        timer={timer}
         onReady={() => {
           setSelected(null);
           onReady();

@@ -7,9 +7,9 @@ import { MAX_STAKES, type DuelResult, type Side } from "./types";
 export type SeriesFormat = "single" | "bo3" | "lives";
 
 export const SERIES_FORMATS: Array<{ id: SeriesFormat; name: string; text: string }> = [
-  { id: "single", name: "Rodada única", text: "Uma rodada decide." },
-  { id: "bo3", name: "Melhor de 3", text: "Vence quem ganhar 2 rodadas." },
-  { id: "lives", name: "Vidas", text: "10 vidas cada. A aposta da rodada vira dano." },
+  { id: "single", name: "Rodada única", text: "Uma rodada decide. Sem aposta: não dá para dobrar." },
+  { id: "bo3", name: "Melhor de 3", text: "Vence quem somar 2 pontos. Cada rodada vale a aposta: dobrada, vale 2 pontos e já decide." },
+  { id: "lives", name: "Vidas", text: "10 vidas cada. A aposta da rodada vira dano (e dobra a partir da rodada 5)." },
 ];
 
 export const START_LIVES = 10;
@@ -41,7 +41,8 @@ export function applyRound(series: Series, result: DuelResult): Series {
   const next: Series = { ...series, wins: [...series.wins] as [number, number], lives: [...series.lives] as [number, number], history: [...series.history, { winner: result.winner, stakes: result.stakes }] };
   if (result.winner !== null) {
     const loser: Side = result.winner === 0 ? 1 : 0;
-    next.wins[result.winner] += 1;
+    // Melhor de 3 em pontos: a aposta é quanto a rodada vale (dobrar vale 2 pontos). Nos outros formatos, 1 vitória.
+    next.wins[result.winner] += series.format === "bo3" ? Math.max(1, result.stakes) : 1;
     next.lives[loser] -= damageFor(series.round, result.stakes);
   }
   next.round = series.round + 1;

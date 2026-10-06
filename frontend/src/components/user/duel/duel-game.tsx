@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { playBotTurn, type BotSkill } from '@duel/bots';
-import { doubleStakes, newDuel, retreat, setReady, snapshotOf, stage as stageCard, unstage, viewFor, whyNotStage, type DuelView } from '@duel/engine';
+import { doubleStakes, newDuel, retreat, retreatCost, setReady, snapshotOf, stage as stageCard, unstage, viewFor, whyNotStage, type DuelView } from '@duel/engine';
 import { applyRound, newSeries, type Series, type SeriesFormat } from '@duel/series';
 import type { DuelEvent, DuelState, Side, Snapshot, TeamCard } from '@duel/types';
-import { durationOf, narrate, recordLines, stepsFrom } from '@/components/user/duel/duel-playback';
+import { durationOf, narrate, recordLines, stakesText, stepsFrom } from '@/components/user/duel/duel-playback';
 import { Button } from '@/components/ui/button';
 import { useDialogs } from '@/components/ui/dialogs';
 import { useToast } from '@/components/ui/toast';
@@ -37,7 +37,7 @@ export function DuelGame({ team, foeTeam, skill, format, art, onExit }: GameProp
   const { campaign, current } = useCampaign();
   const dialogs = useDialogs();
   const toast = useToast();
-  const newRound = useCallback(() => newDuel({ teams: [team, foeTeam], seed: Math.floor(Math.random() * 2 ** 31) }), [team, foeTeam]);
+  const newRound = useCallback(() => newDuel({ teams: [team, foeTeam], seed: Math.floor(Math.random() * 2 ** 31), stakesMatter: format !== 'single' }), [team, foeTeam, format]);
 
   const [state, setState] = useState<DuelState>(newRound);
   const [series, setSeries] = useState<Series>(() => newSeries(format));
@@ -146,7 +146,8 @@ export function DuelGame({ team, foeTeam, skill, format, art, onExit }: GameProp
   }
 
   async function handleRetreat() {
-    const ok = await dialogs.confirm({ title: 'Desistir da rodada?', message: `Você perde o que está valendo (${state.stakes}) e o rival vence esta rodada.`, confirmLabel: 'Desistir', tone: 'danger' });
+    const cost = retreatCost(stateRef.current, 0);
+    const ok = await dialogs.confirm({ title: 'Desistir da rodada?', message: `Você perde o que está valendo (×${cost}) e o rival vence esta rodada.`, confirmLabel: 'Desistir', tone: 'danger' });
     if (ok) act((previous) => retreat(previous, 0));
   }
 
@@ -203,6 +204,8 @@ export function DuelGame({ team, foeTeam, skill, format, art, onExit }: GameProp
         onSelect={setSelected}
         onStage={handleStage}
         onUnstage={(uid) => act((previous) => unstage(previous, 0, uid))}
+        onRestage={(uid, lane) => act((previous) => stageCard(unstage(previous, 0, uid), 0, uid, lane))}
+        stakesText={stakesText(series, view.stakes)}
         onReady={() => {
           setSelected(null);
           act((previous) => setReady(previous, 0));
