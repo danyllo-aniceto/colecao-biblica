@@ -44,6 +44,7 @@ código em **português do Brasil**.
 - Nível/XP: o custo é **por cenário** (`scenarios.xp_per_stop`, +120 por cenário, teto 3.000), não por nível. Curva em `game-rules.ts`
   (`buildXpBands`/`calculateLevel`) carregada por `services/xp-curve.ts` e enviada ao app em `/campaign` (`xpBands`); mudou cenário/parada,
   `syncUserLevels` recalcula o nível de todos. Cenário novo tem **4 paradas** (a 4ª é a relíquia).
+  Moedas da parada = XP por parada ÷ 10 (de 5 em 5), relíquia em dobro (`nodeCoins`).
 - Toda mudança de schema vira migração em `backend/prisma/migrations` (o deploy roda `migrate deploy`).
 
 ## Modo Tabuleiro (jogo com amigos, sem progresso de perfil)

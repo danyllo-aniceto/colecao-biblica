@@ -122,6 +122,12 @@ Painel → Campanha → cenário). Todas as paradas do cenário custam o mesmo e
 
 Ritmo (≈150 XP por partida, 5 partidas por dia): Éden ≈ 3 dias; os 10 primeiros cenários (50 paradas) ≈ 2,4 meses; as 12 pedras ≈ 1 ano e 4 meses.
 
+### Moedas das paradas (padrão único)
+
+Todo cenário paga pelo mesmo padrão: **1 moeda a cada 10 XP da parada** (arredondado de 5 em 5), **relíquia em dobro** (`nodeCoins` em
+`game-rules.ts`). Ex.: Éden (500 XP) = 50 por parada e 100 na relíquia; teto (3.000 XP) = 300 e 600. Aplicado a todos os cenários,
+inclusive os 10 de lançamento (migração `moedas_por_parada`). Ao criar paradas no painel, use o mesmo valor.
+
 ### Padrão: 4 paradas por cenário
 
 Todo cenário novo tem **4 paradas** (a 4ª é a relíquia) e o mapa usa os pontos de 4 paradas do guia de arte

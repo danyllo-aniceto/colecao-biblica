@@ -1,5 +1,5 @@
 import type { Db } from "../db/prisma";
-import { defaultXpPerStop } from "./game-rules";
+import { defaultXpPerStop, nodeCoins } from "./game-rules";
 import { ensureScenarioAvatar } from "./scenario-avatar";
 import { syncUserLevels } from "./xp-curve";
 
@@ -53,12 +53,6 @@ function scenarioCosmetics(scenario: DefaultScenario, index: number) {
     { type: "NAME_COLOR" as const, name: `Cor: ${scenario.name}`, rarity: "RARE" as const, color: scenario.color },
     { type: "FRAME" as const, name: `Moldura: ${scenario.name}`, rarity: "EPIC" as const, color: scenario.color, style: scenario.frameStyle },
   ].map((item, step) => ({ ...item, description: `Exclusivo do cenário ${scenario.name}.`, unlock: "REWARD" as const, system: true, sortOrder: 800 + index * 10 + step }));
-}
-
-/** Moedas da parada: sobem com o nível; a relíquia paga em dobro. */
-export function nodeCoins(level: number, relic: boolean): number {
-  const base = Math.round((15 + level * 1.5) / 5) * 5;
-  return relic ? base * 2 : base;
 }
 
 async function ensureSpecialCharacter(db: Db) {
@@ -161,7 +155,7 @@ export async function ensureDefaultCampaign(db: Db) {
           relic,
           fragment: relic,
           title: relic ? `Relíquia: ${scenario.relicTitle}` : null,
-          rewardCoins: nodeCoins(level, relic),
+          rewardCoins: nodeCoins(defaultXpPerStop(index), relic),
           rewardDefinitionId: helperName ? (helpers.get(helperName) ?? null) : null,
           rewardCosmeticId: relic ? relicTitleId : (itemIds[step] ?? null),
         };

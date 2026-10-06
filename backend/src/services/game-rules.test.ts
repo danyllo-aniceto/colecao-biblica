@@ -27,6 +27,7 @@ import {
   friendSaleSellerCoins,
   stickerUpgradeCost,
   buildXpBands,
+  nodeCoins,
   calculateLevel,
   DEFAULT_XP_BANDS,
   defaultXpPerStop,
@@ -96,6 +97,15 @@ describe("XP, pontos e nível", () => {
     expect(defaultXpPerStop(9)).toBe(1580);
     expect(defaultXpPerStop(21)).toBe(3000);
     expect(defaultXpPerStop(45)).toBe(3000);
+  });
+
+  it("moedas da parada: 1 para cada 10 XP do cenário, relíquia em dobro", () => {
+    expect(nodeCoins(500, false)).toBe(50);
+    expect(nodeCoins(500, true)).toBe(100);
+    expect(nodeCoins(620, false)).toBe(60);
+    expect(nodeCoins(3000, false)).toBe(300);
+    expect(nodeCoins(3000, true)).toBe(600);
+    expect(nodeCoins(10, false)).toBe(5);
   });
 
   it("curva por cenário: cada parada custa o XP do cenário dela", () => {

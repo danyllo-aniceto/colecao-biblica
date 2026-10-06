@@ -65,6 +65,15 @@ export const XP_PER_STOP_BASE = 500;
 export const XP_PER_STOP_STEP = 120;
 export const XP_PER_STOP_CAP = 3000;
 
+/**
+ * Moedas de uma parada da campanha: 1 moeda para cada 10 XP que ela custa (arredondado de 5 em 5); a relíquia paga em dobro.
+ * Todos os cenários seguem esse padrão, então a recompensa sobe junto com o esforço.
+ */
+export function nodeCoins(xpPerStop: number, relic: boolean): number {
+  const base = Math.max(5, Math.round(xpPerStop / 10 / 5) * 5);
+  return relic ? base * 2 : base;
+}
+
 /** Sem cenários cadastrados, todo nível custa o valor inicial. */
 export const DEFAULT_XP_BANDS: XpBand[] = [{ fromLevel: 1, cost: XP_PER_STOP_BASE }];
 

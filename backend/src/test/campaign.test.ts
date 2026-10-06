@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "../db/prisma";
-import { defaultXpPerStop, calculateLevel } from "../services/game-rules";
+import { defaultXpPerStop, calculateLevel, nodeCoins } from "../services/game-rules";
 import { loadXpBands, syncUserLevels } from "../services/xp-curve";
 import { api, bearer, login, resetDatabase } from "./helpers";
 
@@ -236,6 +236,10 @@ describe.skipIf(!hasDatabase)("campanha", () => {
   it("o XP por parada sobe de cenário em cenário e o nível acompanha a curva", async () => {
     const scenarios = await prisma.scenario.findMany({ orderBy: { sortOrder: "asc" } });
     expect(scenarios.map((scenario) => scenario.xpPerStop)).toEqual(scenarios.map((_, index) => defaultXpPerStop(index)));
+
+    // Todas as paradas pagam pelo mesmo padrão: 1 moeda a cada 10 XP do cenário (relíquia em dobro).
+    const nodes = await prisma.scenarioNode.findMany({ include: { scenario: { select: { xpPerStop: true } } } });
+    for (const node of nodes) expect(node.rewardCoins).toBe(nodeCoins(node.scenario.xpPerStop, node.relic));
 
     const bands = await loadXpBands(prisma);
     expect(bands[0]).toEqual({ fromLevel: 1, cost: 500 });
