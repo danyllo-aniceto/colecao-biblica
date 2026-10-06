@@ -28,6 +28,8 @@ export type AdminScenario = {
   boardLandmarks?: Landmark[] | null;
   fragmentCharacterId: number | null;
   fragmentCharacter: { id: number; name: string } | null;
+  /** XP para subir cada nível (parada) deste cenário. */
+  xpPerStop: number;
   sortOrder: number;
   active: boolean;
   system: boolean;
@@ -52,6 +54,8 @@ export type ScenarioPayload = {
   boardPathStyle?: PathStyle | null;
   boardLandmarks?: Landmark[] | null;
   fragmentCharacterId: number | null;
+  /** Vazio na criação: continua a escada do último cenário. */
+  xpPerStop?: number;
   sortOrder: number;
   active: boolean;
 };

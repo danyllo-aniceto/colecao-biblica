@@ -193,9 +193,10 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
   const [boardLandmarks, setBoardLandmarks] = useState<Landmark[]>(scenario?.boardLandmarks ?? []);
   const [characterId, setCharacterId] = useState(scenario?.fragmentCharacterId ? String(scenario.fragmentCharacterId) : '');
   const [sortOrder, setSortOrder] = useState(String(scenario?.sortOrder ?? nextOrder));
+  const [xpPerStop, setXpPerStop] = useState(scenario ? String(scenario.xpPerStop) : '');
   const [active, setActive] = useState(scenario?.active ?? true);
   const [characters, setCharacters] = useState<CharacterOption[]>([]);
-  const [errors, setErrors] = useState<{ slug?: string; name?: string }>({});
+  const [errors, setErrors] = useState<{ slug?: string; name?: string; xpPerStop?: string }>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -209,6 +210,8 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
     const next: typeof errors = {};
     if (!scenario && !/^[a-z0-9-]{2,40}$/.test(slug.trim().toLowerCase())) next.slug = 'Use letras minúsculas, números e hífen (2 a 40).';
     if (!name.trim()) next.name = 'Informe o nome do cenário.';
+    const xpValue = Number(xpPerStop);
+    if (xpPerStop.trim() && (!Number.isInteger(xpValue) || xpValue < 50)) next.xpPerStop = 'Informe um número inteiro a partir de 50.';
     setErrors(next);
     if (Object.keys(next).length > 0) return;
     setSaving(true);
@@ -228,6 +231,7 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
       boardLandmarks: boardLandmarks.map((landmark) => ({ ...landmark, imageUrl: landmark.imageUrl || null, emoji: landmark.imageUrl ? null : landmark.emoji?.trim() || null })),
       fragmentCharacterId: characterId ? Number(characterId) : null,
       sortOrder: Number(sortOrder) || 0,
+      xpPerStop: xpPerStop.trim() ? Number(xpPerStop) : undefined,
       active,
     };
     try {
@@ -329,6 +333,13 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
           </Field>
           <Field label="Ordem no caminho" hint="Menor vem primeiro.">
             <Input type="number" min={0} value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} />
+          </Field>
+          <Field
+            label="XP por parada"
+            hint={`XP para subir cada nível deste cenário (uma partida rende cerca de 150 XP${xpPerStop.trim() && Number(xpPerStop) > 0 ? `; aqui, cerca de ${Math.max(1, Math.round(Number(xpPerStop) / 150))} partidas por parada` : ''}). Sobe de cenário em cenário.${scenario ? '' : ' Vazio: continua a escada do último cenário.'}`}
+            error={errors.xpPerStop}
+          >
+            <Input type="number" min={50} value={xpPerStop} onChange={(event) => setXpPerStop(event.target.value)} placeholder={scenario ? undefined : 'Automático'} />
           </Field>
         </div>
         <Switch checked={active} onChange={setActive} label="Ligado (aparece para os jogadores)" />

@@ -8,6 +8,7 @@ import { MAX_LANDMARKS } from "../board/layout";
 import { requireAdmin } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
 import { ensureScenarioAvatar } from "../services/scenario-avatar";
+import { nextXpPerStop, syncUserLevels } from "../services/xp-curve";
 
 /** Painel da campanha: cenários e paradas. */
 export const campaignAdminRouter = Router();
@@ -60,6 +61,8 @@ const scenarioSchema = z.object({
   boardPathStyle: z.enum(["SOFT", "MEDIUM", "WIDE"]).nullish(),
   boardLandmarks: z.array(landmarkSchema).max(MAX_LANDMARKS, `No máximo ${MAX_LANDMARKS} marcos`).nullish(),
   fragmentCharacterId: z.number().int().positive().nullish(),
+  /** XP para subir cada nível deste cenário (ausente: na criação continua a escada do último; na edição não altera). */
+  xpPerStop: z.number().int().min(50).max(1_000_000).optional(),
   sortOrder: z.number().int().min(0).max(100_000),
   active: z.boolean(),
 });
@@ -127,9 +130,11 @@ campaignAdminRouter.post(
         boardPathStyle: input.boardPathStyle ?? null,
         boardLandmarks: input.boardLandmarks ?? Prisma.DbNull,
         fragmentCharacterId: input.fragmentCharacterId ?? null,
+        xpPerStop: input.xpPerStop ?? (await nextXpPerStop(prisma)),
       },
     });
     await ensureScenarioAvatar(prisma, scenario);
+    await syncUserLevels(prisma);
     res.status(201).json(await prisma.scenario.findUniqueOrThrow({ where: { id: scenario.id } }));
   }),
 );
@@ -164,6 +169,7 @@ campaignAdminRouter.put(
     });
     // O ícone de perfil acompanha a arte do ícone do cenário.
     await ensureScenarioAvatar(prisma, scenario);
+    await syncUserLevels(prisma);
     res.json(scenario);
   }),
 );
@@ -176,6 +182,7 @@ campaignAdminRouter.delete(
     if (!scenario) throw notFound("Cenário não encontrado");
     if (scenario.system) throw badRequest("Cenários do sistema não podem ser excluídos; desative-o");
     await prisma.scenario.delete({ where: { id } });
+    await syncUserLevels(prisma);
     res.status(204).end();
   }),
 );
@@ -218,7 +225,9 @@ async function saveNode(scenarioId: number, nodeId: number | null, body: unknown
 campaignAdminRouter.post(
   "/scenarios/:id/nodes",
   asyncHandler(async (req, res) => {
-    res.status(201).json(await saveNode(parseId(req.params.id), null, req.body));
+    const node = await saveNode(parseId(req.params.id), null, req.body);
+    await syncUserLevels(prisma);
+    res.status(201).json(node);
   }),
 );
 
@@ -261,7 +270,9 @@ campaignAdminRouter.put(
     const id = parseId(req.params.id);
     const node = await prisma.scenarioNode.findUnique({ where: { id }, select: { scenarioId: true } });
     if (!node) throw notFound("Parada não encontrada");
-    res.json(await saveNode(node.scenarioId, id, req.body));
+    const saved = await saveNode(node.scenarioId, id, req.body);
+    await syncUserLevels(prisma);
+    res.json(saved);
   }),
 );
 
@@ -271,6 +282,7 @@ campaignAdminRouter.delete(
     const id = parseId(req.params.id);
     if (!(await prisma.scenarioNode.findUnique({ where: { id }, select: { id: true } }))) throw notFound("Parada não encontrada");
     await prisma.scenarioNode.delete({ where: { id } });
+    await syncUserLevels(prisma);
     res.status(204).end();
   }),
 );

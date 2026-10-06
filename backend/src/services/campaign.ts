@@ -6,6 +6,7 @@ import { EMERALD_CHEST, openEmeraldChest } from "./chests";
 import { EMERALD_SET_NAMES } from "./default-cosmetics";
 import { grantCosmetic, toCosmeticResponse } from "./cosmetics";
 import { toUserResponse } from "./mappers";
+import { loadXpBands } from "./xp-curve";
 import { applyReward, grantStickerIfMissing, walletData } from "./rewards";
 import { getSettings } from "./settings";
 
@@ -44,6 +45,8 @@ export async function getCampaign(userId: number) {
 
   return {
     level: user.level,
+    /** Curva de XP por nível (o app calcula a barra de progresso com ela). */
+    xpBands: await loadXpBands(prisma),
     currentScenarioId: currentId,
     emeraldChest: {
       coins: EMERALD_CHEST.coins,

@@ -773,6 +773,8 @@ model Scenario {
   fragmentCharacterId Int?     @map("fragment_character_id")
   /// Ícone de perfil (avatar) com a arte do cenário, entregue junto com a relíquia.
   avatarCosmeticId    Int?     @map("avatar_cosmetic_id")
+  /// XP para subir cada nível (parada) deste cenário; sobe de cenário em cenário e define a curva de nível do jogo.
+  xpPerStop           Int      @default(500) @map("xp_per_stop")
   sortOrder           Int      @default(0) @map("sort_order")
   active              Boolean  @default(true)
   /// Criado no deploy (não excluível; o admin pode editar e desativar).

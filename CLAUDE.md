@@ -41,6 +41,9 @@ código em **português do Brasil**.
 - Continuação da campanha (12 Pedras do Peitoral, cenários 11+ em trios): plano e checklist em `docs/campanha-12-pedras.md`; padrão de
   prompts de arte (3D Disney/Pixar) em `docs/prompts-3d-padrao.md`. **Todo cenário novo cadastrado já ganha a regra dele no Duelo**
   (`duel/scenarios.ts`, sem sorte, com teste) e entra no checklist.
+- Nível/XP: o custo é **por cenário** (`scenarios.xp_per_stop`, +120 por cenário, teto 3.000), não por nível. Curva em `game-rules.ts`
+  (`buildXpBands`/`calculateLevel`) carregada por `services/xp-curve.ts` e enviada ao app em `/campaign` (`xpBands`); mudou cenário/parada,
+  `syncUserLevels` recalcula o nível de todos. Cenário novo tem **4 paradas** (a 4ª é a relíquia).
 - Toda mudança de schema vira migração em `backend/prisma/migrations` (o deploy roda `migrate deploy`).
 
 ## Modo Tabuleiro (jogo com amigos, sem progresso de perfil)

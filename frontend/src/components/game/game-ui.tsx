@@ -10,18 +10,42 @@ function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ');
 }
 
-/** Mesma curva do backend: sair do nível 1 custa 300 XP e cada nível seguinte pede 100 XP a mais. */
-export function xpForLevel(level: number) {
-  const steps = Math.max(0, level - 1);
-  return 300 * steps + (100 * steps * (steps - 1)) / 2;
+/**
+ * Mesma curva do backend: o custo de XP é do cenário e vale para todas as paradas dele. Cada faixa começa em `fromLevel`
+ * e `cost` é o XP para subir um nível dentro dela (o servidor manda as faixas junto com a campanha).
+ */
+export type XpBand = { fromLevel: number; cost: number };
+
+/** Antes de a campanha carregar (ou sem cenários): todo nível custa 500 XP. */
+export const DEFAULT_XP_BANDS: XpBand[] = [{ fromLevel: 1, cost: 500 }];
+
+function xpCostOfLevel(level: number, bands: XpBand[]) {
+  let cost = bands[0]?.cost ?? 500;
+  for (const band of bands) {
+    if (band.fromLevel > level) break;
+    cost = band.cost;
+  }
+  return cost;
+}
+
+/** XP total acumulado para chegar ao nível. */
+export function xpForLevel(level: number, bands: XpBand[] = DEFAULT_XP_BANDS) {
+  let total = 0;
+  for (let current = 2; current <= level; current += 1) total += xpCostOfLevel(current, bands);
+  return total;
 }
 
 /** Progresso dentro do nível atual. */
-export function levelProgress(xp: number) {
+export function levelProgress(xp: number, bands: XpBand[] = DEFAULT_XP_BANDS) {
   let level = 1;
-  while (xpForLevel(level + 1) <= xp) level += 1;
-  const current = xp - xpForLevel(level);
-  const needed = xpForLevel(level + 1) - xpForLevel(level);
+  let start = 0;
+  let needed = xpCostOfLevel(2, bands);
+  while (xp >= start + needed) {
+    start += needed;
+    level += 1;
+    needed = xpCostOfLevel(level + 1, bands);
+  }
+  const current = xp - start;
   return { level, current, needed, percent: (current / needed) * 100 };
 }
 

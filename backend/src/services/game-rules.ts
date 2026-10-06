@@ -10,10 +10,6 @@ export const ANSWER_GRACE_SECONDS = 3;
 const XP_PER_CORRECT = 10;
 const POINTS_PER_CORRECT = 100;
 const POINTS_PER_WRONG = 30;
-/** XP para sair do nível 1; cada nível seguinte pede mais LEVEL_XP_STEP. */
-const LEVEL_BASE_XP = 300;
-const LEVEL_XP_STEP = 100;
-
 export function defaultTimeByDifficulty(difficulty: QuestionDifficulty): number {
   switch (difficulty) {
     case "EASY":
@@ -57,15 +53,69 @@ export function calculateScore(correctAnswers: number, wrongAnswers: number): nu
   return correctAnswers * POINTS_PER_CORRECT - wrongAnswers * POINTS_PER_WRONG;
 }
 
-/** XP total para chegar ao nível (curva progressiva: cada nível pede 100 XP a mais que o anterior). */
-export function xpForLevel(level: number): number {
-  const steps = Math.max(0, level - 1);
-  return LEVEL_BASE_XP * steps + (LEVEL_XP_STEP * steps * (steps - 1)) / 2;
+/**
+ * Curva de nível: o custo de XP é do CENÁRIO (`xpPerStop`), igual em todas as paradas dele, e sobe de cenário em cenário.
+ * Uma faixa vale do nível `fromLevel` em diante, até a próxima faixa; `cost` é o XP para subir UM nível dentro dela.
+ * O nível 1 não custa nada (a primeira parada já abre).
+ */
+export type XpBand = { fromLevel: number; cost: number };
+
+/** XP por parada do primeiro cenário, quanto sobe a cada cenário e o teto (valores sugeridos ao criar cenários). */
+export const XP_PER_STOP_BASE = 500;
+export const XP_PER_STOP_STEP = 120;
+export const XP_PER_STOP_CAP = 3000;
+
+/** Sem cenários cadastrados, todo nível custa o valor inicial. */
+export const DEFAULT_XP_BANDS: XpBand[] = [{ fromLevel: 1, cost: XP_PER_STOP_BASE }];
+
+/** XP por parada sugerido para o cenário na posição `position` (0 = primeiro do caminho). */
+export function defaultXpPerStop(position: number): number {
+  return Math.min(XP_PER_STOP_CAP, XP_PER_STOP_BASE + XP_PER_STOP_STEP * Math.max(0, position));
 }
 
-export function calculateLevel(xp: number): number {
+/**
+ * Monta as faixas a partir dos cenários na ordem do caminho: cada nível custa o `xpPerStop` do cenário que o tem como parada;
+ * níveis sem parada (lacunas) e os depois do último cenário seguem o custo do cenário anterior.
+ */
+export function buildXpBands(scenarios: Array<{ levels: number[]; xpPerStop: number }>): XpBand[] {
+  const costByLevel = new Map<number, number>();
+  for (const scenario of scenarios) {
+    for (const level of scenario.levels) if (!costByLevel.has(level)) costByLevel.set(level, Math.max(1, Math.round(scenario.xpPerStop)));
+  }
+  const bands: XpBand[] = [];
+  for (const level of [...costByLevel.keys()].sort((a, b) => a - b)) {
+    const cost = costByLevel.get(level)!;
+    if (bands.length === 0 || bands[bands.length - 1].cost !== cost) bands.push({ fromLevel: level, cost });
+  }
+  return bands.length > 0 ? bands : DEFAULT_XP_BANDS;
+}
+
+/** XP para subir do nível anterior até `level`. */
+export function xpCostOfLevel(level: number, bands: XpBand[] = DEFAULT_XP_BANDS): number {
+  let cost = bands[0]?.cost ?? XP_PER_STOP_BASE;
+  for (const band of bands) {
+    if (band.fromLevel > level) break;
+    cost = band.cost;
+  }
+  return cost;
+}
+
+/** XP total acumulado para chegar ao nível. */
+export function xpForLevel(level: number, bands: XpBand[] = DEFAULT_XP_BANDS): number {
+  let total = 0;
+  for (let current = 2; current <= level; current += 1) total += xpCostOfLevel(current, bands);
+  return total;
+}
+
+export function calculateLevel(xp: number, bands: XpBand[] = DEFAULT_XP_BANDS): number {
   let level = 1;
-  while (xpForLevel(level + 1) <= xp) level += 1;
+  let needed = xpCostOfLevel(2, bands);
+  let remaining = xp;
+  while (remaining >= needed) {
+    remaining -= needed;
+    level += 1;
+    needed = xpCostOfLevel(level + 1, bands);
+  }
   return level;
 }
 

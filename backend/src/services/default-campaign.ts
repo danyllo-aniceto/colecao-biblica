@@ -1,5 +1,7 @@
 import type { Db } from "../db/prisma";
+import { defaultXpPerStop } from "./game-rules";
 import { ensureScenarioAvatar } from "./scenario-avatar";
+import { syncUserLevels } from "./xp-curve";
 
 type DefaultScenario = {
   slug: string;
@@ -97,6 +99,7 @@ export async function ensureDefaultCampaign(db: Db) {
   const existing = new Set((await db.scenario.findMany({ select: { slug: true } })).map((scenario) => scenario.slug));
   if (DEFAULT_SCENARIOS.every((scenario) => existing.has(scenario.slug))) {
     await ensureAllScenarioAvatars(db);
+    await syncUserLevels(db);
     return;
   }
 
@@ -141,6 +144,7 @@ export async function ensureDefaultCampaign(db: Db) {
         verseReference: scenario.verseReference,
         color: scenario.color,
         sortOrder: (index + 1) * 10,
+        xpPerStop: defaultXpPerStop(index),
         fragmentCharacterId: special.id,
         system: true,
       },
@@ -164,5 +168,7 @@ export async function ensureDefaultCampaign(db: Db) {
       }),
       skipDuplicates: true,
     });
-  }  await ensureAllScenarioAvatars(db);
+  }
+  await ensureAllScenarioAvatars(db);
+  await syncUserLevels(db);
 }

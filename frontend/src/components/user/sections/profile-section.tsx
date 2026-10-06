@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { InstallAppButton } from '@/components/pwa/install-app-button';
 import { APP_VERSION } from '@/lib/pwa';
+import { useCampaign } from '@/components/user/campaign/campaign-provider';
 import { BoostChips, CoinChip, LevelBadge, ProgressBar, SectionHeading, StatTile, levelProgress } from '@/components/game/game-ui';
 import { AchievementsPanel } from '@/components/user/achievements-panel';
 import { MatchHistoryPanel } from '@/components/user/match-history-panel';
@@ -62,7 +63,8 @@ export function ProfileSection({
   collection,
   onShowcaseChange,
 }: ProfileSectionProps) {
-  const progress = levelProgress(profile?.xp ?? 0);
+  const { xpBands } = useCampaign();
+  const progress = levelProgress(profile?.xp ?? 0, xpBands);
   const [tab, setTab] = useState<Tab>('summary');
   const [previewing, setPreviewing] = useState(false);
   const [pickingShowcase, setPickingShowcase] = useState(false);

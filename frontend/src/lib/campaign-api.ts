@@ -4,6 +4,7 @@ import type { Landmark, PathStyle } from '@board/layout';
 import type { StickerRarity } from '@/lib/admin-api';
 import type { Cosmetic } from '@/lib/rewards-api';
 import type { UnlockedAchievement } from '@/lib/user-api';
+import type { XpBand } from '@/components/game/game-ui';
 import type { UserProfile } from '@/types/auth';
 
 export type CampaignNodeState = 'claimed' | 'available' | 'locked';
@@ -70,6 +71,8 @@ export type CampaignSpecial = {
 
 export type Campaign = {
   level: number;
+  /** Curva de XP por nível, para a barra de progresso. */
+  xpBands: XpBand[];
   currentScenarioId: number | null;
   special: CampaignSpecial | null;
   /** O que o Baú de Esmeralda traz (prêmio da figurinha especial). */

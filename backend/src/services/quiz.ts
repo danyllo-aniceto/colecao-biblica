@@ -29,6 +29,7 @@ import {
   studyStatus,
   weightedPick,
 } from "./game-rules";
+import { loadXpBands } from "./xp-curve";
 import { currentScenarioIdFor } from "./campaign";
 import { checkAchievements } from "./achievements";
 import { applyReward, availableRewards, grantStickerIfMissing, walletData } from "./rewards";
@@ -861,7 +862,7 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
       ...walletData(wallet),
       xp: totalXp,
       totalScore: user.totalScore + score,
-      level: calculateLevel(totalXp),
+      level: calculateLevel(totalXp, await loadXpBands(tx)),
       stickerPity,
       bestCombo: Math.max(user.bestCombo, stats.bestCombo ?? 0),
     },

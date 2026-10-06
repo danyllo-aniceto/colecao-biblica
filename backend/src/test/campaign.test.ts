@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "../db/prisma";
+import { defaultXpPerStop, calculateLevel } from "../services/game-rules";
+import { loadXpBands, syncUserLevels } from "../services/xp-curve";
 import { api, bearer, login, resetDatabase } from "./helpers";
 
 const hasDatabase = Boolean(process.env.TEST_DATABASE_URL);
@@ -229,5 +231,37 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     expect(linked.body.scenarioName).toBe("Jardim do Éden");
     expect((await api.put(`/api/questions/admin/${base.id}`).set(bearer(admin)).send({ scenarioId: null })).body.scenarioId).toBeNull();
     expect((await api.put(`/api/questions/admin/${base.id}`).set(bearer(admin)).send({ scenarioId: 9999 })).status).toBe(404);
+  });
+
+  it("o XP por parada sobe de cenário em cenário e o nível acompanha a curva", async () => {
+    const scenarios = await prisma.scenario.findMany({ orderBy: { sortOrder: "asc" } });
+    expect(scenarios.map((scenario) => scenario.xpPerStop)).toEqual(scenarios.map((_, index) => defaultXpPerStop(index)));
+
+    const bands = await loadXpBands(prisma);
+    expect(bands[0]).toEqual({ fromLevel: 1, cost: 500 });
+    expect(bands.length).toBe(10);
+
+    // Quem já tem XP é reposicionado pela curva nova (e ninguém perde XP).
+    const user = await prisma.user.update({ where: { email: "user@email.com" }, data: { xp: 3000, level: 40, chestLevel: 35 } });
+    await syncUserLevels(prisma, true);
+    const synced = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(synced.xp).toBe(3000);
+    expect(synced.level).toBe(calculateLevel(3000, bands));
+    expect(synced.chestLevel).toBeLessThanOrEqual(synced.level);
+
+    // Mudar o XP por parada no painel recalcula o nível na hora.
+    const admin = await login("admin2@email.com");
+    const eden = scenarios[0];
+    const before = synced.level;
+    const res = await api.put(`/api/campaign/admin/scenarios/${eden.id}`).set(bearer(admin)).send({ name: eden.name, sortOrder: eden.sortOrder, active: true, xpPerStop: 250 });
+    expect(res.status).toBe(200);
+    expect(res.body.xpPerStop).toBe(250);
+    const after = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(after.level).toBeGreaterThan(before);
+
+    // A campanha entrega a curva para o app calcular a barra de progresso.
+    const userToken = await login("user@email.com");
+    const campaign = await api.get("/api/campaign").set(bearer(userToken));
+    expect(campaign.body.xpBands[0]).toEqual({ fromLevel: 1, cost: 250 });
   });
 });

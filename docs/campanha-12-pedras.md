@@ -103,24 +103,34 @@ vira migração; tela do Peitoral com `Pagination` onde houver lista e sem compo
 ### Decisões já tomadas
 
 - **Brasão** é um **cosmético novo** (`CosmeticType.BADGE`), **exibido no perfil** do jogador (e ao lado do nome onde couber).
-- **Nível e XP serão refatorados** para a campanha ficar longa, mas **alcançável**; os cenários chegam aos poucos, **de trio em trio**.
+- **Nível e XP refatorados** (por cenário) para a campanha ficar longa, mas **alcançável**; os cenários chegam aos poucos, **de trio em trio**.
 - **Duelo:** todo cenário cadastrado ganha **a sua regra no Duelo de Figurinhas** (sem sorte), em `backend/src/duel/scenarios.ts`, com teste.
 
-### ⚠️ Níveis e XP (a refatorar)
+### Níveis e XP (✅ refatorado)
 
-A campanha anda **por nível** (cada parada é um nível, `level` é único) e o XP por nível cresce a cada nível (`xpForLevel`: 300 + 100 por nível). Hoje o
-nível 50 pede ≈ 132 mil XP no total; 36 cenários × 4–5 paradas levariam ao nível ~200 (≈ 2 milhões de XP, ~20 mil por
-nível), o que a curva atual torna inalcançável. Antes de cadastrar em volume, decidir uma das saídas:
+O custo de XP agora é **do cenário**, não do nível: cada cenário tem o campo **XP por parada** (`scenarios.xp_per_stop`, editável em
+Painel → Campanha → cenário). Todas as paradas do cenário custam o mesmo e o valor sobe de cenário em cenário:
 
-1. **Curva achatada** depois do nível 50 (o XP por nível para de crescer, ex.: fixo no valor do nível 50, ~5 mil).
-2. **Cenários curtos** (3 paradas cada → ~108 níveis novos) combinados com a curva achatada. **← recomendado**
+- **Cenário 1 = 500 XP por parada**, **+120 por cenário**, **teto de 3.000** (`defaultXpPerStop` em `game-rules.ts`). Cenário novo
+  criado sem informar o valor continua a escada do último.
+- O nível 1 é de graça (a primeira parada abre na hora). O nível continua sendo "quantas paradas já abriu".
+- Cenários que ainda não existem (ou lacunas) seguem o custo do último: o jogo nunca trava no fim do mapa.
+- A curva é calculada pelo servidor (`services/xp-curve.ts`) e enviada ao app junto com a campanha (`xpBands`); a barra de XP usa a
+  mesma conta (`levelProgress` em `game-ui.tsx`).
+- Ao mudar a curva (cenário/parada criado, editado, excluído, ou XP por parada alterado) o nível de todos é **recalculado a partir do
+  XP** (`syncUserLevels`). Ninguém perde XP; o baú de nível nunca fica "devendo" (`chestLevel` ≤ nível).
 
-A curva nova precisa valer para jogadores que já passaram do nível 50 e **não pode tirar nível de ninguém** (migrar pelo XP atual).
-3. Desacoplar a campanha nova do nível do jogador (progresso por "estrelas"/quizzes concluídos no cenário).
+Ritmo (≈150 XP por partida, 5 partidas por dia): Éden ≈ 3 dias; os 10 primeiros cenários (50 paradas) ≈ 2,4 meses; as 12 pedras ≈ 1 ano e 4 meses.
+
+### Padrão: 4 paradas por cenário
+
+Todo cenário novo tem **4 paradas** (a 4ª é a relíquia) e o mapa usa os pontos de 4 paradas do guia de arte
+(`22,90 → 62,64 → 30,38 → 70,12`). Com isso: 1 cenário = 4 níveis, 1 pedra (3 cenários) = 12 níveis, as 12 pedras = 144 níveis.
+Os 10 cenários de lançamento mantêm as paradas que já têm (4 a 6) para não apagar progresso de ninguém.
 
 ## 5. Etapas (marque ao concluir)
 
-- [ ] **0.** Definir a curva de XP nova (refatorar `xpForLevel`, com teste e sem reduzir o nível de ninguém), paradas por cenário e a lista final dos 36.
+- [x] **0.** Curva de XP por cenário (`xpPerStop`, +120 por cenário, teto 3.000) com testes; padrão de 4 paradas por cenário. Falta só fechar a lista final dos 36.
 - [ ] **1.** Brasões: `CosmeticType.BADGE` + migração, exibição no perfil/ranking, seletor.
 - [ ] **2.** Regra pura das pedras (`game-rules.ts` + teste) e tabelas do Peitoral (migração + seed das 12 pedras).
 - [ ] **3.** Agrupar cenários por pedra; liberar pedra + cosmético + brasão ao concluir o 3º cenário (transação).

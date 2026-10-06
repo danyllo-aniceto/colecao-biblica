@@ -59,8 +59,8 @@ export function PlayerHud({
   socialNotices?: number;
 }) {
   const xp = profile?.xp ?? 0;
-  const progress = levelProgress(xp);
   const campaign = useCampaign();
+  const progress = levelProgress(xp, campaign.xpBands);
 
   return (
     <header className="sticky top-0 z-40 border-b border-edge bg-bg/85 backdrop-blur-xl">

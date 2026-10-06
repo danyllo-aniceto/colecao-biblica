@@ -22,7 +22,7 @@ import { scenarioFallbackBackground, scenarioMapSrc, scenarioThemeVars } from '@
 import { playSfx } from '@/lib/sound/sfx';
 import { rewardVisual } from '@/lib/reward-visual';
 import { ChestIcon, ChestOpening } from '@/components/user/chest-opening';
-import { xpForLevel } from '@/components/game/game-ui';
+import { DEFAULT_XP_BANDS, xpForLevel } from '@/components/game/game-ui';
 import { getRarityLabel } from '@/lib/rarity-theme';
 import HourglassTopRoundedIcon from '@mui/icons-material/HourglassTopRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
@@ -245,6 +245,7 @@ const prefersReducedMotion = () => typeof window !== 'undefined' && window.match
  */
 export function CampaignModal({ open, campaign, xp, playerName, onClose, onChanged, onUserUpdate }: CampaignModalProps) {
   const toast = useToast();
+  const xpBands = campaign?.xpBands ?? DEFAULT_XP_BANDS;
   // Subida: o primeiro cenário fica embaixo e os seguintes vão aparecendo para cima.
   const scenarios = useMemo(() => [...(campaign?.scenarios ?? [])].reverse(), [campaign]);
   // Acima do último cenário ficam o prêmio final (baú de esmeralda e figurinha especial) e o aviso de novidades.
@@ -502,12 +503,12 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
             <div className="space-y-1 rounded-2xl bg-violet/15 p-3">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm font-bold text-muted">XP total para chegar ao nível {liveSelected.level}</span>
-                <span className="font-display text-lg font-bold text-violet-strong dark:text-violet">{xpForLevel(liveSelected.level).toLocaleString('pt-BR')} XP</span>
+                <span className="font-display text-lg font-bold text-violet-strong dark:text-violet">{xpForLevel(liveSelected.level, xpBands).toLocaleString('pt-BR')} XP</span>
               </div>
               <p className="text-xs font-semibold text-muted">
-                {xp >= xpForLevel(liveSelected.level)
+                {xp >= xpForLevel(liveSelected.level, xpBands)
                   ? `Você já passou desse ponto: tem ${xp.toLocaleString('pt-BR')} XP no total.`
-                  : `Você tem ${xp.toLocaleString('pt-BR')} XP no total: faltam ${(xpForLevel(liveSelected.level) - xp).toLocaleString('pt-BR')} XP. A barra do topo mostra só o XP do nível atual.`}
+                  : `Você tem ${xp.toLocaleString('pt-BR')} XP no total: faltam ${(xpForLevel(liveSelected.level, xpBands) - xp).toLocaleString('pt-BR')} XP. A barra do topo mostra só o XP do nível atual.`}
               </p>
             </div>
             {liveSelected.state === 'locked' ? <Alert tone="info">Chegue ao nível {liveSelected.level} para abrir esta parada.</Alert> : null}

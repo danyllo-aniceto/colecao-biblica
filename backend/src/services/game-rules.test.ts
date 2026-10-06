@@ -26,7 +26,11 @@ import {
   friendSalePrice,
   friendSaleSellerCoins,
   stickerUpgradeCost,
+  buildXpBands,
   calculateLevel,
+  DEFAULT_XP_BANDS,
+  defaultXpPerStop,
+  xpCostOfLevel,
   xpForLevel,
   calculateMatchCoins,
   cycleDay,
@@ -76,15 +80,62 @@ describe("XP, pontos e nível", () => {
     expect(calculateScore(0, 3)).toBe(-90);
   });
 
-  it("curva de nível: 300 XP para o nível 2 e +100 XP a cada nível seguinte", () => {
+  it("curva de nível sem cenários: todo nível custa o valor inicial", () => {
     expect(calculateLevel(0)).toBe(1);
-    expect(calculateLevel(299)).toBe(1);
-    expect(calculateLevel(300)).toBe(2);
-    // Curva progressiva: 300, 400, 500... XP por nível.
-    expect(calculateLevel(699)).toBe(2);
-    expect(calculateLevel(700)).toBe(3);
-    expect(xpForLevel(10)).toBe(6300);
-    expect(xpForLevel(50)).toBe(132300);
+    expect(calculateLevel(499)).toBe(1);
+    expect(calculateLevel(500)).toBe(2);
+    expect(calculateLevel(999)).toBe(2);
+    expect(calculateLevel(1000)).toBe(3);
+    expect(xpForLevel(1)).toBe(0);
+    expect(xpForLevel(10)).toBe(4500);
+  });
+
+  it("o XP por parada sugerido sobe de cenário em cenário até o teto", () => {
+    expect(defaultXpPerStop(0)).toBe(500);
+    expect(defaultXpPerStop(1)).toBe(620);
+    expect(defaultXpPerStop(9)).toBe(1580);
+    expect(defaultXpPerStop(21)).toBe(3000);
+    expect(defaultXpPerStop(45)).toBe(3000);
+  });
+
+  it("curva por cenário: cada parada custa o XP do cenário dela", () => {
+    const bands = buildXpBands([
+      { levels: [1, 2, 3, 4], xpPerStop: 500 },
+      { levels: [5, 6, 7, 8], xpPerStop: 620 },
+    ]);
+    expect(bands).toEqual([
+      { fromLevel: 1, cost: 500 },
+      { fromLevel: 5, cost: 620 },
+    ]);
+    // Nível 1 é de graça; 2, 3 e 4 custam 500 cada.
+    expect(xpForLevel(1, bands)).toBe(0);
+    expect(xpForLevel(4, bands)).toBe(1500);
+    expect(xpForLevel(5, bands)).toBe(2120);
+    expect(xpForLevel(8, bands)).toBe(1500 + 4 * 620);
+    // Depois do último cenário continua o último custo.
+    expect(xpForLevel(10, bands)).toBe(1500 + 6 * 620);
+    expect(calculateLevel(1499, bands)).toBe(3);
+    expect(calculateLevel(1500, bands)).toBe(4);
+    expect(calculateLevel(2119, bands)).toBe(4);
+    expect(calculateLevel(2120, bands)).toBe(5);
+    expect(calculateLevel(xpForLevel(30, bands), bands)).toBe(30);
+    expect(calculateLevel(xpForLevel(30, bands) - 1, bands)).toBe(29);
+  });
+
+  it("curva por cenário: lacunas e cenários fora de ordem seguem o custo anterior", () => {
+    const bands = buildXpBands([
+      { levels: [1, 2], xpPerStop: 400 },
+      { levels: [6, 7], xpPerStop: 800 },
+    ]);
+    expect(xpCostOfLevel(4, bands)).toBe(400);
+    expect(xpCostOfLevel(6, bands)).toBe(800);
+    expect(xpCostOfLevel(50, bands)).toBe(800);
+    expect(buildXpBands([])).toEqual(DEFAULT_XP_BANDS);
+    // Nível repetido: vale o primeiro cenário da lista.
+    expect(buildXpBands([{ levels: [1, 2], xpPerStop: 400 }, { levels: [2, 3], xpPerStop: 900 }])).toEqual([
+      { fromLevel: 1, cost: 400 },
+      { fromLevel: 3, cost: 900 },
+    ]);
   });
 
   it("freio diário de XP: cheio nas primeiras partidas, só uma parte depois", () => {

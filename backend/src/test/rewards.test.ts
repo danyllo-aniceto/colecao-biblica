@@ -145,10 +145,10 @@ describe.skipIf(!hasDatabase)("recompensas novas", () => {
     });
 
     it("nível sobe por curva progressiva", async () => {
-      const player = await prisma.user.update({ where: { email: "user@email.com" }, data: { xp: 680 } });
+      const player = await prisma.user.update({ where: { email: "user@email.com" }, data: { xp: 980 } });
       const token = await login("user@email.com");
       const session = await start(token, 1);
-      // 1 acerto em 1 pergunta = 10 + 12 de bônus = 22 XP → 702 XP = nível 3 (700).
+      // 1 acerto em 1 pergunta = 10 + 12 de bônus = 22 XP → 1002 XP = nível 3 (1000: cada nível do Éden custa 500).
       const result = await answer(token, session.sessionId, session.currentQuestion.id, await correctOf(session.currentQuestion.id));
       expect(result.body.matchResult.userLevel).toBe(3);
       expect((await prisma.user.findUniqueOrThrow({ where: { id: player.id } })).level).toBe(3);
