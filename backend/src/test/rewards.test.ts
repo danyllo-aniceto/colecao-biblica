@@ -141,7 +141,7 @@ describe.skipIf(!hasDatabase)("recompensas novas", () => {
       expect(second.status).toBe(400);
       expect(second.body.message).toContain("1 figurinha(s) hoje");
       expect((await api.post(`/api/shop/buy/${crowd.id}`).set(bearer(token))).status).toBe(200);
-      expect((await api.get("/api/shop/limits").set(bearer(token))).body).toEqual({ stickerLimitPerDay: 1, stickersBoughtToday: 1 });
+      expect((await api.get("/api/shop/limits").set(bearer(token))).body).toMatchObject({ stickerLimitPerDay: 1, stickersBoughtToday: 1 });
     });
 
     it("nível sobe por curva progressiva", async () => {
@@ -297,7 +297,7 @@ describe.skipIf(!hasDatabase)("recompensas novas", () => {
       expect((await api.post("/api/collection/upgrade").set(bearer(token)).send({ characterId: davi.id })).body.message).toMatch(/nível máximo/);
     });
 
-    it("loja vende baús (nunca o de diamante), abre na hora e conta no limite diário de figurinhas", async () => {
+    it("loja vende baús (nunca o de diamante), abre na hora e respeita o limite diário de baús (3 por padrão, ajustável)", async () => {
       const token = await login("user@email.com");
       await prisma.user.update({ where: { email: "user@email.com" }, data: { coins: 10_000 } });
       const shop = (await api.get("/api/shop").set(bearer(token))).body as Array<{ id: number; name: string; rewardType: string; priceCoins: number; itemType: string }>;
@@ -315,10 +315,20 @@ describe.skipIf(!hasDatabase)("recompensas novas", () => {
       // Pagou 1.100 e recebeu as moedas do baú.
       expect(bought.body.userCoins).toBeGreaterThanOrEqual(10_000 - 1100 + 25);
 
-      // Baú conta no limite de 1 figurinha comprada por dia.
-      const second = await api.post(`/api/shop/buy/${chests[0].id}`).set(bearer(token));
-      expect(second.status).toBe(400);
-      expect(second.body.message).toContain("1 figurinha(s) hoje");
+      // O limite padrão é de 3 baús por dia; o 4º é recusado e o limite de figurinhas/pacotes é à parte.
+      expect((await api.post(`/api/shop/buy/${chests[0].id}`).set(bearer(token))).status).toBe(200);
+      expect((await api.post(`/api/shop/buy/${chests[0].id}`).set(bearer(token))).status).toBe(200);
+      const fourth = await api.post(`/api/shop/buy/${chests[0].id}`).set(bearer(token));
+      expect(fourth.status).toBe(400);
+      expect(fourth.body.message).toContain("3 baú(s) hoje");
+      expect((await api.get("/api/shop/limits").set(bearer(token))).body).toMatchObject({ chestLimitPerDay: 3, chestsBoughtToday: 3, stickersBoughtToday: 0 });
+      const pack = shop.find((item) => item.rewardType === "STICKER_PACK")!;
+      expect((await api.post(`/api/shop/buy/${pack.id}`).set(bearer(token))).status).toBe(200);
+
+      // O admin muda o limite: com 4, o mesmo jogador compra mais um.
+      const admin = await login("admin2@email.com");
+      expect((await api.put("/api/settings/admin").set(bearer(admin)).send({ shopChestLimitPerDay: 4 })).status).toBe(200);
+      expect((await api.post(`/api/shop/buy/${chests[0].id}`).set(bearer(token))).status).toBe(200);
     });
 
     it("visual dos baús: admin cadastra imagem, nome e cor; todos leem; cor inválida é recusada", async () => {

@@ -382,7 +382,7 @@ export async function listShopItems(): Promise<ShopItem[]> {
   return apiRequest<ShopItem[]>('/shop', { method: 'GET' }, 'Não foi possível carregar a loja.');
 }
 
-export async function getShopLimits(): Promise<{ stickerLimitPerDay: number; stickersBoughtToday: number }> {
+export async function getShopLimits(): Promise<{ stickerLimitPerDay: number; stickersBoughtToday: number; chestLimitPerDay: number; chestsBoughtToday: number }> {
   return apiRequest('/shop/limits', { method: 'GET' }, 'Não foi possível carregar os limites da loja.');
 }
 

@@ -36,7 +36,8 @@ Causas:
 | Freio diário de XP (novo) | sem freio | 6 partidas com XP cheio; depois 25% |
 | Figurinha comum / rara / épica | 200 / 450 / 900 | 450 / 1.100 / 2.800 |
 | Pacote surpresa | 300 | 750 (chances 66/27/6,5/0,5 %) |
-| Limite de figurinhas compradas por dia | 2 | 1 |
+| Limite de figurinhas e pacotes comprados por dia | 2 | 1 |
+| Limite de baús comprados por dia (`shop.chestLimitPerDay`, painel → Configurações) | — | 3 |
 | Ajudas da loja (vida, tempo, 50/50...) | 130–250 | 180–350 (+~30%) |
 | Prêmios sorteados por dia | 3 | 2 |
 | Garantia de figurinha no sorteio | a cada 6 prêmios | a cada 10 |

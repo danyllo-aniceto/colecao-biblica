@@ -47,7 +47,7 @@ const CHEST_CONTENTS: Record<string, { tier: ChestTierName; lines: string[] }> =
 
 export function ShopSection({ items, coins, gameRules, buyingItemId, error, onBuy, profile, onCoins }: ShopSectionProps) {
   const [tab, setTab] = useState<ShopTab>('figurinhas');
-  const [limits, setLimits] = useState<{ stickerLimitPerDay: number; stickersBoughtToday: number } | null>(null);
+  const [limits, setLimits] = useState<{ stickerLimitPerDay: number; stickersBoughtToday: number; chestLimitPerDay: number; chestsBoughtToday: number } | null>(null);
 
   // Recarrega o limite diário de figurinhas ao abrir e depois de cada compra.
   useEffect(() => {
@@ -57,6 +57,7 @@ export function ShopSection({ items, coins, gameRules, buyingItemId, error, onBu
       .catch(() => setLimits(null));
   }, [buyingItemId]);
   const stickersLeft = limits && limits.stickerLimitPerDay > 0 ? Math.max(0, limits.stickerLimitPerDay - limits.stickersBoughtToday) : null;
+  const chestsLeft = limits && limits.chestLimitPerDay > 0 ? Math.max(0, limits.chestLimitPerDay - limits.chestsBoughtToday) : null;
   const odds = packOdds(gameRules);
 
   const stickerItems = items.filter((item) => item.itemType === 'STICKER');
@@ -64,18 +65,20 @@ export function ShopSection({ items, coins, gameRules, buyingItemId, error, onBu
   const packs = stickerItems.filter((item) => item.rewardType === 'STICKER_PACK');
   const singles = stickerItems.filter((item) => item.rewardType === 'STICKER').sort((left, right) => left.priceCoins - right.priceCoins);
   const powers = items.filter((item) => item.itemType !== 'STICKER');
-  const limitNote =
-    stickersLeft === null
-      ? 'Baús, pacotes e figurinhas.'
-      : stickersLeft > 0
-        ? `Baús, pacotes e figurinhas dividem o mesmo limite diário: você ainda pode comprar ${stickersLeft} hoje.`
-        : 'Você já comprou o limite de baús, pacotes e figurinhas de hoje. Jogue para ganhar mais ou volte amanhã!';
+  const chestNote =
+    chestsLeft === null
+      ? ''
+      : chestsLeft > 0
+        ? `Você ainda pode comprar ${chestsLeft} baú(s) hoje.`
+        : 'Você já comprou o limite de baús de hoje. Jogue para ganhar mais ou volte amanhã!';
+  const stickerNote =
+    stickersLeft === null ? '' : stickersLeft > 0 ? `Pacote e figurinhas dividem um limite diário: você ainda pode comprar ${stickersLeft} hoje.` : 'Você já comprou o limite de pacotes e figurinhas de hoje. Jogue para ganhar mais ou volte amanhã!';
 
   const groups: Array<{ title: string; description: string; items: ShopItem[]; kind: 'chest' | 'item' }> =
     tab === 'figurinhas'
       ? [
-          { title: 'Baús', description: `Abrem na hora, com a mesma animação dos baús das partidas. O baú de diamante só se ganha jogando. ${limitNote}`, items: chests, kind: 'chest' as const },
-          { title: 'Pacote de figurinhas', description: 'Sorteia a raridade pelas chances abaixo e depois a figurinha.', items: packs, kind: 'item' as const },
+          { title: 'Baús', description: `Abrem na hora, com a mesma animação dos baús das partidas. O baú de diamante só se ganha jogando. ${chestNote}`, items: chests, kind: 'chest' as const },
+          { title: 'Pacote de figurinhas', description: `Sorteia a raridade pelas chances abaixo e depois a figurinha. ${stickerNote}`, items: packs, kind: 'item' as const },
           { title: 'Figurinha por raridade', description: 'Você escolhe a raridade; a figurinha é sorteada entre as que você ainda não tem.', items: singles, kind: 'item' as const },
         ]
       : tab === 'poderes'
@@ -159,7 +162,7 @@ export function ShopSection({ items, coins, gameRules, buyingItemId, error, onBu
                       className="mt-auto w-full"
                       variant={canAfford ? 'primary' : 'secondary'}
                       onClick={() => onBuy(item)}
-                      disabled={!canAfford || (buyingItemId !== null && !buying) || (item.itemType === 'STICKER' && stickersLeft === 0)}
+                      disabled={!canAfford || (buyingItemId !== null && !buying) || (item.itemType === 'STICKER' && (((item.rewardType ?? '').startsWith('CHEST_') ? chestsLeft : stickersLeft) === 0))}
                       loading={buying}
                     >
                       {buying ? null : <CoinIcon />}

@@ -207,6 +207,7 @@ export type GameSettings = {
   chestCosmeticChance: number;
   chestMaxCoins: number;
   shopStickerLimitPerDay: number;
+  shopChestLimitPerDay: number;
 };
 
 export type AdminStats = {

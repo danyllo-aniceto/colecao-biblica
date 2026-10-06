@@ -73,6 +73,7 @@ const updateSchema = z.object({
   chestCosmeticChance: int(0, 100),
   chestMaxCoins: int(0, 100_000),
   shopStickerLimitPerDay: int(0, 50),
+  shopChestLimitPerDay: int(0, 50),
 });
 
 settingsRouter.get(
