@@ -18,6 +18,12 @@ function resolveBuildId() {
   }
 }
 
+/** Endereço do site (as tags de compartilhamento precisam de URL completa). Na Vercel vem do domínio de produção; vazio deixa o endereço relativo. */
+function resolveSiteUrl() {
+  if (process.env.SITE_URL) return process.env.SITE_URL.replace(/\/$/, "");
+  return process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "";
+}
+
 export default defineConfig({
   define: {
     __BUILD_ID__: JSON.stringify(resolveBuildId()),
@@ -32,6 +38,7 @@ export default defineConfig({
     },
   },
   plugins: [
+    { name: "site-url", transformIndexHtml: (html: string) => html.replaceAll("%SITE_URL%", resolveSiteUrl()) },
     react(),
     tailwindcss(),
     VitePWA({

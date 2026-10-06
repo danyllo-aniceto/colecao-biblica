@@ -9,7 +9,7 @@ import { boardPublicRouter, boardRouter } from "./routes/board";
 import { campaignRouter } from "./routes/campaign";
 import { duelRouter } from "./routes/duel";
 import { gameModesPublicRouter, gameModesRouter } from "./routes/game-modes";
-import { landingRouter } from "./routes/landing";
+import { landingRouter, sharePageRouter } from "./routes/landing";
 import { duelPublicRouter, duelRoomRouter } from "./routes/duel-room";
 import { charactersRouter } from "./routes/characters";
 import { collectionRouter } from "./routes/collection";
@@ -55,6 +55,7 @@ export function createApp() {
   app.use("/api/game-modes-public", gameModesPublicRouter);
   app.use("/api/duel-public", duelPublicRouter);
   app.use("/api/landing", landingRouter);
+  app.use("/api/compartilhar", sharePageRouter);
 
   // Daqui em diante tudo exige login.
   app.use("/api/characters", requireAuth, charactersRouter);

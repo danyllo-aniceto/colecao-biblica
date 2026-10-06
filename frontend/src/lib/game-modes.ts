@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { apiRequest } from '@/lib/http';
 
-export type GameMode = 'QUIZ' | 'BOARD' | 'DUEL';
+/** SHARE não é um jogo: é a imagem usada ao compartilhar o link do app (Painel → Compartilhar o app). */
+export type GameMode = 'QUIZ' | 'BOARD' | 'DUEL' | 'SHARE';
 export type GameModeDesign = { mode: GameMode; imageUrl: string | null };
 export type GameModeImages = Partial<Record<GameMode, string | null>>;
 

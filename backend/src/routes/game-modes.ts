@@ -10,7 +10,8 @@ export const gameModesRouter = Router();
 /** Só a leitura das capas, sem login: a página inicial (landing) mostra os jogos para quem ainda não tem conta. */
 export const gameModesPublicRouter = Router();
 
-export const GAME_MODES = ["QUIZ", "BOARD", "DUEL"] as const;
+/** SHARE não é um jogo: é a imagem usada ao compartilhar o link do app. */
+export const GAME_MODES = ["QUIZ", "BOARD", "DUEL", "SHARE"] as const;
 const select = { mode: true, imageUrl: true } as const;
 
 const list = asyncHandler(async (_req, res) => {

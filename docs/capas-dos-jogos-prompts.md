@@ -61,3 +61,11 @@ Three glowing circular stone arenas in a row on a polished temple courtyard, see
 - Se a IA gerar texto ou números nas figurinhas, acrescente `all sticker cards have completely blank, text-free faces`.
 - Se a parte de baixo vier cheia de detalhe, acrescente `the bottom 40% is an empty soft warm gradient ground`.
 - Para os três ficarem parecidos, use a mesma ferramenta, o mesmo bloco de estilo e, se der, a mesma referência de estilo.
+
+## Imagem ao compartilhar o link do app
+
+Painel → **Compartilhar o app** mostra o link `/api/compartilhar`: quem o recebe no WhatsApp, Telegram ou redes vê um cartão com a imagem e o texto
+que explicam o app (e quem abre cai na página inicial). A imagem padrão (`frontend/public/compartilhar.jpg`, 1200 × 630) é gerada de
+`frontend/scripts/imagem-compartilhar/modelo.html` (logo, três jogos e "Jogue grátis!"); para refazer: `node scripts/imagem-compartilhar/gerar.mjs`
+(precisa do Playwright). Dá para trocar por outra imagem no painel (1200 × 630, de preferência com menos de 300 KB). A página inicial também tem as
+tags de compartilhamento; na Vercel o endereço vem do domínio de produção (ou da variável `SITE_URL`).

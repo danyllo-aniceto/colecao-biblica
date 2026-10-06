@@ -141,4 +141,21 @@ describe.skipIf(!hasDatabase)("duelo: figurinhas e planilha", () => {
       { name: "Davi", rarity: "RARE", imageUrl: "https://exemplo.com/davi.png" },
     ]);
   });
+
+  it("link de compartilhar: cartão com imagem (padrão ou a do painel) e redirecionamento", async () => {
+    const page = await api.get("/api/compartilhar").set("x-forwarded-proto", "https").set("x-forwarded-host", "app.exemplo.com");
+    expect(page.status).toBe(200);
+    expect(page.headers["content-type"]).toMatch(/text\/html/);
+    expect(page.text).toContain('property="og:image" content="https://app.exemplo.com/compartilhar.jpg"');
+    expect(page.text).toContain('name="twitter:card" content="summary_large_image"');
+    expect(page.text).toContain('http-equiv="refresh"');
+    // Host estranho não vira endereço na página.
+    expect((await api.get("/api/compartilhar").set("x-forwarded-host", 'a"><script>')).text).toContain('content="/compartilhar.jpg"');
+
+    const admin = await login("admin2@email.com");
+    await api.put("/api/game-modes/admin/share").set(bearer(admin)).send({ imageUrl: "https://blob.exemplo.com/minha.png" });
+    const custom = await api.get("/api/compartilhar").set("x-forwarded-host", "app.exemplo.com");
+    expect(custom.text).toContain('property="og:image" content="https://blob.exemplo.com/minha.png"');
+    expect(custom.text).not.toContain("og:image:width");
+  });
 });
