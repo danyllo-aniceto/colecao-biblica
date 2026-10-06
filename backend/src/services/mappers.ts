@@ -1,5 +1,5 @@
 import type { BiblicalCharacter, Question, RewardDefinition, ShopItem, User } from "@prisma/client";
-import { suggestedDifficulty } from "./game-rules";
+import { pendingLevelChests, suggestedDifficulty } from "./game-rules";
 import { helperCounts } from "./helpers";
 
 /** Formato das respostas JSON (mesmos campos da API original, que o frontend já usa). */
@@ -20,7 +20,7 @@ export function toUserResponse(user: User) {
     friendCode: user.friendCode,
     ...helperCounts(user),
     bestCombo: user.bestCombo,
-    chestsPending: Math.max(0, user.level - user.chestLevel),
+    chestsPending: pendingLevelChests(user.level, user.chestLevel),
     avatarId: user.avatarId,
     frameId: user.frameId,
     titleId: user.titleId,

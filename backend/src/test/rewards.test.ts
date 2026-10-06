@@ -217,18 +217,19 @@ describe.skipIf(!hasDatabase)("recompensas novas", () => {
   });
 
   describe("baú, coleções e passe", () => {
-    it("baú de nível: um por nível novo, com moedas e ajuda", async () => {
-      const player = await prisma.user.update({ where: { email: "user@email.com" }, data: { level: 3, chestLevel: 1, coins: 0 } });
+    it("baú de nível: um a cada 3 níveis, com moedas e ajuda", async () => {
+      // No nível 7 já passaram os baús do nível 3 e do nível 6 (o do 9 ainda não).
+      const player = await prisma.user.update({ where: { email: "user@email.com" }, data: { level: 7, chestLevel: 1, coins: 0 } });
       const token = await login("user@email.com");
       const first = await api.post("/api/chests/open").set(bearer(token));
-      expect(first.body).toMatchObject({ level: 2, coins: 26, chestsPending: 1 });
+      expect(first.body).toMatchObject({ level: 3, coins: 29, chestsPending: 1 });
       expect(first.body.boost).not.toBeNull();
       await api.post("/api/chests/open").set(bearer(token));
       const none = await api.post("/api/chests/open").set(bearer(token));
       expect(none.status).toBe(400);
       const after = await prisma.user.findUniqueOrThrow({ where: { id: player.id } });
-      expect(after.chestLevel).toBe(3);
-      expect(after.coins).toBe(55);
+      expect(after.chestLevel).toBe(6);
+      expect(after.coins).toBe(67);
     });
 
     it("coleção temática: esconde as que faltam e paga uma vez ao completar", async () => {

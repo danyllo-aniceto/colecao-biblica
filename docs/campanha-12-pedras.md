@@ -111,7 +111,7 @@ vira migração; tela do Peitoral com `Pagination` onde houver lista e sem compo
 O custo de XP agora é **do cenário**, não do nível: cada cenário tem o campo **XP por parada** (`scenarios.xp_per_stop`, editável em
 Painel → Campanha → cenário). Todas as paradas do cenário custam o mesmo e o valor sobe de cenário em cenário:
 
-- **Cenário 1 = 500 XP por parada**, **+120 por cenário**, **teto de 3.000** (`defaultXpPerStop` em `game-rules.ts`). Cenário novo
+- **Cenário 1 = 500 XP por parada**, **+70 por cenário**, **teto de 1.800** (`defaultXpPerStop` em `game-rules.ts`; reajustado para a campanha completa durar 12 a 14 meses, ver `docs/economia.md`). Cenário novo
   criado sem informar o valor continua a escada do último.
 - O nível 1 é de graça (a primeira parada abre na hora). O nível continua sendo "quantas paradas já abriu".
 - Cenários que ainda não existem (ou lacunas) seguem o custo do último: o jogo nunca trava no fim do mapa.
@@ -120,7 +120,7 @@ Painel → Campanha → cenário). Todas as paradas do cenário custam o mesmo e
 - Ao mudar a curva (cenário/parada criado, editado, excluído, ou XP por parada alterado) o nível de todos é **recalculado a partir do
   XP** (`syncUserLevels`). Ninguém perde XP; o baú de nível nunca fica "devendo" (`chestLevel` ≤ nível).
 
-Ritmo (≈150 XP por partida, 5 partidas por dia): Éden ≈ 3 dias; os 10 primeiros cenários (50 paradas) ≈ 2,4 meses; as 12 pedras ≈ 1 ano e 4 meses.
+Ritmo (jogador regular, 5 partidas por dia): Jesus em ~2 meses, conteúdo de hoje (62 níveis) em ~2,7 meses e a campanha completa (194 níveis) em ~13 meses.
 
 ### Moedas das paradas (padrão único)
 

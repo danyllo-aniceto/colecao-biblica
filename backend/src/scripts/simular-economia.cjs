@@ -114,7 +114,7 @@ function simulate(c, p, days = Number(process.env.DAYS) || 365) {
     const lv = levelOf(c, st.xp);
     while (st.chestLevel < lv) {
       st.chestLevel++;
-      const L = st.chestLevel; earn(Math.min(c.chestMax, c.chestBase + c.chestPerLevel * L), 'baus');
+      const L = st.chestLevel; if (L % (c.chestEvery || 1) === 0) earn(Math.min(c.chestMax, c.chestBase + c.chestPerLevel * L), 'baus');
       const camp = c.campaign(L);
       if (camp.coins) earn(camp.coins, 'campanha');
       if (camp.stone) earn(camp.stone, 'pedras');
@@ -179,10 +179,10 @@ const NOVO = {
 };
 
 // ---------------------------------------------------------------------------------------------
-// CURVA POR CENÁRIO (nível e XP refatorados): XP por parada sobe de cenário em cenário (500 + 120, teto 3000),
+// CURVA POR CENÁRIO (nível e XP refatorados): XP por parada sobe de cenário em cenário (500 + 70, teto 1800),
 // moedas da parada = XP/10 (relíquia em dobro), pedra do Peitoral a cada 3 cenários após Jesus.
 // ---------------------------------------------------------------------------------------------
-const xpPerStop = (i) => Math.min(Number(process.env.XP_CAP) || 3000, 500 + (Number(process.env.XP_STEP) || 120) * i);
+const xpPerStop = (i) => Math.min(Number(process.env.XP_CAP) || 1800, 500 + (Number(process.env.XP_STEP) || 70) * i);
 function porCenario(stops, { stoneCoins = 500, finalCoins = 2000, claimTail = false } = {}) {
   const levelInfo = {}; let L = 0; const costOf = {};
   stops.forEach((n, i) => {
@@ -207,12 +207,17 @@ function porCenario(stops, { stoneCoins = 500, finalCoins = 2000, claimTail = fa
 }
 const STOPS_HOJE = [4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 4, 4, 4]; // 10 de lançamento + trio Sardônio
 const STOPS_FUTURO = [...STOPS_HOJE.slice(0, 10), ...Array(36).fill(4)]; // + os 36 cenários das 12 pedras
-const HOJE = { ...NOVO, ...porCenario(STOPS_HOJE) };
-const FUTURO = { ...NOVO, ...porCenario(STOPS_FUTURO) };
+// Álbum maior (ALBUM=400): mesma proporção de raridades do álbum de 88 (45% comuns, 28% raras, 17% épicas, 10% lendárias).
+const ALBUM_TOTAL = Number(process.env.ALBUM) || (process.argv[2] === 'hoje' || process.argv[2] === 'futuro' ? 400 : 88);
+const ALBUM = ALBUM_TOTAL === 88 ? { C: 40, R: 25, E: 15, L: 8 } : { C: Math.round(ALBUM_TOTAL * 0.45), R: Math.round(ALBUM_TOTAL * 0.28), E: Math.round(ALBUM_TOTAL * 0.17), L: Math.round(ALBUM_TOTAL * 0.1) };
+const EXTRA = { chestEvery: Number(process.env.CHEST_EVERY) || 3, album: ALBUM };
+const HOJE = { ...NOVO, ...EXTRA, ...porCenario(STOPS_HOJE) };
+const FUTURO = { ...NOVO, ...EXTRA, ...porCenario(STOPS_FUTURO) };
 
 function relatorio(titulo, cfg) {
   console.log(`\n######## ${titulo} ########`);
   for (const [nome, perfil] of Object.entries(profiles)) {
+    if (process.env.PROFILE && process.env.PROFILE !== nome) continue;
     const r = avg(cfg, perfil, 100);
     console.log(`\n== ${nome} (${perfil.matches} partidas/dia) — álbum completo (mediana): ${r.median >= 999 ? 'mais de 365' : r.median} dias`);
     stickerDraws = 0; for (let i = 0; i < 30; i++) simulate(cfg, perfil, 60); console.log(`   figurinhas de sorteio/baú por dia (60d): ${(stickerDraws / 30 / 60).toFixed(2)}`);

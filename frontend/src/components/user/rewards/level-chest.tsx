@@ -46,7 +46,7 @@ export function LevelChestCard({ profile, onOpened }: { profile: UserProfile | n
           </span>
           <div className="relative min-w-0 flex-1">
             <h3 className="font-display text-lg font-bold text-ink">{pending > 1 ? `${pending} baús de nível` : 'Baú de nível'}</h3>
-            <p className="text-sm text-muted">Você subiu de nível! Abra para ganhar moedas, uma ajuda e, com sorte, um item visual.</p>
+            <p className="text-sm text-muted">Você chegou a um nível de baú (a cada 3 níveis)! Abra para ganhar moedas, uma ajuda e, com sorte, um item visual.</p>
           </div>
           <Button className="relative" onClick={() => void open()} loading={opening}>
             Abrir

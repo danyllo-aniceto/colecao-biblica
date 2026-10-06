@@ -192,19 +192,46 @@ Antes = curva por nível, sem moedas por XP (coluna "ECONOMIA NOVA" do simulador
 | Atual, mas moedas XP ÷ 15 | 631 | 104 | 485 |
 | Atual, mas moedas XP ÷ 20 | 631 | 106 | 466 |
 
-## Proposta (ainda não aplicada)
+## Decisões aplicadas
 
-- **Curva:** `+100` por cenário com **teto 2.400**: regular termina em ~17 meses, dedicado em ~7, casual segue longo (ele não precisa
-  terminar; o objetivo é ver cenários novos a cada poucas semanas).
-- **Moedas da parada:** manter XP ÷ 10 até o Éden-Jerusalém (começo generoso) e usar **XP ÷ 15** nos cenários novos? Ou, mais simples,
-  **XP ÷ 12** em todos. Efeito na renda do regular: de 517 para ~490.
-- **Baú de nível:** a cada **2 níveis** (ou ao concluir cada cenário), dobrando as moedas, para o número de baús ficar perto do que
-  era antes da refatoração.
-- **Pedra e Peitoral:** 500 → **800** por pedra e 2.000 → **5.000** no Peitoral Completo.
+Metas combinadas: campanha completa em **12 a 14 meses** para quem joga ~5 partidas por dia; álbum de **300 a 500 figurinhas**;
+baú de nível **a cada 3 níveis**; moedas da campanha **mantêm o padrão** (1 moeda a cada 10 XP, relíquia em dobro; pedra 500 e Peitoral 2.000).
 
-## Perguntas em aberto (precisam de você)
+| | Antes (rascunho acima) | Aplicado |
+|---|---|---|
+| XP por parada | 500, +120 por cenário, teto 3.000 | **500, +70 por cenário, teto 1.800** (cap no cenário 20) |
+| Baú de nível | 1 por nível | **1 a cada 3 níveis** (3, 6, 9...; moedas 20 + 3/nível, teto 80, como antes) |
+| Moedas da parada | XP ÷ 10 | XP ÷ 10 (igual) |
+| Pedra / Peitoral Completo | 500 / 2.000 | 500 / 2.000 (igual, por enquanto) |
 
-1. **Meta de duração** da campanha completa para o jogador regular: ~14, ~17 ou ~21 meses?
-2. **Tamanho real do álbum** hoje (o modelo usa 88 figurinhas). Quanto maior, mais o álbum dura e menos o dinheiro extra da campanha pesa.
-3. **Baú de nível:** manter por nível, a cada 2 níveis ou por cenário?
-4. Prefere que a campanha dê **mais moedas no começo** (cenários de lançamento) ou a mesma proporção em todos?
+Migração `20261029090000_curva_70_1800` reescreve o XP por parada dos cenários existentes e as moedas das paradas. Quem tinha baús de
+nível acumulados passa a ter um por múltiplo de 3 (o `chestLevel` guarda o nível do último baú aberto).
+
+## Resultado simulado (álbum de 400 figurinhas, campanha completa de 194 níveis)
+
+| | Casual (2/dia) | Regular (5/dia) | Dedicado (12/dia) |
+|---|---|---|---|
+| Nível 50 (Jesus) | ~210 dias | **~59 dias** | ~25 dias |
+| Nível 62 (conteúdo de hoje) | ~290 dias | **~80 dias** | ~33 dias |
+| Nível 194 (campanha completa) | nunca em 2,5 anos | **~400 dias (13 meses)** | ~170 dias (5,5 meses) |
+| Álbum (400) no dia 365 | 60% | **94%** | 98% (completo em ~500 dias) |
+| Renda de moedas por dia (dia 90 / 365) | 158 / 172 | **399 / 526** | 757 / 801 |
+| Parte da renda vinda da campanha | 15% | 23% | 29% |
+
+Leituras:
+
+- **Regular:** campanha (~13 meses) e álbum (~13 a 14 meses) terminam juntos. Meta cumprida.
+- **Dedicado:** consome um trio (3 cenários) a cada ~2 semanas; o ritmo de lançamento de **um trio a cada ~5 semanas** serve ao
+  regular, e o dedicado vai ver o aviso "novos cenários em breve" por boa parte do ano.
+- **Casual:** não termina a campanha (e não é o objetivo), mas vê cenários novos a cada ~3 semanas (4 níveis por cenário).
+- A renda do regular fica em ~400 a 520 por dia, na faixa da revisão anterior (~420): o baú a cada 3 níveis compensa o que a
+  campanha passou a pagar.
+
+Reproduzir: `npm run simular-economia -w backend -- futuro` (variáveis `XP_STEP`, `XP_CAP`, `COIN_DIV`, `CHEST_EVERY`, `ALBUM`, `DAYS`, `PROFILE`).
+
+## Ainda em aberto
+
+- **Preços da loja para um álbum de 300 a 500:** o simulador mostra o jogador regular perto de 94% no dia 365 com os preços atuais
+  (comum 450, rara 1.100, épica 2.800, pacote 750). Se o álbum passar de ~500, vale reavaliar preços e a garantia de figurinha dos baús.
+- **Moedas da pedra e do Peitoral Completo** continuam provisórias (500 e 2.000).
+- Revisar com dados reais depois de 3 a 4 semanas de uso.

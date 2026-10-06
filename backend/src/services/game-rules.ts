@@ -62,8 +62,8 @@ export type XpBand = { fromLevel: number; cost: number };
 
 /** XP por parada do primeiro cenário, quanto sobe a cada cenário e o teto (valores sugeridos ao criar cenários). */
 export const XP_PER_STOP_BASE = 500;
-export const XP_PER_STOP_STEP = 120;
-export const XP_PER_STOP_CAP = 3000;
+export const XP_PER_STOP_STEP = 70;
+export const XP_PER_STOP_CAP = 1800;
 
 /**
  * Moedas de uma parada da campanha: 1 moeda para cada 10 XP que ela custa (arredondado de 5 em 5); a relíquia paga em dobro.
@@ -88,6 +88,19 @@ export function stoneState(completedScenarios: number, claimed: boolean, require
 /** O Peitoral está completo quando todas as pedras ativas foram resgatadas. */
 export function breastplateComplete(claimedStones: number, totalStones: number): boolean {
   return totalStones > 0 && claimedStones >= totalStones;
+}
+
+/** O baú de nível vem a cada 3 níveis (3, 6, 9...). */
+export const LEVEL_CHEST_EVERY = 3;
+
+/** Nível do próximo baú a abrir: o próximo múltiplo de 3 depois do último aberto. */
+export function nextChestLevel(chestLevel: number): number {
+  return (Math.floor(chestLevel / LEVEL_CHEST_EVERY) + 1) * LEVEL_CHEST_EVERY;
+}
+
+/** Baús de nível ainda não abertos: um por múltiplo de 3 alcançado depois do último aberto. */
+export function pendingLevelChests(level: number, chestLevel: number): number {
+  return Math.max(0, Math.floor(level / LEVEL_CHEST_EVERY) - Math.floor(chestLevel / LEVEL_CHEST_EVERY));
 }
 
 /** Sem cenários cadastrados, todo nível custa o valor inicial. */

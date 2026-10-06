@@ -29,7 +29,9 @@ import {
   breastplateComplete,
   buildXpBands,
   stoneState,
+  nextChestLevel,
   nodeCoins,
+  pendingLevelChests,
   calculateLevel,
   DEFAULT_XP_BANDS,
   defaultXpPerStop,
@@ -95,10 +97,24 @@ describe("XP, pontos e nível", () => {
 
   it("o XP por parada sugerido sobe de cenário em cenário até o teto", () => {
     expect(defaultXpPerStop(0)).toBe(500);
-    expect(defaultXpPerStop(1)).toBe(620);
-    expect(defaultXpPerStop(9)).toBe(1580);
-    expect(defaultXpPerStop(21)).toBe(3000);
-    expect(defaultXpPerStop(45)).toBe(3000);
+    expect(defaultXpPerStop(1)).toBe(570);
+    expect(defaultXpPerStop(9)).toBe(1130);
+    expect(defaultXpPerStop(18)).toBe(1760);
+    expect(defaultXpPerStop(19)).toBe(1800);
+    expect(defaultXpPerStop(45)).toBe(1800);
+  });
+
+  it("baú de nível: um a cada 3 níveis (3, 6, 9...)", () => {
+    expect(pendingLevelChests(1, 1)).toBe(0);
+    expect(pendingLevelChests(2, 1)).toBe(0);
+    expect(pendingLevelChests(3, 1)).toBe(1);
+    expect(pendingLevelChests(9, 1)).toBe(3);
+    expect(pendingLevelChests(9, 3)).toBe(2);
+    expect(pendingLevelChests(9, 9)).toBe(0);
+    expect(pendingLevelChests(5, 9)).toBe(0);
+    expect(nextChestLevel(1)).toBe(3);
+    expect(nextChestLevel(3)).toBe(6);
+    expect(nextChestLevel(5)).toBe(6);
   });
 
   it("moedas da parada: 1 para cada 10 XP do cenário, relíquia em dobro", () => {
