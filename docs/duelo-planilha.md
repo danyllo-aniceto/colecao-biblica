@@ -36,7 +36,7 @@ Formato: `nome chave=valor chave=valor`. Sem espaços nos valores (`_` vira espa
 | `mover-inimigos` | leva as figurinhas do rival deste cenário para outros | — |
 | `calar` | cancela os Dons contínuos do rival aqui | — |
 | `criar` | cria fichas | `ficha=` Descendente · Ovelha · Pão · Peixe · Soldado `onde=` cada-cenario · aqui · vizinhos |
-| `sumir` | some e volta à mão depois, mais forte | `turnos=1..5` `bonus=N` |
+| `sumir` | some da arena e volta sozinha, no mesmo lugar, mais forte, e fica (no fim do duelo volta sem o bônus) | `turnos=1..5` `bonus=N` |
 | `proteger` | (contínuo) suas figurinhas aqui não são destruídas nem reduzidas pelo rival | — |
 | `aura` | (contínuo) Influência para outras figurinhas suas | `valor=N` `em=` aliados-aqui · vizinhos · aliados `etiqueta=` |
 | `devolver` | devolve uma figurinha do rival à mão dele | `alvo=` inimigo-mais-fraco · inimigo-mais-forte |

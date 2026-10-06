@@ -269,17 +269,7 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
 
       <footer className="shrink-0 space-y-1.5 border-t border-edge bg-surface/90 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur">
         {view.foeDoubledNow && view.status === 'playing' && !playing ? (
-          <div className="animate-duel-narration flex items-center gap-2 rounded-2xl border-2 border-danger bg-danger/10 px-2.5 py-1.5" role="alert">
-            <span className="text-xl" aria-hidden="true">
-              🎲
-            </span>
-            <p className="min-w-0 flex-1 text-xs font-bold leading-tight text-ink">
-              O rival dobrou: vale <b className="text-danger">×{view.stakes}</b>. Siga jogando ou desista perdendo só <b>×{view.retreatCost}</b>.
-            </p>
-            <Button size="sm" variant="secondary" className="shrink-0 text-danger" onClick={onRetreat} disabled={!view.canRetreat || busy}>
-              <FlagRoundedIcon fontSize="small" /> Desistir
-            </Button>
-          </div>
+          <FoeDoubledNotice key={`${view.turn}-${view.stakes}`} stakes={view.stakes} cost={view.retreatCost} canRetreat={view.canRetreat && !busy} onRetreat={onRetreat} />
         ) : null}
         <div className="flex min-h-[4.25rem] items-stretch gap-2 rounded-2xl bg-surface-2 px-3 py-1.5">
           <div className="min-w-0 flex-1" aria-live="polite">
@@ -644,6 +634,34 @@ function CardsArea({
           </span>
         </DuelCardFace>
       ))}
+    </div>
+  );
+}
+
+/** Aviso de que o rival dobrou: flutua sobre a mesa (não empurra nada), some sozinho em alguns segundos e pode ser fechado. */
+function FoeDoubledNotice({ stakes, cost, canRetreat, onRetreat }: { stakes: number; cost: number; canRetreat: boolean; onRetreat: () => void }) {
+  const [open, setOpen] = useState(true);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setOpen(false), 6000);
+    return () => window.clearTimeout(timer);
+  }, []);
+  if (!open) return null;
+  return (
+    <div className="pointer-events-none fixed inset-x-2 top-16 z-40 flex justify-center">
+      <div className="animate-duel-narration pointer-events-auto flex max-w-md items-center gap-2 rounded-2xl border-2 border-danger bg-surface px-2.5 py-1.5 shadow-lg" role="alert">
+        <span className="text-xl" aria-hidden="true">
+          🎲
+        </span>
+        <p className="min-w-0 flex-1 text-xs font-bold leading-tight text-ink">
+          O rival dobrou: vale <b className="text-danger">×{stakes}</b>. Siga jogando ou desista perdendo só <b>×{cost}</b>.
+        </p>
+        <Button size="sm" variant="secondary" className="shrink-0 text-danger" onClick={onRetreat} disabled={!canRetreat}>
+          <FlagRoundedIcon fontSize="small" /> Desistir
+        </Button>
+        <button type="button" className="shrink-0 rounded-full p-1 text-muted hover:text-ink" aria-label="Fechar aviso" onClick={() => setOpen(false)}>
+          ✕
+        </button>
+      </div>
     </div>
   );
 }

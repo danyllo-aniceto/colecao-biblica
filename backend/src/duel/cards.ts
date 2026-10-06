@@ -119,7 +119,7 @@ function describeEffect(effect: Effect): string {
     case "create":
       return effect.where === "eachLane" ? `cria ${effect.token} em cada cenário com espaço` : effect.where === "neighbors" ? `cria ${effect.token} nos cenários vizinhos` : `cria ${effect.token} aqui`;
     case "vanish":
-      return `some e volta à mão ${effect.turns} turnos depois com ${signed(effect.bonus)}`;
+      return `some da arena e volta sozinha ${effect.turns === 1 ? "no turno seguinte" : `${effect.turns} turnos depois`}${effect.bonus ? ` com ${signed(effect.bonus)}` : ""}, no mesmo lugar, e fica`;
     case "protect":
       return "suas figurinhas aqui não podem ser destruídas nem reduzidas pelo rival";
     case "aura":

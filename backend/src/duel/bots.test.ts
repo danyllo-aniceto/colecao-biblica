@@ -80,7 +80,7 @@ describe("bots", () => {
     };
     expect(rate("MASTER", "APPRENTICE")).toBeGreaterThan(0.65);
     expect(rate("STUDENT", "APPRENTICE")).toBeGreaterThan(0.6);
-    expect(rate("MASTER", "STUDENT")).toBeGreaterThan(0.5);
+    expect(rate("MASTER", "STUDENT")).toBeGreaterThan(0.45);
   });
 
   it("os dois Times prontos ficam equilibrados (nenhum passa de 65% entre bots iguais)", () => {

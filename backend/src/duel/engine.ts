@@ -28,6 +28,7 @@ import {
   type Lane,
   type PlacedCard,
   type PlayerState,
+  type Returning,
   type ScenarioDef,
   type Side,
   type SnapCard,
@@ -442,8 +443,9 @@ function applyEffect(state: DuelState, ctx: Ctx, effect: Effect, isDestroyedHook
       const index = list.findIndex((card) => card.uid === ctx.card.uid);
       if (index < 0) return;
       list.splice(index, 1);
-      state.players[ctx.side].returning.push({ card: { uid: ctx.card.uid, def: ctx.card.def, bonus: ctx.card.bonus + effect.bonus }, atTurn: state.turn + effect.turns });
-      emit(state, { type: "vanish", side: ctx.side, lane: ctx.lane, uid: ctx.card.uid, name: self, text: `${self} sumiu e volta em ${effect.turns} turnos.` });
+      // Some da arena (ninguém a atinge) e volta sozinha, no mesmo lugar, mais forte, e fica.
+      state.players[ctx.side].returning.push({ card: { uid: ctx.card.uid, def: ctx.card.def, bonus: ctx.card.bonus }, atTurn: state.turn + effect.turns, lane: ctx.lane, gain: effect.bonus });
+      emit(state, { type: "vanish", side: ctx.side, lane: ctx.lane, uid: ctx.card.uid, name: self, text: `${self} sumiu da arena e volta sozinho no turno ${state.turn + effect.turns}${effect.bonus ? ` com ${effect.bonus > 0 ? "+" : "−"}${Math.abs(effect.bonus)}` : ""}.` });
       return;
     }
     case "bounce": {
@@ -747,6 +749,12 @@ function endOfTurn(state: DuelState) {
 
 function finish(state: DuelState, retreated: Side | null = null) {
   if (retreated === null) {
+    // Quem ainda estava fora (sumiu perto do fim) volta a tempo de contar, mas sem o bônus: não chegou a ficar forte.
+    for (const side of [0, 1] as Side[]) {
+      const waiting = state.players[side].returning.filter((entry) => entry.lane !== undefined);
+      state.players[side].returning = state.players[side].returning.filter((entry) => entry.lane === undefined);
+      for (const entry of waiting) placeReturning(state, side, entry, false);
+    }
     // "Ao fim do duelo", cenário por cenário, quem revelou primeiro no último turno antes.
     const first = state.priority ?? 0;
     for (let laneIndex = 0; laneIndex < LANES; laneIndex += 1) {
@@ -779,6 +787,36 @@ function finish(state: DuelState, retreated: Side | null = null) {
   emit(state, { type: "win", side: winner ?? undefined, text: winner === null ? "Empate!" : retreated !== null ? "O rival desistiu." : "Fim do duelo." });
 }
 
+/**
+ * A figurinha que tinha sumido volta para a arena (a de antes, ou outra com espaço) e fica. `withBonus` = recebe o bônus prometido.
+ * Sem arena com espaço, volta à mão.
+ */
+function placeReturning(state: DuelState, side: Side, entry: Returning, withBonus: boolean) {
+  const player = state.players[side];
+  const room = (index: number) => state.lanes[index].cards[side].length < (isLaneOpen(state, index) ? slotsOf(laneScenario(state, index)) : MAX_SLOTS);
+  const preferred = entry.lane !== undefined && room(entry.lane) ? entry.lane : state.lanes.findIndex((_, index) => room(index));
+  const name = entry.card.def.name;
+  if (preferred < 0) {
+    if (player.hand.length < HAND_MAX) player.hand.push({ uid: entry.card.uid, def: entry.card.def, bonus: entry.card.bonus });
+    else player.graveyard.push(entry.card);
+    emit(state, { type: "return", side, name, text: `${name} voltou à mão (não havia espaço nas arenas).` });
+    return;
+  }
+  const gain = withBonus ? (entry.gain ?? 0) : 0;
+  const placed: PlacedCard = { uid: entry.card.uid, def: entry.card.def, bonus: entry.card.bonus + gain, silenced: false, order: state.nextOrder++, turn: state.turn };
+  state.lanes[preferred].cards[side].push(placed);
+  emit(state, {
+    type: "return",
+    side,
+    lane: preferred,
+    uid: placed.uid,
+    name,
+    amount: gain,
+    text: `${name} voltou para ${arenaName(state, preferred)}${gain ? ` com ${gain > 0 ? "+" : "−"}${Math.abs(gain)}` : ""} e fica.`,
+    ...(entry.lane !== undefined && entry.lane !== preferred ? { fromLane: entry.lane } : {}),
+  });
+}
+
 function nextTurn(state: DuelState, leftover: [number, number] = [0, 0]) {
   state.turn += 1;
   emit(state, { type: "turn", text: `Turno ${state.turn}` });
@@ -787,7 +825,9 @@ function nextTurn(state: DuelState, leftover: [number, number] = [0, 0]) {
     const back = player.returning.filter((entry) => entry.atTurn <= state.turn);
     player.returning = player.returning.filter((entry) => entry.atTurn > state.turn);
     for (const entry of back) {
-      if (player.hand.length < HAND_MAX) {
+      if (entry.lane !== undefined) {
+        placeReturning(state, side, entry, true);
+      } else if (player.hand.length < HAND_MAX) {
         player.hand.push(entry.card);
         emit(state, { type: "return", side, name: entry.card.def.name, text: `${entry.card.def.name} voltou à mão.` });
       } else {
@@ -916,6 +956,8 @@ export type DuelView = {
   /** O rival dobrou a aposta neste turno e você ainda decide: seguir ou desistir. */
   foeDoubledNow: boolean;
   opponent: { handCount: number; deckCount: number; ready: boolean; doubled: boolean };
+  /** Figurinhas que sumiram e voltam sozinhas (de qualquer lado): o nome, a arena e o turno da volta. */
+  away: Array<{ side: Side; def: CardDef; lane: number; atTurn: number; gain: number }>;
   you_doubled: boolean;
   events: DuelEvent[];
   result: DuelResult | null;
@@ -958,6 +1000,7 @@ export function viewFor(state: DuelState, side: Side): DuelView {
     foeDoubledNow: state.status === "playing" && state.players[foe].doubledTurn === state.turn && state.players[side].doubledTurn !== state.turn,
     opponent: { handCount: state.players[foe].hand.length, deckCount: state.players[foe].deck.length, ready: state.players[foe].ready, doubled: state.players[foe].doubledTurn > 0 },
     you_doubled: me.doubledTurn > 0,
+    away: ([0, 1] as Side[]).flatMap((who) => state.players[who].returning.flatMap((entry) => (entry.lane === undefined ? [] : [{ side: who, def: entry.card.def, lane: entry.lane, atTurn: entry.atTurn, gain: entry.gain ?? 0 }]))),
     events: state.events,
     result: state.result,
   };

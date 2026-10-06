@@ -176,7 +176,11 @@ export type Lane = {
 
 export type Staged = { uid: number; lane: number };
 
-export type Returning = { card: Card; atTurn: number };
+/**
+ * Figurinha que sumiu (Dom "sumir") e vai voltar sozinha para a arena `lane` no turno `atTurn`, com o bônus `gain`, e fica lá.
+ * Entradas antigas (sem `lane`) voltam à mão, como antes.
+ */
+export type Returning = { card: Card; atTurn: number; lane?: number; gain?: number };
 
 export type PlayerState = {
   deck: Card[];

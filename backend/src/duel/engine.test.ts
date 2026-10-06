@@ -213,17 +213,20 @@ describe("Dons", () => {
     expect(board(done, 2, 0).filter((card) => card.def.name === "Descendente")).toHaveLength(1);
   });
 
-  it("Jonas some e volta à mão 3 turnos depois com +3", () => {
+  it("Jonas some, volta sozinho para a mesma arena 3 turnos depois com +3 e fica", () => {
     let state = playTurn(duel({ mine: ["jonas", "abel", "rute"] }), [["jonas", 0]]);
     expect(board(state, 0, 0)).toHaveLength(0);
     expect(state.players[0].returning[0].atTurn).toBe(4);
     for (let turn = 2; turn <= 3; turn += 1) {
-      expect(state.players[0].hand.some((card) => card.def.id === "jonas")).toBe(false);
+      expect(board(state, 0, 0).some((card) => card.def.id === "jonas")).toBe(false);
       state = setReady(setReady(state, 0), 1);
     }
     expect(state.turn).toBe(4);
-    const back = state.players[0].hand.find((card) => card.def.id === "jonas")!;
+    expect(state.players[0].hand.some((card) => card.def.id === "jonas")).toBe(false);
+    const back = board(state, 0, 0).find((card) => card.def.id === "jonas")!;
     expect(back.bonus).toBe(3);
+    expect(state.players[0].returning).toHaveLength(0);
+    expect(state.events.some((event) => event.type === "return" && event.lane === 0 && event.uid === back.uid)).toBe(true);
   });
 
   it("Rute cresce quando outra figurinha sua é jogada no mesmo cenário", () => {
