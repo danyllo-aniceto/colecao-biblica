@@ -17,12 +17,15 @@ import { StickerCard } from '@/components/game/sticker-card';
 import { CosmeticPreview } from '@/components/user/rewards/cosmetic-preview';
 import { ScenarioIcon } from '@/components/user/campaign/scenario-art';
 import { cn } from '@/lib/cn';
-import { claimCampaignNode, type Campaign, type CampaignNode, type CampaignScenario, type ClaimNodeResult } from '@/lib/campaign-api';
+import { claimCampaignNode, claimStone, type Campaign, type CampaignNode, type CampaignScenario, type ClaimNodeResult, type ClaimStoneResult, type Stone } from '@/lib/campaign-api';
+import { BreastplateModal, StoneGem, StonePage } from '@/components/user/campaign/breastplate';
+import { BadgeMark } from '@/components/game/player-look';
+import ShieldRoundedIcon from '@mui/icons-material/ShieldRounded';
 import { scenarioFallbackBackground, scenarioMapSrc, scenarioThemeVars } from '@/lib/campaign-theme';
 import { playSfx } from '@/lib/sound/sfx';
 import { rewardVisual } from '@/lib/reward-visual';
 import { ChestIcon, ChestOpening } from '@/components/user/chest-opening';
-import { xpForLevel } from '@/components/game/game-ui';
+import { DEFAULT_XP_BANDS, xpForLevel } from '@/components/game/game-ui';
 import { getRarityLabel } from '@/lib/rarity-theme';
 import HourglassTopRoundedIcon from '@mui/icons-material/HourglassTopRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
@@ -226,6 +229,8 @@ function FinalePage({ campaign, special, playerName, active }: { campaign: Campa
   );
 }
 
+type CampaignPage = { kind: 'soon' } | { kind: 'finale' } | { kind: 'stone'; stone: Stone } | { kind: 'scenario'; scenario: CampaignScenario };
+
 type CampaignModalProps = {
   open: boolean;
   campaign: Campaign | null;
@@ -245,11 +250,29 @@ const prefersReducedMotion = () => typeof window !== 'undefined' && window.match
  */
 export function CampaignModal({ open, campaign, xp, playerName, onClose, onChanged, onUserUpdate }: CampaignModalProps) {
   const toast = useToast();
+  const xpBands = campaign?.xpBands ?? DEFAULT_XP_BANDS;
   // Subida: o primeiro cenário fica embaixo e os seguintes vão aparecendo para cima.
   const scenarios = useMemo(() => [...(campaign?.scenarios ?? [])].reverse(), [campaign]);
-  // Acima do último cenário ficam o prêmio final (baú de esmeralda e figurinha especial) e o aviso de novidades.
-  const topPages = campaign?.special ? 2 : 1;
-  const pageCount = scenarios.length + topPages;
+  // Páginas de cima para baixo: aviso de novidades; depois, na ordem do caminho invertida, os cenários com o prêmio de Jesus
+  // logo acima do último cenário de lançamento e a pedra do Peitoral logo acima do último cenário do grupo dela.
+  const pages = useMemo<CampaignPage[]>(() => {
+    const ascending = campaign?.scenarios ?? [];
+    const withFragment = ascending.map((item, index) => (item.nodes.some((node) => node.fragment) ? index : -1)).filter((index) => index >= 0);
+    const finaleAfter = campaign?.special && withFragment.length > 0 ? withFragment[withFragment.length - 1] : -1;
+    const lastOfStone = new Map<number, number>();
+    ascending.forEach((item, index) => {
+      if (item.stoneId) lastOfStone.set(item.stoneId, index);
+    });
+    const built: CampaignPage[] = [];
+    ascending.forEach((item, index) => {
+      built.push({ kind: 'scenario', scenario: item });
+      if (index === finaleAfter) built.push({ kind: 'finale' });
+      const stone = item.stoneId && lastOfStone.get(item.stoneId) === index ? campaign?.breastplate.stones.find((entry) => entry.id === item.stoneId) : undefined;
+      if (stone) built.push({ kind: 'stone', stone });
+    });
+    return [{ kind: 'soon' }, ...built.reverse()];
+  }, [campaign]);
+  const pageCount = pages.length;
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const positioned = useRef(false);
   const frame = useRef(0);
@@ -261,7 +284,12 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
   const [emerald, setEmerald] = useState<ClaimNodeResult | null>(null);
 
   const special = campaign?.special ?? null;
-  const scenario = scenarios[active - topPages] ?? scenarios[0] ?? null;
+  const activePage = pages[active];
+  // Cor do tema da tela: do cenário (ou da pedra) da página em foco.
+  const themeColor = activePage?.kind === 'scenario' ? activePage.scenario.color : activePage?.kind === 'stone' ? activePage.stone.color : (scenarios[0]?.color ?? null);
+  const [stoneClaiming, setStoneClaiming] = useState<number | null>(null);
+  const [stoneWon, setStoneWon] = useState<{ stone: Stone; result: ClaimStoneResult } | null>(null);
+  const [peitoral, setPeitoral] = useState(false);
   const selectedScenario = selected ? (scenarios.find((item) => item.nodes.some((node) => node.id === selected.id)) ?? null) : null;
   const liveSelected = selected && selectedScenario ? (selectedScenario.nodes.find((node) => node.id === selected.id) ?? selected) : selected;
 
@@ -284,11 +312,11 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
     const scroller = scrollerRef.current;
     if (!open || !campaign || !scroller || positioned.current) return;
     positioned.current = true;
-    const index = Math.max(0, scenarios.findIndex((item) => item.id === campaign.currentScenarioId)) + topPages;
+    const index = Math.max(0, pages.findIndex((page) => page.kind === 'scenario' && page.scenario.id === campaign.currentScenarioId));
     // 'instant' ignora o scroll-smooth do CSS; com 'auto' a abertura rolaria do topo até o cenário.
     scroller.scrollTo({ top: index * scroller.clientHeight, behavior: 'instant' });
     setActive(index);
-  }, [open, campaign, scenarios, topPages]);
+  }, [open, campaign, pages]);
 
   // Whoosh a cada cenário que passa (arrastando ou pelas setas).
   const previousActive = useRef(active);
@@ -359,12 +387,27 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
     }
   }
 
+  async function claimStoneAction(stone: Stone) {
+    setStoneClaiming(stone.id);
+    try {
+      const result = await claimStone(stone.id);
+      onUserUpdate(result.user, result.unlockedAchievements);
+      onChanged();
+      setPeitoral(false);
+      setStoneWon({ stone, result });
+    } catch (reason) {
+      toast.error(errorMessage(reason));
+    } finally {
+      setStoneClaiming(null);
+    }
+  }
+
   const arrow = 'flex h-9 w-9 items-center justify-center rounded-full bg-primary text-on-primary shadow-[0_3px_0_var(--primary-strong)] transition active:translate-y-0.5 active:shadow-none disabled:opacity-40 disabled:shadow-none';
 
   return (
     <>
       {open ? (
-        <div role="dialog" aria-modal="true" aria-label="Campanha" style={scenario ? scenarioThemeVars(scenario.color) : undefined} className="fixed inset-0 z-[60] flex flex-col bg-bg transition-colors duration-700">
+        <div role="dialog" aria-modal="true" aria-label="Campanha" style={themeColor ? scenarioThemeVars(themeColor) : undefined} className="fixed inset-0 z-[60] flex flex-col bg-bg transition-colors duration-700">
           <header className="flex shrink-0 items-center gap-3 border-b border-edge bg-surface/80 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl transition-colors duration-700">
             <Tooltip content="Fechar a campanha" side="bottom">
               <button type="button" onClick={onClose} aria-label="Fechar a campanha" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-surface-3 text-muted transition hover:text-ink">
@@ -372,6 +415,15 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
               </button>
             </Tooltip>
             <h2 className="font-display text-xl font-bold text-ink">Campanha</h2>
+            {campaign && campaign.breastplate.total > 0 ? (
+              <Tooltip content="Peitoral do Sumo Sacerdote" side="bottom">
+                <button type="button" onClick={() => setPeitoral(true)} aria-label={`Abrir o Peitoral: ${campaign.breastplate.claimed} de ${campaign.breastplate.total} pedras`} className="relative flex h-11 items-center gap-1.5 rounded-2xl bg-surface-3 px-3 text-sm font-bold text-ink transition hover:bg-surface-2">
+                  <ShieldRoundedIcon fontSize="small" className="text-[#c99a1c]" />
+                  {campaign.breastplate.claimed}/{campaign.breastplate.total}
+                  {campaign.breastplate.stones.some((stone) => stone.state === 'available') ? <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-success ring-2 ring-surface" /> : null}
+                </button>
+              </Tooltip>
+            ) : null}
             {special ? (
               <div data-rarity={special.character.rarity} className="rarity ml-auto flex min-w-0 max-w-[55%] items-center gap-2 rounded-2xl border-2 border-r-special/50 bg-r-special/10 px-3 py-1.5">
                 <StarRoundedIcon className="shrink-0 text-r-special" fontSize="small" />
@@ -401,10 +453,14 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
           ) : (
             <div className="relative min-h-0 flex-1">
               <div ref={scrollerRef} onScroll={handleScroll} tabIndex={0} aria-label="Cenários da campanha" className="h-full snap-y snap-mandatory overflow-y-auto overscroll-contain scroll-smooth outline-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <SoonPage active={active === 0} />
-                {campaign.special ? <FinalePage campaign={campaign} special={campaign.special} playerName={playerName} active={active === 1} /> : null}
-                {scenarios.map((item, scenarioIndex) => {
-                  const index = scenarioIndex + topPages;
+                {pages.map((page, index) => {
+                  if (page.kind === 'soon') return <SoonPage key="soon" active={active === index} />;
+                  if (page.kind === 'finale' && campaign.special) return <FinalePage key="finale" campaign={campaign} special={campaign.special} playerName={playerName} active={active === index} />;
+                  if (page.kind === 'stone') {
+                    return <StonePage key={`stone-${page.stone.id}`} stone={page.stone} playerName={playerName} active={active === index} claiming={stoneClaiming === page.stone.id} onClaim={(stone) => void claimStoneAction(stone)} onOpenBreastplate={() => setPeitoral(true)} pageClass={pageShell} />;
+                  }
+                  if (page.kind !== 'scenario') return null;
+                  const item = page.scenario;
                   return (
                   <section
                     key={item.id}
@@ -446,25 +502,20 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
                   </button>
                 </Tooltip>
                 <ol className="pointer-events-auto flex flex-col items-center gap-1 rounded-full bg-surface/80 px-1 py-1.5 backdrop-blur">
-                  {Array.from({ length: topPages }, (_, index) => (
-                    <li key={`extra-${index}`}>
-                      <button type="button" onClick={() => goTo(index)} aria-label={index === 0 && topPages === 2 ? 'Ir para o aviso de novidades' : index === topPages - 1 && topPages === 2 ? 'Ir para o prêmio final' : 'Ir para o aviso de novidades'} aria-current={index === active ? 'true' : undefined} className={cn('block rounded-full transition-all duration-300', index === active ? 'h-4 w-2 bg-primary' : 'h-2 w-2 bg-edge-strong/60')} />
-                    </li>
-                  ))}
-                  {scenarios.map((item, scenarioIndex) => {
-                    const index = scenarioIndex + topPages;
-                    return (
-                    <li key={item.id}>
+                  {pages.map((page, index) => (
+                    <li key={page.kind === 'scenario' ? `s-${page.scenario.id}` : page.kind === 'stone' ? `p-${page.stone.id}` : page.kind}>
                       <button
                         type="button"
                         onClick={() => goTo(index)}
-                        aria-label={`Ir para ${item.name}`}
+                        aria-label={page.kind === 'scenario' ? `Ir para ${page.scenario.name}` : page.kind === 'stone' ? `Ir para a pedra ${page.stone.name}` : page.kind === 'finale' ? 'Ir para o prêmio final' : 'Ir para o aviso de novidades'}
                         aria-current={index === active ? 'true' : undefined}
-                        className={cn('block rounded-full transition-all duration-300', index === active ? 'h-4 w-2 bg-primary' : item.completed ? 'h-2 w-2 bg-success' : 'h-2 w-2 bg-edge-strong')}
+                        className={cn(
+                          'block rounded-full transition-all duration-300',
+                          index === active ? 'h-4 w-2 bg-primary' : page.kind === 'scenario' ? (page.scenario.completed ? 'h-2 w-2 bg-success' : 'h-2 w-2 bg-edge-strong') : page.kind === 'stone' ? (page.stone.state === 'claimed' ? 'h-2.5 w-2.5 rotate-45 rounded-[2px] bg-success' : 'h-2.5 w-2.5 rotate-45 rounded-[2px] bg-[#e0b43a]') : 'h-2 w-2 bg-edge-strong/60',
+                        )}
                       />
                     </li>
-                    );
-                  })}
+                  ))}
                 </ol>
                 <Tooltip content="Cenário anterior" side="top">
                   <button type="button" onClick={() => goTo(active + 1)} disabled={active >= pageCount - 1} aria-label="Cenário anterior (para baixo)" className={cn(arrow, 'pointer-events-auto')}>
@@ -502,17 +553,45 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
             <div className="space-y-1 rounded-2xl bg-violet/15 p-3">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm font-bold text-muted">XP total para chegar ao nível {liveSelected.level}</span>
-                <span className="font-display text-lg font-bold text-violet-strong dark:text-violet">{xpForLevel(liveSelected.level).toLocaleString('pt-BR')} XP</span>
+                <span className="font-display text-lg font-bold text-violet-strong dark:text-violet">{xpForLevel(liveSelected.level, xpBands).toLocaleString('pt-BR')} XP</span>
               </div>
               <p className="text-xs font-semibold text-muted">
-                {xp >= xpForLevel(liveSelected.level)
+                {xp >= xpForLevel(liveSelected.level, xpBands)
                   ? `Você já passou desse ponto: tem ${xp.toLocaleString('pt-BR')} XP no total.`
-                  : `Você tem ${xp.toLocaleString('pt-BR')} XP no total: faltam ${(xpForLevel(liveSelected.level) - xp).toLocaleString('pt-BR')} XP. A barra do topo mostra só o XP do nível atual.`}
+                  : `Você tem ${xp.toLocaleString('pt-BR')} XP no total: faltam ${(xpForLevel(liveSelected.level, xpBands) - xp).toLocaleString('pt-BR')} XP. A barra do topo mostra só o XP do nível atual.`}
               </p>
             </div>
             {liveSelected.state === 'locked' ? <Alert tone="info">Chegue ao nível {liveSelected.level} para abrir esta parada.</Alert> : null}
             {liveSelected.state === 'claimed' ? <Alert tone="success">Você já resgatou esta parada.</Alert> : null}
             <RewardLines node={liveSelected} playerName={playerName} music={selectedScenario?.hasMusic && liveSelected.level === selectedScenario.startLevel ? selectedScenario.name : null} />
+          </div>
+        ) : null}
+      </Modal>
+
+      <BreastplateModal open={peitoral} breastplate={campaign?.breastplate ?? null} playerName={playerName} claimingId={stoneClaiming} onClaim={(stone) => void claimStoneAction(stone)} onClose={() => setPeitoral(false)} />
+
+      <Modal open={stoneWon !== null} size="sm" title="Pedra conquistada!" onClose={() => setStoneWon(null)} footer={<Button onClick={() => setStoneWon(null)}>Continuar</Button>}>
+        {stoneWon ? (
+          <div className="space-y-4 text-center">
+            <div className="animate-pop-in mx-auto w-fit">
+              <StoneGem stone={{ ...stoneWon.stone, state: 'claimed' }} size={144} />
+            </div>
+            <p className="font-display text-xl font-semibold text-ink">{stoneWon.stone.name}</p>
+            <ul className="space-y-1 text-sm font-semibold text-ink">
+              {stoneWon.result.coins ? <li>+{stoneWon.result.coins.toLocaleString('pt-BR')} moedas</li> : null}
+              {stoneWon.result.cosmeticGranted && stoneWon.stone.cosmetic ? <li>{stoneWon.stone.cosmetic.name}</li> : null}
+              {stoneWon.result.badgeGranted && stoneWon.stone.badge ? (
+                <li className="flex items-center justify-center gap-2">
+                  <BadgeMark badge={{ name: stoneWon.stone.badge.name, imageUrl: stoneWon.stone.badge.imageUrl ?? null, color: stoneWon.stone.badge.color ?? null, style: stoneWon.stone.badge.style ?? null }} size="sm" /> {stoneWon.stone.badge.name}
+                </li>
+              ) : null}
+            </ul>
+            {stoneWon.result.completeReward ? (
+              <Alert tone="success">
+                Peitoral Completo! +{stoneWon.result.completeReward.coins.toLocaleString('pt-BR')} moedas, {stoneWon.result.completeReward.badgeName} e {stoneWon.result.completeReward.prestigeName}.
+              </Alert>
+            ) : null}
+            <p className="text-xs text-muted">Equipe o brasão em Perfil → Itens visuais.</p>
           </div>
         ) : null}
       </Modal>

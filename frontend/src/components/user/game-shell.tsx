@@ -15,7 +15,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Tooltip } from '@/components/ui/tooltip';
 import { useCampaign } from '@/components/user/campaign/campaign-provider';
 import type { UserProfile } from '@/types/auth';
-import { PlayerAvatar } from '@/components/game/player-look';
+import { BadgeMark, PlayerAvatar } from '@/components/game/player-look';
 import type { PlayerLook } from '@/lib/rewards-api';
 
 export type SectionId = 'home' | 'stickers' | 'quiz' | 'shop' | 'ranking' | 'friends' | 'settings';
@@ -59,8 +59,8 @@ export function PlayerHud({
   socialNotices?: number;
 }) {
   const xp = profile?.xp ?? 0;
-  const progress = levelProgress(xp);
   const campaign = useCampaign();
+  const progress = levelProgress(xp, campaign.xpBands);
 
   return (
     <header className="sticky top-0 z-40 border-b border-edge bg-bg/85 backdrop-blur-xl">
@@ -76,8 +76,11 @@ export function PlayerHud({
           </Tooltip>
           <div className="min-w-0 flex-1 sm:max-w-xs">
             <div className="flex items-baseline justify-between gap-2">
-              <span className="truncate font-display text-base font-semibold text-ink" style={look?.nameColor ? { color: look.nameColor } : undefined}>
-                {profile?.name ?? 'Jogador'}
+              <span className="flex min-w-0 items-center gap-1.5">
+                <span className="truncate font-display text-base font-semibold text-ink" style={look?.nameColor ? { color: look.nameColor } : undefined}>
+                  {profile?.name ?? 'Jogador'}
+                </span>
+                <BadgeMark badge={look?.badge} size="sm" />
               </span>
               <Tooltip content={`Você tem ${progress.current} XP neste nível. Faltam ${progress.needed - progress.current} XP para o nível ${progress.level + 1}.`} side="bottom">
                 <span className="shrink-0 cursor-help text-xs font-bold text-muted" aria-label={`${progress.current} de ${progress.needed} XP neste nível; faltam ${progress.needed - progress.current} para o nível ${progress.level + 1}`}>

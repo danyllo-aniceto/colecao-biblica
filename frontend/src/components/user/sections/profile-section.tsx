@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { InstallAppButton } from '@/components/pwa/install-app-button';
 import { APP_VERSION } from '@/lib/pwa';
+import { useCampaign } from '@/components/user/campaign/campaign-provider';
 import { BoostChips, CoinChip, LevelBadge, ProgressBar, SectionHeading, StatTile, levelProgress } from '@/components/game/game-ui';
 import { AchievementsPanel } from '@/components/user/achievements-panel';
 import { MatchHistoryPanel } from '@/components/user/match-history-panel';
@@ -62,7 +63,8 @@ export function ProfileSection({
   collection,
   onShowcaseChange,
 }: ProfileSectionProps) {
-  const progress = levelProgress(profile?.xp ?? 0);
+  const { xpBands } = useCampaign();
+  const progress = levelProgress(profile?.xp ?? 0, xpBands);
   const [tab, setTab] = useState<Tab>('summary');
   const [previewing, setPreviewing] = useState(false);
   const [pickingShowcase, setPickingShowcase] = useState(false);
@@ -81,7 +83,7 @@ export function ProfileSection({
           </span>
           <div className="min-w-0 flex-1">
             <h1 className="sr-only">{profile?.name ?? 'Jogador'}</h1>
-            <PlayerName name={profile?.name ?? 'Jogador'} look={look} nameClassName="text-3xl" className="[&_.player-title]:text-sm" />
+            <PlayerName name={profile?.name ?? 'Jogador'} look={look} nameClassName="text-3xl" badgeSize="md" className="[&_.player-title]:text-sm" />
             <p className="truncate text-sm font-semibold text-muted">{profile?.email}</p>
             <div className="mt-3 max-w-sm">
               <div className="mb-1 flex justify-between text-xs font-bold text-muted">

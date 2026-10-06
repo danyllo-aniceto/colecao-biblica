@@ -194,6 +194,11 @@ export function cardPower(state: DuelState, laneIndex: number, side: Side, card:
   // Regras de cenário que mexem em cada figurinha.
   const rule = laneScenario(state, laneIndex).rule;
   if (rule.kind === "cheapBonus" && card.def.cost === 1) power += rule.amount;
+  // Sozinha do lado dela aqui.
+  if (rule.kind === "lone" && here.length === 1) power += rule.amount;
+  // A primeira que o lado colocou aqui (as primícias).
+  if (rule.kind === "firstBonus" && here.length > 0 && [...here].sort((a, b) => a.order - b.order)[0].uid === card.uid) power += rule.amount;
+  if (rule.kind === "costBonus" && card.def.cost >= rule.min) power += rule.amount;
   if (rule.kind === "sharedTag" && here.some((mate) => mate.uid !== card.uid && mate.def.tags.some((tag) => card.def.tags.includes(tag)))) power += rule.amount;
   return power;
 }
@@ -204,6 +209,8 @@ function laneBonus(state: DuelState, laneIndex: number, side: Side): number {
   const mine = state.lanes[laneIndex].cards[side];
   const theirs = state.lanes[laneIndex].cards[other(side)];
   if (rule.kind === "majority" && mine.length > theirs.length) return rule.amount;
+  // Quem tem menos figurinhas (e ao menos uma) ganha o bônus; empate de quantidade não dá nada.
+  if (rule.kind === "underdog" && mine.length > 0 && mine.length < theirs.length) return rule.amount;
   if (rule.kind === "tagBonus") return mine.filter((card) => card.def.tags.some((tag) => rule.tags.includes(tag))).length * rule.amount;
   return 0;
 }
@@ -704,6 +711,28 @@ function endOfTurn(state: DuelState) {
         if (cardPower(state, index, side, weakest) <= 0) continue;
         weakest.bonus -= rule.amount;
         emit(state, { type: "power", side, lane: index, uid: weakest.uid, name: weakest.def.name, amount: -rule.amount, text: `${scenarioOf(lane.scenario).name}: ${weakest.def.name} perdeu ${rule.amount}.` });
+      }
+    }
+    if (rule.kind === "decayStrongest" || rule.kind === "growWeakest") {
+      const strongest = rule.kind === "decayStrongest";
+      for (const side of [0, 1] as Side[]) {
+        const cards = lane.cards[side];
+        if (cards.length === 0) continue;
+        // Mais forte ou mais fraca; no empate, a que entrou primeiro.
+        const target = [...cards].sort((a, b) => (strongest ? -1 : 1) * (cardPower(state, index, side, a) - cardPower(state, index, side, b)) || a.order - b.order)[0];
+        // A queda não leva ninguém abaixo de zero.
+        if (strongest && cardPower(state, index, side, target) <= 0) continue;
+        const amount = strongest ? -rule.amount : rule.amount;
+        target.bonus += amount;
+        emit(state, {
+          type: "power",
+          side,
+          lane: index,
+          uid: target.uid,
+          name: target.def.name,
+          amount,
+          text: strongest ? `${scenarioOf(lane.scenario).name}: ${target.def.name}, a mais forte, perdeu ${rule.amount}.` : `${scenarioOf(lane.scenario).name}: ${target.def.name}, a mais fraca, subiu ${rule.amount}.`,
+        });
       }
     }
     if (rule.kind === "stormAt" && state.turn === rule.turn) {

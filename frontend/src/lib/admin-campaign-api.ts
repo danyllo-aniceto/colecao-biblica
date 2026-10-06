@@ -28,6 +28,10 @@ export type AdminScenario = {
   boardLandmarks?: Landmark[] | null;
   fragmentCharacterId: number | null;
   fragmentCharacter: { id: number; name: string } | null;
+  /** Pedra do Peitoral do grupo deste cenário. */
+  stoneId?: number | null;
+  /** XP para subir cada nível (parada) deste cenário. */
+  xpPerStop: number;
   sortOrder: number;
   active: boolean;
   system: boolean;
@@ -52,6 +56,10 @@ export type ScenarioPayload = {
   boardPathStyle?: PathStyle | null;
   boardLandmarks?: Landmark[] | null;
   fragmentCharacterId: number | null;
+  /** Vazio na criação: continua a escada do último cenário. */
+  xpPerStop?: number;
+  /** Pedra do Peitoral (3 cenários por pedra); null desliga. */
+  stoneId?: number | null;
   sortOrder: number;
   active: boolean;
 };
@@ -119,3 +127,22 @@ export function defaultNodePosition(index: number, total: number): { x: number; 
   const span = Math.max(total - 1, 1);
   return { x: columns[index % columns.length], y: Math.round(90 - (index / span) * 78) };
 }
+
+/** Uma das 12 pedras do Peitoral, como o painel edita. */
+export type AdminStone = {
+  id: number;
+  slot: number;
+  name: string;
+  tribe: string | null;
+  color: string;
+  description: string | null;
+  imageUrl: string | null;
+  rewardCoins: number;
+  active: boolean;
+  _count: { scenarios: number };
+};
+
+export type StonePayload = { name: string; tribe: string | null; color: string; description: string | null; imageUrl: string | null; rewardCoins: number; active: boolean };
+
+export const listStonesAdmin = () => apiRequest<AdminStone[]>('/campaign/admin/stones', { method: 'GET' }, 'Não foi possível carregar as pedras.');
+export const updateStone = (id: number, payload: StonePayload) => apiRequest(`/campaign/admin/stones/${id}`, json('PUT', payload), 'Não foi possível salvar a pedra.');

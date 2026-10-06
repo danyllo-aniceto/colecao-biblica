@@ -1,7 +1,7 @@
 import type { ScenarioDef } from "./types";
 
 /**
- * Os 10 cenários do Duelo (os mesmos da campanha). Nenhum usa sorte: só decisão do jogador.
+ * Os cenários do Duelo (os mesmos da campanha: 10 de lançamento + os das 12 Pedras). Nenhum usa sorte: só decisão do jogador.
  * Regras são dados; o motor as lê em `engine.ts`.
  */
 export const SCENARIOS: ScenarioDef[] = [
@@ -15,6 +15,12 @@ export const SCENARIOS: ScenarioDef[] = [
   { id: "babilonia", name: "Babilônia", emoji: "🦁", rule: { kind: "shiftFirst" }, text: "A primeira figurinha de cada lado vai para o cenário vizinho à direita (se houver espaço)." },
   { id: "galileia", name: "Mar da Galileia", emoji: "⛵", rule: { kind: "stormAt", turn: 4, amount: 1 }, text: "No fim do turno 4, todas as figurinhas daqui perdem 1." },
   { id: "jerusalem", name: "Jerusalém", emoji: "🕊️", rule: { kind: "winnerBonus", amount: 2 }, text: "Quem vencer este cenário ganha +2 na Influência total (desempate)." },
+  { id: "babel", name: "Torre de Babel", emoji: "🧱", rule: { kind: "decayStrongest", amount: 1 }, text: "No fim de cada turno, a figurinha mais forte de cada lado perde 1." },
+  { id: "betel", name: "Betel", emoji: "🪜", rule: { kind: "growWeakest", amount: 1 }, text: "No fim de cada turno, a figurinha mais fraca de cada lado ganha +1." },
+  { id: "peniel", name: "Peniel", emoji: "🌅", rule: { kind: "underdog", amount: 3 }, text: "Quem tem menos figurinhas aqui (ao menos 1) ganha +3." },
+  { id: "horebe", name: "Sarça ardente em Horebe", emoji: "🔥", rule: { kind: "lone", amount: 3 }, text: "Uma figurinha sozinha do seu lado aqui ganha +3." },
+  { id: "tabernaculo", name: "Tabernáculo", emoji: "🪔", rule: { kind: "firstBonus", amount: 2 }, text: "A primeira figurinha de cada lado aqui (as primícias) ganha +2." },
+  { id: "cidade-davi", name: "Cidade de Davi", emoji: "🎵", rule: { kind: "costBonus", min: 4, amount: 2 }, text: "Figurinhas de Vigor 4 ou mais aqui ganham +2." },
 ];
 
 export const SCENARIO_BY_ID = new Map(SCENARIOS.map((scenario) => [scenario.id, scenario]));

@@ -4,6 +4,7 @@ import type { Landmark, PathStyle } from '@board/layout';
 import type { StickerRarity } from '@/lib/admin-api';
 import type { Cosmetic } from '@/lib/rewards-api';
 import type { UnlockedAchievement } from '@/lib/user-api';
+import type { XpBand } from '@/components/game/game-ui';
 import type { UserProfile } from '@/types/auth';
 
 export type CampaignNodeState = 'claimed' | 'available' | 'locked';
@@ -35,6 +36,8 @@ export type CampaignScenario = {
   verse: string | null;
   verseReference: string | null;
   color: string | null;
+  /** Pedra do Peitoral que este cenário ajuda a conquistar (3 cenários por pedra). */
+  stoneId?: number | null;
   mapImageUrl: string | null;
   iconImageUrl: string | null;
   /** Imagem de fundo da tela do quiz neste cenário. */
@@ -68,8 +71,54 @@ export type CampaignSpecial = {
   owned: boolean;
 };
 
+export type StoneState = 'claimed' | 'available' | 'locked';
+
+/** Uma das 12 pedras do Peitoral do Sumo Sacerdote. */
+export type Stone = {
+  id: number;
+  /** Posição no peitoral (1 a 12, fileiras de 3). */
+  slot: number;
+  name: string;
+  tribe: string | null;
+  color: string;
+  description: string | null;
+  imageUrl: string | null;
+  rewardCoins: number;
+  cosmetic: Cosmetic | null;
+  badge: Cosmetic | null;
+  /** Cenários do grupo já cadastrados; a pedra pede `required`. */
+  scenarios: Array<{ id: number; slug: string; name: string; color: string | null; iconImageUrl: string | null; completed: boolean }>;
+  required: number;
+  completed: number;
+  state: StoneState;
+};
+
+export type Breastplate = {
+  stones: Stone[];
+  claimed: number;
+  total: number;
+  complete: boolean;
+  finalClaimed: boolean;
+  finalReward: { coins: number; badgeName: string; prestigeName: string };
+};
+
+export type ClaimStoneResult = {
+  stoneId: number;
+  coins: number;
+  cosmeticGranted: boolean;
+  badgeGranted: boolean;
+  /** Na 12ª pedra: a conquista Peitoral Completo. */
+  completeReward: { coins: number; badgeName: string; prestigeName: string } | null;
+  unlockedAchievements: UnlockedAchievement[];
+  user: UserProfile;
+};
+
 export type Campaign = {
   level: number;
+  /** Curva de XP por nível, para a barra de progresso. */
+  xpBands: XpBand[];
+  /** O Peitoral: as 12 pedras, o progresso de cada uma e a conquista final. */
+  breastplate: Breastplate;
   currentScenarioId: number | null;
   special: CampaignSpecial | null;
   /** O que o Baú de Esmeralda traz (prêmio da figurinha especial). */
@@ -97,3 +146,5 @@ export const getCampaign = () => apiRequest<Campaign>('/campaign', { method: 'GE
 
 export const claimCampaignNode = (id: number) =>
   apiRequest<ClaimNodeResult>(`/campaign/nodes/${id}/claim`, { method: 'POST' }, 'Não foi possível resgatar esta parada.');
+
+export const claimStone = (id: number) => apiRequest<ClaimStoneResult>(`/campaign/stones/${id}/claim`, { method: 'POST' }, 'Não foi possível resgatar esta pedra.');

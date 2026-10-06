@@ -23,7 +23,7 @@ import {
 
 export const cosmeticsRouter = Router();
 
-const cosmeticType = z.enum(["AVATAR", "FRAME", "TITLE", "NAME_COLOR", "REACTION", "PROFILE_BG", "ALBUM_COVER", "PAWN"]);
+const cosmeticType = z.enum(["AVATAR", "FRAME", "TITLE", "NAME_COLOR", "REACTION", "PROFILE_BG", "ALBUM_COVER", "PAWN", "BADGE"]);
 const color = z
   .string()
   .regex(/^#[0-9a-fA-F]{6}$/, "Use uma cor no formato #rrggbb")
@@ -153,6 +153,7 @@ async function validate(type: z.infer<typeof cosmeticType>, input: CosmeticInput
   if (type === "PAWN" && !input.imageUrl && !input.style) {
     throw badRequest("O peão precisa de uma imagem ou de um emoji");
   }
+  if (type === "BADGE" && !input.imageUrl && !input.style) throw badRequest("O brasão precisa de uma imagem ou de um emoji");
   if ((type === "PROFILE_BG" || type === "ALBUM_COVER") && !input.imageUrl && !input.color) {
     throw badRequest(type === "PROFILE_BG" ? "O fundo de perfil precisa de uma imagem ou de uma cor" : "A capa do álbum precisa de uma imagem ou de uma cor");
   }
@@ -383,6 +384,8 @@ const TYPE_ALIASES: Record<string, z.infer<typeof cosmeticType>> = {
   capa: "ALBUM_COVER",
   peao: "PAWN",
   pawn: "PAWN",
+  brasao: "BADGE",
+  badge: "BADGE",
 };
 
 const TITLE_STYLE_ALIASES: Record<string, (typeof TITLE_STYLES)[number]> = {
@@ -465,6 +468,9 @@ cosmeticsRouter.post(
         if (!animation) return void errors.push({ row, message: `animação "${data.animation}" inválida (Pulo, Quicar, Tremer, Girar, Subir ou Pulsar)` });
       } else if (type === "PAWN") {
         if (!data.emoji && !data.imageUrl) return void errors.push({ row, message: "informe um emoji ou o link de uma imagem para o peão" });
+        style = data.emoji || null;
+      } else if (type === "BADGE") {
+        if (!data.emoji && !data.imageUrl) return void errors.push({ row, message: "informe um emoji ou o link de uma imagem para o brasão" });
         style = data.emoji || null;
       } else if (type === "AVATAR") {
         // Sem imagem não dá para usar: entra desativado até a imagem ser enviada.

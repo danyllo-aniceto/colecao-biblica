@@ -37,6 +37,17 @@ código em **português do Brasil**.
 - Raridade `SPECIAL` (Jesus) é única e só vem da campanha: nunca em pacote, sorteio, loja, troca, venda ou fusão
   (`isCampaignOnlyRarity` em `game-rules.ts`). Cenários/paradas da campanha: `services/campaign.ts` e seed em
   `default-campaign.ts`; guia de arte em `docs/campanha-prompts-de-arte.md`.
+- Campanha e passes são mundos separados: tema/arte de passe nunca é reutilizado em cenário (e vice-versa).
+- Continuação da campanha (12 Pedras do Peitoral, cenários 11+ em trios): plano e checklist em `docs/campanha-12-pedras.md`; padrão de
+  prompts de arte (3D Disney/Pixar) em `docs/prompts-3d-padrao.md`. **Todo cenário novo cadastrado já ganha a regra dele no Duelo**
+  (`duel/scenarios.ts`, sem sorte, com teste) e entra no checklist.
+- Nível/XP: o custo é **por cenário** (`scenarios.xp_per_stop`, 500 +70 por cenário, teto 1.800), não por nível. Curva em `game-rules.ts`
+  (`buildXpBands`/`calculateLevel`) carregada por `services/xp-curve.ts` e enviada ao app em `/campaign` (`xpBands`); mudou cenário/parada,
+  `syncUserLevels` recalcula o nível de todos. Cenário novo tem **4 paradas** (a 4ª é a relíquia).
+  Baú de nível a cada 3 níveis (`pendingLevelChests`). Economia: `docs/economia.md`.
+  Moedas da parada = XP por parada ÷ 10 (de 5 em 5), relíquia em dobro (`nodeCoins`).
+- 12 Pedras: `Stone` (12 no seed, `services/breastplate.ts`), cenários ligados por `scenarios.stone_id` (3 por pedra), resgate em
+  `POST /campaign/stones/:id/claim` (moedas + cor do nome + brasão `BADGE`); a 12ª dá o Peitoral Completo. Cenários das Pedras não dão fragmento de Jesus.
 - Toda mudança de schema vira migração em `backend/prisma/migrations` (o deploy roda `migrate deploy`).
 
 ## Modo Tabuleiro (jogo com amigos, sem progresso de perfil)

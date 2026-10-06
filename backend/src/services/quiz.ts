@@ -28,7 +28,9 @@ import {
   shuffle,
   studyStatus,
   weightedPick,
+  pendingLevelChests,
 } from "./game-rules";
+import { loadXpBands } from "./xp-curve";
 import { currentScenarioIdFor } from "./campaign";
 import { checkAchievements } from "./achievements";
 import { applyReward, availableRewards, grantStickerIfMissing, walletData } from "./rewards";
@@ -861,7 +863,7 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
       ...walletData(wallet),
       xp: totalXp,
       totalScore: user.totalScore + score,
-      level: calculateLevel(totalXp),
+      level: calculateLevel(totalXp, await loadXpBands(tx)),
       stickerPity,
       bestCombo: Math.max(user.bestCombo, stats.bestCombo ?? 0),
     },
@@ -916,7 +918,7 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
     studyLevelUp,
     eventName: event && (event.xpMultiplier > 1 || event.coinMultiplier > 1) ? event.name : null,
     levelUp: updated.level > user.level,
-    chestsPending: Math.max(0, updated.level - updated.chestLevel),
+    chestsPending: pendingLevelChests(updated.level, updated.chestLevel),
     userXp: updated.xp,
     userLevel: updated.level,
     userCoins: updated.coins + achievementCoins,

@@ -5,7 +5,9 @@ import { campaignNodeState, currentScenarioId, defaultNodePosition, fragmentsCom
 import { EMERALD_CHEST, openEmeraldChest } from "./chests";
 import { EMERALD_SET_NAMES } from "./default-cosmetics";
 import { grantCosmetic, toCosmeticResponse } from "./cosmetics";
+import { getBreastplate } from "./breastplate";
 import { toUserResponse } from "./mappers";
+import { loadXpBands } from "./xp-curve";
 import { applyReward, grantStickerIfMissing, walletData } from "./rewards";
 import { getSettings } from "./settings";
 
@@ -44,6 +46,10 @@ export async function getCampaign(userId: number) {
 
   return {
     level: user.level,
+    /** Curva de XP por nível (o app calcula a barra de progresso com ela). */
+    xpBands: await loadXpBands(prisma),
+    /** O Peitoral: as 12 pedras, o progresso de cada uma e a conquista final. */
+    breastplate: await getBreastplate(prisma, userId),
     currentScenarioId: currentId,
     emeraldChest: {
       coins: EMERALD_CHEST.coins,
@@ -88,6 +94,7 @@ export async function getCampaign(userId: number) {
         verse: scenario.verse,
         verseReference: scenario.verseReference,
         color: scenario.color,
+        stoneId: scenario.stoneId,
         mapImageUrl: scenario.mapImageUrl,
         iconImageUrl: scenario.iconImageUrl,
         quizBackgroundUrl: scenario.quizBackgroundUrl,

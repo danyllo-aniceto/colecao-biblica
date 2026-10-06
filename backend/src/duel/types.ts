@@ -144,7 +144,13 @@ export type ScenarioRule =
   | { kind: "tagBonus"; tags: string[]; amount: number }
   | { kind: "shiftFirst" }
   | { kind: "stormAt"; turn: number; amount: number }
-  | { kind: "winnerBonus"; amount: number };
+  | { kind: "winnerBonus"; amount: number }
+  | { kind: "decayStrongest"; amount: number }
+  | { kind: "growWeakest"; amount: number }
+  | { kind: "underdog"; amount: number }
+  | { kind: "lone"; amount: number }
+  | { kind: "firstBonus"; amount: number }
+  | { kind: "costBonus"; min: number; amount: number };
 
 export type ScenarioDef = {
   /** Mesmo identificador (slug) do cenário da campanha. */

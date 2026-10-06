@@ -139,3 +139,99 @@ fica como está. Tudo continua editável no painel (Configurações e Loja), inc
 - A renda depende do perfil: ~150 moedas por dia (casual, 2 partidas), ~300 (regular, 5) e ~400 (dedicado, 12).
 - O jogador do modelo gasta tudo na loja, sempre na figurinha mais rara que consegue pagar: é o pior caso para a duração.
 - Vale reavaliar com dados reais depois de 3 a 4 semanas de uso (quanto cada jogador ganha por dia e o que compra).
+
+---
+
+# Reavaliação: curva por cenário, 12 Pedras e moedas da campanha (rascunho)
+
+O que mudou desde a revisão acima: o custo de XP passou a ser **por cenário** (500 no Éden, +120 por cenário, teto 3.000), as
+paradas pagam **XP ÷ 10 moedas** (relíquia em dobro), entraram o **baú de nível por nível mais barato**, a **pedra do Peitoral**
+(500 moedas a cada 3 cenários, a 12ª +2.000) e a campanha cresce até **46 cenários e 194 níveis** (36 cenários × 4 paradas depois de Jesus).
+
+Simulador atualizado: `npm run simular-economia -w backend -- hoje` (13 cenários, 62 níveis) ou `-- futuro` (campanha completa).
+Variáveis para testar ajustes sem editar o arquivo: `XP_STEP`, `XP_CAP`, `COIN_DIV` (divisor das moedas da parada) e `DAYS`.
+Modelo: 3 perfis (casual 2 partidas/dia, regular 5, dedicado 12), álbum de 88 figurinhas; os números são medianas de 100 simulações.
+
+## O que a simulação mostra (curva atual: 500, +120, teto 3.000; moedas = XP ÷ 10)
+
+| | Casual | Regular | Dedicado |
+|---|---|---|---|
+| Fim dos 10 cenários de lançamento (nível 50, Jesus) | ~270 dias | **~75 dias** | ~32 dias |
+| Fim do conteúdo de hoje (nível 62) | ~380 dias | **~105 dias** | ~45 dias |
+| Campanha completa (nível 194) | nunca em 4 anos | **~630 dias (21 meses)** | ~265 dias (9 meses) |
+| Renda de moedas por dia (dia 90) | 178 (era 150) | **517 (era 420)** | 1.054 (era 818) |
+| Parte da renda vinda da campanha (60 dias) | 14% (era 5%) | **19% (era 6%)** | 22% (era 6%) |
+| Álbum completo (mediana) | +1 ano | ~210 dias (era ~204) | ~99 dias (era ~94) |
+
+Antes = curva por nível, sem moedas por XP (coluna "ECONOMIA NOVA" do simulador: `npm run simular-economia -w backend -- novo`).
+
+## Achados
+
+1. **A campanha virou fonte relevante de moedas** (de ~6% para ~19% da renda do jogador regular). Isso é esperado (as paradas agora
+   pagam por esforço), mas empurra a renda ~25% acima do que a revisão anterior calibrou. O álbum, porém, quase não encurtou
+   (mediana ~210 dias), porque a velocidade dele vem sobretudo dos baús da partida e das repetidas.
+2. **O início ficou bem mais rápido, e o fim muito longo.** O jogador regular chega a Jesus em ~2,5 meses (antes ~6), mas leva 21 meses
+   para os 194 níveis; o casual não termina. O dedicado esgota o conteúdo de hoje em 6 semanas: a tela "novos cenários em breve" vai
+   aparecer para ele cedo, então o ritmo de lançamento de **um trio a cada ~5 semanas** precisa ser mantido.
+3. **Cada nível dá um baú de nível** (20 + 3/nível, teto 80 moedas, mais ajuda e chance de item visual). Com níveis mais baratos o
+   jogador regular acumula **129 a 158 níveis em 1 ano** (antes ~70): são o dobro de baús de nível, e o conjunto de itens visuais
+   "que saem no baú" e as ajudas se esgotam mais cedo. Vale decidir se o baú de nível continua **por nível** ou passa a ser **a cada
+   N níveis / por cenário concluído**.
+4. **Níveis depois do último cenário continuam rendendo baú** (sem parada, só o baú de nível). Não quebra nada, mas o dedicado
+   chega ao nível ~250 no ano sem conteúdo novo; o aviso "em breve" cobre isso.
+5. **Moedas da pedra (500) e do Peitoral Completo (2.000)** somam só ~2% da renda; estão baixas para uma conquista de 1 ano e meio
+   (2.000 = ~4 dias de renda de um jogador regular). Podem subir sem risco.
+
+## Sensibilidade: o que cada ajuste faz (campanha completa, jogador regular)
+
+| Ajuste | Dias até o nível 194 | Dias até o nível 62 | Renda dia 90 |
+|---|---|---|---|
+| Atual: +120, teto 3.000, XP ÷ 10 | 631 (21 meses) | 104 | 517 |
+| +100, teto 2.400 | **524 (17 meses)** | 95 | ~517 |
+| +80, teto 2.000 | 443 (14,5 meses) | 85 | ~517 |
+| Atual, mas moedas XP ÷ 15 | 631 | 104 | 485 |
+| Atual, mas moedas XP ÷ 20 | 631 | 106 | 466 |
+
+## Decisões aplicadas
+
+Metas combinadas: campanha completa em **12 a 14 meses** para quem joga ~5 partidas por dia; álbum de **300 a 500 figurinhas**;
+baú de nível **a cada 3 níveis**; moedas da campanha **mantêm o padrão** (1 moeda a cada 10 XP, relíquia em dobro; pedra 500 e Peitoral 2.000).
+
+| | Antes (rascunho acima) | Aplicado |
+|---|---|---|
+| XP por parada | 500, +120 por cenário, teto 3.000 | **500, +70 por cenário, teto 1.800** (cap no cenário 20) |
+| Baú de nível | 1 por nível | **1 a cada 3 níveis** (3, 6, 9...; moedas 20 + 3/nível, teto 80, como antes) |
+| Moedas da parada | XP ÷ 10 | XP ÷ 10 (igual) |
+| Pedra / Peitoral Completo | 500 / 2.000 | 500 / 2.000 (igual, por enquanto) |
+
+Migração `20261029090000_curva_70_1800` reescreve o XP por parada dos cenários existentes e as moedas das paradas. Quem tinha baús de
+nível acumulados passa a ter um por múltiplo de 3 (o `chestLevel` guarda o nível do último baú aberto).
+
+## Resultado simulado (álbum de 400 figurinhas, campanha completa de 194 níveis)
+
+| | Casual (2/dia) | Regular (5/dia) | Dedicado (12/dia) |
+|---|---|---|---|
+| Nível 50 (Jesus) | ~210 dias | **~59 dias** | ~25 dias |
+| Nível 62 (conteúdo de hoje) | ~290 dias | **~80 dias** | ~33 dias |
+| Nível 194 (campanha completa) | nunca em 2,5 anos | **~400 dias (13 meses)** | ~170 dias (5,5 meses) |
+| Álbum (400) no dia 365 | 60% | **94%** | 98% (completo em ~500 dias) |
+| Renda de moedas por dia (dia 90 / 365) | 158 / 172 | **399 / 526** | 757 / 801 |
+| Parte da renda vinda da campanha | 15% | 23% | 29% |
+
+Leituras:
+
+- **Regular:** campanha (~13 meses) e álbum (~13 a 14 meses) terminam juntos. Meta cumprida.
+- **Dedicado:** consome um trio (3 cenários) a cada ~2 semanas; o ritmo de lançamento de **um trio a cada ~5 semanas** serve ao
+  regular, e o dedicado vai ver o aviso "novos cenários em breve" por boa parte do ano.
+- **Casual:** não termina a campanha (e não é o objetivo), mas vê cenários novos a cada ~3 semanas (4 níveis por cenário).
+- A renda do regular fica em ~400 a 520 por dia, na faixa da revisão anterior (~420): o baú a cada 3 níveis compensa o que a
+  campanha passou a pagar.
+
+Reproduzir: `npm run simular-economia -w backend -- futuro` (variáveis `XP_STEP`, `XP_CAP`, `COIN_DIV`, `CHEST_EVERY`, `ALBUM`, `DAYS`, `PROFILE`).
+
+## Ainda em aberto
+
+- **Preços da loja para um álbum de 300 a 500:** o simulador mostra o jogador regular perto de 94% no dia 365 com os preços atuais
+  (comum 450, rara 1.100, épica 2.800, pacote 750). Se o álbum passar de ~500, vale reavaliar preços e a garantia de figurinha dos baús.
+- **Moedas da pedra e do Peitoral Completo** continuam provisórias (500 e 2.000).
+- Revisar com dados reais depois de 3 a 4 semanas de uso.

@@ -5,7 +5,7 @@ import { env } from "../lib/env";
 import { checkAchievements } from "./achievements";
 import { grantCosmetic, toCosmeticResponse } from "./cosmetics";
 import { activeEvent } from "./events";
-import { chestCoins, duplicateCosmeticCoins, monthKeyInTimeZone, monthRangeInTimeZone, nextMonthKey, passForMonth } from "./game-rules";
+import { chestCoins, duplicateCosmeticCoins, monthKeyInTimeZone, monthRangeInTimeZone, nextChestLevel, nextMonthKey, passForMonth, pendingLevelChests } from "./game-rules";
 import { HELPERS } from "./helpers";
 import { toUserResponse } from "./mappers";
 import { applyReward, walletData } from "./rewards";
@@ -36,9 +36,9 @@ export async function openChest(userId: number, random: () => number = Math.rand
   return transaction(async (tx) => {
     await lockUser(tx, userId);
     const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
-    if (user.level <= user.chestLevel) throw badRequest("Nenhum baú para abrir. Suba de nível para ganhar o próximo!");
+    if (pendingLevelChests(user.level, user.chestLevel) <= 0) throw badRequest("Nenhum baú para abrir. Suba de nível para ganhar o próximo!");
     const settings = await getSettings(tx);
-    const level = user.chestLevel + 1;
+    const level = nextChestLevel(user.chestLevel);
 
     let coins = chestCoins(level, settings);
     const room = CHEST_BOOSTS.filter((boost) => user[boost.field] < settings[boost.maxSetting]);
@@ -61,7 +61,7 @@ export async function openChest(userId: number, random: () => number = Math.rand
       coins,
       boost: boost ? { field: boost.field, name: boost.name } : null,
       cosmetic: cosmetic ? toCosmeticResponse(cosmetic) : null,
-      chestsPending: Math.max(0, saved.level - saved.chestLevel),
+      chestsPending: pendingLevelChests(saved.level, saved.chestLevel),
       user: toUserResponse(saved),
     };
   });

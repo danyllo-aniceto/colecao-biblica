@@ -52,7 +52,7 @@ export async function resetUsersProgress(userIds: number[], options: ResetOption
       await tx.message.deleteMany({ where: { OR: [{ senderId: mine }, { receiverId: mine }] } });
       await tx.friendship.deleteMany({ where: { OR: [{ requesterId: mine }, { addresseeId: mine }] } });
     }
-    await tx.user.updateMany({ where: { id: mine }, data: { ...freshProgress(), avatarId: null, frameId: null, titleId: null, nameColorId: null, profileBgId: null, albumCoverId: null } });
+    await tx.user.updateMany({ where: { id: mine }, data: { ...freshProgress(), avatarId: null, frameId: null, titleId: null, nameColorId: null, profileBgId: null, albumCoverId: null, badgeId: null } });
   });
   return userIds.length;
 }

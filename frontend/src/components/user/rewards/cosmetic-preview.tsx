@@ -1,4 +1,4 @@
-import { PlayerAvatar, PlayerTitle, ReactionGlyph } from '@/components/game/player-look';
+import { BadgeMark, PlayerAvatar, PlayerTitle, ReactionGlyph } from '@/components/game/player-look';
 import { albumCoverStyle, coverImageStyle, surfaceStyle } from '@/lib/look-background';
 import type { Cosmetic } from '@/lib/rewards-api';
 
@@ -11,6 +11,7 @@ export const COSMETIC_TYPE_LABELS: Record<Cosmetic['type'], { one: string; many:
   PROFILE_BG: { one: 'Fundo de perfil', many: 'Fundos de perfil' },
   ALBUM_COVER: { one: 'Capa do álbum', many: 'Capas do álbum' },
   PAWN: { one: 'Peão', many: 'Peões' },
+  BADGE: { one: 'Brasão', many: 'Brasões' },
 };
 
 /** Como o item fica no jogador: usa o ícone atual para mostrar molduras. */
@@ -31,6 +32,8 @@ export function CosmeticPreview({ item, playerName, avatarUrl, size = 'lg' }: { 
     case 'REACTION':
     case 'PAWN':
       return <ReactionGlyph reaction={item} size={size === 'lg' ? 'md' : 'sm'} />;
+    case 'BADGE':
+      return <BadgeMark badge={{ name: item.name, imageUrl: item.imageUrl ?? null, color: item.color ?? null, style: item.style ?? null }} size={size === 'lg' ? 'md' : 'sm'} />;
     case 'PROFILE_BG':
       return (
         <span className="flex h-full min-h-12 w-full items-center gap-2 overflow-hidden rounded-xl px-2" style={surfaceStyle(item)}>

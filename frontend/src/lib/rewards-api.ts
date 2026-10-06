@@ -3,7 +3,7 @@ import type { StickerRarity } from '@/lib/admin-api';
 import type { UnlockedAchievement } from '@/lib/user-api';
 import type { UserProfile } from '@/types/auth';
 
-export type CosmeticType = 'AVATAR' | 'FRAME' | 'TITLE' | 'NAME_COLOR' | 'REACTION' | 'PROFILE_BG' | 'ALBUM_COVER' | 'PAWN';
+export type CosmeticType = 'AVATAR' | 'FRAME' | 'TITLE' | 'NAME_COLOR' | 'REACTION' | 'PROFILE_BG' | 'ALBUM_COVER' | 'PAWN' | 'BADGE';
 export type CosmeticUnlock = 'FREE' | 'SHOP' | 'REQUIREMENT' | 'REWARD';
 
 export type Cosmetic = {
@@ -14,7 +14,7 @@ export type Cosmetic = {
   rarity: StickerRarity;
   imageUrl?: string | null;
   color?: string | null;
-  /** Título: plain/glow/rainbow/pulse/shimmer/wave. Moldura: solid/wood/copper/silver/gold/fire/rainbow/ice/sunset/laurel/aurora/neon/royal/galaxy/pearl/pentecost/emerald. Reação: emoji. */
+  /** Título: plain/glow/rainbow/pulse/shimmer/wave. Moldura: solid/wood/copper/silver/gold/fire/rainbow/ice/sunset/laurel/aurora/neon/royal/galaxy/pearl/pentecost/emerald. Reação, peão e brasão: emoji. */
   style?: string | null;
   /** Reação: como entra no chat (pop, bounce, shake, spin, rise, pulse). */
   animation?: string | null;
@@ -45,7 +45,7 @@ export type UnlockedCosmetic = { id: number; name: string; type: CosmeticType; r
 
 export type Inventory = {
   unlocked: UnlockedCosmetic[];
-  equipped: { avatarId: number | null; frameId: number | null; titleId: number | null; nameColorId: number | null; profileBgId: number | null; albumCoverId: number | null };
+  equipped: { avatarId: number | null; frameId: number | null; titleId: number | null; nameColorId: number | null; profileBgId: number | null; albumCoverId: number | null; badgeId: number | null };
   coins: number;
   items: InventoryItem[];
 };
@@ -59,6 +59,8 @@ export type PlayerLook = {
   /** Fundo do cartão de perfil e capa do álbum. */
   profileBg?: { imageUrl: string | null; color: string | null; style: string | null } | null;
   albumCover?: { imageUrl: string | null; color: string | null; style: string | null } | null;
+  /** Brasão equipado: imagem, ou o emoji em `style` sobre a cor. */
+  badge?: { name: string; imageUrl: string | null; color: string | null; style: string | null } | null;
 };
 
 export type PlayerProfile = {

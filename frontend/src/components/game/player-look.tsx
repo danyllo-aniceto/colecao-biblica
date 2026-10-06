@@ -57,12 +57,31 @@ export function PlayerTitle({ title, className }: { title?: PlayerLook['title'] 
   );
 }
 
+/** Brasão do perfil: imagem enviada pelo admin, ou o emoji sobre a cor do brasão. */
+export function BadgeMark({ badge, size = 'md', className }: { badge?: PlayerLook['badge'] | null; size?: 'xs' | 'sm' | 'md' | 'lg'; className?: string }) {
+  if (!badge) return null;
+  const box = size === 'lg' ? 'h-16 w-16 text-4xl' : size === 'md' ? 'h-9 w-9 text-xl' : size === 'sm' ? 'h-6 w-6 text-sm' : 'h-4 w-4 text-[10px]';
+  return (
+    <span
+      role="img"
+      aria-label={`Brasão: ${badge.name}`}
+      className={cn('inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full leading-none ring-2 ring-[var(--badge-color)]', box, className)}
+      style={{ '--badge-color': badge.color ?? 'var(--primary)', backgroundColor: 'color-mix(in srgb, var(--badge-color) 22%, var(--surface))' } as CSSProperties}
+    >
+      {badge.imageUrl ? <img src={badge.imageUrl} alt="" className="h-full w-full object-contain" /> : badge.style}
+    </span>
+  );
+}
+
 /** Nome na cor equipada + título embaixo. */
-export function PlayerName({ name, look, className, nameClassName }: { name: string; look?: PlayerLook | null; className?: string; nameClassName?: string }) {
+export function PlayerName({ name, look, className, nameClassName, badgeSize = 'xs' }: { name: string; look?: PlayerLook | null; className?: string; nameClassName?: string; badgeSize?: 'xs' | 'sm' | 'md' }) {
   return (
     <span className={cn('flex min-w-0 flex-col leading-tight', className)}>
-      <span className={cn('truncate font-display font-bold text-ink', nameClassName)} style={look?.nameColor ? { color: look.nameColor } : undefined}>
-        {name}
+      <span className="flex min-w-0 items-center gap-1">
+        <span className={cn('truncate font-display font-bold text-ink', nameClassName)} style={look?.nameColor ? { color: look.nameColor } : undefined}>
+          {name}
+        </span>
+        <BadgeMark badge={look?.badge} size={badgeSize} />
       </span>
       <PlayerTitle title={look?.title} />
     </span>
