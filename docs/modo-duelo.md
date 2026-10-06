@@ -191,6 +191,15 @@ Legenda: ✅ feito e testado · ⬜ a fazer.
 - **Animações do turno:** figurinha empurrada/levada/convertida voa para o novo lugar com uma seta; afastada treme e estoura; devolvida à mão voa até a mão do dono; some sobe e desaparece;
   criada surge com brilho; revelada chega virando; mudança de Influência mostra "+3" ou "−2" subindo (`use-card-motion.tsx`).
 
+## 12c. Ajustes depois dos primeiros testes com amigos
+
+- **Vigor acumulado:** o Vigor que sobra num turno soma ao do seguinte (`PlayerState.carry`), até o 6º. A tela mostra o que sobra, de onde veio (turno + guardado + Dom) e o que fica guardado.
+- **Ordem justa:** a revelação tem 2 fases: (1) todas as figurinhas do turno entram na mesa (quem está na frente primeiro); (2) os "Ao revelar" agem na mesma ordem, já com tudo na mesa
+  (evento `dom` na repetição). Assim quem revela primeiro também atinge o que o rival jogou no mesmo turno. "Quando uma figurinha sua é jogada aqui" só reage a quem entrou antes.
+- **Sala:** só pessoas contam como "sala cheia": um amigo que chega toma o lugar do bot. Da sala de espera dá para criar/editar/excluir Times (`duel-deck-manager.tsx`).
+- **Relógio:** o treino contra o bot também tem tempo por turno (padrão 45 s, ou sem limite), com anel e barra; vencido, o jogo diz "Pronto" com o que já estava colocado.
+- **Arrastar no celular:** a mão usa `touch-action: pan-x`, senão o navegador cancelava o gesto para cima.
+
 ## 13. Riscos
 
 - **Tom:** o tema é bíblico. Duelos são provações entre figurinhas: efeitos se chamam *afastar*, *silenciar*, *enviar de volta*, não "matar". Jesus fica fora.

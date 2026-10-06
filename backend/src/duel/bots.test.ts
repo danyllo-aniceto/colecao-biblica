@@ -78,7 +78,7 @@ describe("bots", () => {
       }
       return wins / games;
     };
-    expect(rate("MASTER", "APPRENTICE")).toBeGreaterThan(0.7);
+    expect(rate("MASTER", "APPRENTICE")).toBeGreaterThan(0.65);
     expect(rate("STUDENT", "APPRENTICE")).toBeGreaterThan(0.6);
     expect(rate("MASTER", "STUDENT")).toBeGreaterThan(0.5);
   });

@@ -1,4 +1,4 @@
-import type { PointerEventHandler, ReactNode } from 'react';
+import type { CSSProperties, PointerEventHandler, ReactNode } from 'react';
 import { describeDom } from '@duel/cards';
 import type { CardDef } from '@duel/types';
 import { AnimatedNumber } from '@/components/user/duel/duel-anim';
@@ -35,6 +35,8 @@ type FaceProps = {
   onPointerDown?: PointerEventHandler<HTMLElement>;
   /** Atributos `data-*` (a mesa usa para achar cada figurinha e animar o voo dela). */
   data?: Record<string, string | number>;
+  /** Estilo extra (a mão usa `touchAction: 'pan-x'` para o dedo arrastar para cima sem o navegador rolar a página). */
+  style?: CSSProperties;
   children?: ReactNode;
 };
 
@@ -45,7 +47,7 @@ const SIZES = {
 } as const;
 
 /** Uma figurinha: arte, Vigor (azul), Influência (laranja; verde se subiu, vermelho se caiu) e nome. */
-export function DuelCardFace({ def, art, power, size = 'board', selected, dimmed, silenced, focus, animate, className, onClick, onPointerDown, data, children }: FaceProps) {
+export function DuelCardFace({ def, art, power, size = 'board', selected, dimmed, silenced, focus, animate, className, onClick, onPointerDown, data, style, children }: FaceProps) {
   const dataProps = Object.fromEntries(Object.entries(data ?? {}).map(([key, value]) => [`data-${key}`, value]));
   const image = artOf(art, def);
   const shown = power ?? def.power;
@@ -57,6 +59,7 @@ export function DuelCardFace({ def, art, power, size = 'board', selected, dimmed
       {...(onClick ? { type: 'button' as const, onClick } : {})}
       onPointerDown={onPointerDown}
       {...dataProps}
+      style={style}
       aria-label={`${def.name}, Vigor ${def.cost}, Influência ${shown}`}
       data-sound="off"
       className={cn(

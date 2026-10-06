@@ -129,10 +129,14 @@ describe("efeitos novos no motor", () => {
     const state = duel([card("Ramp", "revelar", "vigor-extra valor=2"), card("Cara", "revelar", "comprar", { cost: 5, power: 9 })], [], 2);
     const done = turn(state, [[0, 0]]);
     expect(done.turn).toBe(3);
+    // Isola o bônus do Dom (o Vigor que sobra de um turno para o outro tem teste próprio).
+    done.players[0].carry = 0;
+    done.players[1].carry = 0;
     expect(viewFor(done, 0).energy).toBe(5);
     expect(viewFor(done, 1).energy).toBe(3);
     // No turno seguinte o bônus acaba.
     const after = setReady(setReady(done, 0), 1);
+    after.players[0].carry = 0;
     expect(viewFor(after, 0).energy).toBe(4);
 
     const cheap = turn(duel([card("Mestre", "revelar", "custo-menos valor=1"), card("Cara", "revelar", "comprar", { cost: 5, power: 9 })]), [[0, 0]]);

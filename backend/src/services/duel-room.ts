@@ -78,6 +78,8 @@ type Work = {
 
 const keyOf = (player: Pick<DuelRoomPlayer, "userId" | "slot">) => (player.userId ? `u${player.userId}` : `b${player.slot}`);
 const isHuman = (player: DuelRoomPlayer) => player.userId !== null && !player.replaced;
+/** Pessoas na sala (bots não contam: um amigo que chega toma o lugar do bot). */
+const humanCount = (players: Array<{ userId: number | null }>) => players.filter((player) => player.userId !== null).length;
 const normalizeCode = (code: string) => code.trim().toUpperCase();
 const sideOf = (player: Pick<DuelRoomPlayer, "slot">): Side => (player.slot === 0 ? 0 : 1);
 const other = (side: Side): Side => (side === 0 ? 1 : 0);
@@ -445,7 +447,13 @@ export async function joinRoom(userId: number, rawCode: string, input: { deckSlo
     return runTx(tx, code, userId, { member: false }, async (work, me, now) => {
       if (me) return; // já está na sala: só devolve a visão
       if (work.status !== "LOBBY") throw badRequest("A partida desta sala já começou");
-      if (work.players.length >= MAX_PLAYERS) throw badRequest("A sala está cheia (2 jogadores)");
+      // Só pessoas enchem a sala: se a vaga está com um bot, quem chegou toma o lugar dele.
+      if (humanCount(work.players) >= MAX_PLAYERS) throw badRequest("A sala está cheia (2 jogadores)");
+      const bot = work.players.find((player) => player.userId === null);
+      if (bot && work.players.length >= MAX_PLAYERS) {
+        await tx.duelRoomPlayer.delete({ where: { id: bot.id } });
+        work.players = work.players.filter((player) => player.id !== bot.id);
+      }
       const user = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true } });
       const deckSlot = await checkDeck(tx, userId, input.deckSlot);
       const row = await tx.duelRoomPlayer.create({ data: { roomId: work.room.id, slot: freeSlot(work.players), userId, name: user.name.slice(0, NAME_MAX), deckSlot, lastSeenAt: new Date(now) } });
@@ -501,10 +509,10 @@ export async function myRoom(userId: number) {
 export async function publicRoom(rawCode: string) {
   const room = await prisma.duelRoom.findUnique({
     where: { code: normalizeCode(rawCode) },
-    select: { code: true, status: true, host: { select: { name: true } }, players: { select: { id: true } } },
+    select: { code: true, status: true, host: { select: { name: true } }, players: { select: { id: true, userId: true } } },
   });
   if (!room) throw notFound("Sala não encontrada. Confira o código.");
-  return { code: room.code, status: room.status, hostName: room.host.name, players: room.players.length, maxPlayers: MAX_PLAYERS };
+  return { code: room.code, status: room.status, hostName: room.host.name, players: room.players.filter((player) => player.userId !== null).length, maxPlayers: MAX_PLAYERS };
 }
 
 // ---------------------------------------------------------------------------
@@ -750,7 +758,7 @@ export function inviteFriend(userId: number, code: string, friendId: number) {
   return transaction((tx) =>
     runTx(tx, code, userId, { member: true }, async (work) => {
       requireLobby(work);
-      if (work.players.length >= MAX_PLAYERS) throw badRequest("A sala está cheia (2 jogadores)");
+      if (humanCount(work.players) >= MAX_PLAYERS) throw badRequest("A sala está cheia (2 jogadores)");
       if (work.players.some((player) => player.userId === friendId)) throw badRequest("Essa pessoa já está na sala");
       if (!(await areFriends(tx, userId, friendId))) throw forbidden("Você só pode convidar amigos");
       await tx.duelInvite.upsert({
@@ -775,11 +783,11 @@ export async function listInvites(userId: number) {
     where: { toUserId: userId, createdAt: { gt: new Date(Date.now() - 2 * 60 * 60 * 1000) }, room: { status: "LOBBY", players: { none: { userId } } } },
     orderBy: { createdAt: "desc" },
     take: 10,
-    select: { id: true, createdAt: true, from: { select: { name: true } }, room: { select: { code: true, players: { select: { id: true } } } } },
+    select: { id: true, createdAt: true, from: { select: { name: true } }, room: { select: { code: true, players: { select: { id: true, userId: true } } } } },
   });
   return invites
-    .filter((invite) => invite.room.players.length < MAX_PLAYERS)
-    .map((invite) => ({ id: invite.id, code: invite.room.code, fromName: invite.from.name, players: invite.room.players.length, createdAt: invite.createdAt }));
+    .filter((invite) => humanCount(invite.room.players) < MAX_PLAYERS)
+    .map((invite) => ({ id: invite.id, code: invite.room.code, fromName: invite.from.name, players: humanCount(invite.room.players), createdAt: invite.createdAt }));
 }
 
 export async function dismissInvite(userId: number, inviteId: number) {

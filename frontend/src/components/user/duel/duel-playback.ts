@@ -5,7 +5,9 @@ import type { DuelEvent, Side, Snapshot } from '@duel/types';
 export function durationOf(event: DuelEvent): number {
   switch (event.type) {
     case 'reveal':
-      return event.dom ? 3200 : 1500;
+      return 1500;
+    case 'dom':
+      return 3200;
     case 'scenario':
       return 3600;
     case 'turn':

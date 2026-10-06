@@ -5,6 +5,7 @@ import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import PersonAddRoundedIcon from '@mui/icons-material/PersonAddRounded';
 import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
 import SmartToyRoundedIcon from '@mui/icons-material/SmartToyRounded';
+import StyleRoundedIcon from '@mui/icons-material/StyleRounded';
 import type { BotSkill } from '@duel/bots';
 import { SERIES_FORMATS, type SeriesFormat } from '@duel/series';
 import { Alert } from '@/components/game/game-ui';
@@ -31,6 +32,8 @@ export type DuelLobbyActions = {
   onRemove: (slot: number) => void;
   onDeck: (slot: number) => void;
   onConfig: (config: Partial<DuelRoomConfig>) => void;
+  /** Abre "Meus Times" (criar, editar, excluir) sem sair da sala. */
+  onManageDecks: () => void;
 };
 
 /** Copia (ou compartilha) o link da sala; é o jeito de chamar quem ainda não está nos amigos. */
@@ -56,7 +59,8 @@ export function DuelLobby({ view, decks, busy, actions, connectionLost }: { view
   const toast = useToast();
   const [inviting, setInviting] = useState(false);
   const isHost = Boolean(view.me?.isHost);
-  const full = view.players.length >= MAX_PLAYERS;
+  // Só pessoas enchem a sala: se a vaga é de um bot, o amigo que chegar toma o lugar dele.
+  const full = view.players.filter((player) => player.userId !== null).length >= MAX_PLAYERS;
   const slots = Array.from({ length: MAX_PLAYERS }, (_, slot) => view.players.find((player) => player.slot === slot) ?? null);
   const humanIds = view.players.flatMap((player) => (player.userId ? [player.userId] : []));
   const everyoneHasDeck = view.players.every((player) => player.hasDeck);
@@ -95,7 +99,7 @@ export function DuelLobby({ view, decks, busy, actions, connectionLost }: { view
         <section className="panel space-y-3 p-4" aria-label="Seu Time">
           <h3 className="font-display text-base font-bold text-ink">Seu Time</h3>
           {decks.length === 0 ? (
-            <Alert tone="info">Você ainda não montou um Time. Saia da sala, monte um Time de 12 figurinhas no Duelo e volte com o código.</Alert>
+            <Alert tone="info">Você ainda não montou um Time. Toque em "Montar meu Time" aqui embaixo: a sala espera por você.</Alert>
           ) : (
             <Select
               aria-label="Time que você vai usar"
@@ -106,6 +110,9 @@ export function DuelLobby({ view, decks, busy, actions, connectionLost }: { view
             />
           )}
           {view.me && view.me.deckSlot === null && decks.length > 0 ? <p className="text-xs font-semibold text-danger">Escolha o Time para o anfitrião poder começar.</p> : null}
+          <Button size="sm" variant="secondary" onClick={actions.onManageDecks}>
+            <StyleRoundedIcon fontSize="small" /> {decks.length === 0 ? 'Montar meu Time' : 'Montar ou editar Times'}
+          </Button>
         </section>
 
         <section className="panel space-y-3 p-4" aria-label="Regras da partida">
@@ -189,6 +196,7 @@ export function DuelLobby({ view, decks, busy, actions, connectionLost }: { view
               ),
             )}
           </ul>
+          {view.players.some((player) => player.bot) && !full ? <p className="text-xs font-semibold text-muted">Quando um amigo entrar na sala, ele toma o lugar do bot.</p> : null}
         </section>
 
         <div className="mt-auto space-y-2 pb-[env(safe-area-inset-bottom)]">
