@@ -25,6 +25,12 @@ Este documento é o plano vivo: **atualize o checklist a cada etapa**. Prompts d
 (A tradição liga cada pedra a uma tribo de Israel, na ordem do nascimento: Rúben, Simeão, Levi, Judá, Dã, Naftali, Gade,
 Aser, Issacar, Zebulom, José, Benjamim. Dá para usar o nome da tribo como subtítulo do brasão.)
 
+## 1.1 Campanha e passes são mundos separados
+
+Os temas dos **passes** (ex.: passe *Noite de Belém*) e os **cenários da campanha** (ex.: cenário *Belém*) **não se misturam**:
+mesmo que o lugar se repita, a arte, o ícone, a música e os itens são feitos à parte e um não reaproveita o outro. Nada do
+passe entra no cenário e vice-versa.
+
 ## 2. Cenários sugeridos (36)
 
 Agrupados **por pedra**, para cada trio ter uma **cor de identidade** (a mesma do cosmético e do brasão) e os cenários
@@ -38,7 +44,7 @@ vontade.
 | 3 Carbúnculo | ★Monte Carmelo · Carro de fogo (Elias) · Pentecostes no Cenáculo | tons de fogo, sem violência: altar e chuva chegando; redemoinho de luz; chamas sobre a sala |
 | 4 Esmeralda | Campos de Belém (Rute) · Vale do Salmo 23 · Oásis de Elim | verde-vivo: cevada e colheita; pastos e águas tranquilas; 12 fontes e 70 palmeiras |
 | 5 Safira | ★Susã (Ester) · Jonas e o grande peixe · Calçada de safira (Êx 24:10) | azul profundo: palácio e lírios; mar e baleia estilizada; chão de safira sob os pés de Deus |
-| 6 Diamante | Monte da Transfiguração · Batismo no Jordão · ★Noite de Belém | branco-cristal: neve e luz; água clara e pomba; a estrela (já existe banner/ícone) |
+| 6 Diamante | Monte da Transfiguração · Batismo no Jordão · ★Belém (nascimento de Jesus) | branco-cristal: neve e luz; água clara e pomba; a estrela e a manjedoura (arte própria da campanha, nada de reaproveitar a do passe) |
 | 7 Jacinto | ★Damasco (estrada de Paulo) · ★Atenas (Areópago) · Corinto | crepúsculo laranja/azul; luz do céu na estrada; colunas e o "Deus desconhecido"; porto e mercado |
 | 8 Ágata | ★Éfeso · Filipos (prisão e terremoto) · Malta (naufrágio e fogueira) | listras de pedra e areia: teatro e templo; cela aberta; praia com a fogueira |
 | 9 Ametista | ★Roma · Antioquia ("cristãos") · Tiatira (Lídia, a vendedora de púrpura) | roxo e mármore: Coliseu e estradas; praça e primeiros irmãos; tingimento de púrpura |
@@ -51,6 +57,19 @@ Se quiser mais ideias para trocar ou ampliar, estas combinam bem com o estilo: *
 (Lázaro), **Gólgota/jardim do túmulo**, **Emaús**, **Cana** (água em vinho), **Cafarnaum**, **Samaria** (poço de Jacó),
 **Rio Quebar** (Ezequiel), **Vale dos ossos secos**, **Sardes**, **Laodiceia**, **Cenário-surpresa de evento** (Natal,
 Páscoa) valendo como bônus fora da contagem.
+
+## 2.1 Regra de cada cenário no Duelo
+
+Cada cenário novo traz uma regra de duelo, **sem sorte**, com tema do lugar. Regras existentes: `cheapBonus`, `sharedTag`,
+`majority`, `decay`, `slots`, `noMove`, `tagBonus`, `shiftFirst`, `stormAt`, `winnerBonus`; as marcadas (novo) pedem tipo novo no motor.
+
+| Cenário | Regra proposta |
+|---|---|
+| Torre de Babel | **(novo)** A figurinha mais forte de cada lado perde 1 no fim de cada turno (a soberba da torre) |
+| Betel | **(novo)** No fim de cada turno, a figurinha mais fraca de cada lado ganha +1 (a escada sobe) |
+| Peniel | **(novo)** Quem tem menos figurinhas aqui ganha +3 (a luta com o anjo: quem resiste é abençoado) |
+
+(Os próximos trios ganham a regra na hora do cadastro.)
 
 ## 3. Cada cenário (checklist de arte)
 
@@ -81,7 +100,13 @@ Princípios (seguem o resto do projeto): recompensas dentro de `transaction` + `
 `system = true`; regra pura em `game-rules.ts` com teste (`stonesEarned(concluídos)`, etc.); toda mudança de schema
 vira migração; tela do Peitoral com `Pagination` onde houver lista e sem componentes de navegador.
 
-### ⚠️ Ponto de atenção: níveis e XP
+### Decisões já tomadas
+
+- **Brasão** é um **cosmético novo** (`CosmeticType.BADGE`), **exibido no perfil** do jogador (e ao lado do nome onde couber).
+- **Nível e XP serão refatorados** para a campanha ficar longa, mas **alcançável**; os cenários chegam aos poucos, **de trio em trio**.
+- **Duelo:** todo cenário cadastrado ganha **a sua regra no Duelo de Figurinhas** (sem sorte), em `backend/src/duel/scenarios.ts`, com teste.
+
+### ⚠️ Níveis e XP (a refatorar)
 
 A campanha anda **por nível** (cada parada é um nível, `level` é único) e o XP por nível cresce a cada nível (`xpForLevel`: 300 + 100 por nível). Hoje o
 nível 50 pede ≈ 132 mil XP no total; 36 cenários × 4–5 paradas levariam ao nível ~200 (≈ 2 milhões de XP, ~20 mil por
@@ -89,11 +114,13 @@ nível), o que a curva atual torna inalcançável. Antes de cadastrar em volume,
 
 1. **Curva achatada** depois do nível 50 (o XP por nível para de crescer, ex.: fixo no valor do nível 50, ~5 mil).
 2. **Cenários curtos** (3 paradas cada → ~108 níveis novos) combinados com a curva achatada. **← recomendado**
+
+A curva nova precisa valer para jogadores que já passaram do nível 50 e **não pode tirar nível de ninguém** (migrar pelo XP atual).
 3. Desacoplar a campanha nova do nível do jogador (progresso por "estrelas"/quizzes concluídos no cenário).
 
 ## 5. Etapas (marque ao concluir)
 
-- [ ] **0.** Decidir: lista final dos 36 cenários, paradas por cenário e a curva de XP (seção 4).
+- [ ] **0.** Definir a curva de XP nova (refatorar `xpForLevel`, com teste e sem reduzir o nível de ninguém), paradas por cenário e a lista final dos 36.
 - [ ] **1.** Brasões: `CosmeticType.BADGE` + migração, exibição no perfil/ranking, seletor.
 - [ ] **2.** Regra pura das pedras (`game-rules.ts` + teste) e tabelas do Peitoral (migração + seed das 12 pedras).
 - [ ] **3.** Agrupar cenários por pedra; liberar pedra + cosmético + brasão ao concluir o 3º cenário (transação).
