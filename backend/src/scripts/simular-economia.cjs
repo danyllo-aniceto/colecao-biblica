@@ -8,6 +8,7 @@
 // o jogador gasta tudo na loja comprando sempre a figurinha mais rara que consegue pagar.
 // Ao mudar um número do jogo, atualize o bloco NOVO abaixo e veja o efeito antes de publicar.
 // Simulação da economia: jogador médio por perfil, dia a dia.
+const ANTIGO_NODE = (L, relic) => { const b = Math.round((20 + L * 2) / 5) * 5; return relic ? b * 2 : b; };
 const ANTIGO = {
   // xp
   xpPerCorrect: 10, levelBase: 200, levelStep: 50,
@@ -23,6 +24,7 @@ const ANTIGO = {
   packOdds: { C: 62, R: 28, E: 9, L: 1 },
   album: { C: 40, R: 25, E: 15, L: 8 },
   missionDaily: 35, weekly: 500, xpFullMatches: null, collectionCoinsPerMonth: 0,
+  campaign: (L) => ({ coins: L <= 50 ? ANTIGO_NODE(L, [4, 8, 13, 18, 23, 28, 33, 38, 44, 50].includes(L)) : 0, stone: 0 }),
   xpDaily: null, // limite de XP/dia (null = sem)
   xpAfterCap: 1,
 };
@@ -32,8 +34,9 @@ const profiles = {
   hardcore: { matches: 12, marathons: 9, acc: 0.85, login: 1, missions: 2.4, weekly: 1 },
 };
 const rnd = Math.random;
-const xpForLevel = (c, L) => { const s = Math.max(0, L - 1); return c.levelBase * s + (c.levelStep * s * (s - 1)) / 2; };
-const levelOf = (c, xp) => { let L = 1; while (xpForLevel(c, L + 1) <= xp) L++; return L; };
+// Curva antiga (quadrática por nível) ou por cenário (`c.xpCost(L)` = XP para subir até o nível L).
+const stepCost = (c, L) => (c.xpCost ? c.xpCost(L) : c.levelBase + c.levelStep * (L - 2));
+const levelOf = (c, xp) => { let L = 1, left = xp; while (left >= stepCost(c, L + 1)) { left -= stepCost(c, L + 1); L++; } return L; };
 
 function playMatch(c, acc, n = 10) {
   let streak = 0, correct = 0, combo = 0, lives = 3, answered = 0;
@@ -51,10 +54,10 @@ function pick(w) { const t = w.reduce((s, x) => s + x[1], 0); let r = rnd() * t;
 
 let SRC = {};
 let stickerDraws = 0;
-function simulate(c, p, days = 365) {
+function simulate(c, p, days = Number(process.env.DAYS) || 365) {
   const st = { coins: 0, xp: 0, level: 1, chestLevel: 1, owned: { C: 0, R: 0, E: 0, L: 0 }, streak: 0, noSticker: 0, dupCoins: 0, income: 0, total: 0 };
   const total = c.album.C + c.album.R + c.album.E + c.album.L;
-  const out = []; let doneDay = null;
+  const out = []; let doneDay = null; st.reached = {};
   st.cum = 0; const hist = [0]; const earn = (n, cat = 'outros') => { st.coins += n; st.cum += n; (SRC[cat] ??= 0); SRC[cat] += n; };
   const giveSticker = (r, free = false) => { // r: C R E L (sorteio e loja preferem figurinhas que faltam; no baú, às vezes vem repetida)
     const faltam = c.album[r] - st.owned[r];
@@ -112,9 +115,12 @@ function simulate(c, p, days = 365) {
     while (st.chestLevel < lv) {
       st.chestLevel++;
       const L = st.chestLevel; earn(Math.min(c.chestMax, c.chestBase + c.chestPerLevel * L), 'baus');
-      if (L <= 50) earn(c.nodeCoins(L, [4, 8, 13, 18, 23, 28, 33, 38, 44, 50].includes(L)), 'campanha');
+      const camp = c.campaign(L);
+      if (camp.coins) earn(camp.coins, 'campanha');
+      if (camp.stone) earn(camp.stone, 'pedras');
     }
     st.level = lv;
+    for (const m of c.milestones ?? []) if (lv >= m && !st.reached[m]) st.reached[m] = d;
     // compras: loja
     let bought = 0;
     while (bought < c.shopLimit) {
@@ -127,17 +133,20 @@ function simulate(c, p, days = 365) {
     if (!doneDay && have >= total) doneDay = d;
     if ([7, 14, 30, 60, 90, 180, 365].includes(d)) out.push({ d, level: st.level, album: Math.round((have / total) * 100) + '%', leg: st.owned.L + '/' + c.album.L, income: st.income, bank: st.coins });
   }
-  return { out, doneDay, total };
+  return { out, doneDay, total, reached: st.reached };
 }
 function avg(c, p, runs = 150) {
-  const acc = {}; let done = []; let n = 0;
+  const acc = {}; let done = []; let n = 0; const reached = {};
   for (let i = 0; i < runs; i++) {
     const r = simulate(c, p); done.push(r.doneDay ?? 999);
+    for (const m of c.milestones ?? []) (reached[m] ??= []).push(r.reached[m] ?? 9999);
     r.out.forEach((o) => { const a = (acc[o.d] ??= { level: 0, album: 0, income: 0, bank: 0, leg: 0 }); a.level += o.level; a.album += parseInt(o.album); a.income += o.income; a.bank += o.bank; a.leg += parseInt(o.leg); });
   }
   const rows = Object.entries(acc).map(([d, a]) => `d${d}: nv ${(a.level / runs).toFixed(0)} | álbum ${(a.album / runs).toFixed(0)}% | lend ${(a.leg / runs).toFixed(1)} | renda/dia ${(a.income / runs).toFixed(0)}`);
   done.sort((a, b) => a - b);
-  return { rows, median: done[Math.floor(done.length / 2)] };
+  const reachedMedian = {};
+  for (const [m, list] of Object.entries(reached)) { list.sort((a, b) => a - b); const v = list[Math.floor(list.length / 2)]; reachedMedian[m] = v >= 9999 ? null : v; }
+  return { rows, median: done[Math.floor(done.length / 2)], reachedMedian };
 }
 function breakdown(c, p, days = 60, runs = 100) {
   SRC = {};
@@ -153,7 +162,7 @@ const NOVO = {
   rewardLimit: 2, pity: 10,
   dailyBase: 20, dailyStep: 10, daily7: 100,
   chestBase: 20, chestPerLevel: 3, chestMax: 80,
-  nodeCoins: (L, relic) => { const b = Math.round((15 + L * 1.5) / 5) * 5; return relic ? b * 2 : b; },
+  campaign: (L) => ({ coins: L <= 50 ? Math.round((15 + L * 1.5) / 5) * 5 * ([4, 8, 13, 18, 23, 28, 33, 38, 44, 50].includes(L) ? 2 : 1) : 0, stone: 0 }),
   price: { C: 450, R: 1100, E: 2800 }, shopLimit: 1,
   dup: { C: 55, R: 135, E: 340, L: 800 },
   draw: { stC: 9, stR: 3.5, stE: 1.2, stL: 0.4, coins: 30, coinAmt: 40, other: 46, pack: 1.5 },
@@ -169,6 +178,38 @@ const NOVO = {
   },
 };
 
+// ---------------------------------------------------------------------------------------------
+// CURVA POR CENÁRIO (nível e XP refatorados): XP por parada sobe de cenário em cenário (500 + 120, teto 3000),
+// moedas da parada = XP/10 (relíquia em dobro), pedra do Peitoral a cada 3 cenários após Jesus.
+// ---------------------------------------------------------------------------------------------
+const xpPerStop = (i) => Math.min(Number(process.env.XP_CAP) || 3000, 500 + (Number(process.env.XP_STEP) || 120) * i);
+function porCenario(stops, { stoneCoins = 500, finalCoins = 2000, claimTail = false } = {}) {
+  const levelInfo = {}; let L = 0; const costOf = {};
+  stops.forEach((n, i) => {
+    for (let k = 0; k < n; k++) {
+      L++;
+      costOf[L] = xpPerStop(i);
+      const relic = k === n - 1;
+      const coins = Math.max(5, Math.round(xpPerStop(i) / (Number(process.env.COIN_DIV) || 10) / 5) * 5) * (relic ? 2 : 1);
+      // Pedra: depois dos 10 de lançamento, a cada 3 cenários (o último nível do 3º cenário).
+      const stoneEnd = relic && i >= 10 && (i - 10) % 3 === 2;
+      const isLast = i === stops.length - 1 && relic && (i - 10) % 3 === 2 && (i - 10) / 3 + 1 === 12;
+      levelInfo[L] = { coins, stone: stoneEnd ? stoneCoins + (isLast ? finalCoins : 0) : 0 };
+    }
+  });
+  const last = L;
+  return {
+    last,
+    xpCost: (lv) => costOf[Math.min(lv, last)] ?? costOf[last],
+    campaign: (lv) => levelInfo[lv] ?? { coins: 0, stone: 0 },
+    milestones: [50, Math.min(62, last), last],
+  };
+}
+const STOPS_HOJE = [4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 4, 4, 4]; // 10 de lançamento + trio Sardônio
+const STOPS_FUTURO = [...STOPS_HOJE.slice(0, 10), ...Array(36).fill(4)]; // + os 36 cenários das 12 pedras
+const HOJE = { ...NOVO, ...porCenario(STOPS_HOJE) };
+const FUTURO = { ...NOVO, ...porCenario(STOPS_FUTURO) };
+
 function relatorio(titulo, cfg) {
   console.log(`\n######## ${titulo} ########`);
   for (const [nome, perfil] of Object.entries(profiles)) {
@@ -177,8 +218,14 @@ function relatorio(titulo, cfg) {
     stickerDraws = 0; for (let i = 0; i < 30; i++) simulate(cfg, perfil, 60); console.log(`   figurinhas de sorteio/baú por dia (60d): ${(stickerDraws / 30 / 60).toFixed(2)}`);
     console.log('   fontes de moedas (60 dias): ' + breakdown(cfg, perfil, 60, 60));
     r.rows.filter((_, i) => [2, 4, 5, 6].includes(i)).forEach((linha) => console.log('  ' + linha));
+    if (cfg.milestones) console.log('   dias até o nível (mediana): ' + cfg.milestones.map((m) => `${m}: ${r.reachedMedian[m] ?? '+365'}`).join(' · '));
   }
 }
 const alvo = process.argv[2];
-if (alvo !== 'novo') relatorio('ECONOMIA ANTIGA', ANTIGO);
-if (alvo !== 'antigo') relatorio('ECONOMIA NOVA', NOVO);
+// Uso: simular-economia [antigo|novo|hoje|futuro]  (sem argumento: antigo + novo)
+if (alvo === 'hoje') relatorio('HOJE: curva por cenário, 13 cenários (62 níveis)', HOJE);
+else if (alvo === 'futuro') relatorio('FUTURO: curva por cenário, campanha completa (46 cenários, 194 níveis)', FUTURO);
+else {
+  if (alvo !== 'novo') relatorio('ECONOMIA ANTIGA', ANTIGO);
+  if (alvo !== 'antigo') relatorio('ECONOMIA NOVA (curva por nível, antes da refatoração)', NOVO);
+}
