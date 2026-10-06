@@ -309,6 +309,27 @@ describe.skipIf(!hasDatabase)("duelo online", () => {
     expect((await api.get(`/api/duel-room/${room.code}`).set(bearer(ana))).status).toBe(403);
   });
 
+  it("sala com bot não conta como cheia: o amigo convidado toma o lugar do bot", async () => {
+    const room = await newRoom();
+    await prisma.friendship.create({ data: { requesterId: anaId, addresseeId: biaId, status: "ACCEPTED" } });
+    const withBot = await post(ana, `${room.code}/bots`, { skill: "STUDENT" });
+    expect(withBot.body.players).toHaveLength(2);
+    // A prévia do convite e o convite em si ainda valem (só pessoas enchem a sala).
+    expect((await api.get(`/api/duel-public/${room.code}`)).body).toMatchObject({ players: 1, maxPlayers: 2 });
+    expect((await post(ana, `${room.code}/invite`, { friendId: biaId })).status).toBe(204);
+    expect((await api.get("/api/duel-room/invites").set(bearer(bia))).body).toEqual([expect.objectContaining({ code: room.code, players: 1 })]);
+
+    const joined = await post(bia, `${room.code}/join`, { deckSlot: 1 });
+    expect(joined.status).toBe(200);
+    expect(joined.body.players.map((player: { bot: string | null; userId: number | null }) => [player.userId !== null, player.bot])).toEqual([[true, null], [true, null]]);
+    // Agora sim: duas pessoas, sala cheia para o terceiro.
+    const admin = await login("admin2@email.com");
+    const third = await post(admin, `${room.code}/join`);
+    expect(third.status).toBe(400);
+    expect(third.body.message).toMatch(/cheia/);
+    expect((await api.get(`/api/duel-public/${room.code}`)).body).toMatchObject({ players: 2 });
+  });
+
   it("o Time inválido na hora de começar é recusado com o motivo", async () => {
     const room = await newRoom();
     await post(bia, `${room.code}/join`, { deckSlot: 1 });

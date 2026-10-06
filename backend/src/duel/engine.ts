@@ -88,7 +88,7 @@ export function newDuel(input: NewDuelInput): DuelState {
     const cards: Card[] = team.map((entry) => ({ uid: uid++, def: levelDef(entry.def, entry.level), bonus: 0 }));
     const mixed = shuffled(cards, seed);
     seed = mixed.seed;
-    return { deck: mixed.items.slice(START_HAND), hand: mixed.items.slice(0, START_HAND), graveyard: [], returning: [], staged: [], ready: false, doubledTurn: 0, energyBonus: 0, nextEnergyBonus: 0 };
+    return { deck: mixed.items.slice(START_HAND), hand: mixed.items.slice(0, START_HAND), graveyard: [], returning: [], staged: [], ready: false, doubledTurn: 0, energyBonus: 0, nextEnergyBonus: 0, carry: 0 };
   };
   const players: [PlayerState, PlayerState] = [build(input.teams[0]), build(input.teams[1])];
 
@@ -115,7 +115,14 @@ export function newDuel(input: NewDuelInput): DuelState {
 
 /** Vigor do jogador no turno: o número do turno mais o que um Dom deu a mais. */
 export function energyFor(state: DuelState, side: Side) {
-  return state.turn + state.players[side].energyBonus;
+  const player = state.players[side];
+  return state.turn + player.energyBonus + (player.carry ?? 0);
+}
+
+/** De onde vem o Vigor do turno: o número do turno, o bônus de Dons e o que sobrou (e foi guardado) dos turnos anteriores. */
+export function energyParts(state: DuelState, side: Side) {
+  const player = state.players[side];
+  return { turn: state.turn, bonus: player.energyBonus, carry: player.carry ?? 0 };
 }
 
 export function isLaneOpen(state: DuelState, lane: number) {
@@ -616,13 +623,14 @@ function decidePriority(state: DuelState): Side {
   return roll.value < 0.5 ? 0 : 1;
 }
 
-function revealPlay(state: DuelState, side: Side, play: Staged, spent: { value: number }) {
+/** Fase 1 do turno: a figurinha vai para a arena (sem agir ainda). Devolve a figurinha colocada, ou null se não coube. */
+function placePlay(state: DuelState, side: Side, play: Staged, spent: { value: number }): PlacedCard | null {
   const player = state.players[side];
   const handIndex = player.hand.findIndex((card) => card.uid === play.uid);
-  if (handIndex < 0) return;
+  if (handIndex < 0) return null;
   const card = player.hand[handIndex];
-  if (spent.value + card.def.cost > energyFor(state, side)) return;
-  if (play.lane < 0 || play.lane >= LANES) return;
+  if (spent.value + card.def.cost > energyFor(state, side)) return null;
+  if (play.lane < 0 || play.lane >= LANES) return null;
 
   let target = play.lane;
   const origin = state.lanes[target];
@@ -633,7 +641,7 @@ function revealPlay(state: DuelState, side: Side, play: Staged, spent: { value: 
   }
   if (state.lanes[target].cards[side].length >= slotsOf(laneScenario(state, target))) {
     emit(state, { type: "play", side, lane: target, name: card.def.name, text: `${card.def.name} não coube e voltou à mão.` });
-    return;
+    return null;
   }
 
   spent.value += card.def.cost;
@@ -648,18 +656,39 @@ function revealPlay(state: DuelState, side: Side, play: Staged, spent: { value: 
     uid: placed.uid,
     name: placed.def.name,
     text: target !== play.lane ? `${placed.def.name} foi levado para ${arenaName(state, target)}.` : `${placed.def.name} entrou em ${arenaName(state, target)}.`,
-    ...(placed.def.dom ? { dom: describeDom(placed.def.dom) } : {}),
     ...(target !== play.lane ? { fromLane: play.lane } : {}),
   });
+  return placed;
+}
 
-  runDom(state, { lane: target, side, card: placed }, "reveal");
-  // "Quando uma figurinha sua é jogada aqui": as outras figurinhas suas neste cenário reagem.
+/**
+ * Fase 2: o "Ao revelar" da figurinha age, já com TODAS as figurinhas do turno (de ambos os lados) na mesa. Assim quem revela
+ * primeiro também pode atingir o que o rival jogou neste mesmo turno; a ordem de prioridade só decide quem age antes.
+ */
+function resolvePlay(state: DuelState, side: Side, placed: PlacedCard) {
+  const here = findCard(state, placed.uid);
+  if (!here) return; // já foi afastada por um Dom que agiu antes
+  if (placed.def.dom?.trigger === "reveal") {
+    emit(state, { type: "dom", side, lane: here.lane, uid: placed.uid, name: placed.def.name, text: `${placed.def.name} usa o Dom.`, dom: describeDom(placed.def.dom) });
+  }
+  runDom(state, { lane: here.lane, side, card: here.card }, "reveal");
+  // "Quando uma figurinha sua é jogada aqui": as figurinhas suas que já estavam neste cenário (jogadas antes) reagem.
   const current = findCard(state, placed.uid);
   if (current) {
     for (const mate of [...state.lanes[current.lane].cards[side]]) {
-      if (mate.uid !== placed.uid) runDom(state, { lane: current.lane, side, card: mate }, "allyPlayed");
+      if (mate.uid !== placed.uid && mate.order < placed.order) runDom(state, { lane: current.lane, side, card: mate }, "allyPlayed");
     }
   }
+}
+
+/** Coloca as jogadas de um lado e resolve os Dons delas (usado na previsão dos bots). */
+function playSide(state: DuelState, side: Side, plays: Staged[], spent: { value: number }) {
+  const placed: PlacedCard[] = [];
+  for (const play of plays) {
+    const card = placePlay(state, side, play, spent);
+    if (card) placed.push(card);
+  }
+  for (const card of placed) resolvePlay(state, side, card);
 }
 
 function endOfTurn(state: DuelState) {
@@ -721,7 +750,7 @@ function finish(state: DuelState, retreated: Side | null = null) {
   emit(state, { type: "win", side: winner ?? undefined, text: winner === null ? "Empate!" : retreated !== null ? "O rival desistiu." : "Fim do duelo." });
 }
 
-function nextTurn(state: DuelState) {
+function nextTurn(state: DuelState, leftover: [number, number] = [0, 0]) {
   state.turn += 1;
   emit(state, { type: "turn", text: `Turno ${state.turn}` });
   for (const side of [0, 1] as Side[]) {
@@ -741,6 +770,8 @@ function nextTurn(state: DuelState) {
     player.ready = false;
     player.energyBonus = player.nextEnergyBonus;
     player.nextEnergyBonus = 0;
+    // O Vigor que não foi gasto fica guardado e soma ao do turno seguinte (até o 6º).
+    player.carry = Math.max(0, leftover[side]);
   }
   if (state.turn <= LANES) {
     const scenario = laneScenario(state, state.turn - 1);
@@ -753,12 +784,20 @@ function resolveTurn(state: DuelState) {
   const first = decidePriority(state);
   state.priority = first;
   const spent: [{ value: number }, { value: number }] = [{ value: 0 }, { value: 0 }];
+  // Fase 1: todas as figurinhas entram (quem está na frente primeiro). Fase 2: os Dons agem na mesma ordem.
+  const placed: Array<{ side: Side; card: PlacedCard }> = [];
   for (const side of [first, other(first)]) {
-    for (const play of state.players[side].staged) revealPlay(state, side, play, spent[side]);
+    for (const play of state.players[side].staged) {
+      const card = placePlay(state, side, play, spent[side]);
+      if (card) placed.push({ side, card });
+    }
   }
+  for (const entry of placed) resolvePlay(state, entry.side, entry.card);
   endOfTurn(state);
+  // O Vigor que sobrou fica guardado para o turno seguinte.
+  const leftover: [number, number] = [Math.max(0, energyFor(state, 0) - spent[0].value), Math.max(0, energyFor(state, 1) - spent[1].value)];
   if (state.turn >= TURNS) finish(state);
-  else nextTurn(state);
+  else nextTurn(state, leftover);
 }
 
 // ---------------------------------------------------------------------------
@@ -839,6 +878,8 @@ export type DuelView = {
   energyLeft: number;
   canDouble: boolean;
   canRetreat: boolean;
+  /** De onde vem o Vigor do turno: número do turno, bônus de Dons e o que sobrou (guardado) dos turnos anteriores. */
+  energyParts: { turn: number; bonus: number; carry: number };
   /** A aposta vale algo nesta partida? (Falso na rodada única.) */
   stakesMatter: boolean;
   /** Quanto se perde ao desistir agora (se o rival acabou de dobrar, só o que valia antes). */
@@ -882,6 +923,7 @@ export function viewFor(state: DuelState, side: Side): DuelView {
     energyLeft: energyFor(state, side) - stagedCost(state, side),
     canDouble: whyNotDouble(state, side) === null,
     canRetreat: whyNotRetreat(state, side) === null,
+    energyParts: energyParts(state, side),
     stakesMatter: state.stakesMatter !== false,
     retreatCost: retreatCost(state, side),
     foeDoubledNow: state.status === "playing" && state.players[foe].doubledTurn === state.turn && state.players[side].doubledTurn !== state.turn,
@@ -909,7 +951,7 @@ export function stateFromView(view: DuelView, seed: number): DuelState {
   }));
   const empty = (): PlayerState => ({ deck: [], hand: [], graveyard: [], returning: [], staged: [], ready: false, doubledTurn: 0, energyBonus: 0, nextEnergyBonus: 0 });
   const players: [PlayerState, PlayerState] = [empty(), empty()];
-  players[side] = { ...empty(), hand: clone(view.hand), deck: [] };
+  players[side] = { ...empty(), hand: clone(view.hand), deck: [], energyBonus: view.energy - view.turn };
   const maxOrder = lanes.flatMap((lane) => [...lane.cards[0], ...lane.cards[1]]).reduce((max, card) => Math.max(max, card.order), 0);
   const maxUid = lanes.flatMap((lane) => [...lane.cards[0], ...lane.cards[1]]).reduce((max, card) => Math.max(max, card.uid), 1000);
   return { rng: seed, turn: view.turn, status: "playing", lanes, players, nextUid: maxUid + 1, nextOrder: maxOrder + 1, priority: view.priority, stakes: view.stakes, stakesMatter: view.stakesMatter, events: [], result: null };
@@ -919,7 +961,6 @@ export function stateFromView(view: DuelView, seed: number): DuelState {
 export function previewReveal(state: DuelState, side: Side, plays: Staged[]): DuelState {
   const draft = clone(state);
   draft.events = [];
-  const spent = { value: 0 };
-  for (const play of plays) revealPlay(draft, side, play, spent);
+  playSide(draft, side, plays, { value: 0 });
   return draft;
 }

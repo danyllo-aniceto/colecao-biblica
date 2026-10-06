@@ -155,9 +155,9 @@ export function UserDashboard() {
     celebrate(result.unlockedAchievements);
   }
 
-  function navigate(next: SectionId) {
-    // Tocar em "Jogar" estando numa tela de jogo volta aos cartões.
-    if (next === 'quiz' && section === 'quiz') setPlayMode(null);
+  function navigate(next: SectionId, options: { keepPlayMode?: boolean } = {}) {
+    // Tocar em "Jogar" estando numa tela de jogo volta aos cartões (convites de sala escolhem o jogo e não voltam).
+    if (next === 'quiz' && section === 'quiz' && !options.keepPlayMode) setPlayMode(null);
     setSection(next);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -574,7 +574,7 @@ export function UserDashboard() {
       onAccept={(code) => {
         setPendingRoom(code);
         setPlayMode('board');
-        navigate('quiz');
+        navigate('quiz', { keepPlayMode: true });
       }}
     />
     <RoomInviteWatcher
@@ -583,7 +583,7 @@ export function UserDashboard() {
       onAccept={(code) => {
         setPendingDuelRoom(code);
         setPlayMode('duel');
-        navigate('quiz');
+        navigate('quiz', { keepPlayMode: true });
       }}
     />
     <div className="min-h-dvh pb-28 sm:pb-10">

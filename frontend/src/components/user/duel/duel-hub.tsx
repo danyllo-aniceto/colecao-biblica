@@ -52,6 +52,7 @@ export function DuelHub({ characters, collection }: Props) {
   const [slot, setSlot] = useState<number | null>(null);
   const [skill, setSkill] = useState<BotSkill>('STUDENT');
   const [format, setFormat] = useState<SeriesFormat>('bo3');
+  const [turnSeconds, setTurnSeconds] = useState('45');
   const [useLevels, setUseLevels] = useState(false);
   const [editing, setEditing] = useState<{ slot: number; deck: DuelDeck | null } | null>(null);
   const [saving, setSaving] = useState(false);
@@ -272,6 +273,20 @@ export function DuelHub({ characters, collection }: Props) {
                 <Segmented aria-label="Tipo de série" value={format} onChange={setFormat} options={SERIES_FORMATS.map((entry) => ({ value: entry.id, label: entry.name }))} />
               </div>
             </div>
+            <div className="space-y-2">
+              <span className="text-sm font-bold text-muted">Tempo por turno no treino</span>
+              <Segmented
+                aria-label="Tempo por turno"
+                value={turnSeconds}
+                onChange={setTurnSeconds}
+                options={[
+                  { value: '0', label: 'Sem limite' },
+                  { value: '30', label: '30s' },
+                  { value: '45', label: '45s' },
+                  { value: '60', label: '60s' },
+                ]}
+              />
+            </div>
             <Switch checked={useLevels} onChange={setUseLevels} label="Usar o nível das minhas figurinhas" description="Ligado, figurinhas de nível 2 a 5 ficam um pouco mais fortes (e o rival também sobe). Desligado, todas valem como nível 1." />
 
             {current && !room ? (
@@ -305,8 +320,8 @@ export function DuelHub({ characters, collection }: Props) {
       </div>
 
       {joinOpen ? <JoinRoomModal open onClose={() => setJoinOpen(false)} onJoin={joinByCode} /> : null}
-      {room ? <OnlineDuel key={room.code} code={room.code} initial={room.initial} decks={decks} art={art} onClose={closeRoom} /> : null}
-      {playing ? <DuelGame key={playing.key} team={playing.team} foeTeam={playing.foe} skill={skill} format={format} art={art} onExit={() => setPlaying(null)} /> : null}
+      {room ? <OnlineDuel key={room.code} code={room.code} initial={room.initial} decks={decks} ownedCards={ownedCards} missing={missing} onDecksChanged={load} art={art} onClose={closeRoom} /> : null}
+      {playing ? <DuelGame key={playing.key} team={playing.team} foeTeam={playing.foe} skill={skill} format={format} turnSeconds={Number(turnSeconds) || null} art={art} onExit={() => setPlaying(null)} /> : null}
       <DuelHelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
       {editing ? (
         <DuelDeckBuilder

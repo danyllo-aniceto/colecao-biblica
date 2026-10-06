@@ -185,6 +185,8 @@ export type PlayerState = {
   /** Vigor a mais neste turno (de um Dom do turno anterior) e no próximo. */
   energyBonus: number;
   nextEnergyBonus: number;
+  /** Vigor que sobrou dos turnos anteriores e foi guardado: soma ao deste turno. Ausente = 0 (estados antigos). */
+  carry?: number;
 };
 
 /** Foto do tabuleiro num instante (para a tela repetir o turno passo a passo, com os números mudando). */
@@ -192,7 +194,7 @@ export type SnapCard = { uid: number; def: CardDef; power: number; silenced: boo
 export type Snapshot = Array<{ cards: [SnapCard[], SnapCard[]]; power: [number, number]; open: boolean }>;
 
 export type DuelEvent = {
-  type: "play" | "reveal" | "power" | "destroy" | "move" | "create" | "draw" | "vanish" | "return" | "silence" | "scenario" | "turn" | "double" | "retreat" | "win" | "bounce" | "discard" | "convert" | "energy";
+  type: "play" | "reveal" | "power" | "destroy" | "move" | "create" | "draw" | "vanish" | "return" | "silence" | "scenario" | "turn" | "double" | "retreat" | "win" | "bounce" | "discard" | "convert" | "energy" | "dom";
   side?: Side;
   lane?: number;
   uid?: number;

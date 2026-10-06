@@ -25,6 +25,8 @@ type GameProps = {
   foeTeam: TeamCard[];
   skill: BotSkill;
   format: SeriesFormat;
+  /** Tempo de cada turno em segundos (null = sem limite). Vencido, o jogo diz "Pronto" com o que já estava colocado. */
+  turnSeconds: number | null;
   art: CardArt;
   onExit: () => void;
 };
@@ -33,7 +35,7 @@ const SPEED_KEY = 'colecao-biblica:duel-speed';
 const HELP_KEY = 'colecao-biblica:duel-help';
 
 /** Treino contra bot: um aparelho, sem XP nem moedas. O motor decide tudo; aqui ficam os turnos, as animações, o bot e a série. */
-export function DuelGame({ team, foeTeam, skill, format, art, onExit }: GameProps) {
+export function DuelGame({ team, foeTeam, skill, format, turnSeconds, art, onExit }: GameProps) {
   const { campaign, current } = useCampaign();
   const dialogs = useDialogs();
   const toast = useToast();
@@ -49,6 +51,10 @@ export function DuelGame({ team, foeTeam, skill, format, art, onExit }: GameProp
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [speed, setSpeed] = useState<DuelSpeed>(() => (localStorage.getItem(SPEED_KEY) === 'rapido' ? 'rapido' : 'normal'));
   const counted = useRef(false);
+  const [deadline, setDeadline] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const roundId = useRef(0);
+  const clockTurn = useRef('');
   const stateRef = useRef(state);
   stateRef.current = state;
   const historyId = useRef(0);
@@ -159,7 +165,45 @@ export function DuelGame({ team, foeTeam, skill, format, art, onExit }: GameProp
     onExit();
   }
 
+  // O relógio do turno só começa quando a repetição do turno anterior acaba (a pessoa precisa ver o que houve).
+  useEffect(() => {
+    if (!turnSeconds || state.status !== 'playing' || playback || summary) return;
+    const key = `${roundId.current}-${state.turn}`;
+    if (clockTurn.current === key) return;
+    clockTurn.current = key;
+    setDeadline(Date.now() + turnSeconds * 1000);
+  }, [turnSeconds, state.status, state.turn, playback, summary]);
+
+  useEffect(() => {
+    if (deadline === null) return;
+    const timer = window.setInterval(() => {
+      const current = Date.now();
+      setNow(current);
+      if (current >= deadline) {
+        window.clearInterval(timer);
+        setDeadline(null);
+        if (stateRef.current.status === 'playing' && !stateRef.current.players[0].ready) {
+          toast.info('Tempo esgotado: o turno terminou com o que você já tinha colocado.');
+          commit((previous) => (previous.status === 'playing' && !previous.players[0].ready ? setReady(previous, 0) : previous));
+        }
+      }
+    }, 250);
+    return () => window.clearInterval(timer);
+  }, [deadline, commit, toast]);
+  // Pronto antes da hora: o relógio para.
+  useEffect(() => {
+    if (state.players[0].ready) setDeadline(null);
+  }, [state.players]);
+  const remaining = deadline === null ? null : Math.max(0, Math.ceil((deadline - now) / 1000));
+  useEffect(() => {
+    if (remaining !== null && remaining > 0 && remaining <= 5) {
+      playSfx('reelTick');
+      navigator.vibrate?.(30);
+    }
+  }, [remaining]);
+
   function nextRound() {
+    roundId.current += 1;
     counted.current = false;
     setSummary(false);
     setSelected(null);
@@ -206,6 +250,7 @@ export function DuelGame({ team, foeTeam, skill, format, art, onExit }: GameProp
         onUnstage={(uid) => act((previous) => unstage(previous, 0, uid))}
         onRestage={(uid, lane) => act((previous) => stageCard(unstage(previous, 0, uid), 0, uid, lane))}
         stakesText={stakesText(series, view.stakes)}
+        timer={turnSeconds ? { remaining: remaining ?? turnSeconds, total: turnSeconds, waiting: state.players[0].ready } : null}
         onReady={() => {
           setSelected(null);
           act((previous) => setReady(previous, 0));

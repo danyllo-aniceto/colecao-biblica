@@ -62,6 +62,7 @@ type Press = { uid: number; x: number; y: number; type: string; from: 'hand' | '
 
 const EVENT_ICON: Partial<Record<DuelEvent['type'], string>> = {
   reveal: '🃏',
+  dom: '✨',
   power: '✨',
   destroy: '💥',
   move: '↔️',
@@ -218,6 +219,15 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
         {extra}
       </div>
 
+      {timer ? (
+        <div className="h-1.5 w-full shrink-0 bg-surface-3" aria-hidden="true">
+          <div
+            className={cn('h-full transition-[width] duration-500 ease-linear', timer.remaining <= 10 ? 'bg-danger' : timer.remaining / Math.max(timer.total, 1) < 0.5 ? 'bg-primary' : 'bg-success')}
+            style={{ width: `${Math.max(0, Math.min(100, (timer.remaining / Math.max(timer.total, 1)) * 100))}%` }}
+          />
+        </div>
+      ) : null}
+
       <main ref={boardRef} className="grid min-h-0 flex-1 grid-cols-3 gap-2 px-2 py-2" onClick={playing ? onAdvance : undefined}>
         {lanes.map((lane, index) => {
           const stagedHere = view.staged.filter((play) => play.lane === index).map((play) => view.hand.find((card) => card.uid === play.uid)).filter((card): card is NonNullable<typeof card> => Boolean(card));
@@ -271,26 +281,26 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
             </Button>
           </div>
         ) : null}
-        <div className="flex min-h-[4.75rem] items-stretch gap-2 rounded-2xl bg-surface-2 px-3 py-2">
+        <div className="flex min-h-[4.25rem] items-stretch gap-2 rounded-2xl bg-surface-2 px-3 py-1.5">
           <div className="min-w-0 flex-1" aria-live="polite">
             {stage ? (
               <Narration stage={stage} art={art} onSkip={onSkip} />
             ) : selected ? (
               <CardReadout def={selected.def} power={selected.def.power + selected.bonus} />
             ) : (
-              <p className="flex h-full min-h-[4.25rem] items-center text-sm font-semibold leading-snug text-muted">
+              <p className="flex h-full min-h-[3.5rem] items-center text-sm font-semibold leading-snug text-muted">
                 {view.status !== 'playing'
                   ? 'Fim da rodada.'
                   : view.ready
                     ? 'Pronto! Esperando o rival...'
                     : busy
                       ? 'Aguarde...'
-                      : 'Toque numa figurinha para ler o Dom. Depois toque numa arena ou arraste até ela (vale até arena fechada). Arrastar de uma arena para outra também vale.'}
+                      : 'Toque numa figurinha para ler o Dom. Depois toque numa arena ou arraste até ela (até as fechadas).'}
               </p>
             )}
           </div>
           {stage ? null : (
-            <div className="flex shrink-0 flex-col justify-center gap-1">
+            <div className="grid shrink-0 grid-cols-2 content-center gap-1">
               <Tooltip content={speed === 'normal' ? 'Animações normais (toque para acelerar)' : 'Animações rápidas (toque para voltar ao normal)'} side="top">
                 <button type="button" onClick={onSpeed} aria-label="Velocidade das animações" aria-pressed={speed === 'rapido'} className={cn('flex h-8 w-8 items-center justify-center rounded-xl', speed === 'rapido' ? 'bg-primary text-on-primary' : 'bg-surface-3 text-muted hover:text-ink')}>
                   <FastForwardRoundedIcon fontSize="small" />
@@ -304,6 +314,11 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
               <Tooltip content="Como jogar" side="top">
                 <button type="button" onClick={onHelp} aria-label="Como jogar" className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-3 text-muted hover:text-ink">
                   <HelpOutlineRoundedIcon fontSize="small" />
+                </button>
+              </Tooltip>
+              <Tooltip content={`Desistir da rodada (perde ×${view.retreatCost})`} side="top">
+                <button type="button" onClick={onRetreat} disabled={!view.canRetreat || busy || view.status !== 'playing'} aria-label={`Desistir da rodada, perde ${view.retreatCost}`} className="flex h-8 w-8 items-center justify-center rounded-xl bg-danger/15 text-danger hover:bg-danger/25 disabled:opacity-40">
+                  <FlagRoundedIcon fontSize="small" />
                 </button>
               </Tooltip>
             </div>
@@ -322,7 +337,9 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
                 power={card.def.power + card.bonus}
                 selected={selectedUid === card.uid}
                 dimmed={!affordable || locked}
-                className={cn('cursor-pointer touch-pan-x', drag?.uid === card.uid && 'opacity-30')}
+                // pan-x: deslizar de lado rola a mão; para cima, o navegador não rola e o dedo arrasta a figurinha.
+                style={{ touchAction: 'pan-x' }}
+                className={cn('cursor-pointer', drag?.uid === card.uid && 'opacity-30')}
                 onClick={() => {
                   if (justDragged.current) return;
                   if (!locked) onSelect(selectedUid === card.uid ? null : card.uid);
@@ -335,19 +352,14 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
             );
           })}
         </div>
+        <VigorPanel view={view} selectedCost={selected ? selected.def.cost : null} />
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="ghost" onClick={onRetreat} disabled={!view.canRetreat || busy || playing || view.status !== 'playing'} className="text-danger">
-            <FlagRoundedIcon fontSize="small" /> Desistir
-            <span className="text-[11px] font-bold opacity-80">−{view.retreatCost}</span>
-          </Button>
-          <VigorOrb left={view.energyLeft} total={view.energy} />
-          <span className="flex-1" />
           {view.stakesMatter ? (
-            <Button size="sm" variant="secondary" onClick={onDouble} disabled={!youCanDouble} aria-label={`Dobrar a aposta para ${view.stakes * 2}`}>
+            <Button size="sm" variant="secondary" className="shrink-0" onClick={onDouble} disabled={!youCanDouble} aria-label={`Dobrar a aposta para ${view.stakes * 2}`}>
               Dobrar <b className="text-danger">×{Math.min(view.stakes * 2, 16)}</b>
             </Button>
           ) : null}
-          <Button size="md" onClick={onReady} disabled={locked} aria-label={`Pronto, turno ${view.turn} de ${TURNS}`}>
+          <Button size="md" className="flex-1" onClick={onReady} disabled={locked} aria-label={`Pronto, turno ${view.turn} de ${TURNS}`}>
             Pronto {view.turn}/{TURNS}
           </Button>
         </div>
@@ -424,16 +436,68 @@ function TurnClock({ timer }: { timer: { remaining: number; total: number; waiti
   );
 }
 
-/** O Vigor que sobra no turno, bem grande: é o que limita as jogadas. */
-function VigorOrb({ left, total }: { left: number; total: number }) {
+/**
+ * O Vigor do turno, bem à vista: quanto sobra agora (número grande), de onde veio (turno + guardado + bônus) e quanto
+ * vai ficar guardado para o próximo turno. Cada raio é 1 de Vigor: cheio = ainda dá para gastar, vazio = já usado.
+ */
+function VigorPanel({ view, selectedCost }: { view: DuelView; selectedCost: number | null }) {
+  const { turn, bonus, carry } = view.energyParts;
+  const total = view.energy;
+  const left = view.energyLeft;
+  const spent = total - left;
+  const [delta, setDelta] = useState<{ id: number; amount: number } | null>(null);
+  const last = useRef(left);
+  useEffect(() => {
+    const change = left - last.current;
+    last.current = left;
+    if (change === 0) return;
+    const id = Date.now();
+    setDelta({ id, amount: change });
+    const timer = window.setTimeout(() => setDelta((current) => (current?.id === id ? null : current)), 1300);
+    return () => window.clearTimeout(timer);
+  }, [left]);
+  const preview = selectedCost !== null && selectedCost <= left ? left - selectedCost : null;
+  const parts = [`turno ${turn}`, carry > 0 ? `+${carry} guardado` : null, bonus > 0 ? `+${bonus} de Dom` : null].filter(Boolean).join(' ');
+  // Raios: primeiro os guardados (dourados), depois os do turno (azuis) e os de Dons (verdes); os usados ficam vazios.
+  const pips = Array.from({ length: total }, (_, index) => {
+    const origin = index < carry ? 'carry' : index < carry + turn ? 'turn' : 'bonus';
+    return { origin, used: index >= left };
+  });
   return (
-    <span className="relative flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-full bg-info font-display leading-none text-white shadow-[0_4px_0_rgba(0,0,0,0.25),0_0_0_3px_rgba(255,255,255,0.25)_inset]" aria-label={`Vigor ${left} de ${total}`}>
-      <span className="text-2xl font-black">
-        <AnimatedNumber value={left} />
+    <div className="relative flex w-full items-center gap-3 rounded-2xl border-2 border-info/50 bg-info/10 px-2.5 py-1" role="group" aria-label={`Vigor: sobram ${left} de ${total}`}>
+      <span className="relative flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-full bg-info font-display leading-none text-white shadow-[0_3px_0_rgba(0,0,0,0.25),0_0_0_3px_rgba(255,255,255,0.3)_inset]">
+        <span className="text-2xl font-black">
+          <AnimatedNumber value={left} />
+        </span>
+        <span className="text-[8px] font-bold uppercase tracking-wide opacity-90">Vigor</span>
+        {delta ? (
+          <span key={delta.id} className={cn('animate-duel-float pointer-events-none absolute -top-2 left-1/2 font-display text-xl font-black drop-shadow', delta.amount < 0 ? 'text-danger' : 'text-success')} aria-hidden="true">
+            {delta.amount > 0 ? '+' : '−'}
+            {Math.abs(delta.amount)}
+          </span>
+        ) : null}
       </span>
-      <span className="text-[9px] font-bold opacity-90">de {total}</span>
-      <span className="absolute -bottom-2 rounded-full bg-black/70 px-1.5 py-px text-[8px] font-bold uppercase tracking-wide">Vigor</span>
-    </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-bold leading-tight text-ink">
+          {left} de {total} <span className="font-semibold text-muted">· {parts}</span>
+        </p>
+        <div className="mt-1 flex flex-wrap gap-[3px]" aria-hidden="true">
+          {pips.map((pip, index) => (
+            <span
+              key={index}
+              className={cn(
+                'h-4 w-3 transition-all duration-300',
+                pip.used ? 'scale-90 border border-edge-strong bg-transparent opacity-60' : pip.origin === 'carry' ? 'bg-amber-400' : pip.origin === 'turn' ? 'bg-info' : 'bg-success',
+              )}
+              style={{ clipPath: 'polygon(55% 0, 0 58%, 42% 58%, 30% 100%, 100% 38%, 55% 38%)' }}
+            />
+          ))}
+        </div>
+        <p className="mt-1 text-[11px] font-semibold leading-tight text-muted">
+          {preview !== null ? `Jogando a escolhida (−${selectedCost}) sobram ${preview}` : spent > 0 ? `Gastou ${spent} · se parar agora guarda ${left} para o próximo turno` : left > 0 ? `O que não gastar fica guardado (${left})` : 'Sem Vigor: toque em Pronto'}
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -494,7 +558,7 @@ function Arena({ lane, index, image, focus, dropHint, blindHint, onInfo }: { lan
           if (lane.scenario) onInfo();
         }}
         className={cn(
-          'relative flex h-[8.5rem] w-full flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl border-[3px] bg-surface-3 px-1.5 py-4 text-center shadow-lg transition',
+          'relative flex h-[7.5rem] w-full flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl border-[3px] bg-surface-3 px-1.5 py-4 text-center shadow-lg transition',
           lane.open ? 'border-primary-strong' : 'border-edge-strong',
           focus && 'animate-duel-focus',
           lane.open && 'animate-duel-arena',

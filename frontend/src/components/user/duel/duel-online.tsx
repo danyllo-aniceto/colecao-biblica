@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { snapshotOfView, type DuelView } from '@duel/engine';
-import type { DuelEvent, Side, Snapshot, Staged } from '@duel/types';
+import type { CardDef, DuelEvent, Side, Snapshot, Staged } from '@duel/types';
 import { Alert } from '@/components/game/game-ui';
 import { Button } from '@/components/ui/button';
 import { useDialogs } from '@/components/ui/dialogs';
@@ -10,6 +10,7 @@ import { useCampaign } from '@/components/user/campaign/campaign-provider';
 import type { CardArt } from '@/components/user/duel/duel-card';
 import { DuelHelpModal } from '@/components/user/duel/duel-help';
 import { DuelHistoryModal, type HistoryEntry } from '@/components/user/duel/duel-history';
+import { DuelDeckManager } from '@/components/user/duel/duel-deck-manager';
 import { DuelLobby, shareDuelRoom } from '@/components/user/duel/duel-lobby';
 import { durationOf, narrate, recordLines, stakesText, stepsFrom } from '@/components/user/duel/duel-playback';
 import { DuelRoundModal } from '@/components/user/duel/duel-round-modal';
@@ -51,18 +52,24 @@ type Props = {
   initial?: DuelRoomView | null;
   /** Times salvos do jogador (para escolher no lobby). */
   decks: DuelDeck[];
+  /** Figurinhas do Duelo que o jogador tem (para montar Times na sala de espera) e quantas ainda faltam. */
+  ownedCards: CardDef[];
+  missing: number;
+  /** Recarrega os Times depois de criar, editar ou excluir. */
+  onDecksChanged: () => void;
   art: CardArt;
   /** Fecha a sala na tela (a pessoa saiu ou foi tirada). */
   onClose: () => void;
 };
 
 /** Sala online do Duelo: acompanha o servidor por consultas curtas e mostra o lobby ou o duelo. */
-export function OnlineDuel({ code, initial = null, decks, art, onClose }: Props) {
+export function OnlineDuel({ code, initial = null, decks, ownedCards, missing, onDecksChanged, art, onClose }: Props) {
   const toast = useToast();
   const dialogs = useDialogs();
   const [view, setView] = useState<DuelRoomView | null>(initial);
   const [fatal, setFatal] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
+  const [managing, setManaging] = useState(false);
   const [busy, setBusy] = useState(false);
   const [clockOffset, setClockOffset] = useState(initial ? initial.serverNow - Date.now() : 0);
 
@@ -212,12 +219,14 @@ export function OnlineDuel({ code, initial = null, decks, art, onClose }: Props)
 
   if (view.status === 'LOBBY' || !view.duel || !view.series) {
     return (
+      <>
       <DuelLobby
         view={view}
         decks={decks}
         busy={busy}
         connectionLost={offline}
         actions={{
+          onManageDecks: () => setManaging(true),
           onLeave: () => void leave(),
           onStart: () => void run(() => startDuelRoom(code)),
           onAddBot: (skill) => void run(() => addDuelRoomBot(code, skill)),
@@ -227,6 +236,22 @@ export function OnlineDuel({ code, initial = null, decks, art, onClose }: Props)
           onConfig: (config) => void run(() => updateDuelRoomConfig(code, config)),
         }}
       />
+      <DuelDeckManager
+        open={managing}
+        onClose={() => setManaging(false)}
+        decks={decks}
+        cards={ownedCards}
+        art={art}
+        missing={missing}
+        currentSlot={view.me.deckSlot}
+        onUse={(slot) => void run(() => setDuelRoomDeck(code, slot))}
+        onChanged={(slot) => {
+          onDecksChanged();
+          // O Time que acabou de ser salvo já vai para a sala.
+          if (slot !== undefined) void run(() => setDuelRoomDeck(code, slot));
+        }}
+      />
+      </>
     );
   }
 

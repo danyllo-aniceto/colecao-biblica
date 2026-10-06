@@ -329,8 +329,12 @@ describe("passo a passo do turno (para a tela animar)", () => {
     const done = playTurn(state, [["davi", 0]]);
     const steps = done.events.filter((event) => event.snap);
     const reveal = steps.find((event) => event.type === "reveal")!;
+    const dom = steps.find((event) => event.type === "dom")!;
     const power = steps.find((event) => event.type === "power")!;
-    expect(reveal.dom).toContain("+6 de Influência para esta figurinha");
+    // Primeiro a figurinha entra; depois o Dom é anunciado e só então muda o número.
+    expect(dom.dom).toContain("+6 de Influência para esta figurinha");
+    expect(steps.indexOf(reveal)).toBeLessThan(steps.indexOf(dom));
+    expect(steps.indexOf(dom)).toBeLessThan(steps.indexOf(power));
     expect(reveal.snap![0].cards[0].map((card) => card.power)).toEqual([2]);
     expect(reveal.snap![0].power).toEqual([2, 6]);
     expect(power.snap![0].cards[0].map((card) => card.power)).toEqual([8]);
@@ -407,6 +411,53 @@ describe("fim do duelo e aposta", () => {
     const near: ReturnType<typeof newSeries> = { ...lives, lives: [10, 3], round: 5 };
     expect(applyRound(near, win(0, 2))).toMatchObject({ over: true, winner: 0 });
     expect(applyRound(newSeries("single"), win(1))).toMatchObject({ over: true, winner: 1 });
+  });
+});
+
+describe("ordem de revelação justa", () => {
+  it("quem revela primeiro também atinge o que o rival jogou NESTE turno (os Dons agem depois de todas entrarem)", () => {
+    let state = duel({ mine: ["elias"], theirs: ["abel"], turn: 4, scenarios: ["jerico", "arca", "canaa"] });
+    // Eu estou ganhando a arena 1, então revelo primeiro.
+    state.lanes[0].cards[0].push({ uid: 900, def: def("saul"), bonus: 0, silenced: false, order: 1, turn: 1 });
+    state.nextOrder = 2;
+    state = playTurn(state, [["elias", 0]], [["abel", 0]]);
+    const firstReveal = state.events.find((event) => event.type === "reveal")!;
+    expect(firstReveal.name).toBe("Elias");
+    // Elias age só depois de a Abel do rival entrar na mesa: a Abel (a mais fraca do rival) foi afastada.
+    expect(board(state, 0, 1).map((card) => card.def.name)).not.toContain("Abel");
+    expect(state.events.some((event) => event.type === "destroy" && event.name === "Abel")).toBe(true);
+    expect(state.players[1].graveyard.map((card) => card.def.name)).toContain("Abel");
+  });
+});
+
+describe("Vigor guardado", () => {
+  it("o Vigor que sobra num turno soma ao do próximo, até o 6º", () => {
+    let state = duel({});
+    expect(viewFor(state, 0).energyParts).toEqual({ turn: 1, bonus: 0, carry: 0 });
+    // Turno 1: ninguém joga nada, sobra 1 para cada um.
+    state = setReady(setReady(state, 0), 1);
+    expect(viewFor(state, 0)).toMatchObject({ energy: 3, energyLeft: 3, energyParts: { turn: 2, bonus: 0, carry: 1 } });
+    // Turno 2: gasta 1 dos 3; sobram 2 e o turno 3 fica com 3 + 2 = 5.
+    const hand = state.players[0].hand.find((card) => card.def.cost === 1)!;
+    state = stage(state, 0, hand.uid, 0);
+    expect(viewFor(state, 0).energyLeft).toBe(2);
+    state = setReady(setReady(state, 0), 1);
+    expect(viewFor(state, 0)).toMatchObject({ energy: 5, energyParts: { turn: 3, carry: 2 } });
+    // Quem não jogou nada acumula mais: 3 (turno 2) sem gastar viram 3 + 3 = 6 no turno 3.
+    expect(viewFor(state, 1)).toMatchObject({ energy: 6, energyParts: { carry: 3 } });
+    // Dá para usar tudo o que guardou de uma vez.
+    expect(whyNotStage(state, 1, state.players[1].hand[0].uid, 0)).toBeNull();
+  });
+
+  it("a figurinha que não coube não gasta Vigor (e o que sobrou também é guardado)", () => {
+    let state = duel({ mine: ["rute", "rute", "rute"], scenarios: ["arca", "sinai", "canaa"] });
+    state.players[0].energyBonus = 3;
+    // A arena 2 (Sinai) ainda está fechada: dá para colocar 3, mas só 2 cabem de verdade.
+    for (let i = 0; i < 3; i += 1) state = stage(state, 0, state.players[0].hand[i].uid, 1);
+    state = setReady(setReady(state, 0), 1);
+    // A terceira voltou à mão sem gastar. Energia do turno 1 = 1 + 3 = 4; gastou 2; guardou 2.
+    expect(board(state, 1, 0)).toHaveLength(2);
+    expect(viewFor(state, 0).energyParts.carry).toBe(2);
   });
 });
 
