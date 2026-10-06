@@ -1,0 +1,225 @@
+﻿"Nome";"Resumo curto";"História completa";"Curiosidades";"Onde ler";"Papel na história";"Período";"Livros";"Versículos-chave";"Palavras-chave";"Publicado";"Árvore genealógica";"Linha do tempo"
+"Atalia";"Filha da casa de Acabe e esposa do rei Jeorão de Judá, Atalia mandou matar a família real para tomar o trono e foi a única mulher a reinar sobre Judá, por seis anos, até ser derrubada pelo sacerdote Joiada em favor do pequeno Joás.";"Atalia era da casa de Onri e Acabe. Os livros dos Reis a chamam de filha de Onri, no sentido de neta, e dizem que o rei Jeorão de Judá andou nos caminhos dos reis de Israel ""como fazia a casa de Acabe, porque a filha de Acabe era sua mulher"". O casamento selava uma aliança entre o reino do norte, de Israel, e o reino do sul, de Judá. Junto com a princesa, porém, entrou em Jerusalém a adoração de Baal, que a casa de Acabe e Jezabel tinha espalhado pelo norte.
+Jeorão reinou oito anos e morreu de uma doença dolorosa. Seu filho Acazias, filho de Atalia, subiu ao trono e reinou apenas um ano, sob a influência da mãe, que o aconselhava a fazer o mal. Acazias foi visitar o rei Jorão, de Israel, e acabou morto durante a revolta de Jeú, que exterminou a casa de Acabe. Ao saber que o filho estava morto, Atalia deu um passo brutal: levantou-se e destruiu toda a descendência real da casa de Davi.
+Mas um deles escapou. Josebá, filha do rei Jeorão e irmã de Acazias, escondeu o menino Joás, filho de Acazias, ainda de colo, com a sua ama, num quarto do templo. Josebá era casada com o sacerdote Joiada. Por seis anos Joás ficou escondido na casa do Senhor, enquanto Atalia reinava sobre a terra, a única mulher a governar Judá por conta própria.
+No sétimo ano, Joiada reuniu os chefes das guardas, fez com eles uma aliança dentro do templo e lhes mostrou o filho do rei. Distribuiu entre os guardas as lanças e os escudos do rei Davi, e colocou todos em volta do menino, com as armas na mão. Joás foi coroado e ungido, e o povo bateu palmas e gritou: ""Viva o rei!"". Atalia ouviu o barulho, correu ao templo, viu o rei junto à coluna e rasgou as vestes, gritando: ""Traição! Traição!"".
+Joiada mandou que ela fosse retirada do recinto do templo, para que não morresse ali, e Atalia foi levada pelo caminho por onde os cavalos entram no palácio, onde foi morta. Depois, Joiada fez uma aliança entre o Senhor, o rei e o povo, para que fossem o povo do Senhor. A multidão derrubou o templo de Baal, quebrou os altares e os ídolos e matou Matã, o sacerdote de Baal. A cidade ficou em paz, e o menino de sete anos foi conduzido ao palácio.
+A história de Atalia mostra como a promessa a Davi esteve por um fio. Se Joás não tivesse sido escondido, a linhagem da qual viria o Messias teria acabado. A Bíblia também registra que os filhos de Atalia haviam arrombado o templo e usado as coisas sagradas em honra de Baal.";"Atalia é a única mulher a ter reinado sozinha sobre Judá, de cerca de 841 a 835 a.C.
+Josebá, esposa do sacerdote Joiada, foi quem salvou o pequeno Joás (2 Crônicas 22:11).
+Joás foi coroado com sete anos e reinou quarenta anos em Jerusalém (2 Reis 11:21 e 12:1).
+O pequeno Joás ficou escondido seis anos na casa do Senhor (2 Reis 11:3).
+Joiada mandou que Atalia fosse retirada do recinto do templo antes de ser morta, para que o lugar santo não fosse manchado (2 Reis 11:15).";"2 Reis 8:16-27 (o casamento e o filho Acazias)
+2 Reis 11:1-21 (a tomada do trono e a queda de Atalia)
+2 Crônicas 22:10 a 23:21 (o relato paralelo)
+2 Crônicas 24:7 (os filhos de Atalia e o templo)";"Rainha de Judá que matou a família real e reinou por seis anos; sua queda preservou a linhagem de Davi na pessoa do menino Joás";"Reino dividido, Judá (cerca de 841 a 835 a.C.)";"2 Reis, 2 Crônicas";"2 Reis 11:1-3; 2 Reis 11:14; 2 Reis 11:20; 2 Crônicas 22:11";"rainha, Judá, Baal, traição, Joás, Joiada, linhagem de Davi";"Sim";"graph TD
+  Onri[""Onri, rei de Israel""] --> Acabe[""Acabe, rei de Israel""]
+  Acabe --> Atalia[""Atalia, rainha de Judá""]
+  Josafa[""Josafá, rei de Judá""] --> Jeorao[""Jeorão, rei de Judá""]
+  Jeorao --- Atalia
+  Jeorao --> Acazias[""Acazias, rei de Judá""]
+  Atalia --> Acazias
+  Jeorao --> Joseba[""Josebá, que escondeu Joás""]
+  Joseba --- Joiada[""Joiada, sacerdote""]
+  Acazias --> Joas[""Joás, o rei menino""]
+  Joiada -.coroa.-> Joas";"timeline
+  title Atalia e a casa de Davi
+  2 Reis 8 : Atalia se casa com Jeorão e entra em Jerusalém
+  2 Reis 8 : Acazias, filho de Atalia, assume o trono de Judá
+  2 Reis 9 : Jeú mata Acazias e a casa de Acabe cai
+  2 Reis 11 : Atalia destrói a descendência real e reina
+  2 Reis 11 : Josebá esconde o pequeno Joás no templo
+  2 Reis 11 : Joiada coroa Joás no sétimo ano
+  2 Reis 11 : Atalia é morta e o templo de Baal é derrubado"
+"Diná";"Única filha de Jacó mencionada pelo nome, nascida de Lia, Diná é a personagem central de um dos episódios mais duros de Gênesis: a violência sofrida em Siquém e a vingança de seus irmãos Simeão e Levi.";"Diná nasceu de Jacó e Lia, em Padã-Arã, depois dos seis filhos homens de Lia, e é a única filha de Jacó que a Bíblia chama pelo nome. O seu nome tem a mesma raiz do verbo ""julgar"", e lembra o nome de Dã, filho de Raquel e Bila. Quando Jacó voltou da casa de Labão, passou por Siquém, comprou uma parte do campo dos filhos de Hamor e levantou ali um altar.
+O capítulo 34 de Gênesis conta que Diná saiu para ver as filhas da terra. Siquém, filho de Hamor, o heveu, príncipe daquela terra, viu-a, tomou-a e a violentou. O texto diz que a sua alma se apegou a Diná e que ele falou ao coração dela, e depois pediu ao pai que a conseguisse por esposa. Não se registra nenhuma palavra de Diná, e o texto deixa claro que o ato foi grave: ""fez uma loucura em Israel"".
+Jacó ouviu a notícia, mas se calou até a volta dos filhos, que estavam no campo com o gado. Quando eles souberam, ficaram indignados e muito irados. Hamor foi propor um casamento e uma aliança entre os dois povos: ""dai-nos as vossas filhas, e tomai as nossas"". Os filhos de Jacó responderam com astúcia, dizendo que só aceitariam se todos os homens da cidade fossem circuncidados.
+Os homens de Siquém aceitaram. No terceiro dia, quando estavam com dor, dois irmãos de Diná, Simeão e Levi, tomaram cada um a sua espada, entraram na cidade e mataram todos os homens, inclusive Hamor e Siquém. Tiraram Diná da casa de Siquém e saíram. Os outros filhos de Jacó entraram depois, saquearam a cidade e levaram o gado, os bens, as mulheres e as crianças.
+Jacó repreendeu Simeão e Levi: ""Turbastes-me, fazendo-me execrável ao morador desta terra"". Eles responderam com uma pergunta, perguntando se alguém podia tratar a sua irmã como uma prostituta. Mais tarde, na bênção que deu aos filhos, Jacó falou dessa violência com horror. O próprio Deus mandou Jacó subir a Betel, e a família partiu, livre da ameaça dos povos vizinhos, que Deus fez temer.
+Diná aparece uma última vez na lista dos que desceram com Jacó ao Egito: ""seus filhos e suas filhas"", e entre elas, ""Diná, sua filha"". O texto bíblico dá pouco espaço à voz dela, mas o episódio mostra o peso que as Escrituras dão à dor de uma mulher violentada e à violência em cadeia que pode vir depois, quando a vingança toma o lugar da justiça.";"Diná é a única filha de Jacó citada pelo nome no livro de Gênesis (Gênesis 30:21 e 46:15).
+O nome Diná vem de uma raiz hebraica ligada a ""julgar"" ou ""fazer justiça"".
+Siquém, a cidade do episódio, mais tarde seria lugar de aliança com Deus, quando Josué reuniu o povo ali (Josué 24).
+Em Gênesis 34:25, Simeão e Levi são chamados ""irmãos de Diná"", pois eram filhos de Lia, assim como ela.
+Na bênção que deu aos filhos, Jacó recusou entrar no conselho de Simeão e Levi e amaldiçoou a sua ira (Gênesis 49:5-7).
+A Bíblia não diz a idade de Diná no episódio, nem registra nenhuma palavra dela.";"Gênesis 30:21 (o nascimento de Diná)
+Gênesis 33:18-20 (Jacó chega a Siquém)
+Gênesis 34 (o episódio completo)
+Gênesis 35:1-5 (a subida a Betel)
+Gênesis 49:5-7 (a bênção de Jacó sobre Simeão e Levi)";"Filha de Jacó e Lia, vítima da violência em Siquém; o seu caso desencadeou a vingança de Simeão e Levi e a reprovação de Jacó";"Era dos patriarcas (cerca de 1900 a 1800 a.C.)";"Gênesis";"Gênesis 30:21; Gênesis 34:1-2; Gênesis 34:25-26; Gênesis 34:30; Gênesis 49:5-7";"filha de Jacó, Siquém, Lia, Simeão, Levi, violência, vingança";"Sim";"graph TD
+  Jaco[""Jacó""] --> Rubem[""Rúben""]
+  Jaco --> Simeao[""Simeão""]
+  Jaco --> Levi[""Levi""]
+  Jaco --> Juda[""Judá""]
+  Jaco --> Dina[""Diná, única filha citada""]
+  Lia[""Lia""] --> Rubem
+  Lia --> Simeao
+  Lia --> Levi
+  Lia --> Juda
+  Lia --> Dina
+  Hamor[""Hamor, o heveu""] --> Siquem[""Siquém""]
+  Simeao -.vinga.-> Dina
+  Levi -.vinga.-> Dina";"timeline
+  title Diná em Gênesis
+  Gênesis 30 : Nasce Diná, filha de Jacó e de Lia
+  Gênesis 33 : Jacó acampa diante de Siquém e levanta um altar
+  Gênesis 34 : Diná sai para ver as filhas da terra e é violentada por Siquém
+  Gênesis 34 : Os irmãos exigem a circuncisão dos homens da cidade
+  Gênesis 34 : Simeão e Levi matam os homens e levam Diná de volta
+  Gênesis 35 : Deus manda Jacó subir a Betel
+  Gênesis 46 : Diná é lembrada entre os que descem ao Egito"
+"Ezequias";"Rei de Judá que abriu e purificou o templo, derrubou os ídolos e viu Deus livrar Jerusalém do exército de Senaqueribe; a sua oração diante da carta do rei assírio e os quinze anos acrescentados à sua vida estão entre os momentos mais marcantes do Antigo Testamento.";"Ezequias era filho do rei Acaz, um dos reis mais ímpios de Judá, e de Abi, filha de Zacarias. Subiu ao trono com vinte e cinco anos e reinou vinte e nove anos em Jerusalém. A Bíblia diz que ""fez o que era reto aos olhos do Senhor, conforme tudo o que fizera Davi, seu pai"", e que, depois dele, não houve rei como ele entre os reis de Judá, nem antes.
+No primeiro mês do primeiro ano, Ezequias abriu as portas do templo, que o pai fechara, e reparou-as. Mandou os levitas se santificarem e tirarem a imundícia do santuário, e em dezesseis dias a casa do Senhor estava purificada. Depois restabeleceu os sacrifícios e o canto dos salmos de Davi e de Asafe. Eliminou os altos, quebrou as colunas, cortou os postes-ídolos e esmigalhou a serpente de bronze que Moisés fizera, à qual o povo queimava incenso e que chamavam de Neustã.
+Ezequias convidou todo o Israel, também as tribos do norte, para celebrar a Páscoa em Jerusalém, o que não se fazia daquela forma desde os dias de Salomão. Houve tanta alegria que o povo prolongou a festa por mais sete dias. Depois, os israelitas saíram pelas cidades de Judá e destruíram as colunas e os altares dos ídolos.
+No décimo quarto ano do seu reinado, Senaqueribe, rei da Assíria, invadiu Judá e tomou muitas cidades fortificadas. Ezequias pagou-lhe um pesado tributo, incluindo o ouro que cobria as portas do templo, mas o rei assírio mandou seu comandante, o Rabsaqué, a Jerusalém, para exigir a rendição, zombando do Deus de Israel diante do povo, em hebraico. Ezequias rasgou as vestes, subiu ao templo e estendeu a carta diante do Senhor. O profeta Isaías respondeu que Deus defenderia a cidade, e naquela noite o anjo do Senhor feriu cento e oitenta e cinco mil homens no arraial dos assírios. Senaqueribe voltou para Nínive.
+Antes disso, Ezequias adoeceu mortalmente, e Isaías lhe disse que pusesse a casa em ordem, porque morreria. O rei virou o rosto para a parede e orou, chorando muito. Deus mandou Isaías voltar e dizer que lhe acrescentaria quinze anos de vida. Como sinal, a sombra recuou dez graus no relógio de Acaz, e um emplastro de figos foi aplicado na ferida. Mais tarde, ao receber os emissários de Merodaque-Baladã, rei da Babilônia, Ezequias lhes mostrou todos os seus tesouros, e Isaías anunciou que um dia tudo seria levado à Babilônia.
+Ezequias também mandou abrir um canal subterrâneo, o túnel de Siloé, que levava a água da fonte de Giom para dentro da cidade. Ele morreu em paz e foi sepultado com honra, e seu filho Manassés reinou em seu lugar. Os homens de Ezequias também copiaram provérbios de Salomão, reunidos em Provérbios 25 a 29.";"O túnel de Ezequias, com cerca de 533 metros, ainda pode ser percorrido em Jerusalém. A inscrição de Siloé, descoberta em 1880, descreve os dois grupos de escavadores se encontrando.
+O prisma de Senaqueribe, achado em escavações assírias, diz que ele prendeu Ezequias em Jerusalém ""como um pássaro em uma gaiola"".
+Ezequias esmigalhou a serpente de bronze de Moisés, chamada Neustã, porque o povo lhe queimava incenso (2 Reis 18:4).
+Seu reinado de vinte e nove anos incluiu os quinze anos acrescentados à vida (2 Reis 20:6).
+Provérbios 25:1 diz que os homens de Ezequias copiaram provérbios de Salomão.
+Seu filho Manassés nasceu durante os quinze anos de vida a mais e começou a reinar com doze anos (2 Reis 21:1).";"2 Reis 18 a 20 (o reinado, o cerco e a doença)
+2 Crônicas 29 a 32 (a reforma, a Páscoa e o túnel)
+Isaías 36 a 39 (o relato de Isaías)
+Provérbios 25:1 (os provérbios copiados)";"Rei reformador de Judá, que purificou o templo, restaurou a Páscoa e confiou em Deus diante de Senaqueribe, que sitiou Jerusalém";"Reino de Judá (cerca de 715 a 686 a.C.)";"2 Reis, 2 Crônicas, Isaías, Provérbios";"2 Reis 18:5; 2 Reis 19:15-19; 2 Reis 20:5-6; 2 Crônicas 29:3; 2 Crônicas 32:7-8";"rei de Judá, reforma, Páscoa, Senaqueribe, oração, túnel de Siloé, Isaías";"Sim";"graph TD
+  Davi[""Davi""] --> Acaz[""Acaz, rei de Judá""]
+  Acaz --> Ezequias[""Ezequias, rei de Judá""]
+  Abi[""Abi, filha de Zacarias""] --> Ezequias
+  Ezequias --> Manasses[""Manassés""]
+  Manasses --> Amom[""Amom""]
+  Amom --> Josias[""Josias""]
+  Isaias[""Isaías, profeta""] -.aconselha.-> Ezequias
+  Senaqueribe[""Senaqueribe, rei da Assíria""] -.cerca Jerusalém.-> Ezequias";"timeline
+  title O reinado de Ezequias
+  2 Reis 18 : Ezequias começa a reinar aos vinte e cinco anos
+  2 Crônicas 29 : Abre e purifica o templo
+  2 Crônicas 30 : Convoca todo o Israel para a Páscoa
+  2 Reis 18 : Destrói os altos e a serpente de bronze
+  2 Reis 18 : Senaqueribe invade Judá e cerca Jerusalém
+  2 Reis 19 : Ezequias ora e o anjo do Senhor fere o exército assírio
+  2 Reis 20 : Ezequias adoece e Deus acrescenta quinze anos
+  2 Reis 20 : Recebe os emissários da Babilônia e Isaías anuncia o exílio"
+"Gideão";"Juiz da tribo de Manassés que, mesmo se achando o menor da família mais pobre, foi escolhido por Deus para libertar Israel dos midianitas com apenas trezentos homens, trombetas, cântaros e tochas.";"Gideão era filho de Joás, abiezrita, da tribo de Manassés, e morava em Ofra. Por sete anos Israel esteve sob o domínio de Midiã, e o povo se escondia em covas e cavernas, enquanto os midianitas e os amalequitas destruíam as colheitas e levavam o gado. Num dia, o anjo do Senhor apareceu a Gideão, que debulhava trigo no lagar, para que os midianitas não o vissem, e lhe disse: ""O Senhor é contigo, varão valente"".
+Gideão respondeu com franqueza, perguntando onde estavam os milagres de que os pais falavam, se o Senhor estava com eles. Deus lhe disse: ""Vai nesta tua força... Porventura não te enviei eu?"". Gideão objetou que a sua família era a mais pobre de Manassés, e que ele era o menor na casa de seu pai. Pediu um sinal e preparou uma oferta, e o anjo fez fogo sair da rocha e consumi-la. Gideão levantou ali um altar e o chamou de ""O Senhor é paz"".
+Na mesma noite, Deus mandou Gideão derrubar o altar de Baal do pai e cortar o poste-ídolo ao lado dele, e construir um altar ao Senhor. Gideão, com medo, fez isso de noite, com dez servos. Quando o povo quis matá-lo, o pai, Joás, disse que, se Baal fosse deus, ele que se defendesse. Por isso Gideão recebeu o nome de Jerubaal, ""que Baal conteste contra ele"".
+Gideão tocou a trombeta, e muitos homens vieram. Mesmo assim, pediu um novo sinal: estendeu um velo de lã na eira e pediu que só o velo ficasse molhado de orvalho. Na noite seguinte, pediu o contrário, que só o chão ficasse molhado. Deus atendeu aos dois pedidos.
+Gideão tinha trinta e dois mil homens. Deus lhe disse que eram demais, para que Israel não se orgulhasse. Vinte e dois mil voltaram por medo, e dos dez mil que ficaram, Deus escolheu apenas trezentos, os que lamberam a água com a língua, como o cão. À noite, dividiu os trezentos em três grupos, deu a cada homem uma trombeta, um cântaro vazio e uma tocha dentro dele. Ao sinal, quebraram os cântaros, mostraram as tochas, tocaram as trombetas e gritaram: ""Espada pelo Senhor e por Gideão!"". Os midianitas fugiram, matando-se uns aos outros.
+Gideão perseguiu os reis de Midiã, Zeba e Zalmuna, e castigou as cidades de Sucote e Penuel, que se negaram a ajudá-lo. Quando o povo quis que ele e a sua descendência reinassem, ele respondeu: ""Eu não dominarei sobre vós... o Senhor vos dominará"". Mas pediu os brincos de ouro dos despojos e com eles fez um éfode, que o povo passou a adorar em Ofra, e isso se tornou um laço para Gideão e a sua casa. A terra teve paz por quarenta anos. Gideão morreu em boa velhice e foi sepultado em Ofra. O Novo Testamento o cita entre os heróis da fé.";"Gideão também é chamado de Jerubaal, nome que lembra o desafio ao deus Baal (Juízes 6:32).
+Deus reduziu o exército de 32.000 para 10.000 e depois para 300 homens (Juízes 7:2-7).
+Os trezentos usaram trombetas, cântaros e tochas, e os midianitas se atacaram uns aos outros (Juízes 7:19-22).
+Gideão pediu dois sinais com um velo de lã, o primeiro com orvalho só no velo e o segundo só no chão (Juízes 6:36-40).
+""O dia de Midiã"" virou expressão de grande vitória de Deus em Isaías 9:4 e 10:26.
+Seu filho Abimeleque, nascido de uma concubina em Siquém, matou setenta irmãos para reinar (Juízes 9).";"Juízes 6 (o chamado e os sinais)
+Juízes 7 (os trezentos e a vitória)
+Juízes 8 (a perseguição, o éfode e a paz)
+Hebreus 11:32-34 (a lista dos heróis da fé)";"Juiz de Israel que, com trezentos homens, venceu os midianitas, mostrando que Deus salva pelos fracos para que ninguém se orgulhe";"Tempo dos juízes (cerca de 1200 a 1100 a.C.)";"Juízes, Hebreus";"Juízes 6:12; Juízes 6:15-16; Juízes 7:2; Juízes 7:20; Juízes 8:23";"juiz, Midiã, trezentos homens, trombetas, cântaros, sinais, Baal";"Sim";"graph TD
+  Manasses[""Manassés""] --> Abiezer[""Família de Abiezer""]
+  Abiezer --> Joas[""Joás, abiezrita""]
+  Joas --> Gideao[""Gideão, também chamado Jerubaal""]
+  Gideao --> Jotao[""Jotão, o filho mais novo""]
+  Gideao --> Setenta[""Setenta filhos de muitas mulheres""]
+  Gideao --> Abimeleque[""Abimeleque, filho da concubina de Siquém""]";"timeline
+  title Gideão e os midianitas
+  Juízes 6 : Sete anos de opressão de Midiã
+  Juízes 6 : O anjo do Senhor chama Gideão no lagar
+  Juízes 6 : Gideão derruba o altar de Baal e recebe o nome Jerubaal
+  Juízes 6 : O velo de lã e os dois sinais
+  Juízes 7 : Deus reduz o exército de 32 mil para 300
+  Juízes 7 : Trombetas, cântaros e tochas derrotam Midiã
+  Juízes 8 : Gideão persegue os reis Zeba e Zalmuna
+  Juízes 8 : Recusa reinar e faz o éfode
+  Juízes 8 : A terra tem paz por quarenta anos"
+"Isaque";"Filho da promessa, nascido de Abraão e Sara na velhice dos dois, Isaque foi oferecido no monte Moriá e salvo por um carneiro, casou-se com Rebeca e foi pai de Esaú e Jacó, sendo o segundo dos três patriarcas de Israel.";"Isaque nasceu quando Abraão tinha cem anos e Sara noventa, e o seu nome quer dizer ""riso"", porque Sara havia rido ao ouvir a promessa. Foi circuncidado ao oitavo dia, e na festa do seu desmame Sara viu Ismael zombando dele, e pediu a Abraão que o expulsasse com Agar. Deus disse a Abraão que fizesse o que Sara dizia, porque é em Isaque que a descendência seria chamada.
+Quando Isaque era ainda um jovem, Deus pôs Abraão à prova e lhe pediu que o oferecesse em holocausto na terra de Moriá. Pai e filho subiram juntos ao monte, e Isaque carregou a lenha. Ao notar que faltava o cordeiro, perguntou ao pai onde ele estava. Abraão respondeu: ""Deus proverá para si o cordeiro para o holocausto, meu filho"". Já com Isaque atado sobre o altar, o anjo do Senhor chamou do céu e impediu o sacrifício. Havia um carneiro preso pelos chifres numa moita, e Abraão o ofereceu no lugar do filho.
+Aos quarenta anos, Isaque se casou com Rebeca, a quem o servo de Abraão encontrou em Padã-Arã. Ele estava no campo, ao cair da tarde, meditando, quando viu os camelos chegarem. Rebeca desceu do camelo, cobriu-se com o véu, e Isaque a levou para a tenda de Sara, a mãe. A Bíblia diz que ele a amou e foi consolado depois da morte da mãe. Rebeca era estéril, e Isaque orou ao Senhor por ela, que concebeu gêmeos, Esaú e Jacó, quando Isaque tinha sessenta anos.
+Houve fome na terra, e Isaque foi para Gerar, para a terra de Abimeleque, rei dos filisteus. Deus lhe apareceu e proibiu que descesse ao Egito, e renovou a ele a promessa feita a Abraão. Como o pai, Isaque disse que Rebeca era a sua irmã, com medo de ser morto, mas Abimeleque o descobriu e o repreendeu. Isaque semeou naquela terra, e no mesmo ano colheu cem vezes mais. Enriqueceu tanto que os filisteus o invejaram e taparam os poços que o pai havia cavado.
+Isaque os cavou de novo, e quando os pastores de Gerar brigaram pelos poços, ele os deixou e foi abrindo outros, chamados Eseque, Sitna e Reobote, até o último ficar em paz. Em Berseba, Deus lhe apareceu e confirmou a promessa, e Abimeleque foi lá fazer uma aliança com ele.
+Já velho e quase cego, Isaque queria abençoar Esaú, o filho preferido, mas Rebeca e Jacó o enganaram, e ele abençoou Jacó, mesmo sem querer. Quando descobriu o engano, ele estremeceu muito, mas não voltou atrás: ""Será bendito"". Depois, mandou Jacó a Padã-Arã escolher esposa e o abençoou outra vez. Isaque viveu cento e oitenta anos e foi sepultado por Esaú e Jacó na cova de Macpela, onde estavam Abraão, Sara e, mais tarde, Rebeca.";"O nome Isaque significa ""riso"", ligado ao riso de Sara e de Abraão ao ouvirem a promessa (Gênesis 17:17 e 18:12).
+Isaque nasceu quando Abraão tinha cem anos e Sara noventa (Gênesis 21:5).
+Isaque é o único dos três patriarcas que nunca saiu de Canaã.
+Isaque colheu ""cem por um"" no ano em que semeou em Gerar (Gênesis 26:12).
+Hebreus 11:17-19 diz que Abraão considerou que Deus podia ressuscitar Isaque dentre os mortos.
+Isaque viveu cento e oitenta anos, mais do que Abraão, que viveu cento e setenta e cinco (Gênesis 25:7 e 35:28).";"Gênesis 21:1-8 (o nascimento)
+Gênesis 22:1-19 (o monte Moriá)
+Gênesis 24 (o casamento com Rebeca)
+Gênesis 26 (Gerar, os poços e Berseba)
+Gênesis 27 (a bênção de Jacó)
+Hebreus 11:17-20 (Isaque na galeria da fé)";"Patriarca de Israel, filho da promessa feita a Abraão, pai de Esaú e Jacó e herdeiro da aliança de Deus";"Era dos patriarcas (cerca de 2000 a 1800 a.C.)";"Gênesis, Romanos, Gálatas, Hebreus";"Gênesis 17:19; Gênesis 22:7-8; Gênesis 24:63-67; Gênesis 26:3-4; Hebreus 11:17-19";"patriarca, promessa, sacrifício, Moriá, Rebeca, poços, bênção";"Sim";"graph TD
+  Abraao[""Abraão""] --> Isaque[""Isaque, filho da promessa""]
+  Sara[""Sara""] --> Isaque
+  Abraao --> Ismael[""Ismael, filho de Agar""]
+  Isaque --- Rebeca[""Rebeca""]
+  Isaque --> Esau[""Esaú""]
+  Isaque --> Jaco[""Jacó""]
+  Rebeca --> Esau
+  Rebeca --> Jaco
+  Jaco --> Doze[""Os doze filhos de Jacó""]";"timeline
+  title A vida de Isaque
+  Gênesis 21 : Nasce Isaque quando Abraão tem cem anos
+  Gênesis 22 : Isaque é oferecido no monte Moriá e um carneiro o substitui
+  Gênesis 24 : Isaque se casa com Rebeca aos quarenta anos
+  Gênesis 25 : Nascem Esaú e Jacó, quando Isaque tem sessenta anos
+  Gênesis 26 : Em Gerar, Isaque colhe cem por um e cava poços
+  Gênesis 27 : Isaque abençoa Jacó pensando ser Esaú
+  Gênesis 35 : Isaque morre aos cento e oitenta anos e é sepultado em Macpela"
+"Jeú";"Comandante do exército de Israel, ungido rei por ordem de Eliseu para destruir a casa de Acabe, Jeú exterminou Jorão, Jezabel e os adoradores de Baal, mas não se afastou dos bezerros de ouro de Jeroboão.";"Jeú era filho de Josafá, filho de Ninsi, e comandava o exército de Israel em Ramote-Gileade, onde o rei Jorão, filho de Acabe, lutava contra os sírios. O profeta Eliseu enviou a Ramote um moço dos discípulos dos profetas, com um vaso de azeite, para ungir Jeú como rei e anunciar a palavra de Deus: toda a casa de Acabe seria exterminada, e Jezabel seria devorada pelos cães, conforme a profecia de Elias. O moço o ungiu e saiu correndo.
+Os oficiais de Jeú perguntaram o que o louco queria. Ele lhes contou a unção, e eles estenderam as capas nos degraus e tocaram a trombeta, gritando: ""Jeú é rei!"". Jeú partiu de carro para Jezreel, onde Jorão se recuperava de feridas. O atalaia da torre viu o grupo e avisou: ""O seu andar é como o andar de Jeú, filho de Ninsi, porque anda furiosamente"".
+Jorão e o rei Acazias, de Judá, saíram ao encontro dele, e se encontraram no campo de Nabote, o jezreelita. Jorão perguntou: ""Há paz, Jeú?"", e Jeú respondeu que não poderia haver paz enquanto durassem as prostituições e as feitiçarias de Jezabel, sua mãe. Jorão virou-se para fugir, e Jeú o feriu com uma flecha entre as costas, e ele caiu morto naquele campo de Nabote, como Elias havia dito. Acazias foi ferido no caminho e morreu em Megido.
+Quando Jeú entrou em Jezreel, Jezabel pintou os olhos, enfeitou a cabeça e olhou da janela. Jeú pediu aos eunucos que a lançassem de lá, e eles a atiraram. Depois de comer e beber, Jeú disse que a enterrassem, por ser filha de rei, mas só encontraram o crânio, os pés e as palmas das mãos, porque os cães a haviam devorado, como Deus tinha dito.
+Jeú mandou cartas a Samaria, onde estavam setenta filhos de Acabe, e os chefes mataram os rapazes e entregaram as cabeças em cestos. Em seguida eliminou os parentes e amigos de Acabe e quarenta e dois parentes de Acazias. No caminho, encontrou Jonadabe, filho de Recabe, e lhe disse: ""Vem comigo, e verás o meu zelo pelo Senhor"". Em Samaria, convocou todos os adoradores de Baal para um grande sacrifício, cercou-os e os matou, e destruiu o templo de Baal, tornando-o um lugar de despejo.
+Deus elogiou o que Jeú fez, e prometeu que seus filhos se sentariam no trono de Israel até a quarta geração. Mas Jeú não guardou a lei do Senhor de todo o coração e não se afastou dos pecados de Jeroboão, os bezerros de ouro de Betel e de Dã. Em seus dias, o Senhor começou a diminuir Israel, e o rei sírio Hazael tomou muita terra. Jeú reinou vinte e oito anos.";"Jeú foi ungido rei por um dos discípulos dos profetas, enviado por Eliseu (2 Reis 9:1-10).
+O atalaia de Jezreel reconheceu Jeú de longe pelo jeito de guiar o carro, ""furiosamente"" (2 Reis 9:20).
+O Obelisco Negro do rei assírio Salmaneser III mostra Jeú, ou o seu enviado, se curvando e entregando tributo.
+Jonadabe, filho de Recabe, foi o antepassado dos recabitas, que não bebiam vinho (Jeremias 35).
+A promessa de Deus a Jeú cumpriu-se com quatro gerações no trono: Jeoacaz, Jeoás, Jeroboão II e Zacarias (2 Reis 10:30; 15:12).
+O profeta Oséias anunciou castigo sobre a casa de Jeú por causa do sangue de Jezreel (Oséias 1:4).";"2 Reis 9 (a unção e a morte de Jorão e Jezabel)
+2 Reis 10 (o extermínio da casa de Acabe e de Baal)
+1 Reis 19:16-17 (a ordem dada a Elias)
+Oséias 1:4 (o sangue de Jezreel)";"Rei de Israel e executor do julgamento de Deus sobre a casa de Acabe e sobre a adoração de Baal, mas sem fidelidade total ao Senhor";"Reino de Israel (cerca de 841 a 814 a.C.)";"1 Reis, 2 Reis, 2 Crônicas, Oséias";"2 Reis 9:20; 2 Reis 10:16; 2 Reis 10:30; 2 Reis 10:31; Oséias 1:4";"rei de Israel, unção, Jezreel, Jezabel, Baal, zelo, Acabe";"Sim";"graph TD
+  Ninsi[""Ninsi""] --> Josafa[""Josafá, pai de Jeú""]
+  Josafa --> Jeu[""Jeú, rei de Israel""]
+  Jeu --> Jeoacaz[""Jeoacaz""]
+  Jeoacaz --> Jeoas[""Jeoás""]
+  Jeoas --> Jeroboao[""Jeroboão II""]
+  Jeroboao --> Zacarias[""Zacarias""]
+  Eliseu[""Eliseu, profeta""] -.manda ungir.-> Jeu
+  Jeu -.extermina.-> Acabe[""Casa de Acabe""]";"timeline
+  title Jeú, rei de Israel
+  2 Reis 9 : Jeú é ungido em Ramote-Gileade
+  2 Reis 9 : Mata o rei Jorão no campo de Nabote
+  2 Reis 9 : Jezabel é lançada da janela
+  2 Reis 10 : Mata os setenta filhos de Acabe em Samaria
+  2 Reis 10 : Encontra Jonadabe e o leva no carro
+  2 Reis 10 : Destrói os adoradores de Baal e o templo
+  2 Reis 10 : Hazael começa a reduzir Israel
+  2 Reis 10 : Jeú morre depois de vinte e oito anos de reinado"
+"Joabe";"Sobrinho de Davi e comandante do seu exército, Joabe foi um chefe militar leal e implacável: venceu batalhas, tomou Jebus, mas também assassinou rivais, matou Absalão contra a ordem do rei e, por fim, foi executado por ordem de Salomão.";"Joabe era filho de Zeruia, irmã de Davi, e irmão de Abisai e de Asael. Aparece pela primeira vez quando Davi era rei só de Judá, em Hebrom. No tanque de Gibeão, os homens de Joabe enfrentaram os de Abner, general de Isbosete, filho de Saul, e na fuga Abner matou Asael, o irmão de Joabe. Joabe guardou o rancor.
+Quando Abner foi a Hebrom fazer as pazes com Davi, Joabe o chamou à parte, à porta da cidade, e o matou com um golpe no ventre, vingando o irmão. Davi se declarou inocente, mandou rasgar as vestes, jejuou e chorou diante do túmulo de Abner. Disse que os filhos de Zeruia eram duros demais para ele, e pediu que o Senhor retribuísse ao que fizera o mal.
+Ao tomar Jebus, que viria a ser Jerusalém, Davi tinha prometido a chefia do exército a quem subisse primeiro à fortaleza. Joabe subiu e se tornou o chefe. Conduziu as guerras de Davi contra os amonitas e os sírios, com um discurso famoso: ""Esforça-te, e fortifiquemo-nos pelo nosso povo, e pelas cidades do nosso Deus; e faça o Senhor o que parecer bom aos seus olhos"".
+Em Rabá, Joabe participou do pior episódio de Davi. O rei lhe mandou, por Urias, uma carta ordenando que o pusessem na frente da batalha mais dura, e depois recuassem, para que fosse ferido e morresse. Joabe cumpriu a ordem e mandou o relato a Davi. Quando estava prestes a tomar a cidade, mandou chamar o rei para que a conquista fosse atribuída a ele.
+Mais tarde, Joabe usou uma mulher sábia de Tecoa para reconciliar Davi e Absalão. Quando Absalão se rebelou, Joabe comandou um terço do exército de Davi. O rei mandou que tratassem Absalão com brandura, mas Joabe, ao saber que ele estava preso pelos cabelos num carvalho, o feriu no coração com três dardos, e dez dos seus escudeiros acabaram de matá-lo. Davi chorou, e Joabe o repreendeu duramente por amar os inimigos e odiar os amigos.
+Depois da revolta de Seba, Joabe matou também Amasa, a quem Davi havia dado o seu lugar: aproximou-se dele como para o beijar e o feriu com a espada. Quando Davi ordenou o recenseamento do povo, Joabe protestou, mas teve de cumprir. No fim da vida de Davi, apoiou Adonias na disputa pelo trono contra Salomão. Davi, já morrendo, mandou Salomão não deixar Joabe descer em paz ao sepulcro. Joabe fugiu para o altar, mas Benaia o executou ali, por ordem de Salomão, e ele foi sepultado em sua casa, no deserto.";"Joabe era sobrinho de Davi, filho de Zeruia, irmã do rei (1 Crônicas 2:16).
+Ele foi o primeiro a subir à fortaleza de Jebus, e por isso recebeu o comando do exército (1 Crônicas 11:6).
+Matou Abner e Amasa com espada, em encontros que pareciam amistosos (2 Samuel 3:27 e 20:9-10).
+Joabe matou Absalão com três dardos, apesar de Davi ter pedido que o poupassem (2 Samuel 18:14).
+Seus irmãos Abisai e Asael também eram guerreiros famosos de Davi (2 Samuel 2:18).
+Joabe se agarrou aos chifres do altar, mas foi morto ali mesmo (1 Reis 2:28-34).";"2 Samuel 2 e 3 (Abner e Asael)
+2 Samuel 10 e 11 (Rabá e Urias)
+2 Samuel 14 (a mulher de Tecoa)
+2 Samuel 18 (a morte de Absalão)
+2 Samuel 20 (Amasa e Seba)
+1 Reis 1 e 2 (Adonias e o fim de Joabe)";"Chefe do exército de Davi, hábil e cruel, que serviu o rei em quase todas as guerras e foi também responsável por várias mortes políticas";"Reinado de Davi (cerca de 1010 a 970 a.C.)";"2 Samuel, 1 Reis, 1 Crônicas";"2 Samuel 10:12; 2 Samuel 11:14-17; 2 Samuel 18:14; 1 Reis 2:5-6; 1 Reis 2:34";"general, exército, Davi, Abner, Absalão, Urias, Salomão, Benaia";"Sim";"graph TD
+  Jesse[""Jessé""] --> Davi[""Davi, rei""]
+  Jesse --> Zeruia[""Zeruia, irmã de Davi""]
+  Zeruia --> Joabe[""Joabe, general""]
+  Zeruia --> Abisai[""Abisai""]
+  Zeruia --> Asael[""Asael""]
+  Joabe -.serve.-> Davi
+  Benaia[""Benaia""] -.executa Joabe.-> Joabe";"timeline
+  title Joabe, o general de Davi
+  2 Samuel 2 : Asael morre em Gibeão e Joabe guarda o rancor
+  2 Samuel 3 : Joabe mata Abner em Hebrom
+  1 Crônicas 11 : Joabe sobe primeiro a Jebus e recebe o comando
+  2 Samuel 11 : Joabe cumpre a ordem que leva à morte de Urias
+  2 Samuel 14 : Reconcilia Davi e Absalão pela mulher de Tecoa
+  2 Samuel 18 : Mata Absalão com três dardos
+  2 Samuel 20 : Mata Amasa e derrota a revolta de Seba
+  1 Reis 2 : Salomão manda executar Joabe junto ao altar"
