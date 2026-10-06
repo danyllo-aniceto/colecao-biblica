@@ -9,7 +9,10 @@ import ExploreRoundedIcon from '@mui/icons-material/ExploreRounded';
 import LandscapeRoundedIcon from '@mui/icons-material/LandscapeRounded';
 import LocationCityRoundedIcon from '@mui/icons-material/LocationCityRounded';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
+import FoundationRoundedIcon from '@mui/icons-material/FoundationRounded';
 import ParkRoundedIcon from '@mui/icons-material/ParkRounded';
+import StairsRoundedIcon from '@mui/icons-material/StairsRounded';
+import WbTwilightRoundedIcon from '@mui/icons-material/WbTwilightRounded';
 
 const DEFAULT_COLOR = '#7c4dff';
 
@@ -25,6 +28,9 @@ const FALLBACK_ICONS: Record<string, typeof MapRoundedIcon> = {
   babilonia: LocationCityRoundedIcon,
   galileia: AnchorRoundedIcon,
   jerusalem: ChurchRoundedIcon,
+  babel: FoundationRoundedIcon,
+  betel: StairsRoundedIcon,
+  peniel: WbTwilightRoundedIcon,
 };
 
 export function ScenarioFallbackIcon({ slug, className, fontSize = 28 }: { slug: string; className?: string; fontSize?: number }): ReactNode {

@@ -13,7 +13,7 @@ import { getRarityLabel } from '@/lib/rarity-theme';
 import { buyCosmetic, getInventory, type CosmeticType, type Inventory } from '@/lib/rewards-api';
 import type { UserProfile } from '@/types/auth';
 
-const TYPES: CosmeticType[] = ['AVATAR', 'FRAME', 'TITLE', 'NAME_COLOR', 'REACTION', 'PROFILE_BG', 'ALBUM_COVER', 'PAWN'];
+const TYPES: CosmeticType[] = ['AVATAR', 'FRAME', 'TITLE', 'NAME_COLOR', 'REACTION', 'PROFILE_BG', 'ALBUM_COVER', 'PAWN', 'BADGE'];
 
 /** Loja de itens visuais: o que está à venda agora (inclui os do evento). */
 export function CosmeticShop({ profile, coins, onCoins }: { profile: UserProfile | null; coins: number; onCoins: (coins: number) => void }) {

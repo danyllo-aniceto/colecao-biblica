@@ -61,13 +61,13 @@ Páscoa) valendo como bônus fora da contagem.
 ## 2.1 Regra de cada cenário no Duelo
 
 Cada cenário novo traz uma regra de duelo, **sem sorte**, com tema do lugar. Regras existentes: `cheapBonus`, `sharedTag`,
-`majority`, `decay`, `slots`, `noMove`, `tagBonus`, `shiftFirst`, `stormAt`, `winnerBonus`; as marcadas (novo) pedem tipo novo no motor.
+`majority`, `decay`, `slots`, `noMove`, `tagBonus`, `shiftFirst`, `stormAt`, `winnerBonus`; `decayStrongest`, `growWeakest` e `underdog` entraram com os cenários das Pedras (testes em `engine.test.ts`).
 
 | Cenário | Regra proposta |
 |---|---|
-| Torre de Babel | **(novo)** A figurinha mais forte de cada lado perde 1 no fim de cada turno (a soberba da torre) |
-| Betel | **(novo)** No fim de cada turno, a figurinha mais fraca de cada lado ganha +1 (a escada sobe) |
-| Peniel | **(novo)** Quem tem menos figurinhas aqui ganha +3 (a luta com o anjo: quem resiste é abençoado) |
+| Torre de Babel | ✅ A figurinha mais forte de cada lado perde 1 no fim de cada turno (a soberba da torre) |
+| Betel | ✅ No fim de cada turno, a figurinha mais fraca de cada lado ganha +1 (a escada sobe) |
+| Peniel | ✅ Quem tem menos figurinhas aqui (ao menos 1) ganha +3 (a luta com o anjo: quem resiste é abençoado) |
 
 (Os próximos trios ganham a regra na hora do cadastro.)
 
@@ -137,12 +137,12 @@ Os 10 cenários de lançamento mantêm as paradas que já têm (4 a 6) para não
 ## 5. Etapas (marque ao concluir)
 
 - [x] **0.** Curva de XP por cenário (`xpPerStop`, +120 por cenário, teto 3.000) com testes; padrão de 4 paradas por cenário. Falta só fechar a lista final dos 36.
-- [ ] **1.** Brasões: `CosmeticType.BADGE` + migração, exibição no perfil/ranking, seletor.
-- [ ] **2.** Regra pura das pedras (`game-rules.ts` + teste) e tabelas do Peitoral (migração + seed das 12 pedras).
-- [ ] **3.** Agrupar cenários por pedra; liberar pedra + cosmético + brasão ao concluir o 3º cenário (transação).
-- [ ] **4.** Tela do Peitoral (12 engastes em 4 fileiras, pedra conquistada brilha) e aviso/animação ao ganhar.
-- [ ] **5.** Conquista Peitoral Completo (brasão e cosmético de prestígio).
-- [ ] **6.** Cadastro dos cenários aos poucos (painel), pedra por pedra: **1. Sardônio** primeiro.
+- [x] **1.** Brasões: `CosmeticType.BADGE` + migração, exibição no perfil/ranking, seletor.
+- [x] **2.** Regra pura das pedras (`game-rules.ts` + teste) e tabelas do Peitoral (migração + seed das 12 pedras).
+- [x] **3.** Agrupar cenários por pedra; liberar pedra + cosmético + brasão ao concluir o 3º cenário (transação).
+- [x] **4.** Tela do Peitoral (12 engastes em 4 fileiras, pedra conquistada brilha) e aviso/animação ao ganhar.
+- [x] **5.** Conquista Peitoral Completo (brasão, moldura de prestígio e 2.000 moedas, entregues junto com a 12ª pedra).
+- [ ] **6.** Cadastro dos cenários aos poucos, pedra por pedra. ✅ Trio 1 (Sardônio): Torre de Babel, Betel e Peniel (níveis 51–62, já no seed, sem arte). Faltam os trios 2 a 12.
 - [ ] **7.** Arte das 12 pedras, 12 brasões, 12 cosméticos e o prêmio final.
 
 ### Prompts de arte extras desta campanha (peças novas)
@@ -154,3 +154,18 @@ Os 10 cenários de lançamento mantêm as paradas que já têm (4 a 6) para não
   cenário), 512×512 PNG transparente, legível pequeno ao lado do nome.
 - **Peitoral completo:** o peitoral inteiro, quadrado de tecido azul/púrpura/escarlate e linho com as 12 gemas em
   4 fileiras de 3, ouro, luz suave de cima à esquerda, sem rosto e sem texto.
+
+## 6. Como ficou no app (implementado)
+
+- **Mapa:** o prêmio de Jesus fica entre Jerusalém e Torre de Babel (cenário 10 → 11); o cartão da **pedra** aparece logo acima do
+  último cenário do grupo dela, e o aviso **"Novos cenários em breve"** continua no topo de tudo.
+- **Peitoral:** botão no cabeçalho da campanha (🛡️ 1/12) e o cartão "Ver o Peitoral" abrem os 12 engastes em 4 fileiras de 3; toque numa
+  pedra para ver cenários, recompensas e resgatar. A gema é desenhada em SVG enquanto a arte não é enviada.
+- **Resgate da pedra** (`POST /api/campaign/stones/:id/claim`): libera ao concluir (todas as paradas resgatadas) os 3 cenários do grupo;
+  dá 500 moedas (editável no painel), a cor do nome da pedra e o **brasão** da pedra. A 12ª entrega o **Peitoral Completo**.
+- **Brasão** (`CosmeticType.BADGE`, `users.badge_id`): equipa-se em Itens visuais e aparece ao lado do nome (topo, perfil, ranking, amigos).
+- **Painel:** Campanha → *Pedras do Peitoral* (nome, tribo, cor, arte, moedas) e, no cadastro do cenário, o campo *Pedra do Peitoral*
+  (3 cenários por pedra) e *XP por parada*. Cosmético e brasão de cada pedra ficam em *Itens visuais*.
+- **Os cenários das Pedras não dão fragmento de Jesus** (só os 10 de lançamento). O **Tabuleiro** usa as regras padrão nesses cenários
+  até criarmos regras próprias (`board/scenarios.ts`).
+- Moedas da pedra (500) e do Peitoral Completo (2.000) são provisórias: entram na reavaliação da economia.

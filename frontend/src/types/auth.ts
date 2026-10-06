@@ -44,6 +44,7 @@ export type UserProfile = {
   nameColorId?: number | null;
   profileBgId?: number | null;
   albumCoverId?: number | null;
+  badgeId?: number | null;
   showcase?: number[];
   lastDailyClaim?: string | null;
   name: string;

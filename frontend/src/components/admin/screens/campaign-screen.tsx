@@ -25,10 +25,12 @@ import {
   deleteScenario,
   listNodesAdmin,
   listScenariosAdmin,
+  listStonesAdmin,
   updateNode,
   updateScenario,
   type AdminNode,
   type AdminScenario,
+  type AdminStone,
 } from '@/lib/admin-campaign-api';
 import { listCosmeticsAdmin } from '@/lib/admin-rewards-api';
 import { COSMETIC_TYPE_LABELS } from '@/components/user/rewards/cosmetic-preview';
@@ -41,6 +43,7 @@ import { LandmarksEditor } from './landmarks-editor';
 import { PATH_STYLES, type Landmark, type PathStyle } from '@board/layout';
 import { MapPositionEditor } from './map-position-editor';
 import { usePagedList } from '../use-paged-list';
+import { StonesPanel } from './stones-panel';
 
 /** Todos os itens visuais (a lista do painel é paginada em 100, então busca página a página). */
 function useAllCosmeticOptions() {
@@ -84,94 +87,97 @@ export function CampaignScreen() {
   }
 
   return (
-    <AdminPanel
-      title="Campanha"
-      description="Cenários do caminho do jogador. Cada parada abre quando o jogador chega ao nível dela; a última de cada cenário costuma ser a relíquia. Cenários do sistema podem ser editados e desligados, mas não excluídos."
-      actions={
-        <Button onClick={() => setEditing('new')}>
-          <AddRoundedIcon fontSize="small" /> Novo cenário
-        </Button>
-      }
-    >
-      <DataTable
-        columns={[{ label: 'Cenário' }, { label: 'Ordem' }, { label: 'Paradas' }, { label: 'Perguntas' }, { label: 'Figurinha especial' }, { label: 'Status' }, { label: '', className: 'w-44' }]}
-        loading={list.loading}
-        error={list.error}
-        isEmpty={list.items.length === 0}
-        empty="Nenhum cenário cadastrado."
-        minWidth={780}
+    <div className="space-y-6">
+      <AdminPanel
+        title="Campanha"
+        description="Cenários do caminho do jogador. Cada parada abre quando o jogador chega ao nível dela; a última de cada cenário costuma ser a relíquia. Cenários do sistema podem ser editados e desligados, mas não excluídos."
+        actions={
+          <Button onClick={() => setEditing('new')}>
+            <AddRoundedIcon fontSize="small" /> Novo cenário
+          </Button>
+        }
       >
-        {list.items.map((scenario) => (
-          <Row key={scenario.id}>
-            <Cell>
-              <span className="flex items-center gap-3">
-                <ScenarioIcon scenario={scenario} size={40} />
-                <span className="min-w-0">
-                  <span className="block truncate font-semibold">{scenario.name}</span>
-                  <span className="block text-xs text-muted">{scenario.slug}</span>
+        <DataTable
+          columns={[{ label: 'Cenário' }, { label: 'Ordem' }, { label: 'Paradas' }, { label: 'Perguntas' }, { label: 'Figurinha especial' }, { label: 'Status' }, { label: '', className: 'w-44' }]}
+          loading={list.loading}
+          error={list.error}
+          isEmpty={list.items.length === 0}
+          empty="Nenhum cenário cadastrado."
+          minWidth={780}
+        >
+          {list.items.map((scenario) => (
+            <Row key={scenario.id}>
+              <Cell>
+                <span className="flex items-center gap-3">
+                  <ScenarioIcon scenario={scenario} size={40} />
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold">{scenario.name}</span>
+                    <span className="block text-xs text-muted">{scenario.slug}</span>
+                  </span>
                 </span>
-              </span>
-            </Cell>
-            <Cell>{scenario.sortOrder}</Cell>
-            <Cell>{scenario.nodeCount}</Cell>
-            <Cell>{scenario.questionCount}</Cell>
-            <Cell className="text-sm">{scenario.fragmentCharacter?.name ?? '—'}</Cell>
-            <Cell>
-              <StatusBadge active={scenario.active} on="Ligado" off="Desligado" />
-            </Cell>
-            <Cell>
-              <div className="flex justify-end gap-1">
-                <IconAction label="Paradas e recompensas" onClick={() => setManaging(scenario)}>
-                  <RouteRoundedIcon fontSize="small" />
-                </IconAction>
-                <IconAction label="Posicionar paradas no mapa" onClick={() => setPositioning(scenario)}>
-                  <OpenWithRoundedIcon fontSize="small" />
-                </IconAction>
-                <IconAction label="Editar" onClick={() => setEditing(scenario)}>
-                  <EditRoundedIcon fontSize="small" />
-                </IconAction>
-                {scenario.system ? null : (
-                  <IconAction label="Excluir" tone="danger" onClick={() => void remove(scenario)}>
-                    <DeleteOutlineRoundedIcon fontSize="small" />
+              </Cell>
+              <Cell>{scenario.sortOrder}</Cell>
+              <Cell>{scenario.nodeCount}</Cell>
+              <Cell>{scenario.questionCount}</Cell>
+              <Cell className="text-sm">{scenario.fragmentCharacter?.name ?? '—'}</Cell>
+              <Cell>
+                <StatusBadge active={scenario.active} on="Ligado" off="Desligado" />
+              </Cell>
+              <Cell>
+                <div className="flex justify-end gap-1">
+                  <IconAction label="Paradas e recompensas" onClick={() => setManaging(scenario)}>
+                    <RouteRoundedIcon fontSize="small" />
                   </IconAction>
-                )}
-              </div>
-            </Cell>
-          </Row>
-        ))}
-      </DataTable>
-      <Pagination page={list.page} totalPages={list.totalPages} totalElements={list.totalElements} pageSize={list.size} onPageChange={list.setPage} onPageSizeChange={list.setSize} itemLabel="cenários" />
-      {editing ? (
-        <ScenarioModal
-          scenario={editing === 'new' ? null : editing}
-          nextOrder={((list.items.at(-1)?.sortOrder ?? 0) || 0) + 10}
-          onClose={() => setEditing(null)}
-          onSaved={() => {
-            setEditing(null);
-            list.reload();
-          }}
-        />
-      ) : null}
-      {positioning ? (
-        <MapPositionEditor
-          scenario={positioning}
-          onClose={() => setPositioning(null)}
-          onSaved={() => {
-            setPositioning(null);
-            list.reload();
-          }}
-        />
-      ) : null}
-      {managing ? (
-        <NodesModal
-          scenario={managing}
-          onClose={() => {
-            setManaging(null);
-            list.reload();
-          }}
-        />
-      ) : null}
-    </AdminPanel>
+                  <IconAction label="Posicionar paradas no mapa" onClick={() => setPositioning(scenario)}>
+                    <OpenWithRoundedIcon fontSize="small" />
+                  </IconAction>
+                  <IconAction label="Editar" onClick={() => setEditing(scenario)}>
+                    <EditRoundedIcon fontSize="small" />
+                  </IconAction>
+                  {scenario.system ? null : (
+                    <IconAction label="Excluir" tone="danger" onClick={() => void remove(scenario)}>
+                      <DeleteOutlineRoundedIcon fontSize="small" />
+                    </IconAction>
+                  )}
+                </div>
+              </Cell>
+            </Row>
+          ))}
+        </DataTable>
+        <Pagination page={list.page} totalPages={list.totalPages} totalElements={list.totalElements} pageSize={list.size} onPageChange={list.setPage} onPageSizeChange={list.setSize} itemLabel="cenários" />
+        {editing ? (
+          <ScenarioModal
+            scenario={editing === 'new' ? null : editing}
+            nextOrder={((list.items.at(-1)?.sortOrder ?? 0) || 0) + 10}
+            onClose={() => setEditing(null)}
+            onSaved={() => {
+              setEditing(null);
+              list.reload();
+            }}
+          />
+        ) : null}
+        {positioning ? (
+          <MapPositionEditor
+            scenario={positioning}
+            onClose={() => setPositioning(null)}
+            onSaved={() => {
+              setPositioning(null);
+              list.reload();
+            }}
+          />
+        ) : null}
+        {managing ? (
+          <NodesModal
+            scenario={managing}
+            onClose={() => {
+              setManaging(null);
+              list.reload();
+            }}
+          />
+        ) : null}
+      </AdminPanel>
+      <StonesPanel />
+    </div>
   );
 }
 
@@ -195,11 +201,16 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
   const [sortOrder, setSortOrder] = useState(String(scenario?.sortOrder ?? nextOrder));
   const [xpPerStop, setXpPerStop] = useState(scenario ? String(scenario.xpPerStop) : '');
   const [active, setActive] = useState(scenario?.active ?? true);
+  const [stoneId, setStoneId] = useState(scenario?.stoneId ? String(scenario.stoneId) : '');
+  const [stones, setStones] = useState<AdminStone[]>([]);
   const [characters, setCharacters] = useState<CharacterOption[]>([]);
   const [errors, setErrors] = useState<{ slug?: string; name?: string; xpPerStop?: string }>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    listStonesAdmin()
+      .then(setStones)
+      .catch(() => setStones([]));
     listCharacterOptions()
       .then((list) => setCharacters(list.filter((character) => character.rarity === 'SPECIAL')))
       .catch(() => setCharacters([]));
@@ -232,6 +243,7 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
       fragmentCharacterId: characterId ? Number(characterId) : null,
       sortOrder: Number(sortOrder) || 0,
       xpPerStop: xpPerStop.trim() ? Number(xpPerStop) : undefined,
+      stoneId: stoneId ? Number(stoneId) : null,
       active,
     };
     try {
@@ -333,6 +345,9 @@ function ScenarioModal({ scenario, nextOrder, onClose, onSaved }: { scenario: Ad
           </Field>
           <Field label="Ordem no caminho" hint="Menor vem primeiro.">
             <Input type="number" min={0} value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} />
+          </Field>
+          <Field label="Pedra do Peitoral" hint="Os cenários com a mesma pedra formam um grupo de 3: ao concluir os 3, o jogador resgata a pedra. Cenários de lançamento (com Jesus) ficam sem pedra.">
+            <Select aria-label="Pedra do Peitoral" value={stoneId} onChange={setStoneId} options={[{ value: '', label: 'Nenhuma' }, ...stones.map((stone) => ({ value: String(stone.id), label: `${stone.slot}. ${stone.name}` }))]} />
           </Field>
           <Field
             label="XP por parada"

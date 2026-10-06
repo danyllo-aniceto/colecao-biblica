@@ -15,16 +15,20 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     const jesus = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Jesus" } });
     expect(jesus.rarity).toBe("SPECIAL");
     const scenarios = await prisma.scenario.findMany({ include: { nodes: true }, orderBy: { sortOrder: "asc" } });
-    expect(scenarios.length).toBe(10);
-    // Uma parada por nível, sem buracos, e a última de cada cenário é a relíquia com fragmento.
+    expect(scenarios.length).toBe(13);
+    // Uma parada por nível, sem buracos, e a última de cada cenário é a relíquia.
     const levels = scenarios.flatMap((scenario) => scenario.nodes.map((node) => node.level)).sort((a, b) => a - b);
-    expect(levels).toEqual(Array.from({ length: 50 }, (_, index) => index + 1));
+    expect(levels).toEqual(Array.from({ length: 62 }, (_, index) => index + 1));
     for (const scenario of scenarios) {
       const last = [...scenario.nodes].sort((a, b) => b.level - a.level)[0];
       expect(last.relic).toBe(true);
-      expect(last.fragment).toBe(true);
-      expect(scenario.fragmentCharacterId).toBe(jesus.id);
+      // Os 10 de lançamento dão o fragmento de Jesus; os 3 das Pedras (depois dele) têm 4 paradas e nenhum fragmento.
+      const launch = scenario.sortOrder <= 100;
+      expect(last.fragment).toBe(launch);
+      expect(scenario.fragmentCharacterId).toBe(launch ? jesus.id : null);
+      if (!launch) expect(scenario.nodes).toHaveLength(4);
     }
+    expect(scenarios.slice(10).map((scenario) => scenario.slug)).toEqual(["babel", "betel", "peniel"]);
   });
 
   it("música do tema: o admin cadastra e só chega ao jogador no nível do cenário", async () => {
@@ -85,7 +89,8 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     const user = await prisma.user.update({ where: { email: "user@email.com" }, data: { level: 60, coins: 0 } });
     const token = await login("user@email.com");
     const campaign = await api.get("/api/campaign").set(bearer(token));
-    const nodes = campaign.body.scenarios.flatMap((scenario: { nodes: Array<{ id: number; fragment: boolean }> }) => scenario.nodes) as Array<{ id: number; fragment: boolean }>;
+    // Só os 10 cenários de lançamento (níveis 1 a 50): os das Pedras vêm depois de Jesus.
+    const nodes = (campaign.body.scenarios.flatMap((scenario: { nodes: Array<{ id: number; fragment: boolean; level: number }> }) => scenario.nodes) as Array<{ id: number; fragment: boolean; level: number }>).filter((node) => node.level <= 50);
     const jesus = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Jesus" } });
 
     let last: Awaited<ReturnType<typeof api.post>> | null = null;
@@ -172,13 +177,13 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     const repeated = await api.post("/api/campaign/admin/scenarios").set(bearer(admin)).send({ ...created.body, slug: "mar-vermelho" });
     expect(repeated.status).toBe(400);
 
-    const node = { level: 51, title: "Travessia", relic: false, fragment: false, rewardCoins: 100, rewardDefinitionId: null, rewardCosmeticId: null, posX: null, posY: null };
+    const node = { level: 71, title: "Travessia", relic: false, fragment: false, rewardCoins: 100, rewardDefinitionId: null, rewardCosmeticId: null, posX: null, posY: null };
     const made = await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send(node);
     expect(made.status).toBe(201);
     // Nível já usado (em qualquer cenário), fragmento sem carta e parada vazia são recusados.
     expect((await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send(node)).status).toBe(400);
-    expect((await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send({ ...node, level: 52, fragment: true })).status).toBe(400);
-    expect((await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send({ ...node, level: 53, rewardCoins: 0 })).status).toBe(400);
+    expect((await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send({ ...node, level: 72, fragment: true })).status).toBe(400);
+    expect((await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send({ ...node, level: 73, rewardCoins: 0 })).status).toBe(400);
     expect((await api.put(`/api/campaign/admin/nodes/${made.body.id}`).set(bearer(admin)).send({ ...node, rewardCoins: 150 })).body.rewardCoins).toBe(150);
 
     // Trocar o ícone do cenário troca a arte do ícone de perfil.
@@ -243,7 +248,7 @@ describe.skipIf(!hasDatabase)("campanha", () => {
 
     const bands = await loadXpBands(prisma);
     expect(bands[0]).toEqual({ fromLevel: 1, cost: 500 });
-    expect(bands.length).toBe(10);
+    expect(bands.length).toBe(13);
 
     // Quem já tem XP é reposicionado pela curva nova (e ninguém perde XP).
     const user = await prisma.user.update({ where: { email: "user@email.com" }, data: { xp: 3000, level: 40, chestLevel: 35 } });
@@ -267,5 +272,67 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     const userToken = await login("user@email.com");
     const campaign = await api.get("/api/campaign").set(bearer(userToken));
     expect(campaign.body.xpBands[0]).toEqual({ fromLevel: 1, cost: 250 });
+  });
+
+  it("pedra do Peitoral: só libera ao concluir os 3 cenários do grupo e entrega moedas, cosmético e brasão", async () => {
+    const stones = await prisma.stone.findMany({ orderBy: { slot: "asc" } });
+    expect(stones.map((stone) => stone.name)).toEqual(["Sardônio", "Topázio", "Carbúnculo", "Esmeralda", "Safira", "Diamante", "Jacinto", "Ágata", "Ametista", "Berilo", "Ônix", "Jaspe"]);
+    const sardonio = stones[0];
+    const user = await prisma.user.update({ where: { email: "user@email.com" }, data: { level: 62, coins: 0 } });
+    const token = await login("user@email.com");
+
+    const first = await api.get("/api/campaign").set(bearer(token));
+    const trio = first.body.scenarios.filter((scenario: { stoneId: number | null }) => scenario.stoneId === sardonio.id) as Array<{ slug: string; nodes: Array<{ id: number }> }>;
+    expect(trio.map((scenario) => scenario.slug)).toEqual(["babel", "betel", "peniel"]);
+    expect(first.body.breastplate.stones).toHaveLength(12);
+    expect(first.body.breastplate.stones[0]).toMatchObject({ slot: 1, state: "locked", completed: 0, required: 3 });
+    expect((await api.post(`/api/campaign/stones/${sardonio.id}/claim`).set(bearer(token))).status).toBe(400);
+
+    // Concluir só dois cenários ainda não basta.
+    for (const scenario of trio.slice(0, 2)) for (const node of scenario.nodes) expect((await api.post(`/api/campaign/nodes/${node.id}/claim`).set(bearer(token))).status).toBe(200);
+    const partial = await api.get("/api/campaign").set(bearer(token));
+    expect(partial.body.breastplate.stones[0]).toMatchObject({ state: "locked", completed: 2 });
+    expect((await api.post(`/api/campaign/stones/${sardonio.id}/claim`).set(bearer(token))).status).toBe(400);
+
+    for (const node of trio[2].nodes) expect((await api.post(`/api/campaign/nodes/${node.id}/claim`).set(bearer(token))).status).toBe(200);
+    expect((await api.get("/api/campaign").set(bearer(token))).body.breastplate.stones[0]).toMatchObject({ state: "available", completed: 3 });
+
+    const coinsBefore = (await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).coins;
+    const claimed = await api.post(`/api/campaign/stones/${sardonio.id}/claim`).set(bearer(token));
+    expect(claimed.status).toBe(200);
+    expect(claimed.body).toMatchObject({ coins: sardonio.rewardCoins, cosmeticGranted: true, badgeGranted: true, completeReward: null });
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).coins).toBe(coinsBefore + sardonio.rewardCoins);
+    expect((await api.post(`/api/campaign/stones/${sardonio.id}/claim`).set(bearer(token))).status).toBe(400);
+    expect((await api.get("/api/campaign").set(bearer(token))).body.breastplate).toMatchObject({ claimed: 1, complete: false });
+
+    // O brasão da pedra se equipa e aparece na aparência do jogador.
+    const badge = await prisma.cosmetic.findUniqueOrThrow({ where: { id: sardonio.badgeCosmeticId! } });
+    expect(badge.type).toBe("BADGE");
+    const equipped = await api.put("/api/cosmetics/equip").set(bearer(token)).send({ type: "BADGE", cosmeticId: badge.id });
+    expect(equipped.status).toBe(200);
+    expect(equipped.body.badge).toMatchObject({ name: "Brasão: Sardônio" });
+    expect((await api.put("/api/cosmetics/equip").set(bearer(token)).send({ type: "BADGE", cosmeticId: null })).body.badge).toBeNull();
+  });
+
+  it("a 12ª pedra entrega o Peitoral Completo uma única vez", async () => {
+    const stones = await prisma.stone.findMany({ orderBy: { slot: "asc" } });
+    const user = await prisma.user.findUniqueOrThrow({ where: { email: "user@email.com" } });
+    // Atalho de teste: o jogador já concluiu os cenários das 11 primeiras pedras e resgatou-as; falta a última.
+    await prisma.userClaim.createMany({ data: stones.slice(0, 11).map((stone) => ({ userId: user.id, kind: "STONE", code: String(stone.slot), periodKey: "once" })) });
+    const jaspe = stones[11];
+    const group = await Promise.all([1, 2, 3].map((n) => prisma.scenario.create({ data: { slug: `jaspe-${n}`, name: `Jaspe ${n}`, sortOrder: 900 + n, stoneId: jaspe.id } })));
+    const nodes = await Promise.all(group.map((scenario, index) => prisma.scenarioNode.create({ data: { scenarioId: scenario.id, level: 200 + index, relic: true, rewardCoins: 10 } })));
+    await prisma.userClaim.createMany({ data: nodes.map((node) => ({ userId: user.id, kind: "CAMPAIGN", code: String(node.id), periodKey: "once" })) });
+    await prisma.user.update({ where: { id: user.id }, data: { coins: 0 } });
+
+    const token = await login("user@email.com");
+    const claimed = await api.post(`/api/campaign/stones/${jaspe.id}/claim`).set(bearer(token));
+    expect(claimed.status).toBe(200);
+    expect(claimed.body.completeReward).toMatchObject({ coins: 2000, badgeName: "Brasão: Peitoral Completo" });
+    expect(claimed.body.user.coins).toBe(jaspe.rewardCoins + 2000);
+    const owned = await prisma.userCosmetic.findMany({ where: { userId: user.id, cosmetic: { name: { in: ["Brasão: Peitoral Completo", "Moldura: Peitoral Completo"] } } } });
+    expect(owned).toHaveLength(2);
+    const state = await api.get("/api/campaign").set(bearer(token));
+    expect(state.body.breastplate).toMatchObject({ claimed: 12, complete: true, finalClaimed: true });
   });
 });

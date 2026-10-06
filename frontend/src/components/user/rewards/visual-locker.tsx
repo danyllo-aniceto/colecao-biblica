@@ -12,8 +12,8 @@ import { cn } from '@/lib/cn';
 import { getRarityLabel } from '@/lib/rarity-theme';
 import { equipCosmetic, getInventory, type CosmeticType, type Inventory, type InventoryItem, type PlayerLook } from '@/lib/rewards-api';
 
-const TYPES: CosmeticType[] = ['AVATAR', 'FRAME', 'TITLE', 'NAME_COLOR', 'REACTION', 'PROFILE_BG', 'ALBUM_COVER', 'PAWN'];
-const EQUIP_KEY: Partial<Record<CosmeticType, keyof Inventory['equipped']>> = { AVATAR: 'avatarId', FRAME: 'frameId', TITLE: 'titleId', NAME_COLOR: 'nameColorId', PROFILE_BG: 'profileBgId', ALBUM_COVER: 'albumCoverId' };
+const TYPES: CosmeticType[] = ['AVATAR', 'FRAME', 'TITLE', 'NAME_COLOR', 'REACTION', 'PROFILE_BG', 'ALBUM_COVER', 'PAWN', 'BADGE'];
+const EQUIP_KEY: Partial<Record<CosmeticType, keyof Inventory['equipped']>> = { AVATAR: 'avatarId', FRAME: 'frameId', TITLE: 'titleId', NAME_COLOR: 'nameColorId', PROFILE_BG: 'profileBgId', ALBUM_COVER: 'albumCoverId', BADGE: 'badgeId' };
 
 /** Armário do jogador: todos os itens, os que tem para equipar e como ganhar os que faltam. */
 export function VisualLocker({ playerName, onLookChange }: { playerName: string; onLookChange: (look: PlayerLook) => void }) {

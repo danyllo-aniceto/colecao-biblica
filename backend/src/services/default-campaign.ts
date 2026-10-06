@@ -18,6 +18,8 @@ type DefaultScenario = {
   /** Estilo da moldura e emoji da reação exclusivos do cenário. */
   frameStyle: string;
   reaction: string;
+  /** Pedra do Peitoral que este cenário ajuda a conquistar (3 cenários por pedra). Esses cenários não dão fragmento de Jesus. */
+  stoneSlot?: number;
 };
 
 /**
@@ -36,6 +38,19 @@ export const DEFAULT_SCENARIOS: DefaultScenario[] = [
   { slug: "galileia", name: "Mar da Galileia", description: "Barcos, redes e os primeiros discípulos de Jesus.", verse: "Venham, sigam-me, e eu os farei pescadores de homens.", verseReference: "Mateus 4:19", color: "#2aa1c4", startLevel: 39, endLevel: 44, relicTitle: "Pescador de Homens", frameStyle: "aurora", reaction: "⛵" },
   { slug: "jerusalem", name: "Jerusalém", description: "Do Monte das Oliveiras ao túmulo vazio.", verse: "Ele não está aqui; ressuscitou, como tinha dito.", verseReference: "Mateus 28:6", color: "#8e6bd1", startLevel: 45, endLevel: 50, relicTitle: "Testemunha da Ressurreição", frameStyle: "pearl", reaction: "🕊️" },
 ];
+
+/**
+ * Continuação da campanha, depois da figurinha de Jesus: as 12 Pedras do Peitoral (Êxodo 28). A cada 3 cenários, 1 pedra.
+ * Todos têm 4 paradas; a 4ª é a relíquia. Plano completo em docs/campanha-12-pedras.md.
+ */
+export const STONE_SCENARIOS_DEFAULT: DefaultScenario[] = [
+  { slug: "babel", name: "Torre de Babel", description: "A cidade e a torre que quiseram chegar ao céu: o Senhor confundiu as línguas e espalhou os povos.", verse: "Por isso foi chamada Babel, porque ali o Senhor confundiu a língua de toda a terra.", verseReference: "Gênesis 11:9", color: "#c8553d", startLevel: 51, endLevel: 54, relicTitle: "Sobrevivente de Babel", frameStyle: "copper", reaction: "🧱", stoneSlot: 1 },
+  { slug: "betel", name: "Betel", description: "O sonho de Jacó: uma escada entre a terra e o céu.", verse: "Certamente o Senhor está neste lugar, e eu não sabia.", verseReference: "Gênesis 28:16", color: "#7a6fc4", startLevel: 55, endLevel: 58, relicTitle: "Sonhador de Betel", frameStyle: "galaxy", reaction: "🪜", stoneSlot: 1 },
+  { slug: "peniel", name: "Peniel", description: "Jacó luta até o amanhecer e recebe um novo nome.", verse: "Não deixarei você ir enquanto não me abençoar.", verseReference: "Gênesis 32:26", color: "#2f8f9d", startLevel: 59, endLevel: 62, relicTitle: "Lutador de Peniel", frameStyle: "aurora", reaction: "🌅", stoneSlot: 1 },
+];
+
+/** Todos os cenários criados no deploy, na ordem do caminho. */
+const ALL_SCENARIOS = [...DEFAULT_SCENARIOS, ...STONE_SCENARIOS_DEFAULT];
 
 /** Nome da figurinha especial entregue pelos fragmentos. */
 export const SPECIAL_CHARACTER_NAME = "Jesus";
@@ -91,18 +106,19 @@ async function ensureAllScenarioAvatars(db: Db) {
  */
 export async function ensureDefaultCampaign(db: Db) {
   const existing = new Set((await db.scenario.findMany({ select: { slug: true } })).map((scenario) => scenario.slug));
-  if (DEFAULT_SCENARIOS.every((scenario) => existing.has(scenario.slug))) {
+  if (ALL_SCENARIOS.every((scenario) => existing.has(scenario.slug))) {
     await ensureAllScenarioAvatars(db);
     await syncUserLevels(db);
     return;
   }
 
   const special = await ensureSpecialCharacter(db);
+  const stoneIds = new Map((await db.stone.findMany({ select: { id: true, slot: true } })).map((stone) => [stone.slot, stone.id]));
   const helpers = new Map(
     (await db.rewardDefinition.findMany({ where: { name: { in: HELPER_REWARDS } }, select: { id: true, name: true } })).map((reward) => [reward.name, reward.id]),
   );
 
-  for (const [index, scenario] of DEFAULT_SCENARIOS.entries()) {
+  for (const [index, scenario] of ALL_SCENARIOS.entries()) {
     if (existing.has(scenario.slug)) continue;
     const title = await db.cosmetic.findFirst({ where: { type: "TITLE", name: scenario.relicTitle }, select: { id: true } });
     const relicTitleId =
@@ -139,7 +155,8 @@ export async function ensureDefaultCampaign(db: Db) {
         color: scenario.color,
         sortOrder: (index + 1) * 10,
         xpPerStop: defaultXpPerStop(index),
-        fragmentCharacterId: special.id,
+        fragmentCharacterId: scenario.stoneSlot ? null : special.id,
+        stoneId: stoneIds.get(scenario.stoneSlot ?? 0) ?? null,
         system: true,
       },
     });
@@ -153,7 +170,7 @@ export async function ensureDefaultCampaign(db: Db) {
           scenarioId: created.id,
           level,
           relic,
-          fragment: relic,
+          fragment: relic && !scenario.stoneSlot,
           title: relic ? `Relíquia: ${scenario.relicTitle}` : null,
           rewardCoins: nodeCoins(defaultXpPerStop(index), relic),
           rewardDefinitionId: helperName ? (helpers.get(helperName) ?? null) : null,

@@ -287,6 +287,34 @@ describe("cenários", () => {
     expect(named(state, 0, 1, "Abel").bonus).toBe(-1);
   });
 
+  it("Babel: a figurinha mais forte de cada lado perde 1 no fim do turno", () => {
+    const state = duel({ turn: 3, scenarios: ["babel", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    state.lanes[0].cards[1].push({ uid: 3, def: def("abel"), bonus: 0, silenced: false, order: 3, turn: 1 });
+    const next = playTurn(state, [], []);
+    expect(named(next, 0, 0, "Saul").bonus).toBe(-1);
+    expect(named(next, 0, 0, "Abel").bonus).toBe(0);
+    expect(named(next, 0, 1, "Abel").bonus).toBe(-1);
+  });
+
+  it("Betel: a figurinha mais fraca de cada lado ganha +1 no fim do turno", () => {
+    const state = duel({ turn: 3, scenarios: ["betel", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    const next = playTurn(state, [], []);
+    expect(named(next, 0, 0, "Abel").bonus).toBe(1);
+    expect(named(next, 0, 0, "Saul").bonus).toBe(0);
+  });
+
+  it("Peniel: quem tem menos figurinhas (e ao menos uma) ganha +3; lado vazio não ganha", () => {
+    const state = duel({ turn: 3, scenarios: ["peniel", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 });
+    state.lanes[0].cards[1].push({ uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 }, { uid: 3, def: def("abel"), bonus: 0, silenced: false, order: 3, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(2 + 3);
+    expect(lanePower(state, 0, 1)).toBe(4);
+    state.lanes[0].cards[0].length = 0;
+    expect(lanePower(state, 0, 0)).toBe(0);
+  });
+
   it("Sinai: só 2 espaços por lado", () => {
     const state = duel({ turn: 4, scenarios: ["sinai", "arca", "canaa"], mine: ["abel", "rute", "miria"] });
     state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 });

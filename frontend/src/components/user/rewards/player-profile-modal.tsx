@@ -30,7 +30,7 @@ export function PlayerProfileCard({ profile }: { profile: PlayerProfile }) {
           <PlayerAvatar look={profile.look} name={profile.name} size="xl" />
         </span>
         <div className="relative min-w-0 flex-1 space-y-1">
-          <PlayerName name={profile.name} look={profile.look} nameClassName="text-2xl" className="[&_.player-title]:text-sm" />
+          <PlayerName name={profile.name} look={profile.look} nameClassName="text-2xl" badgeSize="md" className="[&_.player-title]:text-sm" />
           <div className="flex items-center gap-2 text-sm font-semibold text-muted">
             <LevelBadge level={profile.level} size="sm" /> Nível {profile.level}
           </div>

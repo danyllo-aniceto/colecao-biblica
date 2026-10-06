@@ -83,7 +83,7 @@ export function ProfileSection({
           </span>
           <div className="min-w-0 flex-1">
             <h1 className="sr-only">{profile?.name ?? 'Jogador'}</h1>
-            <PlayerName name={profile?.name ?? 'Jogador'} look={look} nameClassName="text-3xl" className="[&_.player-title]:text-sm" />
+            <PlayerName name={profile?.name ?? 'Jogador'} look={look} nameClassName="text-3xl" badgeSize="md" className="[&_.player-title]:text-sm" />
             <p className="truncate text-sm font-semibold text-muted">{profile?.email}</p>
             <div className="mt-3 max-w-sm">
               <div className="mb-1 flex justify-between text-xs font-bold text-muted">

@@ -61,6 +61,8 @@ const scenarioSchema = z.object({
   boardPathStyle: z.enum(["SOFT", "MEDIUM", "WIDE"]).nullish(),
   boardLandmarks: z.array(landmarkSchema).max(MAX_LANDMARKS, `No máximo ${MAX_LANDMARKS} marcos`).nullish(),
   fragmentCharacterId: z.number().int().positive().nullish(),
+  /** Pedra do Peitoral do grupo deste cenário (3 cenários por pedra). */
+  stoneId: z.number().int().positive().nullish(),
   /** XP para subir cada nível deste cenário (ausente: na criação continua a escada do último; na edição não altera). */
   xpPerStop: z.number().int().min(50).max(1_000_000).optional(),
   sortOrder: z.number().int().min(0).max(100_000),
@@ -83,6 +85,11 @@ const nodeInclude = {
   rewardDefinition: { select: { id: true, name: true, rewardType: true } },
   rewardCosmetic: { select: { id: true, name: true, type: true, rarity: true } },
 } as const;
+
+async function ensureStone(id?: number | null) {
+  if (!id) return;
+  if (!(await prisma.stone.findUnique({ where: { id }, select: { id: true } }))) throw notFound("Pedra não encontrada");
+}
 
 async function ensureCharacter(id?: number | null) {
   if (!id) return;
@@ -114,6 +121,7 @@ campaignAdminRouter.post(
     const input = scenarioSchema.parse(req.body);
     if (await prisma.scenario.findUnique({ where: { slug: input.slug }, select: { id: true } })) throw badRequest("Já existe um cenário com esse identificador");
     await ensureCharacter(input.fragmentCharacterId);
+    await ensureStone(input.stoneId);
     const scenario = await prisma.scenario.create({
       data: {
         ...input,
@@ -130,6 +138,7 @@ campaignAdminRouter.post(
         boardPathStyle: input.boardPathStyle ?? null,
         boardLandmarks: input.boardLandmarks ?? Prisma.DbNull,
         fragmentCharacterId: input.fragmentCharacterId ?? null,
+        stoneId: input.stoneId ?? null,
         xpPerStop: input.xpPerStop ?? (await nextXpPerStop(prisma)),
       },
     });
@@ -149,12 +158,15 @@ campaignAdminRouter.put(
     if (!(await prisma.scenario.findUnique({ where: { id }, select: { id: true } }))) throw notFound("Cenário não encontrado");
     const input = scenarioUpdateSchema.parse(req.body);
     await ensureCharacter(input.fragmentCharacterId);
+    await ensureStone(input.stoneId);
     const scenario = await prisma.scenario.update({
       where: { id },
       data: {
         ...input,
         color: input.color ?? null,
         fragmentCharacterId: input.fragmentCharacterId ?? null,
+        // Ausente mantém a pedra; null desliga.
+        stoneId: input.stoneId,
         // Ausente mantém a imagem; vazio limpa (volta para a padrão).
         mapImageUrl: input.mapImageUrl,
         iconImageUrl: input.iconImageUrl,
@@ -284,5 +296,33 @@ campaignAdminRouter.delete(
     await prisma.scenarioNode.delete({ where: { id } });
     await syncUserLevels(prisma);
     res.status(204).end();
+  }),
+);
+
+const stoneSchema = z.object({
+  name: requiredText(60),
+  tribe: clearableText(60),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use uma cor no formato #rrggbb"),
+  description: clearableText(300),
+  imageUrl: imageRef(),
+  rewardCoins: z.number().int().min(0).max(1_000_000),
+  active: z.boolean(),
+});
+
+/** As 12 pedras do Peitoral (criadas no deploy): o painel ajusta nome, cor, arte e moedas. */
+campaignAdminRouter.get(
+  "/stones",
+  asyncHandler(async (_req, res) => {
+    res.json(await prisma.stone.findMany({ orderBy: { slot: "asc" }, include: { _count: { select: { scenarios: true } } } }));
+  }),
+);
+
+campaignAdminRouter.put(
+  "/stones/:id",
+  asyncHandler(async (req, res) => {
+    const id = parseId(req.params.id);
+    if (!(await prisma.stone.findUnique({ where: { id }, select: { id: true } }))) throw notFound("Pedra não encontrada");
+    const input = stoneSchema.parse(req.body);
+    res.json(await prisma.stone.update({ where: { id }, data: { ...input, color: input.color } }));
   }),
 );

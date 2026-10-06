@@ -26,7 +26,9 @@ import {
   friendSalePrice,
   friendSaleSellerCoins,
   stickerUpgradeCost,
+  breastplateComplete,
   buildXpBands,
+  stoneState,
   nodeCoins,
   calculateLevel,
   DEFAULT_XP_BANDS,
@@ -106,6 +108,16 @@ describe("XP, pontos e nível", () => {
     expect(nodeCoins(3000, false)).toBe(300);
     expect(nodeCoins(3000, true)).toBe(600);
     expect(nodeCoins(10, false)).toBe(5);
+  });
+
+  it("pedra do Peitoral: libera com 3 cenários concluídos e o Peitoral completa com todas resgatadas", () => {
+    expect(stoneState(0, false)).toBe("locked");
+    expect(stoneState(2, false)).toBe("locked");
+    expect(stoneState(3, false)).toBe("available");
+    expect(stoneState(1, true)).toBe("claimed");
+    expect(breastplateComplete(11, 12)).toBe(false);
+    expect(breastplateComplete(12, 12)).toBe(true);
+    expect(breastplateComplete(0, 0)).toBe(false);
   });
 
   it("curva por cenário: cada parada custa o XP do cenário dela", () => {

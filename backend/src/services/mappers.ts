@@ -27,6 +27,7 @@ export function toUserResponse(user: User) {
     nameColorId: user.nameColorId,
     profileBgId: user.profileBgId,
     albumCoverId: user.albumCoverId,
+    badgeId: user.badgeId,
     showcase: user.showcase,
     dailyStreak: user.dailyStreak,
     lastDailyClaim: user.lastDailyClaim,

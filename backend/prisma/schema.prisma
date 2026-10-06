@@ -63,6 +63,8 @@ enum CosmeticType {
   ALBUM_COVER
   /// Peão do tabuleiro (emoji ou imagem); não se equipa, escolhe-se em cada partida.
   PAWN
+  /// Brasão: emblema exibido no perfil, ao lado do nome (um equipado por vez).
+  BADGE
 }
 
 /// Como o item é obtido: grátis para todos, comprado, por meta ou só como prêmio (admin, baú, coleção, passe).
@@ -166,6 +168,7 @@ model User {
   nameColorId        Int?      @map("name_color_id")
   profileBgId        Int?      @map("profile_bg_id")
   albumCoverId       Int?      @map("album_cover_id")
+  badgeId            Int?      @map("badge_id")
   /// Figurinhas escolhidas para a vitrine do perfil (até 3).
   showcase           Int[]     @default([])
   createdAt          DateTime  @default(now()) @map("created_at")
@@ -192,6 +195,7 @@ model User {
   nameColor  Cosmetic? @relation("UserNameColor", fields: [nameColorId], references: [id], onDelete: SetNull)
   profileBg  Cosmetic? @relation("UserProfileBg", fields: [profileBgId], references: [id], onDelete: SetNull)
   albumCover Cosmetic? @relation("UserAlbumCover", fields: [albumCoverId], references: [id], onDelete: SetNull)
+  badge      Cosmetic? @relation("UserBadge", fields: [badgeId], references: [id], onDelete: SetNull)
 
   friendRequestsSent     Friendship[]      @relation("FriendshipRequester")
   friendRequestsReceived Friendship[]      @relation("FriendshipAddressee")
@@ -614,6 +618,9 @@ model Cosmetic {
   nameColorOf       User[]                @relation("UserNameColor")
   profileBgOf       User[]                @relation("UserProfileBg")
   albumCoverOf      User[]                @relation("UserAlbumCover")
+  badgeOf           User[]                @relation("UserBadge")
+  stoneRewards      Stone[]               @relation("StoneReward")
+  stoneBadges       Stone[]               @relation("StoneBadge")
   messages          Message[]
   rewards           RewardDefinition[]
   collections       CharacterCollection[]
@@ -765,6 +772,8 @@ model Scenario {
   duelImageUrl        String?  @map("duel_image_url")
   /// Imagem de fundo do tabuleiro deste cenário (vertical, sem texto), atrás do caminho do jogo de tabuleiro.
   boardImageUrl       String?  @map("board_image_url")
+  /// Pedra do Peitoral que o jogador conquista ao concluir os cenários deste grupo (3 por pedra).
+  stoneId             Int?     @map("stone_id")
   /// Curvas do caminho do tabuleiro: SOFT, MEDIUM ou WIDE (vazio = MEDIUM).
   boardPathStyle      String?  @map("board_path_style")
   /// Marcos do cenário ao lado do caminho: [{ imageUrl?, emoji?, at (0-100), side (L/R), offset, size }].
@@ -783,6 +792,7 @@ model Scenario {
 
   fragmentCharacter BiblicalCharacter? @relation("ScenarioFragmentCharacter", fields: [fragmentCharacterId], references: [id], onDelete: SetNull)
   avatarCosmetic    Cosmetic?          @relation("ScenarioAvatar", fields: [avatarCosmeticId], references: [id], onDelete: SetNull)
+  stone             Stone?             @relation(fields: [stoneId], references: [id], onDelete: SetNull)
   nodes             ScenarioNode[]
   questions         Question[]
   boardRooms        BoardRoom[]
@@ -1034,7 +1044,6 @@ model DuelInvite {
   @@map("duel_invites")
 }
 
-
 /// Capa de cada modo de jogo na aba Jogar (QUIZ, BOARD, DUEL). Sem imagem, o app usa um fundo padrão.
 model GameModeDesign {
   id        Int      @id @default(autoincrement())
@@ -1043,4 +1052,30 @@ model GameModeDesign {
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("game_mode_designs")
+}
+
+/// As 12 pedras do peitoral do sumo sacerdote (Êxodo 28:15-21). Cada pedra é conquistada ao concluir os cenários ligados a ela.
+model Stone {
+  id               Int     @id @default(autoincrement())
+  /// Posição no peitoral (1 a 12, em fileiras de 3, na ordem bíblica).
+  slot             Int     @unique
+  name             String
+  /// Tribo ligada à pedra pela tradição (subtítulo do brasão).
+  tribe            String?
+  /// Cor da pedra, em #rrggbb.
+  color            String
+  description      String?
+  /// Arte da pedra (quadrada, fundo transparente); vazio desenha a gema em SVG.
+  imageUrl         String? @map("image_url")
+  rewardCoins      Int     @default(0) @map("reward_coins")
+  /// Cosmético da pedra e brasão exclusivo, entregues ao resgatar.
+  rewardCosmeticId Int?    @map("reward_cosmetic_id")
+  badgeCosmeticId  Int?    @map("badge_cosmetic_id")
+  active           Boolean @default(true)
+
+  rewardCosmetic Cosmetic?  @relation("StoneReward", fields: [rewardCosmeticId], references: [id], onDelete: SetNull)
+  badgeCosmetic  Cosmetic?  @relation("StoneBadge", fields: [badgeCosmeticId], references: [id], onDelete: SetNull)
+  scenarios      Scenario[]
+
+  @@map("stones")
 }

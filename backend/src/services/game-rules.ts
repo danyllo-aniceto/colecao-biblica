@@ -74,6 +74,22 @@ export function nodeCoins(xpPerStop: number, relic: boolean): number {
   return relic ? base * 2 : base;
 }
 
+/** Quantos cenários concluídos dão uma pedra do Peitoral. */
+export const STONE_SCENARIOS = 3;
+
+export type StoneState = "claimed" | "available" | "locked";
+
+/** Situação da pedra: resgatada, liberada (os cenários do grupo concluídos) ou bloqueada. */
+export function stoneState(completedScenarios: number, claimed: boolean, required = STONE_SCENARIOS): StoneState {
+  if (claimed) return "claimed";
+  return completedScenarios >= required ? "available" : "locked";
+}
+
+/** O Peitoral está completo quando todas as pedras ativas foram resgatadas. */
+export function breastplateComplete(claimedStones: number, totalStones: number): boolean {
+  return totalStones > 0 && claimedStones >= totalStones;
+}
+
 /** Sem cenários cadastrados, todo nível custa o valor inicial. */
 export const DEFAULT_XP_BANDS: XpBand[] = [{ fromLevel: 1, cost: XP_PER_STOP_BASE }];
 

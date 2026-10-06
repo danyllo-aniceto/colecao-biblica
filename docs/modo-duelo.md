@@ -90,7 +90,9 @@ Reaproveitam os 10 cenários da campanha (arte do terreno, cor e música). Nenhu
 Éden: figurinhas de Vigor 1 ganham +2 · Arca: duas figurinhas com a mesma etiqueta lado a lado ganham +1 cada · Canaã: quem tem mais figurinhas aqui ganha +3 ·
 Egito: no fim de cada turno a figurinha mais fraca de cada lado perde 1 · Sinai: só 2 espaços por lado · Jericó: figurinhas não podem ser movidas ·
 Templo: +1 para cada Rei ou Sacerdote seu · Babilônia: a 1ª figurinha jogada por turno vai para outro cenário (você escolhe qual na revelação) ·
-Galileia: no turno 4 todas as figurinhas aqui perdem 1 · Jerusalém: o vencedor do cenário ganha +2 de Influência total.
+Galileia: no turno 4 todas as figurinhas aqui perdem 1 · Jerusalém: o vencedor do cenário ganha +2 de Influência total ·
+Torre de Babel: no fim de cada turno a mais forte de cada lado perde 1 · Betel: no fim de cada turno a mais fraca de cada lado ganha +1 ·
+Peniel: quem tem menos figurinhas aqui (ao menos 1) ganha +3. (Cenários das 12 Pedras: toda pedra nova traz a regra do cenário aqui.)
 
 ## 6. Quem joga com quem
 

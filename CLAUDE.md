@@ -45,6 +45,8 @@ código em **português do Brasil**.
   (`buildXpBands`/`calculateLevel`) carregada por `services/xp-curve.ts` e enviada ao app em `/campaign` (`xpBands`); mudou cenário/parada,
   `syncUserLevels` recalcula o nível de todos. Cenário novo tem **4 paradas** (a 4ª é a relíquia).
   Moedas da parada = XP por parada ÷ 10 (de 5 em 5), relíquia em dobro (`nodeCoins`).
+- 12 Pedras: `Stone` (12 no seed, `services/breastplate.ts`), cenários ligados por `scenarios.stone_id` (3 por pedra), resgate em
+  `POST /campaign/stones/:id/claim` (moedas + cor do nome + brasão `BADGE`); a 12ª dá o Peitoral Completo. Cenários das Pedras não dão fragmento de Jesus.
 - Toda mudança de schema vira migração em `backend/prisma/migrations` (o deploy roda `migrate deploy`).
 
 ## Modo Tabuleiro (jogo com amigos, sem progresso de perfil)
