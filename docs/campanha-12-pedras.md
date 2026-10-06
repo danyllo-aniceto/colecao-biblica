@@ -31,32 +31,42 @@ Os temas dos **passes** (ex.: passe *Noite de Belém*) e os **cenários da campa
 mesmo que o lugar se repita, a arte, o ícone, a música e os itens são feitos à parte e um não reaproveita o outro. Nada do
 passe entra no cenário e vice-versa.
 
-## 2. Cenários sugeridos (36)
+## 2. Cenários: só lugares
 
-Agrupados **por pedra**, para cada trio ter uma **cor de identidade** (a mesma do cosmético e do brasão) e os cenários
-misturarem Antigo e Novo Testamento. Os cenários que você já listou estão marcados com ★. É uma proposta: troque à
-vontade.
+**Regra:** todo cenário da campanha é um **lugar** (país, região, cidade, monte, vale, ilha, templo...), nunca uma coisa ou um
+acontecimento solto (nada de "Carro de fogo", "Livro dos selos", "Trono"). O acontecimento bíblico vira só o clima do lugar.
+Quem escolhe o próximo cenário é o dono do jogo, trio a trio; a lista abaixo é a **sugestão** de como encaixar nas 12 pedras
+(a cor da pedra combina com o visual dos lugares, mas pode ser trocada) e o **pool** logo depois guarda o resto.
 
-| Pedra | Cenários (3) | Ideia visual / destino do caminho |
+### Sugestão por pedra (36 cenários; ✅ = no jogo)
+
+| Pedra | Lugares (3) | Visual |
 |---|---|---|
-| 1 Sardônio | ★Torre de Babel · Betel (escada de Jacó) · ★Peniel | tijolo e brasa; a torre no topo; degraus de luz subindo; margem do rio ao amanhecer |
-| 2 Topázio | Sarça ardente em Horebe · ★Tabernáculo · ★Cidade de Davi | ouro quente; arbusto em chamas sem queimar; tenda com a nuvem; harpa e muralha de Sião |
-| 3 Carbúnculo | ★Monte Carmelo · Carro de fogo (Elias) · Pentecostes no Cenáculo | tons de fogo, sem violência: altar e chuva chegando; redemoinho de luz; chamas sobre a sala |
-| 4 Esmeralda | Campos de Belém (Rute) · Vale do Salmo 23 · Oásis de Elim | verde-vivo: cevada e colheita; pastos e águas tranquilas; 12 fontes e 70 palmeiras |
-| 5 Safira | ★Susã (Ester) · Jonas e o grande peixe · Calçada de safira (Êx 24:10) | azul profundo: palácio e lírios; mar e baleia estilizada; chão de safira sob os pés de Deus |
-| 6 Diamante | Monte da Transfiguração · Batismo no Jordão · ★Belém (nascimento de Jesus) | branco-cristal: neve e luz; água clara e pomba; a estrela e a manjedoura (arte própria da campanha, nada de reaproveitar a do passe) |
-| 7 Jacinto | ★Damasco (estrada de Paulo) · ★Atenas (Areópago) · Corinto | crepúsculo laranja/azul; luz do céu na estrada; colunas e o "Deus desconhecido"; porto e mercado |
-| 8 Ágata | ★Éfeso · Filipos (prisão e terremoto) · Malta (naufrágio e fogueira) | listras de pedra e areia: teatro e templo; cela aberta; praia com a fogueira |
-| 9 Ametista | ★Roma · Antioquia ("cristãos") · Tiatira (Lídia, a vendedora de púrpura) | roxo e mármore: Coliseu e estradas; praça e primeiros irmãos; tingimento de púrpura |
-| 10 Berilo | ★Ilha de Patmos · Mar de vidro (Ap 4) · Cartas às 7 igrejas | verde-água: rochedo e mar; mar cristalino diante do trono; sete candeeiros |
-| 11 Ônix | Os 4 seres viventes · O livro dos 7 selos · Queda da Babilônia (Ap 18) | escuro com brilho dourado, **sem horror**: asas e olhos estilizados; rolo e Cordeiro; cidade que cai em luz |
-| 12 Jaspe | Trono e arco-íris (Ap 4) · Nova Jerusalém · Rio e Árvore da vida | verde-translúcido e ouro: o clímax; muros de jaspe, portas de pérola, árvore frutífera |
+| 1 Sardônio ✅ | Torre de Babel · Betel · Peniel | tijolo e brasa; pedra e céu estrelado; rio ao amanhecer |
+| 2 Topázio ✅ | Sarça ardente em Horebe · Tabernáculo · Cidade de Davi | ouro quente, chama e linho; fortaleza dourada |
+| 3 Carbúnculo | Monte Carmelo · Vale dos Ossos Secos · Cenáculo | tons de fogo, sem violência: monte e mar ao fundo; vale com sopro de luz; sala alta de Jerusalém |
+| 4 Esmeralda | Campos de Belém (Rute) · Oásis de Elim · Monte das Oliveiras | verde-vivo: cevada e colheita; 12 fontes e palmeiras; oliveiras sobre Jerusalém |
+| 5 Safira | Ur dos Caldeus · Susã · Nínive | azul profundo: zigurate no deserto; palácio persa e lírios; muralhas e portões assírios |
+| 6 Diamante | Monte da Transfiguração · Rio Jordão · Belém (nascimento de Jesus) | branco-cristal: neve e luz; água clara; vila e estrela (arte própria da campanha) |
+| 7 Jacinto | Damasco · Atenas · Corinto | crepúsculo laranja e azul: oásis e a rua Direita; Areópago e colunas; porto e mercado |
+| 8 Ágata | Éfeso · Filipos · Malta | listras de pedra e areia: teatro e templo; cidade romana da Macedônia; ilha e praia |
+| 9 Ametista | Roma · Antioquia · Samaria | roxo e mármore: Coliseu e estradas; praça dos primeiros irmãos; colinas e o poço de Jacó |
+| 10 Berilo | Ilha de Patmos · Cesareia Marítima · Cafarnaum | verde-água: rochedo e mar; porto de Herodes; vila à beira do lago |
+| 11 Ônix | Getsêmani · Calvário · Jardim do Túmulo | escuro com brilho dourado, **sem horror**: oliveiral à noite; colina serena; jardim e rocha ao amanhecer |
+| 12 Jaspe | Salão do Trono celestial · Nova Jerusalém · Monte Sião | verde-translúcido e ouro: o clímax; muros de jaspe e portas de pérola |
 
-Se quiser mais ideias para trocar ou ampliar, estas combinam bem com o estilo: **Ur dos Caldeus** (o chamado),
-**Berseba** (poços), **Vale de Elá** (Davi e Golias), **Monte Sião**, **Nínive**, **Cesareia de Filipe**, **Betânia**
-(Lázaro), **Gólgota/jardim do túmulo**, **Emaús**, **Cana** (água em vinho), **Cafarnaum**, **Samaria** (poço de Jacó),
-**Rio Quebar** (Ezequiel), **Vale dos ossos secos**, **Sardes**, **Laodiceia**, **Cenário-surpresa de evento** (Natal,
-Páscoa) valendo como bônus fora da contagem.
+### Pool de lugares (para escolher e trocar)
+
+- **Mesopotâmia e Pérsia:** Ur dos Caldeus · Harã · Nínive · Susã · Elão · Persépolis (palácios persas)
+- **Egito e desertos:** Gósen · Mênfis e as pirâmides · Rio Nilo (berço de Moisés) · Cades-Barneia · Monte Nebo · Petra e Edom · Moabe
+- **Canaã, terra de Israel:** Berseba · Hebrom (Macpela) · Siquém · Siló · Gilgal · Gibeão · Mispa · Ramá · Vale de Elá · En-Gedi · Monte Moriá · Monte Gerizim e Ebal · Vale de Josafá · Monte Sinai (já tem) · Mar Morto e Sodoma · Rio Jordão
+- **Reino e exílio:** Samaria (capital do norte) · Jezreel · Monte Carmelo · Tiro e Sidom · Társis · Ofir · Sabá · Etiópia (Cuxe) · Rio Quebar · Vale dos Ossos Secos · Jerusalém reconstruída (Neemias)
+- **Terra de Jesus:** Nazaré · Belém · Cana · Cafarnaum · Betsaida · Mar da Galileia (já tem) · Monte das Bem-aventuranças · Monte da Transfiguração · Cesareia de Filipe · Decápolis (Gadara) · Betânia · Sicar (poço de Jacó) · Emaús · Tanque de Betesda
+- **Jerusalém, a Paixão:** Monte das Oliveiras · Getsêmani · Cenáculo · Pretório · Calvário (Gólgota) · Jardim do Túmulo · Pórtico de Salomão
+- **Viagens de Paulo:** Damasco · Tarso · Antioquia da Síria · Antioquia da Pisídia · Icônio · Listra · Filipos · Tessalônica · Bereia · Atenas · Corinto · Éfeso · Cesareia Marítima · Chipre · Creta · Malta · Roma
+- **Apocalipse:** Ilha de Patmos · Esmirna · Pérgamo · Tiatira · Sardes · Filadélfia · Laodiceia · Nova Jerusalém · Monte Sião
+
+Cenário-surpresa de evento (Natal, Páscoa) também deve ser um lugar e vale como bônus, fora da contagem de 3 por pedra.
 
 ## 2.1 Regra de cada cenário no Duelo
 
