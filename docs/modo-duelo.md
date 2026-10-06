@@ -116,10 +116,8 @@ Segue o Tabuleiro: **nada de XP, moedas, figurinhas, baús, ranking, missões ou
 
 ## 9. Desbloqueio e campanha (decidido: aberto a todos)
 
-Você tinha pedido que o modo abrisse num nível e aparecesse no mapa. Mantive: **abre no nível 10** (fim do 2º cenário), com um marcador
-**"Arena de Duelos"** trancado no mapa da campanha e, depois, aberto. Como o modo é casual, também dá para deixá-lo aberto a todos como o Tabuleiro
-Recomendo: **aberto a todos** com o marcador no mapa só como atalho decorativo, ou
-trancado no nível 10 se quiser que seja um prêmio da campanha. Sua escolha.
+O Duelo é **livre desde o primeiro acesso**: não tem nível mínimo nem depende da campanha (igual ao Tabuleiro). O nível só entra na
+força das figurinhas quando a sala liga "Usar o nível das figurinhas".
 
 ## 10. Telas (referência: print do Marvel Snap, retrato)
 
