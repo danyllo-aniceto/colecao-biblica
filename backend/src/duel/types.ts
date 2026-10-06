@@ -150,7 +150,10 @@ export type ScenarioRule =
   | { kind: "underdog"; amount: number }
   | { kind: "lone"; amount: number }
   | { kind: "firstBonus"; amount: number }
-  | { kind: "costBonus"; min: number; amount: number };
+  | { kind: "costBonus"; min: number; amount: number }
+  | { kind: "strongestAt"; turn: number; amount: number }
+  | { kind: "weakBonus"; max: number; amount: number }
+  | { kind: "gather"; min: number; amount: number };
 
 export type ScenarioDef = {
   /** Mesmo identificador (slug) do cenário da campanha. */

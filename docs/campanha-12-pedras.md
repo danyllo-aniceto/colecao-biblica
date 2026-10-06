@@ -44,7 +44,7 @@ Quem escolhe o próximo cenário é o dono do jogo, trio a trio; a lista abaixo 
 |---|---|---|
 | 1 Sardônio ✅ | Torre de Babel · Betel · Peniel | tijolo e brasa; pedra e céu estrelado; rio ao amanhecer |
 | 2 Topázio ✅ | Sarça ardente em Horebe · Tabernáculo · Cidade de Davi | ouro quente, chama e linho; fortaleza dourada |
-| 3 Carbúnculo | Monte Carmelo · Vale dos Ossos Secos · Cenáculo | tons de fogo, sem violência: monte e mar ao fundo; vale com sopro de luz; sala alta de Jerusalém |
+| 3 Carbúnculo ✅ | Monte Carmelo · Vale dos Ossos Secos · Cenáculo | tons de fogo, sem violência: monte e mar ao fundo; vale com sopro de luz; sala alta de Jerusalém |
 | 4 Esmeralda | Campos de Belém (Rute) · Oásis de Elim · Monte das Oliveiras | verde-vivo: cevada e colheita; 12 fontes e palmeiras; oliveiras sobre Jerusalém |
 | 5 Safira | Ur dos Caldeus · Susã · Nínive | azul profundo: zigurate no deserto; palácio persa e lírios; muralhas e portões assírios |
 | 6 Diamante | Monte da Transfiguração · Rio Jordão · Belém (nascimento de Jesus) | branco-cristal: neve e luz; água clara; vila e estrela (arte própria da campanha) |
@@ -71,7 +71,7 @@ Cenário-surpresa de evento (Natal, Páscoa) também deve ser um lugar e vale co
 ## 2.1 Regra de cada cenário no Duelo
 
 Cada cenário novo traz uma regra de duelo, **sem sorte**, com tema do lugar. Regras existentes: `cheapBonus`, `sharedTag`,
-`majority`, `decay`, `slots`, `noMove`, `tagBonus`, `shiftFirst`, `stormAt`, `winnerBonus`; `decayStrongest`, `growWeakest`, `underdog`, `lone`, `firstBonus` e `costBonus` entraram com os cenários das Pedras (testes em `engine.test.ts`).
+`majority`, `decay`, `slots`, `noMove`, `tagBonus`, `shiftFirst`, `stormAt`, `winnerBonus`; `decayStrongest`, `growWeakest`, `underdog`, `lone`, `firstBonus`, `costBonus`, `strongestAt`, `weakBonus` e `gather` entraram com os cenários das Pedras (testes em `engine.test.ts`).
 
 | Cenário | Regra proposta |
 |---|---|
@@ -81,6 +81,9 @@ Cada cenário novo traz uma regra de duelo, **sem sorte**, com tema do lugar. Re
 | Sarça ardente em Horebe | ✅ Uma figurinha sozinha do seu lado aqui ganha +3 (Moisés a sós diante da sarça) |
 | Tabernáculo | ✅ A primeira figurinha de cada lado aqui (as primícias) ganha +2 |
 | Cidade de Davi | ✅ Figurinhas de Vigor 4 ou mais aqui ganham +2 (a fortaleza dos grandes) |
+| Monte Carmelo | ✅ No fim do turno 5, o fogo desce: a figurinha mais forte de cada lado aqui ganha +3 |
+| Vale dos Ossos Secos | ✅ Figurinhas de Influência base 2 ou menos aqui ganham +2 (os ossos que se levantam) |
+| Cenáculo | ✅ Com 3 ou mais figurinhas suas aqui, cada uma ganha +1 (unidos num só lugar) |
 
 (Os próximos trios ganham a regra na hora do cadastro.)
 
@@ -155,7 +158,7 @@ Os 10 cenários de lançamento mantêm as paradas que já têm (4 a 6) para não
 - [x] **3.** Agrupar cenários por pedra; liberar pedra + cosmético + brasão ao concluir o 3º cenário (transação).
 - [x] **4.** Tela do Peitoral (12 engastes em 4 fileiras, pedra conquistada brilha) e aviso/animação ao ganhar.
 - [x] **5.** Conquista Peitoral Completo (brasão, moldura de prestígio e 2.000 moedas, entregues junto com a 12ª pedra).
-- [ ] **6.** Cadastro dos cenários aos poucos, pedra por pedra. ✅ Trio 1 (Sardônio): Torre de Babel, Betel e Peniel (níveis 51–62, já no seed, sem arte). ✅ Trio 2 (Topázio): Sarça ardente em Horebe, Tabernáculo e Cidade de Davi (níveis 63–74, no seed, sem arte). Faltam os trios 3 a 12.
+- [ ] **6.** Cadastro dos cenários aos poucos, pedra por pedra. ✅ Trio 1 (Sardônio): Torre de Babel, Betel e Peniel (níveis 51–62, já no seed, sem arte). ✅ Trio 2 (Topázio): Sarça ardente em Horebe, Tabernáculo e Cidade de Davi (níveis 63–74, no seed, sem arte). ✅ Trio 3 (Carbúnculo): Monte Carmelo, Vale dos Ossos Secos e Cenáculo (níveis 75–86, no seed, sem arte). Faltam os trios 4 a 12.
 - [ ] **7.** Arte das 12 pedras, 12 brasões, 12 cosméticos e o prêmio final.
 
 ### Prompts de arte extras desta campanha (peças novas)
