@@ -275,6 +275,8 @@ describe.skipIf(!hasDatabase)("API", () => {
       expect(result.rewardName).toBeTruthy();
       expect(result.rewardMatchesUsedToday).toBe(1);
       expect(result.rewardMatchesLimitPerDay).toBe(5);
+      // A tela do quiz mostra os baús do dia: este é o 1º de 5, de bronze.
+      expect((await api.get("/api/quiz/chests-today").set(bearer(token))).body).toEqual({ limit: 5, used: 1, tiers: ["BRONZE"] });
       // Só 3 perguntas ativas: o mínimo cai para 3 e o baú é de bronze (10 moedas garantidas, além do restante).
       expect(result.chestTier).toBe("BRONZE");
       expect(result.chestCoins).toBe(10);
@@ -675,7 +677,8 @@ describe.skipIf(!hasDatabase)("API", () => {
         data: Array.from({ length: 15 }, () => ({ userId: user.id, quizType: "GENERAL" as const, finishedAt: new Date(), questionsAnswered: 10, correctAnswers: 7, wrongAnswers: 3, xpGained: 0, scoreGained: 0 })),
       });
       const claim = await api.post("/api/missions/W_PLAY_15/claim").set(bearer(token));
-      expect(claim.body).toMatchObject({ coins: 100, userCoins: 100 });
+      expect(claim.body).toMatchObject({ coins: 80, reward: { rewardName: "Pacote surpresa" } });
+      expect(claim.body.reward.characterName).toBeTruthy();
       expect((await api.post("/api/missions/W_PLAY_15/claim").set(bearer(token))).status).toBe(400);
       const after = await api.get("/api/missions").set(bearer(token));
       expect(after.body.find((m: { code: string }) => m.code === "W_PLAY_15")).toMatchObject({ completed: true, claimed: true });

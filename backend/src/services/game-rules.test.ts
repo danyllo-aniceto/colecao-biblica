@@ -7,6 +7,9 @@ import {
   pickGeneralQuestionIds,
   isCampaignOnlyRarity,
   chestCoins,
+  duplicateCosmeticCoins,
+  nextMonthKey,
+  passForMonth,
   comboBonus,
   monthKeyInTimeZone,
   monthRangeInTimeZone,
@@ -23,7 +26,16 @@ import {
   friendSalePrice,
   friendSaleSellerCoins,
   stickerUpgradeCost,
+  breastplateComplete,
+  buildXpBands,
+  stoneState,
+  nextChestLevel,
+  nodeCoins,
+  pendingLevelChests,
   calculateLevel,
+  DEFAULT_XP_BANDS,
+  defaultXpPerStop,
+  xpCostOfLevel,
   xpForLevel,
   calculateMatchCoins,
   cycleDay,
@@ -73,15 +85,95 @@ describe("XP, pontos e nível", () => {
     expect(calculateScore(0, 3)).toBe(-90);
   });
 
-  it("curva de nível: 300 XP para o nível 2 e +100 XP a cada nível seguinte", () => {
+  it("curva de nível sem cenários: todo nível custa o valor inicial", () => {
     expect(calculateLevel(0)).toBe(1);
-    expect(calculateLevel(299)).toBe(1);
-    expect(calculateLevel(300)).toBe(2);
-    // Curva progressiva: 300, 400, 500... XP por nível.
-    expect(calculateLevel(699)).toBe(2);
-    expect(calculateLevel(700)).toBe(3);
-    expect(xpForLevel(10)).toBe(6300);
-    expect(xpForLevel(50)).toBe(132300);
+    expect(calculateLevel(499)).toBe(1);
+    expect(calculateLevel(500)).toBe(2);
+    expect(calculateLevel(999)).toBe(2);
+    expect(calculateLevel(1000)).toBe(3);
+    expect(xpForLevel(1)).toBe(0);
+    expect(xpForLevel(10)).toBe(4500);
+  });
+
+  it("o XP por parada sugerido sobe de cenário em cenário até o teto", () => {
+    expect(defaultXpPerStop(0)).toBe(500);
+    expect(defaultXpPerStop(1)).toBe(570);
+    expect(defaultXpPerStop(9)).toBe(1130);
+    expect(defaultXpPerStop(18)).toBe(1760);
+    expect(defaultXpPerStop(19)).toBe(1800);
+    expect(defaultXpPerStop(45)).toBe(1800);
+  });
+
+  it("baú de nível: um a cada 3 níveis (3, 6, 9...)", () => {
+    expect(pendingLevelChests(1, 1)).toBe(0);
+    expect(pendingLevelChests(2, 1)).toBe(0);
+    expect(pendingLevelChests(3, 1)).toBe(1);
+    expect(pendingLevelChests(9, 1)).toBe(3);
+    expect(pendingLevelChests(9, 3)).toBe(2);
+    expect(pendingLevelChests(9, 9)).toBe(0);
+    expect(pendingLevelChests(5, 9)).toBe(0);
+    expect(nextChestLevel(1)).toBe(3);
+    expect(nextChestLevel(3)).toBe(6);
+    expect(nextChestLevel(5)).toBe(6);
+  });
+
+  it("moedas da parada: 1 para cada 10 XP do cenário, relíquia em dobro", () => {
+    expect(nodeCoins(500, false)).toBe(50);
+    expect(nodeCoins(500, true)).toBe(100);
+    expect(nodeCoins(620, false)).toBe(60);
+    expect(nodeCoins(3000, false)).toBe(300);
+    expect(nodeCoins(3000, true)).toBe(600);
+    expect(nodeCoins(10, false)).toBe(5);
+  });
+
+  it("pedra do Peitoral: libera com 3 cenários concluídos e o Peitoral completa com todas resgatadas", () => {
+    expect(stoneState(0, false)).toBe("locked");
+    expect(stoneState(2, false)).toBe("locked");
+    expect(stoneState(3, false)).toBe("available");
+    expect(stoneState(1, true)).toBe("claimed");
+    expect(breastplateComplete(11, 12)).toBe(false);
+    expect(breastplateComplete(12, 12)).toBe(true);
+    expect(breastplateComplete(0, 0)).toBe(false);
+  });
+
+  it("curva por cenário: cada parada custa o XP do cenário dela", () => {
+    const bands = buildXpBands([
+      { levels: [1, 2, 3, 4], xpPerStop: 500 },
+      { levels: [5, 6, 7, 8], xpPerStop: 620 },
+    ]);
+    expect(bands).toEqual([
+      { fromLevel: 1, cost: 500 },
+      { fromLevel: 5, cost: 620 },
+    ]);
+    // Nível 1 é de graça; 2, 3 e 4 custam 500 cada.
+    expect(xpForLevel(1, bands)).toBe(0);
+    expect(xpForLevel(4, bands)).toBe(1500);
+    expect(xpForLevel(5, bands)).toBe(2120);
+    expect(xpForLevel(8, bands)).toBe(1500 + 4 * 620);
+    // Depois do último cenário continua o último custo.
+    expect(xpForLevel(10, bands)).toBe(1500 + 6 * 620);
+    expect(calculateLevel(1499, bands)).toBe(3);
+    expect(calculateLevel(1500, bands)).toBe(4);
+    expect(calculateLevel(2119, bands)).toBe(4);
+    expect(calculateLevel(2120, bands)).toBe(5);
+    expect(calculateLevel(xpForLevel(30, bands), bands)).toBe(30);
+    expect(calculateLevel(xpForLevel(30, bands) - 1, bands)).toBe(29);
+  });
+
+  it("curva por cenário: lacunas e cenários fora de ordem seguem o custo anterior", () => {
+    const bands = buildXpBands([
+      { levels: [1, 2], xpPerStop: 400 },
+      { levels: [6, 7], xpPerStop: 800 },
+    ]);
+    expect(xpCostOfLevel(4, bands)).toBe(400);
+    expect(xpCostOfLevel(6, bands)).toBe(800);
+    expect(xpCostOfLevel(50, bands)).toBe(800);
+    expect(buildXpBands([])).toEqual(DEFAULT_XP_BANDS);
+    // Nível repetido: vale o primeiro cenário da lista.
+    expect(buildXpBands([{ levels: [1, 2], xpPerStop: 400 }, { levels: [2, 3], xpPerStop: 900 }])).toEqual([
+      { fromLevel: 1, cost: 400 },
+      { fromLevel: 3, cost: 900 },
+    ]);
   });
 
   it("freio diário de XP: cheio nas primeiras partidas, só uma parte depois", () => {
@@ -421,7 +513,7 @@ describe("baú e passe", () => {
   });
 });
 
-describe("campanha e carta especial", () => {
+describe("campanha e figurinha especial", () => {
   const rules = { packOddsCommon: 60, packOddsRare: 25, packOddsEpic: 12, packOddsLegendary: 3 };
 
   it("a raridade especial nunca sai em pacote nem vale moedas de repetida", () => {
@@ -460,7 +552,7 @@ describe("campanha e carta especial", () => {
     expect(currentScenarioId([], nodes, 5)).toBeNull();
   });
 
-  it("a carta especial só é entregue com todos os fragmentos", () => {
+  it("a figurinha especial só é entregue com todos os fragmentos", () => {
     expect(fragmentsComplete(9, 10)).toBe(false);
     expect(fragmentsComplete(10, 10)).toBe(true);
     expect(fragmentsComplete(0, 0)).toBe(false);
@@ -490,5 +582,69 @@ describe("campanha e carta especial", () => {
     // Poucas gerais: o cenário cobre o resto.
     expect(pickGeneralQuestionIds(scenario, [10], 6)).toHaveLength(6);
     expect(pickGeneralQuestionIds(scenario, others, 2)).toHaveLength(2);
+  });
+});
+
+describe("passes temáticos", () => {
+  const passes = [{ id: 1 }, { id: 2 }, { id: 3 }];
+  const months = Array.from({ length: 36 }, (_, index) => `${2026 + Math.floor((index + 9) / 12)}-${String(((index + 9) % 12) + 1).padStart(2, "0")}`);
+
+  it("sem passes não há passe no mês", () => {
+    expect(passForMonth([], "2026-10")).toBeNull();
+  });
+
+  it("um passe só vale em todos os meses", () => {
+    expect(passForMonth([{ id: 7 }], "2027-02")?.id).toBe(7);
+  });
+
+  it("o passe fixado num mês vence o rodízio", () => {
+    const withNatal = [...passes, { id: 9, pinnedMonth: "2026-12" }];
+    expect(passForMonth(withNatal, "2026-12")?.id).toBe(9);
+    expect(passForMonth(withNatal, "2026-11")?.id).not.toBe(9);
+  });
+
+  it("passe fixado em \"MM\" vale todo ano; o mês exato vence", () => {
+    const base = [...passes, { id: 9, pinnedMonth: "12" }];
+    expect(passForMonth(base, "2026-12")?.id).toBe(9);
+    expect(passForMonth(base, "2031-12")?.id).toBe(9);
+    expect(passForMonth(base, "2031-11")?.id).not.toBe(9);
+    expect(passForMonth([...base, { id: 10, pinnedMonth: "2027-12" }], "2027-12")?.id).toBe(10);
+  });
+
+  it("meses fixados não gastam a vez de ninguém no rodízio", () => {
+    const withPins = [...Array.from({ length: 5 }, (_, index) => ({ id: index + 1 })), { id: 90, pinnedMonth: "12" }, { id: 91, pinnedMonth: "04" }];
+    const free = months.filter((month) => !["12", "04"].includes(month.slice(5, 7)));
+    const chosen = free.map((month) => passForMonth(withPins, month)!.id);
+    // Com 5 passes livres, existe um alinhamento em que cada 5 meses livres seguidos trazem os 5 passes, sem repetir.
+    const aligned = [0, 1, 2, 3, 4].some((offset) => {
+      for (let start = offset; start + 5 <= chosen.length; start += 5) if (new Set(chosen.slice(start, start + 5)).size !== 5) return false;
+      return true;
+    });
+    expect(aligned).toBe(true);
+    for (let index = 1; index < chosen.length; index += 1) expect(chosen[index]).not.toBe(chosen[index - 1]);
+  });
+
+  it("o rodízio é estável e passa por todos antes de repetir", () => {
+    const chosen = months.map((month) => passForMonth(passes, month)!.id);
+    expect(chosen).toEqual(months.map((month) => passForMonth(passes, month)!.id));
+    // Outubro de 2026 abre uma volta de 3 meses: cada volta tem os 3 passes.
+    for (let start = 0; start + 3 <= chosen.length; start += 3) expect(new Set(chosen.slice(start, start + 3)).size).toBe(3);
+  });
+
+  it("nunca repete o mesmo passe em dois meses seguidos", () => {
+    const chosen = months.map((month) => passForMonth(passes, month)!.id);
+    for (let index = 1; index < chosen.length; index += 1) expect(chosen[index]).not.toBe(chosen[index - 1]);
+    const two = months.map((month) => passForMonth([{ id: 1 }, { id: 2 }], month)!.id);
+    for (let index = 1; index < two.length; index += 1) expect(two[index]).not.toBe(two[index - 1]);
+  });
+
+  it("passa o ano ao pedir o mês seguinte", () => {
+    expect(nextMonthKey("2026-12")).toBe("2027-01");
+    expect(nextMonthKey("2026-03")).toBe("2026-04");
+  });
+
+  it("item repetido vira mais moedas quanto mais raro", () => {
+    expect(duplicateCosmeticCoins("COMMON")).toBeLessThan(duplicateCosmeticCoins("EPIC"));
+    expect(duplicateCosmeticCoins("LEGENDARY")).toBe(400);
   });
 });

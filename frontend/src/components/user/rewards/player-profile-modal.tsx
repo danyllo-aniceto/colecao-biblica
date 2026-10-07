@@ -10,6 +10,7 @@ import { errorMessage } from '@/components/ui/toast';
 import { Alert, LevelBadge, ProgressBar } from '@/components/game/game-ui';
 import { PlayerAvatar, PlayerName } from '@/components/game/player-look';
 import { StickerCard } from '@/components/game/sticker-card';
+import { surfaceStyle } from '@/lib/look-background';
 import { getPlayerProfile, type PlayerLook, type PlayerProfile } from '@/lib/rewards-api';
 
 /** Cartão do jogador: o que os outros veem (ícone, título, álbum, vitrine e números). */
@@ -23,10 +24,13 @@ export function PlayerProfileCard({ profile }: { profile: PlayerProfile }) {
   ];
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-4">
-        <PlayerAvatar look={profile.look} name={profile.name} size="xl" />
-        <div className="min-w-0 flex-1 space-y-1">
-          <PlayerName name={profile.name} look={profile.look} nameClassName="text-2xl" className="[&_.player-title]:text-sm" />
+      <div className="relative -mx-1 flex items-center gap-4 overflow-hidden rounded-3xl p-3" style={surfaceStyle(profile.look.profileBg)}>
+        {profile.look.profileBg ? <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-surface/90 via-surface/65 to-surface/20" /> : null}
+        <span className="relative">
+          <PlayerAvatar look={profile.look} name={profile.name} size="xl" />
+        </span>
+        <div className="relative min-w-0 flex-1 space-y-1">
+          <PlayerName name={profile.name} look={profile.look} nameClassName="text-2xl" badgeSize="md" className="[&_.player-title]:text-sm" />
           <div className="flex items-center gap-2 text-sm font-semibold text-muted">
             <LevelBadge level={profile.level} size="sm" /> Nível {profile.level}
           </div>

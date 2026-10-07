@@ -5,7 +5,12 @@ import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 import { achievementsRouter } from "./routes/achievements";
 import { adminRouter } from "./routes/admin";
 import { authRouter } from "./routes/auth";
+import { boardPublicRouter, boardRouter } from "./routes/board";
 import { campaignRouter } from "./routes/campaign";
+import { duelRouter } from "./routes/duel";
+import { gameModesPublicRouter, gameModesRouter } from "./routes/game-modes";
+import { landingRouter, sharePageRouter } from "./routes/landing";
+import { duelPublicRouter, duelRoomRouter } from "./routes/duel-room";
 import { charactersRouter } from "./routes/characters";
 import { collectionRouter } from "./routes/collection";
 import { commentsRouter } from "./routes/comments";
@@ -46,6 +51,11 @@ export function createApp() {
   app.use("/api/auth", authRouter);
   app.use("/api/users", usersRouter);
   app.use("/api/uploads", uploadsRouter);
+  app.use("/api/board-public", boardPublicRouter);
+  app.use("/api/game-modes-public", gameModesPublicRouter);
+  app.use("/api/duel-public", duelPublicRouter);
+  app.use("/api/landing", landingRouter);
+  app.use("/api/compartilhar", sharePageRouter);
 
   // Daqui em diante tudo exige login.
   app.use("/api/characters", requireAuth, charactersRouter);
@@ -67,10 +77,14 @@ export function createApp() {
   app.use("/api/social", requireAuth, socialRouter);
   app.use("/api/cosmetics", requireAuth, cosmeticsRouter);
   app.use("/api/chests", requireAuth, chestsRouter);
+  app.use("/api/game-modes", requireAuth, gameModesRouter);
   app.use("/api/collections", requireAuth, collectionsRouter);
   app.use("/api/pass", requireAuth, passRouter);
   app.use("/api/events", requireAuth, eventsRouter);
   app.use("/api/campaign", requireAuth, campaignRouter);
+  app.use("/api/board", requireAuth, boardRouter);
+  app.use("/api/duel", requireAuth, duelRouter);
+  app.use("/api/duel-room", requireAuth, duelRoomRouter);
 
   app.use("/api", notFoundHandler);
   app.use(errorHandler);

@@ -3,7 +3,9 @@ import type { Role } from "@prisma/client";
 import type { Db } from "../db/prisma";
 import { ensureFixedRewards, ensureFixedShopItems } from "./rewards";
 import { ensureDefaultSettings } from "./settings";
+import { ensureBreastplate } from "./breastplate";
 import { ensureDefaultCampaign } from "./default-campaign";
+import { ensureDefaultMissions } from "./missions";
 import { ensureDefaultCosmetics, ensureDefaultPassTiers } from "./default-cosmetics";
 
 type SeedOptions = {
@@ -126,5 +128,7 @@ export async function runSeed(db: Db, options: SeedOptions) {
   await ensureFixedShopItems(db);
   await ensureDefaultCosmetics(db);
   await ensureDefaultPassTiers(db);
+  await ensureBreastplate(db);
   await ensureDefaultCampaign(db);
+  await ensureDefaultMissions(db);
 }

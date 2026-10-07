@@ -1,5 +1,5 @@
 import { apiRequest, apiRequestVoid } from '@/lib/http';
-import type { PaginatedResponse, StickerRarity } from '@/lib/admin-api';
+import type { BulkImportResult, PaginatedResponse, StickerRarity } from '@/lib/admin-api';
 import type { Cosmetic, CosmeticType, CosmeticUnlock, GameEvent } from '@/lib/rewards-api';
 
 const json = (method: string, body?: unknown): RequestInit => ({ method, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
@@ -19,6 +19,8 @@ export type CosmeticPayload = {
   imageUrl?: string | null;
   color?: string | null;
   style?: string | null;
+  animation?: string | null;
+  pack?: string | null;
   unlock: CosmeticUnlock;
   priceCoins?: number | null;
   requirement?: string | null;
@@ -33,6 +35,7 @@ export type CosmeticMeta = {
   requirements: Array<{ code: string; label: string; needsValue: boolean }>;
   titleStyles: string[];
   frameStyles: string[];
+  reactionAnimations: string[];
 };
 
 export const listCosmeticsAdmin = (params: { page: number; size: number; type?: string; search?: string }) =>
@@ -63,24 +66,63 @@ export const createCollection = (payload: CollectionPayload) => apiRequest('/col
 export const updateCollection = (id: number, payload: CollectionPayload) => apiRequest(`/collections/admin/${id}`, json('PUT', payload), 'Não foi possível salvar a coleção.');
 export const deleteCollection = (id: number) => apiRequestVoid(`/collections/admin/${id}`, { method: 'DELETE' }, 'Não foi possível excluir a coleção.');
 
+export type AdminPass = {
+  id: number;
+  name: string;
+  description: string | null;
+  color: string | null;
+  imageUrl: string | null;
+  /** Mês fixado ("AAAA-MM"); vazio = entra no rodízio. */
+  pinnedMonth: string | null;
+  active: boolean;
+  tiers: number;
+};
+
+export type PassPayload = { name: string; description?: string | null; color?: string | null; imageUrl?: string | null; pinnedMonth?: string | null; active: boolean };
+
+export type PassScheduleMonth = { monthKey: string; passId: number | null; name: string | null; pinned: boolean };
+
+export const listPasses = () => apiRequest<AdminPass[]>('/pass/admin/passes', { method: 'GET' }, 'Não foi possível carregar os passes.');
+export const getPassSchedule = () => apiRequest<PassScheduleMonth[]>('/pass/admin/schedule', { method: 'GET' }, 'Não foi possível carregar o calendário dos passes.');
+export const createPass = (payload: PassPayload) => apiRequest<AdminPass>('/pass/admin/passes', json('POST', payload), 'Não foi possível criar o passe.');
+export const updatePass = (id: number, payload: Partial<PassPayload>) => apiRequest<AdminPass>(`/pass/admin/passes/${id}`, json('PUT', payload), 'Não foi possível salvar o passe.');
+export const deletePass = (id: number) => apiRequestVoid(`/pass/admin/passes/${id}`, { method: 'DELETE' }, 'Não foi possível excluir o passe.');
+
 export type AdminPassTier = {
   id: number;
+  passId: number;
   level: number;
   requiredXp: number;
   rewardCoins: number;
   rewardDefinitionId?: number | null;
   rewardCosmeticId?: number | null;
-  rewardDefinition?: { id: number; name: string } | null;
-  rewardCosmetic?: { id: number; name: string; type: CosmeticType } | null;
+  duplicateCoins?: number | null;
+  duplicateRewardDefinitionId?: number | null;
+  rewardDefinition?: { id: number; name: string; rewardType: string } | null;
+  /** Item visual completo (imagem, cor, estilo): a prévia do painel desenha o degrau como o jogador vê. */
+  rewardCosmetic?: Cosmetic | null;
+  duplicateRewardDefinition?: { id: number; name: string } | null;
   active: boolean;
 };
 
-export type PassTierPayload = { level: number; requiredXp: number; rewardCoins: number; rewardDefinitionId?: number | null; rewardCosmeticId?: number | null; active: boolean };
+export type PassTierPayload = {
+  passId: number;
+  level: number;
+  requiredXp: number;
+  rewardCoins: number;
+  rewardDefinitionId?: number | null;
+  rewardCosmeticId?: number | null;
+  duplicateCoins?: number | null;
+  duplicateRewardDefinitionId?: number | null;
+  active: boolean;
+};
 
-export const listPassTiers = () => apiRequest<AdminPassTier[]>('/pass/admin/tiers', { method: 'GET' }, 'Não foi possível carregar o passe.');
+export const listPassTiers = (passId?: number) => apiRequest<AdminPassTier[]>(`/pass/admin/tiers${passId ? `?passId=${passId}` : ''}`, { method: 'GET' }, 'Não foi possível carregar o passe.');
 export const createPassTier = (payload: PassTierPayload) => apiRequest('/pass/admin/tiers', json('POST', payload), 'Não foi possível criar o degrau.');
 export const updatePassTier = (id: number, payload: PassTierPayload) => apiRequest(`/pass/admin/tiers/${id}`, json('PUT', payload), 'Não foi possível salvar o degrau.');
 export const deletePassTier = (id: number) => apiRequestVoid(`/pass/admin/tiers/${id}`, { method: 'DELETE' }, 'Não foi possível excluir o degrau.');
+export const importPassTiers = (rows: Array<Record<string, string>>, dryRun: boolean, passId?: number) =>
+  apiRequest<BulkImportResult>('/pass/admin/tiers/bulk', json('POST', { rows, dryRun, passId }), 'Não foi possível importar os degraus.');
 
 export type AdminEvent = GameEvent & { cosmetics: number };
 export type EventPayload = {

@@ -9,6 +9,7 @@ import { fieldClassName } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Alert, BoostChips, ProgressBar, SectionHeading } from '@/components/game/game-ui';
 import { DailyChallengeCard } from '@/components/user/daily-challenge-card';
+import { DailyChestsCard } from '@/components/user/daily-chests-card';
 import type { CharacterEntry, GameRules, QuizSessionStatus, UserSticker } from '@/lib/user-api';
 import type { UserProfile } from '@/types/auth';
 
@@ -97,44 +98,48 @@ export function PlaySection({
     .sort((left, right) => Number(right.questionCount > 0) - Number(left.questionCount > 0) || left.name.localeCompare(right.name, 'pt-BR'));
   const selectedCharacter = characters.find((character) => String(character.id) === quizForm.characterId);
 
+  const modeDescription = isMarathon
+    ? gameRules
+      ? `Perguntas de toda a Bíblia até suas ${gameRules.startingLives} vidas acabarem. Acerte ${gameRules.rewardMinCorrectAnswers}+ para ganhar um baú (até ${gameRules.rewardMatchLimitPerDay} por dia): quanto mais acertos, melhor o baú.`
+      : 'Perguntas de toda a Bíblia até suas vidas acabarem. Quanto mais acertos, melhor o baú.'
+    : isStudy
+      ? 'Estudo de personagem: só para personagens que você já tem. Não rende prêmios: cada acerto soma no status do personagem.'
+      : 'Você escolhe quantas perguntas. Sem baú: serve para praticar com calma.';
+
   return (
-    <form className="space-y-5" onSubmit={onStart}>
+    <form className="space-y-4" onSubmit={onStart}>
       <SectionHeading title="Escolha o desafio" subtitle="Quanto mais você acerta, mais XP e prêmios ganha." />
 
-      <DailyChallengeCard onStart={onStartChallenge} starting={submitting} currentUserId={profile?.id} />
+      {/* Recontado a cada partida que termina (a sessão volta a ser nula). */}
+      <DailyChestsCard refreshKey={quizSession === null} />
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <ModeCard
           active={isMarathon}
           onClick={() => onChangeForm((current) => ({ ...current, quizType: 'MARATHON' }))}
-          icon={<PublicRoundedIcon sx={{ fontSize: 36 }} />}
+          icon={<PublicRoundedIcon sx={{ fontSize: 30 }} />}
           title="Maratona"
-          description={
-            gameRules
-              ? `Perguntas de toda a Bíblia até suas ${gameRules.startingLives} vidas acabarem. Acerte ${gameRules.rewardMinCorrectAnswers}+ para ganhar um baú (até ${gameRules.rewardMatchLimitPerDay} por dia): quanto mais acertos, melhor o baú.`
-              : 'Perguntas de toda a Bíblia até suas vidas acabarem. Quanto mais acertos, melhor o baú.'
-          }
           tone="primary"
         />
         <ModeCard
           active={quizForm.quizType === 'TRAINING'}
           onClick={() => onChangeForm((current) => ({ ...current, quizType: 'TRAINING' }))}
-          icon={<FitnessCenterRoundedIcon sx={{ fontSize: 36 }} />}
+          icon={<FitnessCenterRoundedIcon sx={{ fontSize: 30 }} />}
           title="Treino"
-          description="Você escolhe quantas perguntas. Sem baú: serve para praticar com calma."
           tone="accent"
         />
         <ModeCard
           active={isStudy}
           onClick={() => onChangeForm((current) => ({ ...current, quizType: 'CHARACTER_STUDY' }))}
-          icon={<PersonSearchRoundedIcon sx={{ fontSize: 36 }} />}
-          title="Estudo de personagem"
-          description="Só para personagens que você já tem. Não rende prêmios: cada acerto soma no status do personagem."
+          icon={<PersonSearchRoundedIcon sx={{ fontSize: 30 }} />}
+          title="Estudo"
           tone="violet"
         />
       </div>
 
-      <section className="panel space-y-5 p-5 sm:p-6">
+      <section className="panel space-y-4 p-4 sm:p-6">
+        <p className="text-sm font-semibold text-muted">{modeDescription}</p>
+
         {isStudy ? (
           <div className="space-y-2">
             <span className="text-sm font-bold text-muted">Personagem</span>
@@ -198,6 +203,13 @@ export function PlaySection({
         </fieldset>
         )}
 
+        {error ? <Alert tone="danger">{error}</Alert> : null}
+
+        <Button type="submit" size="xl" className="w-full" loading={submitting} disabled={isStudy && !quizForm.characterId}>
+          {submitting ? null : <PlayArrowRoundedIcon />}
+          {submitting ? 'Preparando...' : 'Começar partida'}
+        </Button>
+
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-bold text-muted">Seus bônus:</span>
           <BoostChips life={profile?.extraLifeBoosts ?? 0} time={profile?.extraTimeBoosts ?? 0} xp={profile?.doubleXpBoosts ?? 0} hint={profile?.hintBoosts ?? 0} />
@@ -209,13 +221,9 @@ export function PlaySection({
           </p>
         ) : null}
 
-        {error ? <Alert tone="danger">{error}</Alert> : null}
-
-        <Button type="submit" size="xl" className="w-full sm:w-auto" loading={submitting} disabled={isStudy && !quizForm.characterId}>
-          {submitting ? null : <PlayArrowRoundedIcon />}
-          {submitting ? 'Preparando...' : 'Começar partida'}
-        </Button>
       </section>
+
+      <DailyChallengeCard onStart={onStartChallenge} starting={submitting} currentUserId={profile?.id} />
     </form>
   );
 }
@@ -225,14 +233,12 @@ function ModeCard({
   onClick,
   icon,
   title,
-  description,
   tone,
 }: {
   active: boolean;
   onClick: () => void;
   icon: React.ReactNode;
   title: string;
-  description: string;
   tone: 'primary' | 'violet' | 'accent';
 }) {
   const toneClass = tone === 'primary' ? 'bg-primary text-on-primary' : tone === 'accent' ? 'bg-accent text-white' : 'bg-violet text-white';
@@ -241,16 +247,10 @@ function ModeCard({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={cn(
-        'panel flex items-start gap-4 p-5 text-left transition',
-        active ? 'ring-4 ring-primary/50' : 'opacity-80 hover:opacity-100',
-      )}
+      className={cn('panel flex flex-col items-center gap-2 p-3 text-center transition sm:p-4', active ? 'ring-4 ring-primary/50' : 'opacity-75 hover:opacity-100')}
     >
-      <span className={cn('flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl', toneClass)}>{icon}</span>
-      <span>
-        <span className="block font-display text-xl font-bold text-ink">{title}</span>
-        <span className="mt-1 block text-sm text-muted">{description}</span>
-      </span>
+      <span className={cn('flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl', toneClass)}>{icon}</span>
+      <span className="font-display text-base font-bold leading-tight text-ink sm:text-lg">{title}</span>
     </button>
   );
 }

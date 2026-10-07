@@ -70,7 +70,8 @@ export const SETTINGS = {
   chestBaseCoins: { key: "chest.baseCoins", defaultValue: 20, description: "Moedas fixas do baú de nível", kind: "int" },
   chestCoinsPerLevel: { key: "chest.coinsPerLevel", defaultValue: 3, description: "Moedas a mais no baú por nível alcançado", kind: "int" },
   chestMaxCoins: { key: "chest.maxCoins", defaultValue: 80, description: "Teto de moedas de um baú de nível (0 = sem teto)", kind: "int" },
-  shopStickerLimitPerDay: { key: "shop.stickerLimitPerDay", defaultValue: 1, description: "Figurinhas (e pacotes) que o jogador pode comprar por dia (0 = sem limite)", kind: "int" },
+  shopStickerLimitPerDay: { key: "shop.stickerLimitPerDay", defaultValue: 1, description: "Figurinhas avulsas e pacotes que o jogador pode comprar por dia (0 = sem limite)", kind: "int" },
+  shopChestLimitPerDay: { key: "shop.chestLimitPerDay", defaultValue: 3, description: "Baús que o jogador pode comprar por dia na loja (0 = sem limite)", kind: "int" },
   chestCosmeticChance: { key: "chest.cosmeticChance", defaultValue: 15, description: "Chance (%) do baú trazer um item visual", kind: "int" },
 } satisfies Record<string, SettingDefinition>;
 

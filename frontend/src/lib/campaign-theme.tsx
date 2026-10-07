@@ -9,7 +9,16 @@ import ExploreRoundedIcon from '@mui/icons-material/ExploreRounded';
 import LandscapeRoundedIcon from '@mui/icons-material/LandscapeRounded';
 import LocationCityRoundedIcon from '@mui/icons-material/LocationCityRounded';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
+import AirRoundedIcon from '@mui/icons-material/AirRounded';
+import FestivalRoundedIcon from '@mui/icons-material/FestivalRounded';
+import FoundationRoundedIcon from '@mui/icons-material/FoundationRounded';
 import ParkRoundedIcon from '@mui/icons-material/ParkRounded';
+import HolidayVillageRoundedIcon from '@mui/icons-material/HolidayVillageRounded';
+import MusicNoteRoundedIcon from '@mui/icons-material/MusicNoteRounded';
+import StairsRoundedIcon from '@mui/icons-material/StairsRounded';
+import TerrainRoundedIcon from '@mui/icons-material/TerrainRounded';
+import WbTwilightRoundedIcon from '@mui/icons-material/WbTwilightRounded';
+import WhatshotRoundedIcon from '@mui/icons-material/WhatshotRounded';
 
 const DEFAULT_COLOR = '#7c4dff';
 
@@ -25,6 +34,15 @@ const FALLBACK_ICONS: Record<string, typeof MapRoundedIcon> = {
   babilonia: LocationCityRoundedIcon,
   galileia: AnchorRoundedIcon,
   jerusalem: ChurchRoundedIcon,
+  babel: FoundationRoundedIcon,
+  betel: StairsRoundedIcon,
+  peniel: WbTwilightRoundedIcon,
+  horebe: WhatshotRoundedIcon,
+  tabernaculo: FestivalRoundedIcon,
+  'cidade-davi': MusicNoteRoundedIcon,
+  carmelo: TerrainRoundedIcon,
+  'ossos-secos': AirRoundedIcon,
+  pentecostes: HolidayVillageRoundedIcon,
 };
 
 export function ScenarioFallbackIcon({ slug, className, fontSize = 28 }: { slug: string; className?: string; fontSize?: number }): ReactNode {

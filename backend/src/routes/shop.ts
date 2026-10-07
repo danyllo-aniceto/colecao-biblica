@@ -3,10 +3,12 @@ import { env } from "../lib/env";
 import { dayKeyInTimeZone } from "../services/game-rules";
 
 const STICKER_PURCHASE = "SHOP_STICKER";
+const CHEST_PURCHASE = "SHOP_CHEST";
 const CHEST_TIER_BY_REWARD = { CHEST_BRONZE: "BRONZE", CHEST_SILVER: "SILVER", CHEST_GOLD: "GOLD" } as const;
 const chestTierOf = (type: string) => CHEST_TIER_BY_REWARD[type as keyof typeof CHEST_TIER_BY_REWARD] ?? null;
 /** Figurinha, pacote e baú contam no limite diário de compras de figurinhas. */
-const isStickerReward = (type: string) => type === "STICKER" || type === "STICKER_PACK" || chestTierOf(type) !== null;
+/** Figurinha avulsa ou pacote (os baús têm o próprio limite diário). */
+const isStickerReward = (type: string) => type === "STICKER" || type === "STICKER_PACK";
 import { helperCounts } from "../services/helpers";
 import type { Prisma, StickerRarity } from "@prisma/client";
 import { lockUser, prisma, transaction } from "../db/prisma";
@@ -145,15 +147,14 @@ shopRouter.delete(
   }),
 );
 
-/** Quantas figurinhas o jogador ainda pode comprar hoje. */
+/** Quantas figurinhas (e pacotes) e quantos baús o jogador ainda pode comprar hoje. */
 shopRouter.get(
   "/limits",
   asyncHandler(async (req, res) => {
     const settings = await getSettings(prisma);
-    const bought = await prisma.userClaim.count({
-      where: { userId: currentUser(req).id, kind: STICKER_PURCHASE, periodKey: dayKeyInTimeZone(new Date(), env.timezone) },
-    });
-    res.json({ stickerLimitPerDay: settings.shopStickerLimitPerDay, stickersBoughtToday: bought });
+    const where = { userId: currentUser(req).id, periodKey: dayKeyInTimeZone(new Date(), env.timezone) };
+    const [bought, chestsBought] = await Promise.all([prisma.userClaim.count({ where: { ...where, kind: STICKER_PURCHASE } }), prisma.userClaim.count({ where: { ...where, kind: CHEST_PURCHASE } })]);
+    res.json({ stickerLimitPerDay: settings.shopStickerLimitPerDay, stickersBoughtToday: bought, chestLimitPerDay: settings.shopChestLimitPerDay, chestsBoughtToday: chestsBought });
   }),
 );
 
@@ -188,6 +189,16 @@ shopRouter.post(
           throw badRequest(`Você já comprou ${settings.shopStickerLimitPerDay} figurinha(s) hoje. Jogue para ganhar mais ou volte amanhã!`);
         }
         await tx.userClaim.create({ data: { userId, kind: STICKER_PURCHASE, code: `n${bought + 1}`, periodKey: dayKey } });
+      }
+
+      // Limite diário de baús comprados (separado do das figurinhas e pacotes).
+      if (chestTierOf(reward.rewardType) !== null && settings.shopChestLimitPerDay > 0) {
+        const dayKey = dayKeyInTimeZone(new Date(), env.timezone);
+        const bought = await tx.userClaim.count({ where: { userId, kind: CHEST_PURCHASE, periodKey: dayKey } });
+        if (bought >= settings.shopChestLimitPerDay) {
+          throw badRequest(`Você já comprou ${settings.shopChestLimitPerDay} baú(s) hoje. Jogue para ganhar mais ou volte amanhã!`);
+        }
+        await tx.userClaim.create({ data: { userId, kind: CHEST_PURCHASE, code: `n${bought + 1}`, periodKey: dayKey } });
       }
 
       const wallet = { ...user, coins: user.coins - item.priceCoins };

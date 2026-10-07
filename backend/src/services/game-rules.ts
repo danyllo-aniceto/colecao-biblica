@@ -10,10 +10,6 @@ export const ANSWER_GRACE_SECONDS = 3;
 const XP_PER_CORRECT = 10;
 const POINTS_PER_CORRECT = 100;
 const POINTS_PER_WRONG = 30;
-/** XP para sair do nível 1; cada nível seguinte pede mais LEVEL_XP_STEP. */
-const LEVEL_BASE_XP = 300;
-const LEVEL_XP_STEP = 100;
-
 export function defaultTimeByDifficulty(difficulty: QuestionDifficulty): number {
   switch (difficulty) {
     case "EASY":
@@ -57,15 +53,107 @@ export function calculateScore(correctAnswers: number, wrongAnswers: number): nu
   return correctAnswers * POINTS_PER_CORRECT - wrongAnswers * POINTS_PER_WRONG;
 }
 
-/** XP total para chegar ao nível (curva progressiva: cada nível pede 100 XP a mais que o anterior). */
-export function xpForLevel(level: number): number {
-  const steps = Math.max(0, level - 1);
-  return LEVEL_BASE_XP * steps + (LEVEL_XP_STEP * steps * (steps - 1)) / 2;
+/**
+ * Curva de nível: o custo de XP é do CENÁRIO (`xpPerStop`), igual em todas as paradas dele, e sobe de cenário em cenário.
+ * Uma faixa vale do nível `fromLevel` em diante, até a próxima faixa; `cost` é o XP para subir UM nível dentro dela.
+ * O nível 1 não custa nada (a primeira parada já abre).
+ */
+export type XpBand = { fromLevel: number; cost: number };
+
+/** XP por parada do primeiro cenário, quanto sobe a cada cenário e o teto (valores sugeridos ao criar cenários). */
+export const XP_PER_STOP_BASE = 500;
+export const XP_PER_STOP_STEP = 70;
+export const XP_PER_STOP_CAP = 1800;
+
+/**
+ * Moedas de uma parada da campanha: 1 moeda para cada 10 XP que ela custa (arredondado de 5 em 5); a relíquia paga em dobro.
+ * Todos os cenários seguem esse padrão, então a recompensa sobe junto com o esforço.
+ */
+export function nodeCoins(xpPerStop: number, relic: boolean): number {
+  const base = Math.max(5, Math.round(xpPerStop / 10 / 5) * 5);
+  return relic ? base * 2 : base;
 }
 
-export function calculateLevel(xp: number): number {
+/** Quantos cenários concluídos dão uma pedra do Peitoral. */
+export const STONE_SCENARIOS = 3;
+
+export type StoneState = "claimed" | "available" | "locked";
+
+/** Situação da pedra: resgatada, liberada (os cenários do grupo concluídos) ou bloqueada. */
+export function stoneState(completedScenarios: number, claimed: boolean, required = STONE_SCENARIOS): StoneState {
+  if (claimed) return "claimed";
+  return completedScenarios >= required ? "available" : "locked";
+}
+
+/** O Peitoral está completo quando todas as pedras ativas foram resgatadas. */
+export function breastplateComplete(claimedStones: number, totalStones: number): boolean {
+  return totalStones > 0 && claimedStones >= totalStones;
+}
+
+/** O baú de nível vem a cada 3 níveis (3, 6, 9...). */
+export const LEVEL_CHEST_EVERY = 3;
+
+/** Nível do próximo baú a abrir: o próximo múltiplo de 3 depois do último aberto. */
+export function nextChestLevel(chestLevel: number): number {
+  return (Math.floor(chestLevel / LEVEL_CHEST_EVERY) + 1) * LEVEL_CHEST_EVERY;
+}
+
+/** Baús de nível ainda não abertos: um por múltiplo de 3 alcançado depois do último aberto. */
+export function pendingLevelChests(level: number, chestLevel: number): number {
+  return Math.max(0, Math.floor(level / LEVEL_CHEST_EVERY) - Math.floor(chestLevel / LEVEL_CHEST_EVERY));
+}
+
+/** Sem cenários cadastrados, todo nível custa o valor inicial. */
+export const DEFAULT_XP_BANDS: XpBand[] = [{ fromLevel: 1, cost: XP_PER_STOP_BASE }];
+
+/** XP por parada sugerido para o cenário na posição `position` (0 = primeiro do caminho). */
+export function defaultXpPerStop(position: number): number {
+  return Math.min(XP_PER_STOP_CAP, XP_PER_STOP_BASE + XP_PER_STOP_STEP * Math.max(0, position));
+}
+
+/**
+ * Monta as faixas a partir dos cenários na ordem do caminho: cada nível custa o `xpPerStop` do cenário que o tem como parada;
+ * níveis sem parada (lacunas) e os depois do último cenário seguem o custo do cenário anterior.
+ */
+export function buildXpBands(scenarios: Array<{ levels: number[]; xpPerStop: number }>): XpBand[] {
+  const costByLevel = new Map<number, number>();
+  for (const scenario of scenarios) {
+    for (const level of scenario.levels) if (!costByLevel.has(level)) costByLevel.set(level, Math.max(1, Math.round(scenario.xpPerStop)));
+  }
+  const bands: XpBand[] = [];
+  for (const level of [...costByLevel.keys()].sort((a, b) => a - b)) {
+    const cost = costByLevel.get(level)!;
+    if (bands.length === 0 || bands[bands.length - 1].cost !== cost) bands.push({ fromLevel: level, cost });
+  }
+  return bands.length > 0 ? bands : DEFAULT_XP_BANDS;
+}
+
+/** XP para subir do nível anterior até `level`. */
+export function xpCostOfLevel(level: number, bands: XpBand[] = DEFAULT_XP_BANDS): number {
+  let cost = bands[0]?.cost ?? XP_PER_STOP_BASE;
+  for (const band of bands) {
+    if (band.fromLevel > level) break;
+    cost = band.cost;
+  }
+  return cost;
+}
+
+/** XP total acumulado para chegar ao nível. */
+export function xpForLevel(level: number, bands: XpBand[] = DEFAULT_XP_BANDS): number {
+  let total = 0;
+  for (let current = 2; current <= level; current += 1) total += xpCostOfLevel(current, bands);
+  return total;
+}
+
+export function calculateLevel(xp: number, bands: XpBand[] = DEFAULT_XP_BANDS): number {
   let level = 1;
-  while (xpForLevel(level + 1) <= xp) level += 1;
+  let needed = xpCostOfLevel(2, bands);
+  let remaining = xp;
+  while (remaining >= needed) {
+    remaining -= needed;
+    level += 1;
+    needed = xpCostOfLevel(level + 1, bands);
+  }
   return level;
 }
 
@@ -656,7 +744,7 @@ export function currentScenarioId(scenarios: Array<{ id: number }>, nodes: Campa
   return current;
 }
 
-/** A carta especial é entregue quando todos os fragmentos do caminho foram resgatados. */
+/** A figurinha especial é entregue quando todos os fragmentos do caminho foram resgatados. */
 export function fragmentsComplete(claimedFragments: number, totalFragments: number): boolean {
   return totalFragments > 0 && claimedFragments >= totalFragments;
 }
@@ -690,4 +778,62 @@ export function pickGeneralQuestionIds(
   const fromScenario = shuffle(scenarioIds, random).slice(0, Math.min(Math.ceil(limit * share), limit));
   const rest = shuffle([...otherIds, ...scenarioIds.filter((id) => !fromScenario.includes(id))], random);
   return shuffle([...fromScenario, ...rest.slice(0, limit - fromScenario.length)], random);
+}
+
+// ---------------------------------------------------------------------------
+// Passes temáticos
+// ---------------------------------------------------------------------------
+
+/** Moedas dadas no lugar de um item visual que o jogador já tem, por raridade. */
+export const DUPLICATE_COSMETIC_COINS_BY_RARITY: Record<StickerRarity, number> = { COMMON: 50, RARE: 100, EPIC: 200, LEGENDARY: 400, SPECIAL: 400 };
+
+export function duplicateCosmeticCoins(rarity: StickerRarity): number {
+  return DUPLICATE_COSMETIC_COINS_BY_RARITY[rarity] ?? 50;
+}
+
+/** Índice absoluto do mês ("AAAA-MM"): janeiro de 2000 = 0. */
+function monthNumber(monthKey: string): number {
+  const [year, month] = monthKey.split("-").map(Number);
+  return (year - 2000) * 12 + (month - 1);
+}
+
+/** Próximo mês ("AAAA-MM") depois de `monthKey`. */
+export function nextMonthKey(monthKey: string): string {
+  const [year, month] = monthKey.split("-").map(Number);
+  return month >= 12 ? `${year + 1}-01` : `${year}-${String(month + 1).padStart(2, "0")}`;
+}
+
+/**
+ * Qual passe vale no mês. O passe fixado naquele mês ("pinnedMonth": "AAAA-MM" ou "MM" para todo ano) vence; senão os passes livres entram em
+ * rodízio: cada "volta" sorteia a ordem de todos (estável, pelo número da volta) e nunca repete o último da volta
+ * anterior no começo da seguinte. Com mais passes cadastrados, cada um volta mais raramente.
+ */
+export function passForMonth<T extends { id: number; pinnedMonth?: string | null }>(passes: T[], monthKey: string): T | null {
+  const pinnedFor = (key: string) => passes.find((pass) => pass.pinnedMonth === key) ?? passes.find((pass) => pass.pinnedMonth === key.slice(5, 7));
+  const pinned = pinnedFor(monthKey);
+  if (pinned) return pinned;
+  const pool = passes.filter((pass) => !pass.pinnedMonth).sort((left, right) => left.id - right.id);
+  if (pool.length === 0) return null;
+  if (pool.length === 1) return pool[0];
+
+  // O rodízio só conta os meses livres: meses com passe fixado não gastam a vez de ninguém.
+  const target = monthNumber(monthKey);
+  let freeIndex = 0;
+  for (let month = 0; month < target; month += 1) {
+    const year = 2000 + Math.floor(month / 12);
+    if (!pinnedFor(`${year}-${String((month % 12) + 1).padStart(2, "0")}`)) freeIndex += 1;
+  }
+
+  const round = Math.floor(freeIndex / pool.length);
+  // Cada volta sorteia a ordem; os últimos passes da volta anterior (2 se houver 4 ou mais) vão para o fim da nova volta,
+  // assim nenhum passe reaparece logo depois de passar.
+  const keepApart = pool.length >= 4 ? 2 : 1;
+  let recent = new Set<number>();
+  let order = pool;
+  for (let current = 0; current <= round; current += 1) {
+    const shuffled = shuffle(pool, seededRandom(hashString(`passes:${current}`)));
+    order = [...shuffled.filter((pass) => !recent.has(pass.id)), ...shuffled.filter((pass) => recent.has(pass.id))];
+    recent = new Set(order.slice(-keepApart).map((pass) => pass.id));
+  }
+  return order[freeIndex % pool.length];
 }

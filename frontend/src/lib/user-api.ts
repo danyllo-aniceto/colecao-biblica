@@ -1,7 +1,7 @@
 import { apiRequest, apiRequestVoid } from '@/lib/http';
 import type { UserProfile } from '@/types/auth';
 import type { PaginatedResponse, StickerRarity, Testament } from '@/lib/admin-api';
-import type { PlayerLook, UnlockedCosmetic } from '@/lib/rewards-api';
+import type { PlayerLook, RewardResult, UnlockedCosmetic } from '@/lib/rewards-api';
 
 /** Status de estudo do personagem (só acumula acertos; não rende prêmios). */
 export type StudyStatus = {
@@ -382,7 +382,13 @@ export async function listShopItems(): Promise<ShopItem[]> {
   return apiRequest<ShopItem[]>('/shop', { method: 'GET' }, 'Não foi possível carregar a loja.');
 }
 
-export async function getShopLimits(): Promise<{ stickerLimitPerDay: number; stickersBoughtToday: number }> {
+export type ChestsToday = { limit: number; used: number; tiers: Array<ChestTierName | null> };
+
+export async function getChestsToday(): Promise<ChestsToday> {
+  return apiRequest<ChestsToday>('/quiz/chests-today', { method: 'GET' }, 'Não foi possível carregar os baús de hoje.');
+}
+
+export async function getShopLimits(): Promise<{ stickerLimitPerDay: number; stickersBoughtToday: number; chestLimitPerDay: number; chestsBoughtToday: number }> {
   return apiRequest('/shop/limits', { method: 'GET' }, 'Não foi possível carregar os limites da loja.');
 }
 
@@ -505,7 +511,8 @@ export type Mission = {
   period: 'DAILY' | 'WEEKLY';
   title: string;
   coins: number;
-  hints: number;
+  /** Recompensa extra além das moedas (ajuda, pacote, item visual...). */
+  reward: { id: number; name: string; rewardType: string } | null;
   current: number;
   target: number;
   completed: boolean;
@@ -553,7 +560,7 @@ export async function listMissions(): Promise<Mission[]> {
   return apiRequest<Mission[]>('/missions', { method: 'GET' }, 'Não foi possível carregar as missões.');
 }
 
-export async function claimMission(code: string): Promise<{ code: string; coins: number; hints: number; userCoins: number; hintBoosts: number }> {
+export async function claimMission(code: string): Promise<{ code: string; coins: number; reward: RewardResult | null; user: UserProfile }> {
   return apiRequest(`/missions/${code}/claim`, { method: 'POST' }, 'Não foi possível resgatar a missão.');
 }
 

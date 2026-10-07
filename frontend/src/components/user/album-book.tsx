@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
@@ -7,6 +7,7 @@ import { playSfx } from '@/lib/sound/sfx';
 import { StickerCard } from '@/components/game/sticker-card';
 import type { StickerRarity } from '@/lib/admin-api';
 import { cn } from '@/lib/cn';
+import { coverImageStyle } from '@/lib/look-background';
 import { RARITY_ORDER, getRarityLabel } from '@/lib/rarity-theme';
 import type { CharacterEntry } from '@/lib/user-api';
 
@@ -60,13 +61,17 @@ type AlbumBookProps = {
   /** Figurinha a mostrar ao abrir (volta da ficha): o álbum abre na folha dela. */
   focusId?: number | null;
   onFocused?: () => void;
+  /** Capa equipada pelo jogador (cores e imagem da capa do livro). */
+  coverStyle?: CSSProperties;
+  /** Imagem da capa equipada: preenche a folha de abertura. */
+  coverImage?: string | null;
 };
 
 /**
  * Álbum de verdade: capa, folhas de papel e a folha virando ao trocar de página
  * (setas, arrastar no celular, setas do teclado ou a paginação embaixo).
  */
-export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, levelsById, onOpenSticker, resetKey, focusId = null, onFocused }: AlbumBookProps) {
+export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, levelsById, onOpenSticker, resetKey, focusId = null, onFocused, coverStyle, coverImage }: AlbumBookProps) {
   const wide = useWide();
   const perPage = wide ? PER_PAGE_WIDE : PER_PAGE_NARROW;
   const [view, setView] = useState(0);
@@ -121,7 +126,7 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
         <div className={paper}>
           <PageSizer wide={wide} />
           <div className="col-start-1 row-start-1 flex">
-            <AlbumIntro items={items} ownedCount={ownedCount} totalCharacters={totalCharacters} />
+            <AlbumIntro items={items} ownedCount={ownedCount} totalCharacters={totalCharacters} coverImage={coverImage} />
           </div>
         </div>
       );
@@ -235,6 +240,7 @@ export function AlbumBook({ items, totalCharacters, ownedCount, duplicatesById, 
             if (delta < -50) go(view + 1);
             if (delta > 50) go(view - 1);
           }}
+          style={coverStyle}
           className="album-cover rounded-[1.75rem] p-2 outline-none focus-visible:ring-4 focus-visible:ring-primary/40 sm:p-3"
         >
           <div className="relative overflow-hidden rounded-2xl [perspective:1800px]">
@@ -273,9 +279,25 @@ function TurnButton({ side, disabled, onClick }: { side: 'left' | 'right'; disab
   );
 }
 
-function AlbumIntro({ items, ownedCount, totalCharacters }: { items: CharacterEntry[]; ownedCount: number; totalCharacters: number }) {
+export function AlbumIntro({ items, ownedCount, totalCharacters, coverImage }: { items: CharacterEntry[]; ownedCount: number; totalCharacters: number; coverImage?: string | null }) {
   const byRarity = (rarity: StickerRarity) => items.filter((item) => item.rarity === rarity).length;
   const percent = totalCharacters ? Math.round((ownedCount / totalCharacters) * 100) : 0;
+  if (coverImage) {
+    // Capa equipada: a arte preenche a folha e os números ficam num selo embaixo.
+    return (
+      <div className="relative flex flex-1 flex-col justify-end overflow-hidden rounded-xl text-center text-white" style={coverImageStyle(coverImage)}>
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+        <div className="relative space-y-1 p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/80">Coleção Bíblica</p>
+          <h3 className="font-display text-3xl font-bold drop-shadow">Meu álbum</h3>
+          <p className="font-display text-lg font-bold drop-shadow">
+            {ownedCount}/{totalCharacters} · {percent}% completo
+          </p>
+          <p className="text-xs text-white/80">Arraste para o lado ou use as setas para virar a página.</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
       <img src="/icons/icon-192.png" alt="" width={72} height={72} className="h-18 w-18 drop-shadow-md" />

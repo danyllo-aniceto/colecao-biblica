@@ -14,6 +14,7 @@ import {
   useDoubleCoins,
   useVerseHint,
   getActiveSession,
+  getChestsToday,
   getDailyChallenge,
   getHistory,
   getMatchesPage,
@@ -46,6 +47,14 @@ quizRouter.post(
   "/sessions/start",
   asyncHandler(async (req, res) => {
     res.json(await startSession(currentUser(req), startSchema.parse(req.body)));
+  }),
+);
+
+/** Baús ganhos hoje na maratona e quantos faltam (tela do quiz). */
+quizRouter.get(
+  "/chests-today",
+  asyncHandler(async (req, res) => {
+    res.json(await getChestsToday(currentUser(req).id));
   }),
 );
 

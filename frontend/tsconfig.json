@@ -22,6 +22,12 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@board/*": [
+        "../backend/src/board/*"
+      ],
+      "@duel/*": [
+        "../backend/src/duel/*"
       ]
     }
   },

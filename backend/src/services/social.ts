@@ -353,14 +353,14 @@ export async function getMessages(userId: number, friendId: number, before: numb
   };
 }
 
-const reactionSelect = { id: true, name: true, imageUrl: true, style: true } as const;
+const reactionSelect = { id: true, name: true, imageUrl: true, style: true, animation: true, pack: true } as const;
 
 /** Reações que o jogador pode mandar (as que ele tem). */
 export async function myReactions(userId: number) {
   const rows = await prisma.userCosmetic.findMany({
     where: { userId, cosmetic: { type: "REACTION", active: true } },
     select: { cosmetic: { select: reactionSelect } },
-    orderBy: { cosmetic: { sortOrder: "asc" } },
+    orderBy: [{ cosmetic: { pack: "asc" } }, { cosmetic: { sortOrder: "asc" } }, { cosmeticId: "asc" }],
   });
   return rows.map((row) => row.cosmetic);
 }
@@ -375,8 +375,8 @@ export async function sendReaction(userId: number, friendId: number, reactionId:
   const recent = await prisma.message.count({ where: { senderId: userId, tradeId: null, createdAt: { gte: new Date(Date.now() - 60_000) } } });
   if (recent >= MESSAGES_PER_MINUTE) throw new HttpError(429, "Muitas mensagens seguidas. Espere um pouco.");
   const message = await prisma.message.create({ data: { senderId: userId, receiverId: friendId, text: `Reação: ${owned.cosmetic.name}`, reactionId } });
-  const { id, name, imageUrl, style } = owned.cosmetic;
-  return { id: message.id, senderId: userId, text: message.text, createdAt: message.createdAt, readAt: null, trade: null, reaction: { id, name, imageUrl, style } };
+  const { id, name, imageUrl, style, animation, pack } = owned.cosmetic;
+  return { id: message.id, senderId: userId, text: message.text, createdAt: message.createdAt, readAt: null, trade: null, reaction: { id, name, imageUrl, style, animation, pack } };
 }
 
 export async function sendMessage(userId: number, friendId: number, text: string) {

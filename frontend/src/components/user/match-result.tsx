@@ -74,6 +74,8 @@ export function MatchResult({
   const stars = starsFor(correct, answered);
   const leveledUp = result.userLevel > previousLevel;
   const chestPrizes = result.chestPrizes ?? [];
+  // Com baú na partida, o jogador precisa abrir e ver o que ganhou antes de continuar.
+  const chestPending = Boolean(result.chestTier && chestPrizes.length > 0 && !opened);
   const dailyLimitReached = !result.rewardGranted && result.rewardMatchesLimitPerDay > 0 && result.rewardMatchesUsedToday >= result.rewardMatchesLimitPerDay;
 
   return (
@@ -262,9 +264,13 @@ export function MatchResult({
           </>
         )}
 
-        <Button size="xl" className="relative mt-5 w-full" onClick={onContinue}>
-          Continuar
-        </Button>
+        {chestPending ? (
+          <p className="relative mt-5 text-sm font-bold text-muted">Abra o baú para ver seus prêmios.</p>
+        ) : (
+          <Button size="xl" className="relative mt-5 w-full" onClick={onContinue}>
+            Continuar
+          </Button>
+        )}
       </div>
       {opening && result.chestTier ? (
         <ChestOpening

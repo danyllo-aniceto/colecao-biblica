@@ -18,14 +18,27 @@ function resolveBuildId() {
   }
 }
 
+/** Endereço do site (as tags de compartilhamento precisam de URL completa). Na Vercel vem do domínio de produção; vazio deixa o endereço relativo. */
+function resolveSiteUrl() {
+  if (process.env.SITE_URL) return process.env.SITE_URL.replace(/\/$/, "");
+  return process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "";
+}
+
 export default defineConfig({
   define: {
     __BUILD_ID__: JSON.stringify(resolveBuildId()),
   },
   resolve: {
-    alias: { "@": path.resolve(__dirname, "src") },
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+      // Motor do tabuleiro: o mesmo arquivo roda aqui (partida local) e no servidor.
+      "@board": path.resolve(__dirname, "../backend/src/board"),
+      // Motor do Duelo de Cartas (treino contra bot roda aqui; o online, no servidor).
+      "@duel": path.resolve(__dirname, "../backend/src/duel"),
+    },
   },
   plugins: [
+    { name: "site-url", transformIndexHtml: (html: string) => html.replaceAll("%SITE_URL%", resolveSiteUrl()) },
     react(),
     tailwindcss(),
     VitePWA({

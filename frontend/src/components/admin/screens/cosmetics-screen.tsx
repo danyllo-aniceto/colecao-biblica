@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { PawnPreview } from './board-previews';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
@@ -40,9 +42,15 @@ import type { Cosmetic, CosmeticType, CosmeticUnlock } from '@/lib/rewards-api';
 import type { UserProfile } from '@/types/auth';
 import { AdminPanel, Cell, DataTable, IconAction, RarityBadge, Row, SearchInput, StatusBadge } from '../admin-ui';
 import { ImageUploadField } from '../image-upload-field';
+import { EmojiPicker } from '../emoji-picker';
+import { ReactionChatPreview } from '../reaction-chat-preview';
+import { AlbumCoverPreview, ProfileBgPreview } from '../surface-previews';
+import { ReactionsImport } from '../reactions-import';
+import { CosmeticsImport } from '../cosmetics-import';
+import { REACTION_ANIMATION_LABELS } from '@/lib/labels';
 import { useDebouncedValue, usePagedList } from '../use-paged-list';
 
-const TYPES: CosmeticType[] = ['AVATAR', 'FRAME', 'TITLE', 'NAME_COLOR', 'REACTION'];
+const TYPES: CosmeticType[] = ['AVATAR', 'FRAME', 'TITLE', 'NAME_COLOR', 'REACTION', 'PROFILE_BG', 'ALBUM_COVER', 'PAWN', 'BADGE'];
 
 const UNLOCK_LABELS: Record<CosmeticUnlock, string> = { FREE: 'Grátis', SHOP: 'Loja', REQUIREMENT: 'Meta', REWARD: 'Prêmio' };
 const UNLOCK_HELP: Record<CosmeticUnlock, string> = {
@@ -84,6 +92,8 @@ export function CosmeticsScreen() {
   const debounced = useDebouncedValue(search);
   const [editing, setEditing] = useState<AdminCosmetic | 'new' | null>(null);
   const [granting, setGranting] = useState<AdminCosmetic | null>(null);
+  const [importingReactions, setImportingReactions] = useState(false);
+  const [importingItems, setImportingItems] = useState(false);
   const [meta, setMeta] = useState<CosmeticMeta | null>(null);
   const list = usePagedList(listCosmeticsAdmin, { type: type || undefined, search: debounced || undefined }, 20);
 
@@ -124,10 +134,20 @@ export function CosmeticsScreen() {
     <AdminPanel
       description="Ícones, molduras, títulos que brilham, cores do nome e reações do chat. Itens com cadeado vieram com o app: dá para editar e desativar."
       actions={
-        <Button onClick={() => setEditing('new')}>
-          <AddRoundedIcon fontSize="small" />
-          Novo item
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={() => setImportingItems(true)}>
+            <UploadFileRoundedIcon fontSize="small" />
+            Importar itens
+          </Button>
+          <Button variant="secondary" onClick={() => setImportingReactions(true)}>
+            <UploadFileRoundedIcon fontSize="small" />
+            Importar reações
+          </Button>
+          <Button onClick={() => setEditing('new')}>
+            <AddRoundedIcon fontSize="small" />
+            Novo item
+          </Button>
+        </div>
       }
     >
       <div className="grid gap-3 md:grid-cols-[1fr_16rem]">
@@ -163,6 +183,7 @@ export function CosmeticsScreen() {
                     {item.name}
                   </p>
                   <RarityBadge rarity={item.rarity} />
+                  {item.type === 'REACTION' && item.pack ? <span className="ml-1.5 text-xs text-muted">Pacote {item.pack}</span> : null}
                 </div>
               </div>
             </Cell>
@@ -216,6 +237,24 @@ export function CosmeticsScreen() {
           }}
         />
       ) : null}
+      {importingItems ? (
+        <CosmeticsImport
+          onClose={() => setImportingItems(false)}
+          onImported={() => {
+            setImportingItems(false);
+            list.reload();
+          }}
+        />
+      ) : null}
+      {importingReactions ? (
+        <ReactionsImport
+          onClose={() => setImportingReactions(false)}
+          onImported={() => {
+            setImportingReactions(false);
+            list.reload();
+          }}
+        />
+      ) : null}
       {granting ? <GrantModal item={granting} onClose={() => setGranting(null)} onGranted={list.reload} /> : null}
     </AdminPanel>
   );
@@ -231,6 +270,8 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
   const [imageUrl, setImageUrl] = useState(item?.imageUrl ?? '');
   const [color, setColor] = useState(item?.color ?? '#7c4dff');
   const [style, setStyle] = useState(item?.style ?? '');
+  const [animation, setAnimation] = useState(item?.animation ?? 'pop');
+  const [pack, setPack] = useState(item?.pack ?? '');
   const [unlock, setUnlock] = useState<CosmeticUnlock>(item?.unlock ?? 'SHOP');
   const [price, setPrice] = useState(String(item?.priceCoins ?? 300));
   const [requirement, setRequirement] = useState(item?.requirement ?? 'LEVEL');
@@ -259,20 +300,25 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
       rarity,
       imageUrl: imageUrl || null,
       color,
-      style: type === 'REACTION' ? style : effectiveStyle,
+      style: type === 'REACTION' || type === 'PAWN' || type === 'BADGE' ? style : effectiveStyle,
+      animation: type === 'REACTION' ? animation : null,
+      pack: type === 'REACTION' ? pack : null,
       unlock,
       inChestPool,
       active,
       system: false,
       sortOrder: 0,
     }),
-    [item, type, name, rarity, imageUrl, color, style, effectiveStyle, unlock, inChestPool, active],
+    [item, type, name, rarity, imageUrl, color, style, effectiveStyle, animation, pack, unlock, inChestPool, active],
   );
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (type === 'AVATAR' && !imageUrl) return toast.error('Envie a imagem do ícone.');
+    if ((type === 'PROFILE_BG' || type === 'ALBUM_COVER') && !imageUrl && !color) return toast.error('Envie uma imagem ou escolha uma cor.');
     if (type === 'REACTION' && !imageUrl && !style.trim()) return toast.error('Informe um emoji ou envie uma imagem para a reação.');
+    if (type === 'PAWN' && !imageUrl && !style.trim()) return toast.error('Informe um emoji ou envie uma imagem para o peão.');
+    if (type === 'BADGE' && !imageUrl && !style.trim()) return toast.error('Informe um emoji ou envie uma imagem para o brasão.');
     if (unlock === 'SHOP' && !(Number(price) >= 0)) return toast.error('Informe o preço.');
     setSaving(true);
     const payload = {
@@ -280,8 +326,10 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
       description: description.trim() || null,
       rarity,
       imageUrl: imageUrl || null,
-      color: type === 'AVATAR' || type === 'REACTION' ? null : color,
-      style: type === 'REACTION' ? style.trim() || null : type === 'TITLE' || type === 'FRAME' ? effectiveStyle : null,
+      color: type === 'AVATAR' || type === 'REACTION' || type === 'PAWN' ? null : color,
+      style: type === 'REACTION' || type === 'PAWN' || type === 'BADGE' ? style.trim() || null : type === 'TITLE' || type === 'FRAME' ? effectiveStyle : null,
+      animation: type === 'REACTION' ? animation : null,
+      pack: type === 'REACTION' ? pack.trim() || null : null,
       unlock,
       priceCoins: unlock === 'SHOP' ? Number(price) : null,
       requirement: unlock === 'REQUIREMENT' ? requirement : null,
@@ -307,7 +355,7 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
       <form className="space-y-5" onSubmit={submit}>
         {isNew ? (
           <div className="no-scrollbar -mx-1 overflow-x-auto px-1">
-            <Segmented aria-label="Tipo de item" className="min-w-[30rem]" value={type} onChange={setType} options={TYPES.map((value) => ({ value, label: COSMETIC_TYPE_LABELS[value].one }))} />
+            <Segmented aria-label="Tipo de item" className="min-w-[46rem]" value={type} onChange={setType} options={TYPES.map((value) => ({ value, label: COSMETIC_TYPE_LABELS[value].one }))} />
           </div>
         ) : null}
 
@@ -317,6 +365,9 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
           </span>
           <p className="text-sm text-muted">Prévia de como o item aparece para o jogador.</p>
         </div>
+
+        {type === 'PROFILE_BG' ? <ProfileBgPreview item={preview} /> : null}
+        {type === 'ALBUM_COVER' ? <AlbumCoverPreview item={preview} /> : null}
 
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Nome" required>
@@ -330,17 +381,74 @@ function CosmeticModal({ item, defaultType, meta, onClose, onSaved }: { item: Ad
           <Textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={200} rows={2} />
         </Field>
 
-        {type === 'AVATAR' || type === 'REACTION' || type === 'FRAME' ? (
-          <Field label={type === 'FRAME' ? 'Imagem da moldura (opcional, PNG transparente)' : type === 'REACTION' ? 'Imagem ou GIF (opcional se usar emoji)' : 'Imagem do ícone'} required={type === 'AVATAR'}>
-            <ImageUploadField value={imageUrl} onChange={setImageUrl} round={type !== 'REACTION'} />
+        {type === 'AVATAR' || type === 'REACTION' || type === 'PAWN' || type === 'BADGE' || type === 'FRAME' || type === 'PROFILE_BG' || type === 'ALBUM_COVER' ? (
+          <Field
+            label={
+              type === 'FRAME'
+                ? 'Imagem da moldura (opcional, PNG transparente)'
+                : type === 'REACTION'
+                  ? 'Imagem ou GIF (opcional se usar emoji)'
+                  : type === 'PAWN'
+                    ? 'Imagem do peão (opcional se usar emoji)'
+                    : type === 'BADGE'
+                      ? 'Imagem do brasão (opcional se usar emoji, quadrada)'
+                  : type === 'PROFILE_BG'
+                    ? 'Imagem do fundo (opcional, horizontal)'
+                    : type === 'ALBUM_COVER'
+                      ? 'Imagem da capa (opcional, vertical)'
+                      : 'Imagem do ícone'
+            }
+            required={type === 'AVATAR'}
+            hint={
+              type === 'PROFILE_BG' || type === 'ALBUM_COVER'
+                ? 'Sem imagem, vale a cor escolhida abaixo (em degradê). Com imagem, a cor serve de reserva.'
+                : type === 'PAWN'
+                  ? 'Os peões com desbloqueio "Grátis" são os básicos de todo jogador. Trocar o emoji ou a imagem vale para as próximas partidas.'
+                  : undefined
+            }
+          >
+            <ImageUploadField value={imageUrl} onChange={setImageUrl} round={type === 'AVATAR' || type === 'FRAME'} wide={type === 'PROFILE_BG'} />
           </Field>
         ) : null}
         {type === 'REACTION' ? (
-          <Field label="Emoji" hint="Usado quando não há imagem. Ex.: 🙏">
-            <Input value={style} onChange={(event) => setStyle(event.target.value)} maxLength={8} />
+          <>
+            <Field label="Emoji" hint="Usado quando não há imagem. Escolha abaixo ou cole qualquer emoji.">
+              <div className="space-y-2">
+                <Input value={style} onChange={(event) => setStyle(event.target.value)} maxLength={8} placeholder="🙏" />
+                <EmojiPicker value={style} onPick={setStyle} />
+              </div>
+            </Field>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Animação" hint="Como a reação entra na conversa.">
+                <Select aria-label="Animação" value={animation} onChange={setAnimation} options={Object.entries(REACTION_ANIMATION_LABELS).map(([value, label]) => ({ value, label }))} />
+              </Field>
+              <Field label="Pacote (opcional)" hint="Reações com o mesmo pacote ficam juntas no chat. Ex.: Natal.">
+                <Input value={pack} onChange={(event) => setPack(event.target.value)} maxLength={40} placeholder="Ex.: Páscoa" />
+              </Field>
+            </div>
+            <ReactionChatPreview reaction={preview} />
+          </>
+        ) : null}
+        {type === 'PAWN' ? (
+          <>
+            <Field label="Emoji" hint="Usado quando não há imagem. Escolha abaixo ou cole qualquer emoji.">
+              <div className="space-y-2">
+                <Input value={style} onChange={(event) => setStyle(event.target.value)} maxLength={8} placeholder="🐑" />
+                <EmojiPicker value={style} onPick={setStyle} />
+              </div>
+            </Field>
+            <PawnPreview pawn={imageUrl || style} />
+          </>
+        ) : null}
+        {type === 'BADGE' ? (
+          <Field label="Emoji" hint="Usado quando não há imagem; aparece sobre a cor do brasão. Escolha abaixo ou cole qualquer emoji.">
+            <div className="space-y-2">
+              <Input value={style} onChange={(event) => setStyle(event.target.value)} maxLength={8} placeholder="💎" />
+              <EmojiPicker value={style} onPick={setStyle} />
+            </div>
           </Field>
         ) : null}
-        {type === 'TITLE' || type === 'NAME_COLOR' || (type === 'FRAME' && effectiveStyle === 'solid') ? (
+        {type === 'TITLE' || type === 'NAME_COLOR' || type === 'BADGE' || type === 'PROFILE_BG' || type === 'ALBUM_COVER' || (type === 'FRAME' && effectiveStyle === 'solid') ? (
           <Field label="Cor">
             <ColorField value={color} onChange={setColor} />
           </Field>

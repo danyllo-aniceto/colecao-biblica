@@ -59,6 +59,12 @@ enum CosmeticType {
   TITLE
   NAME_COLOR
   REACTION
+  PROFILE_BG
+  ALBUM_COVER
+  /// Peão do tabuleiro (emoji ou imagem); não se equipa, escolhe-se em cada partida.
+  PAWN
+  /// Brasão: emblema exibido no perfil, ao lado do nome (um equipado por vez).
+  BADGE
 }
 
 /// Como o item é obtido: grátis para todos, comprado, por meta ou só como prêmio (admin, baú, coleção, passe).
@@ -112,6 +118,19 @@ enum QuizSessionStatus {
   ABANDONED
 }
 
+/// Sala do Modo Tabuleiro online: LOBBY (reunindo), PLAYING (em jogo) ou FINISHED (pódio na tela).
+enum DuelRoomStatus {
+  LOBBY
+  PLAYING
+  FINISHED
+}
+
+enum BoardRoomStatus {
+  LOBBY
+  PLAYING
+  FINISHED
+}
+
 model User {
   id                 Int       @id @default(autoincrement())
   name               String
@@ -147,6 +166,9 @@ model User {
   frameId            Int?      @map("frame_id")
   titleId            Int?      @map("title_id")
   nameColorId        Int?      @map("name_color_id")
+  profileBgId        Int?      @map("profile_bg_id")
+  albumCoverId       Int?      @map("album_cover_id")
+  badgeId            Int?      @map("badge_id")
   /// Figurinhas escolhidas para a vitrine do perfil (até 3).
   showcase           Int[]     @default([])
   createdAt          DateTime  @default(now()) @map("created_at")
@@ -167,17 +189,31 @@ model User {
   reports      QuestionReport[]
   cosmetics    UserCosmetic[]
 
-  avatar    Cosmetic? @relation("UserAvatar", fields: [avatarId], references: [id], onDelete: SetNull)
-  frame     Cosmetic? @relation("UserFrame", fields: [frameId], references: [id], onDelete: SetNull)
-  title     Cosmetic? @relation("UserTitle", fields: [titleId], references: [id], onDelete: SetNull)
-  nameColor Cosmetic? @relation("UserNameColor", fields: [nameColorId], references: [id], onDelete: SetNull)
+  avatar     Cosmetic? @relation("UserAvatar", fields: [avatarId], references: [id], onDelete: SetNull)
+  frame      Cosmetic? @relation("UserFrame", fields: [frameId], references: [id], onDelete: SetNull)
+  title      Cosmetic? @relation("UserTitle", fields: [titleId], references: [id], onDelete: SetNull)
+  nameColor  Cosmetic? @relation("UserNameColor", fields: [nameColorId], references: [id], onDelete: SetNull)
+  profileBg  Cosmetic? @relation("UserProfileBg", fields: [profileBgId], references: [id], onDelete: SetNull)
+  albumCover Cosmetic? @relation("UserAlbumCover", fields: [albumCoverId], references: [id], onDelete: SetNull)
+  badge      Cosmetic? @relation("UserBadge", fields: [badgeId], references: [id], onDelete: SetNull)
 
-  friendRequestsSent     Friendship[] @relation("FriendshipRequester")
-  friendRequestsReceived Friendship[] @relation("FriendshipAddressee")
-  messagesSent           Message[]    @relation("MessageSender")
-  messagesReceived       Message[]    @relation("MessageReceiver")
-  tradesProposed         Trade[]      @relation("TradeProposer")
-  tradesReceived         Trade[]      @relation("TradeReceiver")
+  friendRequestsSent     Friendship[]      @relation("FriendshipRequester")
+  friendRequestsReceived Friendship[]      @relation("FriendshipAddressee")
+  messagesSent           Message[]         @relation("MessageSender")
+  messagesReceived       Message[]         @relation("MessageReceiver")
+  tradesProposed         Trade[]           @relation("TradeProposer")
+  tradesReceived         Trade[]           @relation("TradeReceiver")
+  duelDecks              DuelDeck[]
+  hostedDuelRooms        DuelRoom[]        @relation("DuelRoomHost")
+  duelPlayers            DuelRoomPlayer[]
+  sentDuelInvites        DuelInvite[]      @relation("DuelInviteFrom")
+  receivedDuelInvites    DuelInvite[]      @relation("DuelInviteTo")
+  /// Vitórias em salas online do Tabuleiro (só conta com 2 ou mais pessoas na sala).
+  boardWins              Int               @default(0) @map("board_wins")
+  hostedBoardRooms       BoardRoom[]       @relation("BoardRoomHost")
+  boardPlayers           BoardRoomPlayer[]
+  sentBoardInvites       BoardInvite[]     @relation("BoardInviteFrom")
+  receivedBoardInvites   BoardInvite[]     @relation("BoardInviteTo")
 
   @@index([totalScore, xp])
   @@map("users")
@@ -217,6 +253,7 @@ model BiblicalCharacter {
   stickerReward     RewardDefinition[]
   collections       CharacterCollection[] @relation("CollectionCharacters")
   campaignScenarios Scenario[]            @relation("ScenarioFragmentCharacter")
+  duelCard          DuelCard?
 
   @@map("biblical_characters")
 }
@@ -272,11 +309,13 @@ model RewardDefinition {
   active             Boolean        @default(true)
   system             Boolean        @default(false)
 
-  stickerCharacter BiblicalCharacter? @relation(fields: [stickerCharacterId], references: [id], onDelete: SetNull)
-  cosmetic         Cosmetic?          @relation(fields: [cosmeticId], references: [id], onDelete: SetNull)
-  shopItems        ShopItem[]
-  passTiers        PassTier[]
-  scenarioNodes    ScenarioNode[]
+  stickerCharacter   BiblicalCharacter? @relation(fields: [stickerCharacterId], references: [id], onDelete: SetNull)
+  cosmetic           Cosmetic?          @relation(fields: [cosmeticId], references: [id], onDelete: SetNull)
+  shopItems          ShopItem[]
+  passTiers          PassTier[]
+  passTierDuplicates PassTier[]         @relation("PassTierDuplicate")
+  scenarioNodes      ScenarioNode[]
+  missions           Mission[]
 
   @@map("reward_definitions")
 }
@@ -552,6 +591,10 @@ model Cosmetic {
   color            String?
   /// Efeito: títulos (plain, glow, rainbow, pulse) e molduras (solid, wood, silver, gold, fire, rainbow).
   style            String?
+  /// Reações: como a figurinha entra no chat (pop, bounce, shake, spin, rise, pulse).
+  animation        String?
+  /// Reações: grupo/pacote (ex.: "Natal"); o seletor do chat agrupa por ele.
+  pack             String?
   unlock           CosmeticUnlock
   priceCoins       Int?           @map("price_coins")
   /// Meta para os de unlock REQUIREMENT (ex.: LEVEL, ALBUM_COMPLETE, BEST_COMBO).
@@ -573,6 +616,11 @@ model Cosmetic {
   frameOf           User[]                @relation("UserFrame")
   titleOf           User[]                @relation("UserTitle")
   nameColorOf       User[]                @relation("UserNameColor")
+  profileBgOf       User[]                @relation("UserProfileBg")
+  albumCoverOf      User[]                @relation("UserAlbumCover")
+  badgeOf           User[]                @relation("UserBadge")
+  stoneRewards      Stone[]               @relation("StoneReward")
+  stoneBadges       Stone[]               @relation("StoneBadge")
   messages          Message[]
   rewards           RewardDefinition[]
   collections       CharacterCollection[]
@@ -616,20 +664,68 @@ model CharacterCollection {
   @@map("character_collections")
 }
 
-/// Degrau do passe da temporada (a trilha recomeça todo mês; o progresso é o XP do mês).
+/// Passe temático (Natal, Páscoa...). Um passe vale por mês: o fixado naquele mês ou, senão, o sorteado em rodízio entre os ativos.
+model Pass {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  /// Cor do tema, em #rrggbb.
+  color       String?
+  imageUrl    String?  @map("image_url")
+  /// Fixa o passe num mês ("AAAA-MM"), ex.: Natal em dezembro.
+  pinnedMonth String?  @map("pinned_month")
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  tiers PassTier[]
+
+  @@map("passes")
+}
+
+/// Degrau de um passe (a trilha recomeça todo mês; o progresso é o XP do mês).
 model PassTier {
+  id                          Int     @id @default(autoincrement())
+  passId                      Int     @map("pass_id")
+  level                       Int
+  requiredXp                  Int     @map("required_xp")
+  rewardCoins                 Int     @default(0) @map("reward_coins")
+  rewardDefinitionId          Int?    @map("reward_definition_id")
+  rewardCosmeticId            Int?    @map("reward_cosmetic_id")
+  /// Moedas quando o jogador já tem o item visual do degrau (vazio = valor padrão da raridade).
+  duplicateCoins              Int?    @map("duplicate_coins")
+  /// Recompensa extra quando o item visual já é do jogador (ajuda, pacote...).
+  duplicateRewardDefinitionId Int?    @map("duplicate_reward_definition_id")
+  active                      Boolean @default(true)
+
+  pass                      Pass              @relation(fields: [passId], references: [id], onDelete: Cascade)
+  rewardDefinition          RewardDefinition? @relation(fields: [rewardDefinitionId], references: [id], onDelete: SetNull)
+  rewardCosmetic            Cosmetic?         @relation(fields: [rewardCosmeticId], references: [id], onDelete: SetNull)
+  duplicateRewardDefinition RewardDefinition? @relation("PassTierDuplicate", fields: [duplicateRewardDefinitionId], references: [id], onDelete: SetNull)
+
+  @@unique([passId, level])
+  @@map("pass_tiers")
+}
+
+/// Missão diária ou semanal. `metric` diz o que é contado (partidas, acertos...); o prêmio é moedas e/ou uma recompensa.
+model Mission {
   id                 Int     @id @default(autoincrement())
-  level              Int     @unique
-  requiredXp         Int     @map("required_xp")
+  code               String  @unique
+  /// DAILY ou WEEKLY.
+  period             String
+  metric             String
+  title              String
+  target             Int
   rewardCoins        Int     @default(0) @map("reward_coins")
   rewardDefinitionId Int?    @map("reward_definition_id")
-  rewardCosmeticId   Int?    @map("reward_cosmetic_id")
   active             Boolean @default(true)
+  /// As do seed não são excluíveis (só desativadas); as criadas no painel têm system = false.
+  system             Boolean @default(false)
+  sortOrder          Int     @default(0) @map("sort_order")
 
   rewardDefinition RewardDefinition? @relation(fields: [rewardDefinitionId], references: [id], onDelete: SetNull)
-  rewardCosmetic   Cosmetic?         @relation(fields: [rewardCosmeticId], references: [id], onDelete: SetNull)
 
-  @@map("pass_tiers")
+  @@map("missions")
 }
 
 /// Evento por tempo limitado (Páscoa, Natal...): multiplica XP/moedas e libera itens na loja.
@@ -672,10 +768,22 @@ model Scenario {
   musicUrl            String?  @map("music_url")
   /// Imagem de fundo da tela do quiz neste cenário (vertical, sem texto).
   quizBackgroundUrl   String?  @map("quiz_background_url")
+  /// Arte da coluna deste cenário na mesa do Duelo (vertical estreita); vazio usa o mapa do cenário.
+  duelImageUrl        String?  @map("duel_image_url")
+  /// Imagem de fundo do tabuleiro deste cenário (vertical, sem texto), atrás do caminho do jogo de tabuleiro.
+  boardImageUrl       String?  @map("board_image_url")
+  /// Pedra do Peitoral que o jogador conquista ao concluir os cenários deste grupo (3 por pedra).
+  stoneId             Int?     @map("stone_id")
+  /// Curvas do caminho do tabuleiro: SOFT, MEDIUM ou WIDE (vazio = MEDIUM).
+  boardPathStyle      String?  @map("board_path_style")
+  /// Marcos do cenário ao lado do caminho: [{ imageUrl?, emoji?, at (0-100), side (L/R), offset, size }].
+  boardLandmarks      Json?    @map("board_landmarks")
   /// Personagem cujos fragmentos este cenário dá (a carta especial).
   fragmentCharacterId Int?     @map("fragment_character_id")
   /// Ícone de perfil (avatar) com a arte do cenário, entregue junto com a relíquia.
   avatarCosmeticId    Int?     @map("avatar_cosmetic_id")
+  /// XP para subir cada nível (parada) deste cenário; sobe de cenário em cenário e define a curva de nível do jogo.
+  xpPerStop           Int      @default(500) @map("xp_per_stop")
   sortOrder           Int      @default(0) @map("sort_order")
   active              Boolean  @default(true)
   /// Criado no deploy (não excluível; o admin pode editar e desativar).
@@ -684,8 +792,10 @@ model Scenario {
 
   fragmentCharacter BiblicalCharacter? @relation("ScenarioFragmentCharacter", fields: [fragmentCharacterId], references: [id], onDelete: SetNull)
   avatarCosmetic    Cosmetic?          @relation("ScenarioAvatar", fields: [avatarCosmeticId], references: [id], onDelete: SetNull)
+  stone             Stone?             @relation(fields: [stoneId], references: [id], onDelete: SetNull)
   nodes             ScenarioNode[]
   questions         Question[]
+  boardRooms        BoardRoom[]
 
   @@index([sortOrder])
   @@map("scenarios")
@@ -718,16 +828,254 @@ model ScenarioNode {
 
 /// Visual de cada baú da partida (BRONZE, SILVER, GOLD, DIAMOND), cadastrado no painel.
 model ChestDesign {
-  id        Int      @id @default(autoincrement())
-  tier      String   @unique
+  id           Int      @id @default(autoincrement())
+  tier         String   @unique
   /// Arte do baú fechado (quadrada, fundo transparente fica melhor).
-  imageUrl  String?  @map("image_url")
+  imageUrl     String?  @map("image_url")
   /// Arte do baú aberto (mesmo enquadramento do fechado): aparece no instante em que ele abre.
-  openImageUrl String? @map("open_image_url")
+  openImageUrl String?  @map("open_image_url")
   /// Nome exibido (vazio usa o padrão) e cor de destaque do brilho.
-  name      String?
-  color     String?
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  name         String?
+  color        String?
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("chest_designs")
+}
+
+/// Sala online do Tabuleiro. Dura pouco: o servidor apaga as de mais de um dia. O motor (state) e as
+/// respostas certas (pool) ficam aqui; o cliente nunca recebe a alternativa certa antes do gabarito.
+model BoardRoom {
+  id         Int             @id @default(autoincrement())
+  /// Código curto para entrar (sem letras que se confundem).
+  code       String          @unique
+  hostId     Int             @map("host_id")
+  scenarioId Int             @map("scenario_id")
+  status     BoardRoomStatus @default(LOBBY)
+  /// Regras da sala (tamanho, tempo, power-ups, empurrão, ajuda).
+  config     Json
+  /// Estado do motor (backend/src/board/engine.ts).
+  state      Json?
+  /// Perguntas da partida com a alternativa certa: [{ id, difficulty, correct }].
+  pool       Json?
+  /// Resposta dada e ainda não aplicada (todos veem o gabarito antes de seguir).
+  reveal     Json?
+  /// Últimas jogadas, em texto.
+  log        Json            @default("[]")
+  /// Avisos animados recentes (calloutsFor): [{ id, emoji, title, text, tone, tiles, playerId, fx, delayMs }].
+  feed       Json            @default("[]")
+  /// Sobe a cada mudança; o cliente só baixa a sala quando muda.
+  version    Int             @default(1)
+  /// Quando o servidor precisa agir sozinho (bot, tempo esgotado, fim do gabarito).
+  dueAt      DateTime?       @map("due_at")
+  /// Fim do tempo do jogador da vez (cronômetro).
+  deadlineAt DateTime?       @map("deadline_at")
+  createdAt  DateTime        @default(now()) @map("created_at")
+  updatedAt  DateTime        @updatedAt @map("updated_at")
+  startedAt  DateTime?       @map("started_at")
+  finishedAt DateTime?       @map("finished_at")
+
+  host     User              @relation("BoardRoomHost", fields: [hostId], references: [id], onDelete: Cascade)
+  scenario Scenario          @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  players  BoardRoomPlayer[]
+  invites  BoardInvite[]
+
+  @@index([status, updatedAt])
+  @@map("board_rooms")
+}
+
+/// Quem está na sala: pessoa (userId) ou bot (bot = nível). Quem sai no meio do jogo vira bot (replaced).
+model BoardRoomPlayer {
+  id         Int      @id @default(autoincrement())
+  roomId     Int      @map("room_id")
+  userId     Int?     @map("user_id")
+  slot       Int
+  name       String
+  /// Emoji ou endereço da imagem do peão.
+  pawn       String
+  /// APPRENTICE, STUDENT ou MASTER quando é bot.
+  bot        String?
+  /// Era uma pessoa e um bot assumiu o lugar (saiu ou ficou ausente).
+  replaced   Boolean  @default(false)
+  afkStrikes Int      @default(0) @map("afk_strikes")
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+  joinedAt   DateTime @default(now()) @map("joined_at")
+
+  room BoardRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, slot])
+  @@unique([roomId, userId])
+  @@index([userId])
+  @@map("board_room_players")
+}
+
+/// Convite de um amigo para uma sala ainda reunindo gente.
+model BoardInvite {
+  id         Int      @id @default(autoincrement())
+  roomId     Int      @map("room_id")
+  fromUserId Int      @map("from_user_id")
+  toUserId   Int      @map("to_user_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  room BoardRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  from User      @relation("BoardInviteFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  to   User      @relation("BoardInviteTo", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, toUserId])
+  @@index([toUserId, createdAt])
+  @@map("board_invites")
+}
+
+/// Carta do Modo Duelo de um personagem (Vigor, Influência, etiquetas e o Dom em texto, ver backend/src/duel/dsl.ts).
+model DuelCard {
+  id          Int      @id @default(autoincrement())
+  characterId Int      @unique @map("character_id")
+  cost        Int
+  power       Int
+  tags        String[]
+  /// Gatilho e efeitos do Dom em texto (vazios = carta sem Dom).
+  trigger     String?
+  effects     String?
+  /// Texto do Dom escrito à mão (substitui o gerado).
+  domText     String?  @map("dom_text")
+  /// Só cartas disponíveis entram nos Times e nos duelos.
+  available   Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  character BiblicalCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@map("duel_cards")
+}
+
+/// Time de 12 cartas montado pelo jogador (até 5 por pessoa) com as figurinhas que ele tem.
+model DuelDeck {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @map("user_id")
+  slot         Int
+  name         String
+  /// Ids dos personagens (as cartas do Time).
+  characterIds Int[]    @map("character_ids")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, slot])
+  @@map("duel_decks")
+}
+
+/// Sala online do Duelo de Cartas (2 jogadores; o outro lado pode ser um bot). Mesmo molde do Tabuleiro: sem websocket, versão + relógio preguiçoso.
+model DuelRoom {
+  id         Int            @id @default(autoincrement())
+  code       String         @unique
+  hostId     Int            @map("host_id")
+  status     DuelRoomStatus @default(LOBBY)
+  /// Regras da sala: { format: single | bo3 | lives, levels: boolean, turnSeconds }.
+  config     Json
+  /// Estado do motor da rodada (backend/src/duel/engine.ts), com as mãos dos dois: nunca sai inteiro do servidor.
+  state      Json?
+  /// Placar da série (backend/src/duel/series.ts).
+  series     Json?
+  /// Os dois Times da partida (cartas já com a definição e o nível), na ordem das vagas.
+  teams      Json?
+  /// Vagas que já pediram a próxima rodada.
+  acks       Json           @default("[]")
+  /// O que aconteceu, em texto.
+  log        Json           @default("[]")
+  /// Sobe a cada mudança; o cliente só baixa a sala quando muda.
+  version    Int            @default(1)
+  /// Quando o servidor precisa agir sozinho (fim do tempo do turno, próxima rodada).
+  dueAt      DateTime?      @map("due_at")
+  /// Fim do tempo do turno (cronômetro).
+  deadlineAt DateTime?      @map("deadline_at")
+  createdAt  DateTime       @default(now()) @map("created_at")
+  updatedAt  DateTime       @updatedAt @map("updated_at")
+  startedAt  DateTime?      @map("started_at")
+  finishedAt DateTime?      @map("finished_at")
+
+  host    User             @relation("DuelRoomHost", fields: [hostId], references: [id], onDelete: Cascade)
+  players DuelRoomPlayer[]
+  invites DuelInvite[]
+
+  @@index([status, updatedAt])
+  @@map("duel_rooms")
+}
+
+/// Quem está na sala: pessoa (userId) ou bot (bot = nível). Quem sai no meio do jogo vira bot (replaced).
+model DuelRoomPlayer {
+  id         Int      @id @default(autoincrement())
+  roomId     Int      @map("room_id")
+  userId     Int?     @map("user_id")
+  /// 0 ou 1 (o lado da mesa).
+  slot       Int
+  name       String
+  /// APPRENTICE, STUDENT ou MASTER quando é bot.
+  bot        String?
+  replaced   Boolean  @default(false)
+  afkStrikes Int      @default(0) @map("afk_strikes")
+  /// Time salvo (1 a 5) que a pessoa levará ao duelo.
+  deckSlot   Int?     @map("deck_slot")
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+  joinedAt   DateTime @default(now()) @map("joined_at")
+
+  room DuelRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, slot])
+  @@unique([roomId, userId])
+  @@index([userId])
+  @@map("duel_room_players")
+}
+
+/// Convite de um amigo para uma sala do Duelo ainda reunindo gente.
+model DuelInvite {
+  id         Int      @id @default(autoincrement())
+  roomId     Int      @map("room_id")
+  fromUserId Int      @map("from_user_id")
+  toUserId   Int      @map("to_user_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  room DuelRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  from User     @relation("DuelInviteFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  to   User     @relation("DuelInviteTo", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, toUserId])
+  @@index([toUserId, createdAt])
+  @@map("duel_invites")
+}
+
+/// Capa de cada modo de jogo na aba Jogar (QUIZ, BOARD, DUEL). Sem imagem, o app usa um fundo padrão.
+model GameModeDesign {
+  id        Int      @id @default(autoincrement())
+  mode      String   @unique
+  imageUrl  String?  @map("image_url")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("game_mode_designs")
+}
+
+/// As 12 pedras do peitoral do sumo sacerdote (Êxodo 28:15-21). Cada pedra é conquistada ao concluir os cenários ligados a ela.
+model Stone {
+  id               Int     @id @default(autoincrement())
+  /// Posição no peitoral (1 a 12, em fileiras de 3, na ordem bíblica).
+  slot             Int     @unique
+  name             String
+  /// Tribo ligada à pedra pela tradição (subtítulo do brasão).
+  tribe            String?
+  /// Cor da pedra, em #rrggbb.
+  color            String
+  description      String?
+  /// Arte da pedra (quadrada, fundo transparente); vazio desenha a gema em SVG.
+  imageUrl         String? @map("image_url")
+  rewardCoins      Int     @default(0) @map("reward_coins")
+  /// Cosmético da pedra e brasão exclusivo, entregues ao resgatar.
+  rewardCosmeticId Int?    @map("reward_cosmetic_id")
+  badgeCosmeticId  Int?    @map("badge_cosmetic_id")
+  active           Boolean @default(true)
+
+  rewardCosmetic Cosmetic?  @relation("StoneReward", fields: [rewardCosmeticId], references: [id], onDelete: SetNull)
+  badgeCosmetic  Cosmetic?  @relation("StoneBadge", fields: [badgeCosmeticId], references: [id], onDelete: SetNull)
+  scenarios      Scenario[]
+
+  @@map("stones")
 }

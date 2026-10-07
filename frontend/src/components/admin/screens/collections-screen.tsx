@@ -25,9 +25,16 @@ import { usePagedList } from '../use-paged-list';
 export function useCosmeticOptions() {
   const [items, setItems] = useState<AdminCosmetic[]>([]);
   useEffect(() => {
-    listCosmeticsAdmin({ page: 0, size: 100 })
-      .then((page) => setItems(page.content))
-      .catch(() => setItems([]));
+    // Carrega todas as páginas: com passes e reações importadas passa de 100 itens.
+    (async () => {
+      const all: AdminCosmetic[] = [];
+      for (let page = 0; page < 30; page += 1) {
+        const result = await listCosmeticsAdmin({ page, size: 100 });
+        all.push(...result.content);
+        if (page + 1 >= result.totalPages) break;
+      }
+      setItems(all);
+    })().catch(() => setItems([]));
   }, []);
   return [{ value: '', label: 'Nenhum' }, ...items.map((item) => ({ value: String(item.id), label: `${item.name} (${COSMETIC_TYPE_LABELS[item.type].one})` }))];
 }

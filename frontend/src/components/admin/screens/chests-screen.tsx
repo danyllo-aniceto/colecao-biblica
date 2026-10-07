@@ -35,8 +35,23 @@ const EMERALD_SAMPLE: ChestPrize[] = [
   { kind: 'COSMETIC', name: 'Pastor das ovelhas', rarity: 'LEGENDARY' },
   { kind: 'STICKER', characterId: null, name: 'Figurinha épica', rarity: 'EPIC', imageUrl: null, unlocked: true, duplicate: false },
   { kind: 'STICKER', characterId: null, name: 'Figurinha lendária', rarity: 'LEGENDARY', imageUrl: null, unlocked: true, duplicate: false },
-  { kind: 'STICKER', characterId: null, name: 'Carta especial', rarity: 'SPECIAL', imageUrl: null, unlocked: true, duplicate: false },
+  { kind: 'STICKER', characterId: null, name: 'Figurinha especial', rarity: 'SPECIAL', imageUrl: null, unlocked: true, duplicate: false },
 ];
+/** Troca as figurinhas do exemplo por personagens reais (nome e foto) tirados das amostras do simulador. */
+function emeraldSample(samples: Partial<Record<MatchTier, ChestPrize[][]>>): ChestPrize[] {
+  const stickers = Object.values(samples).flatMap((tier) => (tier ?? []).flat()).filter((prize) => prize.kind === 'STICKER' && prize.name && prize.imageUrl);
+  const best = (...rarities: string[]) => stickers.find((prize) => prize.kind === 'STICKER' && rarities.includes(prize.rarity ?? ''));
+  const real = {
+    EPIC: best('EPIC') ?? best('RARE', 'COMMON'),
+    LEGENDARY: best('LEGENDARY') ?? best('EPIC'),
+    SPECIAL: best('LEGENDARY', 'EPIC') ?? best('RARE', 'COMMON'),
+  };
+  return EMERALD_SAMPLE.map((prize) => {
+    if (prize.kind !== 'STICKER') return prize;
+    const swap = real[(prize.rarity ?? '') as keyof typeof real];
+    return swap && swap.kind === 'STICKER' ? { ...swap, rarity: prize.rarity, unlocked: true, duplicate: false } : prize;
+  });
+}
 const RARITIES = ['COMMON', 'RARE', 'EPIC', 'LEGENDARY'] as const;
 const RARITY_COLOR: Record<(typeof RARITIES)[number], string> = { COMMON: '#9ca3af', RARE: '#3b82f6', EPIC: '#a855f7', LEGENDARY: '#fbbf24' };
 const ACCURACIES = [0.7, 0.75, 0.8, 0.85, 0.9, 0.95];
@@ -156,7 +171,7 @@ function ChestDesignPanel({ samples, onPreview }: { samples: Partial<Record<Matc
   }
 
   return (
-    <AdminPanel title="Visual dos baús" description="O baú de esmeralda é o prêmio de conquistar a carta especial na campanha. Suba a arte de cada baú (imagem quadrada, de preferência com fundo transparente), escolha o nome e a cor do brilho. Vale para o resultado da partida, a loja e a abertura. Vazio usa o desenho padrão.">
+    <AdminPanel title="Visual dos baús" description="O baú de esmeralda é o prêmio de conquistar a figurinha especial na campanha. Suba a arte de cada baú (imagem quadrada, de preferência com fundo transparente), escolha o nome e a cor do brilho. Vale para o resultado da partida, a loja e a abertura. Vazio usa o desenho padrão.">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {DESIGN_ORDER.map((tier) => {
           const draft = draftOf(tier);
@@ -186,7 +201,7 @@ function ChestDesignPanel({ samples, onPreview }: { samples: Partial<Record<Matc
                 <Button
                   size="sm"
                   variant="secondary"
-                  onClick={() => onPreview(tier, tier === 'EMERALD' ? EMERALD_SAMPLE : (samples[tier] ?? [])[0] ?? [{ kind: 'COINS', amount: 10 }], draft)}
+                  onClick={() => onPreview(tier, tier === 'EMERALD' ? emeraldSample(samples) : (samples[tier] ?? [])[0] ?? [{ kind: 'COINS', amount: 10 }], draft)}
                 >
                   <PlayArrowRoundedIcon fontSize="small" />
                   Testar
@@ -221,7 +236,7 @@ const SOUND_TESTS: Array<{ title: string; sounds: Array<{ name: SfxName; label: 
       { name: 'stickerRare', label: 'Figurinha rara' },
       { name: 'stickerEpic', label: 'Figurinha épica' },
       { name: 'stickerLegendary', label: 'Figurinha lendária' },
-      { name: 'stickerSpecial', label: 'Carta especial' },
+      { name: 'stickerSpecial', label: 'Figurinha especial' },
     ],
   },
 ];

@@ -18,7 +18,7 @@ type DefaultCosmetic = {
 
 const avatar = (file: string) => `/avatars/${file}.svg`;
 
-/** Conjunto exclusivo do Baú de Esmeralda (entregue ao juntar todos os fragmentos da carta especial). */
+/** Conjunto exclusivo do Baú de Esmeralda (entregue ao juntar todos os fragmentos da figurinha especial). */
 export const EMERALD_SET_NAMES = ["Pastor das ovelhas", "Luz esmeralda", "Ovelha do Bom Pastor", "Verde celestial", "Luz da manhã"] as const;
 
 /**
@@ -26,7 +26,7 @@ export const EMERALD_SET_NAMES = ["Pastor das ovelhas", "Luz esmeralda", "Ovelha
  * outros; no deploy só são criados os que faltam (nada é sobrescrito).
  */
 export const DEFAULT_COSMETICS: DefaultCosmetic[] = [
-  // Conjunto exclusivo do Baú de Esmeralda (carta especial): só vem dele
+  // Conjunto exclusivo do Baú de Esmeralda (figurinha especial): só vem dele
   { type: "AVATAR", name: "Pastor das ovelhas", description: "Exclusivo do Baú de Esmeralda", rarity: "LEGENDARY", imageUrl: avatar("pastor"), unlock: "REWARD" },
   { type: "FRAME", name: "Luz esmeralda", description: "Exclusivo do Baú de Esmeralda", rarity: "LEGENDARY", style: "emerald", color: "#14b8a6", unlock: "REWARD" },
   { type: "TITLE", name: "Ovelha do Bom Pastor", description: "Exclusivo do Baú de Esmeralda", rarity: "LEGENDARY", color: "#14b8a6", style: "shimmer", unlock: "REWARD" },
@@ -62,6 +62,32 @@ export const DEFAULT_COSMETICS: DefaultCosmetic[] = [
   { type: "AVATAR", name: "Vela acesa", rarity: "EPIC", imageUrl: avatar("vela"), unlock: "REQUIREMENT", requirement: "DAILY_STREAK", requirementValue: 14 },
   { type: "AVATAR", name: "Leão de Judá", rarity: "LEGENDARY", imageUrl: avatar("leao"), unlock: "REQUIREMENT", requirement: "ALL_LEGENDARY" },
   { type: "AVATAR", name: "Cruz", rarity: "LEGENDARY", imageUrl: avatar("cruz"), unlock: "REWARD", inChestPool: true },
+  // Peões do tabuleiro. Os dez primeiros são de todos (grátis); o painel pode trocar o emoji por uma imagem ou desativá-los.
+  ...[
+    ["🐑", "Ovelha"],
+    ["🕊️", "Pomba"],
+    ["🐟", "Peixe"],
+    ["🌿", "Ramo"],
+    ["⭐", "Estrela"],
+    ["🦁", "Leão"],
+    ["🔥", "Chama"],
+    ["🌊", "Onda"],
+    ["🍇", "Uvas"],
+    ["👑", "Coroa"],
+  ].map(([emoji, name]): DefaultCosmetic => ({ type: "PAWN", name: `Peão: ${name}`, description: "Peão básico do tabuleiro", rarity: "COMMON", style: emoji, unlock: "FREE" })),
+  // Os demais vêm da loja (ou de metas) e o painel também pode trocar o emoji por uma imagem
+  { type: "PAWN", name: "Peão: Maçã do Éden", description: "Peão do tabuleiro", rarity: "COMMON", style: "🍎", unlock: "SHOP", priceCoins: 150 },
+  { type: "PAWN", name: "Peão: Girafa da Arca", description: "Peão do tabuleiro", rarity: "COMMON", style: "🦒", unlock: "SHOP", priceCoins: 150 },
+  { type: "PAWN", name: "Peão: Camelo de Canaã", description: "Peão do tabuleiro", rarity: "COMMON", style: "🐪", unlock: "SHOP", priceCoins: 150 },
+  { type: "PAWN", name: "Peão: Rã do Egito", description: "Peão do tabuleiro", rarity: "COMMON", style: "🐸", unlock: "SHOP", priceCoins: 150 },
+  { type: "PAWN", name: "Peão: Pedra do Sinai", description: "Peão do tabuleiro", rarity: "RARE", style: "🪨", unlock: "SHOP", priceCoins: 300 },
+  { type: "PAWN", name: "Peão: Trombeta de Jericó", description: "Peão do tabuleiro", rarity: "RARE", style: "📯", unlock: "SHOP", priceCoins: 300 },
+  { type: "PAWN", name: "Peão: Menorá do Templo", description: "Peão do tabuleiro", rarity: "RARE", style: "🕎", unlock: "SHOP", priceCoins: 300 },
+  { type: "PAWN", name: "Peão: Muralha da Babilônia", description: "Peão do tabuleiro", rarity: "RARE", style: "🧱", unlock: "SHOP", priceCoins: 300 },
+  { type: "PAWN", name: "Peão: Barco da Galileia", description: "Peão do tabuleiro", rarity: "EPIC", style: "⛵", unlock: "SHOP", priceCoins: 600 },
+  { type: "PAWN", name: "Peão: Túmulo vazio", description: "Peão do tabuleiro", rarity: "EPIC", style: "⛰️", unlock: "SHOP", priceCoins: 600 },
+  { type: "PAWN", name: "Peão: Troféu", description: "Vença 3 partidas online do Tabuleiro", rarity: "RARE", style: "🏆", unlock: "REQUIREMENT", requirement: "BOARD_WINS", requirementValue: 3 },
+  { type: "PAWN", name: "Peão: Campeão", description: "Vença 15 partidas online do Tabuleiro", rarity: "EPIC", style: "🥇", unlock: "REQUIREMENT", requirement: "BOARD_WINS", requirementValue: 15 },
   { type: "AVATAR", name: "Aliança", rarity: "LEGENDARY", imageUrl: avatar("arcoiris"), unlock: "REQUIREMENT", requirement: "COLLECTIONS", requirementValue: 5 },
 
   // Molduras
@@ -158,7 +184,9 @@ export async function ensureDefaultCosmetics(db: Db) {
 
 /** Trilha padrão do passe (só criada quando ainda não existe nenhum degrau). */
 export async function ensureDefaultPassTiers(db: Db) {
+  if ((await db.pass.count()) === 0) await db.pass.create({ data: { name: "Passe da temporada", description: "A trilha mensal de prêmios." } });
   if ((await db.passTier.count()) > 0) return;
+  const pass = await db.pass.findFirstOrThrow({ orderBy: { id: "asc" } });
   const reward = async (name: string) => (await db.rewardDefinition.findFirst({ where: { name }, select: { id: true } }))?.id ?? null;
   const title = await db.cosmetic.findFirst({ where: { type: "TITLE", name: "Peregrino da temporada" }, select: { id: true } });
   const tiers = [
@@ -171,5 +199,5 @@ export async function ensureDefaultPassTiers(db: Db) {
     { level: 7, requiredXp: 14000, rewardCoins: 0, rewardDefinitionId: await reward("Bênção dobrada") },
     { level: 8, requiredXp: 18000, rewardCoins: 300, rewardCosmeticId: title?.id ?? null },
   ];
-  await db.passTier.createMany({ data: tiers.map((tier) => ({ ...tier, rewardCoins: tier.rewardCoins || (tier.rewardDefinitionId ? 0 : 50) })) });
+  await db.passTier.createMany({ data: tiers.map((tier) => ({ ...tier, passId: pass.id, rewardCoins: tier.rewardCoins || (tier.rewardDefinitionId ? 0 : 50) })) });
 }

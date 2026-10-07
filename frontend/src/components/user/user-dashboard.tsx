@@ -19,6 +19,12 @@ import { QuizAnswerScreen, type AnswerReveal, type QuizAnswerPayload } from '@/c
 import { AlbumSection } from '@/components/user/sections/album-section';
 import { HomeSection } from '@/components/user/sections/home-section';
 import { PlaySection, type QuizFormState } from '@/components/user/sections/play-section';
+import { BoardHub } from '@/components/user/board/board-hub';
+import { PlayHub, PlayModeFrame, type PlayMode } from '@/components/user/play-hub';
+import { DuelHub } from '@/components/user/duel/duel-hub';
+import { BoardInviteWatcher, RoomInviteWatcher } from '@/components/user/board/board-invite-watcher';
+import { peekPendingRoom, setPendingRoom } from '@/lib/board-room-api';
+import { dismissDuelRoomInvite, listDuelRoomInvites, peekPendingDuelRoom, setPendingDuelRoom } from '@/lib/duel-room-api';
 import { ProfileSection } from '@/components/user/sections/profile-section';
 import { FriendsSection } from '@/components/user/sections/friends-section';
 import { RankingSection } from '@/components/user/sections/ranking-section';
@@ -82,7 +88,10 @@ export function UserDashboard() {
   const toast = useToast();
   const { confirm } = useDialogs();
 
-  const [section, setSection] = useState<SectionId>(() => takeReturnSection());
+  // Quem chegou por um convite de sala abre direto na aba Jogar, onde a sala é aberta.
+  const [section, setSection] = useState<SectionId>(() => (peekPendingRoom() || peekPendingDuelRoom() ? 'quiz' : takeReturnSection()));
+  // Dentro da aba Jogar: null mostra os cartões dos jogos; senão, a tela do jogo escolhido (convite de sala abre direto o jogo dela).
+  const [playMode, setPlayMode] = useState<PlayMode | null>(() => (peekPendingRoom() ? 'board' : peekPendingDuelRoom() ? 'duel' : null));
   const [profile, setProfile] = useState<UserProfile | null>(user);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -146,7 +155,9 @@ export function UserDashboard() {
     celebrate(result.unlockedAchievements);
   }
 
-  function navigate(next: SectionId) {
+  function navigate(next: SectionId, options: { keepPlayMode?: boolean } = {}) {
+    // Tocar em "Jogar" estando numa tela de jogo volta aos cartões (convites de sala escolhem o jogo e não voltam).
+    if (next === 'quiz' && section === 'quiz' && !options.keepPlayMode) setPlayMode(null);
     setSection(next);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -550,6 +561,7 @@ export function UserDashboard() {
     <PlayerProfileProvider>
     <CampaignProvider
       level={profile?.level ?? 1}
+      xp={profile?.xp ?? 0}
       playerName={profile?.name ?? 'Você'}
       onUserUpdate={(updated, achievements) => {
         setProfile((current) => (current ? { ...current, ...updated } : updated));
@@ -558,6 +570,22 @@ export function UserDashboard() {
       }}
     >
     <MusicController inQuiz={Boolean(quizSession && showQuizAnswer)} />
+    <BoardInviteWatcher
+      onAccept={(code) => {
+        setPendingRoom(code);
+        setPlayMode('board');
+        navigate('quiz', { keepPlayMode: true });
+      }}
+    />
+    <RoomInviteWatcher
+      list={async () => (await listDuelRoomInvites()).map((invite) => ({ id: invite.id, code: invite.code, fromName: invite.fromName, title: `${invite.fromName} chamou você para um Duelo de Figurinhas`, message: `${invite.players} ${invite.players === 1 ? 'jogador' : 'jogadores'} na sala. Quer entrar?` }))}
+      dismiss={dismissDuelRoomInvite}
+      onAccept={(code) => {
+        setPendingDuelRoom(code);
+        setPlayMode('duel');
+        navigate('quiz', { keepPlayMode: true });
+      }}
+    />
     <div className="min-h-dvh pb-28 sm:pb-10">
       <PlayerHud look={myLook} profile={profile} section={section} onNavigate={navigate} socialNotices={socialSummary ? socialSummary.pendingRequests + socialSummary.pendingTrades + socialSummary.unreadMessages : 0} onSignOut={signOut} />
 
@@ -602,6 +630,7 @@ export function UserDashboard() {
 
             {section === 'stickers' ? (
               <AlbumSection
+                look={myLook}
                 playerName={profile?.name ?? 'Você'}
                 characters={characters}
                 ownedIds={ownedIds}
@@ -622,22 +651,35 @@ export function UserDashboard() {
             ) : null}
 
             {section === 'quiz' ? (
-              <PlaySection
-                profile={profile}
-                characters={characters}
-                ownedIds={ownedIds}
-                collection={collection}
-                gameRules={gameRules}
-                quizForm={quizForm}
-                onChangeForm={setQuizForm}
-                quizSession={quizSession}
-                submitting={quizSubmitting}
-                error={quizError}
-                onStart={handleStartQuiz}
-                onResume={handleResumeQuiz}
-                onAbandon={handleAbandonQuiz}
-                onStartChallenge={() => void handleStartChallenge()}
-              />
+              // Partida de quiz em andamento: a tela do quiz tem prioridade.
+              (() => {
+                const mode: PlayMode | null = quizSession ? 'quiz' : playMode;
+                if (!mode) return <PlayHub onOpen={setPlayMode} quizRunning={false} />;
+                return (
+                  <PlayModeFrame mode={mode} onBack={() => setPlayMode(null)}>
+                    {mode === 'quiz' ? (
+                      <PlaySection
+                        profile={profile}
+                        characters={characters}
+                        ownedIds={ownedIds}
+                        collection={collection}
+                        gameRules={gameRules}
+                        quizForm={quizForm}
+                        onChangeForm={setQuizForm}
+                        quizSession={quizSession}
+                        submitting={quizSubmitting}
+                        error={quizError}
+                        onStart={handleStartQuiz}
+                        onResume={handleResumeQuiz}
+                        onAbandon={handleAbandonQuiz}
+                        onStartChallenge={() => void handleStartChallenge()}
+                      />
+                    ) : null}
+                    {mode === 'board' ? <BoardHub playerName={profile?.name ?? ''} /> : null}
+                    {mode === 'duel' ? <DuelHub characters={characters} collection={collection} /> : null}
+                  </PlayModeFrame>
+                );
+              })()
             ) : null}
 
             {section === 'shop' ? (

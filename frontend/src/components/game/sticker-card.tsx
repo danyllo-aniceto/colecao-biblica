@@ -19,13 +19,15 @@ type StickerCardProps = {
   duplicates?: number;
   /** Nível da figurinha (1 a 5): aparece como selo a partir do nível 2. */
   level?: number;
+  /** Carrega a imagem na hora (revelação do baú: não pode aparecer vazia nem atrasada). */
+  eager?: boolean;
 };
 
 /**
  * Figurinha do álbum: moldura e brilho na cor da raridade. Bloqueada, fica toda
  * cinza, desabilitada e com cadeado; a lendária ganha um brilho que atravessa a carta.
  */
-export function StickerCard({ name, rarity, imageUrl, owned, onClick, size = 'md', className, duplicates = 0, level = 1 }: StickerCardProps) {
+export function StickerCard({ name, rarity, imageUrl, owned, onClick, size = 'md', className, duplicates = 0, level = 1, eager = false }: StickerCardProps) {
   const interactive = Boolean(onClick) && owned;
   const Tag = interactive ? 'button' : 'div';
 
@@ -49,7 +51,8 @@ export function StickerCard({ name, rarity, imageUrl, owned, onClick, size = 'md
           <img
             src={imageUrl}
             alt=""
-            loading="lazy"
+            loading={eager ? 'eager' : 'lazy'}
+            decoding={eager ? 'sync' : 'async'}
             draggable={false}
             className={cn('h-full w-full object-cover', !owned && 'opacity-45 grayscale')}
           />

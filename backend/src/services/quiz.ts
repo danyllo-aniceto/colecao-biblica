@@ -28,7 +28,9 @@ import {
   shuffle,
   studyStatus,
   weightedPick,
+  pendingLevelChests,
 } from "./game-rules";
+import { loadXpBands } from "./xp-curve";
 import { currentScenarioIdFor } from "./campaign";
 import { checkAchievements } from "./achievements";
 import { applyReward, availableRewards, grantStickerIfMissing, walletData } from "./rewards";
@@ -762,6 +764,18 @@ async function coinMatchesToday(tx: Tx, userId: number) {
   return tx.quizMatch.count({ where: { userId, coinsGained: { gt: 0 }, finishedAt: { gte: start, lt: end } } });
 }
 
+/** Baús que o jogador já abriu hoje na maratona (do mais antigo ao mais novo) e quantos ainda pode ganhar. */
+export async function getChestsToday(userId: number) {
+  const settings = await getSettings(prisma);
+  const { start, end } = dayRangeInTimeZone(new Date(), env.timezone);
+  const matches = await prisma.quizMatch.findMany({
+    where: { userId, quizType: "GENERAL", rewardGranted: true, finishedAt: { gte: start, lt: end } },
+    orderBy: { finishedAt: "asc" },
+    select: { chestTier: true },
+  });
+  return { limit: settings.rewardMatchLimitPerDay, used: matches.length, tiers: matches.map((match) => match.chestTier) };
+}
+
 export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, stats: MatchStats, random: () => number = Math.random) {
   const event = await activeEvent(tx);
   // Estudo de personagem não rende XP, pontos, moedas nem prêmios: só acumula acertos (status do personagem).
@@ -861,7 +875,7 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
       ...walletData(wallet),
       xp: totalXp,
       totalScore: user.totalScore + score,
-      level: calculateLevel(totalXp),
+      level: calculateLevel(totalXp, await loadXpBands(tx)),
       stickerPity,
       bestCombo: Math.max(user.bestCombo, stats.bestCombo ?? 0),
     },
@@ -916,7 +930,7 @@ export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, 
     studyLevelUp,
     eventName: event && (event.xpMultiplier > 1 || event.coinMultiplier > 1) ? event.name : null,
     levelUp: updated.level > user.level,
-    chestsPending: Math.max(0, updated.level - updated.chestLevel),
+    chestsPending: pendingLevelChests(updated.level, updated.chestLevel),
     userXp: updated.xp,
     userLevel: updated.level,
     userCoins: updated.coins + achievementCoins,

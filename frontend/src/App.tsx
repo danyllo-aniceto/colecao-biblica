@@ -7,6 +7,7 @@ import { DialogProvider } from '@/components/ui/dialogs';
 import { ToastProvider } from '@/components/ui/toast';
 import { DashboardPage, PageLoading } from '@/pages/dashboard-page';
 import { HomePage } from '@/pages/home-page';
+import { RoomInvitePage } from '@/pages/room-invite-page';
 
 // Detalhe da figurinha (texto rico e diagramas) em um arquivo à parte.
 const StickerPage = lazy(() => import('@/pages/sticker-page').then((module) => ({ default: module.StickerPage })));
@@ -20,6 +21,8 @@ export function App() {
             <SoundEffects />
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/sala/:code" element={<RoomInvitePage />} />
+              <Route path="/duelo/:code" element={<RoomInvitePage game="duel" />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route
                 path="/dashboard/figurinhas/:characterId"

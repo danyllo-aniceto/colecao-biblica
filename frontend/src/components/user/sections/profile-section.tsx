@@ -8,6 +8,7 @@ import { ShowcasePicker } from '@/components/user/rewards/showcase-picker';
 import { VisualLocker } from '@/components/user/rewards/visual-locker';
 import { QUIZ_HELPERS } from '@/lib/quiz-helpers';
 import { rewardVisual } from '@/lib/reward-visual';
+import { surfaceStyle } from '@/lib/look-background';
 import type { PlayerLook } from '@/lib/rewards-api';
 import type { UserSticker } from '@/lib/user-api';
 import { cn } from '@/lib/cn';
@@ -19,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { InstallAppButton } from '@/components/pwa/install-app-button';
 import { APP_VERSION } from '@/lib/pwa';
+import { useCampaign } from '@/components/user/campaign/campaign-provider';
 import { BoostChips, CoinChip, LevelBadge, ProgressBar, SectionHeading, StatTile, levelProgress } from '@/components/game/game-ui';
 import { AchievementsPanel } from '@/components/user/achievements-panel';
 import { MatchHistoryPanel } from '@/components/user/match-history-panel';
@@ -61,14 +63,16 @@ export function ProfileSection({
   collection,
   onShowcaseChange,
 }: ProfileSectionProps) {
-  const progress = levelProgress(profile?.xp ?? 0);
+  const { xpBands } = useCampaign();
+  const progress = levelProgress(profile?.xp ?? 0, xpBands);
   const [tab, setTab] = useState<Tab>('summary');
   const [previewing, setPreviewing] = useState(false);
   const [pickingShowcase, setPickingShowcase] = useState(false);
 
   return (
     <div className="space-y-5">
-      <section className="panel relative overflow-hidden p-6">
+      <section className="panel relative overflow-hidden p-6" style={surfaceStyle(look?.profileBg)}>
+        {look?.profileBg ? <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-surface/90 via-surface/65 to-surface/20" /> : null}
         <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-violet/25 blur-3xl" />
         <div className="relative flex flex-wrap items-center gap-5">
           <span className="relative">
@@ -79,7 +83,7 @@ export function ProfileSection({
           </span>
           <div className="min-w-0 flex-1">
             <h1 className="sr-only">{profile?.name ?? 'Jogador'}</h1>
-            <PlayerName name={profile?.name ?? 'Jogador'} look={look} nameClassName="text-3xl" className="[&_.player-title]:text-sm" />
+            <PlayerName name={profile?.name ?? 'Jogador'} look={look} nameClassName="text-3xl" badgeSize="md" className="[&_.player-title]:text-sm" />
             <p className="truncate text-sm font-semibold text-muted">{profile?.email}</p>
             <div className="mt-3 max-w-sm">
               <div className="mb-1 flex justify-between text-xs font-bold text-muted">

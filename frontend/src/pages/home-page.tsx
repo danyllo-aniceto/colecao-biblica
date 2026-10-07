@@ -1,4 +1,8 @@
+import { useEffect, useState } from 'react';
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
+import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
+import MapRoundedIcon from '@mui/icons-material/MapRounded';
+import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
@@ -8,25 +12,52 @@ import { LoginForm } from '@/components/auth/login-form';
 import { StickerCard } from '@/components/game/sticker-card';
 import { InstallAppButton } from '@/components/pwa/install-app-button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { PLAY_MODES } from '@/components/user/play-hub';
+import { cn } from '@/lib/cn';
+import { useGameModeImages } from '@/lib/game-modes';
+import { apiRequest } from '@/lib/http';
 import logo from '@/assets/logo-completa.webp';
 
 const features = [
-  { icon: QuizRoundedIcon, title: 'Quizzes com tempo', text: 'Perguntas rápidas, vidas e bônus para virar o jogo.', tone: 'bg-danger/15 text-danger' },
-  { icon: CollectionsBookmarkRoundedIcon, title: 'Álbum de figurinhas', text: 'Conquiste personagens da Bíblia em quatro raridades.', tone: 'bg-violet/15 text-violet' },
-  { icon: StorefrontRoundedIcon, title: 'Loja de bônus', text: 'Troque moedas por figurinhas, vidas e XP em dobro.', tone: 'bg-primary/20 text-primary-strong dark:text-primary' },
-  { icon: EmojiEventsRoundedIcon, title: 'Ranking', text: 'Suba de nível e dispute o topo com outros jogadores.', tone: 'bg-accent/15 text-accent-strong dark:text-accent' },
-  { icon: BoltRoundedIcon, title: 'Aprenda jogando', text: 'Cada figurinha abre a história completa do personagem.', tone: 'bg-info/15 text-info' },
+  { icon: CollectionsBookmarkRoundedIcon, title: 'Álbum de figurinhas', text: 'Conquiste personagens da Bíblia em quatro raridades, suba o nível das figurinhas com as repetidas e leia a história completa de cada uma.', tone: 'bg-violet/15 text-violet' },
+  { icon: MapRoundedIcon, title: 'Campanha', text: 'Avance de nível por cenários da Bíblia, do Éden à Terra Prometida, e destrave músicas, mapas e prêmios pelo caminho.', tone: 'bg-info/15 text-info' },
+  { icon: TaskAltRoundedIcon, title: 'Missões e prêmio diário', text: 'Metas do dia e da semana, sequência de dias seguidos e baús de recompensa para quem volta sempre.', tone: 'bg-success/15 text-success' },
+  { icon: GroupsRoundedIcon, title: 'Amigos e trocas', text: 'Adicione amigos, converse, troque figurinhas e chame todo mundo para jogar online.', tone: 'bg-danger/15 text-danger' },
+  { icon: StorefrontRoundedIcon, title: 'Loja de bônus', text: 'Troque moedas por figurinhas, vidas, tempo extra, ícones e visuais para o seu perfil.', tone: 'bg-primary/20 text-primary-strong dark:text-primary' },
+  { icon: EmojiEventsRoundedIcon, title: 'Ranking e liga semanal', text: 'Suba de nível e dispute o topo com outros jogadores, com prêmios para os primeiros da semana.', tone: 'bg-accent/15 text-accent-strong dark:text-accent' },
+  { icon: BoltRoundedIcon, title: 'Aprenda jogando', text: 'Cada pergunta traz a explicação e a referência bíblica depois de responder.', tone: 'bg-info/15 text-info' },
   { icon: WifiOffRoundedIcon, title: 'Funciona como app', text: 'Instale no celular e veja sua coleção até sem internet.', tone: 'bg-success/15 text-success' },
 ];
 
-const showcase = [
+type ShowcaseSticker = { name: string; rarity: 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'; imageUrl?: string | null };
+
+/** Figurinhas de exemplo (as imagens vêm do cadastro; sem rede ou sem imagem, aparece só a moldura). */
+const FALLBACK_SHOWCASE: ShowcaseSticker[] = [
   { name: 'Rute', rarity: 'COMMON' },
   { name: 'Davi', rarity: 'RARE' },
   { name: 'Ester', rarity: 'EPIC' },
   { name: 'Paulo', rarity: 'LEGENDARY' },
-] as const;
+];
+
+function useShowcase(): ShowcaseSticker[] {
+  const [stickers, setStickers] = useState<ShowcaseSticker[]>(FALLBACK_SHOWCASE);
+  useEffect(() => {
+    let alive = true;
+    apiRequest<ShowcaseSticker[]>('/landing/stickers', { method: 'GET' }, 'Não foi possível carregar as figurinhas.')
+      .then((list) => {
+        if (alive && list.length > 0) setStickers(list);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return stickers;
+}
 
 export function HomePage() {
+  const images = useGameModeImages();
+  const showcase = useShowcase();
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-16 pt-4 sm:px-6">
       <header className="flex items-center justify-between gap-3 py-2">
@@ -48,12 +79,12 @@ export function HomePage() {
             <span className="bg-[linear-gradient(90deg,var(--primary),var(--accent))] bg-clip-text text-transparent">jogando</span>
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-lg text-muted lg:mx-0">
-            Responda quizzes, ganhe XP e moedas e complete o álbum com os personagens da Bíblia.
+            Responda ao quiz, jogue Tabuleiro e Duelo de Figurinhas com os amigos, ganhe XP e moedas e complete o álbum com os personagens da Bíblia.
           </p>
           <div className="mt-8 grid grid-cols-4 gap-3 sm:gap-4">
             {showcase.map((item, index) => (
               <div key={item.name} className="animate-pop-in" style={{ animationDelay: `${300 + index * 120}ms`, transform: `rotate(${(index - 1.5) * 4}deg)` }}>
-                <StickerCard name={item.name} rarity={item.rarity} owned size="sm" />
+                <StickerCard name={item.name} rarity={item.rarity} imageUrl={item.imageUrl} owned size="sm" eager />
               </div>
             ))}
           </div>
@@ -64,10 +95,41 @@ export function HomePage() {
         </div>
       </section>
 
+      <section className="py-8" aria-label="Os jogos">
+        <h2 className="text-center font-display text-3xl font-bold text-ink sm:text-4xl">Três jeitos de jogar</h2>
+        <p className="mx-auto mt-2 max-w-2xl text-center text-muted">Um jogo principal para aprender e ganhar prêmios, e dois para se divertir com os amigos, sem pressa e sem compromisso.</p>
+        <ul className="mt-8 grid gap-4 lg:grid-cols-3">
+          {PLAY_MODES.map((mode, index) => {
+            const image = images[mode.design];
+            return (
+              <li key={mode.id} className="animate-fade-up" style={{ animationDelay: `${index * 90}ms` }}>
+                <article className="flex h-full flex-col overflow-hidden rounded-3xl border-2 border-edge bg-surface shadow-sm">
+                  <div className={cn('relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br text-white', mode.fallback)}>
+                    {image ? <img src={image} alt="" loading="lazy" draggable={false} className="absolute inset-0 h-full w-full object-cover" /> : <span className="absolute inset-0 flex items-center justify-center opacity-90">{mode.icon}</span>}
+                    <span className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/70 to-transparent" />
+                    <h3 className="absolute bottom-0 left-0 p-4 font-display text-2xl font-bold leading-tight drop-shadow">{mode.title}</h3>
+                  </div>
+                  <div className="flex flex-1 flex-col gap-3 p-4">
+                    <p className="text-sm font-semibold leading-6 text-muted">{mode.text}</p>
+                    <div className="mt-auto flex flex-wrap gap-1.5">
+                      {mode.tags.map((tag) => (
+                        <span key={tag} className="rounded-full bg-surface-3 px-2.5 py-1 text-xs font-bold text-ink">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </article>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
       <section className="py-8">
         <h2 className="text-center font-display text-3xl font-bold text-ink sm:text-4xl">Como funciona</h2>
         <ol className="mt-8 grid gap-4 sm:grid-cols-3">
-          {['Crie sua conta grátis', 'Jogue e acerte perguntas', 'Ganhe prêmios e figurinhas'].map((step, index) => (
+          {['Crie sua conta grátis', 'Escolha um jogo e divirta-se', 'Ganhe prêmios e complete o álbum'].map((step, index) => (
             <li key={step} className="panel flex items-center gap-4 p-5">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary font-display text-2xl font-bold text-on-primary shadow-[0_4px_0_var(--primary-strong)]">
                 {index + 1}
@@ -78,7 +140,11 @@ export function HomePage() {
         </ol>
       </section>
 
-      <section className="grid gap-4 py-8 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="py-8" aria-label="Tudo no app">
+        <h2 className="text-center font-display text-3xl font-bold text-ink sm:text-4xl">Tudo isso no mesmo app</h2>
+      </section>
+
+      <section className="grid gap-4 pb-8 sm:grid-cols-2 lg:grid-cols-4">
         {features.map((feature, index) => {
           const Icon = feature.icon;
           return (
