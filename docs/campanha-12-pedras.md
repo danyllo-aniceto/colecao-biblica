@@ -184,6 +184,10 @@ Os 10 cenários de lançamento mantêm as paradas que já têm (4 a 6) para não
 
 - **Mapa:** o prêmio de Jesus fica entre Jerusalém e Torre de Babel (cenário 10 → 11); o cartão da **pedra** aparece logo acima do
   último cenário do grupo dela, e o aviso **"Novos cenários em breve"** continua no topo de tudo.
+- **Partes da campanha:** o cabeçalho mostra *Campanha: <parte>* e só o contador dela. Parte da **Figurinha Especial de Jesus** (cenários de
+  lançamento): estrela com os fragmentos. Parte do **Peitoral do Sumo Sacerdote** (cenários com pedra): escudo com as pedras (x/12). Os pontinhos
+  laterais mostram só as páginas do grupo atual (Jesus: os 10 cenários e o prêmio; Peitoral: os 3 cenários da pedra e a pedra) e um botão
+  redondo leva à próxima campanha (escudo, em cima) ou à anterior (estrela, embaixo). Não precisa mexer em nada ao cadastrar cenários novos.
 - **Peitoral:** botão no cabeçalho da campanha (🛡️ 1/12) e o cartão "Ver o Peitoral" abrem os 12 engastes em 4 fileiras de 3; toque numa
   pedra para ver cenários, recompensas e resgatar. A gema é desenhada em SVG enquanto a arte não é enviada.
 - **Resgate da pedra** (`POST /api/campaign/stones/:id/claim`): libera ao concluir (todas as paradas resgatadas) os 3 cenários do grupo;

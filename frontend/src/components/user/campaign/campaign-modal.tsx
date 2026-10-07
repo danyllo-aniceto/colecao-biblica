@@ -229,6 +229,9 @@ function FinalePage({ campaign, special, playerName, active }: { campaign: Campa
   );
 }
 
+/** Partes da campanha: a figurinha especial (cenários de lançamento) e o Peitoral do Sumo Sacerdote (cenários com pedra). */
+type CampaignSection = 'jesus' | 'peitoral';
+
 type CampaignPage = { kind: 'soon' } | { kind: 'finale' } | { kind: 'stone'; stone: Stone } | { kind: 'scenario'; scenario: CampaignScenario };
 
 type CampaignModalProps = {
@@ -273,6 +276,18 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
     return [{ kind: 'soon' }, ...built.reverse()];
   }, [campaign]);
   const pageCount = pages.length;
+  // A campanha tem partes: a da figurinha especial (cenários de lançamento) e a do Peitoral (cenários com pedra). Cada página sabe a
+  // sua parte e o seu grupo (todos os da figurinha especial juntos; no Peitoral, um grupo por pedra: 3 cenários e a pedra).
+  const pageMeta = useMemo(() => {
+    const meta = pages.map((page): { section: CampaignSection; group: string } => {
+      if (page.kind === 'scenario') return page.scenario.stoneId ? { section: 'peitoral', group: `pedra-${page.scenario.stoneId}` } : { section: 'jesus', group: 'jesus' };
+      if (page.kind === 'stone') return { section: 'peitoral', group: `pedra-${page.stone.id}` };
+      return { section: 'jesus', group: 'jesus' };
+    });
+    // O aviso "em breve" fica junto da última parte do caminho (a página logo abaixo dele).
+    if (meta.length > 1) meta[0] = meta[1];
+    return meta;
+  }, [pages]);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const positioned = useRef(false);
   const frame = useRef(0);
@@ -290,6 +305,14 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
   const [stoneClaiming, setStoneClaiming] = useState<number | null>(null);
   const [stoneWon, setStoneWon] = useState<{ stone: Stone; result: ClaimStoneResult } | null>(null);
   const [peitoral, setPeitoral] = useState(false);
+  // Parte da campanha em foco: título do cabeçalho, pontinhos só do grupo dela e atalho para a parte vizinha.
+  const activeMeta = pageMeta[active] ?? pageMeta[0] ?? { section: 'jesus' as CampaignSection, group: 'jesus' };
+  const sectionTitle = (section: CampaignSection) => (section === 'jesus' ? (special ? `Figurinha Especial de ${special.character.name}` : 'Jornada') : 'Peitoral do Sumo Sacerdote');
+  const indicesOf = (section: CampaignSection) => pages.flatMap((_, index) => (pageMeta[index]?.section === section ? [index] : []));
+  const groupIndices = pages.flatMap((_, index) => (pageMeta[index]?.group === activeMeta.group ? [index] : []));
+  // Na subida a parte nova fica acima: a "próxima campanha" é o Peitoral (em cima) e a anterior é a da figurinha especial (embaixo).
+  const nextSection: CampaignSection | null = activeMeta.section === 'jesus' && indicesOf('peitoral').length > 0 ? 'peitoral' : null;
+  const prevSection: CampaignSection | null = activeMeta.section === 'peitoral' && indicesOf('jesus').length > 0 ? 'jesus' : null;
   const selectedScenario = selected ? (scenarios.find((item) => item.nodes.some((node) => node.id === selected.id)) ?? null) : null;
   const liveSelected = selected && selectedScenario ? (selectedScenario.nodes.find((node) => node.id === selected.id) ?? selected) : selected;
 
@@ -414,28 +437,31 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
                 <CloseRoundedIcon />
               </button>
             </Tooltip>
-            <h2 className="font-display text-xl font-bold text-ink">Campanha</h2>
-            {campaign && campaign.breastplate.total > 0 ? (
-              <Tooltip content="Peitoral do Sumo Sacerdote" side="bottom">
-                <button type="button" onClick={() => setPeitoral(true)} aria-label={`Abrir o Peitoral: ${campaign.breastplate.claimed} de ${campaign.breastplate.total} pedras`} className="relative flex h-11 items-center gap-1.5 rounded-2xl bg-surface-3 px-3 text-sm font-bold text-ink transition hover:bg-surface-2">
-                  <ShieldRoundedIcon fontSize="small" className="text-[#c99a1c]" />
-                  {campaign.breastplate.claimed}/{campaign.breastplate.total}
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-muted">Campanha:</p>
+              <h2 className="line-clamp-2 font-display text-[15px] font-bold leading-tight text-ink">{sectionTitle(activeMeta.section)}</h2>
+            </div>
+            {activeMeta.section === 'peitoral' && campaign && campaign.breastplate.total > 0 ? (
+              <Tooltip content="Abrir o Peitoral do Sumo Sacerdote" side="bottom">
+                <button type="button" onClick={() => setPeitoral(true)} aria-label={`Abrir o Peitoral: ${campaign.breastplate.claimed} de ${campaign.breastplate.total} pedras`} className="relative flex w-24 shrink-0 items-center gap-1.5 rounded-2xl border-2 border-[#e0b43a]/60 bg-[#e0b43a]/10 px-2.5 py-1.5 text-left transition hover:bg-[#e0b43a]/20">
+                  <ShieldRoundedIcon fontSize="small" className="shrink-0 text-[#c99a1c]" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-xs font-bold text-ink">
+                      {campaign.breastplate.complete ? 'Completo!' : `${campaign.breastplate.claimed}/${campaign.breastplate.total}`}
+                    </span>
+                    {campaign.breastplate.complete ? null : <ProgressBar className="mt-1 h-1.5" value={(campaign.breastplate.claimed / Math.max(campaign.breastplate.total, 1)) * 100} color="#e0b43a" />}
+                  </span>
                   {campaign.breastplate.stones.some((stone) => stone.state === 'available') ? <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-success ring-2 ring-surface" /> : null}
                 </button>
               </Tooltip>
             ) : null}
-            {special ? (
-              <div data-rarity={special.character.rarity} className="rarity ml-auto flex min-w-0 max-w-[55%] items-center gap-2 rounded-2xl border-2 border-r-special/50 bg-r-special/10 px-3 py-1.5">
+            {activeMeta.section === 'jesus' && special ? (
+              <div data-rarity={special.character.rarity} className="rarity flex w-24 shrink-0 items-center gap-1.5 rounded-2xl border-2 border-r-special/50 bg-r-special/10 px-2.5 py-1.5">
                 <StarRoundedIcon className="shrink-0 text-r-special" fontSize="small" />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-bold text-ink">{special.owned ? `${special.character.name} conquistado!` : `Figurinha ${special.character.name}`}</p>
+                  <p className="truncate text-xs font-bold text-ink">{special.owned ? 'Conquistada!' : `${special.fragments}/${special.totalFragments}`}</p>
                   {special.owned ? null : <ProgressBar className="mt-1 h-1.5" value={(special.fragments / Math.max(special.totalFragments, 1)) * 100} color="var(--r-special)" />}
                 </div>
-                {special.owned ? null : (
-                  <span className="shrink-0 text-xs font-bold text-muted">
-                    {special.fragments}/{special.totalFragments}
-                  </span>
-                )}
               </div>
             ) : null}
           </header>
@@ -501,8 +527,17 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
                     <KeyboardArrowUpRoundedIcon fontSize="small" />
                   </button>
                 </Tooltip>
-                <ol className="pointer-events-auto flex flex-col items-center gap-1 rounded-full bg-surface/80 px-1 py-1.5 backdrop-blur">
-                  {pages.map((page, index) => (
+                {nextSection ? (
+                  <Tooltip content={`Próxima campanha: ${sectionTitle(nextSection)}`} side="bottom">
+                    <button type="button" onClick={() => goTo(Math.max(...indicesOf(nextSection)))} aria-label={`Ir para a próxima campanha: ${sectionTitle(nextSection)}`} className="pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full bg-[#e0b43a] text-[#5a3d00] shadow-[0_2px_0_#a97c10] transition active:translate-y-0.5 active:shadow-none">
+                      <ShieldRoundedIcon sx={{ fontSize: 18 }} />
+                    </button>
+                  </Tooltip>
+                ) : null}
+                <ol aria-label={`Páginas de ${sectionTitle(activeMeta.section)}`} className="pointer-events-auto flex flex-col items-center gap-1 rounded-full bg-surface/80 px-1 py-1.5 backdrop-blur">
+                  {groupIndices.map((index) => {
+                    const page = pages[index];
+                    return (
                     <li key={page.kind === 'scenario' ? `s-${page.scenario.id}` : page.kind === 'stone' ? `p-${page.stone.id}` : page.kind}>
                       <button
                         type="button"
@@ -515,8 +550,16 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
                         )}
                       />
                     </li>
-                  ))}
+                    );
+                  })}
                 </ol>
+                {prevSection ? (
+                  <Tooltip content={`Campanha anterior: ${sectionTitle(prevSection)}`} side="top">
+                    <button type="button" onClick={() => goTo(Math.min(...indicesOf(prevSection)))} aria-label={`Ir para a campanha anterior: ${sectionTitle(prevSection)}`} className="pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full bg-r-special text-white shadow-[0_2px_0_rgba(0,0,0,0.25)] transition active:translate-y-0.5 active:shadow-none">
+                      <StarRoundedIcon sx={{ fontSize: 18 }} />
+                    </button>
+                  </Tooltip>
+                ) : null}
                 <Tooltip content="Cenário anterior" side="top">
                   <button type="button" onClick={() => goTo(active + 1)} disabled={active >= pageCount - 1} aria-label="Cenário anterior (para baixo)" className={cn(arrow, 'pointer-events-auto')}>
                     <KeyboardArrowDownRoundedIcon fontSize="small" />
