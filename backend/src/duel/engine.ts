@@ -213,6 +213,12 @@ export function cardPower(state: DuelState, laneIndex: number, side: Side, card:
   if (rule.kind === "gather" && here.length >= rule.min) power += rule.amount;
   // Quem vigia permanece: figurinhas reveladas há `after` turnos ou mais ganham o bônus.
   if (rule.kind === "veteran" && state.turn - card.turn >= rule.after) power += rule.amount;
+  // Três tendas: com exatamente `count` figurinhas suas aqui, cada uma ganha o bônus.
+  if (rule.kind === "exactCount" && here.length === rule.count) power += rule.amount;
+  // Quem acabou de entrar nas águas: a última que o lado revelou aqui.
+  if (rule.kind === "lastBonus" && here.length > 0 && [...here].sort((a, b) => b.order - a.order)[0].uid === card.uid) power += rule.amount;
+  // Os últimos serão os primeiros: a mais fraca (Influência base + bônus permanentes; empate: a que entrou primeiro).
+  if (rule.kind === "weakestBonus" && here.length > 0 && [...here].sort((a, b) => a.def.power + a.bonus - (b.def.power + b.bonus) || a.order - b.order)[0].uid === card.uid) power += rule.amount;
   if (rule.kind === "sharedTag" && here.some((mate) => mate.uid !== card.uid && mate.def.tags.some((tag) => card.def.tags.includes(tag)))) power += rule.amount;
   return power;
 }
@@ -837,6 +843,26 @@ function endOfTurn(state: DuelState) {
     if (rule.kind === "bountyAt" && state.turn === rule.turn) {
       for (const side of [0, 1] as Side[]) for (const card of lane.cards[side]) card.bonus += rule.amount;
       emit(state, { type: "power", lane: index, amount: rule.amount, text: `${scenarioOf(lane.scenario).emoji} Colheita em ${scenarioOf(lane.scenario).name}: todas as figurinhas ganharam ${rule.amount}.` });
+    }
+    if (rule.kind === "reversalAt" && state.turn === rule.turn) {
+      // A reviravolta: o lado que está perdendo aqui (Influência menor; empate não conta) ganha o bônus em cada figurinha.
+      const power: [number, number] = [lanePower(state, index, 0), lanePower(state, index, 1)];
+      const losing: Side | null = power[0] === power[1] ? null : power[0] < power[1] ? 0 : 1;
+      if (losing !== null && lane.cards[losing].length > 0) {
+        for (const card of lane.cards[losing]) card.bonus += rule.amount;
+        emit(state, { type: "power", side: losing, lane: index, amount: rule.amount, text: `${scenarioOf(lane.scenario).emoji} ${scenarioOf(lane.scenario).name}: a reviravolta! Quem estava perdendo ganhou ${rule.amount} em cada figurinha.` });
+      }
+    }
+    if (rule.kind === "forgive") {
+      // Arrependimento: quem tinha perdido Influência aqui (bônus negativo) volta ao normal.
+      for (const side of [0, 1] as Side[]) {
+        for (const card of lane.cards[side]) {
+          if (card.bonus >= 0) continue;
+          const restored = -card.bonus;
+          card.bonus = 0;
+          emit(state, { type: "power", side, lane: index, uid: card.uid, name: card.def.name, amount: restored, text: `${scenarioOf(lane.scenario).name}: ${card.def.name} foi perdoada e recuperou ${restored}.` });
+        }
+      }
     }
     if (rule.kind === "stormAt" && state.turn === rule.turn) {
       for (const side of [0, 1] as Side[]) for (const card of lane.cards[side]) card.bonus -= rule.amount;

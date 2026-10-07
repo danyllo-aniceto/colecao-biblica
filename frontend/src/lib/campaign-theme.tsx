@@ -20,6 +20,12 @@ import MusicNoteRoundedIcon from '@mui/icons-material/MusicNoteRounded';
 import StairsRoundedIcon from '@mui/icons-material/StairsRounded';
 import TerrainRoundedIcon from '@mui/icons-material/TerrainRounded';
 import WaterDropRoundedIcon from '@mui/icons-material/WaterDropRounded';
+import ApartmentRoundedIcon from '@mui/icons-material/ApartmentRounded';
+import DiamondRoundedIcon from '@mui/icons-material/DiamondRounded';
+import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
+import StarRoundedIcon from '@mui/icons-material/StarRounded';
+import StarsRoundedIcon from '@mui/icons-material/StarsRounded';
+import WavesRoundedIcon from '@mui/icons-material/WavesRounded';
 import WbTwilightRoundedIcon from '@mui/icons-material/WbTwilightRounded';
 import WhatshotRoundedIcon from '@mui/icons-material/WhatshotRounded';
 
@@ -49,6 +55,12 @@ const FALLBACK_ICONS: Record<string, typeof MapRoundedIcon> = {
   'campos-belem': GrassRoundedIcon,
   elim: WaterDropRoundedIcon,
   'monte-oliveiras': ForestRoundedIcon,
+  'ur-caldeus': StarsRoundedIcon,
+  susa: DiamondRoundedIcon,
+  ninive: ApartmentRoundedIcon,
+  transfiguracao: LightModeRoundedIcon,
+  jordao: WavesRoundedIcon,
+  manjedoura: StarRoundedIcon,
 };
 
 export function ScenarioFallbackIcon({ slug, className, fontSize = 28 }: { slug: string; className?: string; fontSize?: number }): ReactNode {

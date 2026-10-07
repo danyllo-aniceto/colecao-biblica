@@ -173,7 +173,12 @@ export type ScenarioRule =
   | { kind: "refuge" }
   | { kind: "veteran"; after: number; amount: number }
   | { kind: "weakBonus"; max: number; amount: number }
-  | { kind: "gather"; min: number; amount: number };
+  | { kind: "gather"; min: number; amount: number }
+  | { kind: "reversalAt"; turn: number; amount: number }
+  | { kind: "forgive" }
+  | { kind: "exactCount"; count: number; amount: number }
+  | { kind: "lastBonus"; amount: number }
+  | { kind: "weakestBonus"; amount: number };
 
 export type ScenarioDef = {
   /** Mesmo identificador (slug) do cenário da campanha. */

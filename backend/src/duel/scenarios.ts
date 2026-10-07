@@ -27,6 +27,12 @@ export const SCENARIOS: ScenarioDef[] = [
   { id: "campos-belem", name: "Campos de Belém", emoji: "🌾", rule: { kind: "bountyAt", turn: 4, amount: 1 }, text: "No fim do turno 4, é a colheita: todas as figurinhas aqui ganham +1." },
   { id: "elim", name: "Oásis de Elim", emoji: "🌴", rule: { kind: "refuge" }, text: "Refúgio: o rival não consegue enfraquecer, calar nem destruir, com Dons, as figurinhas daqui." },
   { id: "monte-oliveiras", name: "Monte das Oliveiras", emoji: "🫒", rule: { kind: "veteran", after: 2, amount: 2 }, text: "Quem vigia permanece: figurinhas reveladas aqui há 2 turnos ou mais ganham +2." },
+  { id: "ur-caldeus", name: "Ur dos Caldeus", emoji: "🌟", rule: { kind: "tagBonus", tags: ["Patriarca"], amount: 2 }, text: "Os pais da fé: +2 para cada Patriarca seu aqui." },
+  { id: "susa", name: "Susã", emoji: "👑", rule: { kind: "reversalAt", turn: 5, amount: 1 }, text: "A reviravolta de Ester: no fim do turno 5, o lado que está perdendo aqui ganha +1 em cada figurinha." },
+  { id: "ninive", name: "Nínive", emoji: "🏙️", rule: { kind: "forgive" }, text: "Nínive se arrependeu: no fim de cada turno, as figurinhas daqui perdoadas recuperam a Influência que tinham perdido." },
+  { id: "transfiguracao", name: "Monte da Transfiguração", emoji: "☀️", rule: { kind: "exactCount", count: 3, amount: 2 }, text: "Três tendas: com exatamente 3 figurinhas suas aqui, cada uma ganha +2." },
+  { id: "jordao", name: "Rio Jordão", emoji: "💧", rule: { kind: "lastBonus", amount: 2 }, text: "Quem entra nas águas: a figurinha mais recente de cada lado aqui ganha +2." },
+  { id: "manjedoura", name: "Manjedoura de Jesus", emoji: "⭐", rule: { kind: "weakestBonus", amount: 3 }, text: "Os últimos serão os primeiros: a figurinha mais fraca de cada lado aqui ganha +3." },
 ];
 
 export const SCENARIO_BY_ID = new Map(SCENARIOS.map((scenario) => [scenario.id, scenario]));

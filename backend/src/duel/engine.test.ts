@@ -372,6 +372,62 @@ describe("cenários", () => {
     expect(lanePower(state, 0, 0)).toBe(3 * (2 + 1));
   });
 
+  it("Ur dos Caldeus: +2 para cada Patriarca seu aqui", () => {
+    const state = duel({ turn: 3, scenarios: ["ur-caldeus", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("noe"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(7 + 2 + 2);
+    state.lanes[0].cards[0].push({ uid: 3, def: def("jose"), bonus: 0, silenced: false, order: 3, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(7 + 2 + 4 + 2 * 2);
+  });
+
+  it("Susã: no fim do turno 5, quem está perdendo aqui ganha +1 em cada figurinha; empate não muda nada", () => {
+    const state = duel({ turn: 5, scenarios: ["susa", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 });
+    state.lanes[0].cards[1].push({ uid: 2, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    const next = playTurn(state, [], []);
+    expect(named(next, 0, 0, "Abel").bonus).toBe(1);
+    expect(named(next, 0, 1, "Saul").bonus).toBe(0);
+    const tie = duel({ turn: 5, scenarios: ["susa", "arca", "canaa"] });
+    tie.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 });
+    tie.lanes[0].cards[1].push({ uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    const same = playTurn(tie, [], []);
+    expect(named(same, 0, 0, "Abel").bonus).toBe(0);
+    expect(named(same, 0, 1, "Abel").bonus).toBe(0);
+  });
+
+  it("Nínive: no fim de cada turno quem tinha perdido Influência aqui recupera; bônus positivo fica", () => {
+    const state = duel({ turn: 2, scenarios: ["ninive", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("saul"), bonus: -3, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("abel"), bonus: 2, silenced: false, order: 2, turn: 1 });
+    const next = playTurn(state, [], []);
+    expect(named(next, 0, 0, "Saul").bonus).toBe(0);
+    expect(named(next, 0, 0, "Abel").bonus).toBe(2);
+  });
+
+  it("Monte da Transfiguração: com exatamente 3 figurinhas suas aqui, cada uma ganha +2", () => {
+    const state = duel({ turn: 3, scenarios: ["transfiguracao", "arca", "canaa"] });
+    const push = (uid: number) => state.lanes[0].cards[0].push({ uid, def: def("abel"), bonus: 0, silenced: false, order: uid, turn: 1 });
+    push(1);
+    push(2);
+    expect(lanePower(state, 0, 0)).toBe(2 * 2);
+    push(3);
+    expect(lanePower(state, 0, 0)).toBe(3 * (2 + 2));
+    push(4);
+    expect(lanePower(state, 0, 0)).toBe(4 * 2);
+  });
+
+  it("Rio Jordão: a figurinha mais recente de cada lado aqui ganha +2", () => {
+    const state = duel({ turn: 3, scenarios: ["jordao", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("saul"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 5, turn: 2 });
+    // Abel entrou por último (order 5): leva o +2; Saul não.
+    expect(lanePower(state, 0, 0)).toBe(6 + 2 + 2);
+  });
+
+  it("Manjedoura de Jesus: a figurinha mais fraca de cada lado aqui ganha +3", () => {
+    const state = duel({ turn: 3, scenarios: ["manjedoura", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("saul"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(6 + 2 + 3);
+  });
+
   it("o nome antigo Cenáculo ainda resolve para Pentecostes (salas guardadas)", () => {
     expect(scenarioOf("cenaculo").id).toBe("pentecostes");
   });
