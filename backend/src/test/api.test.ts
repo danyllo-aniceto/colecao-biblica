@@ -275,6 +275,8 @@ describe.skipIf(!hasDatabase)("API", () => {
       expect(result.rewardName).toBeTruthy();
       expect(result.rewardMatchesUsedToday).toBe(1);
       expect(result.rewardMatchesLimitPerDay).toBe(5);
+      // A tela do quiz mostra os baús do dia: este é o 1º de 5, de bronze.
+      expect((await api.get("/api/quiz/chests-today").set(bearer(token))).body).toEqual({ limit: 5, used: 1, tiers: ["BRONZE"] });
       // Só 3 perguntas ativas: o mínimo cai para 3 e o baú é de bronze (10 moedas garantidas, além do restante).
       expect(result.chestTier).toBe("BRONZE");
       expect(result.chestCoins).toBe(10);

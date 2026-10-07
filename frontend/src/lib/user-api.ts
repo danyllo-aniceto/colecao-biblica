@@ -382,6 +382,12 @@ export async function listShopItems(): Promise<ShopItem[]> {
   return apiRequest<ShopItem[]>('/shop', { method: 'GET' }, 'Não foi possível carregar a loja.');
 }
 
+export type ChestsToday = { limit: number; used: number; tiers: Array<ChestTierName | null> };
+
+export async function getChestsToday(): Promise<ChestsToday> {
+  return apiRequest<ChestsToday>('/quiz/chests-today', { method: 'GET' }, 'Não foi possível carregar os baús de hoje.');
+}
+
 export async function getShopLimits(): Promise<{ stickerLimitPerDay: number; stickersBoughtToday: number; chestLimitPerDay: number; chestsBoughtToday: number }> {
   return apiRequest('/shop/limits', { method: 'GET' }, 'Não foi possível carregar os limites da loja.');
 }

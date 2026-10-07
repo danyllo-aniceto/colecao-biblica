@@ -9,6 +9,7 @@ import { fieldClassName } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Alert, BoostChips, ProgressBar, SectionHeading } from '@/components/game/game-ui';
 import { DailyChallengeCard } from '@/components/user/daily-challenge-card';
+import { DailyChestsCard } from '@/components/user/daily-chests-card';
 import type { CharacterEntry, GameRules, QuizSessionStatus, UserSticker } from '@/lib/user-api';
 import type { UserProfile } from '@/types/auth';
 
@@ -108,6 +109,9 @@ export function PlaySection({
   return (
     <form className="space-y-4" onSubmit={onStart}>
       <SectionHeading title="Escolha o desafio" subtitle="Quanto mais você acerta, mais XP e prêmios ganha." />
+
+      {/* Recontado a cada partida que termina (a sessão volta a ser nula). */}
+      <DailyChestsCard refreshKey={quizSession === null} />
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <ModeCard

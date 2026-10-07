@@ -764,6 +764,18 @@ async function coinMatchesToday(tx: Tx, userId: number) {
   return tx.quizMatch.count({ where: { userId, coinsGained: { gt: 0 }, finishedAt: { gte: start, lt: end } } });
 }
 
+/** Baús que o jogador já abriu hoje na maratona (do mais antigo ao mais novo) e quantos ainda pode ganhar. */
+export async function getChestsToday(userId: number) {
+  const settings = await getSettings(prisma);
+  const { start, end } = dayRangeInTimeZone(new Date(), env.timezone);
+  const matches = await prisma.quizMatch.findMany({
+    where: { userId, quizType: "GENERAL", rewardGranted: true, finishedAt: { gte: start, lt: end } },
+    orderBy: { finishedAt: "asc" },
+    select: { chestTier: true },
+  });
+  return { limit: settings.rewardMatchLimitPerDay, used: matches.length, tiers: matches.map((match) => match.chestTier) };
+}
+
 export async function finalizeMatch(tx: Tx, user: User, settings: GameSettings, stats: MatchStats, random: () => number = Math.random) {
   const event = await activeEvent(tx);
   // Estudo de personagem não rende XP, pontos, moedas nem prêmios: só acumula acertos (status do personagem).
