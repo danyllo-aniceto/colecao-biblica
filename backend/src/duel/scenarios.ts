@@ -23,13 +23,16 @@ export const SCENARIOS: ScenarioDef[] = [
   { id: "cidade-davi", name: "Cidade de Davi", emoji: "🎵", rule: { kind: "costBonus", min: 4, amount: 2 }, text: "Figurinhas de Vigor 4 ou mais aqui ganham +2." },
   { id: "carmelo", name: "Monte Carmelo", emoji: "☁️", rule: { kind: "strongestAt", turn: 5, amount: 3 }, text: "No fim do turno 5, o fogo desce: a figurinha mais forte de cada lado aqui ganha +3." },
   { id: "ossos-secos", name: "Vale dos Ossos Secos", emoji: "🌬️", rule: { kind: "weakBonus", max: 2, amount: 2 }, text: "Figurinhas de Influência base 2 ou menos aqui ganham +2." },
-  { id: "cenaculo", name: "Cenáculo", emoji: "✨", rule: { kind: "gather", min: 3, amount: 1 }, text: "Com 3 ou mais figurinhas suas aqui, cada uma ganha +1." },
+  { id: "pentecostes", name: "Pentecostes", emoji: "✨", rule: { kind: "gather", min: 3, amount: 1 }, text: "Com 3 ou mais figurinhas suas aqui, cada uma ganha +1." },
 ];
 
 export const SCENARIO_BY_ID = new Map(SCENARIOS.map((scenario) => [scenario.id, scenario]));
 
+/** Identificadores antigos que mudaram de nome (salas e partidas guardadas ainda podem usá-los). */
+const LEGACY_IDS: Record<string, string> = { cenaculo: "pentecostes" };
+
 export function scenarioOf(id: string): ScenarioDef {
-  const found = SCENARIO_BY_ID.get(id);
+  const found = SCENARIO_BY_ID.get(LEGACY_IDS[id] ?? id);
   if (!found) throw new Error(`Cenário de duelo desconhecido: ${id}`);
   return found;
 }

@@ -95,7 +95,7 @@ Torre de Babel: no fim de cada turno a mais forte de cada lado perde 1 · Betel:
 Peniel: quem tem menos figurinhas aqui (ao menos 1) ganha +3 · Sarça ardente em Horebe: figurinha sozinha do lado ganha +3 ·
 Tabernáculo: a primeira figurinha de cada lado aqui ganha +2 · Cidade de Davi: Vigor 4 ou mais ganha +2 ·
 Monte Carmelo: no fim do turno 5 a mais forte de cada lado ganha +3 · Vale dos Ossos Secos: Influência base 2 ou menos ganha +2 ·
-Cenáculo: com 3 ou mais figurinhas suas aqui, cada uma ganha +1. (Cenários das 12 Pedras: toda pedra nova traz a regra do cenário aqui.)
+Pentecostes: com 3 ou mais figurinhas suas aqui, cada uma ganha +1. (Cenários das 12 Pedras: toda pedra nova traz a regra do cenário aqui.)
 
 ## 6. Quem joga com quem
 

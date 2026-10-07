@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { describeDom, levelDef, validateTeam } from "./cards";
 import { cardPower, doubleStakes, lanePower, newDuel, retreat, retreatCost, setReady, snapshotOf, stage, unstage, viewFor, whyNotDouble, whyNotStage } from "./engine";
 import { applyRound, damageFor, newSeries } from "./series";
+import { scenarioOf } from "./scenarios";
 import { READY_DECKS, STARTER_CARDS, readyTeam } from "./starter";
 import { type Card, type CardDef, type DuelState, type PlacedCard, type Side } from "./types";
 
@@ -363,12 +364,16 @@ describe("cenários", () => {
     expect(lanePower(state, 0, 0)).toBe(2 + 2 + 6);
   });
 
-  it("Cenáculo: com 3 ou mais figurinhas suas aqui, cada uma ganha +1", () => {
-    const state = duel({ turn: 3, scenarios: ["cenaculo", "arca", "canaa"] });
+  it("Pentecostes: com 3 ou mais figurinhas suas aqui, cada uma ganha +1", () => {
+    const state = duel({ turn: 3, scenarios: ["pentecostes", "arca", "canaa"] });
     state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 });
     expect(lanePower(state, 0, 0)).toBe(2 + 2);
     state.lanes[0].cards[0].push({ uid: 3, def: def("abel"), bonus: 0, silenced: false, order: 3, turn: 1 });
     expect(lanePower(state, 0, 0)).toBe(3 * (2 + 1));
+  });
+
+  it("o nome antigo Cenáculo ainda resolve para Pentecostes (salas guardadas)", () => {
+    expect(scenarioOf("cenaculo").id).toBe("pentecostes");
   });
 
   it("Sinai: só 2 espaços por lado", () => {

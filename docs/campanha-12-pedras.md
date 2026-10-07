@@ -44,7 +44,7 @@ Quem escolhe o próximo cenário é o dono do jogo, trio a trio; a lista abaixo 
 |---|---|---|
 | 1 Sardônio ✅ | Torre de Babel · Betel · Peniel | tijolo e brasa; pedra e céu estrelado; rio ao amanhecer |
 | 2 Topázio ✅ | Sarça ardente em Horebe · Tabernáculo · Cidade de Davi | ouro quente, chama e linho; fortaleza dourada |
-| 3 Carbúnculo ✅ | Monte Carmelo · Vale dos Ossos Secos · Cenáculo | tons de fogo, sem violência: monte e mar ao fundo; vale com sopro de luz; sala alta de Jerusalém |
+| 3 Carbúnculo ✅ | Monte Carmelo · Vale dos Ossos Secos · Pentecostes (a sala em Jerusalém) | tons de fogo, sem violência: monte e mar ao fundo; vale com sopro de luz; sala alta de Jerusalém |
 | 4 Esmeralda | Campos de Belém (Rute) · Oásis de Elim · Monte das Oliveiras | verde-vivo: cevada e colheita; 12 fontes e palmeiras; oliveiras sobre Jerusalém |
 | 5 Safira | Ur dos Caldeus · Susã · Nínive | azul profundo: zigurate no deserto; palácio persa e lírios; muralhas e portões assírios |
 | 6 Diamante | Monte da Transfiguração · Rio Jordão · Belém (nascimento de Jesus) | branco-cristal: neve e luz; água clara; vila e estrela (arte própria da campanha) |
@@ -52,7 +52,7 @@ Quem escolhe o próximo cenário é o dono do jogo, trio a trio; a lista abaixo 
 | 8 Ágata | Éfeso · Filipos · Malta | listras de pedra e areia: teatro e templo; cidade romana da Macedônia; ilha e praia |
 | 9 Ametista | Roma · Antioquia · Samaria | roxo e mármore: Coliseu e estradas; praça dos primeiros irmãos; colinas e o poço de Jacó |
 | 10 Berilo | Ilha de Patmos · Cesareia Marítima · Cafarnaum | verde-água: rochedo e mar; porto de Herodes; vila à beira do lago |
-| 11 Ônix | Getsêmani · Calvário · Jardim do Túmulo | escuro com brilho dourado, **sem horror**: oliveiral à noite; colina serena; jardim e rocha ao amanhecer |
+| 11 Ônix | Santa Ceia · Getsêmani · Calvário | escuro com brilho dourado, **sem horror**: a grande sala do andar de cima à luz de lamparinas; oliveiral à noite; colina serena (o Jardim do Túmulo fica no pool) |
 | 12 Jaspe | Salão do Trono celestial · Nova Jerusalém · Monte Sião | verde-translúcido e ouro: o clímax; muros de jaspe e portas de pérola |
 
 ### Pool de lugares (para escolher e trocar)
@@ -62,7 +62,7 @@ Quem escolhe o próximo cenário é o dono do jogo, trio a trio; a lista abaixo 
 - **Canaã, terra de Israel:** Berseba · Hebrom (Macpela) · Siquém · Siló · Gilgal · Gibeão · Mispa · Ramá · Vale de Elá · En-Gedi · Monte Moriá · Monte Gerizim e Ebal · Vale de Josafá · Monte Sinai (já tem) · Mar Morto e Sodoma · Rio Jordão
 - **Reino e exílio:** Samaria (capital do norte) · Jezreel · Monte Carmelo · Tiro e Sidom · Társis · Ofir · Sabá · Etiópia (Cuxe) · Rio Quebar · Vale dos Ossos Secos · Jerusalém reconstruída (Neemias)
 - **Terra de Jesus:** Nazaré · Belém · Cana · Cafarnaum · Betsaida · Mar da Galileia (já tem) · Monte das Bem-aventuranças · Monte da Transfiguração · Cesareia de Filipe · Decápolis (Gadara) · Betânia · Sicar (poço de Jacó) · Emaús · Tanque de Betesda
-- **Jerusalém, a Paixão:** Monte das Oliveiras · Getsêmani · Cenáculo · Pretório · Calvário (Gólgota) · Jardim do Túmulo · Pórtico de Salomão
+- **Jerusalém, a Paixão:** Monte das Oliveiras · Getsêmani · Santa Ceia (a sala do andar de cima) · Pretório · Calvário (Gólgota) · Jardim do Túmulo · Pórtico de Salomão
 - **Viagens de Paulo:** Damasco · Tarso · Antioquia da Síria · Antioquia da Pisídia · Icônio · Listra · Filipos · Tessalônica · Bereia · Atenas · Corinto · Éfeso · Cesareia Marítima · Chipre · Creta · Malta · Roma
 - **Apocalipse:** Ilha de Patmos · Esmirna · Pérgamo · Tiatira · Sardes · Filadélfia · Laodiceia · Nova Jerusalém · Monte Sião
 
@@ -83,7 +83,7 @@ Cada cenário novo traz uma regra de duelo, **sem sorte**, com tema do lugar. Re
 | Cidade de Davi | ✅ Figurinhas de Vigor 4 ou mais aqui ganham +2 (a fortaleza dos grandes) |
 | Monte Carmelo | ✅ No fim do turno 5, o fogo desce: a figurinha mais forte de cada lado aqui ganha +3 |
 | Vale dos Ossos Secos | ✅ Figurinhas de Influência base 2 ou menos aqui ganham +2 (os ossos que se levantam) |
-| Cenáculo | ✅ Com 3 ou mais figurinhas suas aqui, cada uma ganha +1 (unidos num só lugar) |
+| Pentecostes | ✅ Com 3 ou mais figurinhas suas aqui, cada uma ganha +1 (unidos num só lugar) |
 
 (Os próximos trios ganham a regra na hora do cadastro.)
 
@@ -158,7 +158,7 @@ Os 10 cenários de lançamento mantêm as paradas que já têm (4 a 6) para não
 - [x] **3.** Agrupar cenários por pedra; liberar pedra + cosmético + brasão ao concluir o 3º cenário (transação).
 - [x] **4.** Tela do Peitoral (12 engastes em 4 fileiras, pedra conquistada brilha) e aviso/animação ao ganhar.
 - [x] **5.** Conquista Peitoral Completo (brasão, moldura de prestígio e 2.000 moedas, entregues junto com a 12ª pedra).
-- [ ] **6.** Cadastro dos cenários aos poucos, pedra por pedra. ✅ Trio 1 (Sardônio): Torre de Babel, Betel e Peniel (níveis 51–62, já no seed, sem arte). ✅ Trio 2 (Topázio): Sarça ardente em Horebe, Tabernáculo e Cidade de Davi (níveis 63–74, no seed, sem arte). ✅ Trio 3 (Carbúnculo): Monte Carmelo, Vale dos Ossos Secos e Cenáculo (níveis 75–86, no seed, sem arte). Faltam os trios 4 a 12.
+- [ ] **6.** Cadastro dos cenários aos poucos, pedra por pedra. ✅ Trio 1 (Sardônio): Torre de Babel, Betel e Peniel (níveis 51–62, já no seed, sem arte). ✅ Trio 2 (Topázio): Sarça ardente em Horebe, Tabernáculo e Cidade de Davi (níveis 63–74, no seed, sem arte). ✅ Trio 3 (Carbúnculo): Monte Carmelo, Vale dos Ossos Secos e Pentecostes (níveis 75–86, no seed, sem arte). Faltam os trios 4 a 12.
 - [ ] **7.** Arte das 12 pedras, 12 brasões, 12 cosméticos e o prêmio final.
 
 ### Prompts de arte extras desta campanha (peças novas)

@@ -42,7 +42,7 @@ const FALLBACK_ICONS: Record<string, typeof MapRoundedIcon> = {
   'cidade-davi': MusicNoteRoundedIcon,
   carmelo: TerrainRoundedIcon,
   'ossos-secos': AirRoundedIcon,
-  cenaculo: HolidayVillageRoundedIcon,
+  pentecostes: HolidayVillageRoundedIcon,
 };
 
 export function ScenarioFallbackIcon({ slug, className, fontSize = 28 }: { slug: string; className?: string; fontSize?: number }): ReactNode {
