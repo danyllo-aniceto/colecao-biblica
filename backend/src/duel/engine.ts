@@ -211,6 +211,8 @@ export function cardPower(state: DuelState, laneIndex: number, side: Side, card:
   if (rule.kind === "weakBonus" && card.def.power <= rule.max) power += rule.amount;
   // Unidas num só lugar: com `min` ou mais figurinhas suas aqui, cada uma ganha o bônus.
   if (rule.kind === "gather" && here.length >= rule.min) power += rule.amount;
+  // Quem vigia permanece: figurinhas reveladas há `after` turnos ou mais ganham o bônus.
+  if (rule.kind === "veteran" && state.turn - card.turn >= rule.after) power += rule.amount;
   if (rule.kind === "sharedTag" && here.some((mate) => mate.uid !== card.uid && mate.def.tags.some((tag) => card.def.tags.includes(tag)))) power += rule.amount;
   return power;
 }
@@ -245,6 +247,8 @@ function isShielded(card: PlacedCard) {
 
 function isProtected(state: DuelState, target: Found) {
   if (isShielded(target.card)) return true;
+  // Refúgio (oásis): o rival não enfraquece, cala nem destrói as figurinhas deste cenário com Dons.
+  if (laneScenario(state, target.lane).rule.kind === "refuge") return true;
   return state.lanes[target.lane].cards[target.side].some((card) => !card.silenced && card.def.dom?.trigger === "ongoing" && card.def.dom.effects.some((effect) => effect.kind === "protect"));
 }
 
@@ -829,6 +833,10 @@ function endOfTurn(state: DuelState) {
         target.bonus += rule.amount;
         emit(state, { type: "power", side, lane: index, uid: target.uid, name: target.def.name, amount: rule.amount, text: `${scenarioOf(lane.scenario).emoji} ${scenarioOf(lane.scenario).name}: o fogo desceu sobre ${target.def.name}, que ganhou ${rule.amount}.` });
       }
+    }
+    if (rule.kind === "bountyAt" && state.turn === rule.turn) {
+      for (const side of [0, 1] as Side[]) for (const card of lane.cards[side]) card.bonus += rule.amount;
+      emit(state, { type: "power", lane: index, amount: rule.amount, text: `${scenarioOf(lane.scenario).emoji} Colheita em ${scenarioOf(lane.scenario).name}: todas as figurinhas ganharam ${rule.amount}.` });
     }
     if (rule.kind === "stormAt" && state.turn === rule.turn) {
       for (const side of [0, 1] as Side[]) for (const card of lane.cards[side]) card.bonus -= rule.amount;

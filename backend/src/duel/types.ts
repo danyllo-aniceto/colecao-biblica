@@ -169,6 +169,9 @@ export type ScenarioRule =
   | { kind: "firstBonus"; amount: number }
   | { kind: "costBonus"; min: number; amount: number }
   | { kind: "strongestAt"; turn: number; amount: number }
+  | { kind: "bountyAt"; turn: number; amount: number }
+  | { kind: "refuge" }
+  | { kind: "veteran"; after: number; amount: number }
   | { kind: "weakBonus"; max: number; amount: number }
   | { kind: "gather"; min: number; amount: number };
 

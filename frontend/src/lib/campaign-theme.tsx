@@ -10,13 +10,16 @@ import LandscapeRoundedIcon from '@mui/icons-material/LandscapeRounded';
 import LocationCityRoundedIcon from '@mui/icons-material/LocationCityRounded';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
 import AirRoundedIcon from '@mui/icons-material/AirRounded';
+import ForestRoundedIcon from '@mui/icons-material/ForestRounded';
 import FestivalRoundedIcon from '@mui/icons-material/FestivalRounded';
 import FoundationRoundedIcon from '@mui/icons-material/FoundationRounded';
 import ParkRoundedIcon from '@mui/icons-material/ParkRounded';
+import GrassRoundedIcon from '@mui/icons-material/GrassRounded';
 import HolidayVillageRoundedIcon from '@mui/icons-material/HolidayVillageRounded';
 import MusicNoteRoundedIcon from '@mui/icons-material/MusicNoteRounded';
 import StairsRoundedIcon from '@mui/icons-material/StairsRounded';
 import TerrainRoundedIcon from '@mui/icons-material/TerrainRounded';
+import WaterDropRoundedIcon from '@mui/icons-material/WaterDropRounded';
 import WbTwilightRoundedIcon from '@mui/icons-material/WbTwilightRounded';
 import WhatshotRoundedIcon from '@mui/icons-material/WhatshotRounded';
 
@@ -43,6 +46,9 @@ const FALLBACK_ICONS: Record<string, typeof MapRoundedIcon> = {
   carmelo: TerrainRoundedIcon,
   'ossos-secos': AirRoundedIcon,
   pentecostes: HolidayVillageRoundedIcon,
+  'campos-belem': GrassRoundedIcon,
+  elim: WaterDropRoundedIcon,
+  'monte-oliveiras': ForestRoundedIcon,
 };
 
 export function ScenarioFallbackIcon({ slug, className, fontSize = 28 }: { slug: string; className?: string; fontSize?: number }): ReactNode {

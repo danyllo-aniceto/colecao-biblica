@@ -24,6 +24,9 @@ export const SCENARIOS: ScenarioDef[] = [
   { id: "carmelo", name: "Monte Carmelo", emoji: "☁️", rule: { kind: "strongestAt", turn: 5, amount: 3 }, text: "No fim do turno 5, o fogo desce: a figurinha mais forte de cada lado aqui ganha +3." },
   { id: "ossos-secos", name: "Vale dos Ossos Secos", emoji: "🌬️", rule: { kind: "weakBonus", max: 2, amount: 2 }, text: "Figurinhas de Influência base 2 ou menos aqui ganham +2." },
   { id: "pentecostes", name: "Pentecostes", emoji: "✨", rule: { kind: "gather", min: 3, amount: 1 }, text: "Com 3 ou mais figurinhas suas aqui, cada uma ganha +1." },
+  { id: "campos-belem", name: "Campos de Belém", emoji: "🌾", rule: { kind: "bountyAt", turn: 4, amount: 1 }, text: "No fim do turno 4, é a colheita: todas as figurinhas aqui ganham +1." },
+  { id: "elim", name: "Oásis de Elim", emoji: "🌴", rule: { kind: "refuge" }, text: "Refúgio: o rival não consegue enfraquecer, calar nem destruir, com Dons, as figurinhas daqui." },
+  { id: "monte-oliveiras", name: "Monte das Oliveiras", emoji: "🫒", rule: { kind: "veteran", after: 2, amount: 2 }, text: "Quem vigia permanece: figurinhas reveladas aqui há 2 turnos ou mais ganham +2." },
 ];
 
 export const SCENARIO_BY_ID = new Map(SCENARIOS.map((scenario) => [scenario.id, scenario]));

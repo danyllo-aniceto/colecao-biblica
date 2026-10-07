@@ -376,6 +376,42 @@ describe("cenários", () => {
     expect(scenarioOf("cenaculo").id).toBe("pentecostes");
   });
 
+  it("Campos de Belém: no fim do turno 4 todas as figurinhas daqui ganham +1", () => {
+    const state = duel({ turn: 4, scenarios: ["campos-belem", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    state.lanes[0].cards[1].push({ uid: 3, def: def("abel"), bonus: 0, silenced: false, order: 3, turn: 1 });
+    const next = playTurn(state, [], []);
+    expect(named(next, 0, 0, "Abel").bonus).toBe(1);
+    expect(named(next, 0, 0, "Saul").bonus).toBe(1);
+    expect(named(next, 0, 1, "Abel").bonus).toBe(1);
+    // Fora do turno 4 nada acontece.
+    const early = duel({ turn: 3, scenarios: ["campos-belem", "arca", "canaa"] });
+    early.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 });
+    expect(named(playTurn(early, [], []), 0, 0, "Abel").bonus).toBe(0);
+  });
+
+  it("Oásis de Elim: o rival não calcula Dons que enfraquecem as figurinhas daqui", () => {
+    // Elias destrói a mais fraca do rival no cenário onde revelar; em Elim o refúgio impede.
+    const refuge = duel({ turn: 4, mine: ["elias"], scenarios: ["elim", "arca", "canaa"] });
+    refuge.lanes[0].cards[1].push({ uid: 9, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 });
+    const safe = playTurn(refuge, [["elias", 0]], []);
+    expect(safe.lanes[0].cards[1].map((card) => card.def.name)).toContain("Abel");
+    // Sem o refúgio (Éden), a mesma jogada destrói.
+    const open = duel({ turn: 4, mine: ["elias"], scenarios: ["eden", "arca", "canaa"] });
+    open.lanes[0].cards[1].push({ uid: 9, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 });
+    const hit = playTurn(open, [["elias", 0]], []);
+    expect(hit.lanes[0].cards[1].map((card) => card.def.name)).not.toContain("Abel");
+  });
+
+  it("Monte das Oliveiras: figurinhas reveladas há 2 turnos ou mais ganham +2", () => {
+    const state = duel({ turn: 4, scenarios: ["monte-oliveiras", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 3 });
+    // Abel entrou no turno 1 (há 3 turnos): +2. Saul entrou no turno 3 (há 1): sem bônus.
+    expect(lanePower(state, 0, 0)).toBe(2 + 2 + 6);
+    state.turn = 5;
+    expect(lanePower(state, 0, 0)).toBe(2 + 2 + 6 + 2);
+  });
+
   it("Sinai: só 2 espaços por lado", () => {
     const state = duel({ turn: 4, scenarios: ["sinai", "arca", "canaa"], mine: ["abel", "rute", "miria"] });
     state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 });
