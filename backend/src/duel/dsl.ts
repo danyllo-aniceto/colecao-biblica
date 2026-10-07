@@ -41,6 +41,8 @@ const COUNT_OF: Array<[string, Count["of"]]> = [
   ["aliados", "alliesAll"],
   ["inimigos-aqui", "enemiesHere"],
   ["figurinhas-aqui", "cardsHere"],
+  ["afastadas", "graveyard"],
+  ["mao", "hand"],
 ];
 
 const WHERE: Array<[string, "eachLane" | "here" | "neighbors"]> = [
@@ -111,8 +113,10 @@ function parseCond(raw: string | undefined): Cond | undefined {
       return { type: "allyHereTag", tag: text() };
     case "turno":
       return { type: "turnAtLeast", turn: number(1, 6) };
+    case "afastadas":
+      return { type: "graveyardAtLeast", atLeast: number(1, 12) };
     default:
-      throw new DslError(`Condição desconhecida: "${kind}". Use inimigo-poder, inimigo-nomeado, aliados-aqui, perdendo, ganhando, sozinho, mao-max, inimigo-etiqueta, aliado-etiqueta ou turno.`);
+      throw new DslError(`Condição desconhecida: "${kind}". Use inimigo-poder, inimigo-nomeado, aliados-aqui, perdendo, ganhando, sozinho, mao-max, inimigo-etiqueta, aliado-etiqueta, turno ou afastadas.`);
   }
 }
 
@@ -138,6 +142,8 @@ function condToText(cond: Cond): string {
       return `aliado-etiqueta:${toName(cond.tag)}`;
     case "turnAtLeast":
       return `turno:${cond.turn}`;
+    case "graveyardAtLeast":
+      return `afastadas:${cond.atLeast}`;
   }
 }
 
@@ -255,6 +261,27 @@ function parseEffect(raw: string): Effect {
     case "ressuscitar":
       known("qtd");
       return { kind: "revive", count: integer(params, "qtd", 1, 2, 1) };
+    case "esgotar":
+      known("valor");
+      return { kind: "exhaust", amount: integer(params, "valor", 1, 2, 1), ...(when ? { when } : {}) };
+    case "buscar": {
+      known("qtd", "etiqueta", "criterio");
+      const pickKey = normalize(params.criterio ?? "mais-cara");
+      if (pickKey !== "mais-cara" && pickKey !== "mais-barata") throw new DslError("criterio= precisa ser mais-cara ou mais-barata.");
+      return { kind: "search", count: integer(params, "qtd", 1, 2, 1), pick: pickKey === "mais-cara" ? "priciest" : "cheapest", ...(params.etiqueta ? { tag: fromName(params.etiqueta) } : {}), ...(when ? { when } : {}) };
+    }
+    case "repetir":
+      known();
+      return { kind: "echo", ...(when ? { when } : {}) };
+    case "blindar":
+      known();
+      return { kind: "shield" };
+    case "purificar":
+      known();
+      return { kind: "cleanse", ...(when ? { when } : {}) };
+    case "igualar":
+      known("max");
+      return { kind: "match", max: integer(params, "max", 1, 12, 12), ...(when ? { when } : {}) };
     default:
       throw new DslError(`Efeito desconhecido: "${nameRaw}". Veja o guia de poderes.`);
   }
@@ -303,6 +330,18 @@ function effectToText(effect: Effect): string {
       return "mover-se";
     case "revive":
       return join("ressuscitar", `qtd=${effect.count}`);
+    case "exhaust":
+      return join("esgotar", `valor=${effect.amount}`, ...se(effect.when));
+    case "search":
+      return join("buscar", `qtd=${effect.count}`, `criterio=${effect.pick === "priciest" ? "mais-cara" : "mais-barata"}`, ...(effect.tag ? [`etiqueta=${toName(effect.tag)}`] : []), ...se(effect.when));
+    case "echo":
+      return join("repetir", ...se(effect.when));
+    case "shield":
+      return "blindar";
+    case "cleanse":
+      return join("purificar", ...se(effect.when));
+    case "match":
+      return join("igualar", `max=${effect.max}`, ...se(effect.when));
   }
 }
 
@@ -311,8 +350,8 @@ function effectToText(effect: Effect): string {
 // ---------------------------------------------------------------------------
 
 /** Efeitos que só fazem sentido como Dom contínuo (e os que não podem ser contínuos). */
-const ONGOING_ONLY: Array<Effect["kind"]> = ["protect", "aura"];
-const ONGOING_ALLOWED: Array<Effect["kind"]> = ["protect", "aura", "powerPer"];
+const ONGOING_ONLY: Array<Effect["kind"]> = ["protect", "aura", "shield"];
+const ONGOING_ALLOWED: Array<Effect["kind"]> = ["protect", "aura", "powerPer", "shield"];
 
 export type ParsedDom = { ok: true; dom: Dom | null } | { ok: false; error: string };
 
@@ -330,7 +369,7 @@ export function parseDom(triggerText: string | undefined, effectsText: string | 
     if (list.length === 0) throw new DslError("Nenhum efeito.");
     if (list.length > 3) throw new DslError("No máximo 3 efeitos por Dom.");
     for (const effect of list) {
-      if (kind === "ongoing" && !ONGOING_ALLOWED.includes(effect.kind)) throw new DslError(`O efeito "${effectToText(effect).split(" ")[0]}" não funciona como Dom contínuo (use só aura, proteger ou poder-por).`);
+      if (kind === "ongoing" && !ONGOING_ALLOWED.includes(effect.kind)) throw new DslError(`O efeito "${effectToText(effect).split(" ")[0]}" não funciona como Dom contínuo (use só aura, proteger, blindar ou poder-por).`);
       if (kind !== "ongoing" && ONGOING_ONLY.includes(effect.kind)) throw new DslError(`"${effectToText(effect).split(" ")[0]}" só funciona no gatilho continuo.`);
       if (effect.kind === "power" && effect.to === "hand" && effect.amount < 0) throw new DslError("Não dá para tirar Influência da sua própria mão.");
     }
@@ -381,7 +420,7 @@ export type GuideEntry = { name: string; summary: string; params: string; exampl
 
 export const EFFECT_GUIDE: GuideEntry[] = [
   { name: "poder", summary: "Soma ou tira Influência.", params: "valor=±N  alvo=(si, aliados-aqui, inimigos-aqui, outros-aliados, inimigo-mais-fraco, inimigo-mais-forte, aliado-mais-fraco, inimigos-todos, mao)  se=condição", example: "poder valor=+6 alvo=si se=inimigo-poder:6" },
-  { name: "poder-por", summary: "Soma Influência por cada figurinha que combine.", params: "valor=N  por=(aliados-aqui, aliados, inimigos-aqui, figurinhas-aqui)  etiqueta=Tag  vigor=N", example: "poder-por valor=+1 por=aliados etiqueta=Apóstolo" },
+  { name: "poder-por", summary: "Soma Influência por cada figurinha que combine (em jogo, afastadas ou na sua mão).", params: "valor=N  por=(aliados-aqui, aliados, inimigos-aqui, figurinhas-aqui, afastadas, mao)  etiqueta=Tag  vigor=N", example: "poder-por valor=+1 por=afastadas" },
   { name: "comprar", summary: "Compra figurinhas do Time.", params: "qtd=1 a 3", example: "comprar qtd=1" },
   { name: "destruir", summary: "Afasta figurinhas.", params: "alvo=(inimigo-mais-fraco, inimigo-mais-forte, aliado-mais-fraco, todos-aqui)  se=condição", example: "destruir alvo=todos-aqui se=perdendo" },
   { name: "mover-inimigos", summary: "Leva as figurinhas do rival deste cenário para outros.", params: "(sem parâmetros)", example: "mover-inimigos" },
@@ -399,11 +438,17 @@ export const EFFECT_GUIDE: GuideEntry[] = [
   { name: "multiplicar", summary: "Multiplica a Influência atual da figurinha.", params: "fator=2 ou 3", example: "multiplicar fator=2" },
   { name: "mover-se", summary: "A figurinha vai para o seu cenário mais fraco com espaço.", params: "(sem parâmetros)", example: "mover-se" },
   { name: "ressuscitar", summary: "Uma figurinha afastada sua volta à mão.", params: "qtd=1 ou 2", example: "ressuscitar qtd=1" },
+  { name: "esgotar", summary: "O rival terá menos Vigor no próximo turno (sempre sobra 1).", params: "valor=1 ou 2  se=condição", example: "esgotar valor=1" },
+  { name: "buscar", summary: "Pega no seu Time uma figurinha (a mais cara ou a mais barata, de uma etiqueta se informada) e põe na mão.", params: "qtd=1 ou 2  criterio=(mais-cara, mais-barata)  etiqueta=Tag  se=condição", example: "buscar etiqueta=Profeta" },
+  { name: "repetir", summary: "Repete o Dom \"Ao revelar\" da sua figurinha mais forte aqui, como se ela tivesse virado de novo.", params: "se=condição", example: "repetir" },
+  { name: "blindar", summary: "(contínuo) Esta figurinha não pode ser afastada, devolvida, movida nem reduzida pelo rival.", params: "(sem parâmetros)", example: "blindar" },
+  { name: "purificar", summary: "Tira as penalidades (Influência negativa acumulada) desta figurinha e das suas outras aqui.", params: "se=condição", example: "purificar" },
+  { name: "igualar", summary: "Esta figurinha sobe até a Influência da mais forte aqui (de qualquer lado).", params: "max=1 a 12  se=condição", example: "igualar max=6" },
 ];
 
 export const TRIGGER_GUIDE: Array<{ name: string; summary: string }> = [
   { name: "revelar", summary: "Acontece quando a figurinha vira." },
-  { name: "continuo", summary: "Vale enquanto a figurinha estiver em jogo (só aura, proteger e poder-por)." },
+  { name: "continuo", summary: "Vale enquanto a figurinha estiver em jogo (só aura, proteger, blindar e poder-por)." },
   { name: "fim-do-turno", summary: "Acontece no fim de cada turno." },
   { name: "fim-do-duelo", summary: "Acontece depois do turno 6, antes de contar os cenários." },
   { name: "destruida", summary: "Acontece quando a figurinha é afastada." },
@@ -420,4 +465,5 @@ export const CONDITION_GUIDE: Array<{ name: string; summary: string }> = [
   { name: "perdendo / ganhando", summary: "O cenário está perdendo / ganhando para você." },
   { name: "mao-max:N", summary: "Você tem N ou menos figurinhas na mão." },
   { name: "turno:N", summary: "A partir do turno N." },
+  { name: "afastadas:N", summary: "Você tem N ou mais figurinhas afastadas (no cemitério)." },
 ];

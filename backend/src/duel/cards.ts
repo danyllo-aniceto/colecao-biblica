@@ -74,10 +74,14 @@ function describeCond(cond: Cond): string {
       return `se você tem aqui outra figurinha ${cond.tag}`;
     case "turnAtLeast":
       return `a partir do turno ${cond.turn}`;
+    case "graveyardAtLeast":
+      return `se você tem ${cond.atLeast}+ figurinhas afastadas`;
   }
 }
 
 function describeCount(count: Count): string {
+  if (count.of === "graveyard") return `figurinha${count.tag ? ` ${count.tag}` : ""} sua afastada`;
+  if (count.of === "hand") return `figurinha${count.tag ? ` ${count.tag}` : ""} na sua mão`;
   const what = count.tag ? `figurinha ${count.tag}` : count.cost !== undefined ? `figurinha de Vigor ${count.cost}` : "figurinha";
   if (count.of === "enemiesHere") return `${what} do rival aqui`;
   if (count.of === "cardsHere") return `${what} aqui`;
@@ -122,6 +126,18 @@ function describeEffect(effect: Effect): string {
       return `some da arena e volta sozinha ${effect.turns === 1 ? "no turno seguinte" : `${effect.turns} turnos depois`}${effect.bonus ? ` com ${signed(effect.bonus)}` : ""}, no mesmo lugar, e fica`;
     case "protect":
       return "suas figurinhas aqui não podem ser destruídas nem reduzidas pelo rival";
+    case "exhaust":
+      return `o rival terá ${effect.amount} a menos de Vigor no próximo turno${effect.when ? `, ${describeCond(effect.when)}` : ""}`;
+    case "search":
+      return `busca no seu Time ${effect.count} figurinha${effect.count > 1 ? "s" : ""}${effect.tag ? ` ${effect.tag}` : ""} ${effect.pick === "priciest" ? "de maior" : "de menor"} Vigor e põe na mão${effect.when ? `, ${describeCond(effect.when)}` : ""}`;
+    case "echo":
+      return `repete o Dom "Ao revelar" da sua figurinha mais forte aqui${effect.when ? `, ${describeCond(effect.when)}` : ""}`;
+    case "shield":
+      return "não pode ser afastada, devolvida, movida nem reduzida pelo rival";
+    case "cleanse":
+      return `tira as penalidades das suas figurinhas aqui${effect.when ? `, ${describeCond(effect.when)}` : ""}`;
+    case "match":
+      return `iguala a Influência da figurinha mais forte daqui (até +${effect.max})${effect.when ? `, ${describeCond(effect.when)}` : ""}`;
     case "aura":
       return `${signed(effect.amount)} de Influência para ${effect.to === "alliesHere" ? "suas figurinhas aqui" : effect.to === "allies" ? "suas outras figurinhas em jogo" : "suas figurinhas nos cenários vizinhos"}${effect.tag ? ` com a etiqueta ${effect.tag}` : ""}`;
   }

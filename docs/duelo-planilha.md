@@ -20,7 +20,7 @@ preenchida **substitui** a figurinha daquele personagem.
 
 ## Gatilhos
 
-`revelar` (quando a figurinha vira) · `continuo` (enquanto estiver em jogo; só aura, proteger e poder-por) · `fim-do-turno` ·
+`revelar` (quando a figurinha vira) · `continuo` (enquanto estiver em jogo; só aura, proteger, blindar e poder-por) · `fim-do-turno` ·
 `fim-do-duelo` (depois do turno 6, antes de contar) · `destruida` · `aliado-jogado` (outra figurinha sua vira no mesmo cenário).
 
 ## Efeitos
@@ -30,7 +30,7 @@ Formato: `nome chave=valor chave=valor`. Sem espaços nos valores (`_` vira espa
 | Efeito | Faz | Parâmetros |
 |---|---|---|
 | `poder` | soma/tira Influência | `valor=±N` `alvo=` si · aliados-aqui · inimigos-aqui · outros-aliados · inimigo-mais-fraco · inimigo-mais-forte · aliado-mais-fraco · inimigos-todos · mao `se=` |
-| `poder-por` | Influência por cada figurinha que combine | `valor=N` `por=` aliados-aqui · aliados · inimigos-aqui · figurinhas-aqui `etiqueta=` `vigor=` |
+| `poder-por` | Influência por cada figurinha que combine | `valor=N` `por=` aliados-aqui · aliados · inimigos-aqui · figurinhas-aqui · afastadas (suas, no cemitério) · mao (as da sua mão) `etiqueta=` `vigor=` |
 | `comprar` | compra figurinhas | `qtd=1..3` |
 | `destruir` | afasta figurinhas | `alvo=` inimigo-mais-fraco · inimigo-mais-forte · aliado-mais-fraco · todos-aqui `se=` |
 | `mover-inimigos` | leva as figurinhas do rival deste cenário para outros | — |
@@ -48,11 +48,17 @@ Formato: `nome chave=valor chave=valor`. Sem espaços nos valores (`_` vira espa
 | `multiplicar` | multiplica a Influência atual | `fator=2..3` |
 | `mover-se` | vai para o seu cenário mais fraco com espaço | — |
 | `ressuscitar` | uma figurinha afastada sua volta à mão | `qtd=1..2` |
+| `esgotar` | o rival tem menos Vigor no próximo turno (sempre sobra 1; no turno 6 não faz nada) | `valor=1..2` `se=` |
+| `buscar` | pega no seu Time uma figurinha e põe na mão (o aviso não diz qual) | `qtd=1..2` `criterio=` mais-cara · mais-barata `etiqueta=` `se=` |
+| `repetir` | repete o "Ao revelar" da sua figurinha mais forte aqui (ignora as que também repetem ou somem) | `se=` |
+| `blindar` | (contínuo) esta figurinha não pode ser afastada, devolvida, movida nem reduzida pelo rival; `calar` cancela | — |
+| `purificar` | tira as penalidades (Influência negativa) desta figurinha e das suas outras aqui | `se=` |
+| `igualar` | esta figurinha sobe até a Influência da mais forte aqui, de qualquer lado | `max=1..12` `se=` |
 
 ## Condições (`se=`)
 
 `inimigo-poder:N` · `inimigo-nomeado:Nome` · `inimigo-etiqueta:Tag` · `aliado-etiqueta:Tag` · `aliados-aqui:N` · `sozinho` ·
-`perdendo` · `ganhando` · `mao-max:N` · `turno:N`.
+`perdendo` · `ganhando` · `mao-max:N` · `turno:N` · `afastadas:N` (você tem N ou mais figurinhas afastadas).
 
 ## Exemplos (linhas da planilha)
 
@@ -65,6 +71,9 @@ Daniel;2;2;Profeta;continuo;proteger;Sim
 Jonas;1;1;Profeta;revelar;sumir turnos=3 bonus=+3;Sim
 Elias;4;4;Profeta;revelar;destruir alvo=inimigo-mais-fraco;Sim
 Paulo;4;5;Apóstolo;revelar;converter | poder-por valor=+1 por=aliados etiqueta=Apóstolo;Sim
+Estêvão;3;2;Discípulo;continuo;poder-por valor=+1 por=afastadas;Sim
+Isaías;4;4;Profeta;revelar;buscar etiqueta=Profeta;Sim
+Judas;3;3;Apóstolo;revelar;esgotar valor=1;Sim
 ```
 
 ## Regras que ajudam a equilibrar

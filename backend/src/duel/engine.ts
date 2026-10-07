@@ -117,7 +117,8 @@ export function newDuel(input: NewDuelInput): DuelState {
 /** Vigor do jogador no turno: o número do turno mais o que um Dom deu a mais. */
 export function energyFor(state: DuelState, side: Side) {
   const player = state.players[side];
-  return state.turn + player.energyBonus + (player.carry ?? 0);
+  // Um Dom que esgota o rival nunca deixa ele sem nada: sobra pelo menos 1 de Vigor.
+  return Math.max(1, state.turn + player.energyBonus + (player.carry ?? 0));
 }
 
 /** De onde vem o Vigor do turno: o número do turno, o bônus de Dons e o que sobrou (e foi guardado) dos turnos anteriores. */
@@ -153,6 +154,12 @@ function findCard(state: DuelState, uid: number): Found | null {
 }
 
 function countMatching(state: DuelState, source: Found, count: Count) {
+  // Figurinhas suas afastadas ou na mão: não estão em cenário nenhum.
+  if (count.of === "graveyard" || count.of === "hand") {
+    const mine = state.players[source.side];
+    const pile = count.of === "graveyard" ? mine.graveyard.filter((card) => !card.def.token) : mine.hand;
+    return pile.filter((card) => (!count.tag || card.def.tags.includes(count.tag)) && (count.cost === undefined || card.def.cost === count.cost)).length;
+  }
   const lanes = count.of === "alliesHere" || count.of === "enemiesHere" || count.of === "cardsHere" ? [source.lane] : state.lanes.map((_, index) => index);
   const sides: Side[] = count.of === "enemiesHere" ? [other(source.side)] : count.of === "cardsHere" ? [0, 1] : [source.side];
   let total = 0;
@@ -231,7 +238,13 @@ function laneWinner(state: DuelState, laneIndex: number): Side | null {
   return a === b ? null : a > b ? 0 : 1;
 }
 
+/** A figurinha tem o Dom contínuo "blindar" (e não foi calada): o rival não consegue afastá-la, devolvê-la, movê-la nem reduzi-la. */
+function isShielded(card: PlacedCard) {
+  return !card.silenced && card.def.dom?.trigger === "ongoing" && card.def.dom.effects.some((effect) => effect.kind === "shield");
+}
+
 function isProtected(state: DuelState, target: Found) {
+  if (isShielded(target.card)) return true;
   return state.lanes[target.lane].cards[target.side].some((card) => !card.silenced && card.def.dom?.trigger === "ongoing" && card.def.dom.effects.some((effect) => effect.kind === "protect"));
 }
 
@@ -291,6 +304,8 @@ function checkCond(state: DuelState, ctx: Ctx, cond: Cond | undefined): boolean 
       return state.lanes[ctx.lane].cards[ctx.side].some((card) => card.uid !== ctx.card.uid && card.def.tags.includes(cond.tag));
     case "turnAtLeast":
       return state.turn >= cond.turn;
+    case "graveyardAtLeast":
+      return state.players[ctx.side].graveyard.filter((card) => !card.def.token).length >= cond.atLeast;
   }
 }
 
@@ -400,7 +415,6 @@ function applyEffect(state: DuelState, ctx: Ctx, effect: Effect, isDestroyedHook
       return;
     }
     case "draw": {
-      if (isDestroyedHook) return;
       const drawn = drawCards(state, ctx.side, effect.count);
       if (drawn > 0) emit(state, { type: "draw", side: ctx.side, name: self, amount: drawn, text: `${self}: comprou ${drawn} figurinha${drawn > 1 ? "s" : ""}.` });
       return;
@@ -549,7 +563,72 @@ function applyEffect(state: DuelState, ctx: Ctx, effect: Effect, isDestroyedHook
       if (back > 0) emit(state, { type: "return", side: ctx.side, name: self, amount: back, text: `${self}: ${back} figurinha${back > 1 ? "s" : ""} voltou à mão.` });
       return;
     }
+    case "exhaust": {
+      // No último turno não há próximo turno: o Dom não tem o que esgotar.
+      if (!checkCond(state, ctx, effect.when) || state.turn >= TURNS) return;
+      const foe = other(ctx.side);
+      state.players[foe].nextEnergyBonus -= effect.amount;
+      emit(state, { type: "energy", side: foe, name: self, amount: -effect.amount, text: `${self}: o rival terá ${effect.amount} a menos de Vigor no próximo turno.` });
+      return;
+    }
+    case "search": {
+      if (!checkCond(state, ctx, effect.when)) return;
+      const player = state.players[ctx.side];
+      let found = 0;
+      for (let step = 0; step < effect.count; step += 1) {
+        if (player.hand.length >= HAND_MAX) break;
+        const pool = player.deck.map((card, index) => ({ card, index })).filter(({ card }) => !effect.tag || card.def.tags.includes(effect.tag));
+        if (pool.length === 0) break;
+        // Empate de Vigor: a que está mais perto do topo do Time (o texto do evento não diz qual foi: é segredo do dono).
+        const best = pool.reduce((a, b) => (effect.pick === "priciest" ? (b.card.def.cost > a.card.def.cost ? b : a) : b.card.def.cost < a.card.def.cost ? b : a));
+        const [card] = player.deck.splice(best.index, 1);
+        player.hand.push(card);
+        found += 1;
+      }
+      if (found > 0) emit(state, { type: "draw", side: ctx.side, name: self, amount: found, text: `${self}: buscou ${found} figurinha${found > 1 ? "s" : ""} no Time.` });
+      return;
+    }
+    case "echo": {
+      if (!checkCond(state, ctx, effect.when)) return;
+      // Só repete Dons "Ao revelar" que não repetem nem fazem a figurinha sumir (nada de laço infinito ou de tirá-la do cenário).
+      const candidates = state.lanes[ctx.lane].cards[ctx.side].filter(
+        (card) => card.uid !== ctx.card.uid && card.def.dom?.trigger === "reveal" && !card.def.dom.effects.some((item) => item.kind === "echo" || item.kind === "vanish"),
+      );
+      const target = candidates.sort((a, b) => cardPower(state, ctx.lane, ctx.side, b) - cardPower(state, ctx.lane, ctx.side, a) || a.order - b.order)[0];
+      if (!target?.def.dom) return;
+      emit(state, { type: "dom", side: ctx.side, lane: ctx.lane, uid: ctx.card.uid, name: self, text: `${self} repetiu o Dom de ${target.def.name}.`, dom: describeDom(target.def.dom) });
+      const inner: Ctx = { side: ctx.side, lane: ctx.lane, card: target };
+      for (const item of target.def.dom.effects) applyEffect(state, inner, item);
+      return;
+    }
+    case "cleanse": {
+      if (!checkCond(state, ctx, effect.when)) return;
+      let restored = 0;
+      for (const card of [ctx.card, ...state.lanes[ctx.lane].cards[ctx.side].filter((entry) => entry.uid !== ctx.card.uid)]) {
+        if (card.bonus < 0) {
+          restored -= card.bonus;
+          card.bonus = 0;
+        }
+      }
+      if (restored > 0) emit(state, { type: "power", side: ctx.side, lane: ctx.lane, uid: ctx.card.uid, name: self, amount: restored, text: `${self}: limpou as penalidades das suas figurinhas aqui (+${restored} de Influência).` });
+      return;
+    }
+    case "match": {
+      if (!checkCond(state, ctx, effect.when)) return;
+      let top = 0;
+      for (const side of [0, 1] as Side[]) {
+        for (const card of state.lanes[ctx.lane].cards[side]) {
+          if (card.uid !== ctx.card.uid) top = Math.max(top, cardPower(state, ctx.lane, side, card));
+        }
+      }
+      const gain = Math.min(effect.max, top - cardPower(state, ctx.lane, ctx.side, ctx.card));
+      if (gain <= 0) return;
+      ctx.card.bonus += gain;
+      emit(state, { type: "power", side: ctx.side, lane: ctx.lane, uid: ctx.card.uid, name: self, amount: gain, text: `${self}: igualou a figurinha mais forte daqui (+${gain} de Influência).` });
+      return;
+    }
     case "protect":
+    case "shield":
     case "aura":
       return; // Contínuos: calculados em cardPower / isProtected.
   }

@@ -162,6 +162,9 @@ Legenda: ✅ feito e testado · ⬜ a fazer.
 2. **Painel + dados** ✅
    - ✅ Vocabulário ampliado: 19 efeitos (os 12 do começo + devolver, descartar, vigor-extra, custo-menos, converter, sacrificar, multiplicar, mover-se,
      ressuscitar, poder na mão, aura em todos, fichas novas), 10 condições; tudo testado (`dsl.test.ts`, 15 testes).
+   - ✅ Mais variedade de Dons: 6 efeitos novos (`esgotar`, `buscar`, `repetir`, `blindar`, `purificar`, `igualar`), contar figurinhas afastadas e da mão em
+     `poder-por`, a condição `afastadas:N` e correção do "Ao ser destruída" que não comprava figurinha (Jó). Testado em `mecanicas-novas.test.ts` (26 testes,
+     inclui 200 duelos de bots com esses Dons).
    - ✅ Dom em texto (`backend/src/duel/dsl.ts`): gatilho + efeitos, com erros em português; mesmo código no servidor (importação) e no painel (prévia).
    - ✅ Tabela `duel_cards` (migração `20261023090000_duelo_cartas`) e API `/api/duel`: figurinhas e Times para o jogo, lista paginada do painel com busca,
      exportação, edição, remoção e **importação por planilha com prévia** (13 testes de integração em `duel.test.ts`).

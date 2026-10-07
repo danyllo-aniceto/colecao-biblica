@@ -54,10 +54,15 @@ export type Cond =
   | { type: "handAtMost"; count: number }
   | { type: "enemyHereTag"; tag: string }
   | { type: "allyHereTag"; tag: string }
-  | { type: "turnAtLeast"; turn: number };
+  | { type: "turnAtLeast"; turn: number }
+  /** Você tem `atLeast` ou mais figurinhas suas afastadas (no cemitério). */
+  | { type: "graveyardAtLeast"; atLeast: number };
 
-/** O que contar nas figurinhas "por cada...": figurinhas suas aqui ou em jogo, com etiqueta ou Vigor específico. */
-export type Count = { of: "alliesHere" | "alliesAll" | "enemiesHere" | "cardsHere"; tag?: string; cost?: number };
+/**
+ * O que contar nas figurinhas "por cada...": figurinhas suas aqui ou em jogo, com etiqueta ou Vigor específico.
+ * `graveyard` conta as suas figurinhas afastadas e `hand`, as que estão na sua mão.
+ */
+export type Count = { of: "alliesHere" | "alliesAll" | "enemiesHere" | "cardsHere" | "graveyard" | "hand"; tag?: string; cost?: number };
 
 export type Effect =
   | { kind: "power"; amount: number; to: Target; when?: Cond }
@@ -90,7 +95,19 @@ export type Effect =
   /** Contínuo: as figurinhas suas neste cenário não podem ser destruídas nem reduzidas por figurinhas do rival. */
   | { kind: "protect" }
   /** Contínuo: +amount nas figurinhas suas neste cenário ou nos cenários vizinhos (de uma etiqueta, se informada). */
-  | { kind: "aura"; amount: number; to: "alliesHere" | "adjacent" | "allies"; tag?: string };
+  | { kind: "aura"; amount: number; to: "alliesHere" | "adjacent" | "allies"; tag?: string }
+  /** O rival terá `amount` a menos de Vigor no próximo turno (sempre sobra ao menos 1). */
+  | { kind: "exhaust"; amount: number; when?: Cond }
+  /** Pega no seu Time `count` figurinha(s) e põe na mão: a mais cara (ou a mais barata) que combine com a etiqueta, se houver. */
+  | { kind: "search"; count: number; pick: "priciest" | "cheapest"; tag?: string; when?: Cond }
+  /** Repete o "Ao revelar" da sua figurinha mais forte aqui que tenha esse Dom (como se ela tivesse virado de novo). */
+  | { kind: "echo"; when?: Cond }
+  /** Contínuo: esta figurinha não pode ser destruída, devolvida, movida nem reduzida pelo rival. */
+  | { kind: "shield" }
+  /** Tira as penalidades (Influência negativa acumulada) desta figurinha e das suas outras aqui. */
+  | { kind: "cleanse"; when?: Cond }
+  /** Esta figurinha sobe até a Influência da mais forte aqui (de qualquer lado), ganhando no máximo `max`. */
+  | { kind: "match"; max: number; when?: Cond };
 
 export type Dom = { trigger: Trigger; effects: Effect[]; /** Texto manual (o do painel); sem ele, o motor descreve. */ text?: string };
 
