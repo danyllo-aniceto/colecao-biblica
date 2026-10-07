@@ -856,18 +856,19 @@ function endOfTurn(state: DuelState) {
       }
     }
     if (rule.kind === "levelAt" && state.turn === rule.turn) {
-      // A luz de Damasco: a mais forte de cada lado cai (não abaixo de zero) e a mais fraca se levanta. Só vale com 2 ou mais figurinhas do lado.
+      // A luz de Damasco: a mais forte de cada lado cai `fall` (não abaixo de zero) e a mais fraca se levanta `rise`. Só vale com 2 ou mais
+      // figurinhas do lado. Como `rise` é maior que `fall`, o lado sai ganhando: vale ter companhia aqui antes do fim do turno.
       for (const side of [0, 1] as Side[]) {
         const cards = lane.cards[side];
         if (cards.length < 2) continue;
         const ranked = [...cards].sort((a, b) => cardPower(state, index, side, b) - cardPower(state, index, side, a) || a.order - b.order);
         const strongest = ranked[0];
         const weakest = ranked[ranked.length - 1];
-        const fall = Math.min(rule.amount, Math.max(cardPower(state, index, side, strongest), 0));
+        const fall = Math.min(rule.fall, Math.max(cardPower(state, index, side, strongest), 0));
         strongest.bonus -= fall;
-        weakest.bonus += rule.amount;
+        weakest.bonus += rule.rise;
         emit(state, { type: "power", side, lane: index, uid: strongest.uid, name: strongest.def.name, amount: -fall, text: `${scenarioOf(lane.scenario).emoji} ${scenarioOf(lane.scenario).name}: ${strongest.def.name} caiu ${fall} diante da luz.` });
-        emit(state, { type: "power", side, lane: index, uid: weakest.uid, name: weakest.def.name, amount: rule.amount, text: `${scenarioOf(lane.scenario).emoji} ${scenarioOf(lane.scenario).name}: ${weakest.def.name} se levantou e ganhou ${rule.amount}.` });
+        emit(state, { type: "power", side, lane: index, uid: weakest.uid, name: weakest.def.name, amount: rule.rise, text: `${scenarioOf(lane.scenario).emoji} ${scenarioOf(lane.scenario).name}: ${weakest.def.name} se levantou e ganhou ${rule.rise}.` });
       }
     }
     if (rule.kind === "growthEvery" && state.turn % rule.every === 0) {

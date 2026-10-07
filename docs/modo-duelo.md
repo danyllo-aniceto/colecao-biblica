@@ -100,7 +100,7 @@ Campos de Belém: no fim do turno 4 todas as figurinhas aqui ganham +1 · Oásis
 Monte das Oliveiras: figurinhas reveladas aqui há 2 turnos ou mais ganham +2 ·
 Ur dos Caldeus: +2 para cada Patriarca seu aqui · Susã: no fim do turno 5 o lado que perde aqui ganha +1 em cada figurinha · Nínive: no fim de cada turno as figurinhas daqui recuperam a Influência perdida ·
 Monte da Transfiguração: com exatamente 3 figurinhas suas aqui, cada uma ganha +2 · Rio Jordão: a figurinha mais recente de cada lado aqui ganha +2 · Manjedoura de Jesus: a mais fraca de cada lado aqui ganha +3 ·
-Damasco: no fim do turno 3 a mais forte de cada lado (com 2+ figurinhas) perde 2 e a mais fraca ganha 2 · Atenas: figurinhas sem Dom aqui ganham +2 · Corinto: nos turnos 2, 4 e 6 todas as figurinhas daqui ganham +1.
+Damasco: no fim do turno 3 a mais forte de cada lado (com 2+ figurinhas) perde 2 e a mais fraca ganha 4 · Atenas: figurinhas sem Dom aqui ganham +2 · Corinto: nos turnos 2, 4 e 6 todas as figurinhas daqui ganham +1.
 
 **Guia no app:** o botão *Poderes e arenas* (hub do Duelo e dentro do *Como jogar*) abre `duel-guide.tsx`, que explica cada tipo de Dom, as palavras do jogo, o que cada efeito faz e lista as arenas com a regra (lê `SCENARIOS`, então arena nova aparece sozinha; efeito ou tipo de Dom novo entra no texto do guia). (Cenários das 12 Pedras: toda pedra nova traz a regra do cenário aqui.)
 

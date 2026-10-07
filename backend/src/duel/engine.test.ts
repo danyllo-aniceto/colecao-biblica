@@ -428,13 +428,15 @@ describe("cenários", () => {
     expect(lanePower(state, 0, 0)).toBe(6 + 2 + 3);
   });
 
-  it("Damasco: no fim do turno 3, a mais forte de cada lado cai 2 e a mais fraca sobe 2; sozinha, nada muda", () => {
+  it("Damasco: no fim do turno 3, a mais forte de cada lado cai 2 e a mais fraca sobe 4 (+2 no total); sozinha, nada muda", () => {
     const state = duel({ turn: 3, scenarios: ["damasco", "arca", "canaa"] });
     state.lanes[0].cards[0].push({ uid: 1, def: def("saul"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 });
     state.lanes[0].cards[1].push({ uid: 3, def: def("saul"), bonus: 0, silenced: false, order: 3, turn: 1 });
     const next = playTurn(state, [], []);
     expect(named(next, 0, 0, "Saul").bonus).toBe(-2);
-    expect(named(next, 0, 0, "Abel").bonus).toBe(2);
+    expect(named(next, 0, 0, "Abel").bonus).toBe(4);
+    // O lado ganha no total: -2 + 4 = +2 (antes valia zero).
+    expect(lanePower(next, 0, 0)).toBe(lanePower(state, 0, 0) + 2);
     // Sozinha do lado dela, a figurinha não muda.
     expect(named(next, 0, 1, "Saul").bonus).toBe(0);
     // Em outro turno nada acontece.

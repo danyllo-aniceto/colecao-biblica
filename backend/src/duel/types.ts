@@ -179,7 +179,7 @@ export type ScenarioRule =
   | { kind: "exactCount"; count: number; amount: number }
   | { kind: "lastBonus"; amount: number }
   | { kind: "weakestBonus"; amount: number }
-  | { kind: "levelAt"; turn: number; amount: number }
+  | { kind: "levelAt"; turn: number; fall: number; rise: number }
   | { kind: "plainBonus"; amount: number }
   | { kind: "growthEvery"; every: number; amount: number };
 

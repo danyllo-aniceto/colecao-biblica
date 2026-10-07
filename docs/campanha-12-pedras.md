@@ -93,7 +93,7 @@ Cada cenário novo traz uma regra de duelo, **sem sorte**, com tema do lugar. Re
 | Monte da Transfiguração | ✅ Três tendas: com exatamente 3 figurinhas suas aqui, cada uma ganha +2 |
 | Rio Jordão | ✅ Quem entra nas águas: a figurinha mais recente de cada lado aqui ganha +2 |
 | Manjedoura de Jesus | ✅ Os últimos serão os primeiros: a figurinha mais fraca de cada lado aqui ganha +3 |
-| Damasco | ✅ A luz da estrada: no fim do turno 3, a mais forte de cada lado aqui (com 2 ou mais figurinhas) perde 2 e a mais fraca ganha 2 |
+| Damasco | ✅ A luz da estrada: no fim do turno 3, a mais forte de cada lado aqui (com 2 ou mais figurinhas) perde 2 e a mais fraca ganha 4 |
 | Atenas | ✅ O altar ao Deus desconhecido: figurinhas sem Dom aqui ganham +2 |
 | Corinto | ✅ Plantar e regar: no fim dos turnos 2, 4 e 6, todas as figurinhas daqui ganham +1 |
 
