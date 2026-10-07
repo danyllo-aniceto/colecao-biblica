@@ -1,0 +1,315 @@
+﻿"Nome";"Resumo curto";"História completa";"Curiosidades";"Onde ler";"Papel na história";"Período";"Livros";"Versículos-chave";"Palavras-chave";"Publicado";"Árvore genealógica";"Linha do tempo"
+"Jacó";"Neto de Abraão e pai das doze tribos de Israel, Jacó disputou a bênção com o irmão Esaú, serviu Labão por vinte anos, lutou com Deus em Peniel e recebeu o nome Israel; sua vida mostra a graça de Deus agindo por meio de um homem cheio de falhas.";"Jacó era filho de Isaque e Rebeca e irmão gêmeo de Esaú. Antes de os meninos nascerem, Deus disse a Rebeca que o maior serviria o menor. Esaú nasceu primeiro, e Jacó saiu segurando o calcanhar do irmão, o que explica o seu nome, que lembra ""aquele que segura o calcanhar"" e, por extensão, ""enganador"". Esaú virou caçador, e Jacó, homem tranquilo que vivia em tendas. Isaque amava Esaú, e Rebeca amava Jacó.
+Jacó comprou a primogenitura de Esaú por um prato de lentilhas e, depois, com a ajuda da mãe, enganou o pai, já velho e cego: vestiu-se com as roupas de Esaú e cobriu as mãos e o pescoço com a pele de cabritos para receber a bênção. Esaú ficou furioso e quis matá-lo, e Jacó fugiu para Harã, para a casa de Labão, irmão de sua mãe.
+No caminho, em Betel, dormiu com uma pedra por travesseiro e sonhou com uma escada que chegava ao céu, com anjos subindo e descendo. Deus renovou a ele a promessa feita a Abraão e a Isaque: a terra, uma descendência numerosa e a bênção para todas as famílias da terra. Jacó chamou o lugar de Betel, ""casa de Deus"", e fez um voto.
+Em Harã, apaixonou-se por Raquel e serviu sete anos por ela, mas Labão lhe deu Lia, a filha mais velha, na noite do casamento. Jacó trabalhou mais sete anos por Raquel e depois seis pelos rebanhos, ao todo vinte anos a serviço de Labão. Nesse tempo nasceram os filhos: de Lia, Rúben, Simeão, Levi, Judá, Issacar, Zebulom e a filha Diná; de Bila, Dã e Naftali; de Zilpa, Gade e Aser; e de Raquel, José. Benjamim nasceu mais tarde, a caminho de Efrata, quando Raquel morreu.
+Na volta a Canaã, com medo de Esaú, Jacó enviou presentes e orou. À noite, junto ao ribeiro de Jaboque, um homem lutou com ele até o amanhecer, tocou-lhe a articulação da coxa e o deixou manco. Jacó disse: ""Não te deixarei ir, se me não abençoares"", e recebeu o nome Israel, que lembra o que luta com Deus. Chamou o lugar de Peniel, ""face de Deus"". No dia seguinte, Esaú correu ao seu encontro e o abraçou, e os dois se reconciliaram.
+Jacó amava José mais que aos outros filhos e lhe deu uma túnica especial. Os irmãos, com inveja, venderam José e disseram ao pai que uma fera o tinha devorado. Jacó chorou por muitos anos. Com a fome, enviou os filhos ao Egito e, ao saber que José estava vivo, desceu com toda a família, setenta pessoas, para Gósen. O faraó o recebeu, e Jacó o abençoou.
+Aos 147 anos, Jacó abençoou José e os filhos dele, Efraim e Manassés, cruzando as mãos para dar a Efraim a bênção principal. Depois falou sobre cada um dos filhos e anunciou que o cetro não se apartaria de Judá. Foi sepultado em Macpela, ao lado de Abraão, Sara, Isaque, Rebeca e Lia.";"O nome Israel, dado a Jacó em Peniel, passou a ser o nome de todo o povo (Gênesis 32:28).
+Depois da luta, Jacó ficou manco, e por isso o povo de Israel não come o tendão da coxa dos animais (Gênesis 32:32).
+Jacó serviu Labão por vinte anos, catorze pelas duas filhas e seis pelos rebanhos (Gênesis 31:41).
+Ele é o patriarca com mais filhos citados no texto bíblico: doze filhos e uma filha.
+Jesus cita o sonho de Betel ao dizer que os anjos subiriam e desceriam sobre o Filho do Homem (João 1:51).
+Jacó viveu 147 anos e tinha 130 quando chegou ao Egito (Gênesis 47:9,28).";"Gênesis 25:19-34 (nascimento e primogenitura)
+Gênesis 27 (a bênção)
+Gênesis 28:10-22 (o sonho de Betel)
+Gênesis 29 a 31 (Harã, Lia e Raquel)
+Gênesis 32 e 33 (Peniel e Esaú)
+Gênesis 37 e 46 a 49 (José, o Egito e as bênçãos)
+Oséias 12:3-4 e Hebreus 11:21 (o testemunho posterior)";"Patriarca de Israel, neto de Abraão e pai das doze tribos; recebeu o nome Israel depois de lutar com Deus em Peniel";"Era dos patriarcas (cerca de 1900 a 1750 a.C.)";"Gênesis, Êxodo, Oséias, Malaquias, Romanos, Hebreus";"Gênesis 28:15; Gênesis 32:26-28; Gênesis 35:10; Gênesis 46:3-4; Gênesis 49:10";"patriarca, Israel, bênção, Betel, Peniel, doze tribos, luta, Esaú";"Sim";"graph TD
+  Isaque[""Isaque""] --> Esau[""Esaú""]
+  Isaque --> Jaco[""Jacó, depois Israel""]
+  Rebeca[""Rebeca""] --> Esau
+  Rebeca --> Jaco
+  Jaco --> Lia[""Lia""]
+  Jaco --> Raquel[""Raquel""]
+  Lia --> Filhos1[""Rúben, Simeão, Levi, Judá, Issacar, Zebulom e Diná""]
+  Raquel --> Jose[""José""]
+  Raquel --> Benjamim[""Benjamim""]
+  Jaco --> Servas[""Bila e Zilpa""]
+  Servas --> Filhos2[""Dã, Naftali, Gade e Aser""]
+  Jose --> Efraim[""Efraim e Manassés""]";"timeline
+  title A vida de Jacó
+  Gênesis 25 : Nascem Esaú e Jacó, e Jacó compra a primogenitura
+  Gênesis 27 : Jacó recebe a bênção de Isaque e foge de Esaú
+  Gênesis 28 : O sonho da escada em Betel
+  Gênesis 29 a 31 : Vinte anos com Labão, os casamentos e os filhos
+  Gênesis 32 : A luta em Peniel e o nome Israel
+  Gênesis 33 : Jacó e Esaú se reconciliam
+  Gênesis 37 : José é vendido pelos irmãos
+  Gênesis 46 : Jacó desce ao Egito com a família
+  Gênesis 49 : As bênçãos aos filhos e a morte de Jacó"
+"Samuel";"Último juiz de Israel e grande profeta, filho de Ana, consagrado ao Senhor desde criança em Siló; foi quem ungiu Saul como primeiro rei e depois Davi, e mostrou que obedecer a Deus vale mais que sacrifícios.";"Samuel nasceu de uma oração. Sua mãe, Ana, era estéril e chorou diante do Senhor em Siló, prometendo que, se tivesse um filho, o entregaria a Deus por toda a vida. O pai, Elcana, vivia em Ramataim, na região montanhosa de Efraim. Quando Samuel foi desmamado, Ana o levou ao sacerdote Eli e o deixou no santuário, e todos os anos lhe fazia uma pequena capa.
+Samuel cresceu servindo diante do Senhor, enquanto os filhos de Eli, Hofni e Finéias, desonravam o sacerdócio. Numa noite, Samuel ouviu uma voz que o chamava e pensou que era Eli. Só na terceira vez Eli entendeu que era Deus e lhe ensinou a responder: ""Fala, Senhor, porque o teu servo ouve"". A palavra foi dura: a casa de Eli seria julgada. Samuel teve medo de contá-la, mas contou, e todo Israel, de Dã a Berseba, soube que Samuel era profeta do Senhor.
+Depois que os filisteus tomaram a arca da aliança e Eli e os filhos morreram, Samuel passou a liderar Israel. Reuniu o povo em Mizpá, que se arrependeu e tirou os ídolos, e Deus deu a vitória sobre os filisteus. Samuel ergueu uma pedra e a chamou de Ebenezer, ""até aqui nos ajudou o Senhor"". Ele julgava o povo todos os anos, num circuito que passava por Betel, Gilgal e Mizpá, e morava em Ramá.
+Quando Samuel envelheceu, os filhos Joel e Abias, a quem tinha posto como juízes, desviaram-se, e os anciãos pediram um rei, ""como o têm todas as nações"". Samuel ficou aflito, mas Deus lhe disse que o povo não rejeitara a ele, e sim ao Senhor. Samuel os avisou do que um rei exigiria e, ainda assim, ungiu Saul, da tribo de Benjamim, por ordem de Deus.
+Quando Saul desobedeceu, oferecendo ele mesmo o sacrifício e poupando o que devia ser destruído, Samuel lhe disse: ""O obedecer é melhor do que o sacrificar"". Deus enviou então Samuel a Belém, à casa de Jessé, para ungir o mais novo dos filhos, Davi, que ainda cuidava das ovelhas. Deus lhe ensinou que o homem vê o exterior, mas o Senhor vê o coração.
+Samuel morreu em Ramá, e todo Israel o lamentou. É lembrado ao lado de Moisés como intercessor (Jeremias 15:1; Salmos 99:6) e aparece na lista dos heróis da fé em Hebreus 11:32.";"Samuel é lembrado como o último dos juízes e como o profeta que marcou a passagem para a monarquia (Atos 13:20).
+Ele ungiu os dois primeiros reis de Israel: Saul e Davi.
+O nome Samuel lembra o pedido de Ana a Deus (""do Senhor o pedi"", 1 Samuel 1:20).
+Ana fazia para o filho uma pequena capa a cada ano (1 Samuel 2:19).
+Ebenezer, ""pedra de ajuda"", é o nome do memorial que Samuel ergueu depois da vitória (1 Samuel 7:12).
+Os livros de Samuel levam o seu nome, embora a sua morte seja contada no capítulo 25 do primeiro livro.";"1 Samuel 1 e 2 (nascimento e infância)
+1 Samuel 3 (o chamado de noite)
+1 Samuel 7 (Mizpá e Ebenezer)
+1 Samuel 8 a 10 (o pedido de um rei e a unção de Saul)
+1 Samuel 15 e 16 (a rejeição de Saul e a unção de Davi)
+1 Samuel 25:1 (a morte de Samuel)";"Último juiz e profeta de Israel, que ungiu Saul e Davi e marcou a passagem do tempo dos juízes para a monarquia";"Fim dos juízes e início da monarquia (cerca de 1100 a 1010 a.C.)";"1 Samuel, 1 Crônicas, Salmos, Jeremias, Atos, Hebreus";"1 Samuel 3:10; 1 Samuel 7:12; 1 Samuel 15:22; 1 Samuel 16:7; Salmos 99:6";"último juiz, profeta, Siló, Ana, unção, Saul, Davi, obediência";"Sim";"graph TD
+  Elcana[""Elcana""] --> Samuel[""Samuel, juiz e profeta""]
+  Ana[""Ana""] --> Samuel
+  Samuel --> Joel[""Joel""]
+  Samuel --> Abias[""Abias""]
+  Eli[""Eli, sacerdote em Siló""] -.criou.-> Samuel
+  Samuel -.unge.-> Saul[""Saul""]
+  Samuel -.unge.-> Davi[""Davi""]";"timeline
+  title Samuel, o último juiz
+  1 Samuel 1 : Ana ora e nasce Samuel
+  1 Samuel 2 : Samuel é entregue a Eli em Siló
+  1 Samuel 3 : Deus chama Samuel de noite
+  1 Samuel 7 : A vitória de Mizpá e a pedra Ebenezer
+  1 Samuel 8 : O povo pede um rei
+  1 Samuel 10 : Samuel unge Saul
+  1 Samuel 15 : Deus rejeita Saul por desobediência
+  1 Samuel 16 : Samuel unge Davi em Belém
+  1 Samuel 25 : Morte de Samuel em Ramá"
+"Jonas";"Profeta do reino do norte, filho de Amitai, que tentou fugir da ordem de Deus de pregar em Nínive, foi engolido por um grande peixe e, depois de obedecer, viu a cidade inteira se arrepender; seu livro mostra a compaixão de Deus por todos os povos.";"Jonas, filho de Amitai, de Gate-Hefer, foi um profeta que atuou no reino do norte, no tempo do rei Jeroboão II. Um dia, Deus lhe mandou ir a Nínive, a grande capital da Assíria, inimiga de Israel, e clamar contra a sua maldade. Em vez de obedecer, Jonas desceu a Jope, achou um navio e embarcou para Társis, na direção oposta, ""para fugir da presença do Senhor"".
+O Senhor mandou um vento forte sobre o mar, e o navio quase se partiu. Os marinheiros, apavorados, oraram cada um ao seu deus e jogaram a carga ao mar, enquanto Jonas dormia no porão. O capitão o acordou e lhe pediu que clamasse ao seu Deus. Lançadas as sortes, o nome de Jonas foi sorteado. Ele confessou que era hebreu e temente ao Senhor, e pediu que o lançassem ao mar, porque a tempestade era por causa dele. Os homens relutaram, mas o lançaram, e o mar se acalmou. Eles temeram ao Senhor e lhe ofereceram sacrifício.
+O Senhor tinha preparado um grande peixe, que engoliu Jonas. Ele ficou no ventre do peixe três dias e três noites, e dali orou ao Senhor com um salmo de gratidão: ""Da minha angústia clamei ao Senhor, e ele me ouviu"". O peixe o vomitou em terra firme.
+Deus mandou a Jonas, pela segunda vez, ir a Nínive. Ele obedeceu e andou pela cidade, que era tão grande que se levavam três dias para atravessá-la, anunciando: ""Ainda quarenta dias, e Nínive será subvertida"". Os ninivitas creram em Deus, decretaram jejum e vestiram pano de saco, do maior ao menor. O rei se levantou do trono, tirou o manto e se assentou na cinza, e mandou que todos se convertessem do mau caminho. Deus viu as suas obras e se arrependeu do mal que tinha dito que lhes faria.
+Jonas ficou muito desgostoso e irado, e disse que sabia que Deus era piedoso e misericordioso, e por isso tinha fugido. Saiu da cidade, fez uma cabana e se sentou para ver o que aconteceria. Deus fez crescer uma aboboreira para lhe dar sombra, e Jonas se alegrou muito. No dia seguinte, um bicho feriu a planta, e ela secou, e Jonas quis morrer. Então Deus lhe perguntou se era justo se irar por causa da planta, e lhe disse que ele não tinha compaixão da grande cidade de Nínive, onde havia mais de cento e vinte mil pessoas que não sabiam discernir entre a mão direita e a esquerda, e muito gado? O livro termina com essa pergunta.
+Jesus cita Jonas como ""sinal"": assim como Jonas esteve três dias no ventre do grande peixe, o Filho do Homem estaria três dias no seio da terra, e os ninivitas se levantariam no juízo para condenar os que não creram.";"Jonas é o profeta do Antigo Testamento mais ligado à pregação a um povo estrangeiro, em sua própria cidade (Jonas 1:2).
+Ele esteve três dias e três noites no ventre do grande peixe (Jonas 1:17).
+A Bíblia não diz que o animal era uma baleia, e fala apenas em ""um grande peixe"".
+Nínive era tão grande que se levavam três dias para atravessá-la (Jonas 3:3).
+O rei de Nínive e todo o povo, até os animais, entraram em jejum (Jonas 3:5-8).
+Jesus se refere ao ""sinal de Jonas"" como imagem da sua morte e ressurreição (Mateus 12:39-41).";"2 Reis 14:25 (Jonas, o profeta)
+Jonas 1 (a fuga e a tempestade)
+Jonas 2 (a oração no peixe)
+Jonas 3 (Nínive se arrepende)
+Jonas 4 (a ira de Jonas e a aboboreira)
+Mateus 12:38-41 e Lucas 11:29-32 (o sinal de Jonas)";"Profeta enviado a Nínive que mostra, com a sua fuga e a sua ira, a misericórdia de Deus por todos os povos";"Reino de Israel (cerca de 785 a 760 a.C.)";"2 Reis, Jonas, Mateus, Lucas";"Jonas 1:3; Jonas 1:17; Jonas 2:9; Jonas 3:10; Jonas 4:11";"profeta, Nínive, grande peixe, fuga, arrependimento, misericórdia, sinal de Jonas";"Sim";"graph TD
+  Amitai[""Amitai, de Gate-Hefer""] --> Jonas[""Jonas, o profeta""]
+  Jonas -.enviado a.-> Ninive[""Nínive, capital da Assíria""]
+  Jonas -.fugiu para.-> Tarsis[""Társis""]
+  Jeroboao[""Jeroboão II, rei de Israel""] -.reinado de.-> Jonas";"timeline
+  title Jonas e Nínive
+  2 Reis 14 : Jonas profetiza no reino do norte
+  Jonas 1 : Deus manda Jonas a Nínive e ele foge para Társis
+  Jonas 1 : A tempestade e Jonas lançado ao mar
+  Jonas 2 : Três dias no ventre do grande peixe
+  Jonas 3 : Jonas prega em Nínive
+  Jonas 3 : A cidade se arrepende e Deus a poupa
+  Jonas 4 : Jonas irado e a aboboreira"
+"Raabe";"Mulher de Jericó que escondeu os dois espias de Josué, confessou que o Senhor é Deus e foi salva com a sua família quando a cidade caiu; entrou na genealogia de Davi e de Jesus e é lembrada como exemplo de fé.";"Raabe vivia em Jericó, numa casa construída sobre a muralha, e é descrita como prostituta. Quando Josué enviou dois espias para reconhecer a terra, eles foram à casa dela, e o rei de Jericó soube e mandou que os entregasse. Raabe os escondeu entre os talos de linho que punha a secar no terraço e disse aos homens do rei que os espias já tinham saído, mandando-os perseguir pelo caminho do Jordão.
+Depois, subiu ao terraço e falou aos espias. Disse que sabia que o Senhor tinha dado a terra a Israel, que o terror deles caíra sobre os moradores e que todos tinham ouvido o que Deus fez no mar Vermelho e com os reis amorreus. E confessou: ""Porque o Senhor, vosso Deus, é Deus em cima nos céus e em baixo na terra"". Em troca da bondade que mostrou, pediu que, quando a cidade fosse tomada, poupassem a vida dela, dos pais, dos irmãos e de toda a família.
+Os espias prometeram. Ela os desceu por uma corda pela janela, e disse que se escondessem nos montes por três dias. Os espias lhe disseram que atasse um cordão de fio de escarlata na janela e reunisse a família em casa. Quem estivesse dentro seria poupado.
+Quando Israel cercou Jericó, rodeando a cidade durante sete dias, os muros caíram. Josué mandou os dois espias entrar na casa de Raabe e tirar de lá a mulher e tudo o que era dela. Raabe, o pai, a mãe, os irmãos e toda a família foram salvos e levados para fora do arraial de Israel, e a cidade foi queimada. Raabe habitou no meio de Israel ""até ao dia de hoje"".
+Mateus a coloca na genealogia de Jesus: Salmom gerou a Boaz, de Raabe. Hebreus 11:31 a cita entre os heróis da fé: ""Pela fé, Raabe, a prostituta, não pereceu com os incrédulos, acolhendo em paz os espias"". Tiago 2:25 usa o seu exemplo para mostrar que a fé verdadeira se prova pelas obras.";"A casa de Raabe ficava sobre o muro de Jericó, e por isso os espias puderam ser descidos pela janela (Josué 2:15).
+O cordão de escarlata na janela lembra o sangue nas ombreiras dos israelitas na Páscoa (Josué 2:18).
+Raabe é uma das poucas mulheres citadas na genealogia de Jesus em Mateus 1:5, junto com Tamar, Rute e a mulher de Urias.
+Segundo Mateus 1:5, ela foi esposa de Salmom e mãe de Boaz, o marido de Rute.
+Dois livros do Novo Testamento a citam como exemplo de fé: Hebreus 11:31 e Tiago 2:25.
+Raabe confessa a sua fé no Senhor antes mesmo da queda de Jericó, apenas por ter ouvido o que Deus fez (Josué 2:10-11).";"Josué 2 (os espias e o acordo)
+Josué 6:17-25 (a queda de Jericó e a salvação de Raabe)
+Mateus 1:5 (a genealogia de Jesus)
+Hebreus 11:31 (a fé de Raabe)
+Tiago 2:25 (a fé e as obras)";"Cananeia de Jericó que escondeu os espias de Israel, confessou o Senhor como Deus e foi incluída no povo e na linhagem do Messias";"Conquista de Canaã (cerca de 1405 a.C.)";"Josué, Mateus, Hebreus, Tiago";"Josué 2:11; Josué 2:18; Josué 6:25; Hebreus 11:31; Tiago 2:25";"Jericó, espias, fé, cordão de escarlata, misericórdia, estrangeira, genealogia de Jesus";"Sim";"graph TD
+  Salmom[""Salmom""] --- Raabe[""Raabe, de Jericó""]
+  Salmom --> Boaz[""Boaz""]
+  Raabe --> Boaz
+  Boaz --- Rute[""Rute""]
+  Boaz --> Obede[""Obede""]
+  Obede --> Jesse[""Jessé""]
+  Jesse --> Davi[""Davi""]
+  Davi --> Jesus[""Jesus, o Messias""]";"timeline
+  title Raabe e a queda de Jericó
+  Josué 2 : Raabe esconde os dois espias no terraço
+  Josué 2 : Confessa que o Senhor é Deus e pede misericórdia
+  Josué 2 : Desce os espias pela janela e recebe o cordão de escarlata
+  Josué 6 : Os muros de Jericó caem
+  Josué 6 : Raabe e a sua família são salvos
+  Mateus 1 : Raabe entra na genealogia de Jesus
+  Hebreus 11 : A sua fé é lembrada entre os heróis"
+"Isaías";"Um dos grandes profetas, filho de Amoz, que viu o Senhor no templo e respondeu ""Eis-me aqui, envia-me a mim""; profetizou em Judá por mais de quarenta anos e anunciou o Emanuel, o Servo sofredor e a restauração de Israel.";"Isaías, filho de Amoz, profetizou em Jerusalém e em Judá nos reinados de Uzias, Jotão, Acaz e Ezequias. No ano em que o rei Uzias morreu, viu o Senhor assentado num alto e sublime trono, cercado de serafins que clamavam: ""Santo, Santo, Santo é o Senhor dos Exércitos"". Isaías se sentiu perdido, por ser homem de lábios impuros, mas um serafim tocou os seus lábios com uma brasa tirada do altar e disse que a culpa estava removida. Ao ouvir ""A quem enviarei, e quem há de ir por nós?"", respondeu: ""Eis-me aqui, envia-me a mim"".
+A mensagem inicial era dura: Deus denunciava a injustiça, a hipocrisia religiosa e a falsa confiança em alianças políticas. Deus convida o povo a se arrepender, prometendo que, ainda que os pecados sejam como a escarlata, ficarão brancos como a neve. Quando o rei Acaz foi pressionado pelos reis de Israel e da Síria, Isaías o chamou a confiar em Deus, e deu um sinal: ""A virgem conceberá, e dará à luz um filho, e chamará o seu nome Emanuel"", que quer dizer ""Deus conosco"".
+No reinado de Ezequias, Senaqueribe cercou Jerusalém. Isaías disse ao rei que não temesse, e naquela noite o anjo do Senhor feriu o exército assírio. Quando Ezequias adoeceu, foi Isaías quem lhe anunciou a morte e depois, por ordem de Deus, a cura, com quinze anos a mais. Também avisou o rei de que um dia tudo o que tinha seria levado à Babilônia.
+Os capítulos 40 a 66 consolam um povo que ainda viveria o exílio: ""Consolai, consolai o meu povo"". O texto menciona até o nome de Ciro, o rei persa que deixaria os exilados voltarem. Aparecem as quatro canções do Servo do Senhor, a mais conhecida em Isaías 52:13 a 53:12: um servo desprezado, ferido pelas nossas transgressões, que levou sobre si o pecado de muitos. O Novo Testamento aplica esse texto a Jesus, e foi o trecho que o eunuco etíope lia quando Filipe lhe explicou o evangelho.
+Isaías também anunciou o ""menino nascido"", cujo nome é ""Maravilhoso, Conselheiro, Deus Forte, Pai da Eternidade, Príncipe da Paz"", e a visão de um novo céu e de uma nova terra. Jesus leu Isaías 61 na sinagoga de Nazaré e disse que aquelas palavras se cumpriam naquele dia. A tradição judaica e cristã diz que Isaías morreu mártir no reinado de Manassés.";"O nome Isaías quer dizer ""o Senhor salva"", o mesmo sentido do nome Jesus.
+O livro tem 66 capítulos, e muitos deles são citados no Novo Testamento.
+Os Manuscritos do Mar Morto trazem um rolo completo de Isaías, cerca de mil anos mais antigo que os manuscritos hebraicos conhecidos antes da sua descoberta.
+O Servo sofredor de Isaías 53 é o trecho que o eunuco etíope lia em Atos 8:32-33.
+Segundo o texto, Isaías anunciou o nome de Ciro mais de cem anos antes de ele reinar (Isaías 44:28; 45:1).
+A visão do seu chamado, em Isaías 6, deu origem ao ""Santo, Santo, Santo"" do culto cristão.";"Isaías 1 (a denúncia)
+Isaías 6 (o chamado)
+Isaías 7 a 9 (Emanuel e o Príncipe da Paz)
+Isaías 36 a 39 (Ezequias e Senaqueribe)
+Isaías 40 (consolo para o povo)
+Isaías 52:13 a 53:12 (o Servo sofredor)
+Isaías 61 (o ano aceitável do Senhor)";"Profeta de Jerusalém que anunciou o juízo, a esperança, o Emanuel e o Servo sofredor, e é o profeta mais citado no Novo Testamento";"Reino de Judá (cerca de 740 a 690 a.C.)";"Isaías, 2 Reis, 2 Crônicas, Mateus, Lucas, João, Atos, Romanos";"Isaías 6:8; Isaías 7:14; Isaías 9:6; Isaías 40:31; Isaías 53:5";"profeta, visão do templo, Emanuel, Servo sofredor, consolo, Ezequias, Messias";"Sim";"graph TD
+  Amoz[""Amoz""] --> Isaias[""Isaías, profeta de Judá""]
+  Isaias -.aconselha.-> Ezequias[""Ezequias, rei de Judá""]
+  Isaias -.fala a.-> Acaz[""Acaz, rei de Judá""]
+  Acaz --> Ezequias
+  Isaias -.anuncia.-> Messias[""O Messias, Emanuel""]";"timeline
+  title O ministério de Isaías
+  Isaías 1 : Isaías denuncia a injustiça em Judá
+  Isaías 6 : Vê o Senhor no templo no ano da morte de Uzias
+  Isaías 7 : Anuncia o sinal de Emanuel ao rei Acaz
+  Isaías 36 : Senaqueribe cerca Jerusalém
+  Isaías 37 : O anjo do Senhor fere o exército assírio
+  Isaías 38 : Deus acrescenta quinze anos à vida de Ezequias
+  Isaías 40 : A mensagem de consolo ao povo
+  Isaías 53 : O canto do Servo sofredor"
+"Jezabel";"Rainha de Israel, filha do rei de Sidom e esposa de Acabe, que promoveu a adoração de Baal, perseguiu os profetas do Senhor e tramou a morte de Nabote; seu fim, anunciado por Elias, tornou o seu nome sinônimo de maldade.";"Jezabel era filha de Etbaal, rei dos sidônios, e casou-se com Acabe, rei de Israel, num casamento político que trouxe para Samaria o culto a Baal e a Aserá. O texto bíblico diz que Acabe, além de andar nos pecados de Jeroboão, tomou por mulher Jezabel e passou a servir a Baal. Ele construiu um templo para Baal em Samaria, e Jezabel sustentava à sua mesa quatrocentos e cinquenta profetas de Baal e quatrocentos profetas de Aserá.
+Quando o profeta Elias anunciou a seca, Jezabel perseguia os profetas do Senhor, e Obadias, mordomo de Acabe, escondeu cem deles em cavernas, de cinquenta em cinquenta. No monte Carmelo, depois que o Senhor respondeu com fogo ao desafio de Elias e os profetas de Baal foram mortos, Jezabel mandou dizer a Elias que o mataria no dia seguinte. Elias fugiu para o deserto e quis morrer.
+O episódio mais conhecido é o de Nabote. Acabe queria a vinha de Nabote, que ficava perto do palácio, e Nabote se recusou a vendê-la, porque era herança de seus pais. Acabe ficou amuado. Jezabel lhe disse que governasse como rei, e escreveu cartas em nome dele, com o selo real, aos anciãos de Jezreel, mandando que proclamassem um jejum e pusessem Nabote em lugar de honra, com dois homens perversos para o acusar de blasfêmia contra Deus e o rei. Nabote foi apedrejado, e Jezabel disse a Acabe que tomasse a vinha. Deus enviou Elias, que anunciou que os cães lamberiam o sangue de Acabe no mesmo lugar e devorariam Jezabel junto ao muro de Jezreel.
+Depois da morte de Acabe, Jezabel viveu ainda cerca de doze anos, influenciando os filhos de Acabe, e Atalia, filha de Acabe, levou o culto de Baal a Judá. Quando Jeú foi ungido rei para destruir a casa de Acabe, chegou a Jezreel. Jezabel pintou os olhos, enfeitou a cabeça e olhou da janela, perguntando se tinha paz Zinri, que matou o seu senhor. Jeú pediu que os eunucos a lançassem para baixo, e eles a lançaram, e o seu sangue respingou na parede. Quando mandaram enterrá-la, por ser filha de rei, só encontraram o crânio, os pés e as palmas das mãos, porque os cães a tinham devorado, como Elias dissera.
+No Apocalipse, a igreja de Tiatira é repreendida por tolerar ""a mulher Jezabel"", que se dizia profetisa e seduzia os servos de Deus. O nome ficou como símbolo da idolatria e da manipulação.";"O nome Jezabel é ligado, por alguns estudiosos, a ""onde está o príncipe?"", expressão do culto a Baal.
+Ela sustentava mais de 800 profetas de Baal e de Aserá em Samaria (1 Reis 18:19).
+Jezabel usou o selo do rei Acabe para mandar as cartas contra Nabote (1 Reis 21:8).
+A profecia de Elias sobre o seu fim foi cumprida ao pé da letra em 2 Reis 9:30-37.
+Sua filha Atalia levou o culto de Baal para Judá (2 Reis 8:18; 11:1).
+Em Apocalipse 2:20, o nome Jezabel é usado para uma falsa profetisa em Tiatira.";"1 Reis 16:29-33 (o casamento com Acabe)
+1 Reis 18 e 19 (o Carmelo e a ameaça a Elias)
+1 Reis 21 (a vinha de Nabote)
+2 Reis 9:30-37 (o fim de Jezabel)
+Apocalipse 2:18-29 (a mulher Jezabel em Tiatira)";"Rainha de Israel e esposa de Acabe, que promoveu o culto a Baal, perseguiu os profetas do Senhor e foi julgada conforme a palavra de Elias";"Reino de Israel (cerca de 874 a 841 a.C.)";"1 Reis, 2 Reis, Apocalipse";"1 Reis 16:31; 1 Reis 18:4; 1 Reis 19:2; 1 Reis 21:25; 2 Reis 9:33-37";"rainha, Baal, Acabe, Elias, Nabote, perseguição, idolatria, julgamento";"Sim";"graph TD
+  Etbaal[""Etbaal, rei de Sidom""] --> Jezabel[""Jezabel, rainha de Israel""]
+  Jezabel --- Acabe[""Acabe, rei de Israel""]
+  Acabe --> Acazias[""Acazias""]
+  Acabe --> Jorao[""Jorão""]
+  Acabe --> Atalia[""Atalia, rainha de Judá""]
+  Jezabel --> Acazias
+  Jezabel --> Jorao
+  Elias[""Elias, profeta""] -.anuncia o julgamento.-> Jezabel
+  Jeu[""Jeú""] -.executa o julgamento.-> Jezabel";"timeline
+  title Jezabel em Israel
+  1 Reis 16 : Jezabel se casa com Acabe e introduz o culto a Baal
+  1 Reis 18 : Elias vence os profetas de Baal no Carmelo
+  1 Reis 19 : Jezabel jura matar Elias
+  1 Reis 21 : Nabote é morto e Jezabel toma a vinha
+  1 Reis 21 : Elias anuncia o fim de Acabe e de Jezabel
+  2 Reis 9 : Jeú é ungido rei
+  2 Reis 9 : Jezabel é lançada da janela em Jezreel
+  Apocalipse 2 : O nome Jezabel é lembrado em Tiatira"
+"João Batista";"Filho de Zacarias e Isabel, profeta do deserto que preparou o caminho do Senhor, batizou Jesus no Jordão e o apontou como ""o Cordeiro de Deus""; foi preso e decapitado por Herodes Antipas por denunciar o seu casamento.";"João nasceu seis meses antes de Jesus, filho do sacerdote Zacarias e de Isabel, que era estéril e já avançada em idade. O anjo Gabriel anunciou o seu nascimento a Zacarias no templo, dizendo que o menino seria grande diante do Senhor, não beberia vinho nem bebida forte e seria cheio do Espírito Santo desde o ventre de sua mãe. Zacarias duvidou e ficou mudo até o dia em que escreveu num tabuleiro: ""O seu nome é João"". Quando recuperou a fala, profetizou que o menino seria chamado profeta do Altíssimo e iria adiante do Senhor para preparar os seus caminhos.
+João cresceu no deserto. No décimo quinto ano do imperador Tibério, a palavra de Deus veio sobre ele, e começou a pregar junto ao Jordão um batismo de arrependimento para perdão dos pecados. Andava vestido de pelos de camelo, com um cinto de couro, e se alimentava de gafanhotos e mel silvestre. Citava Isaías: ""Voz do que clama no deserto: Preparai o caminho do Senhor, endireitai as suas veredas"". Multidões vinham de Jerusalém, da Judeia e de toda a região do Jordão. Aos fariseus e saduceus que apareciam chamava ""raça de víboras"" e dizia que produzissem frutos dignos de arrependimento. Aos soldados, aos cobradores de impostos e ao povo, dava conselhos práticos de justiça e partilha.
+Quando perguntaram se ele era o Cristo, respondeu que não, que era apenas a voz que prepara o caminho, e que depois dele viria alguém mais poderoso, cujas sandálias ele não era digno de desatar. Quando Jesus veio da Galileia ao Jordão, João quis impedi-lo, porque era Jesus quem devia batizá-lo, mas aceitou. Ao sair da água, o céu se abriu, o Espírito desceu como pomba e uma voz disse: ""Este é o meu Filho amado"". No dia seguinte, ao ver Jesus, João disse: ""Eis o Cordeiro de Deus, que tira o pecado do mundo"". Alguns de seus discípulos, entre eles André, seguiram Jesus. João aceitou isso com alegria: ""É necessário que ele cresça e que eu diminua"".
+João denunciou publicamente o rei Herodes Antipas por ter tomado Herodias, mulher do seu irmão Filipe. Herodes o mandou prender. Na prisão, João ouviu falar das obras de Jesus e mandou perguntar se era ele o que havia de vir. Jesus mandou dizer que os cegos viam, os coxos andavam e aos pobres se anunciava o evangelho, e disse à multidão que entre os nascidos de mulher não surgira ninguém maior que João Batista.
+No aniversário de Herodes, a filha de Herodias dançou diante dos convidados, e o rei, tendo jurado dar-lhe o que pedisse, ouviu o pedido, aconselhado pela mãe: a cabeça de João Batista num prato. Herodes, muito triste, mas preso ao juramento, mandou decapitá-lo na prisão. Os discípulos de João levaram o corpo, sepultaram-no e foram contar a Jesus.";"João e Jesus eram parentes, pois Isabel era prima de Maria (Lucas 1:36).
+O nome João quer dizer ""o Senhor é misericordioso"".
+Jesus disse que João era o Elias que havia de vir (Mateus 11:14).
+Ele andava vestido de pelos de camelo, como o profeta Elias (2 Reis 1:8; Mateus 3:4).
+O historiador Josefo registra a morte de João por ordem de Herodes Antipas e a ligação com a fortaleza de Maquero.
+Cerca de vinte e cinco anos depois, Paulo encontrou em Éfeso discípulos que só tinham o batismo de João (Atos 19:1-7).";"Lucas 1 (o nascimento e o cântico de Zacarias)
+Mateus 3, Marcos 1 e Lucas 3 (a pregação e o batismo de Jesus)
+João 1:19-34 (o testemunho sobre o Cordeiro)
+João 3:22-30 (o amigo do noivo)
+Mateus 11:2-19 (a pergunta de João na prisão)
+Mateus 14:1-12 e Marcos 6:14-29 (a morte de João)";"Profeta precursor de Jesus, que preparou o caminho do Messias, batizou o Senhor e morreu mártir por denunciar a injustiça do rei";"Ministério de Jesus (cerca de 26 a 29 d.C.)";"Mateus, Marcos, Lucas, João, Atos, Isaías, Malaquias";"Mateus 3:3; Mateus 11:11; João 1:29; João 1:36; João 3:30";"precursor, batismo, arrependimento, deserto, Cordeiro de Deus, Herodes, mártir";"Sim";"graph TD
+  Zacarias[""Zacarias, sacerdote""] --> Joao[""João Batista""]
+  Isabel[""Isabel""] --> Joao
+  Isabel -.prima de.-> Maria[""Maria, mãe de Jesus""]
+  Maria --> Jesus[""Jesus""]
+  Joao -.batiza.-> Jesus
+  Herodes[""Herodes Antipas""] -.manda prender e matar.-> Joao
+  Herodias[""Herodias""] -.exige a morte de.-> Joao";"timeline
+  title A vida de João Batista
+  Lucas 1 : Gabriel anuncia o nascimento a Zacarias
+  Lucas 1 : Nasce João e Zacarias volta a falar
+  Lucas 3 : João começa a pregar junto ao Jordão
+  Mateus 3 : João batiza Jesus
+  João 1 : Aponta Jesus como o Cordeiro de Deus
+  Mateus 14 : João é preso por denunciar Herodes
+  Mateus 11 : Manda perguntar a Jesus se ele é o que havia de vir
+  Mateus 14 : É decapitado na prisão"
+"Tomé";"Um dos doze apóstolos, conhecido como Dídimo, o ""gêmeo""; ficou famoso por não crer na ressurreição até ver Jesus, mas depois fez a mais clara confissão de fé dos Evangelhos: ""Senhor meu e Deus meu!"".";"Tomé aparece em todas as listas dos doze apóstolos. João o chama também de Dídimo, palavra grega para ""gêmeo"", assim como Tomé, em aramaico. O Evangelho de João é o que mais conta sobre ele, em três cenas.
+Na primeira, Jesus decide voltar à Judeia para ir ao encontro de Lázaro, que tinha morrido, e os discípulos temem, porque os judeus já tinham tentado apedrejá-lo ali. Tomé diz aos outros: ""Vamos nós também, para morrermos com ele"". É um gesto de lealdade, e de coragem, ainda que misturada com pessimismo.
+Na segunda, na última ceia, Jesus fala de preparar um lugar na casa do Pai e diz que os discípulos sabem o caminho. Tomé responde com sinceridade: ""Senhor, não sabemos para onde vais, e como podemos saber o caminho?"". Jesus responde com uma das frases mais conhecidas do Evangelho: ""Eu sou o caminho, e a verdade, e a vida; ninguém vem ao Pai senão por mim"".
+A terceira cena é a mais conhecida. No dia da ressurreição, Jesus apareceu aos discípulos que estavam reunidos com as portas fechadas, mas Tomé não estava. Quando os outros lhe disseram ""Vimos o Senhor"", ele respondeu que, se não visse o sinal dos cravos nas mãos e não pusesse o dedo e a mão no lado de Jesus, não creria. Oito dias depois, os discípulos estavam de novo reunidos, desta vez com Tomé. Jesus entrou, com as portas fechadas, e disse: ""Paz seja convosco"". Voltou-se para Tomé e o convidou a pôr o dedo nas suas mãos e a mão no seu lado. A resposta de Tomé foi curta: ""Senhor meu e Deus meu!"". Jesus disse: ""Porque me viste, creste; bem-aventurados os que não viram e creram"".
+Tomé estava também com os discípulos no mar da Galileia, quando Jesus apareceu na praia, e na sala alta em Jerusalém, depois da ascensão. Segundo uma tradição antiga, ele levou o evangelho para além do império romano, até a Índia, onde as igrejas cristãs de Malabar o reconhecem como fundador; essa tradição não é registrada no Novo Testamento.";"João registra que Tomé era chamado Dídimo, ""gêmeo"" (João 11:16; 20:24).
+A sua confissão, ""Senhor meu e Deus meu"", é o ponto alto do Evangelho de João (João 20:28).
+Jesus não repreendeu a pergunta de Tomé, mas mostrou as marcas na sua carne e o chamou a crer (João 20:27).
+A famosa frase ""Eu sou o caminho, a verdade e a vida"" foi dita em resposta à pergunta de Tomé (João 14:5-6).
+A tradição conta que Tomé morreu mártir na Índia, perto de Madras (a atual Chennai).
+A expressão ""ser como São Tomé"", ""ver para crer"", vem desse episódio e é usada até hoje.";"Mateus 10:3 e Atos 1:13 (a lista dos apóstolos)
+João 11:1-16 (vamos nós também)
+João 14:1-7 (o caminho)
+João 20:19-29 (a dúvida e a confissão)
+João 21:1-14 (o mar da Galileia)";"Apóstolo que passou da dúvida à confissão mais clara da divindade de Jesus, e mostra que perguntas honestas podem levar à fé";"Ministério de Jesus e igreja primitiva (cerca de 27 a 72 d.C.)";"Mateus, Marcos, Lucas, João, Atos";"João 11:16; João 14:5-6; João 20:25; João 20:28-29";"apóstolo, dúvida, ressurreição, confissão, fé, Dídimo, caminho";"Sim";"graph TD
+  Jesus[""Jesus""] --> Doze[""Os doze apóstolos""]
+  Doze --> Tome[""Tomé, o Dídimo""]
+  Doze --> Pedro[""Pedro""]
+  Doze --> Joao[""João""]
+  Doze --> Mateus[""Mateus""]
+  Tome -.confessa.-> Jesus";"timeline
+  title Tomé e os Evangelhos
+  Mateus 10 : Jesus escolhe os doze e Tomé é um deles
+  João 11 : Vamos nós também para morrermos com ele
+  João 14 : Tomé pergunta pelo caminho
+  João 20 : Tomé não estava com os discípulos na primeira aparição
+  João 20 : Oito dias depois Jesus aparece e Tomé confessa
+  João 21 : Tomé está no mar da Galileia com o Ressuscitado
+  Atos 1 : Tomé aguarda em Jerusalém o Espírito Santo"
+"Estêvão";"Um dos sete escolhidos para servir as viúvas em Jerusalém, cheio de fé e do Espírito Santo; foi o primeiro mártir cristão, apedrejado depois de um grande discurso, orando para que Deus perdoasse os seus assassinos.";"Estêvão aparece em Jerusalém, na igreja primitiva, quando os discípulos de fala grega reclamaram que as suas viúvas eram esquecidas na distribuição diária. Os apóstolos pediram que escolhessem sete homens ""de boa reputação, cheios do Espírito Santo e de sabedoria"". O primeiro nome da lista é o de Estêvão, ""homem cheio de fé e do Espírito Santo"". Os outros eram Filipe, Procoro, Nicanor, Timão, Parmenas e Nicolau, de Antioquia.
+Estêvão era ""cheio de graça e de poder"" e fazia grandes prodígios entre o povo. Alguns membros das sinagogas dos libertos, de Cirene, de Alexandria, da Cilícia e da Ásia discutiram com ele, mas não podiam resistir à sabedoria e ao Espírito com que falava. Subornaram falsas testemunhas, que o acusaram de falar contra o templo e contra a Lei e de dizer que Jesus de Nazaré destruiria o lugar e mudaria os costumes de Moisés. Foi levado ao Sinédrio, e todos os que estavam assentados viram que o seu rosto era como o rosto de um anjo.
+Perguntado pelo sumo sacerdote se era verdade, Estêvão fez o mais longo discurso de Atos. Contou a história de Israel, de Abraão a Salomão, mostrando que Deus não ficou preso a um lugar e que o povo, muitas vezes, resistiu aos seus enviados: José foi vendido, Moisés foi rejeitado, e os profetas foram perseguidos. Terminou dizendo: ""Homens de dura cerviz e incircuncisos de coração e ouvido, vós sempre resistis ao Espírito Santo"".
+Os ouvintes, furiosos, rangiam os dentes contra ele. Estêvão, cheio do Espírito Santo, olhou para o céu e viu a glória de Deus e Jesus em pé à direita de Deus. Disse: ""Vejo os céus abertos e o Filho do Homem em pé à destra de Deus"". Os acusadores taparam os ouvidos, lançaram-no para fora da cidade e o apedrejaram. As testemunhas deixaram as suas capas aos pés de um jovem chamado Saulo, que consentia na morte dele.
+Enquanto o apedrejavam, Estêvão orava: ""Senhor Jesus, recebe o meu espírito"". Depois, de joelhos, clamou em alta voz: ""Senhor, não lhes imputes este pecado"". E, tendo dito isto, adormeceu. Homens piedosos o sepultaram e fizeram grande pranto por ele. Naquele dia começou uma grande perseguição contra a igreja de Jerusalém, e os crentes se espalharam pela Judeia e por Samaria, levando a palavra aonde iam. Entre os que se espalharam estava Filipe, outro dos sete.";"Estêvão é o primeiro mártir cristão registrado na Bíblia (Atos 7:59-60).
+O nome Estêvão vem do grego Stephanos, ""coroa"".
+A sua oração pelos assassinos lembra as palavras de Jesus na cruz (Lucas 23:34).
+Saulo, que mais tarde seria o apóstolo Paulo, guardou as capas das testemunhas e aprovou a sua morte (Atos 7:58; 8:1).
+Em Atos 7:56, Estêvão vê Jesus em pé à direita de Deus, e não assentado, como em outros textos do Novo Testamento.
+O seu discurso em Atos 7 é o mais longo do livro de Atos.";"Atos 6:1-7 (os sete escolhidos)
+Atos 6:8-15 (a acusação)
+Atos 7 (o discurso)
+Atos 7:54-60 (o apedrejamento)
+Atos 8:1-4 e 11:19 (a dispersão da igreja)
+Atos 22:20 (a lembrança de Paulo)";"Diácono e primeiro mártir da igreja, cujo testemunho e perdão abriram caminho para a dispersão do evangelho e para a conversão de Saulo";"Igreja primitiva (cerca de 33 a 35 d.C.)";"Atos";"Atos 6:5; Atos 6:15; Atos 7:56; Atos 7:59-60; Atos 22:20";"diácono, mártir, Espírito Santo, discurso, perdão, Saulo, perseguição";"Sim";"graph TD
+  Apostolos[""Os doze apóstolos""] -.escolhem os sete.-> Sete[""Os sete diáconos""]
+  Sete --> Estevao[""Estêvão, primeiro mártir""]
+  Sete --> Filipe[""Filipe""]
+  Sete --> Procoro[""Procoro""]
+  Sete --> Nicanor[""Nicanor""]
+  Sete --> Timao[""Timão""]
+  Sete --> Parmenas[""Parmenas""]
+  Sete --> Nicolau[""Nicolau""]
+  Saulo[""Saulo, depois Paulo""] -.aprova a morte de.-> Estevao";"timeline
+  title Estêvão em Jerusalém
+  Atos 6 : A igreja escolhe os sete para servir as viúvas
+  Atos 6 : Estêvão faz prodígios e debate nas sinagogas
+  Atos 6 : É acusado de blasfêmia diante do Sinédrio
+  Atos 7 : Estêvão conta a história de Israel
+  Atos 7 : Vê os céus abertos e o Filho do Homem
+  Atos 7 : É apedrejado e ora pelos assassinos
+  Atos 8 : Começa a perseguição e a igreja se espalha"
+"Judas Iscariotes";"Um dos doze apóstolos e tesoureiro do grupo, que traiu Jesus por trinta moedas de prata com um beijo no Getsêmani; arrependeu-se tarde demais e morreu, e o seu lugar foi ocupado por Matias.";"Judas Iscariotes foi escolhido por Jesus como um dos doze apóstolos. A palavra Iscariotes é geralmente entendida como ""homem de Queriote"", uma aldeia da Judeia, o que, nessa leitura, o tornaria o único dos doze de fora da Galileia. Era o tesoureiro do grupo e guardava a bolsa de dinheiro. João conta que ele furtava do que se juntava para os pobres.
+Desde cedo, Jesus sabia dele. Depois do discurso sobre o pão da vida, quando muitos discípulos o abandonaram, Jesus disse: ""Não vos escolhi eu em número de doze? E um de vós é diabo"". João comenta que Jesus falava de Judas, que estava para o trair.
+Seis dias antes da Páscoa, em Betânia, Maria ungiu os pés de Jesus com um perfume de nardo puro, muito caro. Judas protestou, perguntando por que aquele perfume não fora vendido por trezentos denários, que se dariam aos pobres. Pouco depois, procurou os principais sacerdotes e perguntou quanto lhe dariam para entregar Jesus. Combinaram trinta moedas de prata, e a partir de então ele buscava uma oportunidade.
+Na última ceia, Jesus disse que um dos presentes o entregaria. Os discípulos se entristeceram e perguntavam quem era. Jesus respondeu que era aquele a quem desse o pão molhado, e deu o pão a Judas. João conta que, depois do bocado, Satanás entrou nele, e Jesus lhe disse: ""O que fazes, faze-o depressa"". Judas saiu, e era noite.
+Naquela noite, no Getsêmani, Judas chegou com uma grande multidão, enviada pelos principais sacerdotes, com espadas e paus, e combinara um sinal: o que beijasse seria Jesus. Aproximou-se e o saudou como Mestre, e o beijou. Jesus lhe respondeu: ""Amigo, a que vieste?"".
+Quando viu que Jesus fora condenado, Judas se arrependeu e devolveu as trinta moedas aos principais sacerdotes e anciãos, dizendo: ""Pequei, traindo o sangue inocente"". Eles responderam: ""Que nos importa? Isso é contigo"". Judas lançou o dinheiro no templo, saiu e se enforcou. Os sacerdotes, sem poder pôr no tesouro o preço do sangue, compraram com as moedas o campo do oleiro, para sepultura de estrangeiros, chamado Campo de Sangue, ou Aceldama. Atos conta a sua morte de modo complementar: ele caiu de cabeça para baixo, o ventre se abriu e as entranhas se derramaram. Depois da ascensão, Pedro propôs eleger alguém para ocupar o lugar de Judas, e a sorte caiu sobre Matias.";"A palavra Iscariotes provavelmente quer dizer ""homem de Queriote"", cidade da Judeia (Josué 15:25).
+Trinta moedas de prata era o preço de um escravo ferido por um boi, segundo a Lei (Êxodo 21:32).
+Mateus aplica a Judas uma profecia atribuída a Jeremias, que ecoa Zacarias 11:12-13, sobre as trinta moedas de prata lançadas na casa do Senhor para o oleiro (Mateus 27:9-10).
+Jesus lavou os pés de Judas, como dos outros, e deu-lhe o pão molhado na última ceia (João 13:2-26).
+Nas listas dos doze dos Evangelhos, o nome de Judas vem sempre por último.
+Judas devolveu o dinheiro e confessou o seu pecado, mas a Bíblia não diz que ele se voltou a Deus em arrependimento verdadeiro.";"João 6:70-71 (um de vós é diabo)
+João 12:1-8 (o perfume de Betânia)
+Mateus 26:14-16 (o acordo das trinta moedas)
+João 13:21-30 (a última ceia)
+Mateus 26:47-50 (o beijo no Getsêmani)
+Mateus 27:3-10 e Atos 1:15-26 (a morte de Judas e a eleição de Matias)";"Apóstolo que traiu Jesus por trinta moedas de prata, cuja história mostra que estar perto de Jesus não substitui a fé e o arrependimento sinceros";"Ministério de Jesus (cerca de 27 a 33 d.C.)";"Mateus, Marcos, Lucas, João, Atos, Salmos, Zacarias";"Mateus 26:15; Mateus 26:50; Mateus 27:3-5; João 13:27; Atos 1:20";"traição, trinta moedas, beijo, apóstolo, Getsêmani, arrependimento, Campo de Sangue";"Sim";"graph TD
+  Jesus[""Jesus""] --> Doze[""Os doze apóstolos""]
+  Doze --> Judas[""Judas Iscariotes, tesoureiro""]
+  Doze --> Pedro[""Pedro""]
+  Doze --> Joao[""João""]
+  Judas -.trai por trinta moedas.-> Jesus
+  Matias[""Matias""] -.ocupa o lugar de.-> Judas";"timeline
+  title Judas e a Paixão
+  João 6 : Jesus avisa que um dos doze é diabo
+  João 12 : Judas protesta contra o perfume em Betânia
+  Mateus 26 : Combina a traição por trinta moedas de prata
+  João 13 : Na última ceia recebe o pão molhado e sai
+  Mateus 26 : Beija Jesus no Getsêmani
+  Mateus 27 : Devolve as moedas e se enforca
+  Atos 1 : Matias é escolhido para o seu lugar"
