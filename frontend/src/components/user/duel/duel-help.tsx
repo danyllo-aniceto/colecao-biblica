@@ -1,10 +1,27 @@
+import { useState } from 'react';
+import AutoStoriesRoundedIcon from '@mui/icons-material/AutoStoriesRounded';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
+import { DuelGuideModal } from '@/components/user/duel/duel-guide';
 
 /** Regras do Duelo em poucas linhas. */
 export function DuelHelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [guide, setGuide] = useState(false);
   return (
-    <Modal open={open} title="Como jogar o Duelo" onClose={onClose} footer={<Button onClick={onClose}>Entendi</Button>}>
+    <>
+    <Modal
+      open={open}
+      title="Como jogar o Duelo"
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="secondary" onClick={() => setGuide(true)}>
+            <AutoStoriesRoundedIcon fontSize="small" /> Poderes e arenas
+          </Button>
+          <Button onClick={onClose}>Entendi</Button>
+        </>
+      }
+    >
       <ul className="space-y-3 text-sm font-semibold text-ink">
         <li>🎯 <b>Objetivo:</b> ganhar 2 das 3 <b>arenas</b>. Em cada uma vence quem tiver mais <b>Influência</b> (o placar hexagonal: vermelho é do rival, verde é seu).</li>
         <li>⏱️ <b>6 turnos.</b> Em cada turno você tem <b>Vigor</b> igual ao número do turno (turno 3 = 3 de Vigor). O número azul da figurinha é o Vigor que ela custa.</li>
@@ -21,5 +38,7 @@ export function DuelHelpModal({ open, onClose }: { open: boolean; onClose: () =>
         <li>🤝 É só diversão: não dá XP, moedas nem figurinhas.</li>
       </ul>
     </Modal>
+    <DuelGuideModal open={guide} onClose={() => setGuide(false)} />
+    </>
   );
 }

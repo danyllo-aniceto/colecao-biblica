@@ -82,6 +82,7 @@ código em **português do Brasil**.
 - Aposta: só vale em Melhor de 3 (pontos) e Vidas (dano); na rodada única `stakesMatter = false` e não dobra. Desistir após o dobro do rival neste turno custa o valor de antes (`retreatCost`).
   Dá para jogar em arena ainda fechada (às cegas): nunca vaze o nome do cenário nem a regra dele nos textos/visão (`arenaName`, `viewFor`).
 - Movimento na mesa (voos, estouros, números flutuando): `use-card-motion.tsx`, guiado pelas fotos (`snap`) de cada evento; evento novo que mova figurinha precisa de `uid` e da foto certa.
+- O guia *Poderes e arenas* (`components/user/duel/duel-guide.tsx`) explica os tipos de Dom e os efeitos e lista as arenas (lê `SCENARIOS`): **efeito ou tipo de Dom novo entra no texto do guia**.
 - **Nenhum cenário nem Dom usa sorte.** Só decisão do jogador. Regras novas entram em `engine.test.ts`; bots só enxergam `viewFor(...)`.
 - Informação escondida (mão e baralho do rival, jogadas não reveladas, cenários que não apareceram) nunca sai do servidor: o online manda só `viewFor`.
 - Online: `services/duel-room.ts` + `routes/duel-room.ts` (mesmo molde do Tabuleiro: sem websocket, `?since=<versão>`, tudo "sozinho" resolvido por `advance()` com a sala trancada).

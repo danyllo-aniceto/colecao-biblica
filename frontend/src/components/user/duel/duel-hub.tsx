@@ -23,6 +23,8 @@ import { buildCardArt, DuelCardFace } from '@/components/user/duel/duel-card';
 import { DuelDeckBuilder } from '@/components/user/duel/duel-deck-builder';
 import { DuelGame } from '@/components/user/duel/duel-game';
 import { DuelHelpModal } from '@/components/user/duel/duel-help';
+import { DuelGuideModal } from '@/components/user/duel/duel-guide';
+import AutoStoriesRoundedIcon from '@mui/icons-material/AutoStoriesRounded';
 import { OnlineDuel } from '@/components/user/duel/duel-online';
 import { JoinRoomModal } from '@/components/user/board/join-room-modal';
 import { deleteDuelDeck, getDuelCards, listDuelDecks, MAX_DUEL_DECKS, saveDuelDeck, type DuelDeck } from '@/lib/duel-api';
@@ -58,6 +60,7 @@ export function DuelHub({ characters, collection }: Props) {
   const [saving, setSaving] = useState(false);
   const [playing, setPlaying] = useState<{ key: number; team: TeamCard[]; foe: TeamCard[] } | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   /** Sala online aberta na tela (com a visão que veio de criar/entrar, para não piscar vazia). */
@@ -204,6 +207,9 @@ export function DuelHub({ characters, collection }: Props) {
             <p className="text-sm font-semibold text-muted">
               Monte um Time de {TEAM_SIZE} figurinhas com as figurinhas que você já conquistou, use o Vigor do turno para colocá-las nas arenas e ganhe 2 das 3. Cada personagem tem um Dom ligado à história dele.
             </p>
+            <Button size="sm" variant="secondary" onClick={() => setGuideOpen(true)}>
+              <AutoStoriesRoundedIcon fontSize="small" /> Poderes e arenas
+            </Button>
           </div>
         </div>
 
@@ -323,6 +329,7 @@ export function DuelHub({ characters, collection }: Props) {
       {room ? <OnlineDuel key={room.code} code={room.code} initial={room.initial} decks={decks} ownedCards={ownedCards} missing={missing} onDecksChanged={load} art={art} onClose={closeRoom} /> : null}
       {playing ? <DuelGame key={playing.key} team={playing.team} foeTeam={playing.foe} skill={skill} format={format} turnSeconds={Number(turnSeconds) || null} art={art} onExit={() => setPlaying(null)} /> : null}
       <DuelHelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <DuelGuideModal open={guideOpen} onClose={() => setGuideOpen(false)} />
       {editing ? (
         <DuelDeckBuilder
           cards={ownedCards}

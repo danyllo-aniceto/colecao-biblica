@@ -97,7 +97,11 @@ Tabernáculo: a primeira figurinha de cada lado aqui ganha +2 · Cidade de Davi:
 Monte Carmelo: no fim do turno 5 a mais forte de cada lado ganha +3 · Vale dos Ossos Secos: Influência base 2 ou menos ganha +2 ·
 Pentecostes: com 3 ou mais figurinhas suas aqui, cada uma ganha +1 ·
 Campos de Belém: no fim do turno 4 todas as figurinhas aqui ganham +1 · Oásis de Elim: o rival não enfraquece, cala nem destrói, com Dons, as figurinhas daqui ·
-Monte das Oliveiras: figurinhas reveladas aqui há 2 turnos ou mais ganham +2. (Cenários das 12 Pedras: toda pedra nova traz a regra do cenário aqui.)
+Monte das Oliveiras: figurinhas reveladas aqui há 2 turnos ou mais ganham +2 ·
+Ur dos Caldeus: +2 para cada Patriarca seu aqui · Susã: no fim do turno 5 o lado que perde aqui ganha +1 em cada figurinha · Nínive: no fim de cada turno as figurinhas daqui recuperam a Influência perdida ·
+Monte da Transfiguração: com exatamente 3 figurinhas suas aqui, cada uma ganha +2 · Rio Jordão: a figurinha mais recente de cada lado aqui ganha +2 · Manjedoura de Jesus: a mais fraca de cada lado aqui ganha +3.
+
+**Guia no app:** o botão *Poderes e arenas* (hub do Duelo e dentro do *Como jogar*) abre `duel-guide.tsx`, que explica cada tipo de Dom, as palavras do jogo, o que cada efeito faz e lista as arenas com a regra (lê `SCENARIOS`, então arena nova aparece sozinha; efeito ou tipo de Dom novo entra no texto do guia). (Cenários das 12 Pedras: toda pedra nova traz a regra do cenário aqui.)
 
 ## 6. Quem joga com quem
 
