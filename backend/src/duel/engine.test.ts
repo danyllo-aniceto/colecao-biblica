@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { describeDom, levelDef, validateTeam } from "./cards";
 import { cardPower, doubleStakes, lanePower, newDuel, retreat, retreatCost, setReady, snapshotOf, stage, unstage, viewFor, whyNotDouble, whyNotStage } from "./engine";
 import { applyRound, damageFor, newSeries } from "./series";
+import { scenarioOf } from "./scenarios";
 import { READY_DECKS, STARTER_CARDS, readyTeam } from "./starter";
 import { type Card, type CardDef, type DuelState, type PlacedCard, type Side } from "./types";
 
@@ -340,6 +341,39 @@ describe("cenários", () => {
     state.lanes[0].cards[0].push({ uid: 1, def: def("moises"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 1 });
     // Moisés (Vigor 4, Influência 5) ganha +2; Saul (Vigor 3, Influência 6) não.
     expect(lanePower(state, 0, 0)).toBe(5 + 2 + 6);
+  });
+
+  it("Carmelo: no fim do turno 5 a figurinha mais forte de cada lado ganha +3", () => {
+    const state = duel({ turn: 5, scenarios: ["carmelo", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    state.lanes[0].cards[1].push({ uid: 3, def: def("abel"), bonus: 0, silenced: false, order: 3, turn: 1 });
+    const next = playTurn(state, [], []);
+    expect(named(next, 0, 0, "Saul").bonus).toBe(3);
+    expect(named(next, 0, 0, "Abel").bonus).toBe(0);
+    expect(named(next, 0, 1, "Abel").bonus).toBe(3);
+    // Fora do turno 5 nada acontece.
+    const early = duel({ turn: 4, scenarios: ["carmelo", "arca", "canaa"] });
+    early.lanes[0].cards[0].push({ uid: 1, def: def("saul"), bonus: 0, silenced: false, order: 1, turn: 1 });
+    expect(named(playTurn(early, [], []), 0, 0, "Saul").bonus).toBe(0);
+  });
+
+  it("Vale dos Ossos Secos: Influência base 2 ou menos ganha +2", () => {
+    const state = duel({ turn: 3, scenarios: ["ossos-secos", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    // Abel (base 2) ganha +2; Saul (base 6) não.
+    expect(lanePower(state, 0, 0)).toBe(2 + 2 + 6);
+  });
+
+  it("Pentecostes: com 3 ou mais figurinhas suas aqui, cada uma ganha +1", () => {
+    const state = duel({ turn: 3, scenarios: ["pentecostes", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(2 + 2);
+    state.lanes[0].cards[0].push({ uid: 3, def: def("abel"), bonus: 0, silenced: false, order: 3, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(3 * (2 + 1));
+  });
+
+  it("o nome antigo Cenáculo ainda resolve para Pentecostes (salas guardadas)", () => {
+    expect(scenarioOf("cenaculo").id).toBe("pentecostes");
   });
 
   it("Sinai: só 2 espaços por lado", () => {

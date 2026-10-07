@@ -15,10 +15,10 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     const jesus = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Jesus" } });
     expect(jesus.rarity).toBe("SPECIAL");
     const scenarios = await prisma.scenario.findMany({ include: { nodes: true }, orderBy: { sortOrder: "asc" } });
-    expect(scenarios.length).toBe(16);
+    expect(scenarios.length).toBe(19);
     // Uma parada por nível, sem buracos, e a última de cada cenário é a relíquia.
     const levels = scenarios.flatMap((scenario) => scenario.nodes.map((node) => node.level)).sort((a, b) => a - b);
-    expect(levels).toEqual(Array.from({ length: 74 }, (_, index) => index + 1));
+    expect(levels).toEqual(Array.from({ length: 86 }, (_, index) => index + 1));
     for (const scenario of scenarios) {
       const last = [...scenario.nodes].sort((a, b) => b.level - a.level)[0];
       expect(last.relic).toBe(true);
@@ -28,7 +28,7 @@ describe.skipIf(!hasDatabase)("campanha", () => {
       expect(scenario.fragmentCharacterId).toBe(launch ? jesus.id : null);
       if (!launch) expect(scenario.nodes).toHaveLength(4);
     }
-    expect(scenarios.slice(10).map((scenario) => scenario.slug)).toEqual(["babel", "betel", "peniel", "horebe", "tabernaculo", "cidade-davi"]);
+    expect(scenarios.slice(10).map((scenario) => scenario.slug)).toEqual(["babel", "betel", "peniel", "horebe", "tabernaculo", "cidade-davi", "carmelo", "ossos-secos", "pentecostes"]);
   });
 
   it("música do tema: o admin cadastra e só chega ao jogador no nível do cenário", async () => {
@@ -248,7 +248,7 @@ describe.skipIf(!hasDatabase)("campanha", () => {
 
     const bands = await loadXpBands(prisma);
     expect(bands[0]).toEqual({ fromLevel: 1, cost: 500 });
-    expect(bands.length).toBe(16);
+    expect(bands.length).toBe(19);
 
     // Quem já tem XP é reposicionado pela curva nova (e ninguém perde XP).
     const user = await prisma.user.update({ where: { email: "user@email.com" }, data: { xp: 3000, level: 40, chestLevel: 35 } });

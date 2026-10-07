@@ -200,6 +200,10 @@ export function cardPower(state: DuelState, laneIndex: number, side: Side, card:
   // A primeira que o lado colocou aqui (as primícias).
   if (rule.kind === "firstBonus" && here.length > 0 && [...here].sort((a, b) => a.order - b.order)[0].uid === card.uid) power += rule.amount;
   if (rule.kind === "costBonus" && card.def.cost >= rule.min) power += rule.amount;
+  // Figurinhas de Influência base baixa (os ossos secos que se levantam).
+  if (rule.kind === "weakBonus" && card.def.power <= rule.max) power += rule.amount;
+  // Unidas num só lugar: com `min` ou mais figurinhas suas aqui, cada uma ganha o bônus.
+  if (rule.kind === "gather" && here.length >= rule.min) power += rule.amount;
   if (rule.kind === "sharedTag" && here.some((mate) => mate.uid !== card.uid && mate.def.tags.some((tag) => card.def.tags.includes(tag)))) power += rule.amount;
   return power;
 }
@@ -735,6 +739,16 @@ function endOfTurn(state: DuelState) {
           amount,
           text: strongest ? `${scenarioOf(lane.scenario).name}: ${target.def.name}, a mais forte, perdeu ${rule.amount}.` : `${scenarioOf(lane.scenario).name}: ${target.def.name}, a mais fraca, subiu ${rule.amount}.`,
         });
+      }
+    }
+    if (rule.kind === "strongestAt" && state.turn === rule.turn) {
+      // O fogo desce sobre o sacrifício: a figurinha mais forte de cada lado ganha o bônus (empate: a que entrou primeiro).
+      for (const side of [0, 1] as Side[]) {
+        const cards = lane.cards[side];
+        if (cards.length === 0) continue;
+        const target = [...cards].sort((a, b) => cardPower(state, index, side, b) - cardPower(state, index, side, a) || a.order - b.order)[0];
+        target.bonus += rule.amount;
+        emit(state, { type: "power", side, lane: index, uid: target.uid, name: target.def.name, amount: rule.amount, text: `${scenarioOf(lane.scenario).emoji} ${scenarioOf(lane.scenario).name}: o fogo desceu sobre ${target.def.name}, que ganhou ${rule.amount}.` });
       }
     }
     if (rule.kind === "stormAt" && state.turn === rule.turn) {
