@@ -428,6 +428,36 @@ describe("cenários", () => {
     expect(lanePower(state, 0, 0)).toBe(6 + 2 + 3);
   });
 
+  it("Damasco: no fim do turno 3, a mais forte de cada lado cai 2 e a mais fraca sobe 2; sozinha, nada muda", () => {
+    const state = duel({ turn: 3, scenarios: ["damasco", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("saul"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    state.lanes[0].cards[1].push({ uid: 3, def: def("saul"), bonus: 0, silenced: false, order: 3, turn: 1 });
+    const next = playTurn(state, [], []);
+    expect(named(next, 0, 0, "Saul").bonus).toBe(-2);
+    expect(named(next, 0, 0, "Abel").bonus).toBe(2);
+    // Sozinha do lado dela, a figurinha não muda.
+    expect(named(next, 0, 1, "Saul").bonus).toBe(0);
+    // Em outro turno nada acontece.
+    const early = duel({ turn: 2, scenarios: ["damasco", "arca", "canaa"] });
+    early.lanes[0].cards[0].push({ uid: 1, def: def("saul"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    expect(named(playTurn(early, [], []), 0, 0, "Saul").bonus).toBe(0);
+  });
+
+  it("Atenas: figurinhas sem Dom ganham +2; com Dom, não", () => {
+    const state = duel({ turn: 3, scenarios: ["atenas", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("moises"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    // Abel não tem Dom (+2); Moisés tem (sem bônus).
+    expect(lanePower(state, 0, 0)).toBe(2 + 2 + 5);
+  });
+
+  it("Corinto: nos turnos pares (2, 4 e 6) todas as figurinhas daqui ganham +1", () => {
+    for (const [turn, expected] of [[2, 1], [3, 0], [4, 1], [5, 0], [6, 1]] as const) {
+      const state = duel({ turn, scenarios: ["corinto", "arca", "canaa"] });
+      state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 });
+      expect(named(playTurn(state, [], []), 0, 0, "Abel").bonus).toBe(expected);
+    }
+  });
+
   it("o nome antigo Cenáculo ainda resolve para Pentecostes (salas guardadas)", () => {
     expect(scenarioOf("cenaculo").id).toBe("pentecostes");
   });

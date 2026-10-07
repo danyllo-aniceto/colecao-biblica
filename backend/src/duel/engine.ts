@@ -217,6 +217,8 @@ export function cardPower(state: DuelState, laneIndex: number, side: Side, card:
   if (rule.kind === "exactCount" && here.length === rule.count) power += rule.amount;
   // Quem acabou de entrar nas águas: a última que o lado revelou aqui.
   if (rule.kind === "lastBonus" && here.length > 0 && [...here].sort((a, b) => b.order - a.order)[0].uid === card.uid) power += rule.amount;
+  // O altar ao Deus desconhecido: figurinhas sem Dom ganham o bônus.
+  if (rule.kind === "plainBonus" && !card.def.dom) power += rule.amount;
   // Os últimos serão os primeiros: a mais fraca (Influência base + bônus permanentes; empate: a que entrou primeiro).
   if (rule.kind === "weakestBonus" && here.length > 0 && [...here].sort((a, b) => a.def.power + a.bonus - (b.def.power + b.bonus) || a.order - b.order)[0].uid === card.uid) power += rule.amount;
   if (rule.kind === "sharedTag" && here.some((mate) => mate.uid !== card.uid && mate.def.tags.some((tag) => card.def.tags.includes(tag)))) power += rule.amount;
@@ -852,6 +854,25 @@ function endOfTurn(state: DuelState) {
         for (const card of lane.cards[losing]) card.bonus += rule.amount;
         emit(state, { type: "power", side: losing, lane: index, amount: rule.amount, text: `${scenarioOf(lane.scenario).emoji} ${scenarioOf(lane.scenario).name}: a reviravolta! Quem estava perdendo ganhou ${rule.amount} em cada figurinha.` });
       }
+    }
+    if (rule.kind === "levelAt" && state.turn === rule.turn) {
+      // A luz de Damasco: a mais forte de cada lado cai (não abaixo de zero) e a mais fraca se levanta. Só vale com 2 ou mais figurinhas do lado.
+      for (const side of [0, 1] as Side[]) {
+        const cards = lane.cards[side];
+        if (cards.length < 2) continue;
+        const ranked = [...cards].sort((a, b) => cardPower(state, index, side, b) - cardPower(state, index, side, a) || a.order - b.order);
+        const strongest = ranked[0];
+        const weakest = ranked[ranked.length - 1];
+        const fall = Math.min(rule.amount, Math.max(cardPower(state, index, side, strongest), 0));
+        strongest.bonus -= fall;
+        weakest.bonus += rule.amount;
+        emit(state, { type: "power", side, lane: index, uid: strongest.uid, name: strongest.def.name, amount: -fall, text: `${scenarioOf(lane.scenario).emoji} ${scenarioOf(lane.scenario).name}: ${strongest.def.name} caiu ${fall} diante da luz.` });
+        emit(state, { type: "power", side, lane: index, uid: weakest.uid, name: weakest.def.name, amount: rule.amount, text: `${scenarioOf(lane.scenario).emoji} ${scenarioOf(lane.scenario).name}: ${weakest.def.name} se levantou e ganhou ${rule.amount}.` });
+      }
+    }
+    if (rule.kind === "growthEvery" && state.turn % rule.every === 0) {
+      for (const side of [0, 1] as Side[]) for (const card of lane.cards[side]) card.bonus += rule.amount;
+      emit(state, { type: "power", lane: index, amount: rule.amount, text: `${scenarioOf(lane.scenario).emoji} ${scenarioOf(lane.scenario).name}: plantaram e regaram, e Deus deu o crescimento: todas as figurinhas ganharam ${rule.amount}.` });
     }
     if (rule.kind === "forgive") {
       // Arrependimento: quem tinha perdido Influência aqui (bônus negativo) volta ao normal.

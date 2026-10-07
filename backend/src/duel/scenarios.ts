@@ -33,6 +33,9 @@ export const SCENARIOS: ScenarioDef[] = [
   { id: "transfiguracao", name: "Monte da Transfiguração", emoji: "☀️", rule: { kind: "exactCount", count: 3, amount: 2 }, text: "Três tendas: com exatamente 3 figurinhas suas aqui, cada uma ganha +2." },
   { id: "jordao", name: "Rio Jordão", emoji: "💧", rule: { kind: "lastBonus", amount: 2 }, text: "Quem entra nas águas: a figurinha mais recente de cada lado aqui ganha +2." },
   { id: "manjedoura", name: "Manjedoura de Jesus", emoji: "⭐", rule: { kind: "weakestBonus", amount: 3 }, text: "Os últimos serão os primeiros: a figurinha mais fraca de cada lado aqui ganha +3." },
+  { id: "damasco", name: "Damasco", emoji: "🛤️", rule: { kind: "levelAt", turn: 3, amount: 2 }, text: "A luz da estrada: no fim do turno 3, a mais forte de cada lado aqui (com 2 ou mais figurinhas) perde 2 e a mais fraca ganha 2." },
+  { id: "atenas", name: "Atenas", emoji: "🏛️", rule: { kind: "plainBonus", amount: 2 }, text: "O altar ao Deus desconhecido: figurinhas sem Dom aqui ganham +2." },
+  { id: "corinto", name: "Corinto", emoji: "⚓", rule: { kind: "growthEvery", every: 2, amount: 1 }, text: "Plantar e regar: no fim dos turnos 2, 4 e 6, todas as figurinhas daqui ganham +1." },
 ];
 
 export const SCENARIO_BY_ID = new Map(SCENARIOS.map((scenario) => [scenario.id, scenario]));

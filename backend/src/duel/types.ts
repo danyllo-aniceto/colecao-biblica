@@ -178,7 +178,10 @@ export type ScenarioRule =
   | { kind: "forgive" }
   | { kind: "exactCount"; count: number; amount: number }
   | { kind: "lastBonus"; amount: number }
-  | { kind: "weakestBonus"; amount: number };
+  | { kind: "weakestBonus"; amount: number }
+  | { kind: "levelAt"; turn: number; amount: number }
+  | { kind: "plainBonus"; amount: number }
+  | { kind: "growthEvery"; every: number; amount: number };
 
 export type ScenarioDef = {
   /** Mesmo identificador (slug) do cenário da campanha. */

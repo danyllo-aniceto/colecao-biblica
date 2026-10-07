@@ -48,7 +48,7 @@ Quem escolhe o próximo cenário é o dono do jogo, trio a trio; a lista abaixo 
 | 4 Esmeralda ✅ | Campos de Belém (Rute) · Oásis de Elim · Monte das Oliveiras | verde-vivo: cevada e colheita; 12 fontes e palmeiras; oliveiras sobre Jerusalém |
 | 5 Safira ✅ | Ur dos Caldeus · Susã · Nínive | azul profundo: zigurate no deserto; palácio persa e lírios; muralhas e portões assírios |
 | 6 Diamante ✅ | Monte da Transfiguração · Rio Jordão · Manjedoura de Jesus | branco-cristal: neve e luz; água clara; vila e estrela (arte própria da campanha) |
-| 7 Jacinto | Damasco · Atenas · Corinto | crepúsculo laranja e azul: oásis e a rua Direita; Areópago e colunas; porto e mercado |
+| 7 Jacinto ✅ | Damasco · Atenas · Corinto | crepúsculo laranja e azul: oásis e a rua Direita; Areópago e colunas; porto e mercado |
 | 8 Ágata | Éfeso · Filipos · Malta | listras de pedra e areia: teatro e templo; cidade romana da Macedônia; ilha e praia |
 | 9 Ametista | Roma · Antioquia · Samaria | roxo e mármore: Coliseu e estradas; praça dos primeiros irmãos; colinas e o poço de Jacó |
 | 10 Berilo | Ilha de Patmos · Cesareia Marítima · Cafarnaum | verde-água: rochedo e mar; porto de Herodes; vila à beira do lago |
@@ -71,7 +71,7 @@ Cenário-surpresa de evento (Natal, Páscoa) também deve ser um lugar e vale co
 ## 2.1 Regra de cada cenário no Duelo
 
 Cada cenário novo traz uma regra de duelo, **sem sorte**, com tema do lugar. Regras existentes: `cheapBonus`, `sharedTag`,
-`majority`, `decay`, `slots`, `noMove`, `tagBonus`, `shiftFirst`, `stormAt`, `winnerBonus`; `decayStrongest`, `growWeakest`, `underdog`, `lone`, `firstBonus`, `costBonus`, `strongestAt`, `weakBonus`, `gather`, `bountyAt`, `refuge`, `veteran`, `reversalAt`, `forgive`, `exactCount`, `lastBonus` e `weakestBonus` entraram com os cenários das Pedras (testes em `engine.test.ts`).
+`majority`, `decay`, `slots`, `noMove`, `tagBonus`, `shiftFirst`, `stormAt`, `winnerBonus`; `decayStrongest`, `growWeakest`, `underdog`, `lone`, `firstBonus`, `costBonus`, `strongestAt`, `weakBonus`, `gather`, `bountyAt`, `refuge`, `veteran`, `reversalAt`, `forgive`, `exactCount`, `lastBonus`, `weakestBonus`, `levelAt`, `plainBonus` e `growthEvery` entraram com os cenários das Pedras (testes em `engine.test.ts`).
 
 | Cenário | Regra proposta |
 |---|---|
@@ -93,6 +93,9 @@ Cada cenário novo traz uma regra de duelo, **sem sorte**, com tema do lugar. Re
 | Monte da Transfiguração | ✅ Três tendas: com exatamente 3 figurinhas suas aqui, cada uma ganha +2 |
 | Rio Jordão | ✅ Quem entra nas águas: a figurinha mais recente de cada lado aqui ganha +2 |
 | Manjedoura de Jesus | ✅ Os últimos serão os primeiros: a figurinha mais fraca de cada lado aqui ganha +3 |
+| Damasco | ✅ A luz da estrada: no fim do turno 3, a mais forte de cada lado aqui (com 2 ou mais figurinhas) perde 2 e a mais fraca ganha 2 |
+| Atenas | ✅ O altar ao Deus desconhecido: figurinhas sem Dom aqui ganham +2 |
+| Corinto | ✅ Plantar e regar: no fim dos turnos 2, 4 e 6, todas as figurinhas daqui ganham +1 |
 
 (Os próximos trios ganham a regra na hora do cadastro.)
 
@@ -167,7 +170,7 @@ Os 10 cenários de lançamento mantêm as paradas que já têm (4 a 6) para não
 - [x] **3.** Agrupar cenários por pedra; liberar pedra + cosmético + brasão ao concluir o 3º cenário (transação).
 - [x] **4.** Tela do Peitoral (12 engastes em 4 fileiras, pedra conquistada brilha) e aviso/animação ao ganhar.
 - [x] **5.** Conquista Peitoral Completo (brasão, moldura de prestígio e 2.000 moedas, entregues junto com a 12ª pedra).
-- [ ] **6.** Cadastro dos cenários aos poucos, pedra por pedra. ✅ Trio 1 (Sardônio): Torre de Babel, Betel e Peniel (níveis 51–62, já no seed, sem arte). ✅ Trio 2 (Topázio): Sarça ardente em Horebe, Tabernáculo e Cidade de Davi (níveis 63–74, no seed, sem arte). ✅ Trio 3 (Carbúnculo): Monte Carmelo, Vale dos Ossos Secos e Pentecostes (níveis 75–86, no seed, sem arte). ✅ Trio 4 (Esmeralda): Campos de Belém, Oásis de Elim e Monte das Oliveiras (níveis 87–98, no seed, sem arte). ✅ Trio 5 (Safira): Ur dos Caldeus, Susã e Nínive (níveis 99–110) e ✅ trio 6 (Diamante): Monte da Transfiguração, Rio Jordão e Manjedoura de Jesus (níveis 111–122), no seed, sem arte. Faltam os trios 7 a 12.
+- [ ] **6.** Cadastro dos cenários aos poucos, pedra por pedra. ✅ Trio 1 (Sardônio): Torre de Babel, Betel e Peniel (níveis 51–62, já no seed, sem arte). ✅ Trio 2 (Topázio): Sarça ardente em Horebe, Tabernáculo e Cidade de Davi (níveis 63–74, no seed, sem arte). ✅ Trio 3 (Carbúnculo): Monte Carmelo, Vale dos Ossos Secos e Pentecostes (níveis 75–86, no seed, sem arte). ✅ Trio 4 (Esmeralda): Campos de Belém, Oásis de Elim e Monte das Oliveiras (níveis 87–98, no seed, sem arte). ✅ Trio 5 (Safira): Ur dos Caldeus, Susã e Nínive (níveis 99–110) e ✅ trio 6 (Diamante): Monte da Transfiguração, Rio Jordão e Manjedoura de Jesus (níveis 111–122), no seed, sem arte. ✅ Trio 7 (Jacinto): Damasco, Atenas e Corinto (níveis 123–134). Faltam os trios 8 a 12.
 - [ ] **7.** Arte das 12 pedras, 12 brasões, 12 cosméticos e o prêmio final.
 
 ### Prompts de arte extras desta campanha (peças novas)
