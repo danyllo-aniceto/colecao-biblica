@@ -190,7 +190,10 @@ export type ScenarioRule =
   | { kind: "samaritan"; amount: number }
   | { kind: "island"; amount: number }
   | { kind: "centurion"; amount: number }
-  | { kind: "together"; amount: number };
+  | { kind: "together"; amount: number }
+  | { kind: "betrayalAt"; turn: number; amount: number }
+  | { kind: "hush" }
+  | { kind: "sacrifice"; amount: number; max: number };
 
 export type ScenarioDef = {
   /** Mesmo identificador (slug) do cenário da campanha. */

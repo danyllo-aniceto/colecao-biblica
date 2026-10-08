@@ -565,6 +565,49 @@ describe("cenários", () => {
     expect(lanePower(state, 0, 0)).toBe(2 + (2 + 2) * 2);
   });
 
+  it("Sala da Santa Ceia: no fim do turno 4, a mais forte do lado que ganha perde 3; empate e outros turnos, não", () => {
+    const setup = (turn: number, rival: string) => {
+      const state = duel({ turn, scenarios: ["santa-ceia", "arca", "canaa"] });
+      state.lanes[0].cards[0].push({ uid: 1, def: def("saul"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 });
+      state.lanes[0].cards[1].push({ uid: 3, def: def(rival), bonus: 0, silenced: false, order: 3, turn: 1 });
+      return state;
+    };
+    const next = playTurn(setup(4, "abel"), [], []);
+    expect(named(next, 0, 0, "Saul").bonus).toBe(-3);
+    expect(named(next, 0, 0, "Abel").bonus).toBe(0);
+    expect(named(next, 0, 1, "Abel").bonus).toBe(0);
+    // Quem perde não é atingido; em outro turno nada acontece.
+    expect(named(playTurn(setup(3, "abel"), [], []), 0, 0, "Saul").bonus).toBe(0);
+    const losing = setup(4, "noe");
+    losing.lanes[0].cards[1].push({ uid: 4, def: def("saul"), bonus: 0, silenced: false, order: 4, turn: 1 });
+    const after = playTurn(losing, [], []);
+    expect(named(after, 0, 0, "Saul").bonus).toBe(0);
+    expect(named(after, 0, 1, "Noé").bonus).toBe(-3);
+  });
+
+  it("Getsêmani: o \"Ao revelar\" não age aqui; em outro cenário, sim", () => {
+    const run = (lane: string) => {
+      const state = duel({ mine: ["moises"], turn: 4, scenarios: [lane, "arca", "canaa"] });
+      state.lanes[0].cards[1].push({ uid: 910, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 });
+      state.nextOrder = 2;
+      return playTurn(state, [["moises", 0]]);
+    };
+    expect(board(run("getsemani"), 0, 1)).toHaveLength(1);
+    expect(board(run("eden"), 0, 1)).toHaveLength(0);
+  });
+
+  it("Calvário: +1 por figurinha sua afastada (cemitério), até +3, e só para quem a perdeu", () => {
+    const state = duel({ turn: 3, scenarios: ["calvario", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(2);
+    for (let i = 0; i < 5; i += 1) state.players[0].graveyard.push({ uid: 100 + i, def: def("saul"), bonus: 0 });
+    expect(lanePower(state, 0, 0)).toBe(2 + 3);
+    state.players[0].graveyard.length = 2;
+    expect(lanePower(state, 0, 0)).toBe(2 + 2);
+    state.lanes[0].cards[1].push({ uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    expect(lanePower(state, 0, 1)).toBe(2);
+  });
+
   it("o nome antigo Cenáculo ainda resolve para Pentecostes (salas guardadas)", () => {
     expect(scenarioOf("cenaculo").id).toBe("pentecostes");
   });

@@ -45,6 +45,9 @@ export const SCENARIOS: ScenarioDef[] = [
   { id: "patmos", name: "Ilha de Patmos", emoji: "📜", rule: { kind: "island", amount: 2 }, text: "Isolado numa ilha: cada figurinha sua aqui ganha +2 se você não tem figurinhas nas arenas vizinhas." },
   { id: "cesareia", name: "Cesareia Marítima", emoji: "⚓", rule: { kind: "centurion", amount: 1 }, text: "O centurião comanda: a figurinha mais forte de cada lado aqui ganha +1 para cada outra figurinha do lado." },
   { id: "cafarnaum", name: "Cafarnaum", emoji: "🏠", rule: { kind: "together", amount: 2 }, text: "Quatro amigos pelo telhado: figurinhas reveladas no mesmo turno que outra sua aqui ganham +2." },
+  { id: "santa-ceia", name: "Sala da Santa Ceia", emoji: "🍷", rule: { kind: "betrayalAt", turn: 4, amount: 3 }, text: "Um de vocês me trairá: no fim do turno 4, a figurinha mais forte do lado que está ganhando aqui perde 3." },
+  { id: "getsemani", name: "Getsêmani", emoji: "🫒", rule: { kind: "hush" }, text: "Vigiai e orai: o silêncio do jardim cala os Dons de \"Ao revelar\" e de \"Quando uma aliada é jogada\" nas figurinhas daqui." },
+  { id: "calvario", name: "Calvário", emoji: "✝️", rule: { kind: "sacrifice", amount: 1, max: 3 }, text: "O sacrifício que redime: cada figurinha sua aqui ganha +1 para cada figurinha sua já afastada (até +3)." },
 ];
 
 export const SCENARIO_BY_ID = new Map(SCENARIOS.map((scenario) => [scenario.id, scenario]));
