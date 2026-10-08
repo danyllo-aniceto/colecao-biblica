@@ -229,10 +229,68 @@ function FinalePage({ campaign, special, playerName, active }: { campaign: Campa
   );
 }
 
+/** Depois da 12ª pedra: o Peitoral Completo, com o prêmio ainda bloqueado ou já conquistado (brasão, moldura e moedas). */
+function PeitoralFinalPage({ campaign, active }: { campaign: Campaign; active: boolean }) {
+  const { breastplate } = campaign;
+  const done = breastplate.finalClaimed;
+  const left = Math.max(breastplate.total - breastplate.claimed, 0);
+  const stones = [...breastplate.stones].sort((a, b) => a.slot - b.slot);
+  return (
+    <section aria-label="Peitoral Completo" aria-hidden={active ? undefined : true} className={pageShell}>
+      <div className={cn('my-auto w-full max-w-md space-y-4 transition-all duration-700', active ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0')}>
+        <div className="text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#b8860b] dark:text-[#e0b43a]">{done ? 'Conquistado' : 'Prêmio final'}</p>
+          <h3 className="font-display text-2xl font-bold text-ink">Peitoral do Sumo Sacerdote</h3>
+          <p className="mt-1 text-sm font-semibold text-muted">
+            {done
+              ? 'Você reuniu as 12 pedras e completou o Peitoral! Seu nome agora carrega o brasão desta conquista.'
+              : left === breastplate.total
+                ? `Reúna as ${breastplate.total} pedras, uma a cada 3 cenários, para vestir o Peitoral Completo.`
+                : `Faltam ${left} ${left === 1 ? 'pedra' : 'pedras'} para completar o Peitoral.`}
+          </p>
+        </div>
+
+        <div className="mx-auto grid max-w-xs grid-cols-4 justify-items-center gap-2 rounded-3xl border-2 border-[#e0b43a]/60 bg-[#e0b43a]/10 p-3">
+          {stones.map((stone) => (
+            <StoneGem key={stone.id} stone={stone} size={48} />
+          ))}
+        </div>
+        {done ? null : <ProgressBar className="h-3" value={(breastplate.claimed / Math.max(breastplate.total, 1)) * 100} color="#e0b43a" />}
+
+        <div className="panel space-y-2 p-4">
+          <p className="flex items-center gap-2 font-display font-bold text-ink">
+            <ShieldRoundedIcon fontSize="small" className="text-[#b8860b] dark:text-[#e0b43a]" /> {done ? 'Recompensas conquistadas' : 'O que você ganha ao completar'}
+          </p>
+          <ul className="space-y-1.5 text-sm font-semibold text-ink">
+            <li className="flex items-center gap-2">
+              <CoinIcon className="h-5 w-5" /> {breastplate.finalReward.coins.toLocaleString('pt-BR')} moedas
+            </li>
+            <li className="flex items-center gap-2">
+              <ShieldRoundedIcon sx={{ fontSize: 20 }} className="text-[#b8860b] dark:text-[#e0b43a]" /> Brasão “{breastplate.finalReward.badgeName}” no perfil
+            </li>
+            <li className="flex items-center gap-2">
+              <StarRoundedIcon sx={{ fontSize: 20 }} className="text-r-special" /> Moldura de prestígio “{breastplate.finalReward.prestigeName}”
+            </li>
+          </ul>
+          {done ? (
+            <p className="flex items-center gap-2 rounded-xl bg-success/15 p-2 text-sm font-bold text-success">
+              <CheckRoundedIcon fontSize="small" /> Tudo isso já está na sua conta.
+            </p>
+          ) : (
+            <p className="flex items-center gap-2 text-xs font-semibold text-muted">
+              <LockRoundedIcon sx={{ fontSize: 16 }} /> Libera ao resgatar a 12ª pedra.
+            </p>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /** Partes da campanha: a figurinha especial (cenários de lançamento) e o Peitoral do Sumo Sacerdote (cenários com pedra). */
 type CampaignSection = 'jesus' | 'peitoral';
 
-type CampaignPage = { kind: 'soon' } | { kind: 'finale' } | { kind: 'stone'; stone: Stone } | { kind: 'scenario'; scenario: CampaignScenario };
+type CampaignPage = { kind: 'soon' } | { kind: 'finale' } | { kind: 'peitoral'; stoneId: number } | { kind: 'stone'; stone: Stone } | { kind: 'scenario'; scenario: CampaignScenario };
 
 type CampaignModalProps = {
   open: boolean;
@@ -272,6 +330,8 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
       if (index === finaleAfter) built.push({ kind: 'finale' });
       const stone = item.stoneId && lastOfStone.get(item.stoneId) === index ? campaign?.breastplate.stones.find((entry) => entry.id === item.stoneId) : undefined;
       if (stone) built.push({ kind: 'stone', stone });
+      // Depois da última pedra do Peitoral: a página do prêmio final.
+      if (stone && campaign && stone.slot === Math.max(...campaign.breastplate.stones.map((entry) => entry.slot))) built.push({ kind: 'peitoral', stoneId: stone.id });
     });
     return [{ kind: 'soon' }, ...built.reverse()];
   }, [campaign]);
@@ -282,6 +342,7 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
     const meta = pages.map((page): { section: CampaignSection; group: string } => {
       if (page.kind === 'scenario') return page.scenario.stoneId ? { section: 'peitoral', group: `pedra-${page.scenario.stoneId}` } : { section: 'jesus', group: 'jesus' };
       if (page.kind === 'stone') return { section: 'peitoral', group: `pedra-${page.stone.id}` };
+      if (page.kind === 'peitoral') return { section: 'peitoral', group: `pedra-${page.stoneId}` };
       return { section: 'jesus', group: 'jesus' };
     });
     // O aviso "em breve" fica junto da última parte do caminho (a página logo abaixo dele).
@@ -301,7 +362,7 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
   const special = campaign?.special ?? null;
   const activePage = pages[active];
   // Cor do tema da tela: do cenário (ou da pedra) da página em foco.
-  const themeColor = activePage?.kind === 'scenario' ? activePage.scenario.color : activePage?.kind === 'stone' ? activePage.stone.color : (scenarios[0]?.color ?? null);
+  const themeColor = activePage?.kind === 'scenario' ? activePage.scenario.color : activePage?.kind === 'stone' ? activePage.stone.color : activePage?.kind === 'peitoral' ? '#e0b43a' : (scenarios[0]?.color ?? null);
   const [stoneClaiming, setStoneClaiming] = useState<number | null>(null);
   const [stoneWon, setStoneWon] = useState<{ stone: Stone; result: ClaimStoneResult } | null>(null);
   const [peitoral, setPeitoral] = useState(false);
@@ -482,6 +543,7 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
                 {pages.map((page, index) => {
                   if (page.kind === 'soon') return <SoonPage key="soon" active={active === index} />;
                   if (page.kind === 'finale' && campaign.special) return <FinalePage key="finale" campaign={campaign} special={campaign.special} playerName={playerName} active={active === index} />;
+                  if (page.kind === 'peitoral') return <PeitoralFinalPage key="peitoral" campaign={campaign} active={active === index} />;
                   if (page.kind === 'stone') {
                     return <StonePage key={`stone-${page.stone.id}`} stone={page.stone} playerName={playerName} active={active === index} claiming={stoneClaiming === page.stone.id} onClaim={(stone) => void claimStoneAction(stone)} onOpenBreastplate={() => setPeitoral(true)} pageClass={pageShell} />;
                   }
@@ -542,11 +604,11 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
                       <button
                         type="button"
                         onClick={() => goTo(index)}
-                        aria-label={page.kind === 'scenario' ? `Ir para ${page.scenario.name}` : page.kind === 'stone' ? `Ir para a pedra ${page.stone.name}` : page.kind === 'finale' ? 'Ir para o prêmio final' : 'Ir para o aviso de novidades'}
+                        aria-label={page.kind === 'scenario' ? `Ir para ${page.scenario.name}` : page.kind === 'stone' ? `Ir para a pedra ${page.stone.name}` : page.kind === 'finale' ? 'Ir para o prêmio final' : page.kind === 'peitoral' ? 'Ir para o Peitoral Completo' : 'Ir para o aviso de novidades'}
                         aria-current={index === active ? 'true' : undefined}
                         className={cn(
                           'block rounded-full transition-all duration-300',
-                          index === active ? 'h-4 w-2 bg-primary' : page.kind === 'scenario' ? (page.scenario.completed ? 'h-2 w-2 bg-success' : 'h-2 w-2 bg-edge-strong') : page.kind === 'stone' ? (page.stone.state === 'claimed' ? 'h-2.5 w-2.5 rotate-45 rounded-[2px] bg-success' : 'h-2.5 w-2.5 rotate-45 rounded-[2px] bg-[#e0b43a]') : 'h-2 w-2 bg-edge-strong/60',
+                          index === active ? 'h-4 w-2 bg-primary' : page.kind === 'scenario' ? (page.scenario.completed ? 'h-2 w-2 bg-success' : 'h-2 w-2 bg-edge-strong') : page.kind === 'peitoral' ? (campaign.breastplate.finalClaimed ? 'h-2.5 w-2.5 rounded-sm bg-success' : 'h-2.5 w-2.5 rounded-sm bg-[#e0b43a]') : page.kind === 'stone' ? (page.stone.state === 'claimed' ? 'h-2.5 w-2.5 rotate-45 rounded-[2px] bg-success' : 'h-2.5 w-2.5 rotate-45 rounded-[2px] bg-[#e0b43a]') : 'h-2 w-2 bg-edge-strong/60',
                         )}
                       />
                     </li>
