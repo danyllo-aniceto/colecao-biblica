@@ -377,9 +377,17 @@ function destroyCard(state: DuelState, target: Found, cause: string) {
 
 function moveEnemies(state: DuelState, ctx: Ctx) {
   const foeSide = other(ctx.side);
-  if (laneScenario(state, ctx.lane).rule.kind === "noMove") return;
+  const self = ctx.card.def.name;
+  if (state.lanes[ctx.lane].cards[foeSide].length === 0) return;
+  if (laneScenario(state, ctx.lane).rule.kind === "noMove") {
+    emit(state, { type: "dom", side: ctx.side, lane: ctx.lane, name: self, text: `${self}: nada se move, a regra de ${arenaName(state, ctx.lane)} impede.` });
+    return;
+  }
   for (const card of [...state.lanes[ctx.lane].cards[foeSide]]) {
-    if (isProtected(state, { lane: ctx.lane, side: foeSide, card })) continue;
+    if (isProtected(state, { lane: ctx.lane, side: foeSide, card })) {
+      emit(state, { type: "dom", side: ctx.side, lane: ctx.lane, uid: card.uid, name: self, text: `${card.def.name} está protegida e não foi movida por ${self}.` });
+      continue;
+    }
     // Destino: o cenário aberto com mais espaço livre para o rival (empate: o mais à esquerda).
     let best = -1;
     let bestFree = 0;
@@ -391,7 +399,10 @@ function moveEnemies(state: DuelState, ctx: Ctx) {
         bestFree = free;
       }
     }
-    if (best < 0) continue;
+    if (best < 0) {
+      emit(state, { type: "dom", side: ctx.side, lane: ctx.lane, uid: card.uid, name: self, text: `${card.def.name} ficou: não há outra arena aberta com espaço para ela.` });
+      continue;
+    }
     const from = state.lanes[ctx.lane].cards[foeSide];
     from.splice(from.findIndex((entry) => entry.uid === card.uid), 1);
     state.lanes[best].cards[foeSide].push(card);

@@ -392,3 +392,13 @@ describe("ordem da revelação justa (Dons que dependem de quem ganha)", () => {
     expect(results).toEqual([1, 1]);
   });
 });
+
+describe("empurrar rivais (Moisés) em qualquer arena", () => {
+  it.each([0, 1, 2])("empurra da arena %i para outra, inclusive da última (direita)", (lane) => {
+    const moises = card("moises", "revelar", "mover-inimigos", { power: 4 });
+    const state = duel([moises], [plain("rival", 3)]);
+    const done = turn(state, [[0, lane]], [[0, lane]]);
+    expect(done.lanes[lane].cards[1]).toHaveLength(0);
+    expect(done.lanes.reduce((sum, item) => sum + item.cards[1].length, 0)).toBe(1);
+  });
+});
