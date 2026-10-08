@@ -68,7 +68,9 @@ describe("bots", () => {
     const rate = (strong: BotSkill, weak: BotSkill) => {
       let wins = 0;
       let games = 0;
-      for (let seed = 100; seed < 200; seed += 1) {
+      // 300 partidas: com 100 o ruído (±5 pontos) era do tamanho da folga e qualquer arena nova no sorteio derrubava o teste.
+      // Medido em 1.000 partidas: Mestre x Aprendiz ~72%, Estudante x Aprendiz ~63 a 65%, Mestre x Estudante ~60%.
+      for (let seed = 100; seed < 400; seed += 1) {
         const swapped = seed % 2 === 1;
         const state = play(seed, swapped ? [weak, strong] : [strong, weak], seed % 4 < 2 ? ["reis-e-juizes", "profetas-e-patriarcas"] : ["profetas-e-patriarcas", "reis-e-juizes"]);
         const winner = state.result!.winner;
@@ -78,9 +80,9 @@ describe("bots", () => {
       }
       return wins / games;
     };
-    expect(rate("MASTER", "APPRENTICE")).toBeGreaterThan(0.65);
-    expect(rate("STUDENT", "APPRENTICE")).toBeGreaterThan(0.6);
-    expect(rate("MASTER", "STUDENT")).toBeGreaterThan(0.45);
+    expect(rate("MASTER", "APPRENTICE")).toBeGreaterThan(0.64);
+    expect(rate("STUDENT", "APPRENTICE")).toBeGreaterThan(0.57);
+    expect(rate("MASTER", "STUDENT")).toBeGreaterThan(0.5);
   });
 
   it("os dois Times prontos ficam equilibrados (nenhum passa de 65% entre bots iguais)", () => {

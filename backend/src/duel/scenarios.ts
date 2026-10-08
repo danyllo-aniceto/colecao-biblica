@@ -36,6 +36,9 @@ export const SCENARIOS: ScenarioDef[] = [
   { id: "damasco", name: "Damasco", emoji: "🛤️", rule: { kind: "levelAt", turn: 3, fall: 2, rise: 4 }, text: "A luz da estrada: no fim do turno 3, a mais forte de cada lado aqui (com 2 ou mais figurinhas) perde 2 e a mais fraca ganha 4." },
   { id: "atenas", name: "Atenas", emoji: "🏛️", rule: { kind: "plainBonus", amount: 2 }, text: "O altar ao Deus desconhecido: figurinhas sem Dom aqui ganham +2." },
   { id: "corinto", name: "Corinto", emoji: "⚓", rule: { kind: "growthEvery", every: 2, amount: 1 }, text: "Plantar e regar: no fim dos turnos 2, 4 e 6, todas as figurinhas daqui ganham +1." },
+  { id: "efeso", name: "Éfeso", emoji: "🏟️", rule: { kind: "domBonus", amount: 1 }, text: "As maravilhas de Deus pelas mãos de Paulo: figurinhas com Dom aqui ganham +1." },
+  { id: "filipos", name: "Filipos", emoji: "🎶", rule: { kind: "evenBonus", amount: 1 }, text: "Paulo e Silas, dois a dois: com 2 ou 4 figurinhas suas aqui, cada uma ganha +1." },
+  { id: "malta", name: "Malta", emoji: "🏝️", rule: { kind: "unharmed" }, text: "A víbora não fez mal: as figurinhas daqui não perdem Influência (as penalidades não valem aqui)." },
 ];
 
 export const SCENARIO_BY_ID = new Map(SCENARIOS.map((scenario) => [scenario.id, scenario]));

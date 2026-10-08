@@ -21,6 +21,9 @@ import StairsRoundedIcon from '@mui/icons-material/StairsRounded';
 import TerrainRoundedIcon from '@mui/icons-material/TerrainRounded';
 import WaterDropRoundedIcon from '@mui/icons-material/WaterDropRounded';
 import ApartmentRoundedIcon from '@mui/icons-material/ApartmentRounded';
+import BeachAccessRoundedIcon from '@mui/icons-material/BeachAccessRounded';
+import LockOpenRoundedIcon from '@mui/icons-material/LockOpenRounded';
+import TheatersRoundedIcon from '@mui/icons-material/TheatersRounded';
 import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
 import SailingRoundedIcon from '@mui/icons-material/SailingRounded';
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
@@ -67,6 +70,9 @@ const FALLBACK_ICONS: Record<string, typeof MapRoundedIcon> = {
   damasco: RouteRoundedIcon,
   atenas: SchoolRoundedIcon,
   corinto: SailingRoundedIcon,
+  efeso: TheatersRoundedIcon,
+  filipos: LockOpenRoundedIcon,
+  malta: BeachAccessRoundedIcon,
 };
 
 export function ScenarioFallbackIcon({ slug, className, fontSize = 28 }: { slug: string; className?: string; fontSize?: number }): ReactNode {

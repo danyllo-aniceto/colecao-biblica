@@ -219,6 +219,12 @@ export function cardPower(state: DuelState, laneIndex: number, side: Side, card:
   if (rule.kind === "lastBonus" && here.length > 0 && [...here].sort((a, b) => b.order - a.order)[0].uid === card.uid) power += rule.amount;
   // O altar ao Deus desconhecido: figurinhas sem Dom ganham o bônus.
   if (rule.kind === "plainBonus" && !card.def.dom) power += rule.amount;
+  // As maravilhas de Éfeso: figurinhas com Dom ganham o bônus.
+  if (rule.kind === "domBonus" && card.def.dom) power += rule.amount;
+  // Dois a dois (Paulo e Silas): com número par de figurinhas suas aqui, cada uma ganha o bônus.
+  if (rule.kind === "evenBonus" && here.length > 0 && here.length % 2 === 0) power += rule.amount;
+  // A víbora não fez mal: penalidades (bônus negativo) não valem nas figurinhas daqui; os bônus positivos ficam.
+  if (rule.kind === "unharmed" && card.bonus < 0) power -= card.bonus;
   // Os últimos serão os primeiros: a mais fraca (Influência base + bônus permanentes; empate: a que entrou primeiro).
   if (rule.kind === "weakestBonus" && here.length > 0 && [...here].sort((a, b) => a.def.power + a.bonus - (b.def.power + b.bonus) || a.order - b.order)[0].uid === card.uid) power += rule.amount;
   if (rule.kind === "sharedTag" && here.some((mate) => mate.uid !== card.uid && mate.def.tags.some((tag) => card.def.tags.includes(tag)))) power += rule.amount;

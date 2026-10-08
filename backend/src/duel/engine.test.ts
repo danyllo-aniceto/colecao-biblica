@@ -460,6 +460,36 @@ describe("cenários", () => {
     }
   });
 
+  it("Éfeso: figurinhas com Dom ganham +1; sem Dom, não", () => {
+    const state = duel({ turn: 3, scenarios: ["efeso", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("moises"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    // Abel não tem Dom (sem bônus); Moisés tem (+1).
+    expect(lanePower(state, 0, 0)).toBe(2 + 5 + 1);
+  });
+
+  it("Filipos: com número par de figurinhas suas aqui (2 ou 4) cada uma ganha +1; com 1 ou 3, não", () => {
+    const state = duel({ turn: 3, scenarios: ["filipos", "arca", "canaa"] });
+    const push = (uid: number) => state.lanes[0].cards[0].push({ uid, def: def("abel"), bonus: 0, silenced: false, order: uid, turn: 1 });
+    push(1);
+    expect(lanePower(state, 0, 0)).toBe(2);
+    push(2);
+    expect(lanePower(state, 0, 0)).toBe(2 * (2 + 1));
+    push(3);
+    expect(lanePower(state, 0, 0)).toBe(3 * 2);
+    push(4);
+    expect(lanePower(state, 0, 0)).toBe(4 * (2 + 1));
+  });
+
+  it("Malta: as penalidades não valem (bônus negativo some), os bônus positivos ficam", () => {
+    const state = duel({ turn: 3, scenarios: ["malta", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("saul"), bonus: -3, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("abel"), bonus: 2, silenced: false, order: 2, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(6 + (2 + 2));
+    // Fora de Malta, a penalidade vale.
+    const other = duel({ turn: 3, scenarios: ["eden", "arca", "canaa"] });
+    other.lanes[0].cards[0].push({ uid: 1, def: def("saul"), bonus: -3, silenced: false, order: 1, turn: 1 });
+    expect(cardPower(other, 0, 0, other.lanes[0].cards[0][0])).toBe(3);
+  });
+
   it("o nome antigo Cenáculo ainda resolve para Pentecostes (salas guardadas)", () => {
     expect(scenarioOf("cenaculo").id).toBe("pentecostes");
   });

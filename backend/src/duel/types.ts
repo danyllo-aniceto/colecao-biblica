@@ -181,7 +181,10 @@ export type ScenarioRule =
   | { kind: "weakestBonus"; amount: number }
   | { kind: "levelAt"; turn: number; fall: number; rise: number }
   | { kind: "plainBonus"; amount: number }
-  | { kind: "growthEvery"; every: number; amount: number };
+  | { kind: "growthEvery"; every: number; amount: number }
+  | { kind: "domBonus"; amount: number }
+  | { kind: "evenBonus"; amount: number }
+  | { kind: "unharmed" };
 
 export type ScenarioDef = {
   /** Mesmo identificador (slug) do cenário da campanha. */
