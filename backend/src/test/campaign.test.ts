@@ -15,10 +15,10 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     const jesus = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Jesus" } });
     expect(jesus.rarity).toBe("SPECIAL");
     const scenarios = await prisma.scenario.findMany({ include: { nodes: true }, orderBy: { sortOrder: "asc" } });
-    expect(scenarios.length).toBe(37);
+    expect(scenarios.length).toBe(40);
     // Uma parada por nível, sem buracos, e a última de cada cenário é a relíquia.
     const levels = scenarios.flatMap((scenario) => scenario.nodes.map((node) => node.level)).sort((a, b) => a - b);
-    expect(levels).toEqual(Array.from({ length: 158 }, (_, index) => index + 1));
+    expect(levels).toEqual(Array.from({ length: 170 }, (_, index) => index + 1));
     for (const scenario of scenarios) {
       const last = [...scenario.nodes].sort((a, b) => b.level - a.level)[0];
       expect(last.relic).toBe(true);
@@ -28,7 +28,7 @@ describe.skipIf(!hasDatabase)("campanha", () => {
       expect(scenario.fragmentCharacterId).toBe(launch ? jesus.id : null);
       if (!launch) expect(scenario.nodes).toHaveLength(4);
     }
-    expect(scenarios.slice(10).map((scenario) => scenario.slug)).toEqual(["babel", "betel", "peniel", "horebe", "tabernaculo", "cidade-davi", "carmelo", "ossos-secos", "pentecostes", "campos-belem", "elim", "monte-oliveiras", "ur-caldeus", "susa", "ninive", "transfiguracao", "jordao", "manjedoura", "damasco", "atenas", "corinto", "efeso", "filipos", "malta", "roma", "antioquia", "samaria"]);
+    expect(scenarios.slice(10).map((scenario) => scenario.slug)).toEqual(["babel", "betel", "peniel", "horebe", "tabernaculo", "cidade-davi", "carmelo", "ossos-secos", "pentecostes", "campos-belem", "elim", "monte-oliveiras", "ur-caldeus", "susa", "ninive", "transfiguracao", "jordao", "manjedoura", "damasco", "atenas", "corinto", "efeso", "filipos", "malta", "roma", "antioquia", "samaria", "patmos", "cesareia", "cafarnaum"]);
   });
 
   it("música do tema: o admin cadastra e só chega ao jogador no nível do cenário", async () => {
@@ -177,13 +177,13 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     const repeated = await api.post("/api/campaign/admin/scenarios").set(bearer(admin)).send({ ...created.body, slug: "mar-vermelho" });
     expect(repeated.status).toBe(400);
 
-    const node = { level: 171, title: "Travessia", relic: false, fragment: false, rewardCoins: 100, rewardDefinitionId: null, rewardCosmeticId: null, posX: null, posY: null };
+    const node = { level: 201, title: "Travessia", relic: false, fragment: false, rewardCoins: 100, rewardDefinitionId: null, rewardCosmeticId: null, posX: null, posY: null };
     const made = await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send(node);
     expect(made.status).toBe(201);
     // Nível já usado (em qualquer cenário), fragmento sem carta e parada vazia são recusados.
     expect((await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send(node)).status).toBe(400);
-    expect((await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send({ ...node, level: 172, fragment: true })).status).toBe(400);
-    expect((await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send({ ...node, level: 173, rewardCoins: 0 })).status).toBe(400);
+    expect((await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send({ ...node, level: 202, fragment: true })).status).toBe(400);
+    expect((await api.post(`/api/campaign/admin/scenarios/${created.body.id}/nodes`).set(bearer(admin)).send({ ...node, level: 203, rewardCoins: 0 })).status).toBe(400);
     expect((await api.put(`/api/campaign/admin/nodes/${made.body.id}`).set(bearer(admin)).send({ ...node, rewardCoins: 150 })).body.rewardCoins).toBe(150);
 
     // Trocar o ícone do cenário troca a arte do ícone de perfil.

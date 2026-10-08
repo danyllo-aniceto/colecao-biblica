@@ -535,6 +535,36 @@ describe("cenários", () => {
     expect(same.lanes[0].cards[1][0].bonus).toBe(0);
   });
 
+  it("Patmos: ganha +2 por figurinha só se você não tem figurinhas nas arenas vizinhas", () => {
+    const state = duel({ turn: 3, scenarios: ["patmos", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(2 + 2);
+    // Figurinha do rival na vizinha não tira o isolamento.
+    state.lanes[1].cards[1].push({ uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(4);
+    // Com figurinha minha na vizinha, o bônus some.
+    state.lanes[1].cards[0].push({ uid: 3, def: def("abel"), bonus: 0, silenced: false, order: 3, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(2);
+  });
+
+  it("Cesareia: só a mais forte ganha +1 por cada outra figurinha do lado; sozinha, nada", () => {
+    const state = duel({ turn: 3, scenarios: ["cesareia", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("saul"), bonus: 0, silenced: false, order: 1, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(6);
+    state.lanes[0].cards[0].push({ uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 }, { uid: 3, def: def("abel"), bonus: 0, silenced: false, order: 3, turn: 1 });
+    // Saul é o centurião: +2 (duas outras); os Abéis não ganham nada.
+    expect(lanePower(state, 0, 0)).toBe(6 + 2 + 2 + 2);
+  });
+
+  it("Cafarnaum: figurinhas reveladas no mesmo turno que outra sua aqui ganham +2", () => {
+    const state = duel({ turn: 3, scenarios: ["cafarnaum", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 2 });
+    expect(lanePower(state, 0, 0)).toBe(2 + 2);
+    state.lanes[0].cards[0].push({ uid: 3, def: def("abel"), bonus: 0, silenced: false, order: 3, turn: 2 });
+    // As duas do turno 2 ganham; a do turno 1 segue sozinha.
+    expect(lanePower(state, 0, 0)).toBe(2 + (2 + 2) * 2);
+  });
+
   it("o nome antigo Cenáculo ainda resolve para Pentecostes (salas guardadas)", () => {
     expect(scenarioOf("cenaculo").id).toBe("pentecostes");
   });

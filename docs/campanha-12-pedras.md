@@ -51,7 +51,7 @@ Quem escolhe o próximo cenário é o dono do jogo, trio a trio; a lista abaixo 
 | 7 Jacinto ✅ | Damasco · Atenas · Corinto | crepúsculo laranja e azul: oásis e a rua Direita; Areópago e colunas; porto e mercado |
 | 8 Ágata ✅ | Éfeso · Filipos · Malta | listras de pedra e areia: teatro e templo; cidade romana da Macedônia; ilha e praia |
 | 9 Ametista ✅ | Roma · Antioquia · Samaria | roxo e mármore: Coliseu e estradas; praça dos primeiros irmãos; colinas e o poço de Jacó |
-| 10 Berilo | Ilha de Patmos · Cesareia Marítima · Cafarnaum | verde-água: rochedo e mar; porto de Herodes; vila à beira do lago |
+| 10 Berilo ✅ | Ilha de Patmos · Cesareia Marítima · Cafarnaum | verde-água: rochedo e mar; porto de Herodes; vila à beira do lago |
 | 11 Ônix | Santa Ceia · Getsêmani · Calvário | escuro com brilho dourado, **sem horror**: a grande sala do andar de cima à luz de lamparinas; oliveiral à noite; colina serena (o Jardim do Túmulo fica no pool) |
 | 12 Jaspe | Salão do Trono celestial · Nova Jerusalém · Monte Sião | verde-translúcido e ouro: o clímax; muros de jaspe e portas de pérola |
 
@@ -102,6 +102,9 @@ Cada cenário novo traz uma regra de duelo, **sem sorte**, com tema do lugar. Re
 | Roma | ✅ Todos os caminhos levam a Roma: cada figurinha sua aqui ganha +1 por arena vizinha onde você também tem figurinhas |
 | Antioquia | ✅ Gente de todo tipo: com 4 ou mais etiquetas diferentes entre as suas figurinhas aqui, cada uma ganha +1 |
 | Samaria | ✅ O samaritano socorre: no fim de cada turno, a mais fraca do lado que está perdendo aqui ganha +1 |
+| Ilha de Patmos | ✅ Isolado numa ilha: cada figurinha sua aqui ganha +2 se você não tem figurinhas nas arenas vizinhas |
+| Cesareia Marítima | ✅ O centurião comanda: a mais forte de cada lado aqui ganha +1 por cada outra figurinha do lado |
+| Cafarnaum | ✅ Quatro amigos pelo telhado: figurinhas reveladas no mesmo turno que outra sua aqui ganham +2 |
 
 (Os próximos trios ganham a regra na hora do cadastro.)
 
@@ -176,7 +179,7 @@ Os 10 cenários de lançamento mantêm as paradas que já têm (4 a 6) para não
 - [x] **3.** Agrupar cenários por pedra; liberar pedra + cosmético + brasão ao concluir o 3º cenário (transação).
 - [x] **4.** Tela do Peitoral (12 engastes em 4 fileiras, pedra conquistada brilha) e aviso/animação ao ganhar.
 - [x] **5.** Conquista Peitoral Completo (brasão, moldura de prestígio e 2.000 moedas, entregues junto com a 12ª pedra).
-- [ ] **6.** Cadastro dos cenários aos poucos, pedra por pedra. ✅ Trio 1 (Sardônio): Torre de Babel, Betel e Peniel (níveis 51–62, já no seed, sem arte). ✅ Trio 2 (Topázio): Sarça ardente em Horebe, Tabernáculo e Cidade de Davi (níveis 63–74, no seed, sem arte). ✅ Trio 3 (Carbúnculo): Monte Carmelo, Vale dos Ossos Secos e Pentecostes (níveis 75–86, no seed, sem arte). ✅ Trio 4 (Esmeralda): Campos de Belém, Oásis de Elim e Monte das Oliveiras (níveis 87–98, no seed, sem arte). ✅ Trio 5 (Safira): Ur dos Caldeus, Susã e Nínive (níveis 99–110) e ✅ trio 6 (Diamante): Monte da Transfiguração, Rio Jordão e Manjedoura de Jesus (níveis 111–122), no seed, sem arte. ✅ Trio 7 (Jacinto): Damasco, Atenas e Corinto (níveis 123–134). ✅ Trio 8 (Ágata): Éfeso, Filipos e Malta (níveis 135–146). ✅ Trio 9 (Ametista): Roma, Antioquia e Samaria (níveis 147–158). Faltam os trios 10 a 12.
+- [ ] **6.** Cadastro dos cenários aos poucos, pedra por pedra. ✅ Trio 1 (Sardônio): Torre de Babel, Betel e Peniel (níveis 51–62, já no seed, sem arte). ✅ Trio 2 (Topázio): Sarça ardente em Horebe, Tabernáculo e Cidade de Davi (níveis 63–74, no seed, sem arte). ✅ Trio 3 (Carbúnculo): Monte Carmelo, Vale dos Ossos Secos e Pentecostes (níveis 75–86, no seed, sem arte). ✅ Trio 4 (Esmeralda): Campos de Belém, Oásis de Elim e Monte das Oliveiras (níveis 87–98, no seed, sem arte). ✅ Trio 5 (Safira): Ur dos Caldeus, Susã e Nínive (níveis 99–110) e ✅ trio 6 (Diamante): Monte da Transfiguração, Rio Jordão e Manjedoura de Jesus (níveis 111–122), no seed, sem arte. ✅ Trio 7 (Jacinto): Damasco, Atenas e Corinto (níveis 123–134). ✅ Trio 8 (Ágata): Éfeso, Filipos e Malta (níveis 135–146). ✅ Trio 9 (Ametista): Roma, Antioquia e Samaria (níveis 147–158). ✅ Trio 10 (Berilo): Ilha de Patmos, Cesareia Marítima e Cafarnaum (níveis 159–170). Faltam os trios 11 e 12.
 - [ ] **7.** Arte das 12 pedras, 12 brasões, 12 cosméticos e o prêmio final.
 
 ### Prompts de arte extras desta campanha (peças novas)

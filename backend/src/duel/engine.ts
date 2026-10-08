@@ -230,6 +230,15 @@ export function cardPower(state: DuelState, laneIndex: number, side: Side, card:
     const connected = [laneIndex - 1, laneIndex + 1].filter((neighbor) => neighbor >= 0 && neighbor < state.lanes.length && state.lanes[neighbor].cards[side].length > 0).length;
     power += rule.amount * connected;
   }
+  // Ilha (Patmos): sem figurinhas suas nas arenas vizinhas, cada uma daqui ganha o bônus.
+  if (rule.kind === "island" && ![laneIndex - 1, laneIndex + 1].some((neighbor) => neighbor >= 0 && neighbor < state.lanes.length && state.lanes[neighbor].cards[side].length > 0)) power += rule.amount;
+  // O centurião comanda (Cesareia): a mais forte (Influência base + bônus; empate, a mais antiga) ganha o bônus por cada outra figurinha sua aqui.
+  if (rule.kind === "centurion" && here.length > 1) {
+    const leader = [...here].sort((a, b) => b.def.power + b.bonus - (a.def.power + a.bonus) || a.order - b.order)[0];
+    if (leader.uid === card.uid) power += rule.amount * (here.length - 1);
+  }
+  // Amigos pelo telhado (Cafarnaum): figurinhas reveladas no mesmo turno que outra sua aqui ganham o bônus.
+  if (rule.kind === "together" && here.some((mate) => mate.uid !== card.uid && mate.turn === card.turn)) power += rule.amount;
   // Gente de todo tipo (Antioquia): com `tags` ou mais etiquetas diferentes entre as figurinhas do lado aqui, cada uma ganha o bônus.
   if (rule.kind === "variety" && new Set(here.flatMap((mate) => mate.def.tags)).size >= rule.tags) power += rule.amount;
   // Os últimos serão os primeiros: a mais fraca (Influência base + bônus permanentes; empate: a que entrou primeiro).

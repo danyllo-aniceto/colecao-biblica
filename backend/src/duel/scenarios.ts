@@ -42,6 +42,9 @@ export const SCENARIOS: ScenarioDef[] = [
   { id: "roma", name: "Roma", emoji: "🛣️", rule: { kind: "roads", amount: 1 }, text: "Todos os caminhos levam a Roma: cada figurinha sua aqui ganha +1 para cada arena vizinha onde você também tem figurinhas." },
   { id: "antioquia", name: "Antioquia", emoji: "🤝", rule: { kind: "variety", tags: 4, amount: 1 }, text: "Gente de todo tipo: se as figurinhas suas aqui reunirem 4 ou mais etiquetas diferentes, cada uma ganha +1." },
   { id: "samaria", name: "Samaria", emoji: "🪣", rule: { kind: "samaritan", amount: 1 }, text: "O samaritano socorre: no fim de cada turno, a figurinha mais fraca do lado que está perdendo aqui ganha +1." },
+  { id: "patmos", name: "Ilha de Patmos", emoji: "📜", rule: { kind: "island", amount: 2 }, text: "Isolado numa ilha: cada figurinha sua aqui ganha +2 se você não tem figurinhas nas arenas vizinhas." },
+  { id: "cesareia", name: "Cesareia Marítima", emoji: "⚓", rule: { kind: "centurion", amount: 1 }, text: "O centurião comanda: a figurinha mais forte de cada lado aqui ganha +1 para cada outra figurinha do lado." },
+  { id: "cafarnaum", name: "Cafarnaum", emoji: "🏠", rule: { kind: "together", amount: 2 }, text: "Quatro amigos pelo telhado: figurinhas reveladas no mesmo turno que outra sua aqui ganham +2." },
 ];
 
 export const SCENARIO_BY_ID = new Map(SCENARIOS.map((scenario) => [scenario.id, scenario]));
