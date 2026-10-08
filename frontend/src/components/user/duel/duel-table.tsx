@@ -217,6 +217,30 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
         <StakesBadge stakes={view.stakes} matter={view.stakesMatter} text={stakesText} />
         {timer ? <TurnClock timer={timer} /> : null}
         {extra}
+        {stage ? null : (
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            <Tooltip content={speed === 'normal' ? 'Animações normais (toque para acelerar)' : 'Animações rápidas (toque para voltar ao normal)'} side="top">
+              <button type="button" onClick={onSpeed} aria-label="Velocidade das animações" aria-pressed={speed === 'rapido'} className={cn('flex h-8 w-8 items-center justify-center rounded-xl', speed === 'rapido' ? 'bg-primary text-on-primary' : 'bg-surface-3 text-muted hover:text-ink')}>
+                <FastForwardRoundedIcon fontSize="small" />
+              </button>
+            </Tooltip>
+            <Tooltip content="O que aconteceu" side="top">
+              <button type="button" onClick={onHistory} aria-label="O que aconteceu" className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-3 text-muted hover:text-ink">
+                <HistoryRoundedIcon fontSize="small" />
+              </button>
+            </Tooltip>
+            <Tooltip content="Como jogar" side="top">
+              <button type="button" onClick={onHelp} aria-label="Como jogar" className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-3 text-muted hover:text-ink">
+                <HelpOutlineRoundedIcon fontSize="small" />
+              </button>
+            </Tooltip>
+            <Tooltip content={`Desistir da rodada (perde ×${view.retreatCost})`} side="top">
+              <button type="button" onClick={onRetreat} disabled={!view.canRetreat || busy || view.status !== 'playing'} aria-label={`Desistir da rodada, perde ${view.retreatCost}`} className="flex h-8 w-8 items-center justify-center rounded-xl bg-danger/15 text-danger hover:bg-danger/25 disabled:opacity-40">
+                <FlagRoundedIcon fontSize="small" />
+              </button>
+            </Tooltip>
+          </div>
+        )}
       </div>
 
       {timer ? (
@@ -228,7 +252,7 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
         </div>
       ) : null}
 
-      <main ref={boardRef} className="grid min-h-0 flex-1 grid-cols-3 gap-2 px-2 py-2" onClick={playing ? onAdvance : undefined}>
+      <main ref={boardRef} className="grid min-h-0 flex-1 grid-cols-3 gap-2 overflow-y-auto px-2 py-2" onClick={playing ? onAdvance : undefined}>
         {lanes.map((lane, index) => {
           const stagedHere = view.staged.filter((play) => play.lane === index).map((play) => view.hand.find((card) => card.uid === play.uid)).filter((card): card is NonNullable<typeof card> => Boolean(card));
           const droppable = drag ? (drag.from === 'staged' ? drag.origin !== index && canPlace(drag.uid, index, true) : canPlace(drag.uid, index)) : false;
@@ -241,7 +265,7 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
               onClick={() => {
                 if (selected && !locked && canPlace(selected.uid, index)) onStage(selected.uid, index);
               }}
-              className={cn('flex min-h-0 flex-col items-stretch rounded-2xl transition', (droppable || targetable) && 'bg-primary/10 ring-2 ring-primary/60', droppable && drag?.lane === index && 'bg-primary/25 ring-4')}
+              className={cn('flex flex-col items-stretch rounded-2xl transition', (droppable || targetable) && 'bg-primary/10 ring-2 ring-primary/60', droppable && drag?.lane === index && 'bg-primary/25 ring-4')}
             >
               <CardsArea side="foe" lane={index} cards={lane.foe} art={art} focusUid={focusUid} onOpen={(card) => setDetail({ def: card.def, power: card.power })} />
               <Arena lane={lane} index={index} image={lane.scenario ? laneImage(lane.scenario.id) : null} focus={focusLane === index} dropHint={droppable && drag?.lane === index} blindHint={targetable || droppable} onInfo={() => setArenaInfo(index)} />
@@ -271,48 +295,24 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
         {view.foeDoubledNow && view.status === 'playing' && !playing ? (
           <FoeDoubledNotice key={`${view.turn}-${view.stakes}`} stakes={view.stakes} cost={view.retreatCost} canRetreat={view.canRetreat && !busy} onRetreat={onRetreat} />
         ) : null}
-        <div className="flex min-h-[4.25rem] items-stretch gap-2 rounded-2xl bg-surface-2 px-3 py-1.5">
+        <div className="flex min-h-[2.75rem] items-stretch gap-2 rounded-2xl bg-surface-2 px-3 py-1">
           <div className="min-w-0 flex-1" aria-live="polite">
             {stage ? (
               <Narration stage={stage} art={art} onSkip={onSkip} />
             ) : selected ? (
               <CardReadout def={selected.def} power={selected.def.power + selected.bonus} />
             ) : (
-              <p className="flex h-full min-h-[3.5rem] items-center text-sm font-semibold leading-snug text-muted">
+              <p className="flex h-full min-h-[2.5rem] items-center text-xs font-semibold leading-snug text-muted">
                 {view.status !== 'playing'
                   ? 'Fim da rodada.'
                   : view.ready
                     ? 'Pronto! Esperando o rival...'
                     : busy
                       ? 'Aguarde...'
-                      : 'Toque numa figurinha para ler o Dom. Depois toque numa arena ou arraste até ela (até as fechadas).'}
+                      : 'Toque numa figurinha para ler o Dom; depois toque numa arena ou arraste até ela.'}
               </p>
             )}
           </div>
-          {stage ? null : (
-            <div className="grid shrink-0 grid-cols-2 content-center gap-1">
-              <Tooltip content={speed === 'normal' ? 'Animações normais (toque para acelerar)' : 'Animações rápidas (toque para voltar ao normal)'} side="top">
-                <button type="button" onClick={onSpeed} aria-label="Velocidade das animações" aria-pressed={speed === 'rapido'} className={cn('flex h-8 w-8 items-center justify-center rounded-xl', speed === 'rapido' ? 'bg-primary text-on-primary' : 'bg-surface-3 text-muted hover:text-ink')}>
-                  <FastForwardRoundedIcon fontSize="small" />
-                </button>
-              </Tooltip>
-              <Tooltip content="O que aconteceu" side="top">
-                <button type="button" onClick={onHistory} aria-label="O que aconteceu" className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-3 text-muted hover:text-ink">
-                  <HistoryRoundedIcon fontSize="small" />
-                </button>
-              </Tooltip>
-              <Tooltip content="Como jogar" side="top">
-                <button type="button" onClick={onHelp} aria-label="Como jogar" className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-3 text-muted hover:text-ink">
-                  <HelpOutlineRoundedIcon fontSize="small" />
-                </button>
-              </Tooltip>
-              <Tooltip content={`Desistir da rodada (perde ×${view.retreatCost})`} side="top">
-                <button type="button" onClick={onRetreat} disabled={!view.canRetreat || busy || view.status !== 'playing'} aria-label={`Desistir da rodada, perde ${view.retreatCost}`} className="flex h-8 w-8 items-center justify-center rounded-xl bg-danger/15 text-danger hover:bg-danger/25 disabled:opacity-40">
-                  <FlagRoundedIcon fontSize="small" />
-                </button>
-              </Tooltip>
-            </div>
-          )}
         </div>
         <div data-hand-zone className="no-scrollbar flex items-end justify-start gap-1.5 overflow-x-auto px-1 pb-1 pt-3 sm:justify-center">
           {hand.length === 0 ? <p className="w-full px-2 py-6 text-center text-sm font-semibold text-muted">Mão vazia</p> : null}
@@ -608,7 +608,7 @@ function CardsArea({
   onStagedPointerDown?: (uid: number, event: ReactPointerEvent<HTMLElement>) => void;
 }) {
   return (
-    <div className={cn('flex min-h-0 flex-1 flex-wrap content-start justify-center gap-1 px-0.5 py-1', side === 'foe' ? 'content-end' : 'content-start')}>
+    <div className={cn('flex min-h-[5.1rem] flex-1 flex-wrap content-start justify-center gap-1 px-0.5 py-1', side === 'foe' ? 'content-end' : 'content-start')}>
       {cards.map((card) => (
         <DuelCardFace key={card.uid} def={card.def} art={art} power={card.power} silenced={card.silenced} animate focus={focusUid === card.uid} data={{ 'card-uid': card.uid, zone: side, lane }} onClick={() => onOpen(card)} />
       ))}
