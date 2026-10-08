@@ -15,10 +15,10 @@ describe.skipIf(!hasDatabase)("campanha", () => {
     const jesus = await prisma.biblicalCharacter.findUniqueOrThrow({ where: { name: "Jesus" } });
     expect(jesus.rarity).toBe("SPECIAL");
     const scenarios = await prisma.scenario.findMany({ include: { nodes: true }, orderBy: { sortOrder: "asc" } });
-    expect(scenarios.length).toBe(43);
+    expect(scenarios.length).toBe(46);
     // Uma parada por nível, sem buracos, e a última de cada cenário é a relíquia.
     const levels = scenarios.flatMap((scenario) => scenario.nodes.map((node) => node.level)).sort((a, b) => a - b);
-    expect(levels).toEqual(Array.from({ length: 182 }, (_, index) => index + 1));
+    expect(levels).toEqual(Array.from({ length: 194 }, (_, index) => index + 1));
     for (const scenario of scenarios) {
       const last = [...scenario.nodes].sort((a, b) => b.level - a.level)[0];
       expect(last.relic).toBe(true);
@@ -28,7 +28,7 @@ describe.skipIf(!hasDatabase)("campanha", () => {
       expect(scenario.fragmentCharacterId).toBe(launch ? jesus.id : null);
       if (!launch) expect(scenario.nodes).toHaveLength(4);
     }
-    expect(scenarios.slice(10).map((scenario) => scenario.slug)).toEqual(["babel", "betel", "peniel", "horebe", "tabernaculo", "cidade-davi", "carmelo", "ossos-secos", "pentecostes", "campos-belem", "elim", "monte-oliveiras", "ur-caldeus", "susa", "ninive", "transfiguracao", "jordao", "manjedoura", "damasco", "atenas", "corinto", "efeso", "filipos", "malta", "roma", "antioquia", "samaria", "patmos", "cesareia", "cafarnaum", "santa-ceia", "getsemani", "calvario"]);
+    expect(scenarios.slice(10).map((scenario) => scenario.slug)).toEqual(["babel", "betel", "peniel", "horebe", "tabernaculo", "cidade-davi", "carmelo", "ossos-secos", "pentecostes", "campos-belem", "elim", "monte-oliveiras", "ur-caldeus", "susa", "ninive", "transfiguracao", "jordao", "manjedoura", "damasco", "atenas", "corinto", "efeso", "filipos", "malta", "roma", "antioquia", "samaria", "patmos", "cesareia", "cafarnaum", "santa-ceia", "getsemani", "calvario", "rio-da-vida", "nova-jerusalem", "monte-siao"]);
   });
 
   it("música do tema: o admin cadastra e só chega ao jogador no nível do cenário", async () => {

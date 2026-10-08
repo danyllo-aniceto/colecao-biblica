@@ -28,6 +28,8 @@ import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import WineBarRoundedIcon from '@mui/icons-material/WineBarRounded';
 import NightsStayRoundedIcon from '@mui/icons-material/NightsStayRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import YardRoundedIcon from '@mui/icons-material/YardRounded';
+import FilterHdrRoundedIcon from '@mui/icons-material/FilterHdrRounded';
 import OpacityRoundedIcon from '@mui/icons-material/OpacityRounded';
 import StadiumRoundedIcon from '@mui/icons-material/StadiumRounded';
 import LockOpenRoundedIcon from '@mui/icons-material/LockOpenRounded';
@@ -90,6 +92,9 @@ const FALLBACK_ICONS: Record<string, typeof MapRoundedIcon> = {
   'santa-ceia': WineBarRoundedIcon,
   getsemani: NightsStayRoundedIcon,
   calvario: AddRoundedIcon,
+  'rio-da-vida': YardRoundedIcon,
+  'nova-jerusalem': LocationCityRoundedIcon,
+  'monte-siao': FilterHdrRoundedIcon,
 };
 
 export function ScenarioFallbackIcon({ slug, className, fontSize = 28 }: { slug: string; className?: string; fontSize?: number }): ReactNode {

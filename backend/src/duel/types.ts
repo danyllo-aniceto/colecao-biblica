@@ -193,7 +193,10 @@ export type ScenarioRule =
   | { kind: "together"; amount: number }
   | { kind: "betrayalAt"; turn: number; amount: number }
   | { kind: "hush" }
-  | { kind: "sacrifice"; amount: number; max: number };
+  | { kind: "sacrifice"; amount: number; max: number }
+  | { kind: "fruit"; amount: number; max: number }
+  | { kind: "gates"; min: number; amount: number }
+  | { kind: "investment"; amount: number };
 
 export type ScenarioDef = {
   /** Mesmo identificador (slug) do cenário da campanha. */

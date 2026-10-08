@@ -608,6 +608,37 @@ describe("cenários", () => {
     expect(lanePower(state, 0, 1)).toBe(2);
   });
 
+  it("Rio da Vida: +1 por turno depois de revelada, até +3", () => {
+    const power = (turn: number) => {
+      const state = duel({ turn, scenarios: ["rio-da-vida", "arca", "canaa"] });
+      state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 2 });
+      return lanePower(state, 0, 0);
+    };
+    expect([2, 3, 4, 5, 6].map(power)).toEqual([2, 3, 4, 5, 5]);
+    expect(power(6)).toBe(2 + 3);
+  });
+
+  it("Nova Jerusalém: quem reúne 12 ou mais de Influência aqui ganha +3 na arena", () => {
+    const state = duel({ turn: 3, scenarios: ["nova-jerusalem", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("saul"), bonus: 0, silenced: false, order: 1, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(6);
+    state.lanes[0].cards[0].push({ uid: 2, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(12 + 3);
+    state.lanes[0].cards[1].push({ uid: 3, def: def("noe"), bonus: 0, silenced: false, order: 3, turn: 1 });
+    expect(lanePower(state, 0, 1)).toBe(7);
+  });
+
+  it("Monte Sião: quem investiu mais Vigor aqui ganha +3 na arena; empate, ninguém", () => {
+    const state = duel({ turn: 3, scenarios: ["monte-siao", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("saul"), bonus: 0, silenced: false, order: 1, turn: 1 });
+    state.lanes[0].cards[1].push({ uid: 2, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(6);
+    expect(lanePower(state, 0, 1)).toBe(6);
+    state.lanes[0].cards[0].push({ uid: 3, def: def("abel"), bonus: 0, silenced: false, order: 3, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(6 + 2 + 3);
+    expect(lanePower(state, 0, 1)).toBe(6);
+  });
+
   it("o nome antigo Cenáculo ainda resolve para Pentecostes (salas guardadas)", () => {
     expect(scenarioOf("cenaculo").id).toBe("pentecostes");
   });

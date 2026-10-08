@@ -48,6 +48,9 @@ export const SCENARIOS: ScenarioDef[] = [
   { id: "santa-ceia", name: "Sala da Santa Ceia", emoji: "🍷", rule: { kind: "betrayalAt", turn: 4, amount: 3 }, text: "Um de vocês me trairá: no fim do turno 4, a figurinha mais forte do lado que está ganhando aqui perde 3." },
   { id: "getsemani", name: "Getsêmani", emoji: "🫒", rule: { kind: "hush" }, text: "Vigiai e orai: o silêncio do jardim cala os Dons de \"Ao revelar\" e de \"Quando uma aliada é jogada\" nas figurinhas daqui." },
   { id: "calvario", name: "Calvário", emoji: "✝️", rule: { kind: "sacrifice", amount: 1, max: 3 }, text: "O sacrifício que redime: cada figurinha sua aqui ganha +1 para cada figurinha sua já afastada (até +3)." },
+  { id: "rio-da-vida", name: "Rio da Vida", emoji: "🌳", rule: { kind: "fruit", amount: 1, max: 3 }, text: "A árvore da vida dá frutos todo mês: cada figurinha sua aqui ganha +1 por turno que passa depois de revelada, até +3." },
+  { id: "nova-jerusalem", name: "Nova Jerusalém", emoji: "🏙️", rule: { kind: "gates", min: 12, amount: 3 }, text: "Doze portas: o lado que reunir 12 ou mais de Influência nas figurinhas daqui ganha +3 na arena." },
+  { id: "monte-siao", name: "Monte Sião", emoji: "⛰️", rule: { kind: "investment", amount: 3 }, text: "A coroa de Sião: o lado que investiu mais Vigor aqui (soma do Vigor das figurinhas) ganha +3 na arena. Empate, ninguém." },
 ];
 
 export const SCENARIO_BY_ID = new Map(SCENARIOS.map((scenario) => [scenario.id, scenario]));

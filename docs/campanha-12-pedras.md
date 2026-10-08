@@ -53,7 +53,7 @@ Quem escolhe o próximo cenário é o dono do jogo, trio a trio; a lista abaixo 
 | 9 Ametista ✅ | Roma · Antioquia · Samaria | roxo e mármore: Coliseu e estradas; praça dos primeiros irmãos; colinas e o poço de Jacó |
 | 10 Berilo ✅ | Ilha de Patmos · Cesareia Marítima · Cafarnaum | verde-água: rochedo e mar; porto de Herodes; vila à beira do lago |
 | 11 Ônix ✅ | Sala da Santa Ceia · Getsêmani · Calvário | escuro com brilho dourado, **sem horror**: a grande sala do andar de cima à luz de lamparinas; oliveiral à noite; colina serena (o Jardim do Túmulo fica no pool) |
-| 12 Jaspe | Salão do Trono celestial · Nova Jerusalém · Monte Sião | verde-translúcido e ouro: o clímax; muros de jaspe e portas de pérola |
+| 12 Jaspe ✅ | Rio da Vida · Nova Jerusalém · Monte Sião | verde-translúcido e ouro: o clímax; muros de jaspe e portas de pérola |
 
 ### Pool de lugares (para escolher e trocar)
 
@@ -108,6 +108,9 @@ Cada cenário novo traz uma regra de duelo, **sem sorte**, com tema do lugar. Re
 | Sala da Santa Ceia | ✅ Um de vocês me trairá: no fim do turno 4, a mais forte do lado que está ganhando aqui perde 3 |
 | Getsêmani | ✅ Vigiai e orai: os Dons de "Ao revelar" e "Quando uma aliada é jogada" não agem aqui |
 | Calvário | ✅ O sacrifício que redime: +1 por figurinha sua já afastada, até +3 |
+| Rio da Vida | ✅ A árvore da vida dá frutos todo mês: +1 por turno depois de revelada, até +3 |
+| Nova Jerusalém | ✅ Doze portas: quem reúne 12 ou mais de Influência aqui ganha +3 na arena |
+| Monte Sião | ✅ A coroa de Sião: quem investiu mais Vigor aqui ganha +3 na arena |
 
 (Os próximos trios ganham a regra na hora do cadastro.)
 
@@ -182,7 +185,7 @@ Os 10 cenários de lançamento mantêm as paradas que já têm (4 a 6) para não
 - [x] **3.** Agrupar cenários por pedra; liberar pedra + cosmético + brasão ao concluir o 3º cenário (transação).
 - [x] **4.** Tela do Peitoral (12 engastes em 4 fileiras, pedra conquistada brilha) e aviso/animação ao ganhar.
 - [x] **5.** Conquista Peitoral Completo (brasão, moldura de prestígio e 2.000 moedas, entregues junto com a 12ª pedra).
-- [ ] **6.** Cadastro dos cenários aos poucos, pedra por pedra. ✅ Trio 1 (Sardônio): Torre de Babel, Betel e Peniel (níveis 51–62, já no seed, sem arte). ✅ Trio 2 (Topázio): Sarça ardente em Horebe, Tabernáculo e Cidade de Davi (níveis 63–74, no seed, sem arte). ✅ Trio 3 (Carbúnculo): Monte Carmelo, Vale dos Ossos Secos e Pentecostes (níveis 75–86, no seed, sem arte). ✅ Trio 4 (Esmeralda): Campos de Belém, Oásis de Elim e Monte das Oliveiras (níveis 87–98, no seed, sem arte). ✅ Trio 5 (Safira): Ur dos Caldeus, Susã e Nínive (níveis 99–110) e ✅ trio 6 (Diamante): Monte da Transfiguração, Rio Jordão e Manjedoura de Jesus (níveis 111–122), no seed, sem arte. ✅ Trio 7 (Jacinto): Damasco, Atenas e Corinto (níveis 123–134). ✅ Trio 8 (Ágata): Éfeso, Filipos e Malta (níveis 135–146). ✅ Trio 9 (Ametista): Roma, Antioquia e Samaria (níveis 147–158). ✅ Trio 10 (Berilo): Ilha de Patmos, Cesareia Marítima e Cafarnaum (níveis 159–170). ✅ Trio 11 (Ônix): Sala da Santa Ceia, Getsêmani e Calvário (níveis 171–182). Falta o trio 12.
+- [ ] **6.** Cadastro dos cenários aos poucos, pedra por pedra. ✅ Trio 1 (Sardônio): Torre de Babel, Betel e Peniel (níveis 51–62, já no seed, sem arte). ✅ Trio 2 (Topázio): Sarça ardente em Horebe, Tabernáculo e Cidade de Davi (níveis 63–74, no seed, sem arte). ✅ Trio 3 (Carbúnculo): Monte Carmelo, Vale dos Ossos Secos e Pentecostes (níveis 75–86, no seed, sem arte). ✅ Trio 4 (Esmeralda): Campos de Belém, Oásis de Elim e Monte das Oliveiras (níveis 87–98, no seed, sem arte). ✅ Trio 5 (Safira): Ur dos Caldeus, Susã e Nínive (níveis 99–110) e ✅ trio 6 (Diamante): Monte da Transfiguração, Rio Jordão e Manjedoura de Jesus (níveis 111–122), no seed, sem arte. ✅ Trio 7 (Jacinto): Damasco, Atenas e Corinto (níveis 123–134). ✅ Trio 8 (Ágata): Éfeso, Filipos e Malta (níveis 135–146). ✅ Trio 9 (Ametista): Roma, Antioquia e Samaria (níveis 147–158). ✅ Trio 10 (Berilo): Ilha de Patmos, Cesareia Marítima e Cafarnaum (níveis 159–170). ✅ Trio 11 (Ônix): Sala da Santa Ceia, Getsêmani e Calvário (níveis 171–182). ✅ Trio 12 (Jaspe): Rio da Vida, Nova Jerusalém e Monte Sião (níveis 183–194). **Os 12 trios estão cadastrados** (36 cenários de pedra).
 - [ ] **7.** Arte das 12 pedras, 12 brasões, 12 cosméticos e o prêmio final.
 
 ### Prompts de arte extras desta campanha (peças novas)

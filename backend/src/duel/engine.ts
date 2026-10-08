@@ -241,6 +241,8 @@ export function cardPower(state: DuelState, laneIndex: number, side: Side, card:
   if (rule.kind === "together" && here.some((mate) => mate.uid !== card.uid && mate.turn === card.turn)) power += rule.amount;
   // O sacrifício (Calvário): +amount por figurinha sua já afastada (no cemitério), até `max` vezes.
   if (rule.kind === "sacrifice") power += rule.amount * Math.min(rule.max, state.players[side].graveyard.length);
+  // A árvore da vida dá frutos todo mês (Rio da Vida): +amount por turno que a figurinha está aqui (revelada em turno anterior), até `max` vezes.
+  if (rule.kind === "fruit") power += rule.amount * Math.min(rule.max, Math.max(state.turn - card.turn, 0));
   // Gente de todo tipo (Antioquia): com `tags` ou mais etiquetas diferentes entre as figurinhas do lado aqui, cada uma ganha o bônus.
   if (rule.kind === "variety" && new Set(here.flatMap((mate) => mate.def.tags)).size >= rule.tags) power += rule.amount;
   // Os últimos serão os primeiros: a mais fraca (Influência base + bônus permanentes; empate: a que entrou primeiro).
@@ -257,6 +259,10 @@ function laneBonus(state: DuelState, laneIndex: number, side: Side): number {
   if (rule.kind === "majority" && mine.length > theirs.length) return rule.amount;
   // Quem tem menos figurinhas (e ao menos uma) ganha o bônus; empate de quantidade não dá nada.
   if (rule.kind === "underdog" && mine.length > 0 && mine.length < theirs.length) return rule.amount;
+  // Doze portas (Nova Jerusalém): o lado que reúne `min` ou mais de Influência nas figurinhas daqui ganha o bônus na arena.
+  if (rule.kind === "gates" && mine.reduce((sum, card) => sum + cardPower(state, laneIndex, side, card), 0) >= rule.min) return rule.amount;
+  // A coroa de Sião: quem investiu mais Vigor (soma do Vigor das figurinhas) aqui ganha o bônus; empate, ninguém.
+  if (rule.kind === "investment" && mine.reduce((sum, card) => sum + card.def.cost, 0) > theirs.reduce((sum, card) => sum + card.def.cost, 0)) return rule.amount;
   if (rule.kind === "tagBonus") return mine.filter((card) => card.def.tags.some((tag) => rule.tags.includes(tag))).length * rule.amount;
   return 0;
 }
