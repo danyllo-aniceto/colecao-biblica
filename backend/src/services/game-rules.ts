@@ -92,19 +92,23 @@ export function stoneState(completedScenarios: number, claimed: boolean, require
 export type MiniGameDef = { id: string; name: string; emoji: string; text: string; stoneSlot: number; ready: boolean };
 
 export const MINI_GAMES: MiniGameDef[] = [
-  { id: "caca-palavras", name: "Caça-palavras", emoji: "🔎", text: "Ache os nomes de personagens e lugares escondidos na grade, contra o tempo.", stoneSlot: 1, ready: false },
-  { id: "forca", name: "Forca", emoji: "🪢", text: "Descubra o personagem, o lugar ou o livro letra por letra, com a descrição como dica.", stoneSlot: 2, ready: false },
-  { id: "quebra-cabeca", name: "Quebra-cabeça", emoji: "🧩", text: "Monte a figurinha ou o mapa do cenário peça por peça.", stoneSlot: 3, ready: false },
-  { id: "memoria", name: "Memória", emoji: "🃏", text: "Una os pares: personagem e feito, lugar e versículo.", stoneSlot: 4, ready: false },
-  { id: "versiculo", name: "Versículo em pedaços", emoji: "📖", text: "Complete as lacunas e ordene as palavras do versículo.", stoneSlot: 5, ready: false },
+  { id: "caca-palavras", name: "Caça-palavras", emoji: "🔎", text: "Ache os nomes de personagens e lugares escondidos na grade, contra o tempo.", stoneSlot: 1, ready: true },
+  { id: "forca", name: "Forca", emoji: "🪢", text: "Descubra o personagem, o lugar ou o livro letra por letra, com a descrição como dica.", stoneSlot: 2, ready: true },
+  { id: "quebra-cabeca", name: "Quebra-cabeça", emoji: "🧩", text: "Monte a figurinha ou o mapa do cenário peça por peça.", stoneSlot: 3, ready: true },
+  { id: "memoria", name: "Memória", emoji: "🃏", text: "Una os pares: personagem e feito, lugar e versículo.", stoneSlot: 4, ready: true },
+  { id: "versiculo", name: "Versículo em pedaços", emoji: "📖", text: "Complete as lacunas e ordene as palavras do versículo.", stoneSlot: 5, ready: true },
   { id: "quem-sou-eu", name: "Quem sou eu?", emoji: "🎭", text: "As dicas aparecem uma a uma: quanto menos dicas, mais pontos.", stoneSlot: 6, ready: false },
-  { id: "labirinto", name: "Labirinto", emoji: "🌀", text: "Ache a saída: em cada bifurcação uma pergunta mostra o caminho certo.", stoneSlot: 7, ready: false },
+  { id: "labirinto", name: "Labirinto", emoji: "🌀", text: "Ache a saída: em cada bifurcação uma pergunta mostra o caminho certo.", stoneSlot: 7, ready: true },
   { id: "linha-do-tempo", name: "Linha do tempo", emoji: "⏳", text: "Encaixe personagens e cenários na ordem da história: quanto mais perto, mais pontos.", stoneSlot: 8, ready: false },
   { id: "palavras-cruzadas", name: "Palavras cruzadas", emoji: "✏️", text: "Preencha a grade com as dicas dos personagens e lugares.", stoneSlot: 9, ready: false },
   { id: "mapa", name: "Mapa bíblico", emoji: "🗺️", text: "Aponte onde fica cada cenário: quanto mais perto, mais pontos.", stoneSlot: 10, ready: false },
   { id: "arvore", name: "Árvore genealógica", emoji: "🌳", text: "Monte a linhagem de Adão até Jesus.", stoneSlot: 11, ready: false },
   { id: "interconexao", name: "Interconexão", emoji: "🔗", text: "Ligue dois personagens ou cenários por uma corrente de relações: menos elos, mais pontos.", stoneSlot: 12, ready: false },
 ];
+
+/** Moedas da primeira vitória do dia em cada mini game e quantas vitórias por dia rendem moedas (o resto só vale pontos no ranking). */
+export const MINI_GAME_WIN_COINS = 10;
+export const MINI_GAME_DAILY_COIN_WINS = 3;
 
 /** Um mini game está liberado quando a pedra dele foi resgatada. */
 export function miniGameUnlocked(game: Pick<MiniGameDef, "stoneSlot">, claimedSlots: number[]): boolean {

@@ -678,7 +678,7 @@ export function UserDashboard() {
                     ) : null}
                     {mode === 'board' ? <BoardHub playerName={profile?.name ?? ''} /> : null}
                     {mode === 'duel' ? <DuelHub characters={characters} collection={collection} /> : null}
-                    {mode === 'minigames' ? <MiniGamesHub currentUserId={profile?.id} /> : null}
+                    {mode === 'minigames' ? <MiniGamesHub currentUserId={profile?.id} onWallet={updateWallet} /> : null}
                   </PlayModeFrame>
                 );
               })()

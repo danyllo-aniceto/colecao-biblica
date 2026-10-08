@@ -53,7 +53,8 @@ liberar o hub de mini games. Evitar bônus permanente de moedas (mexe na economi
 
 - [x] Base: catálogo e liberação por pedra, ranking semanal (tabela `mini_game_scores`, só quem completou o Peitoral), Galeria dos Peitorais, telas (cartão na aba Jogar,
   Jogos/Ranking/Galeria), capa `MINIGAMES` no painel.
-- [ ] Desafio diário (1 por dia) e prêmio pequeno limitado (a decidir).
-- [ ] Jogos sem conteúdo novo: caça-palavras, forca, quebra-cabeça, memória, versículo em pedaços, labirinto.
+- [x] Prêmio: pontos no ranking semanal e 10 moedas na 1ª vitória do dia em cada jogo (até 3 jogos por dia).
+- [x] Jogos sem conteúdo novo: caça-palavras, forca, quebra-cabeça (3 × 3, trocar peças), memória (cenário ↔ referência), versículo em pedaços (ordenar), labirinto (sem perguntas ainda).
+- [ ] Versículo: variante com lacunas. Labirinto: perguntas nas bifurcações. Memória: pares personagem ↔ figurinha.
 - [ ] Jogos com campo novo no painel: quem sou eu (dicas), linha do tempo (cronologia), mapa (coordenadas), árvore genealógica (pai/mãe).
 - [ ] Jogos com grafo de relações: interconexão e palavras cruzadas.

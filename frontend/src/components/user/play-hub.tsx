@@ -43,7 +43,7 @@ export const PLAY_MODES: Array<{ id: PlayMode; design: GameMode; title: string; 
     design: 'MINIGAMES',
     title: 'Mini games',
     text: 'Jogos rápidos para treinar o que você sabe da Bíblia: caça-palavras, forca, quebra-cabeça e mais. Cada pedra do Peitoral libera um jogo novo.',
-    tags: ['Sozinho', 'Liberados pelas pedras', 'Sem XP: só diversão'],
+    tags: ['Sozinho', 'Liberados pelas pedras', 'Sem XP · moedas do dia'],
     icon: <ExtensionRoundedIcon sx={{ fontSize: 56 }} />,
     fallback: 'from-success to-info',
   },
@@ -99,7 +99,7 @@ const TITLES: Record<PlayMode, { title: string; subtitle: string }> = {
   quiz: { title: 'Quiz Bíblico', subtitle: 'Responda, ganhe XP, moedas e figurinhas.' },
   board: { title: 'Tabuleiro', subtitle: 'Partidas sem XP nem moedas: é só diversão.' },
   duel: { title: 'Duelo de Figurinhas', subtitle: 'Figurinhas com Dons, 3 arenas e 6 turnos. Sem XP nem moedas.' },
-  minigames: { title: 'Mini games', subtitle: 'Cada pedra do Peitoral libera um jogo. Sem XP nem moedas.' },
+  minigames: { title: 'Mini games', subtitle: 'Cada pedra do Peitoral libera um jogo. Sem XP; a 1ª vitória do dia rende moedas.' },
 };
 
 /** Moldura da tela de um jogo: botão para voltar aos jogos e o título. */

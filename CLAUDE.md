@@ -96,9 +96,13 @@ código em **português do Brasil**.
 - Proposta, lista dos 12 jogos e ordem de construção em `docs/minigames.md`; atualize o checklist a cada jogo. Catálogo e liberação em `MINI_GAMES`
   (`services/game-rules.ts`, com teste): **cada pedra do Peitoral libera um jogo** (`stoneSlot`) e o **Peitoral Completo libera o ranking semanal**
   (+ brasão, moldura, moedas e entrada na Galeria dos Peitorais). `ready: false` até o jogo existir no app.
-- **Nada do modo dá XP**, moedas nem mexe em ranking geral, missões ou estatísticas de perguntas. Só a pontuação semanal (`mini_game_scores`).
-- Pontos só entram por `recordMiniGameScore` (`services/minigames.ts`), chamado pela rota do próprio jogo depois de conferir a partida no servidor:
-  **não existe rota pública para enviar pontuação**. Guarda só a melhor da semana de cada jogo e só para quem completou o Peitoral.
+- **Nada do modo dá XP** nem mexe em ranking geral, missões ou estatísticas de perguntas. Prêmios: pontos no ranking semanal (`mini_game_scores`, só quem
+  completou o Peitoral) e moedas na **1ª vitória do dia em cada jogo, até 3 jogos por dia** (`MINI_GAME_WIN_COINS`/`MINI_GAME_DAILY_COIN_WINS`).
+- Motores **puros** em `backend/src/minigames/` (sorteio com semente, sem dependências, com teste): cada jogo tem `generate` e `check`. A partida vive no
+  servidor (`mini_game_runs`, `services/minigame-play.ts`): `POST /minigames/:jogo/start` guarda o gabarito, `POST /minigames/runs/:id/finish` confere a
+  resposta e **calcula a pontuação no servidor** (a tela nunca manda pontos; partida vale uma vez; o tempo é o do servidor). A forca confere cada palpite no
+  servidor (`/guess`) e nunca manda a palavra. Jogos de informação aberta (memória, labirinto, versículo...) mandam o jogo inteiro à tela: o servidor confere a
+  solução, mas não impede quem lê a rede; por isso o prêmio é pequeno e limitado.
 - A imagem do modo na aba Jogar é a capa `MINIGAMES` (Painel → Capas dos jogos), como Quiz, Tabuleiro e Duelo.
 
 ## Comandos

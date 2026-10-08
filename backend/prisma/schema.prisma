@@ -187,6 +187,7 @@ model User {
   achievements   UserAchievement[]
   claims         UserClaim[]
   miniGameScores MiniGameScore[]
+  miniGameRuns   MiniGameRun[]
   reports        QuestionReport[]
   cosmetics      UserCosmetic[]
 
@@ -1070,6 +1071,21 @@ model MiniGameScore {
   @@unique([userId, gameId, weekKey])
   @@index([weekKey, score])
   @@map("mini_game_scores")
+}
+
+/// Partida de mini game em andamento: guarda o gabarito no servidor (forca, caça-palavras...) e vale uma única vez.
+model MiniGameRun {
+  id         String    @id @default(uuid())
+  userId     Int       @map("user_id")
+  gameId     String    @map("game_id")
+  state      Json
+  startedAt  DateTime  @default(now()) @map("started_at")
+  finishedAt DateTime? @map("finished_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, gameId])
+  @@map("mini_game_runs")
 }
 
 /// As 12 pedras do peitoral do sumo sacerdote (Êxodo 28:15-21). Cada pedra é conquistada ao concluir os cenários ligados a ela.

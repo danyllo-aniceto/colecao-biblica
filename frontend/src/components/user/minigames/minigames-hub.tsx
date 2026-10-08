@@ -1,18 +1,21 @@
 import { useEffect, useState } from 'react';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
+import { Button } from '@/components/ui/button';
 import { Pagination, usePagination } from '@/components/ui/pagination';
 import { Segmented } from '@/components/ui/segmented';
 import { LoadingState, Spinner } from '@/components/ui/spinner';
 import { Alert, EmptyState, LevelBadge } from '@/components/game/game-ui';
 import { PlayerChip } from '@/components/user/rewards/player-profile-modal';
 import { PeitoralGallery } from '@/components/user/minigames/peitoral-gallery';
+import { MiniGamePlay } from '@/components/user/minigames/mini-game-play';
+import { CoinIcon } from '@/components/game/game-ui';
 import { cn } from '@/lib/cn';
 import { getMiniGames, getMiniRanking, type MiniGameInfo, type MiniGamesOverview, type MiniRankingPage } from '@/lib/minigames-api';
 
 type Tab = 'games' | 'ranking' | 'gallery';
 
-function GameCard({ game }: { game: MiniGameInfo }) {
+function GameCard({ game, onPlay }: { game: MiniGameInfo; onPlay: (game: MiniGameInfo) => void }) {
   const state = !game.unlocked ? 'locked' : game.ready ? 'ready' : 'soon';
   return (
     <li className={cn('panel flex items-start gap-3 p-4', state === 'locked' && 'opacity-70')}>
@@ -29,9 +32,11 @@ function GameCard({ game }: { game: MiniGameInfo }) {
               <span className="text-muted">Libera com a pedra {game.stoneName ?? game.stoneSlot} do Peitoral</span>
             </>
           ) : state === 'soon' ? (
-            <span className="rounded-full bg-success/15 px-2.5 py-1 text-success">Liberado · chega em breve ao app</span>
+            <span className="rounded-full bg-success/15 px-2.5 py-1 text-success">Liberado · chega em breve</span>
           ) : (
-            <span className="rounded-full bg-primary/15 px-2.5 py-1 text-primary-strong dark:text-primary">Liberado</span>
+            <Button size="sm" onClick={() => onPlay(game)}>
+              Jogar
+            </Button>
           )}
         </span>
       </span>
@@ -103,10 +108,13 @@ function WeeklyRanking({ currentUserId }: { currentUserId?: number }) {
 }
 
 /** Tela dos mini games: os jogos (cada pedra libera um), o ranking semanal (Peitoral Completo) e a Galeria dos Peitorais. Sem XP nem moedas. */
-export function MiniGamesHub({ currentUserId }: { currentUserId?: number }) {
+export function MiniGamesHub({ currentUserId, onWallet }: { currentUserId?: number; onWallet: (wallet: { userCoins: number }) => void }) {
   const [tab, setTab] = useState<Tab>('games');
+  const [playing, setPlaying] = useState<MiniGameInfo | null>(null);
   const [overview, setOverview] = useState<MiniGamesOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     let ignore = false;
@@ -116,12 +124,25 @@ export function MiniGamesHub({ currentUserId }: { currentUserId?: number }) {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [reload]);
 
   const games = overview?.games ?? [];
   const list = usePagination(games, 6);
 
   if (!overview) return error ? <Alert tone="danger">{error}</Alert> : <LoadingState label="Carregando mini games..." />;
+
+  if (playing) {
+    return (
+      <MiniGamePlay
+        game={playing}
+        onWallet={onWallet}
+        onExit={() => {
+          setPlaying(null);
+          setReload((value) => value + 1);
+        }}
+      />
+    );
+  }
 
   const unlockedCount = games.filter((game) => game.unlocked).length;
   return (
@@ -140,11 +161,14 @@ export function MiniGamesHub({ currentUserId }: { currentUserId?: number }) {
       {tab === 'games' ? (
         <div className="space-y-4">
           <p className="text-sm font-semibold text-muted">
-            Cada pedra do Peitoral libera um mini game. Você libera {unlockedCount} de {games.length}. Mini games não dão XP nem moedas: valem pela diversão e pelo ranking semanal.
+            Cada pedra do Peitoral libera um mini game. Você libera {unlockedCount} de {games.length}. Mini games não dão XP: valem pela diversão, pelas moedas do dia e pelo ranking semanal.
+          </p>
+          <p className="flex items-center gap-1.5 rounded-xl bg-primary/10 p-2 text-xs font-bold text-ink">
+            <CoinIcon className="h-4 w-4" /> A primeira vitória do dia em cada jogo rende {overview.coins.perWin} moedas (até {overview.coins.limit} jogos por dia). Hoje: {overview.coins.winsToday}/{overview.coins.limit}.
           </p>
           <ul className="grid gap-3 sm:grid-cols-2">
             {list.pageItems.map((game) => (
-              <GameCard key={game.id} game={game} />
+              <GameCard key={game.id} game={game} onPlay={setPlaying} />
             ))}
           </ul>
           <Pagination page={list.page} totalPages={list.totalPages} totalElements={list.totalElements} onPageChange={list.setPage} itemLabel="mini games" />

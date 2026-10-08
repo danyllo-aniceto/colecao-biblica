@@ -2,7 +2,7 @@ import type { Db } from "../db/prisma";
 import { env } from "../lib/env";
 import { badRequest, notFound } from "../lib/errors";
 import { pageOf } from "../lib/pagination";
-import { MINI_GAMES, miniGameUnlocked, weekKeyInTimeZone } from "./game-rules";
+import { dayKeyInTimeZone, MINI_GAMES, MINI_GAME_DAILY_COIN_WINS, MINI_GAME_WIN_COINS, miniGameUnlocked, weekKeyInTimeZone } from "./game-rules";
 import { getBreastplate } from "./breastplate";
 import { playerLooks } from "./cosmetics";
 
@@ -13,6 +13,8 @@ export async function getMiniGames(db: Db, userId: number) {
   const breastplate = await getBreastplate(db, userId);
   const claimedSlots = breastplate.stones.filter((stone) => stone.state === "claimed").map((stone) => stone.slot);
   const stoneBySlot = new Map(breastplate.stones.map((stone) => [stone.slot, stone]));
+  const day = dayKeyInTimeZone(new Date(), env.timezone);
+  const winsToday = await db.userClaim.count({ where: { userId, kind: "MINIGAME", periodKey: day } });
   return {
     games: MINI_GAMES.map((game) => ({
       id: game.id,
@@ -25,6 +27,8 @@ export async function getMiniGames(db: Db, userId: number) {
       unlocked: miniGameUnlocked(game, claimedSlots),
     })),
     rankingUnlocked: breastplate.finalClaimed,
+    /** Moedas da primeira vitória do dia em cada jogo, até `limit` jogos por dia. */
+    coins: { perWin: MINI_GAME_WIN_COINS, limit: MINI_GAME_DAILY_COIN_WINS, winsToday },
     weekKey: weekKeyInTimeZone(new Date(), env.timezone),
   };
 }
