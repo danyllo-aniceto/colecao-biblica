@@ -490,6 +490,51 @@ describe("cenários", () => {
     expect(cardPower(other, 0, 0, other.lanes[0].cards[0][0])).toBe(3);
   });
 
+  it("Roma: cada figurinha ganha +1 por arena vizinha onde o mesmo lado também tem figurinhas", () => {
+    const state = duel({ turn: 3, scenarios: ["canaa", "roma", "arca"] });
+    const push = (lane: number, side: 0 | 1, uid: number) => state.lanes[lane].cards[side].push({ uid, def: def("abel"), bonus: 0, silenced: false, order: uid, turn: 1 });
+    push(1, 0, 1);
+    // Sem figurinhas nas vizinhas, nada muda.
+    expect(lanePower(state, 1, 0)).toBe(2);
+    push(0, 0, 2);
+    expect(lanePower(state, 1, 0)).toBe(2 + 1);
+    push(2, 0, 3);
+    expect(lanePower(state, 1, 0)).toBe(2 + 2);
+    // Figurinhas do rival nas vizinhas não contam para mim.
+    push(0, 1, 4);
+    const rival = duel({ turn: 3, scenarios: ["canaa", "roma", "arca"] });
+    rival.lanes[1].cards[1].push({ uid: 9, def: def("abel"), bonus: 0, silenced: false, order: 9, turn: 1 });
+    rival.lanes[0].cards[0].push({ uid: 8, def: def("abel"), bonus: 0, silenced: false, order: 8, turn: 1 });
+    expect(lanePower(rival, 1, 1)).toBe(2);
+  });
+
+  it("Antioquia: com 4 ou mais etiquetas diferentes entre as suas figurinhas aqui, cada uma ganha +1", () => {
+    const state = duel({ turn: 3, scenarios: ["antioquia", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    // Pastor + Rei = 2 etiquetas: sem bônus.
+    expect(lanePower(state, 0, 0)).toBe(2 + 6);
+    // Com Moisés (Profeta e Líder) chegam a 4 etiquetas: as três ganham +1.
+    state.lanes[0].cards[0].push({ uid: 3, def: def("moises"), bonus: 0, silenced: false, order: 3, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(2 + 6 + 5 + 3);
+  });
+
+  it("Samaria: no fim do turno, a mais fraca do lado que está perdendo ganha +1; empate não conta", () => {
+    const state = duel({ turn: 3, scenarios: ["samaria", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    state.lanes[0].cards[1].push({ uid: 3, def: def("saul"), bonus: 0, silenced: false, order: 3, turn: 1 });
+    const next = playTurn(state, [], []);
+    // Quem perde (lado 0: 4 contra 6) levanta uma só figurinha; o vencedor não muda.
+    expect(next.lanes[0].cards[0].map((card) => card.bonus).sort()).toEqual([0, 1]);
+    expect(next.lanes[0].cards[1][0].bonus).toBe(0);
+    // Empate: ninguém é socorrido.
+    const tie = duel({ turn: 3, scenarios: ["samaria", "arca", "canaa"] });
+    tie.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 });
+    tie.lanes[0].cards[1].push({ uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    const same = playTurn(tie, [], []);
+    expect(same.lanes[0].cards[0][0].bonus).toBe(0);
+    expect(same.lanes[0].cards[1][0].bonus).toBe(0);
+  });
+
   it("o nome antigo Cenáculo ainda resolve para Pentecostes (salas guardadas)", () => {
     expect(scenarioOf("cenaculo").id).toBe("pentecostes");
   });

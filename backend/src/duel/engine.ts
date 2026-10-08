@@ -225,6 +225,13 @@ export function cardPower(state: DuelState, laneIndex: number, side: Side, card:
   if (rule.kind === "evenBonus" && here.length > 0 && here.length % 2 === 0) power += rule.amount;
   // A víbora não fez mal: penalidades (bônus negativo) não valem nas figurinhas daqui; os bônus positivos ficam.
   if (rule.kind === "unharmed" && card.bonus < 0) power -= card.bonus;
+  // Todos os caminhos levam a Roma: cada arena vizinha onde o mesmo lado também tem figurinhas dá o bônus.
+  if (rule.kind === "roads") {
+    const connected = [laneIndex - 1, laneIndex + 1].filter((neighbor) => neighbor >= 0 && neighbor < state.lanes.length && state.lanes[neighbor].cards[side].length > 0).length;
+    power += rule.amount * connected;
+  }
+  // Gente de todo tipo (Antioquia): com `tags` ou mais etiquetas diferentes entre as figurinhas do lado aqui, cada uma ganha o bônus.
+  if (rule.kind === "variety" && new Set(here.flatMap((mate) => mate.def.tags)).size >= rule.tags) power += rule.amount;
   // Os últimos serão os primeiros: a mais fraca (Influência base + bônus permanentes; empate: a que entrou primeiro).
   if (rule.kind === "weakestBonus" && here.length > 0 && [...here].sort((a, b) => a.def.power + a.bonus - (b.def.power + b.bonus) || a.order - b.order)[0].uid === card.uid) power += rule.amount;
   if (rule.kind === "sharedTag" && here.some((mate) => mate.uid !== card.uid && mate.def.tags.some((tag) => card.def.tags.includes(tag)))) power += rule.amount;
@@ -906,6 +913,16 @@ function endOfTurn(state: DuelState) {
     if (rule.kind === "growthEvery" && state.turn % rule.every === 0) {
       for (const side of [0, 1] as Side[]) for (const card of lane.cards[side]) card.bonus += rule.amount;
       emit(state, { type: "power", lane: index, amount: rule.amount, text: `${scenarioOf(lane.scenario).emoji} ${scenarioOf(lane.scenario).name}: plantaram e regaram, e Deus deu o crescimento: todas as figurinhas ganharam ${rule.amount}.` });
+    }
+    if (rule.kind === "samaritan") {
+      // O samaritano socorre: o lado que está perdendo aqui (Influência menor; empate não conta) levanta a sua figurinha mais fraca.
+      const power: [number, number] = [lanePower(state, index, 0), lanePower(state, index, 1)];
+      const losing: Side | null = power[0] === power[1] ? null : power[0] < power[1] ? 0 : 1;
+      if (losing !== null && lane.cards[losing].length > 0) {
+        const weakest = [...lane.cards[losing]].sort((a, b) => cardPower(state, index, losing, a) - cardPower(state, index, losing, b) || a.order - b.order)[0];
+        weakest.bonus += rule.amount;
+        emit(state, { type: "power", side: losing, lane: index, uid: weakest.uid, name: weakest.def.name, amount: rule.amount, text: `${scenarioOf(lane.scenario).emoji} ${scenarioOf(lane.scenario).name}: o samaritano socorreu ${weakest.def.name}, que ganhou ${rule.amount}.` });
+      }
     }
     if (rule.kind === "forgive") {
       // Arrependimento: quem tinha perdido Influência aqui (bônus negativo) volta ao normal.

@@ -184,7 +184,10 @@ export type ScenarioRule =
   | { kind: "growthEvery"; every: number; amount: number }
   | { kind: "domBonus"; amount: number }
   | { kind: "evenBonus"; amount: number }
-  | { kind: "unharmed" };
+  | { kind: "unharmed" }
+  | { kind: "roads"; amount: number }
+  | { kind: "variety"; tags: number; amount: number }
+  | { kind: "samaritan"; amount: number };
 
 export type ScenarioDef = {
   /** Mesmo identificador (slug) do cenário da campanha. */
