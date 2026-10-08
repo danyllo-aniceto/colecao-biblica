@@ -68,7 +68,9 @@ código em **português do Brasil**.
   (`FeedEntry`, tocada uma vez por `id` em `use-callouts.ts`). Todo evento novo do motor que mereça aviso entra ali.
 - Os peões básicos (grátis) são itens `PAWN` do painel (`unlock = FREE`); `FREE_PAWNS` do motor é só o reserva.
 - O motor não vê a alternativa marcada, só se acertou. Toda regra nova tem teste em `engine.test.ts`; regras de cenário são
-  dados em `scenarios.ts`. Nada do modo dá XP, moedas, figurinhas nem mexe nas estatísticas das perguntas.
+  dados em `scenarios.ts` (os 10 de lançamento) e `scenarios-pedras.ts` (os das 12 Pedras, montados com provação, perigos, muros, tempestade,
+  vigília, power-up inicial/exclusivo e `density`: quantidade de atalhos, quedas, poder e provações). **Todo cenário novo cadastrado também ganha as
+  regras dele no Tabuleiro** (sem repetir a combinação de outro; o teste confere) e entra no checklist. Nada do modo dá XP, moedas, figurinhas nem mexe nas estatísticas das perguntas.
 
 ## Modo Duelo (jogo de figurinhas com amigos, sem progresso de perfil)
 

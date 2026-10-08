@@ -90,9 +90,9 @@ function untilTurn(state: BoardState, id: string): BoardState {
   return current;
 }
 
-describe("os 10 cenários", () => {
+describe("os 46 cenários (10 de lançamento + 36 das Pedras)", () => {
   it("todos têm regras próprias com provação, evento e power-up exclusivo", () => {
-    expect(SLUGS).toHaveLength(10);
+    expect(SLUGS).toHaveLength(46);
     for (const slug of SLUGS) {
       const rules = BOARD_SCENARIOS[slug];
       expect(rules.slug).toBe(slug);
@@ -101,8 +101,72 @@ describe("os 10 cenários", () => {
       expect(rules.trial.name, slug).toBeTruthy();
       expect(POWER_UPS[rules.exclusive!], slug).toBeDefined();
     }
-    // Cada cenário tem um exclusivo diferente.
-    expect(new Set(SLUGS.map((slug) => BOARD_SCENARIOS[slug].exclusive)).size).toBe(10);
+    // Cada cenário de lançamento tem um exclusivo diferente.
+    expect(new Set(SLUGS.slice(0, 10).map((slug) => BOARD_SCENARIOS[slug].exclusive)).size).toBe(10);
+  });
+
+  it("os 36 cenários das Pedras têm cada um a sua combinação de regras (nenhum repete outro)", () => {
+    const stones = SLUGS.slice(10);
+    expect(stones).toHaveLength(36);
+    const signature = (slug: string) => {
+      const { slug: _slug, event: _event, trial, ...rest } = BOARD_SCENARIOS[slug];
+      return JSON.stringify({ ...rest, trial: { ...trial, name: "", description: "" } });
+    };
+    // Mesmo mudando só nomes e textos, nenhuma combinação técnica se repete.
+    expect(new Set(stones.map(signature)).size).toBe(36);
+    // A Trombeta só faz sentido onde há muros.
+    for (const slug of stones) if (BOARD_SCENARIOS[slug].exclusive === "TRUMPET") expect(BOARD_SCENARIOS[slug].walls, slug).toBeTruthy();
+    // Os textos do evento e da provação não repetem os de outro cenário.
+    expect(new Set(stones.map((slug) => BOARD_SCENARIOS[slug].event?.name)).size).toBe(36);
+    expect(new Set(stones.map((slug) => BOARD_SCENARIOS[slug].trial.name)).size).toBe(36);
+  });
+
+  it("a densidade do cenário muda as casas do tabuleiro (atalhos, quedas, poder e provações)", () => {
+    const count = (slug: string, kind: string) => kinds(newGame(slug, { config: { size: 60 }, seed: 5 }), kind).length;
+    expect(count("betel", "SHORTCUT")).toBeGreaterThan(count("tabernaculo", "SHORTCUT"));
+    expect(count("roma", "SHORTCUT")).toBeGreaterThan(count("tabernaculo", "SHORTCUT"));
+    expect(count("elim", "FALL")).toBe(0);
+    expect(count("patmos", "FALL")).toBe(0);
+    expect(count("patmos", "SHORTCUT")).toBe(0);
+    expect(count("monte-siao", "FALL")).toBe(0);
+    expect(count("calvario", "FALL")).toBeGreaterThan(count("tabernaculo", "FALL"));
+    expect(count("atenas", "POWER")).toBeGreaterThan(count("tabernaculo", "POWER"));
+    expect(count("nova-jerusalem", "TRIAL")).toBeGreaterThan(count("tabernaculo", "TRIAL"));
+  });
+
+  it("Pedras: provações com regras próprias (Nínive não recua, Peniel premia, Ossos Secos adianta o último)", () => {
+    const trialAt = (slug: string, setup: (copy: BoardState) => void = () => {}) =>
+      rolledWith(plain(newGame(slug)), (copy) => {
+        copy.tiles[copy.die!] = { kind: "TRIAL" };
+        setup(copy);
+      });
+    // Nínive: errou a provação, fica onde está.
+    const ninive = answerQuestion(trialAt("ninive"), bank, true).state;
+    const before = me(ninive).position;
+    const lost = answerQuestion(ninive, bank, false).state;
+    expect(byId(lost, me(ninive).id).position).toBe(before);
+    // Peniel: acertou, avança 3 e ganha um power-up.
+    const peniel = trialAt("peniel");
+    const start = me(peniel).position;
+    const penielWon = answerQuestion(answerQuestion(peniel, bank, true).state, bank, true).state;
+    expect(byId(penielWon, me(peniel).id).position).toBe(start + peniel.die! + 3);
+    expect(byId(penielWon, me(peniel).id).powerUps).toHaveLength(1);
+    // Ossos Secos: acertou, o último colocado ganha 1 casa.
+    const ossos = trialAt("ossos-secos", (copy) => {
+      const mover = me(copy);
+      mover.position = 10;
+      copy.tiles[10 + copy.die!] = { kind: "TRIAL" };
+      copy.players.filter((player) => player.id !== mover.id).forEach((player, index) => (player.position = 2 + index * 3));
+    });
+    const last = [...ossos.players].filter((player) => player.id !== me(ossos).id).sort((a, b) => a.position - b.position)[0];
+    const ossosWon = answerQuestion(answerQuestion(ossos, bank, true).state, bank, true).state;
+    expect(byId(ossosWon, last.id).position).toBe(last.position + 1);
+  });
+
+  it("Monte Sião e Transfiguração: todos começam com o power-up do cenário", () => {
+    for (const player of newGame("monte-siao").players) expect(player.powerUps).toContain("FOURTH");
+    for (const player of newGame("transfiguracao").players) expect(player.powerUps).toContain("LIGHT");
+    for (const player of newGame("antioquia").players) expect(player.powerUps).toContain("SWAP");
   });
 
   it("cada cenário monta o tabuleiro com as casas dele (e só as dele)", () => {

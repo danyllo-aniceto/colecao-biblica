@@ -911,7 +911,8 @@ function endOfTurn(state: DuelState) {
       // Um de vocês me trairá: a mais forte do lado que está ganhando aqui (empate não conta) perde o bônus (não abaixo de zero).
       const power: [number, number] = [lanePower(state, index, 0), lanePower(state, index, 1)];
       const winning: Side | null = power[0] === power[1] ? null : power[0] > power[1] ? 0 : 1;
-      if (winning !== null && lane.cards[winning].length > 0) {
+      // Só vale se os dois lados jogaram aqui: quem joga sozinho não corre risco (senão ninguém se arriscaria a ir primeiro).
+      if (winning !== null && lane.cards[winning].length > 0 && lane.cards[other(winning)].length > 0) {
         const strongest = [...lane.cards[winning]].sort((a, b) => cardPower(state, index, winning, b) - cardPower(state, index, winning, a) || a.order - b.order)[0];
         const fall = Math.min(rule.amount, Math.max(cardPower(state, index, winning, strongest), 0));
         strongest.bonus -= fall;

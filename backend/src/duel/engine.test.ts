@@ -576,6 +576,10 @@ describe("cenários", () => {
     expect(named(next, 0, 0, "Saul").bonus).toBe(-3);
     expect(named(next, 0, 0, "Abel").bonus).toBe(0);
     expect(named(next, 0, 1, "Abel").bonus).toBe(0);
+    // Se só um lado jogou aqui, ninguém perde nada.
+    const solo = setup(4, "abel");
+    solo.lanes[0].cards[1].length = 0;
+    expect(named(playTurn(solo, [], []), 0, 0, "Saul").bonus).toBe(0);
     // Quem perde não é atingido; em outro turno nada acontece.
     expect(named(playTurn(setup(3, "abel"), [], []), 0, 0, "Saul").bonus).toBe(0);
     const losing = setup(4, "noe");

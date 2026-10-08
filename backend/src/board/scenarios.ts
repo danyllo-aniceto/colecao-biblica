@@ -1,4 +1,5 @@
 import type { ScenarioRules } from "./engine";
+import { STONE_BOARD_SCENARIOS } from "./scenarios-pedras";
 
 /**
  * Regras do tabuleiro de cada cenário. É só dado: o motor lê estes objetos, então dá para
@@ -180,7 +181,7 @@ const JERUSALEM: ScenarioRules = {
   event: { name: "O túmulo vazio", description: "Todos começam com um escudo extra na mochila." },
 };
 
-/** Cenários cadastrados no painel que ainda não têm regras próprias usam esta provação simples. */
+/** Cenários criados no painel que ainda não têm regras próprias usam esta provação simples. */
 export const GENERIC_RULES: Omit<ScenarioRules, "slug"> = {
   trial: {
     name: "Provação",
@@ -205,6 +206,8 @@ export const BOARD_SCENARIOS: Record<string, ScenarioRules> = {
   babilonia: BABILONIA,
   galileia: GALILEIA,
   jerusalem: JERUSALEM,
+  // As 12 Pedras do Peitoral (36 cenários): montados em `scenarios-pedras.ts`.
+  ...STONE_BOARD_SCENARIOS,
 };
 
 export function boardRulesFor(slug: string): ScenarioRules {

@@ -105,14 +105,21 @@ Cada cenário novo traz uma regra de duelo, **sem sorte**, com tema do lugar. Re
 | Ilha de Patmos | ✅ Isolado numa ilha: cada figurinha sua aqui ganha +2 se você não tem figurinhas nas arenas vizinhas |
 | Cesareia Marítima | ✅ O centurião comanda: a mais forte de cada lado aqui ganha +1 por cada outra figurinha do lado |
 | Cafarnaum | ✅ Quatro amigos pelo telhado: figurinhas reveladas no mesmo turno que outra sua aqui ganham +2 |
-| Sala da Santa Ceia | ✅ Um de vocês me trairá: no fim do turno 4, a mais forte do lado que está ganhando aqui perde 3 |
+| Sala da Santa Ceia | ✅ Um de vocês me trairá: no fim do turno 4, se os dois lados jogaram aqui, a mais forte do lado que está ganhando perde 3 |
 | Getsêmani | ✅ Vigiai e orai: os Dons de "Ao revelar" e "Quando uma aliada é jogada" não agem aqui |
 | Calvário | ✅ O sacrifício que redime: +1 por figurinha sua já afastada, até +3 |
 | Rio da Vida | ✅ A árvore da vida dá frutos todo mês: +1 por turno depois de revelada, até +3 |
 | Nova Jerusalém | ✅ Doze portas: quem reúne 12 ou mais de Influência aqui ganha +3 na arena |
 | Monte Sião | ✅ A coroa de Sião: quem investiu mais Vigor aqui ganha +3 na arena |
 
-(Os próximos trios ganham a regra na hora do cadastro.)
+(Os próximos cenários ganham a regra na hora do cadastro.)
+
+### Regras no Tabuleiro
+
+Os 36 cenários das Pedras também têm regras próprias no Modo Tabuleiro (`backend/src/board/scenarios-pedras.ts`): provação com nome e números
+própios, evento, power-up exclusivo e, conforme o tema, perigos (flechas, maré, sombras, fogo do céu), muros, tempestade, vigília, abrigos que
+dão power-up, power-up inicial ou uma `density` própria (mais ou menos atalhos, quedas, casas de poder e provações). Nenhum repete a combinação
+técnica de outro, e os testes de `board/scenarios.test.ts` conferem isso e jogam partidas de bots em todos eles.
 
 ## 3. Cada cenário (checklist de arte)
 

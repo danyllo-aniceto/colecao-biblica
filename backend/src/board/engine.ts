@@ -120,6 +120,11 @@ export type ScenarioRules = {
   den?: { count: number } | null;
   /** Tempestade: em algumas rodadas, quem erra a pergunta é levado para trás. */
   storm?: { chance: number; drift: number } | null;
+  /**
+   * Quantas casas de cada tipo o tabuleiro tem (para um tabuleiro de 40; escala com o tamanho). Sem o campo, vale o padrão do motor;
+   * 0 tira o tipo do cenário.
+   */
+  density?: { shortcut?: number; fall?: number; power?: number; trial?: number } | null;
 };
 
 export type BoardConfig = {
@@ -402,7 +407,13 @@ export function buildTiles(config: BoardConfig, rules: ScenarioRules, rng: { s: 
     }
   }
 
-  place(rules.vigil ? "VIGIL" : "TRIAL", Math.max(2, Math.round(size / 13)), 5, gate - 3, 5, () => ({ kind: rules.vigil ? "VIGIL" : "TRIAL" }));
+  /** Quantidade de casas de um tipo: a do cenário (escalada pelo tamanho; 0 = nenhuma) ou o padrão do motor. */
+  const amount = (key: "shortcut" | "fall" | "power" | "trial", fallback: number) => {
+    const own = rules.density?.[key];
+    return own === undefined ? fallback : own === 0 ? 0 : scaled(own, size);
+  };
+
+  place(rules.vigil ? "VIGIL" : "TRIAL", amount("trial", Math.max(2, Math.round(size / 13))), 5, gate - 3, 5, () => ({ kind: rules.vigil ? "VIGIL" : "TRIAL" }));
   if (rules.walls) {
     place("WALL", scaled(rules.walls.count, size), 7, gate - 4, 6, () => ({ kind: "WALL" }));
   }
@@ -412,10 +423,10 @@ export function buildTiles(config: BoardConfig, rules: ScenarioRules, rng: { s: 
   if (rules.den) {
     place("DEN", scaled(rules.den.count, size), 5, gate - 3, 5, () => ({ kind: "DEN" }));
   }
-  place("SHORTCUT", Math.max(1, Math.round(size / 18)), 3, gate - 8, 5, (index) => ({ kind: "SHORTCUT", to: index + randInt(rng, 3, 5) }));
-  place("FALL", Math.max(1, Math.round(size / 18)), 7, gate - 3, 5, (index) => ({ kind: "FALL", to: index - randInt(rng, 3, 4) }));
+  place("SHORTCUT", amount("shortcut", Math.max(1, Math.round(size / 18))), 3, gate - 8, 5, (index) => ({ kind: "SHORTCUT", to: index + randInt(rng, 3, 5) }));
+  place("FALL", amount("fall", Math.max(1, Math.round(size / 18))), 7, gate - 3, 5, (index) => ({ kind: "FALL", to: index - randInt(rng, 3, 4) }));
   if (config.powerUps) {
-    place("POWER", Math.round(size / 9), 2, gate - 2, 3, () => ({ kind: "POWER" }));
+    place("POWER", amount("power", Math.round(size / 9)), 2, gate - 2, 3, () => ({ kind: "POWER" }));
   }
   return tiles;
 }

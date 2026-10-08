@@ -89,6 +89,12 @@ O que está **implementado e testado** (`scenarios.test.ts`, inclusive 120 parti
 Ajustes em relação ao rascunho inicial: o "dilúvio que sobe do começo" virou casas alagadas que mudam de lugar (não pune quem
 está atrás); a "pesca em dobro", "pares de animais" e "estrelas de Abraão" foram trocadas por mecânicas mais claras acima.
 
+
+**Cenários da campanha das 12 Pedras (36):** cada um tem regras próprias em `backend/src/board/scenarios-pedras.ts`, montadas com as mesmas peças
+(provação opcional/com prêmio/perda/ajuda ao último, perigo que muda de lugar, fogo, muros, tempestade, vigília, abrigos que dão power-up,
+power-up inicial e exclusivo) e com a `density` do cenário (quantidade de atalhos, quedas, casas de poder e provações; 0 tira o tipo). Nenhum
+repete a combinação de outro (teste em `scenarios.test.ts`). Cenário novo da campanha entra aqui na hora do cadastro.
+
 ## 4. Peão (cosmético editável) e imagem do tabuleiro
 
 - `CosmeticType.PAWN`: o peão é um **emoji ou uma imagem enviada pelo admin** (como a reação). Não se equipa: escolhe-se em cada
