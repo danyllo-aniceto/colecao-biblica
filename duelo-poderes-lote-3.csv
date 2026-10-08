@@ -1,0 +1,10 @@
+﻿Personagem;Raridade;Papel na história;Período;Testamento;Palavras-chave;Resumo curto;Vigor;Influência;Etiquetas;Gatilho;Efeitos;Texto do Dom;Disponível
+Golias;;;;;;;5;10;Gigante, Guerreiro, Adversário;revelar;esgotar valor=1 | poder valor=-6 alvo=si se=inimigo-nomeado:Davi;;Sim
+Hamã;;;;;;;4;7;Adversário;revelar;igualar max=6;;Sim
+Jael;;;;;;;3;4;Mulher;revelar;destruir alvo=inimigo-mais-forte se=sozinho;;Sim
+José;;;;;;;4;7;Patriarca;revelar;buscar etiqueta=Patriarca;;Sim
+Lázaro;;;;;;;1;1;Discípulo;revelar;sumir turnos=4 bonus=+7;;Sim
+Maria;;;;;;;5;7;Mulher, Discípula;revelar;poder valor=-3 alvo=inimigo-mais-forte | poder valor=+3 alvo=aliado-mais-fraco;;Sim
+Neemias;;;;;;;4;4;Líder;revelar;criar ficha=Soldado onde=vizinhos | poder valor=+1 alvo=aliados-aqui;;Sim
+Priscila;;;;;;;2;4;Mulher, Discípula;revelar;repetir;;Sim
+Zaqueu;;;;;;;2;2;Publicano;continuo;poder-por valor=+1 por=mao;;Sim
