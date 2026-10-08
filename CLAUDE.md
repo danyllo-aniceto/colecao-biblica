@@ -91,6 +91,16 @@ código em **português do Brasil**.
   Os bots jogam o turno ao começar; colocar figurinha não sobe a versão; o prazo só recomeça quando o turno muda. Convite/link: `/duelo/CÓDIGO` (a mesma página de convite do Tabuleiro).
 - Nada do modo dá XP, moedas, figurinhas ou mexe em ranking/missões/estatísticas. Único prêmio previsto: versos de figurinha por vitórias online.
 
+## Mini games (outro modo de jogo, sem progresso de perfil)
+
+- Proposta, lista dos 12 jogos e ordem de construção em `docs/minigames.md`; atualize o checklist a cada jogo. Catálogo e liberação em `MINI_GAMES`
+  (`services/game-rules.ts`, com teste): **cada pedra do Peitoral libera um jogo** (`stoneSlot`) e o **Peitoral Completo libera o ranking semanal**
+  (+ brasão, moldura, moedas e entrada na Galeria dos Peitorais). `ready: false` até o jogo existir no app.
+- **Nada do modo dá XP**, moedas nem mexe em ranking geral, missões ou estatísticas de perguntas. Só a pontuação semanal (`mini_game_scores`).
+- Pontos só entram por `recordMiniGameScore` (`services/minigames.ts`), chamado pela rota do próprio jogo depois de conferir a partida no servidor:
+  **não existe rota pública para enviar pontuação**. Guarda só a melhor da semana de cada jogo e só para quem completou o Peitoral.
+- A imagem do modo na aba Jogar é a capa `MINIGAMES` (Painel → Capas dos jogos), como Quiz, Tabuleiro e Duelo.
+
 ## Comandos
 
 ```bash

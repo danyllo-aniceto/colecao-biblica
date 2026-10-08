@@ -7,6 +7,7 @@ import { adminRouter } from "./routes/admin";
 import { authRouter } from "./routes/auth";
 import { boardPublicRouter, boardRouter } from "./routes/board";
 import { campaignRouter } from "./routes/campaign";
+import { miniGamesRouter } from "./routes/minigames";
 import { duelRouter } from "./routes/duel";
 import { gameModesPublicRouter, gameModesRouter } from "./routes/game-modes";
 import { landingRouter, sharePageRouter } from "./routes/landing";
@@ -82,6 +83,7 @@ export function createApp() {
   app.use("/api/pass", requireAuth, passRouter);
   app.use("/api/events", requireAuth, eventsRouter);
   app.use("/api/campaign", requireAuth, campaignRouter);
+  app.use("/api/minigames", requireAuth, miniGamesRouter);
   app.use("/api/board", requireAuth, boardRouter);
   app.use("/api/duel", requireAuth, duelRouter);
   app.use("/api/duel-room", requireAuth, duelRoomRouter);

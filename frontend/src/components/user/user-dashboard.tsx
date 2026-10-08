@@ -21,6 +21,7 @@ import { HomeSection } from '@/components/user/sections/home-section';
 import { PlaySection, type QuizFormState } from '@/components/user/sections/play-section';
 import { BoardHub } from '@/components/user/board/board-hub';
 import { PlayHub, PlayModeFrame, type PlayMode } from '@/components/user/play-hub';
+import { MiniGamesHub } from '@/components/user/minigames/minigames-hub';
 import { DuelHub } from '@/components/user/duel/duel-hub';
 import { BoardInviteWatcher, RoomInviteWatcher } from '@/components/user/board/board-invite-watcher';
 import { peekPendingRoom, setPendingRoom } from '@/lib/board-room-api';
@@ -677,6 +678,7 @@ export function UserDashboard() {
                     ) : null}
                     {mode === 'board' ? <BoardHub playerName={profile?.name ?? ''} /> : null}
                     {mode === 'duel' ? <DuelHub characters={characters} collection={collection} /> : null}
+                    {mode === 'minigames' ? <MiniGamesHub currentUserId={profile?.id} /> : null}
                   </PlayModeFrame>
                 );
               })()

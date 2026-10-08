@@ -1,0 +1,167 @@
+import { useEffect, useState } from 'react';
+import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
+import LockRoundedIcon from '@mui/icons-material/LockRounded';
+import { Pagination, usePagination } from '@/components/ui/pagination';
+import { Segmented } from '@/components/ui/segmented';
+import { LoadingState, Spinner } from '@/components/ui/spinner';
+import { Alert, EmptyState, LevelBadge } from '@/components/game/game-ui';
+import { PlayerChip } from '@/components/user/rewards/player-profile-modal';
+import { PeitoralGallery } from '@/components/user/minigames/peitoral-gallery';
+import { cn } from '@/lib/cn';
+import { getMiniGames, getMiniRanking, type MiniGameInfo, type MiniGamesOverview, type MiniRankingPage } from '@/lib/minigames-api';
+
+type Tab = 'games' | 'ranking' | 'gallery';
+
+function GameCard({ game }: { game: MiniGameInfo }) {
+  const state = !game.unlocked ? 'locked' : game.ready ? 'ready' : 'soon';
+  return (
+    <li className={cn('panel flex items-start gap-3 p-4', state === 'locked' && 'opacity-70')}>
+      <span className={cn('flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-surface-3 text-2xl', state === 'locked' && 'grayscale')} aria-hidden>
+        {game.emoji}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-display font-bold text-ink">{game.name}</span>
+        <span className="block text-sm font-semibold text-muted">{game.text}</span>
+        <span className="mt-2 flex items-center gap-1.5 text-xs font-bold">
+          {state === 'locked' ? (
+            <>
+              <LockRoundedIcon sx={{ fontSize: 16 }} className="text-muted" />
+              <span className="text-muted">Libera com a pedra {game.stoneName ?? game.stoneSlot} do Peitoral</span>
+            </>
+          ) : state === 'soon' ? (
+            <span className="rounded-full bg-success/15 px-2.5 py-1 text-success">Liberado · chega em breve ao app</span>
+          ) : (
+            <span className="rounded-full bg-primary/15 px-2.5 py-1 text-primary-strong dark:text-primary">Liberado</span>
+          )}
+        </span>
+      </span>
+    </li>
+  );
+}
+
+function WeeklyRanking({ currentUserId }: { currentUserId?: number }) {
+  const [page, setPage] = useState(0);
+  const [data, setData] = useState<MiniRankingPage | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let ignore = false;
+    setLoading(true);
+    getMiniRanking(page, 20)
+      .then((response) => {
+        if (!ignore) {
+          setData(response);
+          setError(null);
+        }
+      })
+      .catch((reason: unknown) => !ignore && setError(reason instanceof Error ? reason.message : 'Não foi possível carregar o ranking.'))
+      .finally(() => !ignore && setLoading(false));
+    return () => {
+      ignore = true;
+    };
+  }, [page]);
+
+  if (!data) return error ? <Alert tone="danger">{error}</Alert> : <LoadingState label="Carregando ranking..." />;
+  if (data.totalElements === 0) {
+    return (
+      <EmptyState icon={<EmojiEventsRoundedIcon fontSize="large" />} title="Ninguém pontuou nesta semana">
+        O ranking zera toda segunda. Jogue um mini game e seja o primeiro.
+      </EmptyState>
+    );
+  }
+  return (
+    <div className="space-y-4">
+      {loading ? (
+        <div className="flex justify-end">
+          <Spinner />
+        </div>
+      ) : null}
+      {data.me ? (
+        <div className="panel flex items-center gap-3 border-2 border-accent p-4">
+          <span className="font-display text-2xl font-bold text-accent-strong dark:text-accent">#{data.me.position}</span>
+          <span className="flex-1 font-display font-semibold text-ink">Sua posição</span>
+          <span className="font-bold text-ink">{data.me.total.toLocaleString('pt-BR')} pts</span>
+        </div>
+      ) : null}
+      <ol className="panel divide-y divide-edge overflow-hidden">
+        {data.content.map((entry) => {
+          const isMe = entry.userId === currentUserId;
+          return (
+            <li key={entry.userId} className={cn('flex items-center gap-3 px-4 py-3', isMe && 'bg-accent/10')}>
+              <span className="w-10 text-center font-display text-lg font-bold text-muted">{entry.position}</span>
+              <PlayerChip userId={entry.userId} name={entry.userName} look={entry.look} suffix={isMe ? '(você)' : undefined} />
+              <LevelBadge level={entry.level} size="sm" />
+              <span className="font-display font-bold text-ink">{entry.total.toLocaleString('pt-BR')}</span>
+            </li>
+          );
+        })}
+      </ol>
+      <Pagination page={page} totalPages={data.totalPages} totalElements={data.totalElements} onPageChange={setPage} itemLabel="jogadores" />
+    </div>
+  );
+}
+
+/** Tela dos mini games: os jogos (cada pedra libera um), o ranking semanal (Peitoral Completo) e a Galeria dos Peitorais. Sem XP nem moedas. */
+export function MiniGamesHub({ currentUserId }: { currentUserId?: number }) {
+  const [tab, setTab] = useState<Tab>('games');
+  const [overview, setOverview] = useState<MiniGamesOverview | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let ignore = false;
+    getMiniGames()
+      .then((response) => !ignore && setOverview(response))
+      .catch((reason: unknown) => !ignore && setError(reason instanceof Error ? reason.message : 'Não foi possível carregar os mini games.'));
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const games = overview?.games ?? [];
+  const list = usePagination(games, 6);
+
+  if (!overview) return error ? <Alert tone="danger">{error}</Alert> : <LoadingState label="Carregando mini games..." />;
+
+  const unlockedCount = games.filter((game) => game.unlocked).length;
+  return (
+    <div className="space-y-5">
+      <Segmented
+        aria-label="Seção dos mini games"
+        value={tab}
+        onChange={setTab}
+        options={[
+          { value: 'games', label: 'Jogos' },
+          { value: 'ranking', label: 'Ranking' },
+          { value: 'gallery', label: 'Galeria' },
+        ]}
+      />
+
+      {tab === 'games' ? (
+        <div className="space-y-4">
+          <p className="text-sm font-semibold text-muted">
+            Cada pedra do Peitoral libera um mini game. Você libera {unlockedCount} de {games.length}. Mini games não dão XP nem moedas: valem pela diversão e pelo ranking semanal.
+          </p>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {list.pageItems.map((game) => (
+              <GameCard key={game.id} game={game} />
+            ))}
+          </ul>
+          <Pagination page={list.page} totalPages={list.totalPages} totalElements={list.totalElements} onPageChange={list.setPage} itemLabel="mini games" />
+        </div>
+      ) : null}
+
+      {tab === 'ranking' ? (
+        overview.rankingUnlocked ? (
+          <WeeklyRanking currentUserId={currentUserId} />
+        ) : (
+          <EmptyState icon={<LockRoundedIcon fontSize="large" />} title="Ranking semanal bloqueado">
+            Complete o Peitoral do Sumo Sacerdote (as 12 pedras) para disputar o ranking semanal dos mini games. Ele zera toda segunda.
+          </EmptyState>
+        )
+      ) : null}
+
+      {tab === 'gallery' ? <PeitoralGallery currentUserId={currentUserId} /> : null}
+    </div>
+  );
+}

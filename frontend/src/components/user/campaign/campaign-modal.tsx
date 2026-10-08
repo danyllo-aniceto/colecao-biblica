@@ -21,6 +21,9 @@ import { claimCampaignNode, claimStone, type Campaign, type CampaignNode, type C
 import { BreastplateModal, StoneGem, StonePage } from '@/components/user/campaign/breastplate';
 import { BadgeMark } from '@/components/game/player-look';
 import ShieldRoundedIcon from '@mui/icons-material/ShieldRounded';
+import ExtensionRoundedIcon from '@mui/icons-material/ExtensionRounded';
+import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
+import { PeitoralGallery } from '@/components/user/minigames/peitoral-gallery';
 import { scenarioFallbackBackground, scenarioMapSrc, scenarioThemeVars } from '@/lib/campaign-theme';
 import { playSfx } from '@/lib/sound/sfx';
 import { rewardVisual } from '@/lib/reward-visual';
@@ -230,7 +233,7 @@ function FinalePage({ campaign, special, playerName, active }: { campaign: Campa
 }
 
 /** Depois da 12ª pedra: o Peitoral Completo, com o prêmio ainda bloqueado ou já conquistado (brasão, moldura e moedas). */
-function PeitoralFinalPage({ campaign, active }: { campaign: Campaign; active: boolean }) {
+function PeitoralFinalPage({ campaign, active, onOpenGallery }: { campaign: Campaign; active: boolean; onOpenGallery: () => void }) {
   const { breastplate } = campaign;
   const done = breastplate.finalClaimed;
   const left = Math.max(breastplate.total - breastplate.claimed, 0);
@@ -271,6 +274,12 @@ function PeitoralFinalPage({ campaign, active }: { campaign: Campaign; active: b
             <li className="flex items-center gap-2">
               <StarRoundedIcon sx={{ fontSize: 20 }} className="text-r-special" /> Moldura de prestígio “{breastplate.finalReward.prestigeName}”
             </li>
+            <li className="flex items-center gap-2">
+              <ExtensionRoundedIcon sx={{ fontSize: 20 }} className="text-success" /> Ranking semanal dos mini games
+            </li>
+            <li className="flex items-center gap-2">
+              <EmojiEventsRoundedIcon sx={{ fontSize: 20 }} className="text-primary" /> Seu nome na Galeria dos Peitorais
+            </li>
           </ul>
           {done ? (
             <p className="flex items-center gap-2 rounded-xl bg-success/15 p-2 text-sm font-bold text-success">
@@ -281,6 +290,9 @@ function PeitoralFinalPage({ campaign, active }: { campaign: Campaign; active: b
               <LockRoundedIcon sx={{ fontSize: 16 }} /> Libera ao resgatar a 12ª pedra.
             </p>
           )}
+          <Button variant="secondary" size="sm" onClick={onOpenGallery}>
+            Ver a Galeria dos Peitorais
+          </Button>
         </div>
       </div>
     </section>
@@ -366,6 +378,7 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
   const [stoneClaiming, setStoneClaiming] = useState<number | null>(null);
   const [stoneWon, setStoneWon] = useState<{ stone: Stone; result: ClaimStoneResult } | null>(null);
   const [peitoral, setPeitoral] = useState(false);
+  const [gallery, setGallery] = useState(false);
   // Parte da campanha em foco: título do cabeçalho, pontinhos só do grupo dela e atalho para a parte vizinha.
   const activeMeta = pageMeta[active] ?? pageMeta[0] ?? { section: 'jesus' as CampaignSection, group: 'jesus' };
   const sectionTitle = (section: CampaignSection) => (section === 'jesus' ? (special ? `Figurinha Especial de ${special.character.name}` : 'Jornada') : 'Peitoral do Sumo Sacerdote');
@@ -543,7 +556,7 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
                 {pages.map((page, index) => {
                   if (page.kind === 'soon') return <SoonPage key="soon" active={active === index} />;
                   if (page.kind === 'finale' && campaign.special) return <FinalePage key="finale" campaign={campaign} special={campaign.special} playerName={playerName} active={active === index} />;
-                  if (page.kind === 'peitoral') return <PeitoralFinalPage key="peitoral" campaign={campaign} active={active === index} />;
+                  if (page.kind === 'peitoral') return <PeitoralFinalPage key="peitoral" campaign={campaign} active={active === index} onOpenGallery={() => setGallery(true)} />;
                   if (page.kind === 'stone') {
                     return <StonePage key={`stone-${page.stone.id}`} stone={page.stone} playerName={playerName} active={active === index} claiming={stoneClaiming === page.stone.id} onClaim={(stone) => void claimStoneAction(stone)} onOpenBreastplate={() => setPeitoral(true)} pageClass={pageShell} />;
                   }
@@ -673,6 +686,9 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
         ) : null}
       </Modal>
 
+      <Modal open={gallery} title="Galeria dos Peitorais" description="Quem reuniu as 12 pedras do Peitoral do Sumo Sacerdote." onClose={() => setGallery(false)} size="lg">
+        <PeitoralGallery currentUserId={undefined} />
+      </Modal>
       <BreastplateModal open={peitoral} breastplate={campaign?.breastplate ?? null} playerName={playerName} claimingId={stoneClaiming} onClaim={(stone) => void claimStoneAction(stone)} onClose={() => setPeitoral(false)} />
 
       <Modal open={stoneWon !== null} size="sm" title="Pedra conquistada!" onClose={() => setStoneWon(null)} footer={<Button onClick={() => setStoneWon(null)}>Continuar</Button>}>

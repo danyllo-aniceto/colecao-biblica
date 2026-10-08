@@ -11,7 +11,7 @@ export const gameModesRouter = Router();
 export const gameModesPublicRouter = Router();
 
 /** SHARE não é um jogo: é a imagem usada ao compartilhar o link do app. */
-export const GAME_MODES = ["QUIZ", "BOARD", "DUEL", "SHARE"] as const;
+export const GAME_MODES = ["QUIZ", "BOARD", "DUEL", "MINIGAMES", "SHARE"] as const;
 const select = { mode: true, imageUrl: true } as const;
 
 const list = asyncHandler(async (_req, res) => {

@@ -1,4 +1,4 @@
-# Mini games — proposta (ainda não implementado)
+# Mini games — decisões e checklist
 
 Ideia do dono do jogo: ao completar o Peitoral (ou ao longo dele), liberar um **outro modo de jogo** com mini games que usam os
 personagens, cenários e versículos que o app já tem. Vale também para a próxima campanha.
@@ -9,10 +9,11 @@ personagens, cenários e versículos que o app já tem. Vale também para a pró
 - Como no Tabuleiro e no Duelo: o modo **não mexe** no ranking, nas missões nem nas estatísticas das perguntas. Prêmio pequeno e limitado por dia.
 - Regra pura do mini game em arquivo sem dependências (testável), como `board/` e `duel/`.
 
-## Como liberar
+## Como liberar (decidido)
 
-Proposta: **uma pedra libera um mini game** (12 pedras = 12 jogos) e o **Peitoral Completo** libera o hub completo com o desafio diário
-e o ranking semanal. Assim o modo aparece cedo (a campanha dura 12–14 meses) e o final continua valendo. Alternativa: tudo só no final.
+**Uma pedra libera um mini game** (12 pedras = 12 jogos: caça-palavras, forca, quebra-cabeça, memória, versículo em pedaços, quem sou eu?, labirinto,
+linha do tempo, palavras cruzadas, mapa, árvore genealógica, interconexão). O **Peitoral Completo** libera o **ranking semanal** dos mini games e a
+entrada na **Galeria dos Peitorais**. **Mini games não dão XP.** Sem baú no final.
 
 ## Os jogos
 
@@ -44,6 +45,15 @@ e o ranking semanal. Assim o modo aparece cedo (a campanha dura 12–14 meses) e
 
 ## Recompensas do final do Peitoral (além do que já dá)
 
-Já dá: 2.000 moedas, brasão e moldura de prestígio. Ideias a escolher: título "Sumo Sacerdote"; peão, reação e arena exclusivos;
+Decidido: 2.000 moedas, brasão, moldura, ranking semanal dos mini games e Galeria dos Peitorais (sem baú). Ideias ainda abertas: título "Sumo Sacerdote";
 fundo de perfil; Galeria dos Peitorais (quem completou, e quando); baú temático; figurinha lendária do Arão (nunca `SPECIAL`, que é só de Jesus);
 liberar o hub de mini games. Evitar bônus permanente de moedas (mexe na economia).
+
+## Checklist
+
+- [x] Base: catálogo e liberação por pedra, ranking semanal (tabela `mini_game_scores`, só quem completou o Peitoral), Galeria dos Peitorais, telas (cartão na aba Jogar,
+  Jogos/Ranking/Galeria), capa `MINIGAMES` no painel.
+- [ ] Desafio diário (1 por dia) e prêmio pequeno limitado (a decidir).
+- [ ] Jogos sem conteúdo novo: caça-palavras, forca, quebra-cabeça, memória, versículo em pedaços, labirinto.
+- [ ] Jogos com campo novo no painel: quem sou eu (dicas), linha do tempo (cronologia), mapa (coordenadas), árvore genealógica (pai/mãe).
+- [ ] Jogos com grafo de relações: interconexão e palavras cruzadas.

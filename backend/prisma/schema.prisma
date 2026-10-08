@@ -179,15 +179,16 @@ model User {
   deletedAt          DateTime? @map("deleted_at")
   deletedBy          String?   @map("deleted_by")
 
-  stickers     UserSticker[]
-  studies      CharacterStudy[]
-  comments     UserComment[]
-  quizMatches  QuizMatch[]
-  quizSessions QuizSession[]
-  achievements UserAchievement[]
-  claims       UserClaim[]
-  reports      QuestionReport[]
-  cosmetics    UserCosmetic[]
+  stickers       UserSticker[]
+  studies        CharacterStudy[]
+  comments       UserComment[]
+  quizMatches    QuizMatch[]
+  quizSessions   QuizSession[]
+  achievements   UserAchievement[]
+  claims         UserClaim[]
+  miniGameScores MiniGameScore[]
+  reports        QuestionReport[]
+  cosmetics      UserCosmetic[]
 
   avatar     Cosmetic? @relation("UserAvatar", fields: [avatarId], references: [id], onDelete: SetNull)
   frame      Cosmetic? @relation("UserFrame", fields: [frameId], references: [id], onDelete: SetNull)
@@ -1052,6 +1053,23 @@ model GameModeDesign {
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("game_mode_designs")
+}
+
+/// Melhor pontuação da semana de cada jogador em cada mini game (só quem completou o Peitoral entra no ranking semanal).
+model MiniGameScore {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  gameId    String   @map("game_id")
+  /// Segunda-feira da semana (mesma chave da liga semanal).
+  weekKey   String   @map("week_key")
+  score     Int
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameId, weekKey])
+  @@index([weekKey, score])
+  @@map("mini_game_scores")
 }
 
 /// As 12 pedras do peitoral do sumo sacerdote (Êxodo 28:15-21). Cada pedra é conquistada ao concluir os cenários ligados a ela.

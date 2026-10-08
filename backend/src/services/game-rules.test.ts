@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  MINI_GAMES,
+  miniGameUnlocked,
+  weeklyTotal,
   campaignNodeState,
   currentScenarioId,
   defaultNodePosition,
@@ -646,5 +649,20 @@ describe("passes temáticos", () => {
   it("item repetido vira mais moedas quanto mais raro", () => {
     expect(duplicateCosmeticCoins("COMMON")).toBeLessThan(duplicateCosmeticCoins("EPIC"));
     expect(duplicateCosmeticCoins("LEGENDARY")).toBe(400);
+  });
+
+  it("mini games: um para cada pedra, sem repetir, e só liberam com a pedra resgatada", () => {
+    expect(MINI_GAMES).toHaveLength(12);
+    expect(MINI_GAMES.map((game) => game.stoneSlot)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect(new Set(MINI_GAMES.map((game) => game.id)).size).toBe(12);
+    expect(miniGameUnlocked(MINI_GAMES[0], [])).toBe(false);
+    expect(miniGameUnlocked(MINI_GAMES[0], [1])).toBe(true);
+    expect(miniGameUnlocked(MINI_GAMES[1], [1])).toBe(false);
+  });
+
+  it("pontuação semanal: soma a melhor de cada jogo e ignora negativos", () => {
+    expect(weeklyTotal([])).toBe(0);
+    expect(weeklyTotal([120, 80, 0])).toBe(200);
+    expect(weeklyTotal([50, -10])).toBe(50);
   });
 });

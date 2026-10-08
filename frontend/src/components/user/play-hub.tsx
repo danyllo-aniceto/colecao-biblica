@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import CasinoRoundedIcon from '@mui/icons-material/CasinoRounded';
+import ExtensionRoundedIcon from '@mui/icons-material/ExtensionRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
 import StyleRoundedIcon from '@mui/icons-material/StyleRounded';
@@ -7,7 +8,7 @@ import { SectionHeading } from '@/components/game/game-ui';
 import { cn } from '@/lib/cn';
 import { useGameModeImages, type GameMode } from '@/lib/game-modes';
 
-export type PlayMode = 'quiz' | 'board' | 'duel';
+export type PlayMode = 'quiz' | 'board' | 'duel' | 'minigames';
 
 export const PLAY_MODES: Array<{ id: PlayMode; design: GameMode; title: string; text: string; tags: string[]; icon: ReactNode; fallback: string }> = [
   {
@@ -37,6 +38,15 @@ export const PLAY_MODES: Array<{ id: PlayMode; design: GameMode; title: string; 
     icon: <StyleRoundedIcon sx={{ fontSize: 56 }} />,
     fallback: 'from-danger to-accent',
   },
+  {
+    id: 'minigames',
+    design: 'MINIGAMES',
+    title: 'Mini games',
+    text: 'Jogos rápidos para treinar o que você sabe da Bíblia: caça-palavras, forca, quebra-cabeça e mais. Cada pedra do Peitoral libera um jogo novo.',
+    tags: ['Sozinho', 'Liberados pelas pedras', 'Sem XP: só diversão'],
+    icon: <ExtensionRoundedIcon sx={{ fontSize: 56 }} />,
+    fallback: 'from-success to-info',
+  },
 ];
 
 /** Aba Jogar: um cartão explicativo para cada jogo. A capa de cada um é enviada pelo painel. */
@@ -45,7 +55,7 @@ export function PlayHub({ onOpen, quizRunning }: { onOpen: (mode: PlayMode) => v
   return (
     <section className="space-y-4" aria-label="Jogos">
       <SectionHeading title="Jogar" subtitle="Escolha um jogo. Cada um tem a sua tela." />
-      <ul className="grid gap-4 lg:grid-cols-3">
+      <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {PLAY_MODES.map((mode) => {
           const image = images[mode.design];
           return (
@@ -89,6 +99,7 @@ const TITLES: Record<PlayMode, { title: string; subtitle: string }> = {
   quiz: { title: 'Quiz Bíblico', subtitle: 'Responda, ganhe XP, moedas e figurinhas.' },
   board: { title: 'Tabuleiro', subtitle: 'Partidas sem XP nem moedas: é só diversão.' },
   duel: { title: 'Duelo de Figurinhas', subtitle: 'Figurinhas com Dons, 3 arenas e 6 turnos. Sem XP nem moedas.' },
+  minigames: { title: 'Mini games', subtitle: 'Cada pedra do Peitoral libera um jogo. Sem XP nem moedas.' },
 };
 
 /** Moldura da tela de um jogo: botão para voltar aos jogos e o título. */
