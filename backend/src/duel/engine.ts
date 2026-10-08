@@ -785,14 +785,29 @@ function resolvePlay(state: DuelState, side: Side, placed: PlacedCard) {
   }
 }
 
+/**
+ * Dons que dependem de quem está ganhando o cenário ("se estiver perdendo/ganhando aqui") só agem depois dos demais "Ao revelar"
+ * do turno, de ambos os lados. Assim o resultado não depende de quem jogou ou revelou primeiro: a conferência é feita com a mesa
+ * já completa. Dentro de cada grupo vale a ordem de prioridade.
+ */
+function dependsOnStanding(card: PlacedCard) {
+  const dom = card.def.dom;
+  if (!dom || dom.trigger !== "reveal") return false;
+  return dom.effects.some((effect) => "when" in effect && (effect.when?.type === "laneLosing" || effect.when?.type === "laneWinning"));
+}
+
+function inResolveOrder<T extends { card: PlacedCard }>(entries: T[]): T[] {
+  return [...entries.filter((entry) => !dependsOnStanding(entry.card)), ...entries.filter((entry) => dependsOnStanding(entry.card))];
+}
+
 /** Coloca as jogadas de um lado e resolve os Dons delas (usado na previsão dos bots). */
 function playSide(state: DuelState, side: Side, plays: Staged[], spent: { value: number }) {
-  const placed: PlacedCard[] = [];
+  const placed: Array<{ card: PlacedCard }> = [];
   for (const play of plays) {
     const card = placePlay(state, side, play, spent);
-    if (card) placed.push(card);
+    if (card) placed.push({ card });
   }
-  for (const card of placed) resolvePlay(state, side, card);
+  for (const entry of inResolveOrder(placed)) resolvePlay(state, side, entry.card);
 }
 
 function endOfTurn(state: DuelState) {
@@ -1010,7 +1025,7 @@ function resolveTurn(state: DuelState) {
       if (card) placed.push({ side, card });
     }
   }
-  for (const entry of placed) resolvePlay(state, entry.side, entry.card);
+  for (const entry of inResolveOrder(placed)) resolvePlay(state, entry.side, entry.card);
   endOfTurn(state);
   // O Vigor que sobrou fica guardado para o turno seguinte.
   const leftover: [number, number] = [Math.max(0, energyFor(state, 0) - spent[0].value), Math.max(0, energyFor(state, 1) - spent[1].value)];

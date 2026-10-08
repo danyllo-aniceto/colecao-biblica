@@ -536,7 +536,7 @@ function CardReadout({ def, power }: { def: CardDef; power: number }) {
 /** A arena (centro da coluna): arte, nome, o que ela faz e o placar dos dois lados. */
 function Arena({ lane, index, image, focus, dropHint, blindHint, onInfo }: { lane: LaneCards; index: number; image: string | null; focus: boolean; dropHint: boolean; blindHint: boolean; onInfo: () => void }) {
   return (
-    <div className="relative my-3 shrink-0">
+    <div className="relative my-4 shrink-0">
       <div className="absolute inset-x-0 -top-3.5 z-10 flex justify-center">
         {lane.open ? lane.theirs > lane.mine ? <PowerHex value={lane.theirs} tone="foe" /> : <NeutralHex value={lane.theirs} /> : null}
       </div>
@@ -548,7 +548,7 @@ function Arena({ lane, index, image, focus, dropHint, blindHint, onInfo }: { lan
           if (lane.scenario) onInfo();
         }}
         className={cn(
-          'relative flex h-[7.5rem] w-full flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl border-[3px] bg-surface-3 px-1.5 py-4 text-center shadow-lg transition',
+          'relative flex min-h-[9.5rem] w-full flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl border-[3px] bg-surface-3 px-1.5 pb-7 pt-7 text-center shadow-lg transition',
           lane.open ? 'border-primary-strong' : 'border-edge-strong',
           focus && 'animate-duel-focus',
           lane.open && 'animate-duel-arena',

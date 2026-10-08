@@ -376,3 +376,19 @@ describe("bots com os novos Dons", () => {
     }
   });
 });
+
+describe("ordem da revelação justa (Dons que dependem de quem ganha)", () => {
+  it("Dom 'se estiver perdendo' confere depois dos outros Dons do turno, venha ele antes ou depois", () => {
+    const joabe = card("joabe", "revelar", "destruir alvo=inimigo-mais-forte se=perdendo", { power: 3 });
+    const reforco = card("reforco", "revelar", "poder valor=+5 alvo=si", { power: 1 });
+    const results = [0, 1].map((order) => {
+      // Joabe começa perdendo 3 x 6, mas o reforço do próprio dono (jogado depois) o deixa na frente: nada a destruir.
+      const state = duel([joabe, reforco], [plain("rival", 6)]);
+      const plays: Array<[number, number]> = order === 0 ? [[0, 0], [1, 0]] : [[1, 0], [0, 0]];
+      const done = turn(state, plays, [[0, 0]]);
+      return done.lanes[0].cards[1].length;
+    });
+    // O rival sobrevive nas duas ordens: quando Joabe confere, o reforço já subiu a Influência dele.
+    expect(results).toEqual([1, 1]);
+  });
+});

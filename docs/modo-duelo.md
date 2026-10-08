@@ -50,6 +50,10 @@ preguiçoso, sons e música por cenário) e as figurinhas, os cenários e o **n�
 5. **Série (escolhida na sala):** *Rodada única* · *Melhor de 3* · *Vidas* (10 vidas; a aposta vira dano; a partir da rodada 5 a aposta vale em dobro).
    Padrão: **Melhor de 3** (~15 min).
 
+**Ordem justa:** as figurinhas de todos entram primeiro; depois os "Ao revelar" agem (quem está na frente primeiro). Dons que dependem de quem
+ganha o cenário ("se estiver perdendo/ganhando") agem **depois dos demais**, com a mesa já completa, para não depender de quem jogou antes.
+**Limite da mão: 5 figurinhas** (a figurinha comprada com a mão cheia vai para o cemitério), para ninguém acumular demais.
+
 Interação que dá "mais lances": decidir o que **segurar** para um cenário ainda escondido, o que jogar **antes/depois** da prioridade, mover/destruir
 figurinhas do rival, copiar, criar figurinhas, **blefar** com Dobrar.
 
@@ -136,7 +140,7 @@ força das figurinhas quando a sala liga "Usar o nível das figurinhas".
 - **Topo:** adversário (nome, peão/avatar), **turno atual** no centro; você embaixo.
 - **Meio:** 3 colunas de cenário (arte do terreno, nome, regra em ícone). Em cima as 4 figurinhas do rival, embaixo as suas; **Influência total de cada lado** em
   números grandes nas bordas do cenário; o lado que vence brilha.
-- **Rodapé:** **sua mão** (3 a 7 figurinhas) em leque, **Vigor** no centro, **Pronto 3/6** à direita, **Desistir** à esquerda, **Dobrar** ao lado.
+- **Rodapé:** **sua mão** (3 a 5 figurinhas) em leque, **Vigor** no centro, **Pronto 3/6** à direita, **Desistir** à esquerda, **Dobrar** ao lado.
 - **Arrastar** a figurinha para o cenário (com som de papel/arrasto) ou tocar na figurinha e tocar no cenário. **Segurar** a figurinha abre o Dom em texto grande.
 - **Avisos animados** de cada Dom (o mesmo sistema de `callouts` do Tabuleiro: "Moisés separou as figurinhas do rival!").
 - Sons e **música do cenário da rodada**, `Dialog`/`Modal`/componentes do app, mobile primeiro.

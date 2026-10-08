@@ -52,7 +52,7 @@ export function DuelCardFace({ def, art, power, size = 'board', selected, dimmed
   const image = artOf(art, def);
   const shown = power ?? def.power;
   const tone = shown > def.power ? 'text-success' : shown < def.power ? 'text-danger' : 'text-white';
-  const badge = size === 'big' ? 'h-10 w-10 text-xl' : size === 'hand' ? 'h-7 w-7 text-sm' : 'h-5 w-5 text-[11px]';
+  const badge = size === 'big' ? 'h-9 min-w-9 px-1 text-lg' : size === 'hand' ? 'h-6 min-w-6 px-0.5 text-[13px]' : 'h-[1.1rem] min-w-[1.1rem] px-0.5 text-[10px]';
   const Wrapper = onClick ? 'button' : 'div';
   return (
     <Wrapper
@@ -75,17 +75,12 @@ export function DuelCardFace({ def, art, power, size = 'board', selected, dimmed
       {image ? <img src={image} alt="" draggable={false} className="absolute inset-0 -z-10 h-full w-full object-cover" /> : <span className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/40 to-violet/50" />}
       {!image ? <span className="absolute inset-0 -z-10 flex items-center justify-center font-display text-3xl font-bold text-white/70">{def.name.slice(0, 1)}</span> : null}
       <span className="absolute inset-x-0 bottom-0 -z-10 h-1/2 bg-gradient-to-t from-black/80 to-transparent" />
-      <span className={cn('absolute left-0.5 top-0.5 flex items-center justify-center rounded-full bg-info font-display font-bold text-white shadow', badge)} aria-hidden="true">
+      <span className={cn('absolute left-0 top-0 flex items-center justify-center rounded-br-lg rounded-tl-[inherit] bg-info/90 font-display font-bold leading-none text-white', badge)} aria-hidden="true">
         {def.cost}
       </span>
-      <span className={cn('absolute right-0.5 top-0.5 flex items-center justify-center rounded-full bg-black/70 font-display font-bold shadow', badge, tone)} aria-hidden="true">
+      <span className={cn('absolute right-0 top-0 flex items-center justify-center rounded-bl-lg rounded-tr-[inherit] bg-black/70 font-display font-bold leading-none', badge, tone)} aria-hidden="true">
         {animate ? <AnimatedNumber value={shown} /> : shown}
       </span>
-      {def.dom ? (
-        <span className="absolute left-1/2 top-0.5 -translate-x-1/2 rounded-full bg-black/60 px-1 text-[9px] leading-4 text-primary" aria-hidden="true">
-          ✨
-        </span>
-      ) : null}
       {silenced ? <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-black/60 text-center text-[9px] font-bold uppercase tracking-wide text-white/90">calado</span> : null}
       <span className="w-full truncate px-1 pb-0.5 text-center font-display font-bold leading-tight text-white drop-shadow">{def.name}</span>
       {children}
