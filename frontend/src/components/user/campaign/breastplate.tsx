@@ -57,7 +57,7 @@ function stateLabel(stone: Stone) {
   return `${stone.completed}/${stone.required} cenários`;
 }
 
-/** Recompensas da pedra: moedas, cosmético e brasão. */
+/** Recompensas da pedra: moedas, cosmético e brasão, e os mini games que ela libera. */
 function StoneRewards({ stone, playerName }: { stone: Stone; playerName: string }) {
   return (
     <div className="space-y-2">
@@ -81,6 +81,24 @@ function StoneRewards({ stone, playerName }: { stone: Stone; playerName: string 
           </li>
         ) : null}
       </ul>
+      {stone.miniGames.length > 0 ? (
+        <>
+          <p className="pt-1 text-xs font-bold uppercase tracking-wider text-muted">{stone.state === 'claimed' ? 'Mini games liberados' : 'Libera os mini games'}</p>
+          <ul className="space-y-2">
+            {stone.miniGames.map((game) => (
+              <li key={game.id} className={cn('flex items-center gap-2 rounded-xl bg-surface-3 p-2', stone.state !== 'claimed' && 'opacity-80')}>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface text-xl" aria-hidden>
+                  {game.emoji}
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-bold text-ink">{game.name}</span>
+                  <span className="block text-xs font-semibold text-muted">{game.text}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
     </div>
   );
 }

@@ -707,6 +707,11 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
                 </li>
               ) : null}
             </ul>
+            {stoneWon.stone.miniGames.length > 0 ? (
+              <Alert tone="info">
+                Mini games liberados: {stoneWon.stone.miniGames.map((game) => `${game.emoji} ${game.name}`).join(' e ')}. Jogue na aba Jogar → Mini games.
+              </Alert>
+            ) : null}
             {stoneWon.result.completeReward ? (
               <Alert tone="success">
                 Peitoral Completo! +{stoneWon.result.completeReward.coins.toLocaleString('pt-BR')} moedas, {stoneWon.result.completeReward.badgeName} e {stoneWon.result.completeReward.prestigeName}.

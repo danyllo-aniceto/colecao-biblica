@@ -2,7 +2,7 @@ import { lockUser, transaction, type Db } from "../db/prisma";
 import { badRequest, notFound } from "../lib/errors";
 import { checkAchievements } from "./achievements";
 import { grantCosmetic, toCosmeticResponse } from "./cosmetics";
-import { breastplateComplete, STONE_SCENARIOS, stoneState } from "./game-rules";
+import { breastplateComplete, MINI_GAMES, STONE_SCENARIOS, stoneState } from "./game-rules";
 import { toUserResponse } from "./mappers";
 import { walletData } from "./rewards";
 
@@ -108,6 +108,8 @@ export async function getBreastplate(db: Db, userId: number) {
       rewardCoins: stone.rewardCoins,
       cosmetic: stone.rewardCosmetic ? toCosmeticResponse(stone.rewardCosmetic) : null,
       badge: stone.badgeCosmetic ? toCosmeticResponse(stone.badgeCosmetic) : null,
+      /** Mini games que esta pedra libera ao ser resgatada. */
+      miniGames: MINI_GAMES.filter((game) => game.stoneSlot === stone.slot).map((game) => ({ id: game.id, name: game.name, emoji: game.emoji, text: game.text })),
       /** Cenários do grupo já cadastrados (a pedra exige {required}; os que faltam aparecem como "em breve"). */
       scenarios,
       required: STONE_SCENARIOS,

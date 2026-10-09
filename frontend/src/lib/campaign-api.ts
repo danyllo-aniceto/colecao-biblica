@@ -86,6 +86,8 @@ export type Stone = {
   rewardCoins: number;
   cosmetic: Cosmetic | null;
   badge: Cosmetic | null;
+  /** Mini games que a pedra libera. */
+  miniGames: Array<{ id: string; name: string; emoji: string; text: string }>;
   /** Cenários do grupo já cadastrados; a pedra pede `required`. */
   scenarios: Array<{ id: number; slug: string; name: string; color: string | null; iconImageUrl: string | null; completed: boolean }>;
   required: number;
