@@ -10,6 +10,11 @@ import { checkBookOrder, checkTestament, generateBookOrder, generateTestament, t
 import { checkBlitz, generateBlitz, type BlitzState } from "../minigames/blitz";
 import { checkBlanks, generateBlanks, usableForBlanks, type BlanksState } from "../minigames/verse-blanks";
 import { generateWhoAmI, whoAmIOutcome, type WhoAmIState } from "../minigames/whoami";
+import { checkCrossword, generateCrossword, type CrosswordState } from "../minigames/crossword";
+import { checkChain, generateChain, type ChainState } from "../minigames/graph";
+import { checkLineage, generateLineage, type LineageState } from "../minigames/lineage";
+import { checkMap, generateMap, type MapState } from "../minigames/places";
+import { checkTimeline, generateTimeline, type TimelineState } from "../minigames/timeline";
 import { checkMaze, generateMaze, type Maze } from "../minigames/maze";
 import { checkMemory, generateMemory, MEMORY_PAIRS, type Memory } from "../minigames/memory";
 import { checkSwapPuzzle, generateSwapPuzzle, type SwapPuzzle } from "../minigames/swap-puzzle";
@@ -35,7 +40,12 @@ type RunState =
   | { game: "livros"; puzzle: BookOrder }
   | { game: "relampago"; state: BlitzState }
   | { game: "lacunas"; state: BlanksState }
-  | { game: "quem-sou-eu"; state: WhoAmIState };
+  | { game: "quem-sou-eu"; state: WhoAmIState }
+  | { game: "linha-do-tempo"; state: TimelineState }
+  | { game: "mapa"; state: MapState }
+  | { game: "arvore"; state: LineageState }
+  | { game: "interconexao"; state: ChainState }
+  | { game: "palavras-cruzadas"; state: CrosswordState };
 
 const found = z.object({ word: z.string().min(1).max(20), from: z.tuple([z.number().int(), z.number().int()]), to: z.tuple([z.number().int(), z.number().int()]) });
 const answers = {
@@ -48,6 +58,11 @@ const answers = {
   testamento: z.object({ choices: z.array(z.enum(["OLD", "NEW"])).max(20) }),
   relampago: z.object({ answers: z.array(z.boolean()).max(20) }),
   lacunas: z.object({ fills: z.array(z.string().max(40)).max(10) }),
+  "linha-do-tempo": z.object({ order: z.array(z.string().max(20)).max(20) }),
+  mapa: z.object({ guesses: z.array(z.object({ lat: z.number(), lon: z.number() })).max(10) }),
+  arvore: z.object({ fathers: z.array(z.string().max(30)).max(10), links: z.array(z.string().max(30)).max(10) }),
+  interconexao: z.object({ path: z.array(z.string().max(40)).max(40) }),
+  "palavras-cruzadas": z.object({ rows: z.array(z.string().max(30)).max(30) }),
 } as const;
 
 /** O que a tela recebe ao começar: o jogo sem o gabarito (a forca nunca manda a palavra). */
@@ -150,6 +165,32 @@ function build(game: string, seed: number, content: Awaited<ReturnType<typeof lo
       const { state, puzzle } = generateBlanks(seed, shuffled(random, sources)[0], decoys);
       return { state: { game, state }, puzzle };
     }
+    case "linha-do-tempo": {
+      const { state, puzzle } = generateTimeline(seed);
+      return { state: { game, state }, puzzle };
+    }
+    case "mapa": {
+      const { state, puzzle } = generateMap(seed);
+      return { state: { game, state }, puzzle };
+    }
+    case "arvore": {
+      const { state, puzzle } = generateLineage(seed);
+      return { state: { game, state }, puzzle };
+    }
+    case "interconexao": {
+      const { state, puzzle } = generateChain(seed);
+      return { state: { game, state }, puzzle };
+    }
+    case "palavras-cruzadas": {
+      // Personagens e lugares: a dica é a descrição com o nome trocado por traços.
+      const entries = [
+        ...content.characters.map((character) => ({ word: lettersOnly(character.name), clue: maskHint(character.shortSummary, character.name) })),
+        ...content.scenarios.map((scenario) => ({ word: lettersOnly(scenario.name), clue: `Lugar: ${maskHint(scenario.description ?? "um cenário da campanha", scenario.name)}` })),
+      ].filter((entry, index, all) => entry.word.length >= 3 && all.findIndex((other) => other.word === entry.word) === index);
+      const generated = generateCrossword(seed, entries);
+      if (!generated) throw badRequest("Ainda não há nomes suficientes para este jogo");
+      return { state: { game, state: generated.state }, puzzle: generated.puzzle };
+    }
     case "quem-sou-eu": {
       if (content.characters.length < 4) throw badRequest("Ainda não há personagens suficientes para este jogo");
       const { state, puzzle } = generateWhoAmI(seed, content.characters);
@@ -244,6 +285,23 @@ export async function finishMiniGame(userId: number, runId: string, body: unknow
       break;
     case "lacunas":
       outcome = checkBlanks(state.state, answers.lacunas.parse(body).fills, seconds);
+      break;
+    case "linha-do-tempo":
+      outcome = checkTimeline(state.state, answers["linha-do-tempo"].parse(body).order, seconds);
+      break;
+    case "mapa":
+      outcome = checkMap(state.state, answers.mapa.parse(body).guesses, seconds);
+      break;
+    case "arvore": {
+      const answer = answers.arvore.parse(body);
+      outcome = checkLineage(state.state, answer.fathers, answer.links, seconds);
+      break;
+    }
+    case "interconexao":
+      outcome = checkChain(state.state, answers.interconexao.parse(body).path, seconds);
+      break;
+    case "palavras-cruzadas":
+      outcome = checkCrossword(state.state, answers["palavras-cruzadas"].parse(body).rows, seconds);
       break;
     default:
       throw badRequest("Este jogo termina palpite a palpite");

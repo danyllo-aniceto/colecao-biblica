@@ -104,11 +104,11 @@ export const MINI_GAMES: MiniGameDef[] = [
   { id: "lacunas", name: "Complete o versículo", emoji: "✍️", text: "Preencha as 3 lacunas do versículo com as palavras certas.", stoneSlot: 5, ready: true },
   { id: "quem-sou-eu", name: "Quem sou eu?", emoji: "🎭", text: "As dicas aparecem uma a uma: quanto menos dicas, mais pontos.", stoneSlot: 6, ready: true },
   { id: "labirinto", name: "Labirinto", emoji: "🌀", text: "Ache a saída do labirinto pelo caminho mais curto.", stoneSlot: 7, ready: true },
-  { id: "linha-do-tempo", name: "Linha do tempo", emoji: "⏳", text: "Encaixe personagens e cenários na ordem da história: quanto mais perto, mais pontos.", stoneSlot: 8, ready: false },
-  { id: "palavras-cruzadas", name: "Palavras cruzadas", emoji: "✏️", text: "Preencha a grade com as dicas dos personagens e lugares.", stoneSlot: 9, ready: false },
-  { id: "mapa", name: "Mapa bíblico", emoji: "🗺️", text: "Aponte onde fica cada cenário: quanto mais perto, mais pontos.", stoneSlot: 10, ready: false },
-  { id: "arvore", name: "Árvore genealógica", emoji: "🌳", text: "Monte a linhagem de Adão até Jesus.", stoneSlot: 11, ready: false },
-  { id: "interconexao", name: "Interconexão", emoji: "🔗", text: "Ligue dois personagens ou cenários por uma corrente de relações: menos elos, mais pontos.", stoneSlot: 12, ready: false },
+  { id: "linha-do-tempo", name: "Linha do tempo", emoji: "⏳", text: "Encaixe personagens e cenários na ordem da história: quanto mais perto, mais pontos.", stoneSlot: 8, ready: true },
+  { id: "palavras-cruzadas", name: "Palavras cruzadas", emoji: "✏️", text: "Preencha a grade com as dicas dos personagens e lugares.", stoneSlot: 9, ready: true },
+  { id: "mapa", name: "Mapa bíblico", emoji: "🗺️", text: "Aponte onde fica cada cenário: quanto mais perto, mais pontos.", stoneSlot: 10, ready: true },
+  { id: "arvore", name: "Árvore genealógica", emoji: "🌳", text: "Monte a linhagem de Adão até Jesus.", stoneSlot: 11, ready: true },
+  { id: "interconexao", name: "Interconexão", emoji: "🔗", text: "Ligue dois personagens ou cenários por uma corrente de relações: menos elos, mais pontos.", stoneSlot: 12, ready: true },
 ];
 
 /** Moedas da primeira vitória do dia em cada mini game e quantas vitórias por dia rendem moedas (o resto só vale pontos no ranking). */

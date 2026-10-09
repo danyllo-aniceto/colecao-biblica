@@ -76,3 +76,9 @@ export type ActResult = { status: 'playing' | 'won' | 'lost'; attemptsLeft?: num
 
 export const actMiniGame = (runId: string, body: object) =>
   apiRequest<ActResult>(`/minigames/runs/${runId}/act`, { method: 'POST', body: JSON.stringify(body) }, 'Não foi possível conferir a jogada.');
+
+export type TimelinePuzzle = { items: Array<{ id: string; label: string; emoji: string }> };
+export type MapPuzzle = { places: string[]; bounds: { west: number; east: number; south: number; north: number } };
+export type LineagePuzzle = { fathers: string[]; sons: string[] };
+export type ChainPuzzle = { from: string; to: string; edges: Array<[string, string, string, string]> };
+export type CrosswordPuzzle = { rows: number; cols: number; open: number[][]; words: Array<{ number: number; row: number; col: number; across: boolean; length: number; clue: string }> };

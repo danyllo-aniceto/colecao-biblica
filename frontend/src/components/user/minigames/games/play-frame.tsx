@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Alert, CoinIcon } from '@/components/game/game-ui';
 import { Button } from '@/components/ui/button';
 import { LoadingState } from '@/components/ui/spinner';
@@ -44,8 +44,12 @@ export function MiniGameFrame<P>({ game, onExit, onWallet, children }: Props<P>)
   const [result, setResult] = useState<MiniGameResult | null>(null);
   const [seconds, setSeconds] = useState(0);
   const startedAt = useRef(0);
+  const starting = useRef(false);
 
   const begin = useCallback(() => {
+    // Uma partida por vez: o modo estrito do React (em desenvolvimento) chama o efeito duas vezes e criaria duas partidas.
+    if (starting.current) return;
+    starting.current = true;
     setRun(null);
     setResult(null);
     setError(null);
@@ -55,7 +59,10 @@ export function MiniGameFrame<P>({ game, onExit, onWallet, children }: Props<P>)
         startedAt.current = Date.now();
         setRun({ runId: started.runId, puzzle: started.puzzle });
       })
-      .catch((reason: unknown) => setError(errorMessage(reason)));
+      .catch((reason: unknown) => setError(errorMessage(reason)))
+      .finally(() => {
+        starting.current = false;
+      });
   }, [game.id]);
 
   useEffect(() => {
@@ -116,7 +123,8 @@ export function MiniGameFrame<P>({ game, onExit, onWallet, children }: Props<P>)
       ) : !run ? (
         <LoadingState label="Preparando o jogo..." />
       ) : (
-        children({ puzzle: run.puzzle, runId: run.runId, submit, finished: Boolean(result), report })
+        // A chave troca a tela por inteiro a cada partida nova (estado do jogo sempre limpo).
+        <Fragment key={run.runId}>{children({ puzzle: run.puzzle, runId: run.runId, submit, finished: Boolean(result), report })}</Fragment>
       )}
 
       {result ? <ResultCard result={result} onAgain={begin} onExit={onExit} /> : null}

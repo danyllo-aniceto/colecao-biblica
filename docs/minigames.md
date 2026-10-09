@@ -11,9 +11,8 @@ personagens, cenários e versículos que o app já tem. Vale também para a pró
 
 ## Como liberar (decidido)
 
-**Cada pedra libera um ou dois mini games** (17 jogos no catálogo, 12 já jogáveis). Pedra 1: caça-palavras e anagrama · 2: forca e antigo ou novo · 3: quebra-cabeça e
-livros em ordem · 4: memória e relâmpago · 5: versículo em pedaços e complete o versículo · 6: quem sou eu? · 7: labirinto · 8 a 12 (ainda por fazer): linha do tempo,
-palavras cruzadas, mapa, árvore genealógica, interconexão. O **administrador** vê todos liberados em Painel → Testar mini games. O **Peitoral Completo** libera o **ranking semanal** dos mini games e a
+**Cada pedra libera um ou dois mini games** (17 jogos no catálogo, todos jogáveis). Pedra 1: caça-palavras e anagrama · 2: forca e antigo ou novo · 3: quebra-cabeça e
+livros em ordem · 4: memória e relâmpago · 5: versículo em pedaços e complete o versículo · 6: quem sou eu? · 7: labirinto · 8: linha do tempo · 9: palavras cruzadas · 10: mapa bíblico · 11: árvore genealógica · 12: interconexão. O **administrador** vê todos liberados em Painel → Testar mini games. O **Peitoral Completo** libera o **ranking semanal** dos mini games e a
 entrada na **Galeria dos Peitorais**. **Mini games não dão XP.** Sem baú no final.
 
 ## Os jogos
@@ -61,3 +60,6 @@ liberar o hub de mini games. Evitar bônus permanente de moedas (mexe na economi
 - [ ] (Pendente) Versículo: variante com lacunas já feita à parte. Labirinto: perguntas nas bifurcações. Memória: pares personagem ↔ figurinha.
 - [ ] Jogos com campo novo no painel: quem sou eu (dicas), linha do tempo (cronologia), mapa (coordenadas), árvore genealógica (pai/mãe).
 - [ ] Jogos com grafo de relações: interconexão e palavras cruzadas.
+- [x] Os 5 últimos: linha do tempo (26 acontecimentos com datas aproximadas, 6 por partida), mapa bíblico (26 lugares com coordenadas, toque no mapa; vale a distância), árvore genealógica (ligar pai e filho, Gn 5 / Mt 1), interconexão (grafo de ~50 relações; ligar dois nomes a 3 ou 4 passos) e palavras cruzadas (gerada com nomes e descrições).
+  Os dados são fixos no código (`backend/src/minigames/{timeline,places,lineage,graph}.ts`) e o mapa é um desenho simplificado (`frontend/src/lib/map-shapes.ts`).
+- [ ] Melhorias, jogo a jogo: datas/lugares/relações editáveis no painel; mapa com imagem enviada; perguntas no labirinto; figurinhas no quebra-cabeça; pares personagem ↔ figurinha na memória.

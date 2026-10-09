@@ -655,7 +655,7 @@ describe("passes temáticos", () => {
     expect(MINI_GAMES).toHaveLength(17);
     expect(new Set(MINI_GAMES.map((game) => game.stoneSlot))).toEqual(new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]));
     expect(new Set(MINI_GAMES.map((game) => game.id)).size).toBe(17);
-    expect(MINI_GAMES.filter((game) => game.ready)).toHaveLength(12);
+    expect(MINI_GAMES.filter((game) => game.ready)).toHaveLength(17);
     expect(miniGameUnlocked(MINI_GAMES[0], [])).toBe(false);
     expect(miniGameUnlocked(MINI_GAMES[0], [1])).toBe(true);
     expect(miniGameUnlocked(MINI_GAMES.find((game) => game.stoneSlot === 2)!, [1])).toBe(false);

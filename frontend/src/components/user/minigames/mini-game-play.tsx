@@ -1,3 +1,8 @@
+import { ChainGame } from '@/components/user/minigames/games/chain-game';
+import { CrosswordGame } from '@/components/user/minigames/games/crossword-game';
+import { LineageGame } from '@/components/user/minigames/games/lineage-game';
+import { MapGame } from '@/components/user/minigames/games/map-game';
+import { TimelineGame } from '@/components/user/minigames/games/timeline-game';
 import { AnagramGame } from '@/components/user/minigames/games/anagram-game';
 import { BlanksGame } from '@/components/user/minigames/games/blanks-game';
 import { BlitzGame } from '@/components/user/minigames/games/blitz-game';
@@ -11,7 +16,7 @@ import { MiniGameFrame } from '@/components/user/minigames/games/play-frame';
 import { SwapPuzzleGame } from '@/components/user/minigames/games/swap-puzzle-game';
 import { VerseGame } from '@/components/user/minigames/games/verse-game';
 import { WordSearchGame } from '@/components/user/minigames/games/wordsearch-game';
-import type { AnagramPuzzle, BlanksPuzzle, BlitzPuzzle, BooksPuzzle, TestamentPuzzle, WhoAmIPuzzle, HangmanPuzzle, MazePuzzle, MemoryPuzzle, MiniGameInfo, SwapPuzzle, VersePuzzle, WordSearchPuzzle } from '@/lib/minigames-api';
+import type { ChainPuzzle, CrosswordPuzzle, LineagePuzzle, MapPuzzle, TimelinePuzzle, AnagramPuzzle, BlanksPuzzle, BlitzPuzzle, BooksPuzzle, TestamentPuzzle, WhoAmIPuzzle, HangmanPuzzle, MazePuzzle, MemoryPuzzle, MiniGameInfo, SwapPuzzle, VersePuzzle, WordSearchPuzzle } from '@/lib/minigames-api';
 
 type Props = { game: MiniGameInfo; onExit: () => void; onWallet: (wallet: { userCoins: number }) => void };
 
@@ -42,6 +47,16 @@ export function MiniGamePlay({ game, onExit, onWallet }: Props) {
       return <MiniGameFrame<BlanksPuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <BlanksGame {...props} />}</MiniGameFrame>;
     case 'quem-sou-eu':
       return <MiniGameFrame<WhoAmIPuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <WhoAmIGame {...props} />}</MiniGameFrame>;
+    case 'linha-do-tempo':
+      return <MiniGameFrame<TimelinePuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <TimelineGame {...props} />}</MiniGameFrame>;
+    case 'mapa':
+      return <MiniGameFrame<MapPuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <MapGame {...props} />}</MiniGameFrame>;
+    case 'arvore':
+      return <MiniGameFrame<LineagePuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <LineageGame {...props} />}</MiniGameFrame>;
+    case 'interconexao':
+      return <MiniGameFrame<ChainPuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <ChainGame {...props} />}</MiniGameFrame>;
+    case 'palavras-cruzadas':
+      return <MiniGameFrame<CrosswordPuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <CrosswordGame {...props} />}</MiniGameFrame>;
     default:
       return null;
   }

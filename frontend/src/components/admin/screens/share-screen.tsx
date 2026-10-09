@@ -151,7 +151,7 @@ export function ShareScreen() {
             </Button>
           </div>
 
-          <Field label="Trocar a imagem do cartão" hint="Horizontal 1200 × 630 px, de preferência com menos de 300 KB (o WhatsApp ignora imagens grandes). Vazio usa a imagem padrão com a logo e os três jogos.">
+          <Field label="Trocar a imagem do cartão" hint="Horizontal 1200 × 630 px, de preferência com menos de 300 KB (o WhatsApp ignora imagens grandes). Vazio usa a imagem padrão com a logo e os jogos.">
             <ImageUploadField value={custom} onChange={setCustom} wide />
           </Field>
           <Button size="sm" onClick={() => void saveImage()} loading={saving} disabled={!changed}>

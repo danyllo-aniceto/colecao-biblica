@@ -92,8 +92,9 @@ describe.skipIf(!hasDatabase)("mini games: partidas", () => {
     expect((await start(token, "caca-palavras")).status).toBe(400);
     expect((await start(token, "nao-existe")).status).toBe(404);
     await giveStones("user@email.com", [1, 9]);
-    // Palavras cruzadas (pedra 9) está liberado mas ainda não existe no app.
-    expect((await start(token, "palavras-cruzadas")).body.message).toMatch(/não está disponível/);
+    // Jogo de outra pedra continua bloqueado; o da pedra 9 abre.
+    expect((await start(token, "mapa")).body.message).toMatch(/não foi liberado/);
+    expect((await start(token, "palavras-cruzadas")).status).toBe(200);
   });
 
   it("resolve o labirinto: o servidor confere, pontua, dá moedas uma vez no dia e guarda a melhor no ranking", async () => {
@@ -266,8 +267,7 @@ describe.skipIf(!hasDatabase)("mini games: jogos novos e administrador", () => {
     expect(overview.rankingUnlocked).toBe(true);
     expect(overview.games.every((game: { unlocked: boolean }) => game.unlocked)).toBe(true);
     expect((await start(admin, "livros")).status).toBe(200);
-    // Jogo que ainda não existe continua indisponível, até para o administrador.
-    expect((await start(admin, "mapa")).body.message).toMatch(/não está disponível/);
+    expect((await start(admin, "mapa")).status).toBe(200);
     const user = await login("user@email.com");
     const plain = (await api.get("/api/minigames").set(bearer(user))).body;
     expect(plain.adminPreview).toBe(false);
@@ -341,5 +341,66 @@ describe.skipIf(!hasDatabase)("mini games: jogos novos e administrador", () => {
     const lost = await act(token, second.runId, { action: "answer", choice: (stored.answer + 1) % 4 });
     expect(lost.body).toMatchObject({ status: "lost", answer: stored.options[stored.answer], result: { solved: false, score: 0 } });
     expect((await act(token, second.runId, { action: "hint" })).status).toBe(400);
+  });
+});
+
+describe.skipIf(!hasDatabase)("mini games: os cinco últimos", () => {
+  beforeEach(async () => {
+    await resetDatabase();
+  });
+
+  const start = (token: string, game: string) => api.post(`/api/minigames/${game}/start`).set(bearer(token));
+  const finish = (token: string, runId: string, body: object) => api.post(`/api/minigames/runs/${runId}/finish`).set(bearer(token)).send(body);
+  const stateOf = async (runId: string) => (await prisma.miniGameRun.findUniqueOrThrow({ where: { id: runId } })).state as Record<string, any>;
+
+  async function unlockAll() {
+    await giveStones("user@email.com", Array.from({ length: 12 }, (_, index) => index + 1), true);
+    return login("user@email.com");
+  }
+
+  it("linha do tempo, mapa, árvore e interconexão: o servidor confere pelo gabarito e a solução não vai à tela", async () => {
+    const token = await unlockAll();
+
+    const timeline = (await start(token, "linha-do-tempo")).body;
+    expect(JSON.stringify(timeline.puzzle)).not.toMatch(/year|"order"/);
+    const order = (await stateOf(timeline.runId)).state.order as string[];
+    expect((await finish(token, timeline.runId, { order })).body).toMatchObject({ solved: true, coins: 10, score: expect.any(Number) });
+
+    const map = (await start(token, "mapa")).body;
+    expect(map.puzzle.places).toHaveLength(5);
+    expect(JSON.stringify(map.puzzle)).not.toMatch(/"lat"/);
+    const places = (await stateOf(map.runId)).state.places as Array<{ lat: number; lon: number }>;
+    expect((await finish(token, map.runId, { guesses: places.map(({ lat, lon }) => ({ lat, lon })) })).body).toMatchObject({ solved: true, score: 1000 });
+
+    const lineage = (await start(token, "arvore")).body;
+    const pairs = (await stateOf(lineage.runId)).state.pairs as Array<{ father: string; son: string }>;
+    const links = lineage.puzzle.fathers.map((father: string) => pairs.find((pair) => pair.father === father)!.son);
+    expect((await finish(token, lineage.runId, { fathers: lineage.puzzle.fathers, links })).body).toMatchObject({ solved: true });
+
+    const chain = (await start(token, "interconexao")).body;
+    const { from, to } = chain.puzzle as { from: string; to: string; edges: Array<[string, string, string, string]> };
+    // Caminho mais curto por busca nas relações que a própria tela recebeu.
+    const around = (node: string) => chain.puzzle.edges.flatMap(([a, b]: [string, string]) => (a === node ? [b] : b === node ? [a] : []));
+    const previous = new Map<string, string>();
+    const queue = [from];
+    for (let head = 0; head < queue.length; head += 1) for (const next of around(queue[head])) if (next !== from && !previous.has(next)) { previous.set(next, queue[head]); queue.push(next); }
+    const path = [to];
+    while (path[0] !== from) path.unshift(previous.get(path[0])!);
+    expect((await finish(token, chain.runId, { path })).body).toMatchObject({ solved: true, score: expect.any(Number) });
+    expect((await finish(token, chain.runId, { path })).status).toBe(400);
+  });
+
+  it("palavras cruzadas: a grade chega sem as letras e a solução guardada vence", async () => {
+    const token = await unlockAll();
+    const run = (await start(token, "palavras-cruzadas")).body;
+    expect(run.puzzle.words.length).toBeGreaterThanOrEqual(4);
+    expect(JSON.stringify(run.puzzle)).not.toMatch(/solution/);
+    const rows = (await stateOf(run.runId)).state.solution as string[];
+    expect(rows).toHaveLength(run.puzzle.rows);
+    const done = await finish(token, run.runId, { rows });
+    expect(done.body).toMatchObject({ solved: true, score: expect.any(Number) });
+    expect(done.body.score).toBeGreaterThan(700);
+    const second = (await start(token, "palavras-cruzadas")).body;
+    expect((await finish(token, second.runId, { rows: ["x"] })).body).toMatchObject({ solved: false, score: 0 });
   });
 });
