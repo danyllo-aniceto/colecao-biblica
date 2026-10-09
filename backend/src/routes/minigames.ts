@@ -3,7 +3,7 @@ import { prisma } from "../db/prisma";
 import { readPage } from "../lib/pagination";
 import { currentUser } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
-import { finishMiniGame, guessHangman, startMiniGame } from "../services/minigame-play";
+import { actMiniGame, finishMiniGame, guessHangman, startMiniGame } from "../services/minigame-play";
 import { getMiniGames, peitoralGallery, weeklyRanking } from "../services/minigames";
 import { z } from "../lib/validation";
 
@@ -55,5 +55,13 @@ miniGamesRouter.post(
   asyncHandler(async (req, res) => {
     const { letter } = z.object({ letter: z.string().min(1).max(4) }).parse(req.body);
     res.json(await guessHangman(currentUser(req).id, String(req.params.run), letter));
+  }),
+);
+
+/** Anagrama e Quem sou eu?: palpites, dicas e respostas conferidos no servidor. */
+miniGamesRouter.post(
+  "/runs/:run/act",
+  asyncHandler(async (req, res) => {
+    res.json(await actMiniGame(currentUser(req).id, String(req.params.run), req.body));
   }),
 );

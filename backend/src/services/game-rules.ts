@@ -86,19 +86,24 @@ export function stoneState(completedScenarios: number, claimed: boolean, require
 }
 
 /**
- * Mini games (outro modo de jogo, sem XP, moedas nem ranking do perfil). Cada pedra do Peitoral libera um jogo (`stoneSlot`) e o Peitoral
+ * Mini games (outro modo de jogo, sem XP, moedas nem ranking do perfil). Cada pedra do Peitoral libera um ou dois jogos (`stoneSlot`) e o Peitoral
  * Completo libera o ranking semanal. `ready` é falso até o jogo existir no app.
  */
 export type MiniGameDef = { id: string; name: string; emoji: string; text: string; stoneSlot: number; ready: boolean };
 
 export const MINI_GAMES: MiniGameDef[] = [
   { id: "caca-palavras", name: "Caça-palavras", emoji: "🔎", text: "Ache os nomes de personagens e lugares escondidos na grade, contra o tempo.", stoneSlot: 1, ready: true },
-  { id: "forca", name: "Forca", emoji: "🪢", text: "Descubra o personagem, o lugar ou o livro letra por letra, com a descrição como dica.", stoneSlot: 2, ready: true },
+  { id: "anagrama", name: "Anagrama", emoji: "🔤", text: "As letras de um nome vieram embaralhadas: monte o nome com 3 tentativas.", stoneSlot: 1, ready: true },
+  { id: "forca", name: "Forca", emoji: "🪢", text: "Descubra o personagem ou o lugar letra por letra, com uma dica.", stoneSlot: 2, ready: true },
+  { id: "testamento", name: "Antigo ou Novo?", emoji: "📜", text: "Livros e personagens: de que Testamento é cada um? Rápido, são 10.", stoneSlot: 2, ready: true },
   { id: "quebra-cabeca", name: "Quebra-cabeça", emoji: "🧩", text: "Monte a figurinha ou o mapa do cenário peça por peça.", stoneSlot: 3, ready: true },
-  { id: "memoria", name: "Memória", emoji: "🃏", text: "Una os pares: personagem e feito, lugar e versículo.", stoneSlot: 4, ready: true },
-  { id: "versiculo", name: "Versículo em pedaços", emoji: "📖", text: "Complete as lacunas e ordene as palavras do versículo.", stoneSlot: 5, ready: true },
-  { id: "quem-sou-eu", name: "Quem sou eu?", emoji: "🎭", text: "As dicas aparecem uma a uma: quanto menos dicas, mais pontos.", stoneSlot: 6, ready: false },
-  { id: "labirinto", name: "Labirinto", emoji: "🌀", text: "Ache a saída: em cada bifurcação uma pergunta mostra o caminho certo.", stoneSlot: 7, ready: true },
+  { id: "livros", name: "Livros em ordem", emoji: "📚", text: "Ponha 6 livros da Bíblia na ordem em que aparecem.", stoneSlot: 3, ready: true },
+  { id: "memoria", name: "Memória", emoji: "🃏", text: "Una os pares: cenário e referência bíblica.", stoneSlot: 4, ready: true },
+  { id: "relampago", name: "Relâmpago", emoji: "⚡", text: "Verdadeiro ou falso? 10 afirmações tiradas das perguntas do quiz.", stoneSlot: 4, ready: true },
+  { id: "versiculo", name: "Versículo em pedaços", emoji: "📖", text: "Ordene as palavras do versículo.", stoneSlot: 5, ready: true },
+  { id: "lacunas", name: "Complete o versículo", emoji: "✍️", text: "Preencha as 3 lacunas do versículo com as palavras certas.", stoneSlot: 5, ready: true },
+  { id: "quem-sou-eu", name: "Quem sou eu?", emoji: "🎭", text: "As dicas aparecem uma a uma: quanto menos dicas, mais pontos.", stoneSlot: 6, ready: true },
+  { id: "labirinto", name: "Labirinto", emoji: "🌀", text: "Ache a saída do labirinto pelo caminho mais curto.", stoneSlot: 7, ready: true },
   { id: "linha-do-tempo", name: "Linha do tempo", emoji: "⏳", text: "Encaixe personagens e cenários na ordem da história: quanto mais perto, mais pontos.", stoneSlot: 8, ready: false },
   { id: "palavras-cruzadas", name: "Palavras cruzadas", emoji: "✏️", text: "Preencha a grade com as dicas dos personagens e lugares.", stoneSlot: 9, ready: false },
   { id: "mapa", name: "Mapa bíblico", emoji: "🗺️", text: "Aponte onde fica cada cenário: quanto mais perto, mais pontos.", stoneSlot: 10, ready: false },

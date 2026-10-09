@@ -160,8 +160,9 @@ export function MiniGamesHub({ currentUserId, onWallet }: { currentUserId?: numb
 
       {tab === 'games' ? (
         <div className="space-y-4">
+          {overview.adminPreview ? <Alert tone="info">Modo administrador: todos os jogos estão liberados para você testar. Seu placar não entra no ranking dos jogadores.</Alert> : null}
           <p className="text-sm font-semibold text-muted">
-            Cada pedra do Peitoral libera um mini game. Você libera {unlockedCount} de {games.length}. Mini games não dão XP: valem pela diversão, pelas moedas do dia e pelo ranking semanal.
+            Cada pedra do Peitoral libera um ou dois mini games. Você libera {unlockedCount} de {games.length}. Mini games não dão XP: valem pela diversão, pelas moedas do dia e pelo ranking semanal.
           </p>
           <p className="flex items-center gap-1.5 rounded-xl bg-primary/10 p-2 text-xs font-bold text-ink">
             <CoinIcon className="h-4 w-4" /> A primeira vitória do dia em cada jogo rende {overview.coins.perWin} moedas (até {overview.coins.limit} jogos por dia). Hoje: {overview.coins.winsToday}/{overview.coins.limit}.

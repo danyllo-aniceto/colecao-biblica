@@ -15,7 +15,7 @@ export type MiniGameInfo = {
   unlocked: boolean;
 };
 
-export type MiniGamesOverview = { games: MiniGameInfo[]; rankingUnlocked: boolean; weekKey: string; coins: { perWin: number; limit: number; winsToday: number } };
+export type MiniGamesOverview = { games: MiniGameInfo[]; rankingUnlocked: boolean; adminPreview: boolean; weekKey: string; coins: { perWin: number; limit: number; winsToday: number } };
 
 export type MiniRankingEntry = { position: number; userId: number; userName: string; level: number; look: PlayerLook | null; total: number };
 export type MiniRankingPage = PaginatedResponse<MiniRankingEntry> & { weekKey: string; me: { position: number; total: number } | null };
@@ -62,3 +62,17 @@ export type SwapPuzzle = { side: number; order: number[]; imageUrl: string | nul
 export type MemoryPuzzle = { cards: Array<{ pair: number; text: string }> };
 export type VersePuzzle = { reference: string; chips: string[]; length: number; words: string[] };
 export type MazePuzzle = { width: number; height: number; cells: number[] };
+
+export type AnagramPuzzle = { letters: string[]; length: number; hint: string; attempts: number };
+export type BooksPuzzle = { books: string[] };
+export type TestamentPuzzle = { items: string[] };
+export type BlitzPuzzle = { statements: Array<{ question: string; answer: string }> };
+export type BlanksPart = { text: string; blank: number | null; prefix?: string; suffix?: string };
+export type BlanksPuzzle = { reference: string; parts: BlanksPart[]; options: string[] };
+export type WhoAmIPuzzle = { clue: string; shown: number; total: number; options: string[] };
+
+/** Passo a passo no servidor (anagrama: palpites; quem sou eu?: dicas e resposta). */
+export type ActResult = { status: 'playing' | 'won' | 'lost'; attemptsLeft?: number; clue?: string; shown?: number; total?: number; answer?: string; result?: MiniGameResult };
+
+export const actMiniGame = (runId: string, body: object) =>
+  apiRequest<ActResult>(`/minigames/runs/${runId}/act`, { method: 'POST', body: JSON.stringify(body) }, 'Não foi possível conferir a jogada.');

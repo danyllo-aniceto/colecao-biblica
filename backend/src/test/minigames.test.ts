@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "../db/prisma";
+import { BOOKS } from "../minigames/books";
 import { recordMiniGameScore } from "../services/minigames";
 import { api, bearer, login, resetDatabase } from "./helpers";
 
@@ -22,14 +23,14 @@ describe.skipIf(!hasDatabase)("mini games", () => {
     const token = await login("user@email.com");
     const first = await api.get("/api/minigames").set(bearer(token));
     expect(first.status).toBe(200);
-    expect(first.body.games).toHaveLength(12);
+    expect(first.body.games).toHaveLength(17);
     expect(first.body.games.every((game: { unlocked: boolean }) => !game.unlocked)).toBe(true);
     expect(first.body.rankingUnlocked).toBe(false);
     expect((await api.get("/api/minigames/ranking").set(bearer(token))).status).toBe(400);
 
     await giveStones("user@email.com", [1, 3]);
     const some = (await api.get("/api/minigames").set(bearer(token))).body;
-    expect(some.games.filter((game: { unlocked: boolean }) => game.unlocked).map((game: { stoneSlot: number }) => game.stoneSlot)).toEqual([1, 3]);
+    expect(some.games.filter((game: { unlocked: boolean }) => game.unlocked).map((game: { stoneSlot: number }) => game.stoneSlot)).toEqual([1, 1, 3, 3]);
     expect(some.games[0].stoneName).toBe("Sardônio");
     expect(some.rankingUnlocked).toBe(false);
   });
@@ -240,5 +241,105 @@ describe.skipIf(!hasDatabase)("mini games: partidas", () => {
     expect(await prisma.miniGameScore.count({ where: { userId } })).toBe(0);
     const overview = (await api.get("/api/minigames").set(bearer(token))).body;
     expect(overview.coins).toEqual({ perWin: 10, limit: 3, winsToday: 3 });
+  });
+});
+
+describe.skipIf(!hasDatabase)("mini games: jogos novos e administrador", () => {
+  beforeEach(async () => {
+    await resetDatabase();
+  });
+
+  const start = (token: string, game: string) => api.post(`/api/minigames/${game}/start`).set(bearer(token));
+  const finish = (token: string, runId: string, body: object) => api.post(`/api/minigames/runs/${runId}/finish`).set(bearer(token)).send(body);
+  const act = (token: string, runId: string, body: object) => api.post(`/api/minigames/runs/${runId}/act`).set(bearer(token)).send(body);
+  const stateOf = async (runId: string) => (await prisma.miniGameRun.findUniqueOrThrow({ where: { id: runId } })).state as Record<string, any>;
+
+  async function unlockAll() {
+    await giveStones("user@email.com", Array.from({ length: 12 }, (_, index) => index + 1), true);
+    return login("user@email.com");
+  }
+
+  it("o administrador tem todos os jogos liberados para testar; o jogador comum não", async () => {
+    const admin = await login("admin2@email.com");
+    const overview = (await api.get("/api/minigames").set(bearer(admin))).body;
+    expect(overview.adminPreview).toBe(true);
+    expect(overview.rankingUnlocked).toBe(true);
+    expect(overview.games.every((game: { unlocked: boolean }) => game.unlocked)).toBe(true);
+    expect((await start(admin, "livros")).status).toBe(200);
+    // Jogo que ainda não existe continua indisponível, até para o administrador.
+    expect((await start(admin, "mapa")).body.message).toMatch(/não está disponível/);
+    const user = await login("user@email.com");
+    const plain = (await api.get("/api/minigames").set(bearer(user))).body;
+    expect(plain.adminPreview).toBe(false);
+    expect(plain.games.some((game: { unlocked: boolean }) => game.unlocked)).toBe(false);
+    expect((await start(user, "livros")).status).toBe(400);
+  });
+
+  it("livros em ordem, antigo ou novo, complete o versículo e relâmpago: o servidor confere e dá as moedas", async () => {
+    const token = await unlockAll();
+    // Relâmpago precisa de perguntas: o seed de demonstração tem poucas.
+    await prisma.question.createMany({
+      data: Array.from({ length: 8 }, (_, index) => ({ text: `Pergunta extra ${index}?`, difficulty: "EASY" as const, timeLimitSeconds: 20, optionA: "Certa", optionB: "Errada B", optionC: "Errada C", optionD: "Errada D", correctOption: "A" })),
+    });
+
+    const livros = (await start(token, "livros")).body;
+    const sorted = [...livros.puzzle.books].sort((a: string, b: string) => BOOKS.indexOf(a as never) - BOOKS.indexOf(b as never));
+    expect((await finish(token, livros.runId, { order: sorted })).body).toMatchObject({ solved: true, coins: 10 });
+
+    const testamento = (await start(token, "testamento")).body;
+    const items = (await stateOf(testamento.runId)).items as Array<{ answer: string }>;
+    expect(testamento.puzzle.items).toHaveLength(10);
+    expect(JSON.stringify(testamento.puzzle)).not.toMatch(/"answer"/);
+    expect((await finish(token, testamento.runId, { choices: items.map((item) => item.answer) })).body).toMatchObject({ solved: true, coins: 10 });
+
+    const lacunas = (await start(token, "lacunas")).body;
+    const blanks = await stateOf(lacunas.runId);
+    expect(lacunas.puzzle.options).toHaveLength(6);
+    expect(JSON.stringify(lacunas.puzzle)).not.toContain(JSON.stringify(blanks.state.answers));
+    expect((await finish(token, lacunas.runId, { fills: blanks.state.answers })).body).toMatchObject({ solved: true, coins: 10 });
+
+    const relampago = (await start(token, "relampago")).body;
+    const truths = (await stateOf(relampago.runId)).state.truths as boolean[];
+    expect(relampago.puzzle.statements.length).toBeGreaterThanOrEqual(5);
+    // Já gastou as 3 vitórias com moedas do dia: ganha pontos, mas não moedas.
+    expect((await finish(token, relampago.runId, { answers: truths })).body).toMatchObject({ solved: true, coins: 0 });
+  });
+
+  it("anagrama: 3 tentativas conferidas no servidor", async () => {
+    const token = await unlockAll();
+    const run = (await start(token, "anagrama")).body;
+    const word = (await stateOf(run.runId)).state.word as string;
+    expect(JSON.stringify(run)).not.toContain(`"${word}"`);
+    expect(run.puzzle.length).toBe(run.puzzle.letters.length);
+    const wrong = await act(token, run.runId, { action: "check", word: "zzzz" });
+    expect(wrong.body).toMatchObject({ status: "playing", attemptsLeft: 2 });
+    const right = await act(token, run.runId, { action: "check", word });
+    expect(right.body).toMatchObject({ status: "won", result: { solved: true, coins: 10 } });
+    expect((await act(token, run.runId, { action: "check", word })).status).toBe(400);
+
+    const lost = (await start(token, "anagrama")).body;
+    let last: { status: string; answer?: string } = { status: "playing" };
+    for (let attempt = 0; attempt < 3; attempt += 1) last = (await act(token, lost.runId, { action: "check", word: "zzzz" })).body;
+    expect(last.status).toBe("lost");
+    expect(last.answer).toBeTruthy();
+  });
+
+  it("quem sou eu?: dicas uma a uma, menos dicas rendem mais; resposta errada perde", async () => {
+    const token = await unlockAll();
+    const run = (await start(token, "quem-sou-eu")).body;
+    expect(run.puzzle.shown).toBe(1);
+    expect(run.puzzle.options).toHaveLength(4);
+    const state = (await stateOf(run.runId)).state as { answer: number; options: string[]; clues: string[] };
+    const hint = await act(token, run.runId, { action: "hint" });
+    expect(hint.body).toMatchObject({ status: "playing", shown: 2, clue: state.clues[1] });
+    const won = await act(token, run.runId, { action: "answer", choice: state.answer });
+    expect(won.body).toMatchObject({ status: "won", result: { solved: true, coins: 10 } });
+    expect(won.body.result.score).toBe(550 + 300);
+
+    const second = (await start(token, "quem-sou-eu")).body;
+    const stored = (await stateOf(second.runId)).state as { answer: number; options: string[] };
+    const lost = await act(token, second.runId, { action: "answer", choice: (stored.answer + 1) % 4 });
+    expect(lost.body).toMatchObject({ status: "lost", answer: stored.options[stored.answer], result: { solved: false, score: 0 } });
+    expect((await act(token, second.runId, { action: "hint" })).status).toBe(400);
   });
 });

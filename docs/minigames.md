@@ -11,8 +11,9 @@ personagens, cenários e versículos que o app já tem. Vale também para a pró
 
 ## Como liberar (decidido)
 
-**Uma pedra libera um mini game** (12 pedras = 12 jogos: caça-palavras, forca, quebra-cabeça, memória, versículo em pedaços, quem sou eu?, labirinto,
-linha do tempo, palavras cruzadas, mapa, árvore genealógica, interconexão). O **Peitoral Completo** libera o **ranking semanal** dos mini games e a
+**Cada pedra libera um ou dois mini games** (17 jogos no catálogo, 12 já jogáveis). Pedra 1: caça-palavras e anagrama · 2: forca e antigo ou novo · 3: quebra-cabeça e
+livros em ordem · 4: memória e relâmpago · 5: versículo em pedaços e complete o versículo · 6: quem sou eu? · 7: labirinto · 8 a 12 (ainda por fazer): linha do tempo,
+palavras cruzadas, mapa, árvore genealógica, interconexão. O **administrador** vê todos liberados em Painel → Testar mini games. O **Peitoral Completo** libera o **ranking semanal** dos mini games e a
 entrada na **Galeria dos Peitorais**. **Mini games não dão XP.** Sem baú no final.
 
 ## Os jogos
@@ -55,6 +56,8 @@ liberar o hub de mini games. Evitar bônus permanente de moedas (mexe na economi
   Jogos/Ranking/Galeria), capa `MINIGAMES` no painel.
 - [x] Prêmio: pontos no ranking semanal e 10 moedas na 1ª vitória do dia em cada jogo (até 3 jogos por dia).
 - [x] Jogos sem conteúdo novo: caça-palavras, forca, quebra-cabeça (3 × 3, trocar peças), memória (cenário ↔ referência), versículo em pedaços (ordenar), labirinto (sem perguntas ainda).
-- [ ] Versículo: variante com lacunas. Labirinto: perguntas nas bifurcações. Memória: pares personagem ↔ figurinha.
+- [x] Mais 6 jogos sem conteúdo novo: anagrama (3 tentativas), antigo ou novo (10 itens), livros em ordem (6 livros), relâmpago (verdadeiro ou falso das perguntas do quiz), complete o versículo (3 lacunas), quem sou eu? (dicas uma a uma com os campos do personagem).
+- [x] Painel → Testar mini games: o administrador joga todos, com tudo liberado.
+- [ ] (Pendente) Versículo: variante com lacunas já feita à parte. Labirinto: perguntas nas bifurcações. Memória: pares personagem ↔ figurinha.
 - [ ] Jogos com campo novo no painel: quem sou eu (dicas), linha do tempo (cronologia), mapa (coordenadas), árvore genealógica (pai/mãe).
 - [ ] Jogos com grafo de relações: interconexão e palavras cruzadas.

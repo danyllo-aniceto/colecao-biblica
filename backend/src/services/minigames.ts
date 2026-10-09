@@ -10,7 +10,9 @@ const FINAL_KIND = "BREASTPLATE";
 
 /** Os mini games do jogador: quais estão liberados (pedra resgatada) e se o ranking semanal já abriu (Peitoral Completo). */
 export async function getMiniGames(db: Db, userId: number) {
-  const breastplate = await getBreastplate(db, userId);
+  const [breastplate, user] = await Promise.all([getBreastplate(db, userId), db.user.findUnique({ where: { id: userId }, select: { role: true } })]);
+  // O administrador tem tudo liberado para testar os jogos (e não entra no ranking dos jogadores).
+  const preview = user?.role === "ADMIN";
   const claimedSlots = breastplate.stones.filter((stone) => stone.state === "claimed").map((stone) => stone.slot);
   const stoneBySlot = new Map(breastplate.stones.map((stone) => [stone.slot, stone]));
   const day = dayKeyInTimeZone(new Date(), env.timezone);
@@ -24,9 +26,10 @@ export async function getMiniGames(db: Db, userId: number) {
       stoneSlot: game.stoneSlot,
       stoneName: stoneBySlot.get(game.stoneSlot)?.name ?? null,
       ready: game.ready,
-      unlocked: miniGameUnlocked(game, claimedSlots),
+      unlocked: preview || miniGameUnlocked(game, claimedSlots),
     })),
-    rankingUnlocked: breastplate.finalClaimed,
+    rankingUnlocked: preview || breastplate.finalClaimed,
+    adminPreview: preview,
     /** Moedas da primeira vitória do dia em cada jogo, até `limit` jogos por dia. */
     coins: { perWin: MINI_GAME_WIN_COINS, limit: MINI_GAME_DAILY_COIN_WINS, winsToday },
     weekKey: weekKeyInTimeZone(new Date(), env.timezone),

@@ -5,6 +5,11 @@ import { badRequest, notFound } from "../lib/errors";
 import { z } from "../lib/validation";
 import { applyGuess, guessLetter, hangmanOutcome, isLost, isWon, maskHint, pattern, HANGMAN_ERRORS, type HangmanState } from "../minigames/hangman";
 import { lettersOnly, shuffled, rng, type Outcome } from "../minigames/common";
+import { ANAGRAM_ATTEMPTS, anagramMatches, anagramOutcome, generateAnagram, type AnagramState } from "../minigames/anagram";
+import { checkBookOrder, checkTestament, generateBookOrder, generateTestament, type BookOrder, type TestamentItem } from "../minigames/books";
+import { checkBlitz, generateBlitz, type BlitzState } from "../minigames/blitz";
+import { checkBlanks, generateBlanks, usableForBlanks, type BlanksState } from "../minigames/verse-blanks";
+import { generateWhoAmI, whoAmIOutcome, type WhoAmIState } from "../minigames/whoami";
 import { checkMaze, generateMaze, type Maze } from "../minigames/maze";
 import { checkMemory, generateMemory, MEMORY_PAIRS, type Memory } from "../minigames/memory";
 import { checkSwapPuzzle, generateSwapPuzzle, type SwapPuzzle } from "../minigames/swap-puzzle";
@@ -24,7 +29,13 @@ type RunState =
   | { game: "quebra-cabeca"; puzzle: SwapPuzzle }
   | { game: "memoria"; memory: Memory }
   | { game: "versiculo"; puzzle: VersePuzzle; words: string[] }
-  | { game: "labirinto"; maze: Maze };
+  | { game: "labirinto"; maze: Maze }
+  | { game: "anagrama"; state: AnagramState }
+  | { game: "testamento"; items: TestamentItem[] }
+  | { game: "livros"; puzzle: BookOrder }
+  | { game: "relampago"; state: BlitzState }
+  | { game: "lacunas"; state: BlanksState }
+  | { game: "quem-sou-eu"; state: WhoAmIState };
 
 const found = z.object({ word: z.string().min(1).max(20), from: z.tuple([z.number().int(), z.number().int()]), to: z.tuple([z.number().int(), z.number().int()]) });
 const answers = {
@@ -33,6 +44,10 @@ const answers = {
   memoria: z.object({ flips: z.array(z.number().int()).max(400) }),
   versiculo: z.object({ taps: z.array(z.number().int()).max(400) }),
   labirinto: z.object({ moves: z.string().max(2000) }),
+  livros: z.object({ order: z.array(z.string().max(40)).max(20) }),
+  testamento: z.object({ choices: z.array(z.enum(["OLD", "NEW"])).max(20) }),
+  relampago: z.object({ answers: z.array(z.boolean()).max(20) }),
+  lacunas: z.object({ fills: z.array(z.string().max(40)).max(10) }),
 } as const;
 
 /** O que a tela recebe ao começar: o jogo sem o gabarito (a forca nunca manda a palavra). */
@@ -41,13 +56,22 @@ export type StartedRun = { runId: string; game: string; puzzle: unknown };
 /** Conteúdo vindo do banco: personagens publicados e cenários ativos. */
 async function loadContent() {
   const [characters, scenarios] = await Promise.all([
-    prisma.biblicalCharacter.findMany({ where: visibleCharacter(), orderBy: { id: "asc" }, select: { name: true, shortSummary: true, imageUrl: true, testament: true } }),
+    prisma.biblicalCharacter.findMany({ where: visibleCharacter(), orderBy: { id: "asc" }, select: { name: true, shortSummary: true, imageUrl: true, testament: true, historicalPeriod: true, bibleBooks: true, narrativeRole: true, keywords: true, importantEvents: true, curiosities: true } }),
     prisma.scenario.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" }, select: { name: true, description: true, verse: true, verseReference: true, mapImageUrl: true } }),
   ]);
   return { characters, scenarios };
 }
 
-function build(game: string, seed: number, content: Awaited<ReturnType<typeof loadContent>>): { state: RunState; puzzle: unknown } {
+/** Perguntas do quiz (só para o Relâmpago): texto, alternativa certa e as erradas. */
+async function loadBlitzQuestions() {
+  const rows = await prisma.question.findMany({ where: { active: true }, take: 400, select: { text: true, optionA: true, optionB: true, optionC: true, optionD: true, correctOption: true } });
+  return rows.map((row) => {
+    const options: Record<string, string> = { A: row.optionA, B: row.optionB, C: row.optionC, D: row.optionD };
+    return { text: row.text, correct: options[row.correctOption], wrong: Object.entries(options).filter(([letter]) => letter !== row.correctOption).map(([, text]) => text) };
+  });
+}
+
+function build(game: string, seed: number, content: Awaited<ReturnType<typeof loadContent>>, questions: Awaited<ReturnType<typeof loadBlitzQuestions>>): { state: RunState; puzzle: unknown } {
   const random = rng(seed ^ 0x9e3779b9);
   switch (game) {
     case "caca-palavras": {
@@ -95,6 +119,42 @@ function build(game: string, seed: number, content: Awaited<ReturnType<typeof lo
       const maze = generateMaze(seed);
       return { state: { game, maze }, puzzle: maze };
     }
+    case "anagrama": {
+      const options = [
+        ...content.characters.map((character) => ({ name: character.name, summary: character.shortSummary })),
+        ...content.scenarios.map((scenario) => ({ name: scenario.name, summary: scenario.description ?? "Um lugar da campanha." })),
+      ].filter((option) => lettersOnly(option.name).length >= 4 && lettersOnly(option.name).length <= 10);
+      if (options.length === 0) throw badRequest("Ainda não há nomes para este jogo");
+      const pick = shuffled(random, options)[0];
+      const letters = generateAnagram(seed, pick.name);
+      return { state: { game, state: { word: pick.name, attempts: 0 } }, puzzle: { letters, length: letters.length, hint: maskHint(pick.summary, pick.name), attempts: ANAGRAM_ATTEMPTS } };
+    }
+    case "testamento": {
+      const people = content.characters.flatMap((character) => (character.testament ? [{ text: character.name, answer: character.testament as "OLD" | "NEW" }] : []));
+      const { puzzle, items } = generateTestament(seed, people);
+      return { state: { game, items }, puzzle };
+    }
+    case "livros": {
+      const puzzle = generateBookOrder(seed);
+      return { state: { game, puzzle }, puzzle };
+    }
+    case "relampago": {
+      if (questions.length < 5) throw badRequest("Ainda não há perguntas suficientes para este jogo");
+      const { state, puzzle } = generateBlitz(seed, questions);
+      return { state: { game, state }, puzzle };
+    }
+    case "lacunas": {
+      const sources = content.scenarios.filter((scenario) => scenario.verse && scenario.verseReference && usableForBlanks(scenario.verse)).map((scenario) => ({ verse: scenario.verse!, reference: scenario.verseReference! }));
+      if (sources.length === 0) throw badRequest("Ainda não há versículos para este jogo");
+      const decoys = content.scenarios.flatMap((scenario) => (scenario.verse ?? "").split(/\s+/)).map((word) => word.replace(/[^\p{L}'’-]/gu, ""));
+      const { state, puzzle } = generateBlanks(seed, shuffled(random, sources)[0], decoys);
+      return { state: { game, state }, puzzle };
+    }
+    case "quem-sou-eu": {
+      if (content.characters.length < 4) throw badRequest("Ainda não há personagens suficientes para este jogo");
+      const { state, puzzle } = generateWhoAmI(seed, content.characters);
+      return { state: { game, state }, puzzle };
+    }
     default:
       throw notFound("Mini game não encontrado");
   }
@@ -108,7 +168,7 @@ export async function startMiniGame(userId: number, gameId: string): Promise<Sta
   if (!game.unlocked) throw badRequest("Esse mini game ainda não foi liberado");
   if (!game.ready) throw badRequest("Esse mini game ainda não está disponível");
   await prisma.miniGameRun.deleteMany({ where: { OR: [{ userId, gameId, finishedAt: null }, { startedAt: { lt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) } }] } });
-  const { state, puzzle } = build(gameId, randomInt(1, 2 ** 31 - 1), await loadContent());
+  const { state, puzzle } = build(gameId, randomInt(1, 2 ** 31 - 1), await loadContent(), gameId === "relampago" ? await loadBlitzQuestions() : []);
   const run = await prisma.miniGameRun.create({ data: { userId, gameId, state: state as object } });
   return { runId: run.id, game: gameId, puzzle };
 }
@@ -173,6 +233,18 @@ export async function finishMiniGame(userId: number, runId: string, body: unknow
     case "labirinto":
       outcome = checkMaze(state.maze, answers.labirinto.parse(body).moves, seconds);
       break;
+    case "livros":
+      outcome = checkBookOrder(state.puzzle, answers.livros.parse(body).order, seconds);
+      break;
+    case "testamento":
+      outcome = checkTestament(state.items, answers.testamento.parse(body).choices, seconds);
+      break;
+    case "relampago":
+      outcome = checkBlitz(state.state, answers.relampago.parse(body).answers, seconds);
+      break;
+    case "lacunas":
+      outcome = checkBlanks(state.state, answers.lacunas.parse(body).fills, seconds);
+      break;
     default:
       throw badRequest("Este jogo termina palpite a palpite");
   }
@@ -204,4 +276,62 @@ export async function guessHangman(userId: number, runId: string, letterInput: s
   if (!next.over) return { ...base, status: "playing" };
   const result = await settle(userId, "forca", hangmanOutcome(hangman, next.seconds));
   return isWon(hangman) ? { ...base, status: "won", result } : { ...base, status: "lost", word: hangman.word, result };
+}
+
+export type ActResult = {
+  status: "playing" | "won" | "lost";
+  /** Anagrama: tentativas que restam. */
+  attemptsLeft?: number;
+  /** Quem sou eu?: a nova dica (quando pediu mais uma). */
+  clue?: string;
+  shown?: number;
+  total?: number;
+  /** Ao perder, a resposta certa. */
+  answer?: string;
+  result?: MiniGameResult;
+};
+
+const actBody = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("check"), word: z.string().max(40) }),
+  z.object({ action: z.literal("hint") }),
+  z.object({ action: z.literal("answer"), choice: z.number().int().min(0).max(3) }),
+]);
+
+/** Jogos que se resolvem passo a passo no servidor (anagrama: cada palpite; quem sou eu?: cada dica e a resposta). */
+export async function actMiniGame(userId: number, runId: string, body: unknown): Promise<ActResult> {
+  const input = actBody.parse(body);
+  const step = await transaction(async (tx) => {
+    await lockUser(tx, userId);
+    const run = await tx.miniGameRun.findFirst({ where: { id: runId, userId } });
+    if (!run) throw notFound("Partida não encontrada");
+    if (run.finishedAt) throw badRequest("Esta partida já terminou");
+    if (Date.now() - run.startedAt.getTime() > MAX_RUN_MS) throw badRequest("Esta partida expirou. Comece outra.");
+    const state = run.state as unknown as RunState;
+    const seconds = (Date.now() - run.startedAt.getTime()) / 1000;
+    const save = (next: RunState, over: boolean) => tx.miniGameRun.update({ where: { id: run.id }, data: { state: next as object, ...(over ? { finishedAt: new Date() } : {}) } });
+
+    if (state.game === "anagrama" && input.action === "check") {
+      const attempts = state.state.attempts + 1;
+      const next = { ...state.state, attempts };
+      const right = anagramMatches(next, input.word);
+      const over = right || attempts >= ANAGRAM_ATTEMPTS;
+      await save({ game: "anagrama", state: next }, over);
+      return { game: "anagrama" as const, over, right, outcome: over ? anagramOutcome(next, right, seconds) : null, attemptsLeft: ANAGRAM_ATTEMPTS - attempts, answer: next.word };
+    }
+    if (state.game === "quem-sou-eu" && input.action === "hint") {
+      if (state.state.shown >= state.state.clues.length) throw badRequest("Não há mais dicas");
+      const next = { ...state.state, shown: state.state.shown + 1 };
+      await save({ game: "quem-sou-eu", state: next }, false);
+      return { game: "quem-sou-eu" as const, over: false, right: false, outcome: null, clue: next.clues[next.shown - 1], shown: next.shown, total: next.clues.length, answer: "" };
+    }
+    if (state.game === "quem-sou-eu" && input.action === "answer") {
+      const outcome = whoAmIOutcome(state.state, input.choice, seconds);
+      await save(state, true);
+      return { game: "quem-sou-eu" as const, over: true, right: outcome.solved, outcome, answer: state.state.options[state.state.answer] };
+    }
+    throw badRequest("Ação inválida para este jogo");
+  });
+  if (!step.over) return { status: "playing", attemptsLeft: "attemptsLeft" in step ? step.attemptsLeft : undefined, clue: "clue" in step ? step.clue : undefined, shown: "shown" in step ? step.shown : undefined, total: "total" in step ? step.total : undefined };
+  const result = await settle(userId, step.game, step.outcome!);
+  return step.right ? { status: "won", result } : { status: "lost", answer: step.answer, result };
 }
