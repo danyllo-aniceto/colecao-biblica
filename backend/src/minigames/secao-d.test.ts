@@ -78,6 +78,15 @@ describe("quebra-cabeça", () => {
   });
 });
 
+describe("partidas de antes desta versão", () => {
+  it("quebra-cabeça e memória antigos ainda são conferidos como fáceis", () => {
+    const oldPuzzle = { puzzle: { side: 3, order: [1, 0, 2, 3, 4, 5, 6, 7, 8], imageUrl: null, title: "Teste" } } as never;
+    expect(checkSwapPuzzle(oldPuzzle, [[0, 1]], 10)).toMatchObject({ solved: true });
+    const oldMemory = { cards: [{ pair: 0, text: "a" }, { pair: 0, text: "b" }, { pair: 1, text: "c" }, { pair: 1, text: "d" }] } as never;
+    expect(checkMemory(oldMemory, [0, 1, 2, 3], 10)).toMatchObject({ solved: true });
+  });
+});
+
 describe("memória", () => {
   const pool: MemoryPairInput[] = [
     ...Array.from({ length: 20 }, (_, index) => ({ key: `P${index}`, kind: "personagens" as const, a: { text: `Pessoa ${index}`, imageUrl: `p${index}.png` }, b: { text: `Pessoa ${index}`, imageUrl: null }, label: `Pessoa ${index}` })),

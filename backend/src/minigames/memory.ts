@@ -86,7 +86,9 @@ export function generateMemory(seed: number, pool: MemoryPairInput[], level: Siz
  * se forem do mesmo par, ficam abertas. Achou todos no tempo: até 700 (cada tentativa a mais que o mínimo tira um pouco) + até 300 de rapidez;
  * senão só os pares achados (até 250). Tudo vezes o fator do nível.
  */
-export function checkMemory(memory: Memory, flips: number[], seconds: number): Outcome {
+export function checkMemory(input: Memory, flips: number[], seconds: number): Outcome {
+  // Partidas começadas antes desta versão não têm nível, tempo nem nomes: valem como fácil.
+  const memory: Memory = { ...input, level: input.level ?? "facil", timeLimit: input.timeLimit ?? null, par: input.par ?? MEMORY_LEVELS.facil.par, labels: input.labels ?? [] };
   if (flips.length % 2 !== 0 || flips.length > 600) return { solved: false, score: 0, detail: "Jogadas inválidas" };
   const matched = new Set<number>();
   for (let index = 0; index < flips.length; index += 2) {

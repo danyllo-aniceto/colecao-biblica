@@ -107,7 +107,9 @@ export function nextHintSwap(order: number[]): [number, number] | null {
  * menos 40 por dica de peça e o custo de cada espiada na imagem; tudo vezes o fator do nível. Sem montar: só as peças no lugar, até 250.
  */
 export function checkSwapPuzzle(state: SwapState, swaps: Array<[number, number]>, seconds: number): Outcome {
-  const { puzzle } = state;
+  // Partidas começadas antes desta versão não têm nível nem ajudas: valem como fácil.
+  const puzzle: SwapPuzzle = { ...state.puzzle, level: state.puzzle.level ?? "facil", timeLimit: state.puzzle.timeLimit ?? null, par: state.puzzle.par ?? SWAP_LEVELS.facil.par, peekPenalty: state.puzzle.peekPenalty ?? 0 };
+  state = { ...state, puzzle, hints: state.hints ?? 0, peeks: state.peeks ?? 0, summary: state.summary ?? "" };
   const order = applySwaps(puzzle.order, swaps);
   if (!order) return { solved: false, score: 0, detail: "Jogada inválida" };
   const pieces = order.length;
