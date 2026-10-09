@@ -89,9 +89,8 @@ describe("partidas de antes desta versão", () => {
 
 describe("memória", () => {
   const pool: MemoryPairInput[] = [
-    ...Array.from({ length: 20 }, (_, index) => ({ key: `P${index}`, kind: "personagens" as const, a: { text: `Pessoa ${index}`, imageUrl: `p${index}.png` }, b: { text: `Pessoa ${index}`, imageUrl: null }, label: `Pessoa ${index}` })),
-    ...Array.from({ length: 10 }, (_, index) => ({ key: `C${index}`, kind: "cenarios" as const, a: { text: `Lugar ${index}`, imageUrl: `c${index}.png` }, b: { text: `Lugar ${index}`, imageUrl: null }, label: `Lugar ${index}` })),
-    ...Array.from({ length: 10 }, (_, index) => ({ key: `V${index}`, kind: "versiculos" as const, a: { text: `Cenário ${index}`, imageUrl: null }, b: { text: `Livro ${index}:1`, imageUrl: null }, label: `Cenário ${index}` })),
+    ...Array.from({ length: 20 }, (_, index) => ({ key: `P${index}`, kind: "personagens" as const, a: { text: `Pessoa ${index}`, imageUrl: `p${index}.png` }, b: { text: `Pessoa ${index}`, imageUrl: `p${index}.png` }, label: `Pessoa ${index}` })),
+    ...Array.from({ length: 12 }, (_, index) => ({ key: `C${index}`, kind: "cenarios" as const, a: { text: `Lugar ${index}`, imageUrl: `c${index}.png` }, b: { text: `Lugar ${index}`, imageUrl: `c${index}.png` }, label: `Lugar ${index}` })),
   ];
   const perfect = (memory: NonNullable<ReturnType<typeof generateMemory>>) => {
     const byPair = new Map<number, number[]>();
@@ -112,15 +111,15 @@ describe("memória", () => {
     expect(generateMemory(4, pool, "medio", "mix")!.cols).toBe(4);
     expect(generateMemory(4, pool, "mestre", "mix")!.cols).toBe(6);
     const people = generateMemory(4, pool, "medio", "personagens")!;
-    expect(people.cards.filter((card) => card.imageUrl).length).toBe(8);
     expect(people.cards.every((card) => card.text.startsWith("Pessoa"))).toBe(true);
-    const verses = generateMemory(4, pool, "facil", "versiculos")!;
-    expect(verses.cards.every((card) => card.imageUrl === null)).toBe(true);
+    // Todas as cartas são imagens, e cada par são duas imagens iguais.
+    expect(people.cards.every((card) => card.imageUrl)).toBe(true);
+    for (let pair = 0; pair < people.pairs; pair += 1) expect(new Set(people.cards.filter((card) => card.pair === pair).map((card) => card.imageUrl)).size).toBe(1);
     expect(generateMemory(4, pool, "facil", "mix")).toEqual(generateMemory(4, pool, "facil", "mix"));
   });
 
   it("tipo com poucos pares completa com os outros; sem pares suficientes não monta; recentes ficam por último", () => {
-    const few = pool.filter((pair) => pair.kind !== "cenarios").slice(0, 25);
+    const few = pool.filter((pair) => pair.kind === "personagens");
     expect(pickPairs(rng(1), few, "cenarios", 8, [])).toHaveLength(8);
     expect(generateMemory(1, pool.slice(0, MIN_PAIRS - 1), "facil", "mix")).toBeNull();
     const first = generateMemory(2, pool, "facil", "personagens")!.labels;
@@ -128,7 +127,7 @@ describe("memória", () => {
     expect(second.filter((label) => first.includes(label))).toHaveLength(0);
     // Na mistura aparecem os três tipos.
     const mix = pickPairs(rng(5), pool, "mix", 9, []);
-    expect(new Set(mix.map((pair) => pair.kind))).toEqual(new Set(["personagens", "cenarios", "versiculos"]));
+    expect(new Set(mix.map((pair) => pair.kind))).toEqual(new Set(["personagens", "cenarios"]));
   });
 
   it("partida perfeita pontua cheio do nível; erros custam; tempo esgotado ou incompleta vale só os pares achados", () => {

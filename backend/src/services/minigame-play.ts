@@ -53,7 +53,7 @@ type RunState =
 const startOptions = z.object({
   difficulty: z.enum(["facil", "medio", "dificil", "mestre"]).optional(),
   /** Quebra-cabeça: de onde vem a imagem; memória: que tipo de pares. */
-  kind: z.enum(["personagens", "cenarios", "versiculos", "mix"]).optional(),
+  kind: z.enum(["personagens", "cenarios", "mix"]).optional(),
   theme: z.enum(THEME_IDS as [string, ...string[]]).optional(),
   /** Turnos (anagrama, forca, livros em ordem) ou itens (antigo ou novo?). */
   rounds: z.number().int().min(1).max(30).optional(),
@@ -167,14 +167,14 @@ function build(game: string, seed: number, content: Awaited<ReturnType<typeof lo
       return { state: { game, ...newSwapState(puzzle, source.summary) }, puzzle };
     }
     case "memoria": {
+      // Pares de imagens iguais: a foto de um personagem ou o mapa de um cenário, duas vezes.
       const pool: MemoryPairInput[] = [
-        ...content.characters.filter((character) => character.imageUrl).map((character) => ({ key: character.name, kind: "personagens" as const, a: { text: character.name, imageUrl: character.imageUrl }, b: { text: character.name, imageUrl: null }, label: character.name })),
-        ...content.scenarios.filter((scenario) => scenario.mapImageUrl).map((scenario) => ({ key: `mapa:${scenario.name}`, kind: "cenarios" as const, a: { text: scenario.name, imageUrl: scenario.mapImageUrl }, b: { text: scenario.name, imageUrl: null }, label: scenario.name })),
-        ...content.scenarios.filter((scenario) => scenario.verseReference).map((scenario) => ({ key: `verso:${scenario.name}`, kind: "versiculos" as const, a: { text: scenario.name, imageUrl: null }, b: { text: scenario.verseReference!, imageUrl: null }, label: scenario.name })),
+        ...content.characters.filter((character) => character.imageUrl).map((character) => ({ key: character.name, kind: "personagens" as const, a: { text: character.name, imageUrl: character.imageUrl }, b: { text: character.name, imageUrl: character.imageUrl }, label: character.name })),
+        ...content.scenarios.filter((scenario) => scenario.mapImageUrl).map((scenario) => ({ key: `mapa:${scenario.name}`, kind: "cenarios" as const, a: { text: scenario.name, imageUrl: scenario.mapImageUrl }, b: { text: scenario.name, imageUrl: scenario.mapImageUrl }, label: scenario.name })),
       ];
       const kind = (MEMORY_KINDS.includes(extras.options.kind as MemoryKind) ? extras.options.kind : "mix") as MemoryKind;
       const memory = generateMemory(seed, pool, sizeLevelOf(extras.options.difficulty), kind, chooseTime(extras.options.time, MEMORY_TIMES), extras.recentWords);
-      if (!memory) throw badRequest("Ainda não há personagens e cenários suficientes para este jogo");
+      if (!memory) throw badRequest("Ainda não há imagens de personagens e cenários suficientes para este jogo");
       memory.backUrl = extras.cardBack;
       return { state: { game, memory }, puzzle: memory };
     }

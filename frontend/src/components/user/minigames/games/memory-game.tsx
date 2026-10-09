@@ -16,12 +16,11 @@ const LEVEL_TEXT: Record<SizeLevel, string> = {
   dificil: '12 pares (24 cartas) · prévia de 2 segundos',
   mestre: '18 pares (36 cartas) · prévia de 2 segundos',
 };
-type Kind = 'mix' | 'personagens' | 'cenarios' | 'versiculos';
+type Kind = 'mix' | 'personagens' | 'cenarios';
 const KINDS: Array<{ value: Kind; label: string; description: string }> = [
-  { value: 'mix', label: 'Mistura', description: 'Fotos, mapas e versículos juntos' },
-  { value: 'personagens', label: 'Personagens', description: 'A foto do personagem e o nome dele' },
-  { value: 'cenarios', label: 'Cenários', description: 'O mapa do cenário e o nome dele' },
-  { value: 'versiculos', label: 'Versículos', description: 'O cenário e a referência bíblica' },
+  { value: 'mix', label: 'Mistura', description: 'Fotos de personagens e mapas de cenários juntos' },
+  { value: 'personagens', label: 'Personagens', description: 'Pares de fotos de personagens' },
+  { value: 'cenarios', label: 'Cenários', description: 'Pares de mapas de cenários' },
 ];
 const TIMES = ['90', '150', '240', '360'] as const;
 const KEY = 'memoria-escolhas';
@@ -44,8 +43,8 @@ function MemorySetup({ onStart }: { onStart: (options: object) => void }) {
   const update = (patch: Partial<Choice>) => setChoice((current) => ({ ...current, ...patch }));
   return (
     <SetupShell
-      intro="Vire duas cartas por vez e ache os pares. No começo todas aparecem por alguns segundos: memorize!"
-      tips={[`🎯 Pontuação máxima nesta escolha: ${Math.round(1000 * SIZE_SCALE[choice.level]).toLocaleString('pt-BR')} pontos.`, '🃏 Menos tentativas e mais rapidez, mais pontos.', '📸 Os pares usam as fotos dos personagens e os mapas dos cenários.']}
+      intro="Vire duas cartas por vez e ache os pares de imagens iguais. No começo todas aparecem por alguns segundos: memorize!"
+      tips={[`🎯 Pontuação máxima nesta escolha: ${Math.round(1000 * SIZE_SCALE[choice.level]).toLocaleString('pt-BR')} pontos.`, '🃏 Menos tentativas e mais rapidez, mais pontos.', '📸 Cada par são duas imagens iguais: a foto de um personagem ou o mapa de um cenário. O nome aparece quando você acha o par.']}
       onStart={() => {
         writeStored(KEY, choice);
         onStart({ difficulty: choice.level, kind: choice.kind, time: choice.timed ? Number(choice.time) : null });
@@ -186,7 +185,7 @@ export function MemoryGame({ puzzle, submit, finished, result }: GameProps<Memor
                 card.imageUrl ? (
                   <>
                     <img src={card.imageUrl} alt="" loading="lazy" draggable={false} className="absolute inset-0 h-full w-full object-cover" />
-                    {done ? <span className="absolute inset-x-0 bottom-0 bg-black/60 px-0.5 py-0.5 text-[10px] leading-3 text-white">{card.text}</span> : null}
+                    {done ? <span className="absolute inset-x-0 bottom-0 truncate bg-black/60 px-0.5 py-0.5 text-[10px] leading-3 text-white">{card.text}</span> : null}
                   </>
                 ) : (
                   card.text

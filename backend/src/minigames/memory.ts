@@ -2,7 +2,7 @@ import { ACCURACY_MAX, rng, shuffled, timeBonus, type Outcome, type Random } fro
 import { SIZE_LABEL, SIZE_SCALE, sizeMaxScore, TIME_GRACE, type SizeLevel } from "./turns";
 
 /**
- * Memória: cartas viradas para baixo; ache os pares. Pares possíveis: foto do personagem ↔ nome, mapa do cenário ↔ nome, cenário ↔ referência bíblica.
+ * Memória: cartas viradas para baixo; ache os pares de imagens iguais: a foto de um personagem ou o mapa de um cenário (o nome aparece ao achar o par).
  * O nível define quantos pares (6, 8, 12 ou 18) e por quantos segundos as cartas aparecem no começo para memorizar.
  */
 export const MEMORY_LEVELS: Record<SizeLevel, { pairs: number; peek: number; par: number }> = {
@@ -16,10 +16,10 @@ export const MIN_PAIRS = 4;
 /** Sem achar todos os pares (tempo esgotado), cada par achado vale uma fatia disto. */
 export const PARTIAL_MAX = 250;
 
-export type MemoryKind = "personagens" | "cenarios" | "versiculos" | "mix";
-export const MEMORY_KINDS: readonly MemoryKind[] = ["personagens", "cenarios", "versiculos", "mix"];
+export type MemoryKind = "personagens" | "cenarios" | "mix";
+export const MEMORY_KINDS: readonly MemoryKind[] = ["personagens", "cenarios", "mix"];
 
-/** Uma face de carta: foto (com o texto como descrição) ou só texto. */
+/** Uma face de carta: a imagem, com o nome como descrição. */
 export type CardFace = { text: string; imageUrl: string | null };
 export type MemoryCard = { pair: number; text: string; imageUrl: string | null };
 /** Dois lados de um par; `kind` diz de onde veio, `label` é o nome mostrado ao achar. */
@@ -50,7 +50,7 @@ export function pickPairs(random: Random, pool: MemoryPairInput[], kind: MemoryK
   const wanted = kind === "mix" ? pool : pool.filter((item) => item.kind === kind);
   // Na mistura alterna os tipos para a mesa ter cara variada.
   if (kind === "mix") {
-    const lanes = (["personagens", "cenarios", "versiculos"] as const).map((lane) => order(wanted.filter((item) => item.kind === lane)));
+    const lanes = (["personagens", "cenarios"] as const).map((lane) => order(wanted.filter((item) => item.kind === lane)));
     const mixed: MemoryPairInput[] = [];
     for (let at = 0; mixed.length < count && lanes.some((lane) => lane.length > at); at += 1) for (const lane of lanes) if (lane[at] && mixed.length < count) mixed.push(lane[at]);
     return mixed;

@@ -143,6 +143,8 @@ describe.skipIf(!hasDatabase)("mini games: partidas", () => {
 
   const act = (token: string, runId: string, body: object) => api.post(`/api/minigames/runs/${runId}/act`).set(bearer(token)).send(body);
   const stateOf = async (runId: string) => (await prisma.miniGameRun.findUniqueOrThrow({ where: { id: runId } })).state as Record<string, any>;
+  /** A memória usa imagens: o banco de demonstração não tem, então os testes cadastram os mapas dos cenários. */
+  const withMaps = () => prisma.scenario.updateMany({ data: { mapImageUrl: "https://exemplo.test/mapa.png" } });
   const base = (text: string) => text.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/[^A-Z]/g, "");
 
   it("forca em turnos: a palavra nunca sai do servidor; palpites conferidos lá; vencer todas rende moedas", async () => {
@@ -213,11 +215,13 @@ describe.skipIf(!hasDatabase)("mini games: partidas", () => {
     expect((await start(token, "quebra-cabeca", { time: 123 })).status).toBe(400);
   });
 
-  it("memória: pares por nível e tipo, fotos nas cartas, e a partida perfeita vence", async () => {
+  it("memória: pares de imagens por nível e tipo, e a partida perfeita vence", async () => {
     const { token } = await unlockAll();
-    const run = (await start(token, "memoria", { difficulty: "facil", kind: "versiculos", time: 150 })).body;
-    expect(run.puzzle).toMatchObject({ level: "facil", pairs: 6, cols: 3, timeLimit: 150 });
-    const cards = run.puzzle.cards as Array<{ pair: number }>;
+    await withMaps();
+    const run = (await start(token, "memoria", { difficulty: "facil", kind: "mix", time: 150 })).body;
+    expect(run.puzzle).toMatchObject({ level: "facil", cols: 3, timeLimit: 150 });
+    const cards = run.puzzle.cards as Array<{ pair: number; imageUrl: string | null }>;
+    expect(cards.every((card) => card.imageUrl)).toBe(true);
     const byPair = new Map<number, number[]>();
     cards.forEach((card, index) => byPair.set(card.pair, [...(byPair.get(card.pair) ?? []), index]));
     const done = await finish(token, run.runId, { flips: [...byPair.values()].flat() });
@@ -252,6 +256,7 @@ describe.skipIf(!hasDatabase)("mini games: partidas", () => {
 
   it("os outros jogos começam sem erro e a resposta vazia não pontua", async () => {
     const { token } = await unlockAll();
+    await withMaps();
     for (const [game, body] of [["caca-palavras", { found: [] }], ["quebra-cabeca", { swaps: [] }], ["memoria", { flips: [] }]] as const) {
       const started = await start(token, game);
       expect(started.status, game).toBe(200);
@@ -267,6 +272,7 @@ describe.skipIf(!hasDatabase)("mini games: partidas", () => {
 
   it("só 3 jogos por dia rendem moedas, e quem não completou o Peitoral joga mas não pontua no ranking", async () => {
     const { userId, token } = await unlockAll(false);
+    await withMaps();
     // Vitória rápida de 4 jogos: cada resposta é montada com o gabarito guardado no banco.
     const wins: number[] = [];
     for (const game of ["quebra-cabeca", "memoria", "caca-palavras"]) {
