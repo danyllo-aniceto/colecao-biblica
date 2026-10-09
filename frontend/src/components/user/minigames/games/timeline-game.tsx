@@ -80,6 +80,8 @@ export function TimelineGame({ puzzle, runId, report, finished }: GameProps<Time
   const [hover, setHover] = useState<number | null>(null);
   const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
   const [lostBeat, setLostBeat] = useState(0);
+  // A carta que acabou de entrar na linha: no turno seguinte a data dela aparece em destaque.
+  const [justPlaced, setJustPlaced] = useState<string | null>(null);
   const endedRef = useRef<typeof ended>(null);
   const pause = useRef<number | undefined>(undefined);
   const pointer = useRef({ x: 0, y: 0 });
@@ -119,6 +121,7 @@ export function TimelineGame({ puzzle, runId, report, finished }: GameProps<Time
     window.clearTimeout(pause.current);
     const current = endedRef.current;
     if (!current?.next) return;
+    setJustPlaced(current.end.card.id);
     setState(current.next);
     setHints(current.next.hints);
     setHintsLeft(current.next.hintsLeft);
@@ -267,10 +270,13 @@ export function TimelineGame({ puzzle, runId, report, finished }: GameProps<Time
         {ended || finished ? null : zone(0)}
         {placed.map((item, index) => (
           <li key={item.id} className="list-none space-y-1">
-            <div className={cn('flex items-center gap-3 rounded-xl p-1.5', ended?.end.card.id === item.id ? (ended.end.right ? 'animate-pop-in bg-success/20' : 'animate-pop-in bg-danger/20') : 'bg-surface-3')}>
+            {/* A data aparece em cima de cada carta que já está na linha, para servir de referência. */}
+            <p key={item.id === justPlaced ? `novo-${state.index}` : 'data'} className={cn('flex items-center gap-1.5 pl-1 font-display text-sm font-bold text-primary-strong dark:text-primary', item.id === justPlaced && !ended && 'animate-pop-in')}>
+              <span aria-hidden>📅</span> {item.yearLabel}
+            </p>
+            <div className={cn('flex items-center gap-3 rounded-xl p-1.5', ended?.end.card.id === item.id ? (ended.end.right ? 'animate-pop-in bg-success/20' : 'animate-pop-in bg-danger/20') : item.id === justPlaced && !ended ? 'bg-primary/15 ring-2 ring-primary/50' : 'bg-surface-3')}>
               <Thumb card={item} size="h-10 w-10" />
               <span className="min-w-0 flex-1 truncate font-display text-sm font-bold text-ink">{item.label}</span>
-              <span className="shrink-0 rounded-full bg-surface px-2 py-0.5 text-[11px] font-bold text-muted">{item.yearLabel}</span>
             </div>
             {ended || finished ? null : zone(index + 1)}
           </li>
