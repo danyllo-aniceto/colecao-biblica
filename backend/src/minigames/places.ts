@@ -124,7 +124,9 @@ const placePoints = (km: number, places: number, maxErrorKm: number) => Math.rou
  * Pontos: cada lugar vale uma fatia de 700 que cai com a distância até zerar na tolerância do nível; se somou 60% ou mais, vence e ganha
  * até 300 de rapidez; menos 40 por dica; tudo vezes o fator do nível. Lugar sem marca não pontua.
  */
-export function checkMap(state: MapState, guesses: Array<Guess | null>, seconds: number): Outcome {
+export function checkMap(input: MapState, guesses: Array<Guess | null>, seconds: number): Outcome {
+  // Partidas começadas antes desta versão não têm nível, tempo nem dicas: valem como o mapa inteiro.
+  const state: MapState = { ...input, level: input.level ?? "dificil", timeLimit: input.timeLimit ?? null, hinted: input.hinted ?? [] };
   const valid = (guess: Guess | null) => guess === null || (Number.isFinite(guess.lat) && Number.isFinite(guess.lon) && Math.abs(guess.lat) <= 90 && Math.abs(guess.lon) <= 180);
   if (guesses.length !== state.places.length || !guesses.every(valid)) return { solved: false, score: 0, detail: "Resposta inválida" };
   const config = MAP_LEVELS[state.level];

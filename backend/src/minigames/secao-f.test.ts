@@ -76,6 +76,15 @@ describe("árvore genealógica", () => {
   });
 });
 
+describe("partidas de antes desta versão", () => {
+  it("árvore antiga não derruba a conferência e mapa antigo vale como o mapa inteiro", () => {
+    expect(checkLineage({ pairs: [{ father: "A", son: "B" }] } as never, [], 5)).toMatchObject({ solved: false, detail: "Partida de uma versão anterior" });
+    const { state } = generateMap(4, "dificil");
+    const old = { places: state.places } as never;
+    expect(checkMap(old, state.places.map(({ lat, lon }) => ({ lat, lon })), 5)).toMatchObject({ solved: true });
+  });
+});
+
 describe("interconexão", () => {
   it("o nível define a distância entre as pontas; as duplas não se repetem", () => {
     for (const level of ["facil", "medio", "dificil"] as const) {

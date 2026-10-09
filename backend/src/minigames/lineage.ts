@@ -99,6 +99,8 @@ export function nextHint(state: LineageState, fills: Array<string | null>): { sl
  * tudo vezes o fator do nível. Passou do tempo total: não vale como completa.
  */
 export function checkLineage(state: LineageState, fills: Array<string | null>, seconds: number): Outcome {
+  // Partida começada antes desta versão (ligar pais e filhos): não dá para conferir.
+  if (!Array.isArray(state.answers)) return { solved: false, score: 0, detail: "Partida de uma versão anterior" };
   const total = state.answers.length;
   if (fills.length !== total) return { solved: false, score: 0, detail: "Resposta inválida" };
   const work = state.answers.map((_, index) => index).filter((index) => !state.prefilled.includes(index));
