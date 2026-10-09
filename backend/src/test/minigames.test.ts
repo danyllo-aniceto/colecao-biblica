@@ -407,6 +407,11 @@ describe.skipIf(!hasDatabase)("mini games: jogos novos e administrador", () => {
     expect(last.body).toMatchObject({ status: "won", result: { solved: true, coins: 10 } });
     expect((await act(token, run.runId, { action: "hint" })).status).toBe(400);
     expect((await start(token, "quem-sou-eu", { rounds: 4 })).status).toBe(400);
+    // No difícil são 6 nomes: a escolha vai até 5.
+    const hard = (await start(token, "quem-sou-eu", { difficulty: "dificil", rounds: 1 })).body;
+    expect(hard.puzzle.options).toHaveLength(6);
+    const stored = (await stateOf(hard.runId)).state.rounds as Array<{ answer: number }>;
+    expect((await act(token, hard.runId, { action: "answer", choice: stored[0].answer })).status).toBe(200);
   });
 
   it("linha do tempo, mapa, árvore e interconexão: o servidor confere pelo gabarito e a solução não vai à tela", async () => {

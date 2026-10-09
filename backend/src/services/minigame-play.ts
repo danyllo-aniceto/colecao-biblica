@@ -385,7 +385,7 @@ const actBody = z.discriminatedUnion("action", [
   z.object({ action: z.literal("timeout") }),
   z.object({ action: z.literal("begin") }),
   z.object({ action: z.literal("hint"), word: z.string().max(20).optional() }),
-  z.object({ action: z.literal("answer"), choice: z.number().int().min(0).max(3) }),
+  z.object({ action: z.literal("answer"), choice: z.number().int().min(0).max(7) }),
   z.object({ action: z.literal("guess"), letter: z.string().min(1).max(4) }),
   z.object({ action: z.literal("reveal") }),
   z.object({ action: z.literal("classify"), choice: z.enum(["OLD", "NEW"]) }),
