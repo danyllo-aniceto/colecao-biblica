@@ -709,7 +709,7 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
             </ul>
             {stoneWon.stone.miniGames.length > 0 ? (
               <Alert tone="info">
-                Mini games liberados: {stoneWon.stone.miniGames.map((game) => `${game.emoji} ${game.name}`).join(' e ')}. Jogue na aba Jogar → Mini games.
+                {stoneWon.stone.miniGames.length === 1 ? 'Mini game liberado' : 'Mini games liberados'}: {stoneWon.stone.miniGames.map((game) => `${game.emoji} ${game.name}`).join(' e ')}. Jogue na aba Jogar → Mini games.
               </Alert>
             ) : null}
             {stoneWon.result.completeReward ? (

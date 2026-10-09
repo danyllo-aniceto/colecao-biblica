@@ -144,7 +144,7 @@ function WeeklyRanking({ currentUserId }: { currentUserId?: number }) {
   );
 }
 
-/** Tela dos mini games: os jogos (cada pedra libera um), o ranking semanal (Peitoral Completo) e a Galeria dos Peitorais. Sem XP nem moedas. */
+/** Tela dos mini games: os jogos (5 livres e um por pedra), o ranking semanal (Peitoral Completo) e a Galeria dos Peitorais. Sem XP nem moedas. */
 export function MiniGamesHub({ currentUserId, onWallet }: { currentUserId?: number; onWallet: (wallet: { userCoins: number }) => void }) {
   const [tab, setTab] = useState<Tab>('games');
   const [playing, setPlaying] = useState<MiniGameInfo | null>(null);
@@ -184,6 +184,7 @@ export function MiniGamesHub({ currentUserId, onWallet }: { currentUserId?: numb
   }
 
   const unlockedCount = games.filter((game) => game.unlocked).length;
+  const freeCount = games.filter((game) => game.stoneSlot === null).length;
   return (
     <div className="space-y-5">
       <Segmented
@@ -201,7 +202,7 @@ export function MiniGamesHub({ currentUserId, onWallet }: { currentUserId?: numb
         <div className="space-y-4">
           {overview.adminPreview ? <Alert tone="info">Modo administrador: todos os jogos estão liberados para você testar. Seu placar não entra no ranking dos jogadores.</Alert> : null}
           <p className="text-sm font-semibold text-muted">
-            Cada pedra do Peitoral libera um ou dois mini games. Você libera {unlockedCount} de {games.length}. Mini games não dão XP: valem pela diversão, pelas moedas do dia e pelo ranking semanal.
+            5 mini games já vêm liberados e cada pedra do Peitoral conquistada libera mais um dos outros {games.length - freeCount}. Você tem {unlockedCount} de {games.length} liberados. Mini games não dão XP: valem pela diversão, pelas moedas do dia e pelo ranking semanal.
           </p>
           <p className="flex items-center gap-1.5 rounded-xl bg-primary/10 p-2 text-xs font-bold text-ink">
             <CoinIcon className="h-4 w-4" /> A primeira vitória do dia em cada jogo rende {overview.coins.perWin} moedas (até {overview.coins.limit} jogos por dia). Hoje: {overview.coins.winsToday}/{overview.coins.limit}.

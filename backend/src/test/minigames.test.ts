@@ -24,14 +24,18 @@ describe.skipIf(!hasDatabase)("mini games", () => {
     const first = await api.get("/api/minigames").set(bearer(token));
     expect(first.status).toBe(200);
     expect(first.body.games).toHaveLength(17);
-    expect(first.body.games.every((game: { unlocked: boolean }) => !game.unlocked)).toBe(true);
+    // Cinco jogos já vêm liberados para todos; os outros 12 dependem de uma pedra cada.
+    const freeIds = ["caca-palavras", "anagrama", "forca", "quebra-cabeca", "memoria"];
+    expect(first.body.games.filter((game: { unlocked: boolean }) => game.unlocked).map((game: { id: string }) => game.id)).toEqual(freeIds);
+    expect(first.body.games.filter((game: { stoneSlot: number | null }) => game.stoneSlot === null)).toHaveLength(5);
     expect(first.body.rankingUnlocked).toBe(false);
     expect((await api.get("/api/minigames/ranking").set(bearer(token))).status).toBe(400);
 
     await giveStones("user@email.com", [1, 3]);
     const some = (await api.get("/api/minigames").set(bearer(token))).body;
-    expect(some.games.filter((game: { unlocked: boolean }) => game.unlocked).map((game: { stoneSlot: number }) => game.stoneSlot)).toEqual([1, 1, 3, 3]);
-    expect(some.games[0].stoneName).toBe("Sardônio");
+    expect(some.games.filter((game: { unlocked: boolean }) => game.unlocked).map((game: { id: string }) => game.id)).toEqual([...freeIds, "testamento", "relampago"]);
+    expect(some.games.find((game: { id: string }) => game.id === "testamento").stoneName).toBe("Sardônio");
+    expect(some.games.find((game: { id: string }) => game.id === "caca-palavras").stoneName).toBeNull();
     expect(some.rankingUnlocked).toBe(false);
   });
 
@@ -40,7 +44,7 @@ describe.skipIf(!hasDatabase)("mini games", () => {
     const userId = await giveStones("user@email.com", [1]);
     // Sem o Peitoral completo a pontuação não é guardada.
     expect(await recordMiniGameScore(prisma, userId, "caca-palavras", 100)).toMatchObject({ recorded: false });
-    await expect(recordMiniGameScore(prisma, userId, "forca", 10)).rejects.toThrow("ainda não foi liberado");
+    await expect(recordMiniGameScore(prisma, userId, "mapa", 10)).rejects.toThrow("ainda não foi liberado");
     await expect(recordMiniGameScore(prisma, userId, "nao-existe", 10)).rejects.toThrow("não encontrado");
     await expect(recordMiniGameScore(prisma, userId, "caca-palavras", -1)).rejects.toThrow("inválida");
 
@@ -89,8 +93,10 @@ describe.skipIf(!hasDatabase)("mini games: partidas", () => {
 
   it("não começa jogo bloqueado nem inexistente ou ainda não feito", async () => {
     const token = await login("user@email.com");
-    expect((await start(token, "caca-palavras")).status).toBe(400);
+    expect((await start(token, "mapa")).status).toBe(400);
     expect((await start(token, "nao-existe")).status).toBe(404);
+    // Os jogos livres abrem para qualquer um, sem pedra.
+    expect((await start(token, "caca-palavras")).status).toBe(200);
     await giveStones("user@email.com", [1, 9]);
     // Jogo de outra pedra continua bloqueado; o da pedra 9 abre.
     expect((await start(token, "mapa")).body.message).toMatch(/não foi liberado/);

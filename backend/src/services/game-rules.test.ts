@@ -653,12 +653,17 @@ describe("passes temáticos", () => {
 
   it("mini games: cada pedra libera pelo menos um jogo, ids únicos, e só liberam com a pedra resgatada", () => {
     expect(MINI_GAMES).toHaveLength(17);
-    expect(new Set(MINI_GAMES.map((game) => game.stoneSlot))).toEqual(new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]));
+    // 5 jogos livres para todos e um jogo para cada uma das 12 pedras.
+    const free = MINI_GAMES.filter((game) => game.stoneSlot === null);
+    expect(free.map((game) => game.id)).toEqual(["caca-palavras", "anagrama", "forca", "quebra-cabeca", "memoria"]);
+    const locked = MINI_GAMES.filter((game) => game.stoneSlot !== null);
+    expect(locked.map((game) => game.stoneSlot).sort((a, b) => a! - b!)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
     expect(new Set(MINI_GAMES.map((game) => game.id)).size).toBe(17);
     expect(MINI_GAMES.filter((game) => game.ready)).toHaveLength(17);
-    expect(miniGameUnlocked(MINI_GAMES[0], [])).toBe(false);
-    expect(miniGameUnlocked(MINI_GAMES[0], [1])).toBe(true);
-    expect(miniGameUnlocked(MINI_GAMES.find((game) => game.stoneSlot === 2)!, [1])).toBe(false);
+    expect(miniGameUnlocked(free[0], [])).toBe(true);
+    expect(miniGameUnlocked(locked.find((game) => game.stoneSlot === 1)!, [])).toBe(false);
+    expect(miniGameUnlocked(locked.find((game) => game.stoneSlot === 1)!, [1])).toBe(true);
+    expect(miniGameUnlocked(locked.find((game) => game.stoneSlot === 2)!, [1])).toBe(false);
   });
 
   it("pontuação semanal: soma a melhor de cada jogo e ignora negativos", () => {

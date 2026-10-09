@@ -83,7 +83,7 @@ function StoneRewards({ stone, playerName }: { stone: Stone; playerName: string 
       </ul>
       {stone.miniGames.length > 0 ? (
         <>
-          <p className="pt-1 text-xs font-bold uppercase tracking-wider text-muted">{stone.state === 'claimed' ? 'Mini games liberados' : 'Libera os mini games'}</p>
+          <p className="pt-1 text-xs font-bold uppercase tracking-wider text-muted">{stone.state === 'claimed' ? (stone.miniGames.length === 1 ? 'Mini game liberado' : 'Mini games liberados') : stone.miniGames.length === 1 ? 'Libera o mini game' : 'Libera os mini games'}</p>
           <ul className="space-y-2">
             {stone.miniGames.map((game) => (
               <li key={game.id} className={cn('flex items-center gap-2 rounded-xl bg-surface-3 p-2', stone.state !== 'claimed' && 'opacity-80')}>

@@ -86,21 +86,21 @@ export function stoneState(completedScenarios: number, claimed: boolean, require
 }
 
 /**
- * Mini games (outro modo de jogo, sem XP, moedas nem ranking do perfil). Cada pedra do Peitoral libera um ou dois jogos (`stoneSlot`) e o Peitoral
+ * Mini games (outro modo de jogo, sem XP, moedas nem ranking do perfil). 5 jogos já vêm liberados para todos (`stoneSlot: null`) e cada uma das 12 pedras do Peitoral libera um dos outros 12 (`stoneSlot`); o Peitoral
  * Completo libera o ranking semanal. `ready` é falso até o jogo existir no app.
  */
-export type MiniGameDef = { id: string; name: string; emoji: string; text: string; stoneSlot: number; ready: boolean };
+export type MiniGameDef = { id: string; name: string; emoji: string; text: string; /** Pedra que libera o jogo (1 a 12); null = liberado para todos desde o começo. */ stoneSlot: number | null; ready: boolean };
 
 export const MINI_GAMES: MiniGameDef[] = [
-  { id: "caca-palavras", name: "Caça-palavras", emoji: "🔎", text: "Ache os nomes de personagens e lugares escondidos na grade, contra o tempo.", stoneSlot: 1, ready: true },
-  { id: "anagrama", name: "Anagrama", emoji: "🔤", text: "Nomes com as letras embaralhadas: monte cada um em até 3 tentativas, em vários turnos e com tempo opcional.", stoneSlot: 1, ready: true },
-  { id: "forca", name: "Forca", emoji: "🪢", text: "Descubra o personagem ou o lugar letra por letra, em vários turnos, com dica, retrato e tempo opcional.", stoneSlot: 2, ready: true },
-  { id: "testamento", name: "Antigo ou Novo?", emoji: "📜", text: "Livros e personagens: de que Testamento é cada um? Escolha a dificuldade, a quantidade e o tempo.", stoneSlot: 2, ready: true },
-  { id: "quebra-cabeca", name: "Quebra-cabeça", emoji: "🧩", text: "Monte o retrato de um personagem ou o mapa de um cenário: de 9 a 36 peças, com dicas e tempo opcional.", stoneSlot: 3, ready: true },
-  { id: "livros", name: "Livros em ordem", emoji: "📚", text: "Ponha livros da Bíblia na ordem em que aparecem, em conjuntos de 4, 6 ou 8.", stoneSlot: 3, ready: true },
-  { id: "memoria", name: "Memória", emoji: "🃏", text: "Ache os pares de imagens iguais: fotos de personagens e mapas de cenários, de 12 a 36 cartas, com prévia e tempo opcional.", stoneSlot: 4, ready: true },
-  { id: "relampago", name: "Relâmpago", emoji: "⚡", text: "Verdadeiro ou falso? Afirmações tiradas das perguntas do quiz, com explicação, no nível e no tempo que você escolher.", stoneSlot: 4, ready: true },
-  { id: "versiculo", name: "Versículo em pedaços", emoji: "📖", text: "Ordene as palavras do versículo, em vários turnos, com dicas e tempo opcional.", stoneSlot: 5, ready: true },
+  { id: "caca-palavras", name: "Caça-palavras", emoji: "🔎", text: "Ache os nomes de personagens e lugares escondidos na grade, contra o tempo.", stoneSlot: null, ready: true },
+  { id: "anagrama", name: "Anagrama", emoji: "🔤", text: "Nomes com as letras embaralhadas: monte cada um em até 3 tentativas, em vários turnos e com tempo opcional.", stoneSlot: null, ready: true },
+  { id: "forca", name: "Forca", emoji: "🪢", text: "Descubra o personagem ou o lugar letra por letra, em vários turnos, com dica, retrato e tempo opcional.", stoneSlot: null, ready: true },
+  { id: "quebra-cabeca", name: "Quebra-cabeça", emoji: "🧩", text: "Monte o retrato de um personagem ou o mapa de um cenário: de 9 a 36 peças, com dicas e tempo opcional.", stoneSlot: null, ready: true },
+  { id: "memoria", name: "Memória", emoji: "🃏", text: "Ache os pares de imagens iguais: fotos de personagens e mapas de cenários, de 12 a 36 cartas, com prévia e tempo opcional.", stoneSlot: null, ready: true },
+  { id: "testamento", name: "Antigo ou Novo?", emoji: "📜", text: "Livros e personagens: de que Testamento é cada um? Escolha a dificuldade, a quantidade e o tempo.", stoneSlot: 1, ready: true },
+  { id: "livros", name: "Livros em ordem", emoji: "📚", text: "Ponha livros da Bíblia na ordem em que aparecem, em conjuntos de 4, 6 ou 8.", stoneSlot: 2, ready: true },
+  { id: "relampago", name: "Relâmpago", emoji: "⚡", text: "Verdadeiro ou falso? Afirmações tiradas das perguntas do quiz, com explicação, no nível e no tempo que você escolher.", stoneSlot: 3, ready: true },
+  { id: "versiculo", name: "Versículo em pedaços", emoji: "📖", text: "Ordene as palavras do versículo, em vários turnos, com dicas e tempo opcional.", stoneSlot: 4, ready: true },
   { id: "lacunas", name: "Complete o versículo", emoji: "✍️", text: "Preencha as lacunas do versículo com as palavras certas: de 2 a 4 lacunas, conforme a dificuldade.", stoneSlot: 5, ready: true },
   { id: "quem-sou-eu", name: "Quem sou eu?", emoji: "🎭", text: "Descubra o personagem pelas dicas, uma a uma: quanto menos dicas, mais pontos, e a foto aparece no fim.", stoneSlot: 6, ready: true },
   { id: "labirinto", name: "Labirinto", emoji: "🌀", text: "Leve o seu peão até a bandeira pelo caminho mais curto: mapas diferentes a cada partida, estrelas, névoa e 4 tamanhos.", stoneSlot: 7, ready: true },
@@ -115,9 +115,9 @@ export const MINI_GAMES: MiniGameDef[] = [
 export const MINI_GAME_WIN_COINS = 10;
 export const MINI_GAME_DAILY_COIN_WINS = 3;
 
-/** Um mini game está liberado quando a pedra dele foi resgatada. */
+/** Um mini game está liberado quando é um dos livres ou quando a pedra dele foi resgatada. */
 export function miniGameUnlocked(game: Pick<MiniGameDef, "stoneSlot">, claimedSlots: number[]): boolean {
-  return claimedSlots.includes(game.stoneSlot);
+  return game.stoneSlot === null || claimedSlots.includes(game.stoneSlot);
 }
 
 /** Pontuação de uma semana: a soma da melhor pontuação de cada jogo (jogar o mesmo jogo de novo só vale se melhorar). */

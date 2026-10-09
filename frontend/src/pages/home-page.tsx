@@ -20,7 +20,7 @@ import logo from '@/assets/logo-completa.webp';
 
 const features = [
   { icon: CollectionsBookmarkRoundedIcon, title: 'Álbum de figurinhas', text: 'Conquiste personagens da Bíblia em quatro raridades, suba o nível das figurinhas com as repetidas e leia a história completa de cada uma.', tone: 'bg-violet/15 text-violet' },
-  { icon: MapRoundedIcon, title: 'Campanha', text: 'Avance de nível por cenários da Bíblia, do Éden à Terra Prometida e além, colecione as 12 pedras do Peitoral e destrave músicas, mapas, prêmios e os mini games pelo caminho.', tone: 'bg-info/15 text-info' },
+  { icon: MapRoundedIcon, title: 'Campanha', text: 'Avance de nível por cenários da Bíblia, do Éden à Terra Prometida e além, colecione as 12 pedras do Peitoral e destrave músicas, mapas, prêmios e um mini game novo a cada pedra.', tone: 'bg-info/15 text-info' },
   { icon: TaskAltRoundedIcon, title: 'Missões e prêmio diário', text: 'Metas do dia e da semana, sequência de dias seguidos e baús de recompensa para quem volta sempre.', tone: 'bg-success/15 text-success' },
   { icon: GroupsRoundedIcon, title: 'Amigos e trocas', text: 'Adicione amigos, converse, troque figurinhas e chame todo mundo para jogar online.', tone: 'bg-danger/15 text-danger' },
   { icon: StorefrontRoundedIcon, title: 'Loja de bônus', text: 'Troque moedas por figurinhas, vidas, tempo extra, ícones e visuais para o seu perfil.', tone: 'bg-primary/20 text-primary-strong dark:text-primary' },
@@ -79,7 +79,7 @@ export function HomePage() {
             <span className="bg-[linear-gradient(90deg,var(--primary),var(--accent))] bg-clip-text text-transparent">jogando</span>
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-lg text-muted lg:mx-0">
-            Responda ao quiz, jogue Tabuleiro e Duelo de Figurinhas com os amigos, avance na Campanha para liberar mini games, ganhe XP e moedas e complete o álbum com os personagens da Bíblia.
+            Responda ao quiz, jogue Tabuleiro e Duelo de Figurinhas com os amigos, jogue os mini games (5 já liberados e 12 que se abrem na Campanha), ganhe XP e moedas e complete o álbum com os personagens da Bíblia.
           </p>
           <div className="mt-8 grid grid-cols-4 gap-3 sm:gap-4">
             {showcase.map((item, index) => (
@@ -97,7 +97,7 @@ export function HomePage() {
 
       <section className="py-8" aria-label="Os jogos">
         <h2 className="text-center font-display text-3xl font-bold text-ink sm:text-4xl">Quatro jeitos de jogar</h2>
-        <p className="mx-auto mt-2 max-w-2xl text-center text-muted">Um jogo principal para aprender e ganhar prêmios, dois para se divertir com os amigos, sem pressa e sem compromisso, e os mini games, que você libera avançando na Campanha.</p>
+        <p className="mx-auto mt-2 max-w-2xl text-center text-muted">Um jogo principal para aprender e ganhar prêmios, dois para se divertir com os amigos, sem pressa e sem compromisso, e os 17 mini games, jogos rápidos para treinar a Bíblia: 5 já vêm liberados e os outros 12 se abrem, um por pedra do Peitoral, na Campanha.</p>
         <ul className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {PLAY_MODES.map((mode, index) => {
             const image = images[mode.design];

@@ -42,11 +42,11 @@ export const PLAY_MODES: Array<{ id: PlayMode; design: GameMode; title: string; 
     id: 'minigames',
     design: 'MINIGAMES',
     title: 'Mini games',
-    text: 'Jogos rápidos para treinar o que você sabe da Bíblia: caça-palavras, forca, quebra-cabeça e mais. Cada pedra do Peitoral libera jogos novos.',
-    tags: ['Sozinho', 'Liberados pelas pedras', 'Sem XP · moedas do dia'],
+    text: 'Jogos rápidos para treinar o que você sabe da Bíblia: caça-palavras, anagrama, forca, quebra-cabeça, memória e mais 12 jogos. Escolha a dificuldade e o tempo de cada um.',
+    tags: ['Sozinho', '5 já liberados', 'Sem XP · moedas do dia'],
     icon: <ExtensionRoundedIcon sx={{ fontSize: 56 }} />,
     fallback: 'from-success to-info',
-    unlock: 'Libere jogando a Campanha: cada pedra do Peitoral que você conquista abre mini games novos. Complete o Peitoral e entre no ranking semanal.',
+    unlock: '5 mini games já estão liberados para você. Os outros 12 se abrem um por pedra do Peitoral conquistada na Campanha. Complete o Peitoral e entre no ranking semanal.',
   },
 ];
 
@@ -76,7 +76,7 @@ export function PlayHub({ onOpen, quizRunning }: { onOpen: (mode: PlayMode) => v
                 </span>
                 <span className="flex flex-1 flex-col gap-3 p-4">
                   <span className="text-sm font-semibold leading-6 text-muted">{mode.text}</span>
-                  {mode.unlock ? <span className="rounded-xl bg-primary/10 p-2.5 text-xs font-bold leading-5 text-ink">🔒 {mode.unlock}</span> : null}
+                  {mode.unlock ? <span className="rounded-xl bg-primary/10 p-2.5 text-xs font-bold leading-5 text-ink">🔓 {mode.unlock}</span> : null}
                   <span className="flex flex-wrap gap-1.5">
                     {mode.tags.map((tag) => (
                       <span key={tag} className="rounded-full bg-surface-3 px-2.5 py-1 text-xs font-bold text-ink">
@@ -101,7 +101,7 @@ const TITLES: Record<PlayMode, { title: string; subtitle: string }> = {
   quiz: { title: 'Quiz Bíblico', subtitle: 'Responda, ganhe XP, moedas e figurinhas.' },
   board: { title: 'Tabuleiro', subtitle: 'Partidas sem XP nem moedas: é só diversão.' },
   duel: { title: 'Duelo de Figurinhas', subtitle: 'Figurinhas com Dons, 3 arenas e 6 turnos. Sem XP nem moedas.' },
-  minigames: { title: 'Mini games', subtitle: 'Cada pedra do Peitoral libera um jogo. Sem XP; a 1ª vitória do dia rende moedas.' },
+  minigames: { title: 'Mini games', subtitle: '5 jogos já liberados e um novo a cada pedra do Peitoral. Sem XP; a 1ª vitória do dia rende moedas.' },
 };
 
 /** Moldura da tela de um jogo: botão para voltar aos jogos e o título. */

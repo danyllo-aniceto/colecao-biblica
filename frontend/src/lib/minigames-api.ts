@@ -7,8 +7,8 @@ export type MiniGameInfo = {
   name: string;
   emoji: string;
   text: string;
-  /** Pedra do Peitoral que libera o jogo (1 a 12). */
-  stoneSlot: number;
+  /** Pedra do Peitoral que libera o jogo (1 a 12); null = já vem liberado para todos. */
+  stoneSlot: number | null;
   stoneName: string | null;
   /** O jogo já existe no app (os demais aparecem como "em preparo"). */
   ready: boolean;

@@ -11,8 +11,8 @@ personagens, cenários e versículos que o app já tem. Vale também para a pró
 
 ## Como liberar (decidido)
 
-**Cada pedra libera um ou dois mini games** (17 jogos no catálogo, todos jogáveis). Pedra 1: caça-palavras e anagrama · 2: forca e antigo ou novo · 3: quebra-cabeça e
-livros em ordem · 4: memória e relâmpago · 5: versículo em pedaços e complete o versículo · 6: quem sou eu? · 7: labirinto · 8: linha do tempo · 9: palavras cruzadas · 10: mapa bíblico · 11: árvore genealógica · 12: interconexão. O **administrador** vê todos liberados em Painel → Testar mini games. O **Peitoral Completo** libera o **ranking semanal** dos mini games e a
+**5 mini games já vêm liberados para todos** (caça-palavras, anagrama, forca, quebra-cabeça e memória) e **os outros 12 abrem um por pedra** do Peitoral (17 jogos no catálogo, todos jogáveis).
+Pedra 1: antigo ou novo · 2: livros em ordem · 3: relâmpago · 4: versículo em pedaços · 5: complete o versículo · 6: quem sou eu? · 7: labirinto · 8: linha do tempo · 9: palavras cruzadas · 10: mapa bíblico · 11: árvore genealógica · 12: interconexão. O **administrador** vê todos liberados em Painel → Testar mini games. O **Peitoral Completo** libera o **ranking semanal** dos mini games e a
 entrada na **Galeria dos Peitorais**. **Mini games não dão XP.** Sem baú no final.
 
 ## Os jogos

@@ -25,7 +25,7 @@ export async function getMiniGames(db: Db, userId: number) {
       emoji: game.emoji,
       text: game.text,
       stoneSlot: game.stoneSlot,
-      stoneName: stoneBySlot.get(game.stoneSlot)?.name ?? null,
+      stoneName: game.stoneSlot === null ? null : (stoneBySlot.get(game.stoneSlot)?.name ?? null),
       ready: game.ready,
       coverUrl: designs.get(game.id)?.coverUrl ?? null,
       backgroundUrl: designs.get(game.id)?.backgroundUrl ?? null,
