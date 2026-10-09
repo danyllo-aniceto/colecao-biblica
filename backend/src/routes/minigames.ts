@@ -3,7 +3,7 @@ import { prisma } from "../db/prisma";
 import { readPage } from "../lib/pagination";
 import { currentUser, requireAdmin } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
-import { actMiniGame, finishMiniGame, guessHangman, startMiniGame } from "../services/minigame-play";
+import { actMiniGame, finishMiniGame, startMiniGame } from "../services/minigame-play";
 import { getMiniGames, peitoralGallery, saveMiniGameDesign, weeklyRanking } from "../services/minigames";
 import { imageRef, z } from "../lib/validation";
 
@@ -49,16 +49,7 @@ miniGamesRouter.post(
   }),
 );
 
-/** Forca: um palpite por vez, conferido no servidor. */
-miniGamesRouter.post(
-  "/runs/:run/guess",
-  asyncHandler(async (req, res) => {
-    const { letter } = z.object({ letter: z.string().min(1).max(4) }).parse(req.body);
-    res.json(await guessHangman(currentUser(req).id, String(req.params.run), letter));
-  }),
-);
-
-/** Anagrama e Quem sou eu?: palpites, dicas e respostas conferidos no servidor. */
+/** Jogos passo a passo (anagrama, forca, antigo ou novo?, livros em ordem, quem sou eu?...): jogadas conferidas no servidor. */
 miniGamesRouter.post(
   "/runs/:run/act",
   asyncHandler(async (req, res) => {

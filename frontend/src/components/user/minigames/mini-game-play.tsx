@@ -6,10 +6,10 @@ import { TimelineGame } from '@/components/user/minigames/games/timeline-game';
 import { AnagramGame, anagramSetup } from '@/components/user/minigames/games/anagram-game';
 import { BlanksGame } from '@/components/user/minigames/games/blanks-game';
 import { BlitzGame } from '@/components/user/minigames/games/blitz-game';
-import { BooksGame } from '@/components/user/minigames/games/books-game';
-import { TestamentGame } from '@/components/user/minigames/games/testament-game';
+import { BooksGame, booksSetup } from '@/components/user/minigames/games/books-game';
+import { TestamentGame, testamentSetup } from '@/components/user/minigames/games/testament-game';
 import { WhoAmIGame } from '@/components/user/minigames/games/whoami-game';
-import { HangmanGame } from '@/components/user/minigames/games/hangman-game';
+import { HangmanGame, hangmanSetup } from '@/components/user/minigames/games/hangman-game';
 import { MazeGame } from '@/components/user/minigames/games/maze-game';
 import { MemoryGame } from '@/components/user/minigames/games/memory-game';
 import { MiniGameFrame } from '@/components/user/minigames/games/play-frame';
@@ -26,7 +26,7 @@ export function MiniGamePlay({ game, onExit, onWallet }: Props) {
     case 'caca-palavras':
       return <MiniGameFrame<WordSearchPuzzle> game={game} onExit={onExit} onWallet={onWallet} setup={wordSearchSetup}>{(props) => <WordSearchGame {...props} />}</MiniGameFrame>;
     case 'forca':
-      return <MiniGameFrame<HangmanPuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <HangmanGame {...props} />}</MiniGameFrame>;
+      return <MiniGameFrame<HangmanPuzzle> game={game} onExit={onExit} onWallet={onWallet} setup={hangmanSetup}>{(props) => <HangmanGame {...props} />}</MiniGameFrame>;
     case 'quebra-cabeca':
       return <MiniGameFrame<SwapPuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <SwapPuzzleGame {...props} />}</MiniGameFrame>;
     case 'memoria':
@@ -38,9 +38,9 @@ export function MiniGamePlay({ game, onExit, onWallet }: Props) {
     case 'anagrama':
       return <MiniGameFrame<AnagramPuzzle> game={game} onExit={onExit} onWallet={onWallet} setup={anagramSetup}>{(props) => <AnagramGame {...props} />}</MiniGameFrame>;
     case 'testamento':
-      return <MiniGameFrame<TestamentPuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <TestamentGame {...props} />}</MiniGameFrame>;
+      return <MiniGameFrame<TestamentPuzzle> game={game} onExit={onExit} onWallet={onWallet} setup={testamentSetup}>{(props) => <TestamentGame {...props} />}</MiniGameFrame>;
     case 'livros':
-      return <MiniGameFrame<BooksPuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <BooksGame {...props} />}</MiniGameFrame>;
+      return <MiniGameFrame<BooksPuzzle> game={game} onExit={onExit} onWallet={onWallet} setup={booksSetup}>{(props) => <BooksGame {...props} />}</MiniGameFrame>;
     case 'relampago':
       return <MiniGameFrame<BlitzPuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <BlitzGame {...props} />}</MiniGameFrame>;
     case 'lacunas':

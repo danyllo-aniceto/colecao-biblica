@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { lettersOnly, rng } from "./common";
-import { applyGuess, guessLetter, hangmanOutcome, isLost, isWon, maskHint, pattern, type HangmanState } from "./hangman";
+import { applyGuess, guessLetter, isLost, isWon, maskHint, pattern, type HangmanState } from "./hangman";
 import { checkMaze, generateMaze, shortestPath, type Maze } from "./maze";
 import { checkMemory, generateMemory } from "./memory";
 import { checkSwapPuzzle, generateSwapPuzzle, minimumSwaps } from "./swap-puzzle";
@@ -170,17 +170,6 @@ describe("forca", () => {
     for (const letter of "QWXZKY") lost = applyGuess(lost, letter);
     expect(isLost(lost)).toBe(true);
     expect(applyGuess(lost, "N")).toBe(lost);
-    expect(hangmanOutcome(lost, 5)).toMatchObject({ solved: false, score: 0 });
-  });
-
-  it("vitória pontua mais com menos erros e menos tempo", () => {
-    let clean = start("Noé");
-    for (const letter of "NOE") clean = applyGuess(clean, letter);
-    let sloppy = start("Noé");
-    for (const letter of "QWNOE") sloppy = applyGuess(sloppy, letter);
-    expect(hangmanOutcome(clean, 10).score).toBeGreaterThan(hangmanOutcome(sloppy, 10).score);
-    expect(hangmanOutcome(clean, 10).score).toBeGreaterThan(hangmanOutcome(clean, 120).score);
-    expect(hangmanOutcome(clean, 10).score).toBeLessThanOrEqual(1000);
   });
 
   it("a dica não entrega o nome", () => {

@@ -3,7 +3,7 @@ import { ANAGRAM_ATTEMPTS, anagramMatches, anagramOutcome, generateAnagram, newA
 import { plainText, rng } from "./common";
 import { maskHint } from "./hangman";
 import { checkBlitz, generateBlitz, type BlitzQuestion } from "./blitz";
-import { BOOKS, bookTestament, checkBookOrder, checkTestament, generateBookOrder, generateTestament } from "./books";
+import { BOOKS, bookTestament } from "./books";
 import { checkBlanks, generateBlanks, usableForBlanks } from "./verse-blanks";
 import { cluesOf, generateWhoAmI, whoAmIOutcome, type Person } from "./whoami";
 
@@ -16,31 +16,6 @@ describe("livros da Bíblia", () => {
     expect(bookTestament("Mateus")).toBe("NEW");
     expect(bookTestament("Apocalipse")).toBe("NEW");
     expect(bookTestament("Livro Inventado")).toBeNull();
-  });
-
-  it("livros em ordem: 6 livros embaralhados; a ordem certa pontua cheio, posições certas pontuam parcial", () => {
-    const puzzle = generateBookOrder(8);
-    expect(puzzle.books).toHaveLength(6);
-    expect(generateBookOrder(8)).toEqual(puzzle);
-    const right = [...puzzle.books].sort((a, b) => BOOKS.indexOf(a as never) - BOOKS.indexOf(b as never));
-    expect(puzzle.books).not.toEqual(right);
-    expect(checkBookOrder(puzzle, right, 5)).toMatchObject({ solved: true, score: 1000 });
-    const swapped = [right[1], right[0], ...right.slice(2)];
-    expect(checkBookOrder(puzzle, swapped, 5)).toMatchObject({ solved: false, score: Math.round((4 / 6) * 700) });
-    expect(checkBookOrder(puzzle, [...right.slice(1)], 5).detail).toBe("Resposta inválida");
-    expect(checkBookOrder(puzzle, [right[0], right[0], ...right.slice(2)], 5).detail).toBe("Resposta inválida");
-  });
-
-  it("antigo ou novo: 10 itens, errar 1 ainda vence, errar 2 não", () => {
-    const { puzzle, items } = generateTestament(3, [{ text: "Davi", answer: "OLD" }, { text: "Paulo", answer: "NEW" }]);
-    expect(puzzle.items).toHaveLength(10);
-    expect(items.map((item) => item.text)).toEqual(puzzle.items);
-    const all = items.map((item) => item.answer);
-    expect(checkTestament(items, all, 5)).toMatchObject({ solved: true, score: 1000 });
-    const flip = (choice: "OLD" | "NEW") => (choice === "OLD" ? "NEW" : "OLD");
-    expect(checkTestament(items, [flip(all[0]), ...all.slice(1)], 5).solved).toBe(true);
-    expect(checkTestament(items, [flip(all[0]), flip(all[1]), ...all.slice(2)], 5).solved).toBe(false);
-    expect(checkTestament(items, all.slice(1), 5).detail).toBe("Resposta inválida");
   });
 });
 

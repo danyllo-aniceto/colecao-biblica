@@ -57,11 +57,6 @@ export const startMiniGame = <P>(game: string, options?: object) =>
 export const finishMiniGame = (runId: string, answer: object) =>
   apiRequest<MiniGameResult>(`/minigames/runs/${runId}/finish`, { method: 'POST', body: JSON.stringify(answer) }, 'Não foi possível conferir a partida.');
 
-export type HangmanGuess = { pattern: Array<string | null>; errors: number; maxErrors: number; status: 'playing' | 'won' | 'lost'; word?: string; result?: MiniGameResult };
-
-export const guessHangman = (runId: string, letter: string) =>
-  apiRequest<HangmanGuess>(`/minigames/runs/${runId}/guess`, { method: 'POST', body: JSON.stringify({ letter }) }, 'Não foi possível conferir a letra.');
-
 /** Dados que cada jogo recebe ao começar (o servidor guarda o gabarito). */
 export type WordSearchDifficulty = 'facil' | 'medio' | 'dificil';
 export type WordSearchTheme = 'mix' | 'antigo' | 'novo' | 'lugares' | 'livros';
@@ -79,7 +74,27 @@ export type WordSearchPuzzle = {
   par: number;
   maxScore: number;
 };
-export type HangmanPuzzle = { pattern: Array<string | null>; errors: number; maxErrors: number; hint: string; testament: string | null };
+export type TurnLevel = 'facil' | 'medio' | 'dificil';
+export type HangmanPuzzle = {
+  round: number;
+  rounds: number;
+  pattern: Array<string | null>;
+  errors: number;
+  maxErrors: number;
+  hint: string;
+  testament: string | null;
+  imageUrl: string | null;
+  hintsLeft: number;
+  timePerRound: number | null;
+  level: TurnLevel;
+  maxScore: number;
+};
+export type HangmanEnd = { right: boolean; timedOut: boolean; answer: string; imageUrl: string | null; points: number };
+export type HangmanEvent =
+  | { kind: 'begin' }
+  | { kind: 'guess'; pattern: Array<string | null>; errors: number; hit: boolean }
+  | { kind: 'reveal'; pattern: Array<string | null>; hintsLeft: number }
+  | { kind: 'end'; end: HangmanEnd; pattern: Array<string | null>; errors: number; next: HangmanPuzzle | null };
 export type SwapPuzzle = { side: number; order: number[]; imageUrl: string | null; title: string };
 export type MemoryPuzzle = { cards: Array<{ pair: number; text: string }> };
 export type VersePuzzle = { reference: string; chips: string[]; length: number; words: string[] };
@@ -102,15 +117,26 @@ export type AnagramPuzzle = {
 };
 export type AnagramRoundEnd = { right: boolean; timedOut: boolean; answer: string; imageUrl: string | null; points: number };
 export type AnagramEvent = { kind: 'begin' } | { kind: 'wrong'; attemptsLeft: number } | { kind: 'end'; end: AnagramRoundEnd; next: AnagramPuzzle | null };
-export type BooksPuzzle = { books: string[] };
-export type TestamentPuzzle = { items: string[] };
+export type BooksPuzzle = {
+  round: number;
+  rounds: number;
+  books: Array<{ name: string; testament: 'OLD' | 'NEW' | null }>;
+  timePerRound: number | null;
+  level: TurnLevel;
+  maxScore: number;
+};
+export type BooksEnd = { right: number; total: number; solved: boolean; timedOut: boolean; correct: string[]; points: number };
+export type BooksEvent = { kind: 'begin' } | { kind: 'end'; end: BooksEnd; next: BooksPuzzle | null };
+export type TestamentPuzzle = { index: number; total: number; text: string; kind: 'book' | 'person'; timePerItem: number | null; level: TurnLevel; maxScore: number };
+export type TestamentEnd = { right: boolean; timedOut: boolean; correct: 'OLD' | 'NEW'; text: string; imageUrl: string | null; points: number };
+export type TestamentEvent = { kind: 'begin' } | { kind: 'end'; end: TestamentEnd; next: TestamentPuzzle | null };
 export type BlitzPuzzle = { statements: Array<{ question: string; answer: string }> };
 export type BlanksPart = { text: string; blank: number | null; prefix?: string; suffix?: string };
 export type BlanksPuzzle = { reference: string; parts: BlanksPart[]; options: string[] };
 export type WhoAmIPuzzle = { clue: string; shown: number; total: number; options: string[] };
 
 /** Passo a passo no servidor (anagrama: palpites; quem sou eu?: dicas e resposta). */
-export type ActResult = { status: 'playing' | 'won' | 'lost'; anagram?: AnagramEvent; cell?: [number, number]; hintsLeft?: number; attemptsLeft?: number; clue?: string; shown?: number; total?: number; answer?: string; result?: MiniGameResult };
+export type ActResult = { status: 'playing' | 'won' | 'lost'; turn?: unknown; cell?: [number, number]; hintsLeft?: number; attemptsLeft?: number; clue?: string; shown?: number; total?: number; answer?: string; result?: MiniGameResult };
 
 export const actMiniGame = (runId: string, body: object) =>
   apiRequest<ActResult>(`/minigames/runs/${runId}/act`, { method: 'POST', body: JSON.stringify(body) }, 'Não foi possível conferir a jogada.');

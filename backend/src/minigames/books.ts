@@ -1,4 +1,5 @@
-import { ACCURACY_MAX, rng, shuffled, timeBonus, type Outcome } from "./common";
+import { rng, shuffled, type Outcome, type Random } from "./common";
+import { beginClock, clockAlmostOver, clockExpired, elapsedSeconds, endClock, LEVEL_LABEL, LEVEL_SCALE, maxScoreOf, newClock, speedFactor, turnShare, TurnError, type Clock, type Level, type TurnResult } from "./turns";
 
 /** Os 66 livros da Bíblia (protestante), na ordem canônica; os 39 primeiros são do Antigo Testamento. */
 export const BOOKS = [
@@ -15,44 +16,115 @@ export const bookTestament = (book: string): "OLD" | "NEW" | null => {
   return index < 0 ? null : index < OLD_TESTAMENT_BOOKS ? "OLD" : "NEW";
 };
 
-/** Livros em ordem: 6 livros embaralhados para pôr na ordem em que aparecem na Bíblia. */
-export const ORDER_BOOKS = 6;
-export type BookOrder = { books: string[] };
+export const bookIndex = (book: string) => BOOKS.indexOf(book as (typeof BOOKS)[number]);
 
-export function generateBookOrder(seed: number): BookOrder {
+/** Livros mais conhecidos (o fácil do "Antigo ou Novo?" usa só estes). */
+export const FAMOUS_BOOKS = new Set<string>([
+  "Gênesis", "Êxodo", "Josué", "Juízes", "Rute", "1 Samuel", "2 Samuel", "Ester", "Jó", "Salmos", "Provérbios", "Isaías", "Jeremias", "Daniel", "Jonas",
+  "Mateus", "Marcos", "Lucas", "João", "Atos", "Romanos", "1 Coríntios", "Gálatas", "Efésios", "Filipenses", "Tiago", "Hebreus", "Apocalipse",
+]);
+
+/**
+ * Livros em ordem, em turnos: cada turno é um conjunto de livros embaralhados para pôr na ordem em que aparecem na Bíblia.
+ * Fácil: 4 livros bem espalhados (com a dica de Testamento); médio: 6 livros; difícil: 8 livros próximos uns dos outros.
+ */
+export const ROUND_CHOICES = [1, 3, 5] as const;
+export const BOOK_TIME_CHOICES = [30, 60, 90, 120, 180] as const;
+export const BOOK_LEVELS: Record<Level, { size: number; hintTestament: boolean }> = {
+  facil: { size: 4, hintTestament: true },
+  medio: { size: 6, hintTestament: false },
+  dificil: { size: 8, hintTestament: false },
+};
+
+export type BookOrderState = { seed: number; level: Level; clock: Clock; sets: string[][]; current: number; results: TurnResult[] };
+export type BookOrderPuzzle = {
+  round: number;
+  rounds: number;
+  books: Array<{ name: string; testament: "OLD" | "NEW" | null }>;
+  timePerRound: number | null;
+  level: Level;
+  maxScore: number;
+};
+
+/** Um conjunto de livros já na ordem certa. */
+function pickSet(random: Random, level: Level): string[] {
+  const { size } = BOOK_LEVELS[level];
+  if (level === "dificil") {
+    // Livros próximos: sorteia uma janela de 20 e tira 8.
+    const start = Math.floor(random() * (BOOKS.length - 20));
+    return shuffled(random, BOOKS.slice(start, start + 20)).slice(0, size).sort((a, b) => bookIndex(a) - bookIndex(b));
+  }
+  if (level === "facil") {
+    // Espalhados: um de cada quarto da Bíblia.
+    const chunk = Math.floor(BOOKS.length / size);
+    return Array.from({ length: size }, (_, part) => BOOKS[part * chunk + Math.floor(random() * chunk)]).sort((a, b) => bookIndex(a) - bookIndex(b));
+  }
+  return shuffled(random, BOOKS).slice(0, size).sort((a, b) => bookIndex(a) - bookIndex(b));
+}
+
+export function newBookOrder(seed: number, level: Level, rounds: number, timePerRound: number | null, now: number): BookOrderState {
   const random = rng(seed);
-  const chosen = shuffled(random, BOOKS).slice(0, ORDER_BOOKS);
-  let books = shuffled(random, chosen);
-  const sorted = [...chosen].sort((a, b) => BOOKS.indexOf(a as (typeof BOOKS)[number]) - BOOKS.indexOf(b as (typeof BOOKS)[number]));
-  while (books.every((book, index) => book === sorted[index])) books = shuffled(random, chosen);
-  return { books };
+  const sets: string[][] = [];
+  while (sets.length < rounds) {
+    const set = pickSet(random, level);
+    // Não repete o mesmo conjunto na partida.
+    if (!sets.some((other) => other.join("|") === set.join("|"))) sets.push(set);
+  }
+  return { seed, level, clock: newClock(timePerRound, now), sets, current: 0, results: [] };
 }
 
-/** Pontua cada posição certa; completa e rápido ganha o bônus de tempo. */
-export function checkBookOrder(puzzle: BookOrder, order: string[], seconds: number): Outcome {
-  const expected = [...puzzle.books].sort((a, b) => BOOKS.indexOf(a as (typeof BOOKS)[number]) - BOOKS.indexOf(b as (typeof BOOKS)[number]));
-  if (order.length !== expected.length || new Set(order).size !== order.length || order.some((book) => !puzzle.books.includes(book))) return { solved: false, score: 0, detail: "Resposta inválida" };
-  const right = order.filter((book, index) => book === expected[index]).length;
-  const solved = right === expected.length;
-  return { solved, score: Math.round((right / expected.length) * ACCURACY_MAX) + (solved ? timeBonus(seconds, 20) : 0), detail: `${right} de ${expected.length} no lugar certo` };
+/** Os livros do turno embaralhados (nunca já na ordem certa). */
+export function publicBookOrder(state: BookOrderState): BookOrderPuzzle {
+  const set = state.sets[state.current];
+  const random = rng((state.seed + state.current * 104729) >>> 0);
+  let mixed = shuffled(random, set);
+  while (set.length > 1 && mixed.every((book, index) => book === set[index])) mixed = shuffled(random, set);
+  const hint = BOOK_LEVELS[state.level].hintTestament;
+  return {
+    round: state.current,
+    rounds: state.sets.length,
+    books: mixed.map((name) => ({ name, testament: hint ? bookTestament(name) : null })),
+    timePerRound: state.clock.timePerTurn,
+    level: state.level,
+    maxScore: maxScoreOf(state.level),
+  };
 }
 
-/** Antigo ou Novo Testamento: 10 itens (livros e personagens) para classificar. */
-export const TESTAMENT_ITEMS = 10;
-export type TestamentItem = { text: string; answer: "OLD" | "NEW" };
-export type TestamentQuiz = { items: string[] };
+export type BookOrderAction = { type: "order"; order: string[] } | { type: "skip" } | { type: "timeout" } | { type: "begin" };
+export type BookOrderEnd = { right: number; total: number; solved: boolean; timedOut: boolean; correct: string[]; points: number };
+export type BookOrderEvent = { kind: "begin" } | { kind: "end"; end: BookOrderEnd; next: BookOrderPuzzle | null };
 
-export function generateTestament(seed: number, people: TestamentItem[]): { puzzle: TestamentQuiz; items: TestamentItem[] } {
-  const random = rng(seed);
-  const books: TestamentItem[] = BOOKS.map((book) => ({ text: book, answer: bookTestament(book)! }));
-  const pool = [...shuffled(random, people).slice(0, 4), ...shuffled(random, books)].slice(0, TESTAMENT_ITEMS);
-  const items = shuffled(random, pool);
-  return { puzzle: { items: items.map((item) => item.text) }, items };
+/** Pontos de um conjunto (antes do fator da dificuldade): 70% pelas posições certas e 30% pela rapidez (só se acertou todas). */
+export function bookTurnPoints(rounds: number, right: number, total: number, seconds: number, timed: boolean): number {
+  const solved = right === total;
+  return Math.round(turnShare(rounds, timed) * (0.7 * (right / total) + (solved ? 0.3 * speedFactor(seconds, 6 * total) : 0)));
 }
 
-export function checkTestament(items: TestamentItem[], choices: Array<"OLD" | "NEW">, seconds: number): Outcome {
-  if (choices.length !== items.length) return { solved: false, score: 0, detail: "Resposta inválida" };
-  const right = choices.filter((choice, index) => choice === items[index].answer).length;
-  const solved = right >= items.length - 1;
-  return { solved, score: Math.round((right / items.length) * ACCURACY_MAX) + (solved ? timeBonus(seconds, 25) : 0), detail: `${right} de ${items.length} certos` };
+export function playBookOrder(state: BookOrderState, action: BookOrderAction, now: number): { state: BookOrderState; event: BookOrderEvent; done: boolean } {
+  const set = state.sets[state.current];
+  if (!set) throw new TurnError("A partida já terminou");
+  if (action.type === "begin") return { state: { ...state, clock: beginClock(state.clock, now) }, event: { kind: "begin" }, done: false };
+  if (action.type === "timeout" && !clockAlmostOver(state.clock, now)) throw new TurnError("Ainda há tempo");
+  const timedOut = action.type === "timeout" || clockExpired(state.clock, now);
+  let order: string[] = [];
+  if (action.type === "order" && !timedOut) {
+    order = action.order;
+    if (order.length !== set.length || new Set(order).size !== order.length || order.some((book) => !set.includes(book))) throw new TurnError("Ordem inválida");
+  }
+  const right = order.filter((book, index) => book === set[index]).length;
+  const seconds = Math.min(elapsedSeconds(state.clock, now), state.clock.timePerTurn ?? Infinity);
+  const points = timedOut ? 0 : bookTurnPoints(state.sets.length, right, set.length, seconds, state.clock.timePerTurn !== null);
+  const solved = right === set.length;
+  const results = [...state.results, { label: set.join(", "), solved, timedOut, points, seconds: Math.round(seconds) }];
+  const current = state.current + 1;
+  const next: BookOrderState = { ...state, results, current, clock: endClock(state.clock, now) };
+  const done = current >= state.sets.length;
+  return { state: next, event: { kind: "end", end: { right, total: set.length, solved, timedOut, correct: set, points }, next: done ? null : publicBookOrder(next) }, done };
+}
+
+export function bookOrderOutcome(state: BookOrderState): Outcome {
+  const solvedCount = state.results.filter((result) => result.solved).length;
+  const total = state.sets.length;
+  const score = Math.round(state.results.reduce((sum, result) => sum + result.points, 0) * LEVEL_SCALE[state.level]);
+  return { solved: solvedCount >= Math.ceil(total / 2), score, detail: `${solvedCount} de ${total} ${total === 1 ? "conjunto" : "conjuntos"} na ordem · ${LEVEL_LABEL[state.level]}` };
 }

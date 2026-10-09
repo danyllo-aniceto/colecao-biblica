@@ -141,38 +141,72 @@ describe.skipIf(!hasDatabase)("mini games: partidas", () => {
     expect(ranking.body.me.total).toBe(done.body.score);
   });
 
-  it("forca: a palavra nunca sai do servidor; palpites são conferidos lá e vencer rende moedas", async () => {
+  const act = (token: string, runId: string, body: object) => api.post(`/api/minigames/runs/${runId}/act`).set(bearer(token)).send(body);
+  const stateOf = async (runId: string) => (await prisma.miniGameRun.findUniqueOrThrow({ where: { id: runId } })).state as Record<string, any>;
+  const base = (text: string) => text.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/[^A-Z]/g, "");
+
+  it("forca em turnos: a palavra nunca sai do servidor; palpites conferidos lá; vencer todas rende moedas", async () => {
     const { userId, token } = await unlockAll();
-    const started = await start(token, "forca");
+    const started = await start(token, "forca", { difficulty: "facil", rounds: 3, time: 60 });
     expect(started.status).toBe(200);
     const { runId, puzzle } = started.body;
     expect(JSON.stringify(started.body)).not.toMatch(/"word"/);
-    expect(puzzle.maxErrors).toBe(6);
-    const stored = (await prisma.miniGameRun.findUniqueOrThrow({ where: { id: runId } })).state as { hangman: { word: string } };
-    const word = stored.hangman.word;
-    expect(puzzle.pattern.length).toBe(word.length);
-    expect((await api.post(`/api/minigames/runs/${runId}/guess`).set(bearer(token)).send({ letter: "12" })).status).toBe(400);
+    expect(puzzle).toMatchObject({ round: 0, maxErrors: 8, timePerRound: 60, level: "facil" });
+    const rounds = ((await prisma.miniGameRun.findUniqueOrThrow({ where: { id: runId } })).state as { state: { rounds: Array<{ word: string }> } }).state.rounds;
+    expect(puzzle.pattern.length).toBe(rounds[0].word.length);
+    expect((await act(token, runId, { action: "guess", letter: "12" })).status).toBe(400);
+    // Ainda há tempo: o servidor recusa o "tempo esgotado".
+    expect((await act(token, runId, { action: "timeout" })).status).toBe(400);
     let last: { status: string; result?: { coins: number; solved: boolean } } = { status: "playing" };
-    for (const letter of new Set([...word.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/[^A-Z]/g, "")])) {
-      const response = await api.post(`/api/minigames/runs/${runId}/guess`).set(bearer(token)).send({ letter });
-      expect(response.status).toBe(200);
-      last = response.body;
+    for (const round of rounds) {
+      for (const letter of new Set([...base(round.word)])) {
+        const response = await act(token, runId, { action: "guess", letter });
+        expect(response.status).toBe(200);
+        last = response.body;
+      }
+      await act(token, runId, { action: "begin" });
     }
     expect(last.status).toBe("won");
     expect(last.result).toMatchObject({ solved: true, coins: 10 });
-    expect((await api.post(`/api/minigames/runs/${runId}/guess`).set(bearer(token)).send({ letter: "A" })).status).toBe(400);
+    expect((await act(token, runId, { action: "guess", letter: "A" })).status).toBe(400);
     expect((await prisma.user.findUniqueOrThrow({ where: { id: userId } })).coins).toBeGreaterThanOrEqual(10);
+    expect((await start(token, "forca", { rounds: 4 })).status).toBe(400);
   });
 
-  it("forca: perder (6 erros) revela a palavra e não rende moedas", async () => {
+  it("forca: perder as palavras revela a resposta e não rende moedas", async () => {
     const { token } = await unlockAll();
-    const { runId } = (await start(token, "forca")).body as { runId: string };
-    const word = ((await prisma.miniGameRun.findUniqueOrThrow({ where: { id: runId } })).state as { hangman: { word: string } }).hangman.word;
-    const inWord = new Set(word.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase());
+    const { runId } = (await start(token, "forca", { rounds: 1, difficulty: "medio" })).body as { runId: string };
+    const word = ((await prisma.miniGameRun.findUniqueOrThrow({ where: { id: runId } })).state as { state: { rounds: Array<{ word: string }> } }).state.rounds[0].word;
+    const inWord = new Set(base(word));
     const wrong = [..."QWXZKYJVBPFGHU"].filter((letter) => !inWord.has(letter)).slice(0, 6);
-    let last: { status: string; word?: string; result?: { coins: number } } = { status: "playing" };
-    for (const letter of wrong) last = (await api.post(`/api/minigames/runs/${runId}/guess`).set(bearer(token)).send({ letter })).body;
-    expect(last).toMatchObject({ status: "lost", word, result: { coins: 0 } });
+    let last: { status: string; turn?: { end?: { answer: string } }; result?: { coins: number } } = { status: "playing" };
+    for (const letter of wrong) last = (await act(token, runId, { action: "guess", letter })).body;
+    expect(last).toMatchObject({ status: "lost", turn: { kind: "end", end: { answer: word } }, result: { coins: 0 } });
+  });
+
+  it("livros em ordem em turnos e antigo ou novo? conferidos no servidor", async () => {
+    const token = await unlockAll();
+    const livros = (await start(token, "livros", { difficulty: "facil", rounds: 3 })).body;
+    const sets = (await stateOf(livros.runId)).state.sets as string[][];
+    expect(livros.puzzle.books).toHaveLength(4);
+    expect(livros.puzzle.books[0].testament).not.toBeUndefined();
+    expect((await act(token, livros.runId, { action: "order", order: ["Gênesis"] })).status).toBe(400);
+    let last = { status: "playing" } as { status: string; result?: unknown };
+    for (const set of sets) last = (await act(token, livros.runId, { action: "order", order: set })).body;
+    expect(last).toMatchObject({ status: "won", result: { solved: true, coins: 10 } });
+
+    const testamento = (await start(token, "testamento", { difficulty: "medio", rounds: 10, time: 12 })).body;
+    const items = (await stateOf(testamento.runId)).state.items as Array<{ text: string; answer: string }>;
+    expect(items).toHaveLength(10);
+    expect(JSON.stringify(testamento.puzzle)).not.toMatch(/"answer"/);
+    const first = await act(token, testamento.runId, { action: "classify", choice: items[0].answer });
+    expect(first.body.turn).toMatchObject({ kind: "end", end: { right: true, correct: items[0].answer } });
+    let end = first.body;
+    for (const item of items.slice(1)) {
+      await act(token, testamento.runId, { action: "begin" });
+      end = (await act(token, testamento.runId, { action: "classify", choice: item.answer })).body;
+    }
+    expect(end).toMatchObject({ status: "won", result: { solved: true } });
   });
 
   it("os outros jogos começam sem erro e a resposta vazia não pontua", async () => {
@@ -275,22 +309,12 @@ describe.skipIf(!hasDatabase)("mini games: jogos novos e administrador", () => {
     expect((await start(user, "livros")).status).toBe(400);
   });
 
-  it("livros em ordem, antigo ou novo, complete o versículo e relâmpago: o servidor confere e dá as moedas", async () => {
+  it("complete o versículo e relâmpago: o servidor confere e dá as moedas", async () => {
     const token = await unlockAll();
     // Relâmpago precisa de perguntas: o seed de demonstração tem poucas.
     await prisma.question.createMany({
       data: Array.from({ length: 8 }, (_, index) => ({ text: `Pergunta extra ${index}?`, difficulty: "EASY" as const, timeLimitSeconds: 20, optionA: "Certa", optionB: "Errada B", optionC: "Errada C", optionD: "Errada D", correctOption: "A" })),
     });
-
-    const livros = (await start(token, "livros")).body;
-    const sorted = [...livros.puzzle.books].sort((a: string, b: string) => BOOKS.indexOf(a as never) - BOOKS.indexOf(b as never));
-    expect((await finish(token, livros.runId, { order: sorted })).body).toMatchObject({ solved: true, coins: 10 });
-
-    const testamento = (await start(token, "testamento")).body;
-    const items = (await stateOf(testamento.runId)).items as Array<{ answer: string }>;
-    expect(testamento.puzzle.items).toHaveLength(10);
-    expect(JSON.stringify(testamento.puzzle)).not.toMatch(/"answer"/);
-    expect((await finish(token, testamento.runId, { choices: items.map((item) => item.answer) })).body).toMatchObject({ solved: true, coins: 10 });
 
     const lacunas = (await start(token, "lacunas")).body;
     const blanks = await stateOf(lacunas.runId);
@@ -314,11 +338,11 @@ describe.skipIf(!hasDatabase)("mini games: jogos novos e administrador", () => {
     expect(run.puzzle).toMatchObject({ round: 0, timePerRound: 45, difficulty: "facil" });
     expect(run.puzzle.length).toBe(run.puzzle.letters.length);
     const wrong = await act(token, run.runId, { action: "check", word: "zzzz" });
-    expect(wrong.body).toMatchObject({ status: "playing", anagram: { kind: "wrong", attemptsLeft: 2 } });
+    expect(wrong.body).toMatchObject({ status: "playing", turn: { kind: "wrong", attemptsLeft: 2 } });
     // Ainda há tempo: o servidor recusa o "tempo esgotado".
     expect((await act(token, run.runId, { action: "timeout" })).status).toBe(400);
     let last = (await act(token, run.runId, { action: "check", word: rounds[0].word })).body;
-    expect(last.anagram).toMatchObject({ kind: "end", end: { right: true, answer: rounds[0].word } });
+    expect(last.turn).toMatchObject({ kind: "end", end: { right: true, answer: rounds[0].word } });
     for (let index = 1; index < rounds.length; index += 1) {
       await act(token, run.runId, { action: "begin" });
       last = (await act(token, run.runId, { action: "check", word: rounds[index].word })).body;

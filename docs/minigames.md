@@ -90,3 +90,11 @@ sons próprios (`lib/sound/sfx.ts`, nomes `ws*` etc.) e imagens do painel. Padr�
 - Servidor (`/act`): `check`, `skip`, `timeout` e `begin` (o relógio do nome só corre depois do `begin`, para o jogador ver o resultado sem perder tempo); o tempo vence no servidor com 3 s de folga. As palavras das últimas 8 partidas ficam por último no sorteio.
 - Dicas sem HTML: `plainText` (`minigames/common.ts`) limpa tags e entidades dos textos do painel antes de virarem dica (vale para forca, cruzadas e quem sou eu?).
 - Sons próprios (`an*`); teclado no computador (letras, Backspace, Enter); retrato do personagem/lugar se revela ao acertar.
+
+### Seção A — Forca, Antigo ou Novo?, Livros em ordem (feito)
+
+Base compartilhada: `backend/src/minigames/turns.ts` (dificuldade, fator 60/80/100%, relógio por turno conferido no servidor com folga de 3 s, `begin` para o tempo não correr no resultado) e, no app, `games/turn-kit.tsx` (preparo, bolinhas de turnos, barra de tempo, cartão de resultado, `useTurnAct`). Os jogos em turnos passam por `TURN_GAMES` em `services/minigame-play.ts` (`POST /runs/:id/act` com `action`: `guess`, `reveal`, `classify`, `order`, `skip`, `timeout`, `begin`...). O eventos voltam em `turn`.
+
+- **Forca**: fácil (3–6 letras, 8 vidas, 2 dicas de letra, retrato que clareia a cada acerto) · médio (5–9, 6 vidas) · difícil (7–14, 5 vidas, 1 dica, sem retrato). 1, 3 ou 5 palavras; tempo por palavra opcional (30–120 s). Letra revelada desconta 15% do turno.
+- **Antigo ou Novo?**: fácil (livros conhecidos) · médio (66 livros) · difícil (livros menos conhecidos); 40% personagens. 10, 15 ou 20 itens; tempo por item opcional (5–15 s). O servidor confere cada resposta e devolve o certo (e o retrato do personagem); sequência de acertos; vence com 80%.
+- **Livros em ordem**: fácil (4 livros espalhados, com AT/NT) · médio (6) · difícil (8 próximos). 1, 3 ou 5 conjuntos; tempo opcional (30–180 s). Ao conferir mostra a ordem certa e onde errou.

@@ -1,5 +1,6 @@
 import { lettersOnly, rng, shuffled, type Outcome, type Random } from "./common";
 import { maskHint } from "./hangman";
+import { TurnError } from "./turns";
 
 /**
  * Anagrama em turnos: cada turno é um nome com as letras embaralhadas, 3 tentativas e, se o jogador quiser, um tempo por nome.
@@ -124,7 +125,7 @@ export type AnagramEvent =
   | { kind: "wrong"; attemptsLeft: number }
   | { kind: "end"; end: RoundEnd; next: AnagramPuzzle | null };
 
-export class AnagramError extends Error {}
+export const AnagramError = TurnError;
 
 /** Aplica uma jogada. Se o tempo do nome já venceu, o nome termina como "tempo esgotado" seja qual for a jogada. */
 export function playAnagram(state: AnagramState, action: AnagramAction, now: number): { state: AnagramState; event: AnagramEvent; done: boolean } {

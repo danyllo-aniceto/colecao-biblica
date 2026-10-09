@@ -94,10 +94,10 @@ export type MiniGameDef = { id: string; name: string; emoji: string; text: strin
 export const MINI_GAMES: MiniGameDef[] = [
   { id: "caca-palavras", name: "Caça-palavras", emoji: "🔎", text: "Ache os nomes de personagens e lugares escondidos na grade, contra o tempo.", stoneSlot: 1, ready: true },
   { id: "anagrama", name: "Anagrama", emoji: "🔤", text: "Nomes com as letras embaralhadas: monte cada um em até 3 tentativas, em vários turnos e com tempo opcional.", stoneSlot: 1, ready: true },
-  { id: "forca", name: "Forca", emoji: "🪢", text: "Descubra o personagem ou o lugar letra por letra, com uma dica.", stoneSlot: 2, ready: true },
-  { id: "testamento", name: "Antigo ou Novo?", emoji: "📜", text: "Livros e personagens: de que Testamento é cada um? Rápido, são 10.", stoneSlot: 2, ready: true },
+  { id: "forca", name: "Forca", emoji: "🪢", text: "Descubra o personagem ou o lugar letra por letra, em vários turnos, com dica, retrato e tempo opcional.", stoneSlot: 2, ready: true },
+  { id: "testamento", name: "Antigo ou Novo?", emoji: "📜", text: "Livros e personagens: de que Testamento é cada um? Escolha a dificuldade, a quantidade e o tempo.", stoneSlot: 2, ready: true },
   { id: "quebra-cabeca", name: "Quebra-cabeça", emoji: "🧩", text: "Monte a figurinha ou o mapa do cenário peça por peça.", stoneSlot: 3, ready: true },
-  { id: "livros", name: "Livros em ordem", emoji: "📚", text: "Ponha 6 livros da Bíblia na ordem em que aparecem.", stoneSlot: 3, ready: true },
+  { id: "livros", name: "Livros em ordem", emoji: "📚", text: "Ponha livros da Bíblia na ordem em que aparecem, em conjuntos de 4, 6 ou 8.", stoneSlot: 3, ready: true },
   { id: "memoria", name: "Memória", emoji: "🃏", text: "Una os pares: cenário e referência bíblica.", stoneSlot: 4, ready: true },
   { id: "relampago", name: "Relâmpago", emoji: "⚡", text: "Verdadeiro ou falso? 10 afirmações tiradas das perguntas do quiz.", stoneSlot: 4, ready: true },
   { id: "versiculo", name: "Versículo em pedaços", emoji: "📖", text: "Ordene as palavras do versículo.", stoneSlot: 5, ready: true },

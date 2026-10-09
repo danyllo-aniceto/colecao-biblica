@@ -5,7 +5,7 @@ import { Segmented } from '@/components/ui/segmented';
 import { Switch } from '@/components/ui/switch';
 import { errorMessage } from '@/components/ui/toast';
 import { cn } from '@/lib/cn';
-import { actMiniGame, type AnagramDifficulty, type AnagramPuzzle, type AnagramRoundEnd, type MiniGameResult } from '@/lib/minigames-api';
+import { actMiniGame, type AnagramDifficulty, type AnagramEvent, type AnagramPuzzle, type AnagramRoundEnd, type MiniGameResult } from '@/lib/minigames-api';
 import { playSfx } from '@/lib/sound/sfx';
 import { clock, type GameProps, type SetupRender } from './play-frame';
 
@@ -137,7 +137,7 @@ export function AnagramGame({ puzzle, runId, report, finished }: GameProps<Anagr
       setMessage(null);
       try {
         const response = await actMiniGame(runId, body);
-        const event = response.anagram;
+        const event = response.turn as AnagramEvent | undefined;
         if (event?.kind === 'wrong') {
           setAttemptsLeft(event.attemptsLeft);
           setMessage(event.attemptsLeft === 1 ? 'Ainda não é esse. Última tentativa!' : 'Ainda não é esse. Tente de novo!');
