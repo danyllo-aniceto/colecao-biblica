@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,23 @@ import { cn } from '@/lib/cn';
 import { getMiniGames, getMiniRanking, type MiniGameInfo, type MiniGamesOverview, type MiniRankingPage } from '@/lib/minigames-api';
 
 type Tab = 'games' | 'ranking' | 'gallery';
+
+/** O jogo ocupa a tela inteira (igual para o jogador e para o administrador testando): por cima do app, com rolagem própria. */
+function FullScreen({ children }: { children: ReactNode }) {
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, []);
+  return createPortal(
+    <div role="dialog" aria-modal="true" aria-label="Mini game" className="fixed inset-0 z-[60] overflow-y-auto bg-bg px-4 pb-10 pt-[max(1rem,env(safe-area-inset-top))]">
+      {children}
+    </div>,
+    document.body,
+  );
+}
 
 function GameCard({ game, onPlay }: { game: MiniGameInfo; onPlay: (game: MiniGameInfo) => void }) {
   const state = !game.unlocked ? 'locked' : game.ready ? 'ready' : 'soon';
@@ -133,14 +151,16 @@ export function MiniGamesHub({ currentUserId, onWallet }: { currentUserId?: numb
 
   if (playing) {
     return (
-      <MiniGamePlay
-        game={playing}
-        onWallet={onWallet}
-        onExit={() => {
-          setPlaying(null);
-          setReload((value) => value + 1);
-        }}
-      />
+      <FullScreen>
+        <MiniGamePlay
+          game={playing}
+          onWallet={onWallet}
+          onExit={() => {
+            setPlaying(null);
+            setReload((value) => value + 1);
+          }}
+        />
+      </FullScreen>
     );
   }
 
