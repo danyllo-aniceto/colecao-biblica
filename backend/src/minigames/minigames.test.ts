@@ -4,7 +4,6 @@ import { applyGuess, guessLetter, isLost, isWon, maskHint, pattern, type Hangman
 import { checkMaze, generateMaze, shortestPath, type Maze } from "./maze";
 import { checkMemory, generateMemory } from "./memory";
 import { checkSwapPuzzle, generateSwapPuzzle, minimumSwaps } from "./swap-puzzle";
-import { checkVerse, generateVerse, usableVerse } from "./verse";
 import { checkWordSearch, DIFFICULTIES, generateWordSearch, gridSize, HINT_PENALTY, selectionSpells, wordSearchCandidates, type Difficulty, type Found, type GeneratedWordSearch, type WordSearch, type WordSearchState } from "./wordsearch";
 
 const NAMES = ["Moisés", "Abraão", "Davi", "Salomão", "Débora", "Gideão", "Samuel", "Rute", "Ester", "Daniel", "Elias", "Eliseu", "Jonas", "Noé", "Isaías", "Jeremias", "Ezequiel", "Josué", "Jacó", "Isaque", "Gabriel", "Miguel", "Pedro", "Tiago", "Mateus", "Lucas", "Marcos", "Paulo", "Timóteo", "Estêvão", "Barnabé", "Lázaro", "Zaqueu", "Nicodemos"];
@@ -244,35 +243,6 @@ describe("memória", () => {
     expect(checkMemory(memory, perfect().slice(0, 10), 10).solved).toBe(false);
     // Virar de novo uma carta que já foi achada é inválido.
     expect(checkMemory(memory, [...perfect(), 0, 1], 10).detail).toBe("Jogadas inválidas");
-  });
-});
-
-describe("versículo em pedaços", () => {
-  const source = { verse: "O Senhor é o meu pastor e nada me faltará", reference: "Salmos 23:1" };
-
-  it("só serve versículo de 6 a 22 palavras", () => {
-    expect(usableVerse(source)).toBe(true);
-    expect(usableVerse({ verse: "Jesus chorou.", reference: "João 11:35" })).toBe(false);
-  });
-
-  it("tocar na ordem certa pontua cheio; erros custam; trocar palavras iguais vale", () => {
-    const { puzzle, words } = generateVerse(2, source);
-    expect(puzzle.chips).toHaveLength(words.length);
-    expect([...puzzle.chips].sort()).toEqual([...words].sort());
-    expect(puzzle.chips).not.toEqual(words);
-    const used = new Set<number>();
-    const taps = words.map((word) => {
-      const index = puzzle.chips.findIndex((chip, at) => chip === word && !used.has(at));
-      used.add(index);
-      return index;
-    });
-    expect(checkVerse(puzzle, words, taps, 5)).toMatchObject({ solved: true, score: 1000 });
-    // Um toque errado no meio conta 1 erro.
-    const first = taps[0];
-    const wrong = puzzle.chips.findIndex((chip, at) => chip !== words[1] && at !== taps[0] && !taps.slice(0, 1).includes(at));
-    expect(checkVerse(puzzle, words, [first, wrong, ...taps.slice(1)], 5).score).toBe(1000 - 60);
-    expect(checkVerse(puzzle, words, taps.slice(0, 3), 5).solved).toBe(false);
-    expect(checkVerse(puzzle, words, [...taps, taps[0]], 5).solved).toBe(false);
   });
 });
 

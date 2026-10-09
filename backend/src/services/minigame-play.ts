@@ -4,13 +4,13 @@ import { env } from "../lib/env";
 import { badRequest, notFound } from "../lib/errors";
 import { z } from "../lib/validation";
 import { hangmanGameOutcome, maskHint, newHangman, pickHangmanRounds, playHangman, publicHangman, ROUND_CHOICES as HANGMAN_ROUNDS, TIME_CHOICES as HANGMAN_TIMES, type HangmanGameState } from "../minigames/hangman";
-import { lettersOnly, shuffled, rng, type Outcome } from "../minigames/common";
+import { lettersOnly, plainText, shuffled, rng, type Outcome } from "../minigames/common";
 import { anagramOutcome, newAnagram, pickRounds, playAnagram, publicRound, ROUND_CHOICES as ANAGRAM_ROUNDS, TIME_CHOICES as ANAGRAM_TIMES, type AnagramState } from "../minigames/anagram";
 import { bookOrderOutcome, BOOK_TIME_CHOICES, newBookOrder, playBookOrder, publicBookOrder, ROUND_CHOICES as BOOK_ROUNDS, type BookOrderState } from "../minigames/books";
 import { COUNT_CHOICES as TESTAMENT_COUNTS, newTestament, pickTestamentItems, playTestament, publicTestament, testamentOutcome, TIME_CHOICES as TESTAMENT_TIMES, type TestamentState } from "../minigames/testament";
 import { LEVEL_IDS, TurnError, type Level } from "../minigames/turns";
-import { checkBlitz, generateBlitz, type BlitzState } from "../minigames/blitz";
-import { checkBlanks, generateBlanks, usableForBlanks, type BlanksState } from "../minigames/verse-blanks";
+import { blitzOutcome, COUNT_CHOICES as BLITZ_COUNTS, newBlitz, pickBlitzItems, playBlitz, publicBlitz, TIME_CHOICES as BLITZ_TIMES, type BlitzState } from "../minigames/blitz";
+import { blanksOutcome, newBlanks, pickBlanksRounds, playBlanks, publicBlanks, ROUND_CHOICES as BLANKS_ROUNDS, TIME_CHOICES as BLANKS_TIMES, type BlanksState } from "../minigames/verse-blanks";
 import { generateWhoAmI, whoAmIOutcome, type WhoAmIState } from "../minigames/whoami";
 import { checkCrossword, generateCrossword, type CrosswordState } from "../minigames/crossword";
 import { checkChain, generateChain, type ChainState } from "../minigames/graph";
@@ -20,7 +20,7 @@ import { checkTimeline, generateTimeline, type TimelineState } from "../minigame
 import { checkMaze, generateMaze, type Maze } from "../minigames/maze";
 import { checkMemory, generateMemory, MEMORY_PAIRS, type Memory } from "../minigames/memory";
 import { checkSwapPuzzle, generateSwapPuzzle, type SwapPuzzle } from "../minigames/swap-puzzle";
-import { checkVerse, generateVerse, usableVerse, type VersePuzzle } from "../minigames/verse";
+import { newVerse, pickVerseRounds, playVerse, publicVerse, ROUND_CHOICES as VERSE_ROUNDS, TIME_CHOICES as VERSE_TIMES, verseOutcome, type VerseState } from "../minigames/verse";
 import { checkWordSearch, DIFFICULTY_IDS, generateWordSearch, THEME_IDS, wordSearchCandidates, type WordSearchState } from "../minigames/wordsearch";
 import { dayKeyInTimeZone, MINI_GAME_DAILY_COIN_WINS, MINI_GAME_WIN_COINS } from "./game-rules";
 import { getMiniGames, recordMiniGameScore } from "./minigames";
@@ -35,7 +35,7 @@ type RunState =
   | { game: "forca"; state: HangmanGameState }
   | { game: "quebra-cabeca"; puzzle: SwapPuzzle }
   | { game: "memoria"; memory: Memory }
-  | { game: "versiculo"; puzzle: VersePuzzle; words: string[] }
+  | { game: "versiculo"; state: VerseState }
   | { game: "labirinto"; maze: Maze }
   | { game: "anagrama"; state: AnagramState }
   | { game: "testamento"; state: TestamentState }
@@ -82,6 +82,9 @@ const TURN_GAMES: Record<string, TurnGame> = {
   anagrama: turnGame<AnagramState, Parameters<typeof playAnagram>[1]>({ play: playAnagram, outcome: anagramOutcome, words: (state) => state.rounds.map((round) => round.word) }),
   forca: turnGame<HangmanGameState, Parameters<typeof playHangman>[1]>({ play: playHangman, outcome: hangmanGameOutcome, words: (state) => state.rounds.map((round) => round.word) }),
   testamento: turnGame<TestamentState, Parameters<typeof playTestament>[1]>({ play: playTestament, outcome: testamentOutcome, words: (state) => state.items.map((item) => item.text) }),
+  relampago: turnGame<BlitzState, Parameters<typeof playBlitz>[1]>({ play: playBlitz, outcome: blitzOutcome, words: (state) => state.items.map((item) => item.question) }),
+  versiculo: turnGame<VerseState, Parameters<typeof playVerse>[1]>({ play: playVerse, outcome: verseOutcome, words: (state) => state.rounds.map((round) => round.reference) }),
+  lacunas: turnGame<BlanksState, Parameters<typeof playBlanks>[1]>({ play: playBlanks, outcome: blanksOutcome, words: (state) => state.rounds.map((round) => round.reference) }),
   livros: turnGame<BookOrderState, Parameters<typeof playBookOrder>[1]>({ play: playBookOrder, outcome: bookOrderOutcome, words: (state) => state.sets.flat() }),
 };
 
@@ -90,10 +93,7 @@ const answers = {
   "caca-palavras": z.object({ found: z.array(found).max(20) }),
   "quebra-cabeca": z.object({ swaps: z.array(z.tuple([z.number().int(), z.number().int()])).max(400) }),
   memoria: z.object({ flips: z.array(z.number().int()).max(400) }),
-  versiculo: z.object({ taps: z.array(z.number().int()).max(400) }),
   labirinto: z.object({ moves: z.string().max(2000) }),
-  relampago: z.object({ answers: z.array(z.boolean()).max(20) }),
-  lacunas: z.object({ fills: z.array(z.string().max(40)).max(10) }),
   "linha-do-tempo": z.object({ order: z.array(z.string().max(20)).max(20) }),
   mapa: z.object({ guesses: z.array(z.object({ lat: z.number(), lon: z.number() })).max(10) }),
   arvore: z.object({ fathers: z.array(z.string().max(30)).max(10), links: z.array(z.string().max(30)).max(10) }),
@@ -115,10 +115,17 @@ async function loadContent() {
 
 /** Perguntas do quiz (só para o Relâmpago): texto, alternativa certa e as erradas. */
 async function loadBlitzQuestions() {
-  const rows = await prisma.question.findMany({ where: { active: true }, take: 400, select: { text: true, optionA: true, optionB: true, optionC: true, optionD: true, correctOption: true } });
+  const rows = await prisma.question.findMany({ where: { active: true }, take: 600, select: { text: true, difficulty: true, optionA: true, optionB: true, optionC: true, optionD: true, correctOption: true, explanation: true, bibleReference: true } });
   return rows.map((row) => {
     const options: Record<string, string> = { A: row.optionA, B: row.optionB, C: row.optionC, D: row.optionD };
-    return { text: row.text, correct: options[row.correctOption], wrong: Object.entries(options).filter(([letter]) => letter !== row.correctOption).map(([, text]) => text) };
+    return {
+      text: row.text,
+      correct: options[row.correctOption],
+      wrong: Object.entries(options).filter(([letter]) => letter !== row.correctOption).map(([, text]) => text),
+      difficulty: row.difficulty,
+      explanation: row.explanation ? plainText(row.explanation) : null,
+      reference: row.bibleReference,
+    };
   });
 }
 
@@ -159,11 +166,12 @@ function build(game: string, seed: number, content: Awaited<ReturnType<typeof lo
       return { state: { game, memory }, puzzle: memory };
     }
     case "versiculo": {
-      const sources = content.scenarios.filter((scenario) => scenario.verse && scenario.verseReference).map((scenario) => ({ verse: scenario.verse!, reference: scenario.verseReference! })).filter(usableVerse);
-      if (sources.length === 0) throw badRequest("Ainda não há versículos para este jogo");
-      const { puzzle, words } = generateVerse(seed, shuffled(random, sources)[0]);
-      // A ordem certa vai junto para a tela dar o retorno de cada toque; o servidor confere tudo de novo no fim.
-      return { state: { game, puzzle, words }, puzzle: { ...puzzle, words } };
+      const sources = content.scenarios.filter((scenario) => scenario.verse && scenario.verseReference).map((scenario) => ({ verse: scenario.verse!, reference: scenario.verseReference!, title: scenario.name, imageUrl: scenario.mapImageUrl }));
+      const level = levelOf(extras.options.difficulty);
+      const rounds = pickVerseRounds(random, sources, level, choose(extras.options.rounds, VERSE_ROUNDS, 3), extras.recentWords);
+      if (rounds.length === 0) throw badRequest("Ainda não há versículos para esta dificuldade");
+      const state = newVerse(seed, rounds, level, chooseTime(extras.options.time, VERSE_TIMES), Date.now());
+      return { state: { game, state }, puzzle: publicVerse(state) };
     }
     case "labirinto": {
       const maze = generateMaze(seed);
@@ -195,15 +203,19 @@ function build(game: string, seed: number, content: Awaited<ReturnType<typeof lo
     }
     case "relampago": {
       if (questions.length < 5) throw badRequest("Ainda não há perguntas suficientes para este jogo");
-      const { state, puzzle } = generateBlitz(seed, questions);
-      return { state: { game, state }, puzzle };
+      const level = levelOf(extras.options.difficulty);
+      const items = pickBlitzItems(random, questions, level, choose(extras.options.rounds, BLITZ_COUNTS, 10), extras.recentWords);
+      const state = newBlitz(seed, items, level, chooseTime(extras.options.time, BLITZ_TIMES), Date.now());
+      return { state: { game, state }, puzzle: publicBlitz(state) };
     }
     case "lacunas": {
-      const sources = content.scenarios.filter((scenario) => scenario.verse && scenario.verseReference && usableForBlanks(scenario.verse)).map((scenario) => ({ verse: scenario.verse!, reference: scenario.verseReference! }));
-      if (sources.length === 0) throw badRequest("Ainda não há versículos para este jogo");
+      const sources = content.scenarios.filter((scenario) => scenario.verse && scenario.verseReference).map((scenario) => ({ verse: scenario.verse!, reference: scenario.verseReference!, title: scenario.name, imageUrl: scenario.mapImageUrl }));
       const decoys = content.scenarios.flatMap((scenario) => (scenario.verse ?? "").split(/\s+/)).map((word) => word.replace(/[^\p{L}'’-]/gu, ""));
-      const { state, puzzle } = generateBlanks(seed, shuffled(random, sources)[0], decoys);
-      return { state: { game, state }, puzzle };
+      const level = levelOf(extras.options.difficulty);
+      const rounds = pickBlanksRounds(random, sources, level, choose(extras.options.rounds, BLANKS_ROUNDS, 3), extras.recentWords, decoys);
+      if (rounds.length === 0) throw badRequest("Ainda não há versículos para esta dificuldade");
+      const state = newBlanks(seed, rounds, level, chooseTime(extras.options.time, BLANKS_TIMES), Date.now());
+      return { state: { game, state }, puzzle: publicBlanks(state) };
     }
     case "linha-do-tempo": {
       const { state, puzzle } = generateTimeline(seed);
@@ -321,17 +333,8 @@ export async function finishMiniGame(userId: number, runId: string, body: unknow
     case "memoria":
       outcome = checkMemory(state.memory, answers.memoria.parse(body).flips, seconds);
       break;
-    case "versiculo":
-      outcome = checkVerse(state.puzzle, state.words, answers.versiculo.parse(body).taps, seconds);
-      break;
     case "labirinto":
       outcome = checkMaze(state.maze, answers.labirinto.parse(body).moves, seconds);
-      break;
-    case "relampago":
-      outcome = checkBlitz(state.state, answers.relampago.parse(body).answers, seconds);
-      break;
-    case "lacunas":
-      outcome = checkBlanks(state.state, answers.lacunas.parse(body).fills, seconds);
       break;
     case "linha-do-tempo":
       outcome = checkTimeline(state.state, answers["linha-do-tempo"].parse(body).order, seconds);
@@ -384,6 +387,9 @@ const actBody = z.discriminatedUnion("action", [
   z.object({ action: z.literal("guess"), letter: z.string().min(1).max(4) }),
   z.object({ action: z.literal("reveal") }),
   z.object({ action: z.literal("classify"), choice: z.enum(["OLD", "NEW"]) }),
+  z.object({ action: z.literal("judge"), value: z.boolean() }),
+  z.object({ action: z.literal("tap"), index: z.number().int() }),
+  z.object({ action: z.literal("fill"), fills: z.array(z.string().max(40)).max(8) }),
   z.object({ action: z.literal("order"), order: z.array(z.string().max(40)).max(12) }),
 ]);
 

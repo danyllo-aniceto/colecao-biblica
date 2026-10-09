@@ -2,9 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ANAGRAM_ATTEMPTS, anagramMatches, anagramOutcome, generateAnagram, newAnagram, pickRounds, playAnagram, publicRound, roundPoints, TIME_GRACE, type AnagramState } from "./anagram";
 import { plainText, rng } from "./common";
 import { maskHint } from "./hangman";
-import { checkBlitz, generateBlitz, type BlitzQuestion } from "./blitz";
 import { BOOKS, bookTestament } from "./books";
-import { checkBlanks, generateBlanks, usableForBlanks } from "./verse-blanks";
 import { cluesOf, generateWhoAmI, whoAmIOutcome, type Person } from "./whoami";
 
 describe("livros da Bíblia", () => {
@@ -140,49 +138,5 @@ describe("quem sou eu?", () => {
     expect(whoAmIOutcome({ ...state, shown: 5 }, state.answer, 5).score).toBe(100 + 300);
     const wrong = (state.answer + 1) % 4;
     expect(whoAmIOutcome(state, wrong, 5)).toMatchObject({ solved: false, score: 0 });
-  });
-});
-
-describe("complete o versículo", () => {
-  const source = { verse: "Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito.", reference: "João 3:16" };
-
-  it("só serve versículo com palavras longas o bastante", () => {
-    expect(usableForBlanks(source.verse)).toBe(true);
-    expect(usableForBlanks("Jesus chorou.")).toBe(false);
-  });
-
-  it("sorteia 3 lacunas separadas, oferece as certas e 3 enfeites; só acertar tudo vence", () => {
-    const { state, puzzle } = generateBlanks(6, source, ["Egito", "Faraó", "deserto", "Jordão", "mundo"]);
-    expect(state.answers).toHaveLength(3);
-    expect(puzzle.parts.filter((part) => part.blank !== null)).toHaveLength(3);
-    expect(puzzle.parts.filter((part) => part.blank !== null).map((part) => part.blank)).toEqual([0, 1, 2]);
-    expect(puzzle.options).toHaveLength(6);
-    for (const answer of state.answers) expect(puzzle.options).toContain(answer);
-    const rebuilt = puzzle.parts.map((part) => (part.blank === null ? part.text : `${part.prefix}${state.answers[part.blank]}${part.suffix}`)).join(" ");
-    expect(rebuilt).toBe(source.verse);
-    expect(checkBlanks(state, state.answers.map((word) => word.toLowerCase()), 5)).toMatchObject({ solved: true, score: 1000 });
-    expect(checkBlanks(state, [state.answers[0], state.answers[1], "Egito"], 5)).toMatchObject({ solved: false, score: Math.round((2 / 3) * 700) });
-    expect(checkBlanks(state, ["x"], 5).detail).toBe("Resposta inválida");
-  });
-});
-
-describe("relâmpago", () => {
-  const questions: BlitzQuestion[] = Array.from({ length: 14 }, (_, index) => ({ text: `Pergunta ${index}?`, correct: `Certa ${index}`, wrong: [`Errada ${index}a`, `Errada ${index}b`, `Errada ${index}c`] }));
-
-  it("10 afirmações, metade verdadeiras; a conferência é pelo gabarito", () => {
-    const { state, puzzle } = generateBlitz(9, questions);
-    expect(puzzle.statements).toHaveLength(10);
-    expect(state.truths.filter(Boolean)).toHaveLength(5);
-    puzzle.statements.forEach((statement, index) => expect(statement.answer.startsWith("Certa")).toBe(state.truths[index]));
-    expect(checkBlitz(state, state.truths, 5)).toMatchObject({ solved: true, score: 1000 });
-    const two = state.truths.map((value, index) => (index < 2 ? !value : value));
-    expect(checkBlitz(state, two, 5).solved).toBe(true);
-    const three = state.truths.map((value, index) => (index < 3 ? !value : value));
-    expect(checkBlitz(state, three, 5).solved).toBe(false);
-    expect(checkBlitz(state, [true], 5).detail).toBe("Resposta inválida");
-  });
-
-  it("com poucas perguntas usa as que houver", () => {
-    expect(generateBlitz(1, questions.slice(0, 6)).puzzle.statements).toHaveLength(6);
   });
 });

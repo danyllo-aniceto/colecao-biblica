@@ -98,3 +98,11 @@ Base compartilhada: `backend/src/minigames/turns.ts` (dificuldade, fator 60/80/1
 - **Forca**: fácil (3–6 letras, 8 vidas, 2 dicas de letra, retrato que clareia a cada acerto) · médio (5–9, 6 vidas) · difícil (7–14, 5 vidas, 1 dica, sem retrato). 1, 3 ou 5 palavras; tempo por palavra opcional (30–120 s). Letra revelada desconta 15% do turno.
 - **Antigo ou Novo?**: fácil (livros conhecidos) · médio (66 livros) · difícil (livros menos conhecidos); 40% personagens. 10, 15 ou 20 itens; tempo por item opcional (5–15 s). O servidor confere cada resposta e devolve o certo (e o retrato do personagem); sequência de acertos; vence com 80%.
 - **Livros em ordem**: fácil (4 livros espalhados, com AT/NT) · médio (6) · difícil (8 próximos). 1, 3 ou 5 conjuntos; tempo opcional (30–180 s). Ao conferir mostra a ordem certa e onde errou.
+
+### Seção B — Relâmpago, Versículo em pedaços, Complete o versículo (feito)
+
+Mesmo molde da seção A (turnos via `act`, preparo, `turns.ts`).
+
+- **Relâmpago**: a dificuldade escolhe a dificuldade das perguntas do quiz (fácil: EASY · médio: MEDIUM+EASY · difícil: HARD/VERY_HARD; completa com outras se faltar). 10, 15 ou 20 afirmações; tempo por afirmação opcional (8–20 s). Cada julgamento é conferido no servidor (`judge`) e volta com a explicação e a referência da pergunta; sequência de acertos; vence com 80%.
+- **Versículo em pedaços**: fácil (6–11 palavras, 3 dicas) · médio (9–16, 2) · difícil (14–22, 1). 1, 3 ou 5 versículos; tempo opcional (30–180 s). A ordem não vai mais para a tela: cada toque (`tap`) é conferido; `hint` destaca a próxima ficha (−12%), erro −8%. Ao terminar mostra o versículo, o cenário e a imagem do mapa.
+- **Complete o versículo**: fácil (2 lacunas, 2 enfeites) · médio (3, 3) · difícil (4 lacunas, 5 enfeites de tamanho parecido, versículos longos). 1, 3 ou 5 versículos; tempo opcional (30–120 s). Uma tentativa por versículo (`fill`); ao conferir mostra o que acertou, o que digitou e o versículo inteiro.

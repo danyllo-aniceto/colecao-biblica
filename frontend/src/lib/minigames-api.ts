@@ -97,7 +97,13 @@ export type HangmanEvent =
   | { kind: 'end'; end: HangmanEnd; pattern: Array<string | null>; errors: number; next: HangmanPuzzle | null };
 export type SwapPuzzle = { side: number; order: number[]; imageUrl: string | null; title: string };
 export type MemoryPuzzle = { cards: Array<{ pair: number; text: string }> };
-export type VersePuzzle = { reference: string; chips: string[]; length: number; words: string[] };
+export type VersePuzzle = { round: number; rounds: number; reference: string; chips: string[]; length: number; hintsLeft: number; timePerRound: number | null; level: TurnLevel; maxScore: number };
+export type VerseEnd = { right: boolean; timedOut: boolean; reference: string; text: string; title: string; imageUrl: string | null; errors: number; points: number };
+export type VerseEvent =
+  | { kind: 'begin' }
+  | { kind: 'tap'; index: number; right: boolean; errors: number }
+  | { kind: 'hint'; index: number; hintsLeft: number }
+  | { kind: 'end'; end: VerseEnd; next: VersePuzzle | null };
 export type MazePuzzle = { width: number; height: number; cells: number[] };
 
 export type AnagramDifficulty = 'facil' | 'medio' | 'dificil';
@@ -130,9 +136,13 @@ export type BooksEvent = { kind: 'begin' } | { kind: 'end'; end: BooksEnd; next:
 export type TestamentPuzzle = { index: number; total: number; text: string; kind: 'book' | 'person'; timePerItem: number | null; level: TurnLevel; maxScore: number };
 export type TestamentEnd = { right: boolean; timedOut: boolean; correct: 'OLD' | 'NEW'; text: string; imageUrl: string | null; points: number };
 export type TestamentEvent = { kind: 'begin' } | { kind: 'end'; end: TestamentEnd; next: TestamentPuzzle | null };
-export type BlitzPuzzle = { statements: Array<{ question: string; answer: string }> };
+export type BlitzPuzzle = { index: number; total: number; question: string; answer: string; timePerItem: number | null; level: TurnLevel; maxScore: number };
+export type BlitzEnd = { right: boolean; timedOut: boolean; truth: boolean; correct: string; question: string; explanation: string | null; reference: string | null; points: number };
+export type BlitzEvent = { kind: 'begin' } | { kind: 'end'; end: BlitzEnd; next: BlitzPuzzle | null };
 export type BlanksPart = { text: string; blank: number | null; prefix?: string; suffix?: string };
-export type BlanksPuzzle = { reference: string; parts: BlanksPart[]; options: string[] };
+export type BlanksPuzzle = { round: number; rounds: number; reference: string; parts: BlanksPart[]; options: string[]; timePerRound: number | null; level: TurnLevel; maxScore: number };
+export type BlanksEnd = { right: number; total: number; solved: boolean; timedOut: boolean; answers: string[]; fills: string[]; reference: string; text: string; title: string; imageUrl: string | null; points: number };
+export type BlanksEvent = { kind: 'begin' } | { kind: 'end'; end: BlanksEnd; next: BlanksPuzzle | null };
 export type WhoAmIPuzzle = { clue: string; shown: number; total: number; options: string[] };
 
 /** Passo a passo no servidor (anagrama: palpites; quem sou eu?: dicas e resposta). */

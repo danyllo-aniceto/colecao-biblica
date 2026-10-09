@@ -211,7 +211,7 @@ describe.skipIf(!hasDatabase)("mini games: partidas", () => {
 
   it("os outros jogos começam sem erro e a resposta vazia não pontua", async () => {
     const { token } = await unlockAll();
-    for (const [game, body] of [["caca-palavras", { found: [] }], ["quebra-cabeca", { swaps: [] }], ["memoria", { flips: [] }], ["versiculo", { taps: [] }]] as const) {
+    for (const [game, body] of [["caca-palavras", { found: [] }], ["quebra-cabeca", { swaps: [] }], ["memoria", { flips: [] }]] as const) {
       const started = await start(token, game);
       expect(started.status, game).toBe(200);
       const result = await finish(token, started.body.runId, body);
@@ -228,7 +228,7 @@ describe.skipIf(!hasDatabase)("mini games: partidas", () => {
     const { userId, token } = await unlockAll(false);
     // Vitória rápida de 4 jogos: cada resposta é montada com o gabarito guardado no banco.
     const wins: number[] = [];
-    for (const game of ["quebra-cabeca", "memoria", "versiculo", "caca-palavras"]) {
+    for (const game of ["quebra-cabeca", "memoria", "caca-palavras"]) {
       const { runId } = (await start(token, game)).body as { runId: string };
       const state = (await prisma.miniGameRun.findUniqueOrThrow({ where: { id: runId } })).state as Record<string, unknown>;
       let body: object;
@@ -246,10 +246,6 @@ describe.skipIf(!hasDatabase)("mini games: partidas", () => {
         const cards = (state.memory as { cards: Array<{ pair: number }> }).cards;
         const flips = [...new Set(cards.map((card) => card.pair))].flatMap((pair) => cards.flatMap((card, index) => (card.pair === pair ? [index] : [])));
         body = { flips };
-      } else if (game === "versiculo") {
-        const { puzzle, words } = state as { puzzle: { chips: string[] }; words: string[] };
-        const used = new Set<number>();
-        body = { taps: words.map((word) => { const index = puzzle.chips.findIndex((chip, at) => chip === word && !used.has(at)); used.add(index); return index; }) };
       } else {
         const puzzle = state.puzzle as { size: number; grid: string[]; words: string[] };
         const found = puzzle.words.map((word) => {
@@ -272,6 +268,12 @@ describe.skipIf(!hasDatabase)("mini games: partidas", () => {
       expect(result.body.recorded).toBe(false);
       wins.push(result.body.coins);
     }
+    // O quarto jogo (em turnos) já não rende moedas: o limite é de 3 jogos por dia.
+    const livros = (await start(token, "livros", { difficulty: "facil", rounds: 1 })).body;
+    const set = ((await prisma.miniGameRun.findUniqueOrThrow({ where: { id: livros.runId } })).state as { state: { sets: string[][] } }).state.sets[0];
+    const fourth = await act(token, livros.runId, { action: "order", order: set });
+    expect(fourth.body).toMatchObject({ status: "won", result: { solved: true, rankingUnlocked: false, recorded: false } });
+    wins.push(fourth.body.result.coins);
     expect(wins).toEqual([10, 10, 10, 0]);
     expect(await prisma.miniGameScore.count({ where: { userId } })).toBe(0);
     const overview = (await api.get("/api/minigames").set(bearer(token))).body;
@@ -316,17 +318,44 @@ describe.skipIf(!hasDatabase)("mini games: jogos novos e administrador", () => {
       data: Array.from({ length: 8 }, (_, index) => ({ text: `Pergunta extra ${index}?`, difficulty: "EASY" as const, timeLimitSeconds: 20, optionA: "Certa", optionB: "Errada B", optionC: "Errada C", optionD: "Errada D", correctOption: "A" })),
     });
 
-    const lacunas = (await start(token, "lacunas")).body;
-    const blanks = await stateOf(lacunas.runId);
+    const lacunas = (await start(token, "lacunas", { difficulty: "medio", rounds: 1 })).body;
+    const blanks = (await stateOf(lacunas.runId)).state.rounds as Array<{ answers: string[] }>;
     expect(lacunas.puzzle.options).toHaveLength(6);
-    expect(JSON.stringify(lacunas.puzzle)).not.toContain(JSON.stringify(blanks.state.answers));
-    expect((await finish(token, lacunas.runId, { fills: blanks.state.answers })).body).toMatchObject({ solved: true, coins: 10 });
+    expect(JSON.stringify(lacunas.puzzle)).not.toContain(JSON.stringify(blanks[0].answers));
+    expect((await act(token, lacunas.runId, { action: "fill", fills: blanks[0].answers })).body).toMatchObject({ status: "won", result: { solved: true, coins: 10 } });
 
-    const relampago = (await start(token, "relampago")).body;
-    const truths = (await stateOf(relampago.runId)).state.truths as boolean[];
-    expect(relampago.puzzle.statements.length).toBeGreaterThanOrEqual(5);
+    const relampago = (await start(token, "relampago", { difficulty: "facil", rounds: 10, time: 12 })).body;
+    const items = (await stateOf(relampago.runId)).state.items as Array<{ truth: boolean }>;
+    expect(relampago.puzzle.total).toBeGreaterThanOrEqual(5);
+    expect(JSON.stringify(relampago.puzzle)).not.toContain("truth");
+    let blitz = (await act(token, relampago.runId, { action: "judge", value: items[0].truth })).body;
+    expect(blitz.turn).toMatchObject({ kind: "end", end: { right: true } });
+    for (const item of items.slice(1)) {
+      await act(token, relampago.runId, { action: "begin" });
+      blitz = (await act(token, relampago.runId, { action: "judge", value: item.truth })).body;
+    }
     // Já gastou as 3 vitórias com moedas do dia: ganha pontos, mas não moedas.
-    expect((await finish(token, relampago.runId, { answers: truths })).body).toMatchObject({ solved: true, coins: 0 });
+    expect(blitz).toMatchObject({ status: "won", result: { solved: true, coins: 0 } });
+  });
+
+  it("versículo em pedaços: o servidor confere cada toque e a ordem nunca vai à tela", async () => {
+    const token = await unlockAll();
+    const run = (await start(token, "versiculo", { difficulty: "medio", rounds: 1 })).body;
+    expect(JSON.stringify(run.puzzle)).not.toContain('"words"');
+    const round = ((await stateOf(run.runId)).state.rounds as Array<{ words: string[]; chips: string[] }>)[0];
+    const used = new Set<number>();
+    const taps = round.words.map((word) => {
+      const index = round.chips.findIndex((chip, at) => chip === word && !used.has(at));
+      used.add(index);
+      return index;
+    });
+    expect((await act(token, run.runId, { action: "tap", index: 9999 })).status).toBe(400);
+    const wrong = round.chips.findIndex((chip, at) => chip !== round.words[0] && at !== taps[0]);
+    expect((await act(token, run.runId, { action: "tap", index: wrong })).body.turn).toMatchObject({ kind: "tap", right: false, errors: 1 });
+    expect((await act(token, run.runId, { action: "hint" })).body.turn).toMatchObject({ kind: "hint", index: taps[0] });
+    let last = { status: "playing" } as { status: string; result?: unknown };
+    for (const index of taps) last = (await act(token, run.runId, { action: "tap", index })).body;
+    expect(last).toMatchObject({ status: "won", result: { solved: true, coins: 10 } });
   });
 
   it("anagrama: turnos, tentativas e tempo conferidos no servidor", async () => {
