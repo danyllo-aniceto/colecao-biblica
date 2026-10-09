@@ -208,7 +208,7 @@ export function WordSearchGame({ puzzle, runId, submit, finished, seconds, resul
   useEffect(() => {
     if (!result) return undefined;
     playSfx(result.solved ? 'wsWin' : 'wsLose');
-    const timers = (result.reveal ?? []).map((entry, index) =>
+    const timers = ((result.reveal as Found[] | undefined) ?? []).map((entry, index) =>
       window.setTimeout(() => {
         setRevealed((current) => [...current, entry]);
         playSfx('wsReveal', 1 + index * 0.07);
@@ -473,7 +473,7 @@ export function WordSearchGame({ puzzle, runId, submit, finished, seconds, resul
           </Button>
         </div>
       ) : (
-        <p className="text-center text-xs font-bold text-muted">{missedWords.size > 0 || (result?.reveal?.length ?? 0) > 0 ? 'Em vermelho: as palavras que faltaram.' : 'Todas as palavras achadas!'}</p>
+        <p className="text-center text-xs font-bold text-muted">{missedWords.size > 0 || (((result?.reveal as Found[] | undefined) ?? []).length > 0) ? 'Em vermelho: as palavras que faltaram.' : 'Todas as palavras achadas!'}</p>
       )}
     </div>
   );

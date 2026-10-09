@@ -185,7 +185,7 @@ describe.skipIf(!hasDatabase)("mini games: partidas", () => {
   });
 
   it("livros em ordem em turnos e antigo ou novo? conferidos no servidor", async () => {
-    const token = await unlockAll();
+    const { token } = await unlockAll();
     const livros = (await start(token, "livros", { difficulty: "facil", rounds: 3 })).body;
     const sets = (await stateOf(livros.runId)).state.sets as string[][];
     expect(livros.puzzle.books).toHaveLength(4);
@@ -388,39 +388,26 @@ describe.skipIf(!hasDatabase)("mini games: jogos novos e administrador", () => {
     expect((await start(token, "anagrama", { rounds: 4 })).status).toBe(400);
   });
 
-  it("quem sou eu?: dicas uma a uma, menos dicas rendem mais; resposta errada perde", async () => {
+  it("quem sou eu? em turnos: dicas uma a uma, a foto só no fim, menos dicas rendem mais; resposta errada perde o turno", async () => {
     const token = await unlockAll();
-    const run = (await start(token, "quem-sou-eu")).body;
-    expect(run.puzzle.shown).toBe(1);
+    const run = (await start(token, "quem-sou-eu", { difficulty: "medio", rounds: 3 })).body;
+    expect(run.puzzle.clues).toHaveLength(1);
     expect(run.puzzle.options).toHaveLength(4);
-    const state = (await stateOf(run.runId)).state as { answer: number; options: string[]; clues: string[] };
+    expect(JSON.stringify(run.puzzle)).not.toMatch(/answer|imageUrl/);
+    const rounds = (await stateOf(run.runId)).state.rounds as Array<{ answer: number; options: string[]; clues: string[]; name: string }>;
     const hint = await act(token, run.runId, { action: "hint" });
-    expect(hint.body).toMatchObject({ status: "playing", shown: 2, clue: state.clues[1] });
-    const won = await act(token, run.runId, { action: "answer", choice: state.answer });
-    expect(won.body).toMatchObject({ status: "won", result: { solved: true, coins: 10 } });
-    expect(won.body.result.score).toBe(550 + 300);
-
-    const second = (await start(token, "quem-sou-eu")).body;
-    const stored = (await stateOf(second.runId)).state as { answer: number; options: string[] };
-    const lost = await act(token, second.runId, { action: "answer", choice: (stored.answer + 1) % 4 });
-    expect(lost.body).toMatchObject({ status: "lost", answer: stored.options[stored.answer], result: { solved: false, score: 0 } });
-    expect((await act(token, second.runId, { action: "hint" })).status).toBe(400);
+    expect(hint.body).toMatchObject({ status: "playing", turn: { kind: "hint", shown: 2, clue: rounds[0].clues[1] } });
+    const first = await act(token, run.runId, { action: "answer", choice: rounds[0].answer });
+    expect(first.body.turn).toMatchObject({ kind: "end", end: { right: true, answer: rounds[0].name } });
+    await act(token, run.runId, { action: "begin" });
+    const second = await act(token, run.runId, { action: "answer", choice: (rounds[1].answer + 1) % 4 });
+    expect(second.body.turn).toMatchObject({ kind: "end", end: { right: false } });
+    await act(token, run.runId, { action: "begin" });
+    const last = await act(token, run.runId, { action: "answer", choice: rounds[2].answer });
+    expect(last.body).toMatchObject({ status: "won", result: { solved: true, coins: 10 } });
+    expect((await act(token, run.runId, { action: "hint" })).status).toBe(400);
+    expect((await start(token, "quem-sou-eu", { rounds: 4 })).status).toBe(400);
   });
-});
-
-describe.skipIf(!hasDatabase)("mini games: os cinco últimos", () => {
-  beforeEach(async () => {
-    await resetDatabase();
-  });
-
-  const start = (token: string, game: string, options: object = {}) => api.post(`/api/minigames/${game}/start`).set(bearer(token)).send(options);
-  const finish = (token: string, runId: string, body: object) => api.post(`/api/minigames/runs/${runId}/finish`).set(bearer(token)).send(body);
-  const stateOf = async (runId: string) => (await prisma.miniGameRun.findUniqueOrThrow({ where: { id: runId } })).state as Record<string, any>;
-
-  async function unlockAll() {
-    await giveStones("user@email.com", Array.from({ length: 12 }, (_, index) => index + 1), true);
-    return login("user@email.com");
-  }
 
   it("linha do tempo, mapa, árvore e interconexão: o servidor confere pelo gabarito e a solução não vai à tela", async () => {
     const token = await unlockAll();
@@ -454,17 +441,30 @@ describe.skipIf(!hasDatabase)("mini games: os cinco últimos", () => {
     expect((await finish(token, chain.runId, { path })).status).toBe(400);
   });
 
-  it("palavras cruzadas: a grade chega sem as letras e a solução guardada vence", async () => {
+  it("palavras cruzadas: a grade chega sem as letras; conferir e revelar são contados no servidor; a solução guardada vence", async () => {
     const token = await unlockAll();
-    const run = (await start(token, "palavras-cruzadas")).body;
+    const run = (await start(token, "palavras-cruzadas", { difficulty: "facil", time: 300 })).body;
     expect(run.puzzle.words.length).toBeGreaterThanOrEqual(4);
-    expect(JSON.stringify(run.puzzle)).not.toMatch(/solution/);
+    expect(run.puzzle).toMatchObject({ level: "facil", timeLimit: 300 });
+    expect(JSON.stringify(run.puzzle)).not.toMatch(/solution|imageUrl/);
     const rows = (await stateOf(run.runId)).state.solution as string[];
     expect(rows).toHaveLength(run.puzzle.rows);
+    const empty = rows.map((row) => row.replace(/[A-Z]/g, " "));
+    const verify = await act(token, run.runId, { action: "verify", rows: empty });
+    expect(verify.body.turn).toMatchObject({ kind: "verify", wrong: [], left: 2 });
+    const row = rows.findIndex((line) => /[A-Z]/.test(line));
+    const col = rows[row].search(/[A-Z]/);
+    const peek = await act(token, run.runId, { action: "peek", row, col });
+    expect(peek.body.turn).toMatchObject({ kind: "peek", row, col, letter: rows[row][col], left: 4 });
+    expect((await act(token, run.runId, { action: "peek", row: 0, col: 99 })).status).toBe(400);
     const done = await finish(token, run.runId, { rows });
     expect(done.body).toMatchObject({ solved: true, score: expect.any(Number) });
-    expect(done.body.score).toBeGreaterThan(700);
+    expect(done.body.detail).toContain("2 ajudas");
+    expect(done.body.reveal.length).toBeGreaterThanOrEqual(4);
+    // 1.000 menos 80 de ajudas, vezes 60% do fácil.
+    expect(done.body.score).toBe(Math.round((1000 - 50 - 30) * 0.6));
     const second = (await start(token, "palavras-cruzadas")).body;
     expect((await finish(token, second.runId, { rows: ["x"] })).body).toMatchObject({ solved: false, score: 0 });
+    expect((await start(token, "palavras-cruzadas", { time: 123 })).status).toBe(400);
   });
 });

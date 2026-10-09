@@ -3,7 +3,8 @@ import { ANAGRAM_ATTEMPTS, anagramMatches, anagramOutcome, generateAnagram, newA
 import { plainText, rng } from "./common";
 import { maskHint } from "./hangman";
 import { BOOKS, bookTestament } from "./books";
-import { cluesOf, generateWhoAmI, whoAmIOutcome, type Person } from "./whoami";
+import { cluesOf, newWhoAmI, pickWhoAmIRounds, playWhoAmI, publicWhoAmI, whoAmIOutcome, whoAmITurnPoints, WHOAMI_LEVELS, type Person } from "./whoami";
+import { TIME_GRACE } from "./turns";
 
 describe("livros da Bíblia", () => {
   it("são 66, 39 do Antigo e 27 do Novo Testamento", () => {
@@ -115,8 +116,8 @@ describe("texto do painel", () => {
 });
 
 describe("quem sou eu?", () => {
-  const person = (name: string): Person => ({ name, testament: "OLD", historicalPeriod: "Por volta de 1000 a.C.", bibleBooks: "1 Samuel, Salmos", narrativeRole: `${name} foi rei`, keywords: "pastor, harpa", importantEvents: "Venceu o gigante", curiosities: null, shortSummary: `${name} derrotou Golias.` });
-  const people = ["Davi", "Saul", "Samuel", "Salomão", "Jonas"].map(person);
+  const person = (name: string): Person => ({ name, testament: "OLD", historicalPeriod: "Por volta de 1000 a.C.", bibleBooks: "1 Samuel, Salmos", narrativeRole: `${name} foi rei`, keywords: "pastor, harpa", importantEvents: "Venceu o gigante", curiosities: null, shortSummary: `<p>${name} derrotou Golias.</p>`, imageUrl: `${name}.png` });
+  const people = ["Davi", "Saul", "Samuel", "Salomão", "Jonas", "Ester", "Rute", "Noé"].map((name, index) => ({ ...person(name), testament: index < 6 ? "OLD" : "NEW" }));
 
   it("monta dicas da mais vaga à mais clara, sem o nome", () => {
     const clues = cluesOf(people[0]);
@@ -126,17 +127,54 @@ describe("quem sou eu?", () => {
     expect(clues.join(" ")).not.toMatch(/davi/i);
   });
 
-  it("4 opções, resposta entre elas; menos dicas = mais pontos; errar zera", () => {
-    const { state, puzzle } = generateWhoAmI(5, people);
-    expect(puzzle.options).toHaveLength(4);
-    expect(new Set(puzzle.options).size).toBe(4);
-    expect(puzzle.shown).toBe(1);
-    expect(puzzle.clue).toBe(state.clues[0]);
-    expect(JSON.stringify(puzzle)).not.toContain('"answer"');
-    expect(whoAmIOutcome(state, state.answer, 5)).toMatchObject({ solved: true, score: 1000 });
-    expect(whoAmIOutcome({ ...state, shown: 3 }, state.answer, 5).score).toBe(1000 - 300);
-    expect(whoAmIOutcome({ ...state, shown: 5 }, state.answer, 5).score).toBe(100 + 300);
-    const wrong = (state.answer + 1) % 4;
-    expect(whoAmIOutcome(state, wrong, 5)).toMatchObject({ solved: false, score: 0 });
+  it("o nível define as opções e a abertura; a tela não recebe o gabarito; no difícil os enfeites são do mesmo Testamento", () => {
+    for (const level of ["facil", "medio", "dificil"] as const) {
+      const rounds = pickWhoAmIRounds(rng(5), people, level, 3, []);
+      expect(rounds).toHaveLength(3);
+      for (const round of rounds) {
+        expect(round.options).toHaveLength(WHOAMI_LEVELS[level].options);
+        expect(new Set(round.options).size).toBe(round.options.length);
+        expect(round.options[round.answer]).toBe(round.name);
+        expect(round.summary).not.toContain("<");
+      }
+      const state = newWhoAmI(1, rounds, level, null, 0);
+      const puzzle = publicWhoAmI(state);
+      expect(puzzle.clues).toHaveLength(WHOAMI_LEVELS[level].opening);
+      expect(JSON.stringify(puzzle)).not.toContain('"answer"');
+      expect(JSON.stringify(puzzle)).not.toContain("png");
+    }
+    const hard = pickWhoAmIRounds(rng(5), people, "dificil", 1, [])[0];
+    const chosen = people.find((person) => person.name === hard.name)!;
+    expect(hard.options.filter((name) => people.find((person) => person.name === name)!.testament === chosen.testament).length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("dicas extras custam, errar zera o turno, a foto vem no fim e o tempo vence no servidor", () => {
+    let state = newWhoAmI(1, pickWhoAmIRounds(rng(2), people, "medio", 2, []), "medio", 30, 0);
+    const first = state.rounds[0];
+    const hint = playWhoAmI(state, { type: "hint" }, 1000);
+    expect(hint.event).toMatchObject({ kind: "hint", shown: 2, clue: first.clues[1] });
+    state = hint.state;
+    let played = playWhoAmI(state, { type: "answer", choice: first.answer }, 5000);
+    expect(played.event).toMatchObject({ kind: "end", end: { right: true, answer: first.name, imageUrl: first.imageUrl, shown: 2 }, next: { round: 1 } });
+    expect(played.state.results[0].points).toBe(whoAmITurnPoints(2, 1, 5, true));
+    state = played.state;
+    expect(publicWhoAmI(state).clues).toHaveLength(1);
+    expect(() => playWhoAmI(state, { type: "timeout" }, 6000)).toThrow("tempo");
+    played = playWhoAmI(state, { type: "answer", choice: state.rounds[1].answer }, (30 + TIME_GRACE + 1) * 1000 + 5000);
+    expect(played.event).toMatchObject({ end: { right: false, timedOut: true, points: 0 } });
+    expect(played.done).toBe(true);
+    expect(whoAmIOutcome(played.state)).toMatchObject({ solved: true, detail: "1 de 2 personagens · Médio" });
+    expect(whoAmITurnPoints(1, 0, 1, true)).toBe(1000);
+    expect(whoAmITurnPoints(1, 0, 1, false)).toBe(850);
+    expect(whoAmITurnPoints(1, 10, 1, true)).toBe(Math.round(1000 * (0.7 * 0.4 + 0.3)));
+  });
+
+  it("todas as dicas acabam e escolher errado perde o turno", () => {
+    let state = newWhoAmI(1, pickWhoAmIRounds(rng(2), people, "facil", 1, []), "facil", null, 0);
+    const total = state.rounds[0].clues.length;
+    for (let shown = state.shown; shown < total; shown += 1) state = playWhoAmI(state, { type: "hint" }, 1000).state;
+    expect(() => playWhoAmI(state, { type: "hint" }, 1000)).toThrow("dicas");
+    const wrong = (state.rounds[0].answer + 1) % state.rounds[0].options.length;
+    expect(playWhoAmI(state, { type: "answer", choice: wrong }, 2000)).toMatchObject({ done: true, event: { end: { right: false, points: 0 } } });
   });
 });

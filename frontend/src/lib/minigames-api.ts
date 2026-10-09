@@ -44,8 +44,8 @@ export type MiniGameResult = {
   weekKey: string;
   coins: number;
   userCoins: number | null;
-  /** Caça-palavras: onde estavam as palavras que faltaram. */
-  reveal?: Array<{ word: string; from: [number, number]; to: [number, number] }>;
+  /** Gabarito depois do fim: no caça-palavras, onde estavam as palavras que faltaram; nas palavras cruzadas, os nomes e as fotos. O formato é de cada jogo. */
+  reveal?: unknown;
 };
 
 export type StartedRun<P> = { runId: string; game: string; puzzle: P };
@@ -143,7 +143,9 @@ export type BlanksPart = { text: string; blank: number | null; prefix?: string; 
 export type BlanksPuzzle = { round: number; rounds: number; reference: string; parts: BlanksPart[]; options: string[]; timePerRound: number | null; level: TurnLevel; maxScore: number };
 export type BlanksEnd = { right: number; total: number; solved: boolean; timedOut: boolean; answers: string[]; fills: string[]; reference: string; text: string; title: string; imageUrl: string | null; points: number };
 export type BlanksEvent = { kind: 'begin' } | { kind: 'end'; end: BlanksEnd; next: BlanksPuzzle | null };
-export type WhoAmIPuzzle = { clue: string; shown: number; total: number; options: string[] };
+export type WhoAmIPuzzle = { round: number; rounds: number; clues: string[]; total: number; options: string[]; timePerRound: number | null; level: TurnLevel; maxScore: number };
+export type WhoAmIEnd = { right: boolean; timedOut: boolean; answer: string; imageUrl: string | null; summary: string; shown: number; points: number };
+export type WhoAmIEvent = { kind: 'begin' } | { kind: 'hint'; clue: string; shown: number; total: number } | { kind: 'end'; end: WhoAmIEnd; next: WhoAmIPuzzle | null };
 
 /** Passo a passo no servidor (anagrama: palpites; quem sou eu?: dicas e resposta). */
 export type ActResult = { status: 'playing' | 'won' | 'lost'; turn?: unknown; cell?: [number, number]; hintsLeft?: number; attemptsLeft?: number; clue?: string; shown?: number; total?: number; answer?: string; result?: MiniGameResult };
@@ -155,7 +157,24 @@ export type TimelinePuzzle = { items: Array<{ id: string; label: string; emoji: 
 export type MapPuzzle = { places: string[]; bounds: { west: number; east: number; south: number; north: number } };
 export type LineagePuzzle = { fathers: string[]; sons: string[] };
 export type ChainPuzzle = { from: string; to: string; edges: Array<[string, string, string, string]> };
-export type CrosswordPuzzle = { rows: number; cols: number; open: number[][]; words: Array<{ number: number; row: number; col: number; across: boolean; length: number; clue: string }> };
+export type CrosswordPuzzle = {
+  rows: number;
+  cols: number;
+  open: number[][];
+  words: Array<{ number: number; row: number; col: number; across: boolean; length: number; clue: string }>;
+  level: TurnLevel;
+  /** Segundos para a cruzada toda; null = sem tempo. */
+  timeLimit: number | null;
+  checksLeft: number;
+  peeksLeft: number;
+  par: number;
+  maxScore: number;
+  checkPenalty: number;
+  peekPenalty: number;
+};
+export type CrosswordEvent = { kind: 'verify'; wrong: Array<[number, number]>; left: number } | { kind: 'peek'; row: number; col: number; letter: string; left: number };
+/** Depois do fim: os nomes das respostas (e a foto, quando houver). */
+export type CrosswordReveal = Array<{ number: number; across: boolean; label: string; imageUrl: string | null }>;
 
 export type MiniGameDesign = { gameId: string; coverUrl: string | null; backgroundUrl: string | null };
 

@@ -70,14 +70,14 @@ export function CountField({ label, value, onChange, options, suffix = '' }: { l
 }
 
 /** "Contar o tempo?" e, se sim, quantos segundos. */
-export function TimerField({ label, timed, onTimed, time, onTime, options, offNote }: { label: string; timed: boolean; onTimed: (timed: boolean) => void; time: string; onTime: (time: string) => void; options: readonly string[]; offNote?: string }) {
+export function TimerField({ label, timed, onTimed, time, onTime, options, offNote, format = (value) => `${value}s`, unitLabel = 'Segundos' }: { label: string; timed: boolean; onTimed: (timed: boolean) => void; time: string; onTime: (time: string) => void; options: readonly string[]; offNote?: string; format?: (value: string) => string; unitLabel?: string }) {
   return (
     <div className="panel space-y-3 p-3">
       <Switch checked={timed} onChange={onTimed} label={label} description={timed ? 'Acabou o tempo, conta como perdido.' : (offNote ?? 'Sem pressa, mas cada turno vale 15% menos.')} />
       {timed ? (
         <div className="space-y-1.5">
-          <span className="block text-xs font-bold uppercase tracking-wider text-muted">Segundos</span>
-          <Segmented aria-label="Segundos" value={time} onChange={onTime} options={options.map((value) => ({ value, label: `${value}s` }))} />
+          <span className="block text-xs font-bold uppercase tracking-wider text-muted">{unitLabel}</span>
+          <Segmented aria-label={unitLabel} value={time} onChange={onTime} options={options.map((value) => ({ value, label: format(value) }))} />
         </div>
       ) : null}
     </div>

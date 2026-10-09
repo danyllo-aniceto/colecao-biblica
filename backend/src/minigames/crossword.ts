@@ -1,12 +1,22 @@
 import { ACCURACY_MAX, lettersOnly, rng, shuffled, timeBonus, type Outcome, type Random } from "./common";
+import { LEVEL_LABEL, LEVEL_SCALE, maxScoreOf, TIME_GRACE, type Level } from "./turns";
 
-/** Palavras cruzadas: nomes de personagens e lugares (as dicas vêm das descrições), grade pequena gerada com semente. */
-export const CROSSWORD_SIZE = 11;
-export const CROSSWORD_WORDS = 6;
-export const MIN_CROSSWORD_WORDS = 4;
+/**
+ * Palavras cruzadas: nomes de personagens e lugares (as dicas vêm das descrições), grade gerada com semente.
+ * Fácil: 5 palavras numa grade pequena; difícil: 10 palavras, nomes mais longos e menos ajuda. Tempo total opcional.
+ * Ajudas: "Conferir letras" (marca as erradas) e "Revelar uma letra"; cada uma desconta pontos.
+ */
+export const CROSSWORD_LEVELS: Record<Level, { size: number; words: number; minWords: number; minLength: number; maxLength: number; par: number; checks: number; peeks: number }> = {
+  facil: { size: 9, words: 5, minWords: 4, minLength: 3, maxLength: 7, par: 150, checks: 3, peeks: 5 },
+  medio: { size: 11, words: 7, minWords: 5, minLength: 3, maxLength: 9, par: 240, checks: 3, peeks: 4 },
+  dificil: { size: 13, words: 10, minWords: 7, minLength: 4, maxLength: 11, par: 360, checks: 2, peeks: 3 },
+};
+export const TIME_CHOICES = [180, 300, 480, 600] as const;
+export const PEEK_PENALTY = 30;
+export const CHECK_PENALTY = 50;
 
-export type Entry = { word: string; clue: string };
-type Placed = { word: string; clue: string; row: number; col: number; across: boolean };
+export type Entry = { word: string; clue: string; label?: string; imageUrl?: string | null };
+type Placed = { word: string; clue: string; row: number; col: number; across: boolean; label?: string; imageUrl?: string | null };
 
 export type CrosswordPuzzle = {
   rows: number;
@@ -15,10 +25,18 @@ export type CrosswordPuzzle = {
   open: number[][];
   words: Array<{ number: number; row: number; col: number; across: boolean; length: number; clue: string }>;
 };
-export type CrosswordState = { solution: string[] };
+export type CrosswordWordInfo = { number: number; across: boolean; label: string; imageUrl: string | null };
+export type CrosswordState = {
+  solution: string[];
+  level: Level;
+  /** Segundos para a cruzada toda; null = sem tempo. */
+  timeLimit: number | null;
+  checks: number;
+  peeks: number;
+  words: CrosswordWordInfo[];
+};
 
-function fits(grid: string[][], placed: Placed[], word: string, row: number, col: number, across: boolean): boolean {
-  const size = CROSSWORD_SIZE;
+function fits(grid: string[][], placed: Placed[], word: string, row: number, col: number, across: boolean, size: number): boolean {
   const dr = across ? 0 : 1;
   const dc = across ? 1 : 0;
   if (row < 0 || col < 0 || row + dr * (word.length - 1) >= size || col + dc * (word.length - 1) >= size) return false;
@@ -45,8 +63,7 @@ function fits(grid: string[][], placed: Placed[], word: string, row: number, col
   return placed.length === 0 || crossings > 0;
 }
 
-function build(random: Random, entries: Entry[]): Placed[] {
-  const size = CROSSWORD_SIZE;
+function build(random: Random, entries: Entry[], size: number, target: number): Placed[] {
   const grid: string[][] = Array.from({ length: size }, () => Array.from({ length: size }, () => ""));
   const placed: Placed[] = [];
   const pool = shuffled(random, entries).sort((a, b) => b.word.length - a.word.length);
@@ -58,7 +75,7 @@ function build(random: Random, entries: Entry[]): Placed[] {
   if (!first) return placed;
   put(first, Math.floor(size / 2), Math.max(0, Math.floor((size - first.word.length) / 2)), true);
   for (const entry of pool) {
-    if (placed.length >= CROSSWORD_WORDS) break;
+    if (placed.length >= target) break;
     const options: Array<[number, number, boolean]> = [];
     for (const target of placed) {
       for (let at = 0; at < target.word.length; at += 1) {
@@ -73,7 +90,7 @@ function build(random: Random, entries: Entry[]): Placed[] {
       }
     }
     for (const [row, col, across] of shuffled(random, options)) {
-      if (fits(grid, placed, entry.word, row, col, across)) {
+      if (fits(grid, placed, entry.word, row, col, across, size)) {
         put(entry, row, col, across);
         break;
       }
@@ -82,16 +99,17 @@ function build(random: Random, entries: Entry[]): Placed[] {
   return placed;
 }
 
-/** Monta a cruzada; tenta várias vezes (sementes derivadas) até caberem pelo menos 4 palavras. */
-export function generateCrossword(seed: number, entries: Entry[]): { puzzle: CrosswordPuzzle; state: CrosswordState } | null {
-  const usable = entries.filter((entry) => entry.word.length >= 3 && entry.word.length <= CROSSWORD_SIZE - 2);
+/** Monta a cruzada do nível; tenta várias vezes (sementes derivadas) até caberem as palavras pedidas (ou ao menos o mínimo do nível). */
+export function generateCrossword(seed: number, entries: Entry[], level: Level = "medio"): { puzzle: CrosswordPuzzle; state: Pick<CrosswordState, "solution" | "words"> } | null {
+  const config = CROSSWORD_LEVELS[level];
+  const usable = entries.filter((entry) => entry.word.length >= config.minLength && entry.word.length <= Math.min(config.maxLength, config.size - 2));
   let best: Placed[] = [];
-  for (let attempt = 0; attempt < 60; attempt += 1) {
-    const placed = build(rng(seed + attempt * 7919), usable);
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    const placed = build(rng(seed + attempt * 7919), usable, config.size, config.words);
     if (placed.length > best.length) best = placed;
-    if (best.length >= CROSSWORD_WORDS) break;
+    if (best.length >= config.words) break;
   }
-  if (best.length < MIN_CROSSWORD_WORDS) return null;
+  if (best.length < config.minWords) return null;
   // Corta a grade ao retângulo usado.
   const cells = best.flatMap((entry) => [...entry.word].map((letter, index) => ({ r: entry.row + (entry.across ? 0 : index), c: entry.col + (entry.across ? index : 0), letter })));
   const top = Math.min(...cells.map((cell) => cell.r));
@@ -108,10 +126,32 @@ export function generateCrossword(seed: number, entries: Entry[]): { puzzle: Cro
     if (!numbers.has(key)) numbers.set(key, numbers.size + 1);
     return { number: numbers.get(key)!, row, col, across: entry.across, length: entry.word.length, clue: entry.clue };
   });
-  return { puzzle: { rows, cols, open: solution.map((row) => row.map((letter) => (letter === "." ? 0 : 1))), words }, state: { solution: solution.map((row) => row.join("")) } };
+  const info = starts.map(({ entry }, index) => ({ number: words[index].number, across: entry.across, label: entry.label ?? entry.word, imageUrl: entry.imageUrl ?? null }));
+  return { puzzle: { rows, cols, open: solution.map((row) => row.map((letter) => (letter === "." ? 0 : 1))), words }, state: { solution: solution.map((row) => row.join("")), words: info } };
 }
 
-/** Pontua as letras certas; completa e rápida ganha o bônus de tempo. */
+/** As letras digitadas que não batem com a solução (casas vazias não contam). */
+export function wrongCells(state: CrosswordState, rows: string[]): Array<[number, number]> {
+  const wrong: Array<[number, number]> = [];
+  state.solution.forEach((row, r) =>
+    [...row].forEach((letter, c) => {
+      const typed = lettersOnly(rows[r]?.[c] ?? "");
+      if (letter !== "." && typed !== "" && typed !== letter) wrong.push([r, c]);
+    }),
+  );
+  return wrong;
+}
+
+/** A letra de uma casa (dica "revelar uma letra"). */
+export function letterAt(state: CrosswordState, row: number, col: number): string | null {
+  const letter = state.solution[row]?.[col];
+  return letter && letter !== "." ? letter : null;
+}
+
+/**
+ * Pontua as letras certas (até 700) e, se completou, a rapidez (até 300 em relação ao tempo da dificuldade); desconta 50 por conferência e 30 por letra
+ * revelada; tudo vezes o fator da dificuldade. Passou do tempo total: não vale como completa e perde o bônus.
+ */
 export function checkCrossword(state: CrosswordState, rows: string[], seconds: number): Outcome {
   if (rows.length !== state.solution.length || rows.some((row, index) => row.length !== state.solution[index].length)) return { solved: false, score: 0, detail: "Resposta inválida" };
   let total = 0;
@@ -123,6 +163,18 @@ export function checkCrossword(state: CrosswordState, rows: string[], seconds: n
       if (lettersOnly(rows[r][c] ?? "") === letter) right += 1;
     }),
   );
-  const solved = right === total;
-  return { solved, score: Math.round((right / total) * ACCURACY_MAX) + (solved ? timeBonus(seconds, 90) : 0), detail: `${right} de ${total} letras certas` };
+  const late = state.timeLimit !== null && seconds > state.timeLimit + TIME_GRACE;
+  const solved = right === total && !late;
+  const config = CROSSWORD_LEVELS[state.level];
+  const raw = Math.round((right / total) * ACCURACY_MAX) + (solved ? timeBonus(seconds, config.par) : 0) - state.checks * CHECK_PENALTY - state.peeks * PEEK_PENALTY;
+  const score = right === 0 ? 0 : Math.max(0, Math.round(raw * LEVEL_SCALE[state.level]));
+  const helps = state.checks + state.peeks;
+  return {
+    solved,
+    score,
+    detail: `${late ? "Tempo esgotado · " : ""}${right} de ${total} letras certas · ${LEVEL_LABEL[state.level]}${helps > 0 ? ` · ${helps} ${helps === 1 ? "ajuda" : "ajudas"}` : ""}`,
+    reveal: state.words,
+  };
 }
+
+export { maxScoreOf };

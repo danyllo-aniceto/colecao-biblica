@@ -8,11 +8,11 @@ import { lettersOnly, plainText, shuffled, rng, type Outcome } from "../minigame
 import { anagramOutcome, newAnagram, pickRounds, playAnagram, publicRound, ROUND_CHOICES as ANAGRAM_ROUNDS, TIME_CHOICES as ANAGRAM_TIMES, type AnagramState } from "../minigames/anagram";
 import { bookOrderOutcome, BOOK_TIME_CHOICES, newBookOrder, playBookOrder, publicBookOrder, ROUND_CHOICES as BOOK_ROUNDS, type BookOrderState } from "../minigames/books";
 import { COUNT_CHOICES as TESTAMENT_COUNTS, newTestament, pickTestamentItems, playTestament, publicTestament, testamentOutcome, TIME_CHOICES as TESTAMENT_TIMES, type TestamentState } from "../minigames/testament";
-import { LEVEL_IDS, TurnError, type Level } from "../minigames/turns";
+import { LEVEL_IDS, maxScoreOf, TurnError, type Level } from "../minigames/turns";
 import { blitzOutcome, COUNT_CHOICES as BLITZ_COUNTS, newBlitz, pickBlitzItems, playBlitz, publicBlitz, TIME_CHOICES as BLITZ_TIMES, type BlitzState } from "../minigames/blitz";
 import { blanksOutcome, newBlanks, pickBlanksRounds, playBlanks, publicBlanks, ROUND_CHOICES as BLANKS_ROUNDS, TIME_CHOICES as BLANKS_TIMES, type BlanksState } from "../minigames/verse-blanks";
-import { generateWhoAmI, whoAmIOutcome, type WhoAmIState } from "../minigames/whoami";
-import { checkCrossword, generateCrossword, type CrosswordState } from "../minigames/crossword";
+import { newWhoAmI, pickWhoAmIRounds, playWhoAmI, publicWhoAmI, ROUND_CHOICES as WHOAMI_ROUNDS, TIME_CHOICES as WHOAMI_TIMES, whoAmIOutcome, type WhoAmIState } from "../minigames/whoami";
+import { checkCrossword, CHECK_PENALTY, CROSSWORD_LEVELS, generateCrossword, letterAt, PEEK_PENALTY, TIME_CHOICES as CROSSWORD_TIMES, wrongCells, type CrosswordState } from "../minigames/crossword";
 import { checkChain, generateChain, type ChainState } from "../minigames/graph";
 import { checkLineage, generateLineage, type LineageState } from "../minigames/lineage";
 import { checkMap, generateMap, type MapState } from "../minigames/places";
@@ -85,6 +85,7 @@ const TURN_GAMES: Record<string, TurnGame> = {
   relampago: turnGame<BlitzState, Parameters<typeof playBlitz>[1]>({ play: playBlitz, outcome: blitzOutcome, words: (state) => state.items.map((item) => item.question) }),
   versiculo: turnGame<VerseState, Parameters<typeof playVerse>[1]>({ play: playVerse, outcome: verseOutcome, words: (state) => state.rounds.map((round) => round.reference) }),
   lacunas: turnGame<BlanksState, Parameters<typeof playBlanks>[1]>({ play: playBlanks, outcome: blanksOutcome, words: (state) => state.rounds.map((round) => round.reference) }),
+  "quem-sou-eu": turnGame<WhoAmIState, Parameters<typeof playWhoAmI>[1]>({ play: playWhoAmI, outcome: whoAmIOutcome, words: (state) => state.rounds.map((round) => round.name) }),
   livros: turnGame<BookOrderState, Parameters<typeof playBookOrder>[1]>({ play: playBookOrder, outcome: bookOrderOutcome, words: (state) => state.sets.flat() }),
 };
 
@@ -234,19 +235,25 @@ function build(game: string, seed: number, content: Awaited<ReturnType<typeof lo
       return { state: { game, state }, puzzle };
     }
     case "palavras-cruzadas": {
-      // Personagens e lugares: a dica é a descrição com o nome trocado por traços.
+      // Personagens e lugares: a dica é a descrição com o nome trocado por traços; a foto só aparece no fim.
       const entries = [
-        ...content.characters.map((character) => ({ word: lettersOnly(character.name), clue: maskHint(character.shortSummary, character.name) })),
-        ...content.scenarios.map((scenario) => ({ word: lettersOnly(scenario.name), clue: `Lugar: ${maskHint(scenario.description ?? "um cenário da campanha", scenario.name)}` })),
+        ...content.characters.map((character) => ({ word: lettersOnly(character.name), clue: maskHint(character.shortSummary, character.name), label: character.name, imageUrl: character.imageUrl })),
+        ...content.scenarios.map((scenario) => ({ word: lettersOnly(scenario.name), clue: `Lugar: ${maskHint(scenario.description ?? "um cenário da campanha", scenario.name)}`, label: scenario.name, imageUrl: scenario.mapImageUrl })),
       ].filter((entry, index, all) => entry.word.length >= 3 && all.findIndex((other) => other.word === entry.word) === index);
-      const generated = generateCrossword(seed, entries);
-      if (!generated) throw badRequest("Ainda não há nomes suficientes para este jogo");
-      return { state: { game, state: generated.state }, puzzle: generated.puzzle };
+      const level = levelOf(extras.options.difficulty);
+      const generated = generateCrossword(seed, entries, level);
+      if (!generated) throw badRequest("Ainda não há nomes suficientes para esta dificuldade");
+      const config = CROSSWORD_LEVELS[level];
+      const timeLimit = chooseTime(extras.options.time, CROSSWORD_TIMES);
+      const state: CrosswordState = { ...generated.state, level, timeLimit, checks: 0, peeks: 0 };
+      return { state: { game, state }, puzzle: { ...generated.puzzle, level, timeLimit, checksLeft: config.checks, peeksLeft: config.peeks, par: config.par, maxScore: maxScoreOf(level), checkPenalty: CHECK_PENALTY, peekPenalty: PEEK_PENALTY } };
     }
     case "quem-sou-eu": {
       if (content.characters.length < 4) throw badRequest("Ainda não há personagens suficientes para este jogo");
-      const { state, puzzle } = generateWhoAmI(seed, content.characters);
-      return { state: { game, state }, puzzle };
+      const level = levelOf(extras.options.difficulty);
+      const rounds = pickWhoAmIRounds(random, content.characters, level, choose(extras.options.rounds, WHOAMI_ROUNDS, 3), extras.recentWords);
+      const state = newWhoAmI(seed, rounds, level, chooseTime(extras.options.time, WHOAMI_TIMES), Date.now());
+      return { state: { game, state }, puzzle: publicWhoAmI(state) };
     }
     default:
       throw notFound("Mini game não encontrado");
@@ -362,11 +369,6 @@ export async function finishMiniGame(userId: number, runId: string, body: unknow
 
 export type ActResult = {
   status: "playing" | "won" | "lost";
-  attemptsLeft?: number;
-  /** Quem sou eu?: a nova dica (quando pediu mais uma). */
-  clue?: string;
-  shown?: number;
-  total?: number;
   /** Jogos em turnos: o que aconteceu na jogada (palpite, fim do turno) e o próximo turno. O formato é de cada jogo. */
   turn?: unknown;
   /** Caça-palavras: onde a palavra da dica começa e quantas dicas ainda restam. */
@@ -390,6 +392,8 @@ const actBody = z.discriminatedUnion("action", [
   z.object({ action: z.literal("judge"), value: z.boolean() }),
   z.object({ action: z.literal("tap"), index: z.number().int() }),
   z.object({ action: z.literal("fill"), fills: z.array(z.string().max(40)).max(8) }),
+  z.object({ action: z.literal("verify"), rows: z.array(z.string().max(30)).max(30) }),
+  z.object({ action: z.literal("peek"), row: z.number().int().min(0).max(30), col: z.number().int().min(0).max(30) }),
   z.object({ action: z.literal("order"), order: z.array(z.string().max(40)).max(12) }),
 ]);
 
@@ -429,20 +433,24 @@ export async function actMiniGame(userId: number, runId: string, body: unknown):
       if (!asked) await save({ ...state, hinted }, false);
       return { game: "caca-palavras" as const, over: false, right: false, outcome: null, answer: "", cell: placement.from, hintsLeft: state.puzzle.hints - hinted.length };
     }
-    if (state.game === "quem-sou-eu" && input.action === "hint") {
-      if (state.state.shown >= state.state.clues.length) throw badRequest("Não há mais dicas");
-      const next = { ...state.state, shown: state.state.shown + 1 };
-      await save({ game: "quem-sou-eu", state: next }, false);
-      return { game: "quem-sou-eu" as const, over: false, right: false, outcome: null, clue: next.clues[next.shown - 1], shown: next.shown, total: next.clues.length, answer: "" };
-    }
-    if (state.game === "quem-sou-eu" && input.action === "answer") {
-      const outcome = whoAmIOutcome(state.state, input.choice, seconds);
-      await save(state, true);
-      return { game: "quem-sou-eu" as const, over: true, right: outcome.solved, outcome, answer: state.state.options[state.state.answer] };
+    if (state.game === "palavras-cruzadas" && (input.action === "verify" || input.action === "peek")) {
+      const config = CROSSWORD_LEVELS[state.state.level];
+      if (input.action === "verify") {
+        if (state.state.checks >= config.checks) throw badRequest("Acabaram as conferências desta partida");
+        const next = { ...state.state, checks: state.state.checks + 1 };
+        await save({ game: "palavras-cruzadas", state: next }, false);
+        return { game: "palavras-cruzadas" as const, over: false, right: false, outcome: null, answer: "", turn: { kind: "verify", wrong: wrongCells(state.state, input.rows), left: config.checks - next.checks } };
+      }
+      const letter = letterAt(state.state, input.row, input.col);
+      if (!letter) throw badRequest("Escolha uma casa da grade");
+      if (state.state.peeks >= config.peeks) throw badRequest("Acabaram as letras reveladas desta partida");
+      const next = { ...state.state, peeks: state.state.peeks + 1 };
+      await save({ game: "palavras-cruzadas", state: next }, false);
+      return { game: "palavras-cruzadas" as const, over: false, right: false, outcome: null, answer: "", turn: { kind: "peek", row: input.row, col: input.col, letter, left: config.peeks - next.peeks } };
     }
     throw badRequest("Ação inválida para este jogo");
   });
-  if (!step.over) return { status: "playing", turn: "turn" in step ? step.turn : undefined, cell: "cell" in step ? step.cell : undefined, hintsLeft: "hintsLeft" in step ? step.hintsLeft : undefined, clue: "clue" in step ? step.clue : undefined, shown: "shown" in step ? step.shown : undefined, total: "total" in step ? step.total : undefined };
+  if (!step.over) return { status: "playing", turn: "turn" in step ? step.turn : undefined, cell: "cell" in step ? step.cell : undefined, hintsLeft: "hintsLeft" in step ? step.hintsLeft : undefined };
   const result = await settle(userId, step.game, step.outcome!);
   const turnEvent = "turn" in step ? step.turn : undefined;
   return step.right ? { status: "won", turn: turnEvent, result } : { status: "lost", answer: step.answer, turn: turnEvent, result };
