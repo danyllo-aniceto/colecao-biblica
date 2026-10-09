@@ -63,3 +63,22 @@ liberar o hub de mini games. Evitar bônus permanente de moedas (mexe na economi
 - [x] Os 5 últimos: linha do tempo (26 acontecimentos com datas aproximadas, 6 por partida), mapa bíblico (26 lugares com coordenadas, toque no mapa; vale a distância), árvore genealógica (ligar pai e filho, Gn 5 / Mt 1), interconexão (grafo de ~50 relações; ligar dois nomes a 3 ou 4 passos) e palavras cruzadas (gerada com nomes e descrições).
   Os dados são fixos no código (`backend/src/minigames/{timeline,places,lineage,graph}.ts`) e o mapa é um desenho simplificado (`frontend/src/lib/map-shapes.ts`).
 - [ ] Melhorias, jogo a jogo: datas/lugares/relações editáveis no painel; mapa com imagem enviada; perguntas no labirinto; figurinhas no quebra-cabeça; pares personagem ↔ figurinha na memória.
+
+## Enriquecimento jogo a jogo (padrão)
+
+Cada mini game passa por: lógica (dificuldade, pontuação, variedade), UX/UI (tela de preparo, retorno visual), imagens que o app já tem (retratos de personagens e mapas de cenários),
+sons próprios (`lib/sound/sfx.ts`, nomes `ws*` etc.) e imagens do painel. Padrão técnico:
+
+- **Tela de preparo** opcional: `setup` na `MiniGameFrame`; as escolhas vão no corpo de `POST /minigames/:jogo/start` e o servidor valida. "Jogar de novo" repete as escolhas; "Mudar dificuldade" volta ao preparo.
+- **Imagens por jogo** (Painel → Visual dos mini games, tabela `mini_game_designs`): capa do cartão 16:9 (1600 × 900) e fundo da tela de jogo 9:16 (1080 × 1920). Vêm em `/minigames` (`coverUrl`, `backgroundUrl`).
+- **Gabarito depois do fim**: o `Outcome.reveal` do servidor vai ao resultado (ex.: onde estavam as palavras que faltaram).
+- **Pontuação**: máximo de 1.000 por partida (700 precisão + 300 tempo) vezes o fator da dificuldade, para o ranking premiar quem joga o difícil.
+
+### Caça-palavras (feito)
+
+- Dificuldades: fácil (5 palavras, 8×8, → ↓, bônus até 1:10, vale até 600) · médio (7, 10×10, + diagonais, 2:00, até 800) · difícil (10, 12×12 ou mais, 8 direções, 3:30, até 1.000). A grade cresce até 14×14 conforme as letras.
+- Palavras: personagens (nome inteiro e cada nome de um composto), lugares da campanha e os 66 livros da Bíblia; temas: mistura, Antigo, Novo, lugares, livros. As palavras das últimas 8 partidas do jogador (guardadas por 2 dias) ficam por último no sorteio.
+- Dicas: até 3 por partida (`/act` com `hint`), mostram a primeira letra; cada uma desconta 40 pontos (antes do fator). Sem dica de graça no cliente: o servidor guarda as posições.
+- Interação: arrastar (encaixa nas 8 direções) ou tocar na primeira e na última letra; teclado com setas + Enter. Cores diferentes por palavra achada; ao desistir/terminar, as que faltaram aparecem em vermelho, uma a uma.
+- Sons: pegar a letra, tique que sobe um semitom por letra arrastada, achou, errou, dica, vitória, fim sem sucesso, palavras reveladas.
+- [ ] (Depois) Música de fundo própria do modo; mais sons nos demais jogos; dicas por imagem (retrato borrado → nítido).

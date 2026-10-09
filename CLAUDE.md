@@ -103,7 +103,8 @@ código em **português do Brasil**.
   resposta e **calcula a pontuação no servidor** (a tela nunca manda pontos; partida vale uma vez; o tempo é o do servidor). A forca confere cada palpite no
   servidor (`/guess`) e nunca manda a palavra; anagrama e quem sou eu? conferem palpites, dicas e resposta em `/act`. Jogos de informação aberta (memória, labirinto, versículo...) mandam o jogo inteiro à tela: o servidor confere a
   solução, mas não impede quem lê a rede; por isso o prêmio é pequeno e limitado.
-- A imagem do modo na aba Jogar é a capa `MINIGAMES` (Painel → Capas dos jogos), como Quiz, Tabuleiro e Duelo.
+- A imagem do modo na aba Jogar é a capa `MINIGAMES` (Painel → Capas dos jogos), como Quiz, Tabuleiro e Duelo. Cada jogo tem ainda capa de cartão e fundo de tela próprios (`mini_game_designs`, Painel → Visual dos mini games).
+- Cada jogo é enriquecido um a um (dificuldade, preparo, sons, imagens): padrão e andamento em `docs/minigames.md` ("Enriquecimento jogo a jogo"). Jogo com escolhas usa `setup` da `MiniGameFrame` e valida as opções no `start`.
 
 ## Comandos
 

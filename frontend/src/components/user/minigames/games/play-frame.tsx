@@ -23,7 +23,14 @@ export type GameProps<P> = {
   submit: (answer: object) => Promise<void>;
   /** A partida acabou (resultado já conferido): para o relógio. */
   finished: boolean;
+  /** Segundos de jogo (o mesmo relógio do topo). */
+  seconds: number;
+  /** Resultado conferido (nulo enquanto joga): jogos que mostram o gabarito no fim usam o `reveal`. */
+  result: MiniGameResult | null;
 };
+
+/** Tela de preparo (dificuldade, tema...) que vem antes da partida; `onStart` recebe as escolhas e começa o jogo. */
+export type SetupRender = (props: { game: MiniGameInfo; onStart: (options: object) => void }) => ReactNode;
 
 type Props<P> = {
   game: MiniGameInfo;
@@ -31,13 +38,15 @@ type Props<P> = {
   onWallet: (wallet: { userCoins: number }) => void;
   /** Tela do jogo. Recebe o `report` para jogos que o servidor fecha sozinho (forca). */
   children: (props: GameProps<P> & { report: (result: MiniGameResult) => void }) => ReactNode;
+  /** Jogos com escolhas antes de começar (ex.: caça-palavras). Sem isto a partida começa direto. */
+  setup?: SetupRender;
 };
 
 /**
  * Moldura de todo mini game: começa a partida no servidor, mostra o relógio, recebe o resultado conferido e o exibe
  * (pontos, moedas e ranking) com "Jogar de novo".
  */
-export function MiniGameFrame<P>({ game, onExit, onWallet, children }: Props<P>) {
+export function MiniGameFrame<P>({ game, onExit, onWallet, children, setup }: Props<P>) {
   const toast = useToast();
   const [run, setRun] = useState<{ runId: string; puzzle: P } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -45,16 +54,21 @@ export function MiniGameFrame<P>({ game, onExit, onWallet, children }: Props<P>)
   const [seconds, setSeconds] = useState(0);
   const startedAt = useRef(0);
   const starting = useRef(false);
+  // Com tela de preparo, a partida só começa depois da escolha; "Jogar de novo" repete as mesmas escolhas.
+  const [choosing, setChoosing] = useState(Boolean(setup));
+  const lastOptions = useRef<object | undefined>(undefined);
 
-  const begin = useCallback(() => {
+  const begin = useCallback((options?: object) => {
     // Uma partida por vez: o modo estrito do React (em desenvolvimento) chama o efeito duas vezes e criaria duas partidas.
     if (starting.current) return;
     starting.current = true;
+    lastOptions.current = options;
+    setChoosing(false);
     setRun(null);
     setResult(null);
     setError(null);
     setSeconds(0);
-    startMiniGame<P>(game.id)
+    startMiniGame<P>(game.id, options)
       .then((started) => {
         startedAt.current = Date.now();
         setRun({ runId: started.runId, puzzle: started.puzzle });
@@ -66,8 +80,17 @@ export function MiniGameFrame<P>({ game, onExit, onWallet, children }: Props<P>)
   }, [game.id]);
 
   useEffect(() => {
-    begin();
+    if (!setup) begin();
+    // Só na abertura: a tela de preparo (quando existe) chama `begin` com as escolhas.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [begin]);
+
+  const backToSetup = useCallback(() => {
+    setRun(null);
+    setResult(null);
+    setSeconds(0);
+    setChoosing(true);
+  }, []);
 
   useEffect(() => {
     if (!run || result) return undefined;
@@ -102,9 +125,11 @@ export function MiniGameFrame<P>({ game, onExit, onWallet, children }: Props<P>)
           <span aria-hidden>{game.emoji}</span> {game.name}
         </h3>
         <div className="flex shrink-0 items-center gap-1">
-          <span className="whitespace-nowrap rounded-full bg-surface-3 px-3 py-1 font-display text-sm font-bold tabular-nums text-ink" aria-label="Tempo de jogo">
-            ⏱ {clock(seconds)}
-          </span>
+          {choosing ? null : (
+            <span className="whitespace-nowrap rounded-full bg-surface-3 px-3 py-1 font-display text-sm font-bold tabular-nums text-ink" aria-label="Tempo de jogo">
+              ⏱ {clock(seconds)}
+            </span>
+          )}
           {result ? null : (
             <Button size="sm" variant="ghost" onClick={onExit}>
               Sair
@@ -113,7 +138,9 @@ export function MiniGameFrame<P>({ game, onExit, onWallet, children }: Props<P>)
         </div>
       </div>
 
-      {error ? (
+      {choosing && setup ? (
+        setup({ game, onStart: begin })
+      ) : error ? (
         <div className="space-y-3">
           <Alert tone="danger">{error}</Alert>
           <Button variant="secondary" onClick={onExit}>
@@ -124,15 +151,15 @@ export function MiniGameFrame<P>({ game, onExit, onWallet, children }: Props<P>)
         <LoadingState label="Preparando o jogo..." />
       ) : (
         // A chave troca a tela por inteiro a cada partida nova (estado do jogo sempre limpo).
-        <Fragment key={run.runId}>{children({ puzzle: run.puzzle, runId: run.runId, submit, finished: Boolean(result), report })}</Fragment>
+        <Fragment key={run.runId}>{children({ puzzle: run.puzzle, runId: run.runId, submit, finished: Boolean(result), report, seconds, result })}</Fragment>
       )}
 
-      {result ? <ResultCard result={result} onAgain={begin} onExit={onExit} /> : null}
+      {result ? <ResultCard result={result} onAgain={() => begin(lastOptions.current)} onChange={setup ? backToSetup : undefined} onExit={onExit} /> : null}
     </div>
   );
 }
 
-function ResultCard({ result, onAgain, onExit }: { result: MiniGameResult; onAgain: () => void; onExit: () => void }) {
+function ResultCard({ result, onAgain, onChange, onExit }: { result: MiniGameResult; onAgain: () => void; onChange?: () => void; onExit: () => void }) {
   const ref = useRef<HTMLElement | null>(null);
   // O jogo pode ser mais alto que a tela: leva o resultado para a vista.
   useEffect(() => {
@@ -157,10 +184,15 @@ function ResultCard({ result, onAgain, onExit }: { result: MiniGameResult; onAga
       ) : result.score > 0 ? (
         <p className="text-xs font-semibold text-muted">Complete o Peitoral para entrar no ranking semanal.</p>
       ) : null}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button className="flex-1" onClick={onAgain}>
           Jogar de novo
         </Button>
+        {onChange ? (
+          <Button className="flex-1" variant="secondary" onClick={onChange}>
+            Mudar dificuldade
+          </Button>
+        ) : null}
         <Button className="flex-1" variant="secondary" onClick={onExit}>
           Voltar
         </Button>

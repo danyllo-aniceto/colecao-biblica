@@ -19,7 +19,7 @@ import { checkMaze, generateMaze, type Maze } from "../minigames/maze";
 import { checkMemory, generateMemory, MEMORY_PAIRS, type Memory } from "../minigames/memory";
 import { checkSwapPuzzle, generateSwapPuzzle, type SwapPuzzle } from "../minigames/swap-puzzle";
 import { checkVerse, generateVerse, usableVerse, type VersePuzzle } from "../minigames/verse";
-import { checkWordSearch, generateWordSearch, wordSearchCandidates, WORDSEARCH_WORDS, type WordSearch } from "../minigames/wordsearch";
+import { checkWordSearch, DIFFICULTY_IDS, generateWordSearch, THEME_IDS, wordSearchCandidates, type WordSearchState } from "../minigames/wordsearch";
 import { dayKeyInTimeZone, MINI_GAME_DAILY_COIN_WINS, MINI_GAME_WIN_COINS } from "./game-rules";
 import { getMiniGames, recordMiniGameScore } from "./minigames";
 import { visibleCharacter } from "./visibility";
@@ -29,7 +29,7 @@ const COIN_KIND = "MINIGAME";
 const MAX_RUN_MS = 3 * 60 * 60 * 1000;
 
 type RunState =
-  | { game: "caca-palavras"; puzzle: WordSearch }
+  | ({ game: "caca-palavras" } & WordSearchState)
   | { game: "forca"; hangman: HangmanState; hint: string; testament: string | null }
   | { game: "quebra-cabeca"; puzzle: SwapPuzzle }
   | { game: "memoria"; memory: Memory }
@@ -46,6 +46,11 @@ type RunState =
   | { game: "arvore"; state: LineageState }
   | { game: "interconexao"; state: ChainState }
   | { game: "palavras-cruzadas"; state: CrosswordState };
+
+/** Escolhas da tela de preparo (hoje só o caça-palavras tem: dificuldade e tema). */
+const startOptions = z.object({ difficulty: z.enum(DIFFICULTY_IDS as [string, ...string[]]).optional(), theme: z.enum(THEME_IDS as [string, ...string[]]).optional() });
+type StartOptions = z.infer<typeof startOptions>;
+type Extras = { options: StartOptions; recentWords: string[] };
 
 const found = z.object({ word: z.string().min(1).max(20), from: z.tuple([z.number().int(), z.number().int()]), to: z.tuple([z.number().int(), z.number().int()]) });
 const answers = {
@@ -86,15 +91,15 @@ async function loadBlitzQuestions() {
   });
 }
 
-function build(game: string, seed: number, content: Awaited<ReturnType<typeof loadContent>>, questions: Awaited<ReturnType<typeof loadBlitzQuestions>>): { state: RunState; puzzle: unknown } {
+function build(game: string, seed: number, content: Awaited<ReturnType<typeof loadContent>>, questions: Awaited<ReturnType<typeof loadBlitzQuestions>>, extras: Extras): { state: RunState; puzzle: unknown } {
   const random = rng(seed ^ 0x9e3779b9);
   switch (game) {
     case "caca-palavras": {
-      // Personagens e lugares: com poucos personagens publicados o jogo ainda funciona.
-      const names = [...content.characters.map((character) => character.name), ...content.scenarios.map((scenario) => scenario.name)];
-      if (wordSearchCandidates(names).length < WORDSEARCH_WORDS) throw badRequest("Ainda não há personagens suficientes para este jogo");
-      const puzzle = generateWordSearch(seed, names);
-      return { state: { game, puzzle }, puzzle };
+      // Personagens, lugares e livros da Bíblia; as palavras das últimas partidas ficam por último para não parecer repetido.
+      const candidates = wordSearchCandidates({ characters: content.characters.map((character) => ({ name: character.name, imageUrl: character.imageUrl, testament: character.testament })), scenarios: content.scenarios });
+      const generated = generateWordSearch(seed, candidates, { difficulty: extras.options.difficulty as never, theme: extras.options.theme as never, avoid: extras.recentWords });
+      if (!generated) throw badRequest("Ainda não há palavras suficientes para esta dificuldade");
+      return { state: { game, puzzle: generated.puzzle, placements: generated.placements, hinted: [] }, puzzle: generated.puzzle };
     }
     case "forca": {
       const options = [
@@ -201,15 +206,23 @@ function build(game: string, seed: number, content: Awaited<ReturnType<typeof lo
   }
 }
 
+/** Palavras das últimas partidas do jogador (as do banco guardam 2 dias): o sorteio as deixa por último. */
+async function recentWords(userId: number, gameId: string): Promise<string[]> {
+  const runs = await prisma.miniGameRun.findMany({ where: { userId, gameId }, orderBy: { startedAt: "desc" }, take: 8, select: { state: true } });
+  return runs.flatMap((run) => (run.state as unknown as { puzzle?: { words?: string[] } }).puzzle?.words ?? []);
+}
+
 /** Começa uma partida: sorteia o jogo, guarda o gabarito no servidor e devolve só o que a tela precisa. */
-export async function startMiniGame(userId: number, gameId: string): Promise<StartedRun> {
+export async function startMiniGame(userId: number, gameId: string, body: unknown = {}): Promise<StartedRun> {
   const { games } = await getMiniGames(prisma, userId);
   const game = games.find((item) => item.id === gameId);
   if (!game) throw notFound("Mini game não encontrado");
   if (!game.unlocked) throw badRequest("Esse mini game ainda não foi liberado");
   if (!game.ready) throw badRequest("Esse mini game ainda não está disponível");
   await prisma.miniGameRun.deleteMany({ where: { OR: [{ userId, gameId, finishedAt: null }, { startedAt: { lt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) } }] } });
-  const { state, puzzle } = build(gameId, randomInt(1, 2 ** 31 - 1), await loadContent(), gameId === "relampago" ? await loadBlitzQuestions() : []);
+  const options = startOptions.safeParse(body ?? {});
+  if (!options.success) throw badRequest("Escolha de dificuldade ou tema inválida");
+  const { state, puzzle } = build(gameId, randomInt(1, 2 ** 31 - 1), await loadContent(), gameId === "relampago" ? await loadBlitzQuestions() : [], { options: options.data, recentWords: gameId === "caca-palavras" ? await recentWords(userId, gameId) : [] });
   const run = await prisma.miniGameRun.create({ data: { userId, gameId, state: state as object } });
   return { runId: run.id, game: gameId, puzzle };
 }
@@ -260,7 +273,7 @@ export async function finishMiniGame(userId: number, runId: string, body: unknow
   let outcome: Outcome;
   switch (state.game) {
     case "caca-palavras":
-      outcome = checkWordSearch(state.puzzle, answers["caca-palavras"].parse(body).found, seconds);
+      outcome = checkWordSearch(state, answers["caca-palavras"].parse(body).found, seconds);
       break;
     case "quebra-cabeca":
       outcome = checkSwapPuzzle(state.puzzle, answers["quebra-cabeca"].parse(body).swaps, seconds);
@@ -344,6 +357,9 @@ export type ActResult = {
   clue?: string;
   shown?: number;
   total?: number;
+  /** Caça-palavras: onde a palavra da dica começa e quantas dicas ainda restam. */
+  cell?: [number, number];
+  hintsLeft?: number;
   /** Ao perder, a resposta certa. */
   answer?: string;
   result?: MiniGameResult;
@@ -351,7 +367,7 @@ export type ActResult = {
 
 const actBody = z.discriminatedUnion("action", [
   z.object({ action: z.literal("check"), word: z.string().max(40) }),
-  z.object({ action: z.literal("hint") }),
+  z.object({ action: z.literal("hint"), word: z.string().max(20).optional() }),
   z.object({ action: z.literal("answer"), choice: z.number().int().min(0).max(3) }),
 ]);
 
@@ -376,6 +392,15 @@ export async function actMiniGame(userId: number, runId: string, body: unknown):
       await save({ game: "anagrama", state: next }, over);
       return { game: "anagrama" as const, over, right, outcome: over ? anagramOutcome(next, right, seconds) : null, attemptsLeft: ANAGRAM_ATTEMPTS - attempts, answer: next.word };
     }
+    if (state.game === "caca-palavras" && input.action === "hint") {
+      const placement = state.placements.find((entry) => entry.word === input.word);
+      if (!placement) throw badRequest("Escolha uma palavra da lista");
+      const asked = state.hinted.includes(placement.word);
+      if (!asked && state.hinted.length >= state.puzzle.hints) throw badRequest("Acabaram as dicas desta partida");
+      const hinted = asked ? state.hinted : [...state.hinted, placement.word];
+      if (!asked) await save({ ...state, hinted }, false);
+      return { game: "caca-palavras" as const, over: false, right: false, outcome: null, answer: "", cell: placement.from, hintsLeft: state.puzzle.hints - hinted.length };
+    }
     if (state.game === "quem-sou-eu" && input.action === "hint") {
       if (state.state.shown >= state.state.clues.length) throw badRequest("Não há mais dicas");
       const next = { ...state.state, shown: state.state.shown + 1 };
@@ -389,7 +414,7 @@ export async function actMiniGame(userId: number, runId: string, body: unknown):
     }
     throw badRequest("Ação inválida para este jogo");
   });
-  if (!step.over) return { status: "playing", attemptsLeft: "attemptsLeft" in step ? step.attemptsLeft : undefined, clue: "clue" in step ? step.clue : undefined, shown: "shown" in step ? step.shown : undefined, total: "total" in step ? step.total : undefined };
+  if (!step.over) return { status: "playing", cell: "cell" in step ? step.cell : undefined, hintsLeft: "hintsLeft" in step ? step.hintsLeft : undefined, attemptsLeft: "attemptsLeft" in step ? step.attemptsLeft : undefined, clue: "clue" in step ? step.clue : undefined, shown: "shown" in step ? step.shown : undefined, total: "total" in step ? step.total : undefined };
   const result = await settle(userId, step.game, step.outcome!);
   return step.right ? { status: "won", result } : { status: "lost", answer: step.answer, result };
 }

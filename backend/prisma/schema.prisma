@@ -1056,6 +1056,17 @@ model GameModeDesign {
   @@map("game_mode_designs")
 }
 
+/// Imagens de cada mini game: capa do cartão (16:9) e fundo da tela de jogo (vertical).
+model MiniGameDesign {
+  id            Int      @id @default(autoincrement())
+  gameId        String   @unique @map("game_id")
+  coverUrl      String?  @map("cover_url")
+  backgroundUrl String?  @map("background_url")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("mini_game_designs")
+}
+
 /// Melhor pontuação da semana de cada jogador em cada mini game (só quem completou o Peitoral entra no ranking semanal).
 model MiniGameScore {
   id        Int      @id @default(autoincrement())

@@ -5,7 +5,10 @@ import { getSoundSettings } from '@/lib/sound/settings';
  * Efeitos sonoros sintetizados na hora (osciladores e ruído): não há arquivos para baixar
  * e funcionam offline. Cada som é curto e discreto.
  */
-export type SfxName = 'click' | 'soft' | 'toggleOn' | 'toggleOff' | 'open' | 'close' | 'flip' | 'swipe' | 'success' | 'error' | 'correct' | 'wrong' | 'coin' | 'reward' | ChestSfxName;
+export type SfxName = 'click' | 'soft' | 'toggleOn' | 'toggleOff' | 'open' | 'close' | 'flip' | 'swipe' | 'success' | 'error' | 'correct' | 'wrong' | 'coin' | 'reward' | ChestSfxName | MiniGameSfxName;
+
+/** Sons dos mini games (hoje o caça-palavras): arrastar sobre as letras, achar, errar, dica, vitória e fim sem sucesso. */
+export type MiniGameSfxName = 'wsPick' | 'wsTick' | 'wsFound' | 'wsMiss' | 'wsHint' | 'wsWin' | 'wsLose' | 'wsReveal';
 
 /** Sons da abertura de baús: um por nível de baú, um por tipo de prêmio e os do suspense e do carretel. */
 export type ChestSfxName =
@@ -38,10 +41,13 @@ function noiseBuffer(ctx: AudioContext) {
   return noise;
 }
 
-type Out = { ctx: AudioContext; out: GainNode; at: number };
+/** `rate` muda o tom de todo o som (1 = normal; 2 = uma oitava acima): o tique do arrastar sobe a cada letra. */
+type Out = { ctx: AudioContext; out: GainNode; at: number; rate?: number };
 
 /** Nota com ataque rápido e queda suave. */
-function tone({ ctx, out, at }: Out, type: OscillatorType, from: number, to: number, start: number, length: number, peak: number) {
+function tone({ ctx, out, at, rate = 1 }: Out, type: OscillatorType, rawFrom: number, rawTo: number, start: number, length: number, peak: number) {
+  const from = rawFrom * rate;
+  const to = rawTo * rate;
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.type = type;
@@ -223,6 +229,26 @@ const RECIPES: Record<SfxName, (o: Out) => void> = {
     notes(o, 'sine', [1568, 1976], 0.08, 0.4, 0.12, 0.35);
     whoosh(o, 2500, 8000, 0.05, 0.6, 0.18, 2);
   },
+  // ---- Caça-palavras ----
+  wsPick: (o) => tone(o, 'triangle', 440, 560, 0, 0.07, 0.28),
+  wsTick: (o) => tone(o, 'sine', 523, 523, 0, 0.06, 0.22),
+  wsFound: (o) => {
+    notes(o, 'triangle', [659, 784, 988], 0.07, 0.2, 0.3);
+    whoosh(o, 3000, 7000, 0.1, 0.3, 0.1, 2);
+  },
+  wsMiss: (o) => {
+    tone(o, 'sine', 330, 230, 0, 0.16, 0.2);
+    whoosh(o, 900, 400, 0, 0.12, 0.12, 0.8);
+  },
+  wsHint: (o) => notes(o, 'sine', [1319, 1760], 0.09, 0.3, 0.2),
+  wsWin: (o) => {
+    notes(o, 'triangle', [523, 659, 784, 1047, 1319], 0.1, 0.34, 0.3);
+    notes(o, 'sine', [2093, 2637], 0.09, 0.4, 0.1, 0.5);
+    whoosh(o, 3000, 8000, 0.3, 0.6, 0.14, 2);
+  },
+  wsLose: (o) => notes(o, 'triangle', [392, 330, 262], 0.16, 0.34, 0.22),
+  // Palavras que faltaram aparecem uma a uma no fim da partida.
+  wsReveal: (o) => tone(o, 'sine', 392, 330, 0, 0.14, 0.2),
   stickerLegendary: (o) => {
     tone(o, 'sine', 80, 35, 0, 0.9, 0.55); // estrondo
     thud(o, 0.02, 220, 50, 0.6);
@@ -234,12 +260,12 @@ const RECIPES: Record<SfxName, (o: Out) => void> = {
 };
 
 /** Sons mais longos que o padrão (a saída só é desligada depois que eles terminam). */
-const LENGTH_MS: Partial<Record<SfxName, number>> = { chestGold: 1800, chestDiamond: 2400, chestEmerald: 3200, stickerSpecial: 3200, suspenseEpic: 1500, suspenseLegendary: 2500, stickerEpic: 1500, stickerLegendary: 2800 };
+const LENGTH_MS: Partial<Record<SfxName, number>> = { chestGold: 1800, chestDiamond: 2400, chestEmerald: 3200, stickerSpecial: 3200, suspenseEpic: 1500, suspenseLegendary: 2500, stickerEpic: 1500, stickerLegendary: 2800, wsWin: 1800 };
 
 let lastPlayed = new Map<SfxName, number>();
 
 /** Toca o efeito se estiver ligado e o áudio já tiver sido liberado por um toque. */
-export function playSfx(name: SfxName) {
+export function playSfx(name: SfxName, rate = 1) {
   const settings = getSoundSettings();
   const ctx = getAudioContext();
   if (!settings.sfxEnabled || settings.sfxVolume <= 0 || !ctx || ctx.state !== 'running') return;
@@ -251,7 +277,7 @@ export function playSfx(name: SfxName) {
     const out = ctx.createGain();
     out.gain.value = settings.sfxVolume * 0.8;
     out.connect(ctx.destination);
-    RECIPES[name]({ ctx, out, at: ctx.currentTime + 0.005 });
+    RECIPES[name]({ ctx, out, at: ctx.currentTime + 0.005, rate });
     window.setTimeout(() => out.disconnect(), LENGTH_MS[name] ?? 1200);
   } catch {
     // Som é enfeite: nunca atrapalha o jogo.

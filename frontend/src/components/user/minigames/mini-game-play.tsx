@@ -15,7 +15,7 @@ import { MemoryGame } from '@/components/user/minigames/games/memory-game';
 import { MiniGameFrame } from '@/components/user/minigames/games/play-frame';
 import { SwapPuzzleGame } from '@/components/user/minigames/games/swap-puzzle-game';
 import { VerseGame } from '@/components/user/minigames/games/verse-game';
-import { WordSearchGame } from '@/components/user/minigames/games/wordsearch-game';
+import { WordSearchGame, wordSearchSetup } from '@/components/user/minigames/games/wordsearch-game';
 import type { ChainPuzzle, CrosswordPuzzle, LineagePuzzle, MapPuzzle, TimelinePuzzle, AnagramPuzzle, BlanksPuzzle, BlitzPuzzle, BooksPuzzle, TestamentPuzzle, WhoAmIPuzzle, HangmanPuzzle, MazePuzzle, MemoryPuzzle, MiniGameInfo, SwapPuzzle, VersePuzzle, WordSearchPuzzle } from '@/lib/minigames-api';
 
 type Props = { game: MiniGameInfo; onExit: () => void; onWallet: (wallet: { userCoins: number }) => void };
@@ -24,7 +24,7 @@ type Props = { game: MiniGameInfo; onExit: () => void; onWallet: (wallet: { user
 export function MiniGamePlay({ game, onExit, onWallet }: Props) {
   switch (game.id) {
     case 'caca-palavras':
-      return <MiniGameFrame<WordSearchPuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <WordSearchGame {...props} />}</MiniGameFrame>;
+      return <MiniGameFrame<WordSearchPuzzle> game={game} onExit={onExit} onWallet={onWallet} setup={wordSearchSetup}>{(props) => <WordSearchGame {...props} />}</MiniGameFrame>;
     case 'forca':
       return <MiniGameFrame<HangmanPuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <HangmanGame {...props} />}</MiniGameFrame>;
     case 'quebra-cabeca':

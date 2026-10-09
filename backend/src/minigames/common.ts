@@ -45,4 +45,10 @@ export const TIME_MAX = 300;
 export const timeBonus = (seconds: number, fast: number) => Math.max(0, TIME_MAX - Math.max(0, Math.floor(seconds) - fast));
 
 /** Resultado conferido pelo servidor. */
-export type Outcome = { solved: boolean; score: number; detail: string };
+export type Outcome = {
+  solved: boolean;
+  score: number;
+  detail: string;
+  /** Extra para a tela mostrar o gabarito depois do fim (ex.: onde estavam as palavras do caça-palavras que faltaram). */
+  reveal?: unknown;
+};

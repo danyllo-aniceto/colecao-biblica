@@ -17,7 +17,7 @@ import { getMiniGames, getMiniRanking, type MiniGameInfo, type MiniGamesOverview
 type Tab = 'games' | 'ranking' | 'gallery';
 
 /** O jogo ocupa a tela inteira (igual para o jogador e para o administrador testando): por cima do app, com rolagem própria. */
-function FullScreen({ children }: { children: ReactNode }) {
+function FullScreen({ children, background }: { children: ReactNode; background?: string | null }) {
   useEffect(() => {
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -27,7 +27,14 @@ function FullScreen({ children }: { children: ReactNode }) {
   }, []);
   return createPortal(
     <div role="dialog" aria-modal="true" aria-label="Mini game" className="fixed inset-0 z-[60] overflow-y-auto bg-bg px-4 pb-10 pt-[max(1rem,env(safe-area-inset-top))]">
-      {children}
+      {background ? (
+        // Fundo do jogo enviado pelo painel: cobre a tela e fica clareado para as letras e os botões continuarem legíveis.
+        <div aria-hidden className="pointer-events-none fixed inset-0">
+          <img src={background} alt="" className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-bg/55" />
+        </div>
+      ) : null}
+      <div className="relative">{children}</div>
     </div>,
     document.body,
   );
@@ -36,28 +43,40 @@ function FullScreen({ children }: { children: ReactNode }) {
 function GameCard({ game, onPlay }: { game: MiniGameInfo; onPlay: (game: MiniGameInfo) => void }) {
   const state = !game.unlocked ? 'locked' : game.ready ? 'ready' : 'soon';
   return (
-    <li className={cn('panel flex items-start gap-3 p-4', state === 'locked' && 'opacity-70')}>
-      <span className={cn('flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-surface-3 text-2xl', state === 'locked' && 'grayscale')} aria-hidden>
-        {game.emoji}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block font-display font-bold text-ink">{game.name}</span>
-        <span className="block text-sm font-semibold text-muted">{game.text}</span>
-        <span className="mt-2 flex items-center gap-1.5 text-xs font-bold">
+    <li className={cn('panel flex flex-col overflow-hidden', state === 'locked' && 'opacity-70')}>
+      {game.coverUrl ? (
+        <div className="relative aspect-video w-full overflow-hidden bg-surface-3">
+          <img src={game.coverUrl} alt="" loading="lazy" className={cn('absolute inset-0 h-full w-full object-cover', state === 'locked' && 'grayscale')} />
           {state === 'locked' ? (
-            <>
-              <LockRoundedIcon sx={{ fontSize: 16 }} className="text-muted" />
-              <span className="text-muted">Libera com a pedra {game.stoneName ?? game.stoneSlot} do Peitoral</span>
-            </>
-          ) : state === 'soon' ? (
-            <span className="rounded-full bg-success/15 px-2.5 py-1 text-success">Liberado · chega em breve</span>
-          ) : (
-            <Button size="sm" onClick={() => onPlay(game)}>
-              Jogar
-            </Button>
-          )}
+            <span className="absolute inset-0 flex items-center justify-center bg-black/40 text-white">
+              <LockRoundedIcon fontSize="large" />
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+      <div className="flex flex-1 items-start gap-3 p-4">
+        <span className={cn('flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-surface-3 text-2xl', state === 'locked' && 'grayscale')} aria-hidden>
+          {game.emoji}
         </span>
-      </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-display font-bold text-ink">{game.name}</span>
+          <span className="block text-sm font-semibold text-muted">{game.text}</span>
+          <span className="mt-2 flex items-center gap-1.5 text-xs font-bold">
+            {state === 'locked' ? (
+              <>
+                <LockRoundedIcon sx={{ fontSize: 16 }} className="text-muted" />
+                <span className="text-muted">Libera com a pedra {game.stoneName ?? game.stoneSlot} do Peitoral</span>
+              </>
+            ) : state === 'soon' ? (
+              <span className="rounded-full bg-success/15 px-2.5 py-1 text-success">Liberado · chega em breve</span>
+            ) : (
+              <Button size="sm" onClick={() => onPlay(game)}>
+                Jogar
+              </Button>
+            )}
+          </span>
+        </span>
+      </div>
     </li>
   );
 }
@@ -151,7 +170,7 @@ export function MiniGamesHub({ currentUserId, onWallet }: { currentUserId?: numb
 
   if (playing) {
     return (
-      <FullScreen>
+      <FullScreen background={playing.backgroundUrl}>
         <MiniGamePlay
           game={playing}
           onWallet={onWallet}

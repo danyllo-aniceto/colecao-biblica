@@ -17,6 +17,7 @@ export async function getMiniGames(db: Db, userId: number) {
   const stoneBySlot = new Map(breastplate.stones.map((stone) => [stone.slot, stone]));
   const day = dayKeyInTimeZone(new Date(), env.timezone);
   const winsToday = await db.userClaim.count({ where: { userId, kind: "MINIGAME", periodKey: day } });
+  const designs = new Map((await db.miniGameDesign.findMany()).map((design) => [design.gameId, design]));
   return {
     games: MINI_GAMES.map((game) => ({
       id: game.id,
@@ -26,6 +27,8 @@ export async function getMiniGames(db: Db, userId: number) {
       stoneSlot: game.stoneSlot,
       stoneName: stoneBySlot.get(game.stoneSlot)?.name ?? null,
       ready: game.ready,
+      coverUrl: designs.get(game.id)?.coverUrl ?? null,
+      backgroundUrl: designs.get(game.id)?.backgroundUrl ?? null,
       unlocked: preview || miniGameUnlocked(game, claimedSlots),
     })),
     rankingUnlocked: preview || breastplate.finalClaimed,
@@ -79,4 +82,12 @@ export async function peitoralGallery(db: Db, userId: number, skip: number, take
   const content = claims.map((claim, index) => ({ position: skip + index + 1, userId: claim.userId, userName: claim.user.name, level: claim.user.level, look: looks.get(claim.userId) ?? null, completedAt: claim.createdAt.toISOString() }));
   const mine = await db.userClaim.findFirst({ where: { userId, kind: FINAL_KIND }, select: { createdAt: true } });
   return { ...pageOf(content, total, page, size), me: mine ? { completedAt: mine.createdAt.toISOString() } : null };
+}
+
+/** Capa do cartão e fundo da tela de um mini game (painel). Campo ausente não altera; vazio limpa. */
+export async function saveMiniGameDesign(db: Db, gameId: string, input: { coverUrl?: string | null; backgroundUrl?: string | null }) {
+  if (!MINI_GAMES.some((game) => game.id === gameId)) throw notFound("Mini game não encontrado");
+  const data = { ...(input.coverUrl !== undefined ? { coverUrl: input.coverUrl } : {}), ...(input.backgroundUrl !== undefined ? { backgroundUrl: input.backgroundUrl } : {}) };
+  const saved = await db.miniGameDesign.upsert({ where: { gameId }, create: { gameId, ...data }, update: data, select: { gameId: true, coverUrl: true, backgroundUrl: true } });
+  return saved;
 }
