@@ -97,17 +97,31 @@ describe.skipIf(!hasDatabase)("mini games: partidas", () => {
     expect((await start(token, "palavras-cruzadas")).status).toBe(200);
   });
 
+  it("labirinto: nível, mapa e dica contada no servidor", async () => {
+    const { token } = await unlockAll();
+    const run = (await start(token, "labirinto", { difficulty: "dificil", time: 240 })).body;
+    expect(run.puzzle).toMatchObject({ width: 14, height: 18, level: "dificil", timeLimit: 240, hintsLeft: 2, fog: 5 });
+    expect(run.puzzle.stars).toHaveLength(3);
+    const first = await act(token, run.runId, { action: "hint", moves: "" });
+    expect(first.body.turn).toMatchObject({ kind: "hint", left: 1 });
+    expect(first.body.turn.steps.length).toBeGreaterThan(0);
+    expect((await act(token, run.runId, { action: "hint", moves: "XX" })).status).toBe(400);
+    expect((await act(token, run.runId, { action: "hint", moves: "" })).body.turn).toMatchObject({ left: 0 });
+    expect((await act(token, run.runId, { action: "hint", moves: "" })).status).toBe(400);
+    expect((await start(token, "labirinto", { time: 77 })).status).toBe(400);
+  });
+
   it("resolve o labirinto: o servidor confere, pontua, dá moedas uma vez no dia e guarda a melhor no ranking", async () => {
     const { userId, token } = await unlockAll();
     const coinsBefore = (await prisma.user.findUniqueOrThrow({ where: { id: userId } })).coins;
     const started = await start(token, "labirinto");
     expect(started.status).toBe(200);
-    const { runId, puzzle } = started.body as { runId: string; puzzle: { width: number; height: number; cells: number[] } };
+    const { runId, puzzle } = started.body as { runId: string; puzzle: { width: number; height: number; cells: number[]; start: number; goal: number } };
     // Caminho curto por busca (só o teste conhece o gabarito do labirinto pois ele vai inteiro para a tela).
     const dirs: Array<[string, number, number, number]> = [["U", -1, 0, 1], ["R", 0, 1, 2], ["D", 1, 0, 4], ["L", 0, -1, 8]];
     const previous = new Map<number, [number, string]>();
-    const seen = new Set([0]);
-    const queue = [0];
+    const seen = new Set([puzzle.start]);
+    const queue = [puzzle.start];
     for (let head = 0; head < queue.length; head += 1) {
       const at = queue[head];
       for (const [name, dr, dc, bit] of dirs) {
@@ -120,7 +134,7 @@ describe.skipIf(!hasDatabase)("mini games: partidas", () => {
       }
     }
     let moves = "";
-    for (let at = puzzle.width * puzzle.height - 1; at !== 0; ) {
+    for (let at = puzzle.goal; at !== puzzle.start; ) {
       const [from, name] = previous.get(at)!;
       moves = name + moves;
       at = from;
@@ -128,7 +142,8 @@ describe.skipIf(!hasDatabase)("mini games: partidas", () => {
     const done = await finish(token, runId, { moves });
     expect(done.status).toBe(200);
     expect(done.body).toMatchObject({ solved: true, coins: 10, recorded: true, rankingUnlocked: true });
-    expect(done.body.score).toBeGreaterThan(700);
+    // Fácil vale 60% da pontuação cheia.
+    expect(done.body.score).toBeGreaterThan(500);
     expect(done.body.userCoins).toBe(coinsBefore + 10);
     // A mesma partida não vale duas vezes.
     expect((await finish(token, runId, { moves })).status).toBe(400);
@@ -464,10 +479,24 @@ describe.skipIf(!hasDatabase)("mini games: jogos novos e administrador", () => {
   it("linha do tempo, mapa, árvore e interconexão: o servidor confere pelo gabarito e a solução não vai à tela", async () => {
     const token = await unlockAll();
 
-    const timeline = (await start(token, "linha-do-tempo")).body;
-    expect(JSON.stringify(timeline.puzzle)).not.toMatch(/year|"order"/);
-    const order = (await stateOf(timeline.runId)).state.order as string[];
-    expect((await finish(token, timeline.runId, { order })).body).toMatchObject({ solved: true, coins: 10, score: expect.any(Number) });
+    const timeline = (await start(token, "linha-do-tempo", { difficulty: "medio", rounds: 8, time: 20 })).body;
+    expect(JSON.stringify(timeline.puzzle)).not.toMatch(/"year"/);
+    expect(timeline.puzzle).toMatchObject({ total: 8, lives: 4, maxLives: 4 });
+    expect(timeline.puzzle.placed).toHaveLength(1);
+    const stored = (await stateOf(timeline.runId)).state as { items: Array<{ id: string; year: number }>; placed: string[] };
+    const yearOf = (id: string) => stored.items.find((item) => item.id === id)!.year;
+    expect((await act(token, timeline.runId, { action: "place", slot: 99 })).status).toBe(400);
+    const placedYears = [yearOf(stored.placed[0])];
+    let result = { status: "playing" } as { status: string; result?: unknown; turn?: { end?: { right: boolean } } };
+    for (const item of stored.items.slice(1)) {
+      const slot = placedYears.filter((year) => year < item.year).length;
+      result = (await act(token, timeline.runId, { action: "place", slot })).body;
+      expect(result.turn?.end?.right).toBe(true);
+      placedYears.push(item.year);
+      placedYears.sort((a, b) => a - b);
+      await act(token, timeline.runId, { action: "begin" });
+    }
+    expect(result).toMatchObject({ status: "won", result: { solved: true, coins: 10 } });
 
     const map = (await start(token, "mapa")).body;
     expect(map.puzzle.places).toHaveLength(5);

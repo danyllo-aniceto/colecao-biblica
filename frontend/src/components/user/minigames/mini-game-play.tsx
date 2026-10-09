@@ -2,7 +2,7 @@ import { ChainGame } from '@/components/user/minigames/games/chain-game';
 import { CrosswordGame, crosswordSetup } from '@/components/user/minigames/games/crossword-game';
 import { LineageGame } from '@/components/user/minigames/games/lineage-game';
 import { MapGame } from '@/components/user/minigames/games/map-game';
-import { TimelineGame } from '@/components/user/minigames/games/timeline-game';
+import { TimelineGame, timelineSetup } from '@/components/user/minigames/games/timeline-game';
 import { AnagramGame, anagramSetup } from '@/components/user/minigames/games/anagram-game';
 import { BlanksGame, blanksSetup } from '@/components/user/minigames/games/blanks-game';
 import { BlitzGame, blitzSetup } from '@/components/user/minigames/games/blitz-game';
@@ -10,7 +10,7 @@ import { BooksGame, booksSetup } from '@/components/user/minigames/games/books-g
 import { TestamentGame, testamentSetup } from '@/components/user/minigames/games/testament-game';
 import { WhoAmIGame, whoAmISetup } from '@/components/user/minigames/games/whoami-game';
 import { HangmanGame, hangmanSetup } from '@/components/user/minigames/games/hangman-game';
-import { MazeGame } from '@/components/user/minigames/games/maze-game';
+import { MazeGame, mazeSetup } from '@/components/user/minigames/games/maze-game';
 import { MemoryGame, memorySetup } from '@/components/user/minigames/games/memory-game';
 import { MiniGameFrame } from '@/components/user/minigames/games/play-frame';
 import { SwapPuzzleGame, swapPuzzleSetup } from '@/components/user/minigames/games/swap-puzzle-game';
@@ -34,7 +34,7 @@ export function MiniGamePlay({ game, onExit, onWallet }: Props) {
     case 'versiculo':
       return <MiniGameFrame<VersePuzzle> game={game} onExit={onExit} onWallet={onWallet} setup={verseSetup}>{(props) => <VerseGame {...props} />}</MiniGameFrame>;
     case 'labirinto':
-      return <MiniGameFrame<MazePuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <MazeGame {...props} />}</MiniGameFrame>;
+      return <MiniGameFrame<MazePuzzle> game={game} onExit={onExit} onWallet={onWallet} setup={mazeSetup}>{(props) => <MazeGame {...props} />}</MiniGameFrame>;
     case 'anagrama':
       return <MiniGameFrame<AnagramPuzzle> game={game} onExit={onExit} onWallet={onWallet} setup={anagramSetup}>{(props) => <AnagramGame {...props} />}</MiniGameFrame>;
     case 'testamento':
@@ -48,7 +48,7 @@ export function MiniGamePlay({ game, onExit, onWallet }: Props) {
     case 'quem-sou-eu':
       return <MiniGameFrame<WhoAmIPuzzle> game={game} onExit={onExit} onWallet={onWallet} setup={whoAmISetup}>{(props) => <WhoAmIGame {...props} />}</MiniGameFrame>;
     case 'linha-do-tempo':
-      return <MiniGameFrame<TimelinePuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <TimelineGame {...props} />}</MiniGameFrame>;
+      return <MiniGameFrame<TimelinePuzzle> game={game} onExit={onExit} onWallet={onWallet} setup={timelineSetup}>{(props) => <TimelineGame {...props} />}</MiniGameFrame>;
     case 'mapa':
       return <MiniGameFrame<MapPuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <MapGame {...props} />}</MiniGameFrame>;
     case 'arvore':

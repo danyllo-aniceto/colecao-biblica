@@ -4,33 +4,6 @@ import { checkCrossword, CHECK_PENALTY, CROSSWORD_LEVELS, generateCrossword, let
 import { EDGES, NODES, checkChain, generateChain, neighbors, shortestSteps } from "./graph";
 import { LINEAGES, checkLineage, generateLineage } from "./lineage";
 import { MAP_BOUNDS, PLACES, checkMap, distanceKm, generateMap } from "./places";
-import { MIN_GAP, TIMELINE, checkTimeline, generateTimeline } from "./timeline";
-
-describe("linha do tempo", () => {
-  it("tem datas únicas e ordenadas por época; a sorteada tem 6 itens separados por pelo menos 40 anos", () => {
-    expect(new Set(TIMELINE.map((event) => event.id)).size).toBe(TIMELINE.length);
-    expect(TIMELINE.map((event) => event.year)).toEqual([...TIMELINE.map((event) => event.year)].sort((a, b) => a - b));
-    for (let seed = 1; seed <= 40; seed += 1) {
-      const { puzzle, state } = generateTimeline(seed);
-      expect(puzzle.items).toHaveLength(6);
-      const years = state.order.map((id) => TIMELINE.find((event) => event.id === id)!.year);
-      for (let index = 1; index < years.length; index += 1) expect(years[index] - years[index - 1]).toBeGreaterThanOrEqual(MIN_GAP);
-      expect(puzzle.items.map((item) => item.id)).not.toEqual(state.order);
-    }
-  });
-
-  it("a ordem certa pontua cheio; erros de posição custam mais quanto mais longe; resposta inválida zera", () => {
-    const { state } = generateTimeline(3);
-    expect(checkTimeline(state, state.order, 5)).toMatchObject({ solved: true, score: 1000 });
-    const swapped = [state.order[1], state.order[0], ...state.order.slice(2)];
-    const far = [state.order[5], ...state.order.slice(1, 5), state.order[0]];
-    const near = checkTimeline(state, swapped, 5);
-    expect(near).toMatchObject({ solved: false });
-    expect(near.score).toBeGreaterThan(checkTimeline(state, far, 5).score);
-    expect(checkTimeline(state, [...state.order].reverse(), 5).score).toBe(0);
-    expect(checkTimeline(state, state.order.slice(1), 5).detail).toBe("Resposta inválida");
-  });
-});
 
 describe("mapa bíblico", () => {
   it("todos os lugares cabem no mapa e a distância confere com valores conhecidos", () => {

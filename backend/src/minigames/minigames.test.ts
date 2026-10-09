@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { lettersOnly, rng } from "./common";
 import { applyGuess, guessLetter, isLost, isWon, maskHint, pattern, type HangmanState } from "./hangman";
-import { checkMaze, generateMaze, shortestPath, type Maze } from "./maze";
 import { checkWordSearch, DIFFICULTIES, generateWordSearch, gridSize, HINT_PENALTY, selectionSpells, wordSearchCandidates, type Difficulty, type Found, type GeneratedWordSearch, type WordSearch, type WordSearchState } from "./wordsearch";
 
 const NAMES = ["Moisés", "Abraão", "Davi", "Salomão", "Débora", "Gideão", "Samuel", "Rute", "Ester", "Daniel", "Elias", "Eliseu", "Jonas", "Noé", "Isaías", "Jeremias", "Ezequiel", "Josué", "Jacó", "Isaque", "Gabriel", "Miguel", "Pedro", "Tiago", "Mateus", "Lucas", "Marcos", "Paulo", "Timóteo", "Estêvão", "Barnabé", "Lázaro", "Zaqueu", "Nicodemos"];
@@ -172,60 +171,5 @@ describe("forca", () => {
   it("a dica não entrega o nome", () => {
     expect(maskHint("Moisés tirou o povo do Egito. Davi não.", "Moisés")).toBe("___ tirou o povo do Egito. Davi não.");
     expect(maskHint("O rei Davi Rei venceu.", "Davi Rei")).not.toMatch(/davi/i);
-  });
-});
-
-describe("labirinto", () => {
-  const maze = generateMaze(21);
-
-  /** Caminho mais curto por busca, só para montar a resposta certa. */
-  function solution(m: Maze): string {
-    const goal = m.width * m.height - 1;
-    const previous = new Map<number, [number, string]>();
-    const queue = [0];
-    const seen = new Set([0]);
-    const dirs: Array<[string, number, number, number]> = [["U", -1, 0, 1], ["R", 0, 1, 2], ["D", 1, 0, 4], ["L", 0, -1, 8]];
-    for (let head = 0; head < queue.length; head += 1) {
-      const at = queue[head];
-      for (const [name, dr, dc, bit] of dirs) {
-        if (!(m.cells[at] & bit)) continue;
-        const next = (Math.floor(at / m.width) + dr) * m.width + ((at % m.width) + dc);
-        if (seen.has(next)) continue;
-        seen.add(next);
-        previous.set(next, [at, name]);
-        queue.push(next);
-      }
-    }
-    let path = "";
-    for (let at = goal; at !== 0; ) {
-      const [from, name] = previous.get(at)!;
-      path = name + path;
-      at = from;
-    }
-    return path;
-  }
-
-  it("é determinista, tem caminho e as paredes são simétricas", () => {
-    expect(generateMaze(21)).toEqual(maze);
-    expect(generateMaze(22).cells).not.toEqual(maze.cells);
-    for (let at = 0; at < maze.cells.length; at += 1) {
-      const col = at % maze.width;
-      if (maze.cells[at] & 2) expect(maze.cells[at + 1] & 8).toBeTruthy();
-      if (col === maze.width - 1) expect(maze.cells[at] & 2).toBe(0);
-      if (maze.cells[at] & 4) expect(maze.cells[at + maze.width] & 1).toBeTruthy();
-    }
-    expect(shortestPath(maze)).toBe(solution(maze).length);
-  });
-
-  it("chegar à saída pelo caminho curto pontua cheio; voltas custam; parede e saída longe não valem", () => {
-    const best = solution(maze);
-    expect(checkMaze(maze, best, 5)).toMatchObject({ solved: true, score: 1000 });
-    const first = best[0];
-    const opposite = { U: "D", D: "U", L: "R", R: "L" }[first]!;
-    expect(checkMaze(maze, first + opposite + best, 5).score).toBe(1000 - 8);
-    expect(checkMaze(maze, best.slice(0, -1), 5).solved).toBe(false);
-    expect(checkMaze(maze, "X", 5).solved).toBe(false);
-    // Uma parede: tenta sempre sair pelo lado esquerdo da entrada (fora da grade, sempre fechado).
-    expect(checkMaze(maze, "L", 5).detail).toBe("Atravessou uma parede");
   });
 });

@@ -141,7 +141,32 @@ export type VerseEvent =
   | { kind: 'tap'; index: number; right: boolean; errors: number }
   | { kind: 'hint'; index: number; hintsLeft: number }
   | { kind: 'end'; end: VerseEnd; next: VersePuzzle | null };
-export type MazePuzzle = { width: number; height: number; cells: number[] };
+export type MazePuzzle = {
+  width: number;
+  height: number;
+  /** Bits de cada célula: 1 = aberta em cima, 2 = à direita, 4 = embaixo, 8 = à esquerda. */
+  cells: number[];
+  start: number;
+  goal: number;
+  stars: number[];
+  style: string;
+  styleLabel: string;
+  level: SizeLevel;
+  /** Segundos para chegar à saída; null = sem tempo. */
+  timeLimit: number | null;
+  hintsLeft: number;
+  hintPenalty: number;
+  starPoints: number;
+  /** Raio (em células) que o peão enxerga; null = o mapa todo à vista. */
+  fog: number | null;
+  par: number;
+  maxScore: number;
+  imageUrl: string | null;
+  title: string;
+};
+export type MazeEvent = { kind: 'hint'; steps: string; left: number };
+/** Depois do fim: o caminho mais curto. */
+export type MazeReveal = { best: string; title: string; style: string };
 
 export type AnagramDifficulty = 'facil' | 'medio' | 'dificil';
 /** Um turno do anagrama (o nome nunca vem junto). */
@@ -190,7 +215,27 @@ export type ActResult = { status: 'playing' | 'won' | 'lost'; turn?: unknown; ce
 export const actMiniGame = (runId: string, body: object) =>
   apiRequest<ActResult>(`/minigames/runs/${runId}/act`, { method: 'POST', body: JSON.stringify(body) }, 'Não foi possível conferir a jogada.');
 
-export type TimelinePuzzle = { items: Array<{ id: string; label: string; emoji: string }> };
+export type TimelineCard = { id: string; label: string; emoji: string; imageUrl: string | null; kind: 'character' | 'place' | 'event' };
+export type TimelinePlaced = TimelineCard & { yearLabel: string };
+export type TimelinePuzzle = {
+  index: number;
+  total: number;
+  lives: number;
+  maxLives: number;
+  /** A carta da vez (sem a data). */
+  card: TimelineCard;
+  placed: TimelinePlaced[];
+  hints: string[];
+  hintsLeft: number;
+  timePerItem: number | null;
+  level: TurnLevel;
+  maxScore: number;
+};
+export type TimelineEnd = { right: boolean; timedOut: boolean; correctSlot: number; points: number; card: TimelinePlaced };
+export type TimelineEvent =
+  | { kind: 'begin' }
+  | { kind: 'hint'; hints: string[]; hintsLeft: number }
+  | { kind: 'end'; end: TimelineEnd; lives: number; placed: TimelinePlaced[]; next: TimelinePuzzle | null; gameOver: boolean };
 export type MapPuzzle = { places: string[]; bounds: { west: number; east: number; south: number; north: number } };
 export type LineagePuzzle = { fathers: string[]; sons: string[] };
 export type ChainPuzzle = { from: string; to: string; edges: Array<[string, string, string, string]> };
