@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { ANAGRAM_ATTEMPTS, anagramMatches, anagramOutcome, generateAnagram } from "./anagram";
+import { ANAGRAM_ATTEMPTS, anagramMatches, anagramOutcome, generateAnagram, newAnagram, pickRounds, playAnagram, publicRound, roundPoints, TIME_GRACE, type AnagramState } from "./anagram";
+import { plainText, rng } from "./common";
+import { maskHint } from "./hangman";
 import { checkBlitz, generateBlitz, type BlitzQuestion } from "./blitz";
 import { BOOKS, bookTestament, checkBookOrder, checkTestament, generateBookOrder, generateTestament } from "./books";
 import { checkBlanks, generateBlanks, usableForBlanks } from "./verse-blanks";
@@ -50,14 +52,92 @@ describe("anagrama", () => {
     expect(generateAnagram(4, "Moisés")).toEqual(letters);
   });
 
-  it("aceita o nome com ou sem acento e pontua menos a cada tentativa", () => {
-    const state = { word: "Moisés", attempts: 1 };
+  it("aceita o nome com ou sem acento", () => {
+    const state = { word: "Moisés" };
     expect(anagramMatches(state, "moises")).toBe(true);
     expect(anagramMatches(state, "Moises ")).toBe(true);
     expect(anagramMatches(state, "Miosés ")).toBe(false);
-    expect(anagramOutcome(state, true, 5).score).toBe(1000);
-    expect(anagramOutcome({ ...state, attempts: 3 }, true, 5).score).toBe(600);
-    expect(anagramOutcome({ ...state, attempts: ANAGRAM_ATTEMPTS }, false, 5)).toMatchObject({ solved: false, score: 0, detail: "Era Moisés" });
+  });
+
+  const SOURCES = ["Moisés", "Abraão", "Salomão", "Débora", "Gideão", "Samuel", "Rute", "Ester", "Daniel", "Elias", "Jerusalém", "Nazaré", "Betsabá", "Naamã"].map((name) => ({ name, summary: `<p>${name} foi importante.</p>`, imageUrl: null }));
+  const start = (rounds: number, timePerRound: number | null = null, difficulty: "facil" | "medio" | "dificil" = "medio", now = 0): AnagramState =>
+    newAnagram(1, pickRounds(rng(1), SOURCES, difficulty, rounds, []), difficulty, timePerRound, now);
+
+  it("a dificuldade escolhe o tamanho dos nomes; os recentes ficam por último; a dica vem sem HTML nem o nome", () => {
+    const lengths = (difficulty: "facil" | "medio" | "dificil") => pickRounds(rng(3), SOURCES, difficulty, 10, []).map((round) => round.word.normalize("NFD").replace(/[^A-Za-z]/g, "").length);
+    expect(lengths("facil").every((length) => length >= 4 && length <= 6)).toBe(true);
+    expect(lengths("dificil").every((length) => length >= 7)).toBe(true);
+    const first = pickRounds(rng(4), SOURCES, "medio", 3, []).map((round) => round.word);
+    const second = pickRounds(rng(5), SOURCES, "medio", 3, first).map((round) => round.word);
+    expect(second.filter((word) => first.includes(word))).toHaveLength(0);
+    const [round] = pickRounds(rng(6), SOURCES, "medio", 1, []);
+    expect(round.hint).not.toContain("<");
+    expect(round.hint).not.toContain(round.word);
+  });
+
+  it("o turno que a tela recebe nunca traz o nome e esconde o retrato no difícil", () => {
+    const state = start(3);
+    const puzzle = publicRound(state);
+    expect(JSON.stringify(puzzle)).not.toContain(state.rounds[0].word);
+    expect(puzzle).toMatchObject({ round: 0, rounds: 3, attempts: ANAGRAM_ATTEMPTS, timePerRound: null, maxScore: 800 });
+    const withImage = { ...state, rounds: state.rounds.map((round) => ({ ...round, imageUrl: "x.png" })) };
+    expect(publicRound(withImage).imageUrl).toBe("x.png");
+    expect(publicRound({ ...withImage, difficulty: "dificil" }).imageUrl).toBeNull();
+  });
+
+  it("joga os turnos: palpite errado gasta tentativa, acertar avança, pular e esgotar as tentativas zeram o turno", () => {
+    let state = start(3);
+    const words = state.rounds.map((round) => round.word);
+    let played = playAnagram(state, { type: "check", word: "zzzzzz" }, 1000);
+    expect(played.event).toEqual({ kind: "wrong", attemptsLeft: 2 });
+    state = played.state;
+    played = playAnagram(state, { type: "check", word: words[0].toLowerCase() }, 5000);
+    expect(played.event).toMatchObject({ kind: "end", end: { right: true, answer: words[0] }, next: { round: 1 } });
+    expect(played.state.results[0]).toMatchObject({ solved: true, attempts: 2 });
+    state = played.state;
+    played = playAnagram(state, { type: "skip" }, 6000);
+    expect(played.event).toMatchObject({ kind: "end", end: { right: false, points: 0 } });
+    state = played.state;
+    for (let attempt = 0; attempt < ANAGRAM_ATTEMPTS - 1; attempt += 1) state = playAnagram(state, { type: "check", word: "zzzzzz" }, 7000).state;
+    played = playAnagram(state, { type: "check", word: "zzzzzz" }, 7000);
+    expect(played).toMatchObject({ done: true, event: { kind: "end", end: { right: false }, next: null } });
+    expect(() => playAnagram(played.state, { type: "skip" }, 8000)).toThrow("terminou");
+    const outcome = anagramOutcome(played.state);
+    expect(outcome).toMatchObject({ solved: false, detail: "1 de 3 nomes · Médio" });
+  });
+
+  it("com tempo por nome: vence depois do limite mais a folga e o relógio só corre depois de 'begin'", () => {
+    let state = start(2, 30, "medio", 0);
+    expect(() => playAnagram(state, { type: "timeout" }, 5000)).toThrow("tempo");
+    const late = playAnagram(state, { type: "check", word: state.rounds[0].word }, (30 + TIME_GRACE + 1) * 1000);
+    expect(late.event).toMatchObject({ kind: "end", end: { right: false, timedOut: true } });
+    // Entre um nome e outro o relógio fica parado até a tela avisar que começou.
+    state = late.state;
+    expect(state.roundStartedAt).toBeNull();
+    const began = playAnagram(state, { type: "begin" }, 100_000);
+    expect(began.state.roundStartedAt).toBe(100_000);
+    expect(playAnagram(began.state, { type: "begin" }, 120_000).state.roundStartedAt).toBe(100_000);
+    const ok = playAnagram(began.state, { type: "check", word: state.rounds[1].word }, 110_000);
+    expect(ok.event).toMatchObject({ kind: "end", end: { right: true } });
+    const timeout = playAnagram(began.state, { type: "timeout" }, 100_000 + 28_000);
+    expect(timeout.event).toMatchObject({ kind: "end", end: { timedOut: true } });
+  });
+
+  it("pontos: cada turno vale uma fatia de 1.000; menos tentativas e mais rapidez valem mais; sem tempo vale 85%; fácil vale 60%", () => {
+    expect(roundPoints(5, 1, 1, 6, true)).toBe(200);
+    expect(roundPoints(5, 2, 1, 6, true)).toBe(Math.round(200 * (0.7 * 0.6 + 0.3)));
+    expect(roundPoints(5, 1, 1, 6, false)).toBe(170);
+    expect(roundPoints(5, 1, 18 + 36, 6, true)).toBe(140);
+    let state = start(2, null, "facil");
+    for (const round of state.rounds) state = playAnagram(state, { type: "check", word: round.word }, 1000).state;
+    expect(anagramOutcome(state)).toMatchObject({ solved: true, score: Math.round(2 * roundPoints(2, 1, 1, 5, false) * 0.6) });
+  });
+});
+
+describe("texto do painel", () => {
+  it("tira tags e entidades das dicas", () => {
+    expect(plainText("<p>Davi foi rei.</p><p>Tocava harpa &amp; cantava&nbsp;salmos.<br/>Fim</p>")).toBe("Davi foi rei. Tocava harpa & cantava salmos. Fim");
+    expect(maskHint("<p>Moisés guiou o povo.</p>", "Moisés")).toBe("___ guiou o povo.");
   });
 });
 

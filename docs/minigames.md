@@ -82,3 +82,11 @@ sons próprios (`lib/sound/sfx.ts`, nomes `ws*` etc.) e imagens do painel. Padr�
 - Interação: arrastar (encaixa nas 8 direções) ou tocar na primeira e na última letra; teclado com setas + Enter. Cores diferentes por palavra achada; ao desistir/terminar, as que faltaram aparecem em vermelho, uma a uma.
 - Sons: pegar a letra, tique que sobe um semitom por letra arrastada, achou, errou, dica, vitória, fim sem sucesso, palavras reveladas.
 - [ ] (Depois) Música de fundo própria do modo; mais sons nos demais jogos; dicas por imagem (retrato borrado → nítido).
+
+### Anagrama (feito)
+
+- Preparo: dificuldade (fácil 4–6 letras e retrato borrado · médio 5–8 e retrato bem borrado · difícil 7–11 e sem retrato; vale 60% / 80% / 100%), turnos (3, 5, 8 ou 10 nomes) e tempo por nome opcional (20, 30, 45, 60 ou 90 s). Sem tempo, cada nome vale 85%.
+- Cada turno é um nome com 3 tentativas; a fatia de 1.000 pontos do turno vai 70% pelas tentativas (1ª: 100%, 2ª: 60%, 3ª: 30%) e 30% pela rapidez (`par` = 3 s por letra). Vence a partida quem acerta metade dos nomes ou mais.
+- Servidor (`/act`): `check`, `skip`, `timeout` e `begin` (o relógio do nome só corre depois do `begin`, para o jogador ver o resultado sem perder tempo); o tempo vence no servidor com 3 s de folga. As palavras das últimas 8 partidas ficam por último no sorteio.
+- Dicas sem HTML: `plainText` (`minigames/common.ts`) limpa tags e entidades dos textos do painel antes de virarem dica (vale para forca, cruzadas e quem sou eu?).
+- Sons próprios (`an*`); teclado no computador (letras, Backspace, Enter); retrato do personagem/lugar se revela ao acertar.

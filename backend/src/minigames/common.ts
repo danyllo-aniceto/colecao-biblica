@@ -37,6 +37,22 @@ export function lettersOnly(text: string): string {
     .replace(/[^A-Z]/g, "");
 }
 
+/** Texto puro de um campo escrito no painel: tira tags HTML (<p>, <br>...) e entidades (&nbsp;, &amp;...). */
+export function plainText(html: string): string {
+  return html
+    .replace(/<\s*br\s*\/?>/gi, " ")
+    .replace(/<\/(p|div|li|h[1-6])\s*>/gi, " ")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&amp;/gi, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 /** Pontuação máxima de uma partida: até `ACCURACY_MAX` pela precisão e até `TIME_MAX` pela rapidez. */
 export const ACCURACY_MAX = 700;
 export const TIME_MAX = 300;

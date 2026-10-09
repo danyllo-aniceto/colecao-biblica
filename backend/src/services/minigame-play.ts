@@ -5,7 +5,7 @@ import { badRequest, notFound } from "../lib/errors";
 import { z } from "../lib/validation";
 import { applyGuess, guessLetter, hangmanOutcome, isLost, isWon, maskHint, pattern, HANGMAN_ERRORS, type HangmanState } from "../minigames/hangman";
 import { lettersOnly, shuffled, rng, type Outcome } from "../minigames/common";
-import { ANAGRAM_ATTEMPTS, anagramMatches, anagramOutcome, generateAnagram, type AnagramState } from "../minigames/anagram";
+import { AnagramError, anagramOutcome, newAnagram, pickRounds, playAnagram, publicRound, ROUND_CHOICES, TIME_CHOICES, type AnagramAction, type AnagramDifficulty, type AnagramEvent, type AnagramState } from "../minigames/anagram";
 import { checkBookOrder, checkTestament, generateBookOrder, generateTestament, type BookOrder, type TestamentItem } from "../minigames/books";
 import { checkBlitz, generateBlitz, type BlitzState } from "../minigames/blitz";
 import { checkBlanks, generateBlanks, usableForBlanks, type BlanksState } from "../minigames/verse-blanks";
@@ -47,8 +47,14 @@ type RunState =
   | { game: "interconexao"; state: ChainState }
   | { game: "palavras-cruzadas"; state: CrosswordState };
 
-/** Escolhas da tela de preparo (hoje só o caça-palavras tem: dificuldade e tema). */
-const startOptions = z.object({ difficulty: z.enum(DIFFICULTY_IDS as [string, ...string[]]).optional(), theme: z.enum(THEME_IDS as [string, ...string[]]).optional() });
+/** Escolhas da tela de preparo (caça-palavras: dificuldade e tema; anagrama: dificuldade, turnos e tempo). */
+const startOptions = z.object({
+  difficulty: z.enum(DIFFICULTY_IDS as [string, ...string[]]).optional(),
+  theme: z.enum(THEME_IDS as [string, ...string[]]).optional(),
+  /** Anagrama: quantidade de nomes e segundos por nome (null/ausente = sem tempo). */
+  rounds: z.number().int().refine((value) => (ROUND_CHOICES as readonly number[]).includes(value), "Quantidade de turnos inválida").optional(),
+  time: z.number().int().refine((value) => (TIME_CHOICES as readonly number[]).includes(value), "Tempo inválido").nullable().optional(),
+});
 type StartOptions = z.infer<typeof startOptions>;
 type Extras = { options: StartOptions; recentWords: string[] };
 
@@ -140,14 +146,17 @@ function build(game: string, seed: number, content: Awaited<ReturnType<typeof lo
       return { state: { game, maze }, puzzle: maze };
     }
     case "anagrama": {
-      const options = [
-        ...content.characters.map((character) => ({ name: character.name, summary: character.shortSummary })),
-        ...content.scenarios.map((scenario) => ({ name: scenario.name, summary: scenario.description ?? "Um lugar da campanha." })),
-      ].filter((option) => lettersOnly(option.name).length >= 4 && lettersOnly(option.name).length <= 10);
-      if (options.length === 0) throw badRequest("Ainda não há nomes para este jogo");
-      const pick = shuffled(random, options)[0];
-      const letters = generateAnagram(seed, pick.name);
-      return { state: { game, state: { word: pick.name, attempts: 0 } }, puzzle: { letters, length: letters.length, hint: maskHint(pick.summary, pick.name), attempts: ANAGRAM_ATTEMPTS } };
+      const sources = [
+        ...content.characters.map((character) => ({ name: character.name, summary: character.shortSummary, imageUrl: character.imageUrl })),
+        ...content.scenarios.map((scenario) => ({ name: scenario.name, summary: scenario.description ?? "Um lugar da campanha.", imageUrl: scenario.mapImageUrl })),
+      ];
+      const difficulty = (extras.options.difficulty ?? "medio") as AnagramDifficulty;
+      const wanted = extras.options.rounds ?? 5;
+      const rounds = pickRounds(random, sources, difficulty, wanted, extras.recentWords);
+      // Poucos nomes no tamanho pedido: joga com os que há (ao menos 1).
+      if (rounds.length === 0) throw badRequest("Ainda não há nomes suficientes para esta dificuldade");
+      const state = newAnagram(seed, rounds, difficulty, extras.options.time ?? null, Date.now());
+      return { state: { game, state }, puzzle: publicRound(state) };
     }
     case "testamento": {
       const people = content.characters.flatMap((character) => (character.testament ? [{ text: character.name, answer: character.testament as "OLD" | "NEW" }] : []));
@@ -209,7 +218,10 @@ function build(game: string, seed: number, content: Awaited<ReturnType<typeof lo
 /** Palavras das últimas partidas do jogador (as do banco guardam 2 dias): o sorteio as deixa por último. */
 async function recentWords(userId: number, gameId: string): Promise<string[]> {
   const runs = await prisma.miniGameRun.findMany({ where: { userId, gameId }, orderBy: { startedAt: "desc" }, take: 8, select: { state: true } });
-  return runs.flatMap((run) => (run.state as unknown as { puzzle?: { words?: string[] } }).puzzle?.words ?? []);
+  return runs.flatMap((run) => {
+    const state = run.state as unknown as { puzzle?: { words?: string[] }; state?: { rounds?: Array<{ word: string }> } };
+    return state.puzzle?.words ?? state.state?.rounds?.map((round) => round.word) ?? [];
+  });
 }
 
 /** Começa uma partida: sorteia o jogo, guarda o gabarito no servidor e devolve só o que a tela precisa. */
@@ -222,7 +234,7 @@ export async function startMiniGame(userId: number, gameId: string, body: unknow
   await prisma.miniGameRun.deleteMany({ where: { OR: [{ userId, gameId, finishedAt: null }, { startedAt: { lt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) } }] } });
   const options = startOptions.safeParse(body ?? {});
   if (!options.success) throw badRequest("Escolha de dificuldade ou tema inválida");
-  const { state, puzzle } = build(gameId, randomInt(1, 2 ** 31 - 1), await loadContent(), gameId === "relampago" ? await loadBlitzQuestions() : [], { options: options.data, recentWords: gameId === "caca-palavras" ? await recentWords(userId, gameId) : [] });
+  const { state, puzzle } = build(gameId, randomInt(1, 2 ** 31 - 1), await loadContent(), gameId === "relampago" ? await loadBlitzQuestions() : [], { options: options.data, recentWords: gameId === "caca-palavras" || gameId === "anagrama" ? await recentWords(userId, gameId) : [] });
   const run = await prisma.miniGameRun.create({ data: { userId, gameId, state: state as object } });
   return { runId: run.id, game: gameId, puzzle };
 }
@@ -351,12 +363,13 @@ export async function guessHangman(userId: number, runId: string, letterInput: s
 
 export type ActResult = {
   status: "playing" | "won" | "lost";
-  /** Anagrama: tentativas que restam. */
   attemptsLeft?: number;
   /** Quem sou eu?: a nova dica (quando pediu mais uma). */
   clue?: string;
   shown?: number;
   total?: number;
+  /** Anagrama: o que aconteceu na jogada (palpite errado, fim do nome) e o próximo nome. */
+  anagram?: AnagramEvent;
   /** Caça-palavras: onde a palavra da dica começa e quantas dicas ainda restam. */
   cell?: [number, number];
   hintsLeft?: number;
@@ -367,6 +380,9 @@ export type ActResult = {
 
 const actBody = z.discriminatedUnion("action", [
   z.object({ action: z.literal("check"), word: z.string().max(40) }),
+  z.object({ action: z.literal("skip") }),
+  z.object({ action: z.literal("timeout") }),
+  z.object({ action: z.literal("begin") }),
   z.object({ action: z.literal("hint"), word: z.string().max(20).optional() }),
   z.object({ action: z.literal("answer"), choice: z.number().int().min(0).max(3) }),
 ]);
@@ -384,13 +400,19 @@ export async function actMiniGame(userId: number, runId: string, body: unknown):
     const seconds = (Date.now() - run.startedAt.getTime()) / 1000;
     const save = (next: RunState, over: boolean) => tx.miniGameRun.update({ where: { id: run.id }, data: { state: next as object, ...(over ? { finishedAt: new Date() } : {}) } });
 
-    if (state.game === "anagrama" && input.action === "check") {
-      const attempts = state.state.attempts + 1;
-      const next = { ...state.state, attempts };
-      const right = anagramMatches(next, input.word);
-      const over = right || attempts >= ANAGRAM_ATTEMPTS;
-      await save({ game: "anagrama", state: next }, over);
-      return { game: "anagrama" as const, over, right, outcome: over ? anagramOutcome(next, right, seconds) : null, attemptsLeft: ANAGRAM_ATTEMPTS - attempts, answer: next.word };
+    if (state.game === "anagrama") {
+      const action: AnagramAction | null = input.action === "check" ? { type: "check", word: input.word } : input.action === "skip" || input.action === "timeout" || input.action === "begin" ? { type: input.action } : null;
+      if (!action) throw badRequest("Ação inválida para este jogo");
+      let played: ReturnType<typeof playAnagram>;
+      try {
+        played = playAnagram(state.state, action, Date.now());
+      } catch (reason) {
+        if (reason instanceof AnagramError) throw badRequest(reason.message);
+        throw reason;
+      }
+      await save({ game: "anagrama", state: played.state }, played.done);
+      const outcome = played.done ? anagramOutcome(played.state) : null;
+      return { game: "anagrama" as const, over: played.done, right: outcome?.solved ?? false, outcome, answer: "", anagram: played.event };
     }
     if (state.game === "caca-palavras" && input.action === "hint") {
       const placement = state.placements.find((entry) => entry.word === input.word);
@@ -414,7 +436,8 @@ export async function actMiniGame(userId: number, runId: string, body: unknown):
     }
     throw badRequest("Ação inválida para este jogo");
   });
-  if (!step.over) return { status: "playing", cell: "cell" in step ? step.cell : undefined, hintsLeft: "hintsLeft" in step ? step.hintsLeft : undefined, attemptsLeft: "attemptsLeft" in step ? step.attemptsLeft : undefined, clue: "clue" in step ? step.clue : undefined, shown: "shown" in step ? step.shown : undefined, total: "total" in step ? step.total : undefined };
+  if (!step.over) return { status: "playing", anagram: "anagram" in step ? step.anagram : undefined, cell: "cell" in step ? step.cell : undefined, hintsLeft: "hintsLeft" in step ? step.hintsLeft : undefined, clue: "clue" in step ? step.clue : undefined, shown: "shown" in step ? step.shown : undefined, total: "total" in step ? step.total : undefined };
   const result = await settle(userId, step.game, step.outcome!);
-  return step.right ? { status: "won", result } : { status: "lost", answer: step.answer, result };
+  const anagram = "anagram" in step ? step.anagram : undefined;
+  return step.right ? { status: "won", anagram, result } : { status: "lost", answer: step.answer, anagram, result };
 }

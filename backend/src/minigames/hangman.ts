@@ -1,4 +1,4 @@
-import { ACCURACY_MAX, lettersOnly, type Outcome } from "./common";
+import { ACCURACY_MAX, lettersOnly, plainText, type Outcome } from "./common";
 
 /** Forca: 6 erros e acabou. A palavra nunca sai do servidor; cada palpite volta com o que foi revelado. */
 export const HANGMAN_ERRORS = 6;
@@ -40,7 +40,7 @@ export function hangmanOutcome(state: HangmanState, seconds: number): Outcome {
 
 /** Dica sem entregar a resposta: troca cada pedaço do nome por traços. */
 export function maskHint(hint: string, name: string): string {
-  let text = hint;
+  let text = plainText(hint);
   for (const part of [name, ...name.split(/\s+/)].filter((piece) => piece.length >= 3)) {
     text = text.replace(new RegExp(part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), "___");
   }

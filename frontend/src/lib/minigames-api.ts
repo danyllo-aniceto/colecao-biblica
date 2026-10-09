@@ -85,7 +85,23 @@ export type MemoryPuzzle = { cards: Array<{ pair: number; text: string }> };
 export type VersePuzzle = { reference: string; chips: string[]; length: number; words: string[] };
 export type MazePuzzle = { width: number; height: number; cells: number[] };
 
-export type AnagramPuzzle = { letters: string[]; length: number; hint: string; attempts: number };
+export type AnagramDifficulty = 'facil' | 'medio' | 'dificil';
+/** Um turno do anagrama (o nome nunca vem junto). */
+export type AnagramPuzzle = {
+  round: number;
+  rounds: number;
+  letters: string[];
+  length: number;
+  hint: string;
+  imageUrl: string | null;
+  attempts: number;
+  /** Segundos por nome; null = sem tempo. */
+  timePerRound: number | null;
+  difficulty: AnagramDifficulty;
+  maxScore: number;
+};
+export type AnagramRoundEnd = { right: boolean; timedOut: boolean; answer: string; imageUrl: string | null; points: number };
+export type AnagramEvent = { kind: 'begin' } | { kind: 'wrong'; attemptsLeft: number } | { kind: 'end'; end: AnagramRoundEnd; next: AnagramPuzzle | null };
 export type BooksPuzzle = { books: string[] };
 export type TestamentPuzzle = { items: string[] };
 export type BlitzPuzzle = { statements: Array<{ question: string; answer: string }> };
@@ -94,7 +110,7 @@ export type BlanksPuzzle = { reference: string; parts: BlanksPart[]; options: st
 export type WhoAmIPuzzle = { clue: string; shown: number; total: number; options: string[] };
 
 /** Passo a passo no servidor (anagrama: palpites; quem sou eu?: dicas e resposta). */
-export type ActResult = { status: 'playing' | 'won' | 'lost'; cell?: [number, number]; hintsLeft?: number; attemptsLeft?: number; clue?: string; shown?: number; total?: number; answer?: string; result?: MiniGameResult };
+export type ActResult = { status: 'playing' | 'won' | 'lost'; anagram?: AnagramEvent; cell?: [number, number]; hintsLeft?: number; attemptsLeft?: number; clue?: string; shown?: number; total?: number; answer?: string; result?: MiniGameResult };
 
 export const actMiniGame = (runId: string, body: object) =>
   apiRequest<ActResult>(`/minigames/runs/${runId}/act`, { method: 'POST', body: JSON.stringify(body) }, 'Não foi possível conferir a jogada.');

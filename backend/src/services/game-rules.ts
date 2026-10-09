@@ -93,7 +93,7 @@ export type MiniGameDef = { id: string; name: string; emoji: string; text: strin
 
 export const MINI_GAMES: MiniGameDef[] = [
   { id: "caca-palavras", name: "Caça-palavras", emoji: "🔎", text: "Ache os nomes de personagens e lugares escondidos na grade, contra o tempo.", stoneSlot: 1, ready: true },
-  { id: "anagrama", name: "Anagrama", emoji: "🔤", text: "As letras de um nome vieram embaralhadas: monte o nome com 3 tentativas.", stoneSlot: 1, ready: true },
+  { id: "anagrama", name: "Anagrama", emoji: "🔤", text: "Nomes com as letras embaralhadas: monte cada um em até 3 tentativas, em vários turnos e com tempo opcional.", stoneSlot: 1, ready: true },
   { id: "forca", name: "Forca", emoji: "🪢", text: "Descubra o personagem ou o lugar letra por letra, com uma dica.", stoneSlot: 2, ready: true },
   { id: "testamento", name: "Antigo ou Novo?", emoji: "📜", text: "Livros e personagens: de que Testamento é cada um? Rápido, são 10.", stoneSlot: 2, ready: true },
   { id: "quebra-cabeca", name: "Quebra-cabeça", emoji: "🧩", text: "Monte a figurinha ou o mapa do cenário peça por peça.", stoneSlot: 3, ready: true },

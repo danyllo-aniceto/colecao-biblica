@@ -8,7 +8,7 @@ import { getSoundSettings } from '@/lib/sound/settings';
 export type SfxName = 'click' | 'soft' | 'toggleOn' | 'toggleOff' | 'open' | 'close' | 'flip' | 'swipe' | 'success' | 'error' | 'correct' | 'wrong' | 'coin' | 'reward' | ChestSfxName | MiniGameSfxName;
 
 /** Sons dos mini games (hoje o caça-palavras): arrastar sobre as letras, achar, errar, dica, vitória e fim sem sucesso. */
-export type MiniGameSfxName = 'wsPick' | 'wsTick' | 'wsFound' | 'wsMiss' | 'wsHint' | 'wsWin' | 'wsLose' | 'wsReveal';
+export type MiniGameSfxName = 'wsPick' | 'wsTick' | 'wsFound' | 'wsMiss' | 'wsHint' | 'wsWin' | 'wsLose' | 'wsReveal' | 'anPick' | 'anRemove' | 'anRight' | 'anWrong' | 'anTick' | 'anTimeout';
 
 /** Sons da abertura de baús: um por nível de baú, um por tipo de prêmio e os do suspense e do carretel. */
 export type ChestSfxName =
@@ -249,6 +249,25 @@ const RECIPES: Record<SfxName, (o: Out) => void> = {
   wsLose: (o) => notes(o, 'triangle', [392, 330, 262], 0.16, 0.34, 0.22),
   // Palavras que faltaram aparecem uma a uma no fim da partida.
   wsReveal: (o) => tone(o, 'sine', 392, 330, 0, 0.14, 0.2),
+  // ---- Anagrama: peça de madeira encaixando, nome certo, erro suave, contagem e tempo esgotado ----
+  anPick: (o) => {
+    tone(o, 'triangle', 330, 260, 0, 0.06, 0.3);
+    tone(o, 'sine', 880, 880, 0.01, 0.04, 0.08);
+  },
+  anRemove: (o) => tone(o, 'triangle', 260, 360, 0, 0.06, 0.22),
+  anRight: (o) => {
+    notes(o, 'triangle', [523, 659, 784, 1047], 0.075, 0.24, 0.3);
+    whoosh(o, 3500, 8000, 0.15, 0.35, 0.1, 2.2);
+  },
+  anWrong: (o) => {
+    tone(o, 'sine', 300, 200, 0, 0.18, 0.22);
+    tone(o, 'sine', 250, 170, 0.12, 0.2, 0.18);
+  },
+  anTick: (o) => tone(o, 'square', 880, 880, 0, 0.04, 0.1),
+  anTimeout: (o) => {
+    tone(o, 'sawtooth', 330, 140, 0, 0.35, 0.16);
+    thud(o, 0.05, 120, 50, 0.3);
+  },
   stickerLegendary: (o) => {
     tone(o, 'sine', 80, 35, 0, 0.9, 0.55); // estrondo
     thud(o, 0.02, 220, 50, 0.6);
