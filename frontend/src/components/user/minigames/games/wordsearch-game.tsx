@@ -12,16 +12,16 @@ import { clock, type GameProps, type SetupRender } from './play-frame';
 type Cell = [number, number];
 type Found = { word: string; from: Cell; to: Cell };
 
-/** Cada palavra achada ganha a sua cor (só tokens do tema, claro e escuro). As que faltaram aparecem em vermelho. */
+/** Cada palavra achada ganha o seu marca-texto (só tokens do tema, claro e escuro). As que faltaram aparecem em vermelho. */
 const COLORS = [
-  { cell: 'bg-primary/50', chip: 'bg-primary/25' },
-  { cell: 'bg-success/50', chip: 'bg-success/25' },
-  { cell: 'bg-accent/60', chip: 'bg-accent/30' },
-  { cell: 'bg-violet/50', chip: 'bg-violet/25' },
-  { cell: 'bg-info/50', chip: 'bg-info/25' },
-  { cell: 'bg-r-rare/50', chip: 'bg-r-rare/25' },
-  { cell: 'bg-r-epic/50', chip: 'bg-r-epic/25' },
-  { cell: 'bg-r-legendary/55', chip: 'bg-r-legendary/25' },
+  { stroke: 'stroke-primary', chip: 'bg-primary/25' },
+  { stroke: 'stroke-success', chip: 'bg-success/25' },
+  { stroke: 'stroke-accent', chip: 'bg-accent/30' },
+  { stroke: 'stroke-violet', chip: 'bg-violet/25' },
+  { stroke: 'stroke-info', chip: 'bg-info/25' },
+  { stroke: 'stroke-r-rare', chip: 'bg-r-rare/25' },
+  { stroke: 'stroke-r-epic', chip: 'bg-r-epic/25' },
+  { stroke: 'stroke-r-legendary', chip: 'bg-r-legendary/25' },
 ];
 
 const KIND_EMOJI = { character: '🧑', place: '📍', book: '📖' } as const;
@@ -188,20 +188,11 @@ export function WordSearchGame({ puzzle, runId, submit, finished, seconds, resul
   const clueOf = useMemo(() => new Map(puzzle.clues.map((clue) => [clue.word, clue])), [puzzle.clues]);
   const foundWords = useMemo(() => new Set(found.map((entry) => entry.word)), [found]);
 
-  // Mapa de células: de qual palavra achada (cor), faltou, dica.
-  const marks = useMemo(() => {
-    const map = new Map<string, { color?: number; missed?: boolean }>();
-    found.forEach((entry, index) => lineCells(entry.from, entry.to)?.forEach(([r, c]) => map.set(`${r}-${c}`, { color: index % COLORS.length })));
-    revealed.forEach((entry) => lineCells(entry.from, entry.to)?.forEach(([r, c]) => map.set(`${r}-${c}`, { ...map.get(`${r}-${c}`), missed: true })));
-    return map;
-  }, [found, revealed]);
   const missedWords = useMemo(() => new Set(revealed.map((entry) => entry.word)), [revealed]);
 
-  const previewCells = useMemo(() => {
-    const line = drag ? lineCells(drag.start, drag.end) : anchor ? [anchor] : null;
-    return new Set((line ?? []).map(([r, c]) => `${r}-${c}`));
-  }, [drag, anchor]);
-  const missCells = useMemo(() => new Set((miss ?? []).map(([r, c]) => `${r}-${c}`)), [miss]);
+  // Traço do marca-texto que o dedo está desenhando (ou a primeira letra marcada num toque).
+  const previewLine = drag ?? (anchor ? { start: anchor, end: anchor } : null);
+  const previewCells = useMemo(() => new Set((previewLine ? (lineCells(previewLine.start, previewLine.end) ?? []) : []).map(([r, c]) => `${r}-${c}`)), [previewLine]);
   const hintCells = useMemo(() => new Set(Object.entries(hints).filter(([word]) => !foundWords.has(word)).map(([, [r, c]]) => `${r}-${c}`)), [hints, foundWords]);
 
   const send = useCallback(
@@ -396,13 +387,12 @@ export function WordSearchGame({ puzzle, runId, submit, finished, seconds, resul
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerCancel}
-          className="grid touch-none select-none gap-0.5"
+          className="relative grid touch-none select-none gap-0.5"
           style={{ gridTemplateColumns: `repeat(${puzzle.size}, minmax(0, 1fr))` }}
         >
           {puzzle.grid.flatMap((row, r) =>
             [...row].map((letter, c) => {
               const key = `${r}-${c}`;
-              const mark = marks.get(key);
               const previewing = previewCells.has(key);
               return (
                 <button
@@ -419,10 +409,7 @@ export function WordSearchGame({ puzzle, runId, submit, finished, seconds, resul
                   className={cn(
                     'flex aspect-square items-center justify-center rounded-md bg-surface font-display font-bold text-ink transition-colors duration-150',
                     letterSize,
-                    mark?.color !== undefined && COLORS[mark.color].cell,
-                    mark?.missed && 'bg-danger/35 text-danger-strong ring-2 ring-inset ring-danger/70 dark:text-danger',
-                    previewing && 'scale-105 bg-primary text-on-primary shadow-md',
-                    missCells.has(key) && 'animate-shake bg-danger/40',
+                    previewing && 'scale-110',
                     hintCells.has(key) && !previewing && 'animate-pulse ring-2 ring-inset ring-accent',
                   )}
                 >
@@ -431,6 +418,7 @@ export function WordSearchGame({ puzzle, runId, submit, finished, seconds, resul
               );
             }),
           )}
+          <Marker size={puzzle.size} found={found} preview={previewLine} revealed={revealed} miss={miss} />
         </div>
       </div>
 
@@ -500,5 +488,22 @@ function ClueAvatar({ clue, found, small = false }: { clue: WordSearchClue; foun
     <span className={cn('flex shrink-0 items-center justify-center bg-surface-3', size, small ? 'text-lg' : 'text-2xl', !found && 'opacity-60 grayscale')} aria-hidden>
       {KIND_EMOJI[clue.kind]}
     </span>
+  );
+}
+
+/** Os traços de marca-texto por cima da grade: um por palavra achada, um vermelho por palavra que faltou e o que o dedo está riscando. */
+function Marker({ size, found, preview, revealed, miss }: { size: number; found: Found[]; preview: { start: Cell; end: Cell } | null; revealed: Found[]; miss: Cell[] | null }) {
+  const line = (from: Cell, to: Cell, className: string, key: string, animate = false) => (
+    <line key={key} x1={from[1] + 0.5} y1={from[0] + 0.5} x2={to[1] + 0.5} y2={to[0] + 0.5} strokeWidth={0.8} strokeLinecap="round" pathLength={1} className={cn(className, animate && 'animate-marker')} />
+  );
+  return (
+    <svg aria-hidden viewBox={`0 0 ${size} ${size}`} preserveAspectRatio="none" className="pointer-events-none absolute inset-0 h-full w-full">
+      <g className="opacity-55">
+        {found.map((entry, index) => line(entry.from, entry.to, COLORS[index % COLORS.length].stroke, `f-${entry.word}`, true))}
+        {revealed.map((entry) => line(entry.from, entry.to, 'stroke-danger', `m-${entry.word}`, true))}
+      </g>
+      {miss ? <g className="opacity-60">{line(miss[0], miss[miss.length - 1], 'stroke-danger', 'miss')}</g> : null}
+      {preview ? <g className="opacity-60">{line(preview.start, preview.end, 'stroke-accent', 'preview')}</g> : null}
+    </svg>
   );
 }
