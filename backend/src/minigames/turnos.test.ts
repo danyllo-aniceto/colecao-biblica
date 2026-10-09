@@ -3,7 +3,8 @@ import { rng } from "./common";
 import { BOOK_LEVELS, BOOKS, bookIndex, bookOrderOutcome, bookTurnPoints, newBookOrder, playBookOrder, publicBookOrder } from "./books";
 import { HANGMAN_LEVELS, hangmanGameOutcome, hangmanTurnPoints, newHangman, pickHangmanRounds, playHangman, publicHangman, type HangmanSource } from "./hangman";
 import { newTestament, pickTestamentItems, playTestament, publicTestament, testamentOutcome, testamentPoints } from "./testament";
-import { LEVEL_SCALE, TIME_GRACE } from "./turns";
+import { LEVEL_SCALE, safeWords, TIME_GRACE } from "./turns";
+import { newWhoAmI, pickWhoAmIRounds } from "./whoami";
 
 describe("forca em turnos", () => {
   const sources: HangmanSource[] = ["Noé", "Davi", "Rute", "Ester", "Moisés", "Samuel", "Salomão", "Jerusalém", "Nazaré", "Abraão", "Zacarias", "Betsabá", "Habacuque", "Nabucodonosor"].map((name) => ({ name, summary: `<p>${name} foi importante.</p>`, testament: "OLD", imageUrl: null }));
@@ -174,5 +175,18 @@ describe("antigo ou novo?", () => {
     let state = newTestament(1, pickTestamentItems(rng(4), people, "facil", 10, []), "facil", null, 0);
     for (const item of state.items) state = playTestament(state, { type: "classify", choice: item.answer }, 1000).state;
     expect(testamentOutcome(state)).toMatchObject({ solved: true, score: Math.round(10 * testamentPoints(10, 1, false) * LEVEL_SCALE.facil) });
+  });
+});
+
+describe("partidas guardadas em formato antigo", () => {
+  it("não derrubam o sorteio da próxima partida", () => {
+    const read = (state: ReturnType<typeof newWhoAmI>) => state.rounds.map((round) => round.name);
+    // Formato de antes da atualização do Quem sou eu?: sem `rounds`.
+    const old = { options: ["Davi", "Saul"], answer: 0, clues: ["a", "b"], shown: 1 };
+    expect(() => read(old as never)).toThrow();
+    expect(safeWords(read as never, old)).toEqual([]);
+    expect(safeWords(read as never, null)).toEqual([]);
+    const fresh = newWhoAmI(1, pickWhoAmIRounds(rng(1), [{ name: "Davi", testament: "OLD", historicalPeriod: null, bibleBooks: null, narrativeRole: null, keywords: null, importantEvents: null, curiosities: null, shortSummary: "Rei.", imageUrl: null }], "facil", 1, []), "facil", null, 0);
+    expect(safeWords(read as never, fresh)).toEqual(["Davi"]);
   });
 });

@@ -8,7 +8,7 @@ import { lettersOnly, plainText, shuffled, rng, type Outcome } from "../minigame
 import { anagramOutcome, newAnagram, pickRounds, playAnagram, publicRound, ROUND_CHOICES as ANAGRAM_ROUNDS, TIME_CHOICES as ANAGRAM_TIMES, type AnagramState } from "../minigames/anagram";
 import { bookOrderOutcome, BOOK_TIME_CHOICES, newBookOrder, playBookOrder, publicBookOrder, ROUND_CHOICES as BOOK_ROUNDS, type BookOrderState } from "../minigames/books";
 import { COUNT_CHOICES as TESTAMENT_COUNTS, newTestament, pickTestamentItems, playTestament, publicTestament, testamentOutcome, TIME_CHOICES as TESTAMENT_TIMES, type TestamentState } from "../minigames/testament";
-import { LEVEL_IDS, maxScoreOf, TurnError, type Level } from "../minigames/turns";
+import { LEVEL_IDS, maxScoreOf, safeWords, TurnError, type Level } from "../minigames/turns";
 import { blitzOutcome, COUNT_CHOICES as BLITZ_COUNTS, newBlitz, pickBlitzItems, playBlitz, publicBlitz, TIME_CHOICES as BLITZ_TIMES, type BlitzState } from "../minigames/blitz";
 import { blanksOutcome, newBlanks, pickBlanksRounds, playBlanks, publicBlanks, ROUND_CHOICES as BLANKS_ROUNDS, TIME_CHOICES as BLANKS_TIMES, type BlanksState } from "../minigames/verse-blanks";
 import { newWhoAmI, pickWhoAmIRounds, playWhoAmI, publicWhoAmI, ROUND_CHOICES as WHOAMI_ROUNDS, TIME_CHOICES as WHOAMI_TIMES, whoAmIOutcome, type WhoAmIState } from "../minigames/whoami";
@@ -266,7 +266,7 @@ async function recentWords(userId: number, gameId: string): Promise<string[]> {
   const turn = TURN_GAMES[gameId];
   return runs.flatMap((run) => {
     const state = run.state as unknown as { puzzle?: { words?: string[] }; state?: unknown };
-    if (turn && state.state) return turn.words(state.state as never);
+    if (turn && state.state) return safeWords(turn.words, state.state);
     return state.puzzle?.words ?? [];
   });
 }

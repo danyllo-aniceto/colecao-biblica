@@ -42,3 +42,16 @@ export const turnShare = (turns: number, timed: boolean) => (FULL_SCORE / turns)
 export class TurnError extends Error {}
 
 export type TurnResult = { label: string; solved: boolean; timedOut: boolean; points: number; seconds: number };
+
+/**
+ * Lê as palavras de uma partida antiga para o sorteio evitar repeti-las. Partidas guardadas antes de uma atualização podem ter outro formato
+ * (o banco guarda 2 dias): nesse caso devolve lista vazia em vez de derrubar o início do jogo.
+ */
+export function safeWords(read: (state: never) => string[], state: unknown): string[] {
+  try {
+    const words = read(state as never);
+    return Array.isArray(words) ? words.filter((word): word is string => typeof word === "string") : [];
+  } catch {
+    return [];
+  }
+}
