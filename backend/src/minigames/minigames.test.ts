@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest";
 import { lettersOnly, rng } from "./common";
 import { applyGuess, guessLetter, isLost, isWon, maskHint, pattern, type HangmanState } from "./hangman";
 import { checkMaze, generateMaze, shortestPath, type Maze } from "./maze";
-import { checkMemory, generateMemory } from "./memory";
-import { checkSwapPuzzle, generateSwapPuzzle, minimumSwaps } from "./swap-puzzle";
 import { checkWordSearch, DIFFICULTIES, generateWordSearch, gridSize, HINT_PENALTY, selectionSpells, wordSearchCandidates, type Difficulty, type Found, type GeneratedWordSearch, type WordSearch, type WordSearchState } from "./wordsearch";
 
 const NAMES = ["Moisés", "Abraão", "Davi", "Salomão", "Débora", "Gideão", "Samuel", "Rute", "Ester", "Daniel", "Elias", "Eliseu", "Jonas", "Noé", "Isaías", "Jeremias", "Ezequiel", "Josué", "Jacó", "Isaque", "Gabriel", "Miguel", "Pedro", "Tiago", "Mateus", "Lucas", "Marcos", "Paulo", "Timóteo", "Estêvão", "Barnabé", "Lázaro", "Zaqueu", "Nicodemos"];
@@ -174,75 +172,6 @@ describe("forca", () => {
   it("a dica não entrega o nome", () => {
     expect(maskHint("Moisés tirou o povo do Egito. Davi não.", "Moisés")).toBe("___ tirou o povo do Egito. Davi não.");
     expect(maskHint("O rei Davi Rei venceu.", "Davi Rei")).not.toMatch(/davi/i);
-  });
-});
-
-describe("quebra-cabeça", () => {
-  const puzzle = generateSwapPuzzle(9, { imageUrl: null, title: "Teste" });
-
-  it("nunca começa pronto e o mínimo de trocas confere com os ciclos", () => {
-    expect(puzzle.order).toHaveLength(9);
-    expect(puzzle.order.every((piece, index) => piece === index)).toBe(false);
-    expect(minimumSwaps([1, 0, 2, 3])).toBe(1);
-    expect(minimumSwaps([1, 2, 0])).toBe(2);
-    expect(minimumSwaps([0, 1, 2])).toBe(0);
-  });
-
-  /** Resolve trocando cada posição pela peça certa. */
-  function solve(order: number[]): Array<[number, number]> {
-    const current = [...order];
-    const swaps: Array<[number, number]> = [];
-    for (let position = 0; position < current.length; position += 1) {
-      if (current[position] === position) continue;
-      const at = current.indexOf(position);
-      [current[position], current[at]] = [current[at], current[position]];
-      swaps.push([position, at]);
-    }
-    return swaps;
-  }
-
-  it("resolver no mínimo de trocas dá a pontuação cheia; trocas a mais custam pontos; inválidas zeram", () => {
-    const best = solve(puzzle.order);
-    expect(best).toHaveLength(minimumSwaps(puzzle.order));
-    expect(checkSwapPuzzle(puzzle, best, 10)).toMatchObject({ solved: true, score: 1000 });
-    const wasteful: Array<[number, number]> = [[0, 1], [0, 1], ...best];
-    expect(checkSwapPuzzle(puzzle, wasteful, 10).score).toBe(1000 - 70);
-    expect(checkSwapPuzzle(puzzle, best.slice(0, -1), 10)).toMatchObject({ solved: false, score: 0 });
-    expect(checkSwapPuzzle(puzzle, [[0, 0]], 10).solved).toBe(false);
-    expect(checkSwapPuzzle(puzzle, [[0, 99]], 10).solved).toBe(false);
-  });
-});
-
-describe("memória", () => {
-  const pairs = Array.from({ length: 10 }, (_, index) => ({ name: `Cenário ${index}`, match: `Livro ${index}:1` }));
-  const memory = generateMemory(4, pairs);
-
-  /** Jogada perfeita: vira cada par de uma vez. */
-  const perfect = () => {
-    const flips: number[] = [];
-    const byPair = new Map<number, number[]>();
-    memory.cards.forEach((card, index) => byPair.set(card.pair, [...(byPair.get(card.pair) ?? []), index]));
-    for (const cards of byPair.values()) flips.push(...cards);
-    return flips;
-  };
-
-  it("monta 12 cartas, 6 pares, e a partida perfeita (6 tentativas) pontua cheio", () => {
-    expect(memory.cards).toHaveLength(12);
-    expect(new Set(memory.cards.map((card) => card.pair)).size).toBe(6);
-    expect(generateMemory(4, pairs)).toEqual(memory);
-    expect(checkMemory(memory, perfect(), 10)).toMatchObject({ solved: true, score: 1000, detail: "6 tentativas" });
-  });
-
-  it("tentativas erradas custam pontos; jogada inválida ou incompleta não vale", () => {
-    const wrongA = memory.cards.findIndex((card) => card.pair === 0);
-    const wrongB = memory.cards.findIndex((card) => card.pair === 1);
-    const flips = [wrongA, wrongB, ...perfect()];
-    expect(checkMemory(memory, flips, 10).score).toBe(1000 - 50);
-    expect(checkMemory(memory, [0, 0], 10).solved).toBe(false);
-    expect(checkMemory(memory, [0], 10).solved).toBe(false);
-    expect(checkMemory(memory, perfect().slice(0, 10), 10).solved).toBe(false);
-    // Virar de novo uma carta que já foi achada é inválido.
-    expect(checkMemory(memory, [...perfect(), 0, 1], 10).detail).toBe("Jogadas inválidas");
   });
 });
 

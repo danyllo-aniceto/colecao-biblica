@@ -184,6 +184,47 @@ describe.skipIf(!hasDatabase)("mini games: partidas", () => {
     expect(last).toMatchObject({ status: "lost", turn: { kind: "end", end: { answer: word } }, result: { coins: 0 } });
   });
 
+  it("quebra-cabeça: peças por nível, dica e espiada contadas no servidor, vitória pontua com o desconto das ajudas", async () => {
+    const { token } = await unlockAll();
+    const run = (await start(token, "quebra-cabeca", { difficulty: "medio", kind: "mix", time: 240 })).body;
+    expect(run.puzzle).toMatchObject({ side: 4, level: "medio", timeLimit: 240, hintsLeft: 4, peeksLeft: 3 });
+    expect(run.puzzle.order).toHaveLength(16);
+    expect(JSON.stringify(run.puzzle)).not.toMatch(/summary/);
+    const order = [...(run.puzzle.order as number[])];
+    expect((await act(token, run.runId, { action: "hint", swaps: [[0, 99]] })).status).toBe(400);
+    const hint = await act(token, run.runId, { action: "hint", swaps: [] });
+    expect(hint.body.turn).toMatchObject({ kind: "hint", left: 3 });
+    const [a, b] = hint.body.turn.swap as [number, number];
+    expect(order[b]).toBe(a);
+    expect((await act(token, run.runId, { action: "reference" })).body.turn).toMatchObject({ kind: "reference", left: 2 });
+    const swaps: Array<[number, number]> = [[a, b]];
+    [order[a], order[b]] = [order[b], order[a]];
+    for (let position = 0; position < order.length; position += 1) {
+      if (order[position] === position) continue;
+      const at = order.indexOf(position);
+      [order[position], order[at]] = [order[at], order[position]];
+      swaps.push([position, at]);
+    }
+    const done = await finish(token, run.runId, { swaps });
+    expect(done.body).toMatchObject({ solved: true, coins: 10 });
+    expect(done.body.detail).toContain("2 ajudas");
+    expect(done.body.reveal).toMatchObject({ title: expect.any(String) });
+    expect((await start(token, "quebra-cabeca", { difficulty: "nao-existe" })).status).toBe(400);
+    expect((await start(token, "quebra-cabeca", { time: 123 })).status).toBe(400);
+  });
+
+  it("memória: pares por nível e tipo, fotos nas cartas, e a partida perfeita vence", async () => {
+    const { token } = await unlockAll();
+    const run = (await start(token, "memoria", { difficulty: "facil", kind: "versiculos", time: 150 })).body;
+    expect(run.puzzle).toMatchObject({ level: "facil", pairs: 6, cols: 3, timeLimit: 150 });
+    const cards = run.puzzle.cards as Array<{ pair: number }>;
+    const byPair = new Map<number, number[]>();
+    cards.forEach((card, index) => byPair.set(card.pair, [...(byPair.get(card.pair) ?? []), index]));
+    const done = await finish(token, run.runId, { flips: [...byPair.values()].flat() });
+    expect(done.body).toMatchObject({ solved: true, coins: 10 });
+    expect((await start(token, "memoria", { kind: "inexistente" })).status).toBe(400);
+  });
+
   it("livros em ordem em turnos e antigo ou novo? conferidos no servidor", async () => {
     const { token } = await unlockAll();
     const livros = (await start(token, "livros", { difficulty: "facil", rounds: 3 })).body;

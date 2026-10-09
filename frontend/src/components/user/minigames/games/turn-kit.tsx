@@ -49,6 +49,23 @@ export function SetupShell({ intro, tips, onStart, children }: { intro: string; 
   );
 }
 
+/** Quebra-cabeça e Memória têm um nível a mais: o Mestre. */
+export type SizeLevel = Level | 'mestre';
+export const SIZE_EMOJI: Record<SizeLevel, string> = { ...LEVEL_EMOJI, mestre: '🏆' };
+export const SIZE_LABEL: Record<SizeLevel, string> = { ...LEVEL_LABEL, mestre: 'Mestre' };
+export const SIZE_SCALE: Record<SizeLevel, number> = { ...LEVEL_SCALE, mestre: 1 };
+export const SIZE_IDS: SizeLevel[] = ['facil', 'medio', 'dificil', 'mestre'];
+
+export function SizeLevelField({ value, onChange, texts, label = 'Dificuldade' }: { value: SizeLevel; onChange: (level: SizeLevel) => void; texts: Record<SizeLevel, string>; label?: string }) {
+  return (
+    <div className="space-y-1.5">
+      <span className="block font-display text-sm font-bold text-ink">{label}</span>
+      <Segmented<SizeLevel> aria-label={label} value={value} onChange={onChange} options={SIZE_IDS.map((id) => ({ value: id, label: `${SIZE_EMOJI[id]} ${SIZE_LABEL[id]}` }))} className="[&_button]:px-1.5" />
+      <p className="text-xs font-semibold text-muted">{texts[value]}</p>
+    </div>
+  );
+}
+
 export function LevelField({ value, onChange, texts }: { value: Level; onChange: (level: Level) => void; texts: Record<Level, string> }) {
   return (
     <div className="space-y-1.5">

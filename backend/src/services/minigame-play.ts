@@ -8,7 +8,7 @@ import { lettersOnly, plainText, shuffled, rng, type Outcome } from "../minigame
 import { anagramOutcome, newAnagram, pickRounds, playAnagram, publicRound, ROUND_CHOICES as ANAGRAM_ROUNDS, TIME_CHOICES as ANAGRAM_TIMES, type AnagramState } from "../minigames/anagram";
 import { bookOrderOutcome, BOOK_TIME_CHOICES, newBookOrder, playBookOrder, publicBookOrder, ROUND_CHOICES as BOOK_ROUNDS, type BookOrderState } from "../minigames/books";
 import { COUNT_CHOICES as TESTAMENT_COUNTS, newTestament, pickTestamentItems, playTestament, publicTestament, testamentOutcome, TIME_CHOICES as TESTAMENT_TIMES, type TestamentState } from "../minigames/testament";
-import { LEVEL_IDS, maxScoreOf, safeWords, TurnError, type Level } from "../minigames/turns";
+import { LEVEL_IDS, maxScoreOf, safeWords, SIZE_LEVEL_IDS, TurnError, type Level, type SizeLevel } from "../minigames/turns";
 import { blitzOutcome, COUNT_CHOICES as BLITZ_COUNTS, newBlitz, pickBlitzItems, playBlitz, publicBlitz, TIME_CHOICES as BLITZ_TIMES, type BlitzState } from "../minigames/blitz";
 import { blanksOutcome, newBlanks, pickBlanksRounds, playBlanks, publicBlanks, ROUND_CHOICES as BLANKS_ROUNDS, TIME_CHOICES as BLANKS_TIMES, type BlanksState } from "../minigames/verse-blanks";
 import { newWhoAmI, pickWhoAmIRounds, playWhoAmI, publicWhoAmI, ROUND_CHOICES as WHOAMI_ROUNDS, TIME_CHOICES as WHOAMI_TIMES, whoAmIOutcome, type WhoAmIState } from "../minigames/whoami";
@@ -18,8 +18,8 @@ import { checkLineage, generateLineage, type LineageState } from "../minigames/l
 import { checkMap, generateMap, type MapState } from "../minigames/places";
 import { checkTimeline, generateTimeline, type TimelineState } from "../minigames/timeline";
 import { checkMaze, generateMaze, type Maze } from "../minigames/maze";
-import { checkMemory, generateMemory, MEMORY_PAIRS, type Memory } from "../minigames/memory";
-import { checkSwapPuzzle, generateSwapPuzzle, type SwapPuzzle } from "../minigames/swap-puzzle";
+import { checkMemory, generateMemory, MEMORY_KINDS, TIME_CHOICES as MEMORY_TIMES, type Memory, type MemoryKind, type MemoryPairInput } from "../minigames/memory";
+import { applySwaps, checkSwapPuzzle, generateSwapPuzzle, newSwapState, nextHintSwap, SWAP_LEVELS, TIME_CHOICES as SWAP_TIMES, type SwapPuzzle, type SwapState } from "../minigames/swap-puzzle";
 import { newVerse, pickVerseRounds, playVerse, publicVerse, ROUND_CHOICES as VERSE_ROUNDS, TIME_CHOICES as VERSE_TIMES, verseOutcome, type VerseState } from "../minigames/verse";
 import { checkWordSearch, DIFFICULTY_IDS, generateWordSearch, THEME_IDS, wordSearchCandidates, type WordSearchState } from "../minigames/wordsearch";
 import { dayKeyInTimeZone, MINI_GAME_DAILY_COIN_WINS, MINI_GAME_WIN_COINS } from "./game-rules";
@@ -33,7 +33,7 @@ const MAX_RUN_MS = 3 * 60 * 60 * 1000;
 type RunState =
   | ({ game: "caca-palavras" } & WordSearchState)
   | { game: "forca"; state: HangmanGameState }
-  | { game: "quebra-cabeca"; puzzle: SwapPuzzle }
+  | ({ game: "quebra-cabeca" } & SwapState)
   | { game: "memoria"; memory: Memory }
   | { game: "versiculo"; state: VerseState }
   | { game: "labirinto"; maze: Maze }
@@ -51,7 +51,9 @@ type RunState =
 
 /** Escolhas da tela de preparo (caça-palavras: dificuldade e tema; anagrama: dificuldade, turnos e tempo). */
 const startOptions = z.object({
-  difficulty: z.enum(DIFFICULTY_IDS as [string, ...string[]]).optional(),
+  difficulty: z.enum(["facil", "medio", "dificil", "mestre"]).optional(),
+  /** Quebra-cabeça: de onde vem a imagem; memória: que tipo de pares. */
+  kind: z.enum(["personagens", "cenarios", "versiculos", "mix"]).optional(),
   theme: z.enum(THEME_IDS as [string, ...string[]]).optional(),
   /** Turnos (anagrama, forca, livros em ordem) ou itens (antigo ou novo?). */
   rounds: z.number().int().min(1).max(30).optional(),
@@ -66,6 +68,7 @@ function choose<T extends number>(value: number | null | undefined, allowed: rea
   return value as T;
 }
 const chooseTime = (value: number | null | undefined, allowed: readonly number[]) => (value === undefined || value === null ? null : choose(value, allowed, allowed[0]));
+const sizeLevelOf = (value: string | undefined): SizeLevel => (SIZE_LEVEL_IDS.includes(value as SizeLevel) ? (value as SizeLevel) : "facil");
 const levelOf = (value: string | undefined): Level => (LEVEL_IDS.includes(value as Level) ? (value as Level) : "medio");
 
 type Extras = { options: StartOptions; recentWords: string[] };
@@ -136,7 +139,7 @@ function build(game: string, seed: number, content: Awaited<ReturnType<typeof lo
     case "caca-palavras": {
       // Personagens, lugares e livros da Bíblia; as palavras das últimas partidas ficam por último para não parecer repetido.
       const candidates = wordSearchCandidates({ characters: content.characters.map((character) => ({ name: character.name, imageUrl: character.imageUrl, testament: character.testament })), scenarios: content.scenarios });
-      const generated = generateWordSearch(seed, candidates, { difficulty: extras.options.difficulty as never, theme: extras.options.theme as never, avoid: extras.recentWords });
+      const generated = generateWordSearch(seed, candidates, { difficulty: (DIFFICULTY_IDS as readonly string[]).includes(extras.options.difficulty ?? "") ? (extras.options.difficulty as never) : undefined, theme: extras.options.theme as never, avoid: extras.recentWords });
       if (!generated) throw badRequest("Ainda não há palavras suficientes para esta dificuldade");
       return { state: { game, puzzle: generated.puzzle, placements: generated.placements, hinted: [] }, puzzle: generated.puzzle };
     }
@@ -152,18 +155,26 @@ function build(game: string, seed: number, content: Awaited<ReturnType<typeof lo
       return { state: { game, state }, puzzle: publicHangman(state) };
     }
     case "quebra-cabeca": {
-      const sources = [
-        ...content.characters.filter((character) => character.imageUrl).map((character) => ({ imageUrl: character.imageUrl, title: character.name })),
-        ...content.scenarios.filter((scenario) => scenario.mapImageUrl).map((scenario) => ({ imageUrl: scenario.mapImageUrl, title: scenario.name })),
-      ];
-      const source = sources.length > 0 ? shuffled(random, sources)[0] : { imageUrl: null, title: "Quebra-cabeça" };
-      const puzzle = generateSwapPuzzle(seed, source);
-      return { state: { game, puzzle }, puzzle };
+      const kind = extras.options.kind ?? "mix";
+      const characters = kind !== "cenarios" ? content.characters.filter((character) => character.imageUrl).map((character) => ({ imageUrl: character.imageUrl, title: character.name, summary: character.shortSummary, kind: "character" as const })) : [];
+      const places = kind !== "personagens" ? content.scenarios.filter((scenario) => scenario.mapImageUrl).map((scenario) => ({ imageUrl: scenario.mapImageUrl, title: scenario.name, summary: scenario.description ?? "Um lugar da campanha.", kind: "place" as const })) : [];
+      const all = [...characters, ...places];
+      // Os que saíram nas últimas partidas ficam por último; sem nenhuma imagem cadastrada o jogo usa peças numeradas.
+      const fresh = all.filter((source) => !extras.recentWords.includes(source.title));
+      const source = shuffled(random, fresh.length > 0 ? fresh : all)[0] ?? { imageUrl: null, title: "Quebra-cabeça", summary: "", kind: "none" as const };
+      const level = sizeLevelOf(extras.options.difficulty);
+      const puzzle = generateSwapPuzzle(seed, source, level, chooseTime(extras.options.time, SWAP_TIMES));
+      return { state: { game, ...newSwapState(puzzle, source.summary) }, puzzle };
     }
     case "memoria": {
-      const pairs = content.scenarios.filter((scenario) => scenario.verseReference).map((scenario) => ({ name: scenario.name, match: scenario.verseReference! }));
-      if (pairs.length < MEMORY_PAIRS) throw badRequest("Ainda não há cenários suficientes para este jogo");
-      const memory = generateMemory(seed, pairs);
+      const pool: MemoryPairInput[] = [
+        ...content.characters.filter((character) => character.imageUrl).map((character) => ({ key: character.name, kind: "personagens" as const, a: { text: character.name, imageUrl: character.imageUrl }, b: { text: character.name, imageUrl: null }, label: character.name })),
+        ...content.scenarios.filter((scenario) => scenario.mapImageUrl).map((scenario) => ({ key: `mapa:${scenario.name}`, kind: "cenarios" as const, a: { text: scenario.name, imageUrl: scenario.mapImageUrl }, b: { text: scenario.name, imageUrl: null }, label: scenario.name })),
+        ...content.scenarios.filter((scenario) => scenario.verseReference).map((scenario) => ({ key: `verso:${scenario.name}`, kind: "versiculos" as const, a: { text: scenario.name, imageUrl: null }, b: { text: scenario.verseReference!, imageUrl: null }, label: scenario.name })),
+      ];
+      const kind = (MEMORY_KINDS.includes(extras.options.kind as MemoryKind) ? extras.options.kind : "mix") as MemoryKind;
+      const memory = generateMemory(seed, pool, sizeLevelOf(extras.options.difficulty), kind, chooseTime(extras.options.time, MEMORY_TIMES), extras.recentWords);
+      if (!memory) throw badRequest("Ainda não há personagens e cenários suficientes para este jogo");
       return { state: { game, memory }, puzzle: memory };
     }
     case "versiculo": {
@@ -265,8 +276,10 @@ async function recentWords(userId: number, gameId: string): Promise<string[]> {
   const runs = await prisma.miniGameRun.findMany({ where: { userId, gameId }, orderBy: { startedAt: "desc" }, take: 8, select: { state: true } });
   const turn = TURN_GAMES[gameId];
   return runs.flatMap((run) => {
-    const state = run.state as unknown as { puzzle?: { words?: string[] }; state?: unknown };
+    const state = run.state as unknown as { puzzle?: { words?: string[]; title?: string }; memory?: { labels?: string[] }; state?: unknown };
     if (turn && state.state) return safeWords(turn.words, state.state);
+    if (state.memory?.labels) return state.memory.labels;
+    if (state.puzzle?.title) return [state.puzzle.title];
     return state.puzzle?.words ?? [];
   });
 }
@@ -281,7 +294,7 @@ export async function startMiniGame(userId: number, gameId: string, body: unknow
   await prisma.miniGameRun.deleteMany({ where: { OR: [{ userId, gameId, finishedAt: null }, { startedAt: { lt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) } }] } });
   const options = startOptions.safeParse(body ?? {});
   if (!options.success) throw badRequest("Escolha de dificuldade ou tema inválida");
-  const { state, puzzle } = build(gameId, randomInt(1, 2 ** 31 - 1), await loadContent(), gameId === "relampago" ? await loadBlitzQuestions() : [], { options: options.data, recentWords: gameId === "caca-palavras" || gameId in TURN_GAMES ? await recentWords(userId, gameId) : [] });
+  const { state, puzzle } = build(gameId, randomInt(1, 2 ** 31 - 1), await loadContent(), gameId === "relampago" ? await loadBlitzQuestions() : [], { options: options.data, recentWords: gameId === "caca-palavras" || gameId === "quebra-cabeca" || gameId === "memoria" || gameId in TURN_GAMES ? await recentWords(userId, gameId) : [] });
   const run = await prisma.miniGameRun.create({ data: { userId, gameId, state: state as object } });
   return { runId: run.id, game: gameId, puzzle };
 }
@@ -335,7 +348,7 @@ export async function finishMiniGame(userId: number, runId: string, body: unknow
       outcome = checkWordSearch(state, answers["caca-palavras"].parse(body).found, seconds);
       break;
     case "quebra-cabeca":
-      outcome = checkSwapPuzzle(state.puzzle, answers["quebra-cabeca"].parse(body).swaps, seconds);
+      outcome = checkSwapPuzzle(state, answers["quebra-cabeca"].parse(body).swaps, seconds);
       break;
     case "memoria":
       outcome = checkMemory(state.memory, answers.memoria.parse(body).flips, seconds);
@@ -384,7 +397,8 @@ const actBody = z.discriminatedUnion("action", [
   z.object({ action: z.literal("skip") }),
   z.object({ action: z.literal("timeout") }),
   z.object({ action: z.literal("begin") }),
-  z.object({ action: z.literal("hint"), word: z.string().max(20).optional() }),
+  z.object({ action: z.literal("hint"), word: z.string().max(20).optional(), swaps: z.array(z.tuple([z.number().int(), z.number().int()])).max(600).optional() }),
+  z.object({ action: z.literal("reference") }),
   z.object({ action: z.literal("answer"), choice: z.number().int().min(0).max(7) }),
   z.object({ action: z.literal("guess"), letter: z.string().min(1).max(4) }),
   z.object({ action: z.literal("reveal") }),
@@ -423,6 +437,24 @@ export async function actMiniGame(userId: number, runId: string, body: unknown):
       await save({ game: state.game, state: played.state } as RunState, played.done);
       const outcome = played.done ? turn.outcome(played.state as never) : null;
       return { game: state.game, over: played.done, right: outcome?.solved ?? false, outcome, answer: "", turn: played.event };
+    }
+    if (state.game === "quebra-cabeca" && (input.action === "hint" || input.action === "reference")) {
+      const config = SWAP_LEVELS[state.puzzle.level];
+      if (input.action === "reference") {
+        if (state.puzzle.peeksLeft === null) return { game: "quebra-cabeca" as const, over: false, right: false, outcome: null, answer: "", turn: { kind: "reference", left: null } };
+        if (state.peeks >= (config.peeks ?? 0)) throw badRequest("Acabaram as espiadas na imagem desta partida");
+        const next = { ...state, peeks: state.peeks + 1 };
+        await save(next, false);
+        return { game: "quebra-cabeca" as const, over: false, right: false, outcome: null, answer: "", turn: { kind: "reference", left: config.peeks! - next.peeks } };
+      }
+      if (state.hints >= config.hints) throw badRequest("Acabaram as dicas desta partida");
+      const current = applySwaps(state.puzzle.order, input.swaps ?? []);
+      if (!current) throw badRequest("Jogadas inválidas");
+      const swap = nextHintSwap(current);
+      if (!swap) throw badRequest("A imagem já está montada");
+      const next = { ...state, hints: state.hints + 1 };
+      await save(next, false);
+      return { game: "quebra-cabeca" as const, over: false, right: false, outcome: null, answer: "", turn: { kind: "hint", swap, left: config.hints - next.hints } };
     }
     if (state.game === "caca-palavras" && input.action === "hint") {
       const placement = state.placements.find((entry) => entry.word === input.word);

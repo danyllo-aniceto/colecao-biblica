@@ -95,8 +95,41 @@ export type HangmanEvent =
   | { kind: 'guess'; pattern: Array<string | null>; errors: number; hit: boolean }
   | { kind: 'reveal'; pattern: Array<string | null>; hintsLeft: number }
   | { kind: 'end'; end: HangmanEnd; pattern: Array<string | null>; errors: number; next: HangmanPuzzle | null };
-export type SwapPuzzle = { side: number; order: number[]; imageUrl: string | null; title: string };
-export type MemoryPuzzle = { cards: Array<{ pair: number; text: string }> };
+export type SizeLevel = TurnLevel | 'mestre';
+export type SwapPuzzle = {
+  side: number;
+  order: number[];
+  imageUrl: string | null;
+  title: string;
+  kind: 'character' | 'place' | 'none';
+  level: SizeLevel;
+  /** Segundos para montar tudo; null = sem tempo. */
+  timeLimit: number | null;
+  hintsLeft: number;
+  /** Quantas vezes ainda pode ver a imagem inteira (null = sempre à mostra). */
+  peeksLeft: number | null;
+  peekPenalty: number;
+  hintPenalty: number;
+  numbers: boolean;
+  par: number;
+  maxScore: number;
+};
+export type SwapEvent = { kind: 'hint'; swap: [number, number]; left: number } | { kind: 'reference'; left: number | null };
+/** Depois do fim: o que era a imagem. */
+export type SwapReveal = { title: string; imageUrl: string | null; summary: string; kind: 'character' | 'place' | 'none' };
+export type MemoryCardData = { pair: number; text: string; imageUrl: string | null };
+export type MemoryPuzzle = {
+  cards: MemoryCardData[];
+  cols: number;
+  level: SizeLevel;
+  pairs: number;
+  labels: string[];
+  /** Segundos com todas as cartas viradas para cima no começo. */
+  peek: number;
+  timeLimit: number | null;
+  par: number;
+  maxScore: number;
+};
 export type VersePuzzle = { round: number; rounds: number; reference: string; chips: string[]; length: number; hintsLeft: number; timePerRound: number | null; level: TurnLevel; maxScore: number };
 export type VerseEnd = { right: boolean; timedOut: boolean; reference: string; text: string; title: string; imageUrl: string | null; errors: number; points: number };
 export type VerseEvent =

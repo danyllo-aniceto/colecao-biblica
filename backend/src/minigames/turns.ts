@@ -55,3 +55,10 @@ export function safeWords(read: (state: never) => string[], state: unknown): str
     return [];
   }
 }
+
+/** Quebra-cabeça e Memória têm um nível a mais, o Mestre (muitas peças/cartas). */
+export type SizeLevel = Level | "mestre";
+export const SIZE_LEVEL_IDS: readonly SizeLevel[] = ["facil", "medio", "dificil", "mestre"];
+export const SIZE_LABEL: Record<SizeLevel, string> = { facil: "Fácil", medio: "Médio", dificil: "Difícil", mestre: "Mestre" };
+export const SIZE_SCALE: Record<SizeLevel, number> = { facil: 0.6, medio: 0.8, dificil: 0.9, mestre: 1 };
+export const sizeMaxScore = (level: SizeLevel) => Math.round(FULL_SCORE * SIZE_SCALE[level]);

@@ -11,9 +11,9 @@ import { TestamentGame, testamentSetup } from '@/components/user/minigames/games
 import { WhoAmIGame, whoAmISetup } from '@/components/user/minigames/games/whoami-game';
 import { HangmanGame, hangmanSetup } from '@/components/user/minigames/games/hangman-game';
 import { MazeGame } from '@/components/user/minigames/games/maze-game';
-import { MemoryGame } from '@/components/user/minigames/games/memory-game';
+import { MemoryGame, memorySetup } from '@/components/user/minigames/games/memory-game';
 import { MiniGameFrame } from '@/components/user/minigames/games/play-frame';
-import { SwapPuzzleGame } from '@/components/user/minigames/games/swap-puzzle-game';
+import { SwapPuzzleGame, swapPuzzleSetup } from '@/components/user/minigames/games/swap-puzzle-game';
 import { VerseGame, verseSetup } from '@/components/user/minigames/games/verse-game';
 import { WordSearchGame, wordSearchSetup } from '@/components/user/minigames/games/wordsearch-game';
 import type { ChainPuzzle, CrosswordPuzzle, LineagePuzzle, MapPuzzle, TimelinePuzzle, AnagramPuzzle, BlanksPuzzle, BlitzPuzzle, BooksPuzzle, TestamentPuzzle, WhoAmIPuzzle, HangmanPuzzle, MazePuzzle, MemoryPuzzle, MiniGameInfo, SwapPuzzle, VersePuzzle, WordSearchPuzzle } from '@/lib/minigames-api';
@@ -28,9 +28,9 @@ export function MiniGamePlay({ game, onExit, onWallet }: Props) {
     case 'forca':
       return <MiniGameFrame<HangmanPuzzle> game={game} onExit={onExit} onWallet={onWallet} setup={hangmanSetup}>{(props) => <HangmanGame {...props} />}</MiniGameFrame>;
     case 'quebra-cabeca':
-      return <MiniGameFrame<SwapPuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <SwapPuzzleGame {...props} />}</MiniGameFrame>;
+      return <MiniGameFrame<SwapPuzzle> game={game} onExit={onExit} onWallet={onWallet} setup={swapPuzzleSetup}>{(props) => <SwapPuzzleGame {...props} />}</MiniGameFrame>;
     case 'memoria':
-      return <MiniGameFrame<MemoryPuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <MemoryGame {...props} />}</MiniGameFrame>;
+      return <MiniGameFrame<MemoryPuzzle> game={game} onExit={onExit} onWallet={onWallet} setup={memorySetup}>{(props) => <MemoryGame {...props} />}</MiniGameFrame>;
     case 'versiculo':
       return <MiniGameFrame<VersePuzzle> game={game} onExit={onExit} onWallet={onWallet} setup={verseSetup}>{(props) => <VerseGame {...props} />}</MiniGameFrame>;
     case 'labirinto':
