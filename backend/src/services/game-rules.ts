@@ -106,9 +106,9 @@ export const MINI_GAMES: MiniGameDef[] = [
   { id: "labirinto", name: "Labirinto", emoji: "🌀", text: "Leve o seu peão até a bandeira pelo caminho mais curto: mapas diferentes a cada partida, estrelas, névoa e 4 tamanhos.", stoneSlot: 7, ready: true },
   { id: "linha-do-tempo", name: "Linha do tempo", emoji: "⏳", text: "Uma carta por vez (personagem, cenário ou acontecimento): coloque na linha do tempo; errou, perde uma vida.", stoneSlot: 8, ready: true },
   { id: "palavras-cruzadas", name: "Palavras cruzadas", emoji: "✏️", text: "Preencha a grade com as dicas dos personagens e lugares, com ajudas, tempo opcional e 3 níveis.", stoneSlot: 9, ready: true },
-  { id: "mapa", name: "Mapa bíblico", emoji: "🗺️", text: "Aponte onde fica cada cenário: quanto mais perto, mais pontos.", stoneSlot: 10, ready: true },
-  { id: "arvore", name: "Árvore genealógica", emoji: "🌳", text: "Monte a linhagem de Adão até Jesus.", stoneSlot: 11, ready: true },
-  { id: "interconexao", name: "Interconexão", emoji: "🔗", text: "Ligue dois personagens ou cenários por uma corrente de relações: menos elos, mais pontos.", stoneSlot: 12, ready: true },
+  { id: "mapa", name: "Mapa bíblico", emoji: "🗺️", text: "Marque no mapa onde ficam os lugares da Bíblia, em 3 regiões; no fim cada lugar certo aparece com a sua cor.", stoneSlot: 10, ready: true },
+  { id: "arvore", name: "Árvore genealógica", emoji: "🌳", text: "Monte a árvore genealógica: pai, avô, bisavô, tataravô... Escolha o tamanho, de 2 a 8 gerações.", stoneSlot: 11, ready: true },
+  { id: "interconexao", name: "Interconexão", emoji: "🔗", text: "Ligue dois personagens ou lugares por uma corrente de relações, em várias rodadas: menos elos, mais pontos.", stoneSlot: 12, ready: true },
 ];
 
 /** Moedas da primeira vitória do dia em cada mini game e quantas vitórias por dia rendem moedas (o resto só vale pontos no ranking). */

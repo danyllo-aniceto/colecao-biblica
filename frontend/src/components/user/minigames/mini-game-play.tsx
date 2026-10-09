@@ -1,7 +1,7 @@
-import { ChainGame } from '@/components/user/minigames/games/chain-game';
+import { ChainGame, chainSetup } from '@/components/user/minigames/games/chain-game';
 import { CrosswordGame, crosswordSetup } from '@/components/user/minigames/games/crossword-game';
-import { LineageGame } from '@/components/user/minigames/games/lineage-game';
-import { MapGame } from '@/components/user/minigames/games/map-game';
+import { LineageGame, lineageSetup } from '@/components/user/minigames/games/lineage-game';
+import { MapGame, mapSetup } from '@/components/user/minigames/games/map-game';
 import { TimelineGame, timelineSetup } from '@/components/user/minigames/games/timeline-game';
 import { AnagramGame, anagramSetup } from '@/components/user/minigames/games/anagram-game';
 import { BlanksGame, blanksSetup } from '@/components/user/minigames/games/blanks-game';
@@ -50,11 +50,11 @@ export function MiniGamePlay({ game, onExit, onWallet }: Props) {
     case 'linha-do-tempo':
       return <MiniGameFrame<TimelinePuzzle> game={game} onExit={onExit} onWallet={onWallet} setup={timelineSetup}>{(props) => <TimelineGame {...props} />}</MiniGameFrame>;
     case 'mapa':
-      return <MiniGameFrame<MapPuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <MapGame {...props} />}</MiniGameFrame>;
+      return <MiniGameFrame<MapPuzzle> game={game} onExit={onExit} onWallet={onWallet} setup={mapSetup}>{(props) => <MapGame {...props} />}</MiniGameFrame>;
     case 'arvore':
-      return <MiniGameFrame<LineagePuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <LineageGame {...props} />}</MiniGameFrame>;
+      return <MiniGameFrame<LineagePuzzle> game={game} onExit={onExit} onWallet={onWallet} setup={lineageSetup}>{(props) => <LineageGame {...props} />}</MiniGameFrame>;
     case 'interconexao':
-      return <MiniGameFrame<ChainPuzzle> game={game} onExit={onExit} onWallet={onWallet}>{(props) => <ChainGame {...props} />}</MiniGameFrame>;
+      return <MiniGameFrame<ChainPuzzle> game={game} onExit={onExit} onWallet={onWallet} setup={chainSetup}>{(props) => <ChainGame {...props} />}</MiniGameFrame>;
     case 'palavras-cruzadas':
       return <MiniGameFrame<CrosswordPuzzle> game={game} onExit={onExit} onWallet={onWallet} setup={crosswordSetup}>{(props) => <CrosswordGame {...props} />}</MiniGameFrame>;
     default:

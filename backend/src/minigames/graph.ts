@@ -1,6 +1,19 @@
-import { ACCURACY_MAX, rng, shuffled, timeBonus, type Outcome } from "./common";
+import { rng, shuffled, type Outcome, type Random } from "./common";
+import { beginClock, clockAlmostOver, clockExpired, elapsedSeconds, endClock, LEVEL_LABEL, LEVEL_SCALE, maxScoreOf, newClock, speedFactor, turnShare, TurnError, type Clock, type Level, type TurnResult } from "./turns";
 
-/** Interconexão: chegue de um personagem ou lugar a outro por uma corrente de relações; menos elos, mais pontos. */
+/**
+ * Interconexão, em turnos: em cada rodada, chegue de um personagem ou lugar a outro por uma corrente de relações; menos elos, mais pontos.
+ * A dificuldade define a distância entre os dois (fácil 2–3 elos, médio 3–4, difícil 5–6) e quantas dicas há.
+ */
+export const ROUND_CHOICES = [1, 3, 5] as const;
+export const TIME_CHOICES = [30, 45, 60, 90, 120] as const;
+export const CHAIN_LEVELS: Record<Level, { min: number; max: number; hints: number }> = {
+  facil: { min: 2, max: 3, hints: 3 },
+  medio: { min: 3, max: 4, hints: 2 },
+  dificil: { min: 5, max: 6, hints: 1 },
+};
+/** Cada dica usada numa rodada tira esta parte dos pontos dela. */
+export const HINT_COST = 0.2;
 export type Edge = [from: string, to: string, forward: string, backward: string];
 
 /** Relações bíblicas: `forward` lê de `from` para `to`; `backward` lê de `to` para `from`. */
@@ -85,29 +98,129 @@ export function shortestSteps(from: string, to: string): number | null {
   return null;
 }
 
-export type ChainPuzzle = { from: string; to: string; edges: Edge[] };
-export type ChainState = { from: string; to: string; shortest: number };
-
-/** Sorteia dois nós a 3 ou 4 passos um do outro (nem tão perto que seja óbvio, nem tão longe que canse). */
-export function generateChain(seed: number): { puzzle: ChainPuzzle; state: ChainState } {
-  const random = rng(seed);
-  const nodes = shuffled(random, NODES);
-  for (const from of nodes) {
-    for (const to of shuffled(random, NODES)) {
-      const steps = from === to ? null : shortestSteps(from, to);
-      if (steps !== null && steps >= 3 && steps <= 4) return { puzzle: { from, to, edges: EDGES }, state: { from, to, shortest: steps } };
+/** O caminho mais curto entre dois nós (lista de nós, com os dois pontas); null se não houver. */
+export function shortestPathNodes(from: string, to: string): string[] | null {
+  const previous = new Map<string, string | null>([[from, null]]);
+  const queue = [from];
+  for (let head = 0; head < queue.length; head += 1) {
+    const at = queue[head];
+    if (at === to) {
+      const path: string[] = [];
+      for (let node: string | null = to; node !== null; node = previous.get(node) ?? null) path.unshift(node);
+      return path;
+    }
+    for (const { to: next } of neighbors(at)) {
+      if (!previous.has(next)) {
+        previous.set(next, at);
+        queue.push(next);
+      }
     }
   }
-  throw new Error("Sem par de nós a 3 ou 4 passos");
+  return null;
 }
 
-/** O caminho é a lista de nós visitados, do começo ao fim; cada passo precisa ser uma relação que existe. */
-export function checkChain(state: ChainState, path: string[], seconds: number): Outcome {
-  if (path.length < 2 || path.length > 40 || path[0] !== state.from || path.at(-1) !== state.to) return { solved: false, score: 0, detail: "O caminho não liga os dois" };
-  for (let index = 0; index < path.length - 1; index += 1) {
-    if (!neighbors(path[index]).some(({ to }) => to === path[index + 1])) return { solved: false, score: 0, detail: "Passo inválido" };
+export type ChainRound = { from: string; to: string; shortest: number };
+export type ChainGameState = { seed: number; level: Level; clock: Clock; rounds: ChainRound[]; current: number; hinted: number; results: TurnResult[] };
+export type ChainPuzzle = {
+  round: number;
+  rounds: number;
+  from: string;
+  to: string;
+  edges: Edge[];
+  hintsLeft: number;
+  timePerRound: number | null;
+  level: Level;
+  maxScore: number;
+};
+
+/** Sorteia as duplas à distância do nível, sem repetir pontas nem duplas das últimas partidas. */
+export function pickChainRounds(random: Random, level: Level, count: number, avoid: readonly string[]): ChainRound[] {
+  const config = CHAIN_LEVELS[level];
+  const recent = new Set(avoid);
+  const rounds: ChainRound[] = [];
+  const used = new Set<string>();
+  const nodes = shuffled(random, NODES);
+  for (const pass of [0, 1]) {
+    for (const from of nodes) {
+      for (const to of shuffled(random, NODES)) {
+        if (rounds.length === count) return rounds;
+        if (from === to || used.has(from) || used.has(to)) continue;
+        // Na primeira passada evita as pontas das últimas partidas; na segunda aceita qualquer uma.
+        if (pass === 0 && (recent.has(from) || recent.has(to))) continue;
+        const steps = shortestSteps(from, to);
+        if (steps === null || steps < config.min || steps > config.max) continue;
+        rounds.push({ from, to, shortest: steps });
+        used.add(from);
+        used.add(to);
+        break;
+      }
+    }
   }
-  const steps = path.length - 1;
-  const extra = Math.max(0, steps - state.shortest);
-  return { solved: true, score: Math.max(100, ACCURACY_MAX - extra * 150) + timeBonus(seconds, 30), detail: `${steps} ${steps === 1 ? "elo" : "elos"} (o menor tem ${state.shortest})` };
+  return rounds;
+}
+
+export const newChain = (seed: number, rounds: ChainRound[], level: Level, timePerRound: number | null, now: number): ChainGameState => ({ seed, level, clock: newClock(timePerRound, now), rounds, current: 0, hinted: 0, results: [] });
+
+export function publicChain(state: ChainGameState): ChainPuzzle {
+  const round = state.rounds[state.current];
+  return { round: state.current, rounds: state.rounds.length, from: round.from, to: round.to, edges: EDGES, hintsLeft: CHAIN_LEVELS[state.level].hints - state.hinted, timePerRound: state.clock.timePerTurn, level: state.level, maxScore: maxScoreOf(state.level) };
+}
+
+/** Pontos de uma rodada (antes do fator da dificuldade): 70% pelos elos (cada elo a mais tira 30% dessa parte, mínimo 25%) e 30% pela rapidez, menos 20% por dica. */
+export function chainPoints(rounds: number, steps: number, shortest: number, hinted: number, seconds: number, timed: boolean): number {
+  const accuracy = Math.max(0.25, 1 - Math.max(0, steps - shortest) * 0.3);
+  return Math.max(0, Math.round(turnShare(rounds, timed) * (0.7 * accuracy + 0.3 * speedFactor(seconds, 20 + 10 * shortest) - HINT_COST * hinted)));
+}
+
+export type ChainAction = { type: "path"; path: string[] } | { type: "hint"; path?: string[] } | { type: "skip" } | { type: "timeout" } | { type: "begin" };
+export type ChainEnd = { reached: boolean; timedOut: boolean; steps: number; shortest: number; best: string[]; points: number };
+export type ChainEvent = { kind: "begin" } | { kind: "hint"; node: string; phrase: string; left: number } | { kind: "end"; end: ChainEnd; next: ChainPuzzle | null };
+
+/** O caminho é a lista de nós visitados, do começo ao fim; cada passo precisa ser uma relação que existe. */
+function validPath(round: ChainRound, path: string[]): boolean {
+  if (path.length < 2 || path.length > 40 || path[0] !== round.from || path.at(-1) !== round.to) return false;
+  return path.every((node, index) => index === path.length - 1 || neighbors(node).some(({ to }) => to === path[index + 1]));
+}
+
+export function playChain(state: ChainGameState, action: ChainAction, now: number): { state: ChainGameState; event: ChainEvent; done: boolean } {
+  const round = state.rounds[state.current];
+  if (!round) throw new TurnError("A partida já terminou");
+  if (action.type === "begin") return { state: { ...state, clock: beginClock(state.clock, now) }, event: { kind: "begin" }, done: false };
+  if (action.type === "timeout" && !clockAlmostOver(state.clock, now)) throw new TurnError("Ainda há tempo");
+  const timedOut = action.type === "timeout" || clockExpired(state.clock, now);
+
+  if (action.type === "hint" && !timedOut) {
+    if (state.hinted >= CHAIN_LEVELS[state.level].hints) throw new TurnError("Acabaram as dicas desta rodada");
+    // A dica leva do ponto em que o jogador está ao próximo nó do caminho mais curto até a chegada.
+    const walked = action.path && action.path.length > 0 ? action.path : [round.from];
+    if (walked[0] !== round.from || walked.some((node, index) => index < walked.length - 1 && !neighbors(node).some(({ to }) => to === walked[index + 1]))) throw new TurnError("Caminho inválido");
+    const here = walked[walked.length - 1];
+    const best = shortestPathNodes(here, round.to);
+    if (!best || best.length < 2) throw new TurnError("Você já chegou");
+    const phrase = neighbors(here).find(({ to }) => to === best[1])?.phrase ?? "";
+    return { state: { ...state, hinted: state.hinted + 1 }, event: { kind: "hint", node: best[1], phrase: `${here} ${phrase}`, left: CHAIN_LEVELS[state.level].hints - state.hinted - 1 }, done: false };
+  }
+
+  let steps = 0;
+  let reached = false;
+  if (action.type === "path" && !timedOut) {
+    if (!validPath(round, action.path)) throw new TurnError("Caminho inválido");
+    steps = action.path.length - 1;
+    reached = true;
+  }
+  const seconds = Math.min(elapsedSeconds(state.clock, now), state.clock.timePerTurn ?? Infinity);
+  const points = reached ? chainPoints(state.rounds.length, steps, round.shortest, state.hinted, seconds, state.clock.timePerTurn !== null) : 0;
+  const results = [...state.results, { label: `${round.from} → ${round.to}`, solved: reached, timedOut, points, seconds: Math.round(seconds) }];
+  const current = state.current + 1;
+  const next: ChainGameState = { ...state, results, current, hinted: 0, clock: endClock(state.clock, now) };
+  const done = current >= state.rounds.length;
+  const end: ChainEnd = { reached, timedOut, steps, shortest: round.shortest, best: shortestPathNodes(round.from, round.to) ?? [], points };
+  return { state: next, event: { kind: "end", end, next: done ? null : publicChain(next) }, done };
+}
+
+export function chainOutcome(state: ChainGameState): Outcome {
+  const reached = state.results.filter((result) => result.solved).length;
+  const total = state.rounds.length;
+  const score = Math.round(state.results.reduce((sum, result) => sum + result.points, 0) * LEVEL_SCALE[state.level]);
+  return { solved: reached >= Math.ceil(total / 2), score, detail: `${reached} de ${total} ${total === 1 ? "ligação feita" : "ligações feitas"} · ${LEVEL_LABEL[state.level]}` };
 }

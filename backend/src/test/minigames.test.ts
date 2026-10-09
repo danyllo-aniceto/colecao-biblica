@@ -498,28 +498,54 @@ describe.skipIf(!hasDatabase)("mini games: jogos novos e administrador", () => {
     }
     expect(result).toMatchObject({ status: "won", result: { solved: true, coins: 10 } });
 
-    const map = (await start(token, "mapa")).body;
-    expect(map.puzzle.places).toHaveLength(5);
+    const map = (await start(token, "mapa", { difficulty: "medio", time: 150 })).body;
+    expect(map.puzzle).toMatchObject({ region: "Oriente Médio e Egito", level: "medio", timeLimit: 150, hintsLeft: 2 });
+    expect(map.puzzle.places.length).toBeGreaterThanOrEqual(4);
     expect(JSON.stringify(map.puzzle)).not.toMatch(/"lat"/);
     const places = (await stateOf(map.runId)).state.places as Array<{ lat: number; lon: number }>;
-    expect((await finish(token, map.runId, { guesses: places.map(({ lat, lon }) => ({ lat, lon })) })).body).toMatchObject({ solved: true, score: 1000 });
+    const hint = await act(token, map.runId, { action: "hint", index: 0 });
+    expect(hint.body.turn).toMatchObject({ kind: "hint", index: 0, left: 1 });
+    // A mesma dica não conta duas vezes.
+    expect((await act(token, map.runId, { action: "hint", index: 0 })).body.turn).toMatchObject({ left: 1 });
+    expect((await act(token, map.runId, { action: "hint", index: 99 })).status).toBe(400);
+    const mapDone = await finish(token, map.runId, { guesses: places.map(({ lat, lon }) => ({ lat, lon })) });
+    expect(mapDone.body).toMatchObject({ solved: true, score: Math.round((1000 - 40) * 0.8) });
+    expect(mapDone.body.reveal).toHaveLength(places.length);
 
-    const lineage = (await start(token, "arvore")).body;
-    const pairs = (await stateOf(lineage.runId)).state.pairs as Array<{ father: string; son: string }>;
-    const links = lineage.puzzle.fathers.map((father: string) => pairs.find((pair) => pair.father === father)!.son);
-    expect((await finish(token, lineage.runId, { fathers: lineage.puzzle.fathers, links })).body).toMatchObject({ solved: true });
+    const lineage = (await start(token, "arvore", { difficulty: "medio", rounds: 5 })).body;
+    expect(lineage.puzzle).toMatchObject({ generations: 5, level: "medio" });
+    expect(lineage.puzzle.slots).toHaveLength(4);
+    const answers = (await stateOf(lineage.runId)).state.answers as string[];
+    expect(JSON.stringify(lineage.puzzle.slots)).not.toContain(answers[0]);
+    const lineageHint = await act(token, lineage.runId, { action: "hint", fills: [null, null, null, null] });
+    expect(lineageHint.body.turn).toMatchObject({ kind: "hint", slot: 0, name: answers[0], left: 1 });
+    expect((await finish(token, lineage.runId, { fills: answers })).body).toMatchObject({ solved: true, score: Math.round((1000 - 50) * 0.8) });
+    expect((await start(token, "arvore", { rounds: 9 })).status).toBe(400);
 
-    const chain = (await start(token, "interconexao")).body;
-    const { from, to } = chain.puzzle as { from: string; to: string; edges: Array<[string, string, string, string]> };
-    // Caminho mais curto por busca nas relações que a própria tela recebeu.
-    const around = (node: string) => chain.puzzle.edges.flatMap(([a, b]: [string, string]) => (a === node ? [b] : b === node ? [a] : []));
-    const previous = new Map<string, string>();
-    const queue = [from];
-    for (let head = 0; head < queue.length; head += 1) for (const next of around(queue[head])) if (next !== from && !previous.has(next)) { previous.set(next, queue[head]); queue.push(next); }
-    const path = [to];
-    while (path[0] !== from) path.unshift(previous.get(path[0])!);
-    expect((await finish(token, chain.runId, { path })).body).toMatchObject({ solved: true, score: expect.any(Number) });
-    expect((await finish(token, chain.runId, { path })).status).toBe(400);
+    const chain = (await start(token, "interconexao", { difficulty: "facil", rounds: 3, time: 60 })).body;
+    expect(chain.puzzle).toMatchObject({ round: 0, rounds: 3, level: "facil", hintsLeft: 3 });
+    expect(chain.puzzle.images).toBeTypeOf("object");
+    const chainRounds = (await stateOf(chain.runId)).state.rounds as Array<{ from: string; to: string }>;
+    const edges = chain.puzzle.edges as Array<[string, string, string, string]>;
+    const around = (node: string) => edges.flatMap(([a, b]) => (a === node ? [b] : b === node ? [a] : []));
+    const shortest = (from: string, to: string) => {
+      const previous = new Map<string, string>();
+      const queue = [from];
+      for (let head = 0; head < queue.length; head += 1) for (const next of around(queue[head])) if (next !== from && !previous.has(next)) { previous.set(next, queue[head]); queue.push(next); }
+      const path = [to];
+      while (path[0] !== from) path.unshift(previous.get(path[0])!);
+      return path;
+    };
+    expect((await act(token, chain.runId, { action: "path", path: [chainRounds[0].from, chainRounds[0].to] })).status).toBe(400);
+    const chainHint = await act(token, chain.runId, { action: "hint", path: [chainRounds[0].from] });
+    expect(chainHint.body.turn).toMatchObject({ kind: "hint", node: shortest(chainRounds[0].from, chainRounds[0].to)[1], left: 2 });
+    let chainLast = (await act(token, chain.runId, { action: "path", path: shortest(chainRounds[0].from, chainRounds[0].to) })).body;
+    expect(chainLast.turn).toMatchObject({ kind: "end", end: { reached: true } });
+    for (const round of chainRounds.slice(1)) {
+      await act(token, chain.runId, { action: "begin" });
+      chainLast = (await act(token, chain.runId, { action: "path", path: shortest(round.from, round.to) })).body;
+    }
+    expect(chainLast).toMatchObject({ status: "won", result: { solved: true } });
   });
 
   it("palavras cruzadas: a grade chega sem as letras; conferir e revelar são contados no servidor; a solução guardada vence", async () => {

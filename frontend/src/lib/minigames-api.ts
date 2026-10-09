@@ -236,9 +236,56 @@ export type TimelineEvent =
   | { kind: 'begin' }
   | { kind: 'hint'; hints: string[]; hintsLeft: number }
   | { kind: 'end'; end: TimelineEnd; lives: number; placed: TimelinePlaced[]; next: TimelinePuzzle | null; gameOver: boolean };
-export type MapPuzzle = { places: string[]; bounds: { west: number; east: number; south: number; north: number } };
-export type LineagePuzzle = { fathers: string[]; sons: string[] };
-export type ChainPuzzle = { from: string; to: string; edges: Array<[string, string, string, string]> };
+export type MapBounds = { west: number; east: number; south: number; north: number };
+export type MapPuzzle = {
+  places: string[];
+  bounds: MapBounds;
+  region: string;
+  level: TurnLevel;
+  timeLimit: number | null;
+  hintsLeft: number;
+  hintPenalty: number;
+  maxErrorKm: number;
+  par: number;
+  maxScore: number;
+};
+export type MapEvent = { kind: 'hint'; index: number; lat: number; lon: number; radiusKm: number; left: number };
+/** Depois do fim: onde cada lugar fica de verdade e o erro (km) de quem marcou. */
+export type MapReveal = Array<{ name: string; lat: number; lon: number; km: number | null }>;
+export type LineageSlot = { label: string; name: string | null };
+export type LineagePuzzle = {
+  reference: string;
+  generations: number;
+  /** De cima (o mais antigo) até o pai; `name` já vem preenchido nas ajudas iniciais. */
+  slots: LineageSlot[];
+  pool: string[];
+  source: string | null;
+  level: TurnLevel;
+  timeLimit: number | null;
+  hintsLeft: number;
+  hintPenalty: number;
+  par: number;
+  maxScore: number;
+  /** Foto (ou mapa) de quem tem imagem cadastrada, por nome. */
+  images: Record<string, string>;
+};
+export type LineageEvent = { kind: 'hint'; slot: number; name: string; left: number };
+export type LineageReveal = { answers: string[]; labels: string[]; reference: string; source: string };
+export type ChainPuzzle = {
+  round: number;
+  rounds: number;
+  from: string;
+  to: string;
+  edges: Array<[string, string, string, string]>;
+  hintsLeft: number;
+  timePerRound: number | null;
+  level: TurnLevel;
+  maxScore: number;
+  /** Foto (ou mapa) por nome; só vem na primeira rodada. */
+  images?: Record<string, string>;
+};
+export type ChainEnd = { reached: boolean; timedOut: boolean; steps: number; shortest: number; best: string[]; points: number };
+export type ChainEvent = { kind: 'begin' } | { kind: 'hint'; node: string; phrase: string; left: number } | { kind: 'end'; end: ChainEnd; next: ChainPuzzle | null };
 export type CrosswordPuzzle = {
   rows: number;
   cols: number;

@@ -21,3 +21,12 @@ export const ISLANDS: Array<Array<[number, number]>> = [
   [[23.5, 35.5], [26.3, 35.3], [26, 35], [23.6, 35.2]], // Creta
   [[32.3, 35], [34.6, 35.7], [34, 34.9], [32.5, 34.6]], // Chipre
 ];
+
+/** Lagos e mares fechados da Terra Santa (mapas aproximados, só para se orientar). */
+export const LAKES: Array<Array<[number, number]>> = [
+  [[35.5, 32.89], [35.65, 32.85], [35.62, 32.72], [35.52, 32.7]], // Mar da Galileia
+  [[35.4, 31.77], [35.56, 31.76], [35.5, 31.15], [35.38, 31.2], [35.39, 31.55]], // Mar Morto
+];
+
+/** Rio Jordão (da Galileia ao Mar Morto). */
+export const RIVERS: Array<Array<[number, number]>> = [[[35.62, 32.7], [35.57, 32.45], [35.55, 32.2], [35.52, 31.95], [35.5, 31.77]]];
