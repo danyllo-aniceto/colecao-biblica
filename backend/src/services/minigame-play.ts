@@ -71,7 +71,7 @@ const chooseTime = (value: number | null | undefined, allowed: readonly number[]
 const sizeLevelOf = (value: string | undefined): SizeLevel => (SIZE_LEVEL_IDS.includes(value as SizeLevel) ? (value as SizeLevel) : "facil");
 const levelOf = (value: string | undefined): Level => (LEVEL_IDS.includes(value as Level) ? (value as Level) : "medio");
 
-type Extras = { options: StartOptions; recentWords: string[] };
+type Extras = { options: StartOptions; recentWords: string[]; cardBack: string | null };
 
 /** Jogos em turnos (anagrama, forca, livros em ordem, antigo ou novo?...): o motor puro recebe cada jogada e o servidor só guarda o estado. */
 type TurnGame = {
@@ -175,6 +175,7 @@ function build(game: string, seed: number, content: Awaited<ReturnType<typeof lo
       const kind = (MEMORY_KINDS.includes(extras.options.kind as MemoryKind) ? extras.options.kind : "mix") as MemoryKind;
       const memory = generateMemory(seed, pool, sizeLevelOf(extras.options.difficulty), kind, chooseTime(extras.options.time, MEMORY_TIMES), extras.recentWords);
       if (!memory) throw badRequest("Ainda não há personagens e cenários suficientes para este jogo");
+      memory.backUrl = extras.cardBack;
       return { state: { game, memory }, puzzle: memory };
     }
     case "versiculo": {
@@ -294,7 +295,7 @@ export async function startMiniGame(userId: number, gameId: string, body: unknow
   await prisma.miniGameRun.deleteMany({ where: { OR: [{ userId, gameId, finishedAt: null }, { startedAt: { lt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) } }] } });
   const options = startOptions.safeParse(body ?? {});
   if (!options.success) throw badRequest("Escolha de dificuldade ou tema inválida");
-  const { state, puzzle } = build(gameId, randomInt(1, 2 ** 31 - 1), await loadContent(), gameId === "relampago" ? await loadBlitzQuestions() : [], { options: options.data, recentWords: gameId === "caca-palavras" || gameId === "quebra-cabeca" || gameId === "memoria" || gameId in TURN_GAMES ? await recentWords(userId, gameId) : [] });
+  const { state, puzzle } = build(gameId, randomInt(1, 2 ** 31 - 1), await loadContent(), gameId === "relampago" ? await loadBlitzQuestions() : [], { options: options.data, cardBack: gameId === "memoria" ? ((await prisma.miniGameDesign.findUnique({ where: { gameId }, select: { backUrl: true } }))?.backUrl ?? null) : null, recentWords: gameId === "caca-palavras" || gameId === "quebra-cabeca" || gameId === "memoria" || gameId in TURN_GAMES ? await recentWords(userId, gameId) : [] });
   const run = await prisma.miniGameRun.create({ data: { userId, gameId, state: state as object } });
   return { runId: run.id, game: gameId, puzzle };
 }

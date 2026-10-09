@@ -192,9 +192,13 @@ export function MemoryGame({ puzzle, submit, finished, result }: GameProps<Memor
                   card.text
                 )
               ) : (
-                <span className="text-2xl opacity-80" aria-hidden>
-                  ✦
-                </span>
+                puzzle.backUrl ? (
+                  <img src={puzzle.backUrl} alt="" loading="lazy" draggable={false} className="absolute inset-0 h-full w-full object-cover" />
+                ) : (
+                  <span className="text-2xl opacity-80" aria-hidden>
+                    ✦
+                  </span>
+                )
               )}
             </button>
           );

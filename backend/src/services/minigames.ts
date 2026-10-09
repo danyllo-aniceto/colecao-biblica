@@ -29,6 +29,7 @@ export async function getMiniGames(db: Db, userId: number) {
       ready: game.ready,
       coverUrl: designs.get(game.id)?.coverUrl ?? null,
       backgroundUrl: designs.get(game.id)?.backgroundUrl ?? null,
+      backUrl: designs.get(game.id)?.backUrl ?? null,
       unlocked: preview || miniGameUnlocked(game, claimedSlots),
     })),
     rankingUnlocked: preview || breastplate.finalClaimed,
@@ -85,9 +86,9 @@ export async function peitoralGallery(db: Db, userId: number, skip: number, take
 }
 
 /** Capa do cartão e fundo da tela de um mini game (painel). Campo ausente não altera; vazio limpa. */
-export async function saveMiniGameDesign(db: Db, gameId: string, input: { coverUrl?: string | null; backgroundUrl?: string | null }) {
+export async function saveMiniGameDesign(db: Db, gameId: string, input: { coverUrl?: string | null; backgroundUrl?: string | null; backUrl?: string | null }) {
   if (!MINI_GAMES.some((game) => game.id === gameId)) throw notFound("Mini game não encontrado");
-  const data = { ...(input.coverUrl !== undefined ? { coverUrl: input.coverUrl } : {}), ...(input.backgroundUrl !== undefined ? { backgroundUrl: input.backgroundUrl } : {}) };
-  const saved = await db.miniGameDesign.upsert({ where: { gameId }, create: { gameId, ...data }, update: data, select: { gameId: true, coverUrl: true, backgroundUrl: true } });
+  const data = { ...(input.coverUrl !== undefined ? { coverUrl: input.coverUrl } : {}), ...(input.backgroundUrl !== undefined ? { backgroundUrl: input.backgroundUrl } : {}), ...(input.backUrl !== undefined ? { backUrl: input.backUrl } : {}) };
+  const saved = await db.miniGameDesign.upsert({ where: { gameId }, create: { gameId, ...data }, update: data, select: { gameId: true, coverUrl: true, backgroundUrl: true, backUrl: true } });
   return saved;
 }

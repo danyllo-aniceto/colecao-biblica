@@ -37,6 +37,8 @@ export type Memory = {
   timeLimit: number | null;
   par: number;
   maxScore: number;
+  /** Imagem do verso das cartas (enviada no painel); null usa o desenho padrão. */
+  backUrl?: string | null;
 };
 
 const columnsFor = (cards: number) => (cards <= 12 ? 3 : cards <= 24 ? 4 : 6);

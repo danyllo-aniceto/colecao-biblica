@@ -1062,6 +1062,8 @@ model MiniGameDesign {
   gameId        String   @unique @map("game_id")
   coverUrl      String?  @map("cover_url")
   backgroundUrl String?  @map("background_url")
+  /// Só da Memória: o verso das cartas.
+  backUrl       String?  @map("back_url")
   updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("mini_game_designs")

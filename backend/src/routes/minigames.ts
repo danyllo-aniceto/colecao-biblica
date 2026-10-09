@@ -62,7 +62,7 @@ miniGamesRouter.put(
   "/admin/:game/design",
   requireAdmin,
   asyncHandler(async (req, res) => {
-    const input = z.object({ coverUrl: imageRef(), backgroundUrl: imageRef() }).parse(req.body);
+    const input = z.object({ coverUrl: imageRef(), backgroundUrl: imageRef(), backUrl: imageRef() }).parse(req.body);
     res.json(await saveMiniGameDesign(prisma, String(req.params.game), input));
   }),
 );

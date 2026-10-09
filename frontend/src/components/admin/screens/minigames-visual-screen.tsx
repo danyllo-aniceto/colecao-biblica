@@ -9,7 +9,7 @@ import { getMiniGames, saveMiniGameDesign, type MiniGameInfo } from '@/lib/minig
 import { AdminPanel } from '../admin-ui';
 import { ImageUploadField } from '../image-upload-field';
 
-type Draft = { coverUrl: string; backgroundUrl: string };
+type Draft = { coverUrl: string; backgroundUrl: string; backUrl: string };
 
 /** Capa do cartão e fundo da tela de cada mini game. Sem imagem, o cartão fica só com o ícone e a tela usa a cor do tema. */
 export function MiniGamesVisualScreen() {
@@ -24,7 +24,7 @@ export function MiniGamesVisualScreen() {
     getMiniGames()
       .then((overview) => {
         setGames(overview.games);
-        setDrafts(Object.fromEntries(overview.games.map((game) => [game.id, { coverUrl: game.coverUrl ?? '', backgroundUrl: game.backgroundUrl ?? '' }])));
+        setDrafts(Object.fromEntries(overview.games.map((game) => [game.id, { coverUrl: game.coverUrl ?? '', backgroundUrl: game.backgroundUrl ?? '', backUrl: game.backUrl ?? '' }])));
       })
       .catch((reason: unknown) => setError(errorMessage(reason)));
   }, []);
@@ -33,8 +33,8 @@ export function MiniGamesVisualScreen() {
     const draft = drafts[game.id];
     setSaving(game.id);
     try {
-      const saved = await saveMiniGameDesign(game.id, { coverUrl: draft.coverUrl.trim() || null, backgroundUrl: draft.backgroundUrl.trim() || null });
-      setGames((current) => (current ?? []).map((item) => (item.id === game.id ? { ...item, coverUrl: saved.coverUrl, backgroundUrl: saved.backgroundUrl } : item)));
+      const saved = await saveMiniGameDesign(game.id, { coverUrl: draft.coverUrl.trim() || null, backgroundUrl: draft.backgroundUrl.trim() || null, ...(game.id === 'memoria' ? { backUrl: draft.backUrl.trim() || null } : {}) });
+      setGames((current) => (current ?? []).map((item) => (item.id === game.id ? { ...item, coverUrl: saved.coverUrl, backgroundUrl: saved.backgroundUrl, backUrl: saved.backUrl } : item)));
       toast.success('Imagens do jogo salvas.');
     } catch (reason) {
       toast.error(errorMessage(reason));
@@ -57,8 +57,8 @@ export function MiniGamesVisualScreen() {
       ) : (
         <div className="space-y-4">
           {list.pageItems.map((game) => {
-            const draft = drafts[game.id] ?? { coverUrl: '', backgroundUrl: '' };
-            const changed = draft.coverUrl !== (game.coverUrl ?? '') || draft.backgroundUrl !== (game.backgroundUrl ?? '');
+            const draft = drafts[game.id] ?? { coverUrl: '', backgroundUrl: '', backUrl: '' };
+            const changed = draft.coverUrl !== (game.coverUrl ?? '') || draft.backgroundUrl !== (game.backgroundUrl ?? '') || draft.backUrl !== (game.backUrl ?? '');
             const update = (patch: Partial<Draft>) => setDrafts((current) => ({ ...current, [game.id]: { ...draft, ...patch } }));
             return (
               <article key={game.id} className="space-y-4 rounded-3xl border-2 border-edge bg-surface p-4">
@@ -87,6 +87,14 @@ export function MiniGamesVisualScreen() {
                     </div>
                   </Field>
                 </div>
+                {game.id === 'memoria' ? (
+                  <Field label="Verso das cartas" hint="Vertical 3:4 · 768 × 1024 px · aparece em todas as cartas viradas para baixo; deixe o enfeite no centro e sem texto">
+                    <div className="space-y-2">
+                      <div className="relative mx-auto aspect-[3/4] w-24 overflow-hidden rounded-xl bg-gradient-to-br from-primary to-accent">{draft.backUrl ? <img src={draft.backUrl} alt="" className="absolute inset-0 h-full w-full object-cover" /> : <span className="absolute inset-0 flex items-center justify-center text-2xl text-on-primary opacity-80">✦</span>}</div>
+                      <ImageUploadField value={draft.backUrl} onChange={(url) => update({ backUrl: url })} wide />
+                    </div>
+                  </Field>
+                ) : null}
                 <Button size="sm" onClick={() => void save(game)} loading={saving === game.id} disabled={!changed}>
                   Salvar imagens
                 </Button>

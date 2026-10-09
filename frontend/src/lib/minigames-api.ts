@@ -16,6 +16,8 @@ export type MiniGameInfo = {
   /** Capa do cartão (16:9) e fundo da tela de jogo (vertical), enviados pelo painel. */
   coverUrl: string | null;
   backgroundUrl: string | null;
+  /** Só da Memória: o verso das cartas. */
+  backUrl: string | null;
 };
 
 export type MiniGamesOverview = { games: MiniGameInfo[]; rankingUnlocked: boolean; adminPreview: boolean; weekKey: string; coins: { perWin: number; limit: number; winsToday: number } };
@@ -129,6 +131,8 @@ export type MemoryPuzzle = {
   timeLimit: number | null;
   par: number;
   maxScore: number;
+  /** Imagem do verso das cartas (painel); null usa o desenho padrão. */
+  backUrl?: string | null;
 };
 export type VersePuzzle = { round: number; rounds: number; reference: string; chips: string[]; length: number; hintsLeft: number; timePerRound: number | null; level: TurnLevel; maxScore: number };
 export type VerseEnd = { right: boolean; timedOut: boolean; reference: string; text: string; title: string; imageUrl: string | null; errors: number; points: number };
@@ -209,8 +213,8 @@ export type CrosswordEvent = { kind: 'verify'; wrong: Array<[number, number]>; l
 /** Depois do fim: os nomes das respostas (e a foto, quando houver). */
 export type CrosswordReveal = Array<{ number: number; across: boolean; label: string; imageUrl: string | null }>;
 
-export type MiniGameDesign = { gameId: string; coverUrl: string | null; backgroundUrl: string | null };
+export type MiniGameDesign = { gameId: string; coverUrl: string | null; backgroundUrl: string | null; backUrl: string | null };
 
 /** Painel: salva a capa do cartão e o fundo da tela de um mini game (vazio limpa). */
-export const saveMiniGameDesign = (gameId: string, input: { coverUrl?: string | null; backgroundUrl?: string | null }) =>
+export const saveMiniGameDesign = (gameId: string, input: { coverUrl?: string | null; backgroundUrl?: string | null; backUrl?: string | null }) =>
   apiRequest<MiniGameDesign>(`/minigames/admin/${gameId}/design`, { method: 'PUT', body: JSON.stringify(input) }, 'Não foi possível salvar as imagens do jogo.');
