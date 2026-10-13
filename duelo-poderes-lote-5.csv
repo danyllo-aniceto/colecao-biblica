@@ -1,0 +1,11 @@
+﻿Personagem;Raridade;Papel na história;Período;Testamento;Palavras-chave;Resumo curto;Vigor;Influência;Etiquetas;Gatilho;Efeitos;Texto do Dom;Disponível
+André;;;;;;;2;3;Apóstolo, Discípulo;revelar;custo-menos valor=1;;Sim
+Calebe;;;;;;;3;6;Guerreiro, Líder;continuo;blindar;;Sim
+Esaú;;;;;;;3;3;Caçador;revelar;sacrificar ganho=5;;Sim
+Isabel;;;;;;;2;3;Mulher;revelar;purificar | poder valor=+1 alvo=aliados-aqui;;Sim
+Jeremias;;;;;;;4;7;Profeta;revelar;mover-inimigos;;Sim
+Lucas;;;;;;;4;6;Discípulo, Escritor;revelar;ressuscitar qtd=1;;Sim
+Mordecai;;;;;;;3;4;Líder;continuo;proteger;;Sim
+Natã;;;;;;;3;4;Profeta;revelar;devolver alvo=inimigo-mais-forte se=inimigo-etiqueta:Rei;;Sim
+Pôncio Pilatos;;;;;;;4;5;Adversário, Governador;revelar;calar;;Sim
+Raquel;;;;;;;2;4;Mulher;destruida;comprar qtd=1;;Sim
