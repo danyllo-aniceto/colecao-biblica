@@ -10,6 +10,10 @@ import BadgeRoundedIcon from '@mui/icons-material/BadgeRounded';
 import HistoryEduRoundedIcon from '@mui/icons-material/HistoryEduRounded';
 import AccountTreeRoundedIcon from '@mui/icons-material/AccountTreeRounded';
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
+import SportsKabaddiRoundedIcon from '@mui/icons-material/SportsKabaddiRounded';
+import { describeDom } from '@duel/cards';
+import type { CardDef } from '@duel/types';
+import { getDuelCards } from '@/lib/duel-api';
 import { RequireAuth } from '@/components/auth/require-auth';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Badge } from '@/components/ui/badge';
@@ -37,7 +41,7 @@ import {
 import { markStickerReturn } from '@/lib/sticker-return';
 import { getRarityLabel } from '@/lib/rarity-theme';
 
-type Tab = 'identidade' | 'historia' | 'biblia' | 'diagramas' | 'estudo';
+type Tab = 'identidade' | 'historia' | 'biblia' | 'diagramas' | 'duelo' | 'estudo';
 
 function formatDate(value?: string | null) {
   if (!value) {
@@ -74,6 +78,7 @@ export function StickerPage() {
   const [study, setStudy] = useState<StudyStatus | null>(null);
   const [stickerLevel, setStickerLevel] = useState(1);
   const [duplicates, setDuplicates] = useState(0);
+  const [duelCard, setDuelCard] = useState<CardDef | null>(null);
   const [tab, setTab] = useState<Tab>('identidade');
   const [locked, setLocked] = useState(false);
   const [comments, setComments] = useState<CommentEntry[]>([]);
@@ -132,6 +137,13 @@ export function StickerPage() {
             return new Date(right.updatedAt ?? right.createdAt).getTime() - new Date(left.updatedAt ?? left.createdAt).getTime();
           });
 
+        // A figurinha do Duelo é um extra: se falhar, a ficha abre sem ela.
+        const duelCards = await getDuelCards().catch(() => null);
+        if (ignore) {
+          return;
+        }
+
+        setDuelCard(duelCards?.cards.find((card) => card.id === String(parsedCharacterId)) ?? null);
         setCharacter(selectedCharacter);
         setIsOwned(owned);
         setComments(characterComments);
@@ -163,6 +175,7 @@ export function StickerPage() {
     { value: 'historia', label: 'História', icon: <HistoryEduRoundedIcon fontSize="small" /> },
     ...(hasBible ? [{ value: 'biblia' as const, label: 'Bíblia', icon: <AutoStoriesRoundedIcon fontSize="small" /> }] : []),
     ...(hasDiagrams ? [{ value: 'diagramas' as const, label: 'Diagramas', icon: <AccountTreeRoundedIcon fontSize="small" /> }] : []),
+    ...(duelCard ? [{ value: 'duelo' as const, label: 'Duelo', icon: <SportsKabaddiRoundedIcon fontSize="small" /> }] : []),
     { value: 'estudo', label: 'Meu estudo', icon: <SchoolRoundedIcon fontSize="small" /> },
   ];
 
@@ -397,6 +410,34 @@ export function StickerPage() {
                         </InfoPanel>
                       ) : null}
                     </>
+                  ) : null}
+
+                  {tab === 'duelo' && duelCard ? (
+                    <InfoPanel title="No Duelo">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="rounded-2xl bg-surface-2 p-4 text-center">
+                          <p className="text-xs font-bold uppercase tracking-wider text-muted">Vigor</p>
+                          <p className="font-display text-4xl font-bold text-info">{duelCard.cost}</p>
+                        </div>
+                        <div className="rounded-2xl bg-surface-2 p-4 text-center">
+                          <p className="text-xs font-bold uppercase tracking-wider text-muted">Influência</p>
+                          <p className="font-display text-4xl font-bold text-primary">{duelCard.power}</p>
+                        </div>
+                      </div>
+                      {duelCard.tags.length > 0 ? (
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {duelCard.tags.map((tag) => (
+                            <Badge key={tag} tone="neutral">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : null}
+                      <div className="mt-4 border-t border-edge pt-4">
+                        <p className="mb-1 text-xs font-bold uppercase tracking-wider text-muted">Dom</p>
+                        <p className="font-semibold text-ink">{describeDom(duelCard.dom)}</p>
+                      </div>
+                    </InfoPanel>
                   ) : null}
 
                   {tab === 'estudo' ? (
