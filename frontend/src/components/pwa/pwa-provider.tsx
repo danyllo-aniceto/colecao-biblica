@@ -182,7 +182,7 @@ function OfflineBanner() {
       className="sticky top-0 z-[60] flex items-center justify-center gap-2 border-b border-edge bg-surface px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] text-center text-xs font-semibold text-ink sm:text-sm"
     >
       <CloudOffRoundedIcon fontSize="small" className="text-accent" />
-      <span>Você está offline. Mostrando os dados salvos; quiz e compras voltam quando a conexão retornar.</span>
+      <span>Você está offline. Álbum, figurinhas, Tabuleiro no mesmo aparelho e Duelo contra o computador seguem funcionando; quiz, compras e salas online voltam com a conexão.</span>
     </div>
   );
 }

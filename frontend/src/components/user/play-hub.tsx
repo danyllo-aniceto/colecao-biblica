@@ -5,10 +5,14 @@ import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
 import StyleRoundedIcon from '@mui/icons-material/StyleRounded';
 import { SectionHeading } from '@/components/game/game-ui';
+import { usePwa } from '@/components/pwa/pwa-provider';
 import { cn } from '@/lib/cn';
 import { useGameModeImages, type GameMode } from '@/lib/game-modes';
 
 export type PlayMode = 'quiz' | 'board' | 'duel' | 'minigames';
+
+/** Modos que rodam no aparelho (partida local do Tabuleiro e treino do Duelo); os outros dependem do servidor. */
+const WORKS_OFFLINE: PlayMode[] = ['board', 'duel'];
 
 export const PLAY_MODES: Array<{ id: PlayMode; design: GameMode; title: string; text: string; tags: string[]; icon: ReactNode; fallback: string; /** Aviso de como liberar o modo (aparece no cartão). */ unlock?: string }> = [
   {
@@ -53,18 +57,21 @@ export const PLAY_MODES: Array<{ id: PlayMode; design: GameMode; title: string; 
 /** Aba Jogar: um cartão explicativo para cada jogo. A capa de cada um é enviada pelo painel. */
 export function PlayHub({ onOpen, quizRunning }: { onOpen: (mode: PlayMode) => void; quizRunning: boolean }) {
   const images = useGameModeImages();
+  const { isOnline } = usePwa();
   return (
     <section className="space-y-4" aria-label="Jogos">
       <SectionHeading title="Jogar" subtitle="Escolha um jogo. Cada um tem a sua tela." />
       <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {PLAY_MODES.map((mode) => {
           const image = images[mode.design];
+          const blocked = !isOnline && !WORKS_OFFLINE.includes(mode.id);
           return (
             <li key={mode.id}>
               <button
                 type="button"
                 onClick={() => onOpen(mode.id)}
-                className="group flex h-full w-full flex-col overflow-hidden rounded-3xl border-2 border-edge bg-surface text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/40"
+                disabled={blocked}
+                className="group disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:border-edge disabled:hover:shadow-sm flex h-full w-full flex-col overflow-hidden rounded-3xl border-2 border-edge bg-surface text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/40"
               >
                 <span className={cn('relative block aspect-[16/10] w-full overflow-hidden bg-gradient-to-br text-white', mode.fallback)}>
                   {image ? <img decoding="async" loading="lazy" src={image} alt="" draggable={false} className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : <span className="absolute inset-0 flex items-center justify-center opacity-90">{mode.icon}</span>}
@@ -78,6 +85,8 @@ export function PlayHub({ onOpen, quizRunning }: { onOpen: (mode: PlayMode) => v
                   <span className="text-sm font-semibold leading-6 text-muted">{mode.text}</span>
                   {mode.unlock ? <span className="rounded-xl bg-primary/10 p-2.5 text-xs font-bold leading-5 text-ink">🔓 {mode.unlock}</span> : null}
                   <span className="flex flex-wrap gap-1.5">
+                    {blocked ? <span className="rounded-full bg-danger/15 px-2.5 py-1 text-xs font-bold text-danger-strong dark:text-danger">Precisa de internet</span> : null}
+                    {!blocked && !isOnline ? <span className="rounded-full bg-success/15 px-2.5 py-1 text-xs font-bold text-success-strong dark:text-success">Funciona offline</span> : null}
                     {mode.tags.map((tag) => (
                       <span key={tag} className="rounded-full bg-surface-3 px-2.5 py-1 text-xs font-bold text-ink">
                         {tag}

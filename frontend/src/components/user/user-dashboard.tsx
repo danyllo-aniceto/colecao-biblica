@@ -11,6 +11,7 @@ import { Alert, CoinIcon } from '@/components/game/game-ui';
 import { StickerCard } from '@/components/game/sticker-card';
 import { BottomNav, PlayerHud, type SectionId } from '@/components/user/game-shell';
 import { MusicController } from '@/components/sound/music-controller';
+import { warmImages } from '@/lib/image-warmup';
 import { playSfx } from '@/lib/sound/sfx';
 import { clearStickerReturn, saveStickerReturn, takeReturnSection } from '@/lib/sticker-return';
 import { MatchResult, type MatchSummary } from '@/components/user/match-result';
@@ -228,6 +229,12 @@ export function UserDashboard() {
   }
 
   const ownedIds = useMemo(() => new Set(collection.map((item) => item.characterId)), [collection]);
+
+  // Guarda no aparelho as imagens das figurinhas conquistadas, para o álbum abrir inteiro offline.
+  useEffect(() => {
+    if (loading) return;
+    warmImages(characters.filter((character) => ownedIds.has(character.id)).map((character) => character.imageUrl));
+  }, [loading, characters, ownedIds]);
 
   function celebrate(achievements?: UnlockedAchievement[]) {
     achievements?.forEach((achievement) =>

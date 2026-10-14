@@ -26,6 +26,10 @@ código em **português do Brasil**.
 5. Formulários: `Field` (`ui/field.tsx`) para rótulo, dica e erro; validar antes de enviar e mostrar o erro
    no campo; sucesso e falha de ações em toast.
 
+## Offline (PWA)
+
+- Plano e limites em `docs/offline.md`. Leituras da API que abrem offline ficam em `CACHEABLE_API_PATHS` (`frontend/src/sw.ts`); modo que roda no aparelho entra em `WORKS_OFFLINE` (`play-hub.tsx`). O pré-cache leva todo o JS do jogador (só admin e diagramas ficam de fora): **tela nova lazy do jogador entra sozinha; não ignore arquivos dela em `globIgnores`**.
+
 ## Regras de backend
 
 - Validação com zod (`lib/validation.ts`); em atualizações, campo ausente não altera e `null`/vazio limpa

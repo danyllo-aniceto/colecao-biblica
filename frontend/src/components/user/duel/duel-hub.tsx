@@ -11,6 +11,7 @@ import { botTeam } from '@duel/bot-team';
 import { SERIES_FORMATS, type SeriesFormat } from '@duel/series';
 import type { CardDef, TeamCard } from '@duel/types';
 import { TEAM_SIZE } from '@duel/types';
+import { usePwa } from '@/components/pwa/pwa-provider';
 import { Alert } from '@/components/game/game-ui';
 import { Button } from '@/components/ui/button';
 import { useDialogs } from '@/components/ui/dialogs';
@@ -46,6 +47,7 @@ type Props = {
 /** Cartão "Duelo de Figurinhas" da aba Jogar: monte seu Time com as figurinhas que você tem e treine contra um bot. Sem XP nem moedas. */
 export function DuelHub({ characters, collection }: Props) {
   const toast = useToast();
+  const { isOnline } = usePwa();
   const { confirm } = useDialogs();
   const art = useMemo(() => buildCardArt(characters), [characters]);
   const [cards, setCards] = useState<CardDef[] | null>(null);
@@ -97,6 +99,10 @@ export function DuelHub({ characters, collection }: Props) {
 
   // Sala em que a pessoa já está (para voltar a ela) e salas pedidas por link ou convite de amigo.
   const refreshCurrent = useCallback(() => {
+    if (!navigator.onLine) {
+      setCurrent(null);
+      return;
+    }
     myDuelRoom()
       .then((found) => setCurrent(found ? { code: found.code } : null))
       .catch(() => setCurrent(null));
@@ -310,16 +316,17 @@ export function DuelHub({ characters, collection }: Props) {
               <Button size="lg" disabled={!selectedOk} onClick={start}>
                 <StyleRoundedIcon /> Jogar contra o bot
               </Button>
-              <Button size="lg" variant="accent" disabled={!selectedOk} loading={creating} onClick={() => void createOnline()}>
+              <Button size="lg" variant="accent" disabled={!selectedOk || !isOnline} loading={creating} onClick={() => void createOnline()}>
                 <GroupsRoundedIcon /> Criar sala online
               </Button>
-              <Button size="lg" variant="secondary" onClick={() => setJoinOpen(true)}>
+              <Button size="lg" variant="secondary" disabled={!isOnline} onClick={() => setJoinOpen(true)}>
                 <MeetingRoomRoundedIcon /> Entrar com código
               </Button>
               <Button size="lg" variant="ghost" onClick={() => setHelpOpen(true)}>
                 <HelpOutlineRoundedIcon /> Como jogar
               </Button>
             </div>
+            {!isOnline ? <Alert tone="info">Sem internet: o treino contra o computador funciona normalmente. Salas online e a gravação de Times voltam com a conexão.</Alert> : null}
             {!selectedOk && decks.length > 0 ? <p className="text-xs font-semibold text-muted">Escolha um Time completo para jogar.</p> : null}
           </>
         ) : null}

@@ -51,16 +51,18 @@ export default defineConfig({
       // Manifest e ícones do manifest entram no pré-cache automaticamente; estes são os demais.
       includeAssets: ["icons/apple-touch-icon.png", "icons/favicon-32.png"],
       injectManifest: {
-        // Na instalação, só o essencial para abrir o app offline. Os demais pedaços
-        // (painel do admin, diagramas, outros alfabetos das fontes) entram no
-        // cache na primeira vez em que são usados (rota /assets/ em src/sw.ts).
-        globPatterns: [
-          "index.html",
-          "assets/index-*.{js,css}",
-          "assets/sticker-page-*.js",
-          "assets/logo-completa-*.webp",
-          "assets/*-latin-[0-9]*-normal-*.woff2",
+        // Na instalação vai tudo que o jogador usa (abas, Tabuleiro, Duelo, Mini games, campanha) para o app
+        // funcionar offline; ficam de fora só o painel do admin e os diagramas (Mermaid, KaTeX...), que entram no
+        // cache na primeira vez em que são abertos (rota /assets/ em src/sw.ts).
+        globPatterns: ["index.html", "assets/*.{js,css}", "assets/logo-completa-*.webp", "assets/*-latin-[0-9]*-normal-*.woff2"],
+        globIgnores: [
+          "assets/admin-*.js",
+          "assets/mermaid*.js",
+          "assets/*[dD]iagram*.js",
+          "assets/*-definition-*.js",
+          "assets/{wardley,cytoscape,katex,cose-bilkent,dagre,graph,layout,client,_baseUniq,chunk}-*.js",
         ],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
       },
       manifest: {
         id: "/",

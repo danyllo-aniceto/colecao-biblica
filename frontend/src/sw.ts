@@ -11,7 +11,7 @@ import { ExpirationPlugin } from 'workbox-expiration';
  * - Navegação: qualquer rota do app devolve o index.html do cache (é uma SPA).
  * - Imagens (inclusive as do Vercel Blob): cache com revalidação em segundo plano.
  * - API: só as leituras listadas abaixo, rede primeiro com cópia para uso offline.
- *   Quiz, compras e login nunca passam pelo cache.
+ *   Quiz, compras e login nunca passam pelo cache. Tabuleiro local e Duelo contra o computador rodam no aparelho.
  */
 
 declare const self: ServiceWorkerGlobalScope & { __WB_MANIFEST: Array<{ url: string; revision: string | null }> };
@@ -34,20 +34,36 @@ registerRoute(
   }),
 );
 
-/** Leituras da API que podem ser exibidas offline. */
+/**
+ * Leituras da API que podem ser exibidas offline (rede primeiro, cópia no aparelho como reserva).
+ * Ficam de fora tudo que muda a cada instante ou vale só online: quiz em andamento, salas (Tabuleiro e Duelo),
+ * partidas dos mini games, painel do admin. As cópias são apagadas no login e no logout (CLEAR_USER_DATA).
+ */
 const CACHEABLE_API_PATHS = [
-  /^\/api\/characters(\/\d+)?$/,
+  /^\/api\/characters(\/\d+|\/upcoming)?$/,
   /^\/api\/collection\/my(\/progress)?$/,
+  /^\/api\/collections$/,
   /^\/api\/comments\/my$/,
   /^\/api\/ranking$/,
+  /^\/api\/league$/,
   /^\/api\/settings$/,
-  /^\/api\/shop$/,
-  /^\/api\/users\/me$/,
+  /^\/api\/shop(\/limits)?$/,
+  /^\/api\/users\/(me|\d+)$/,
   /^\/api\/quiz\/history$/,
   /^\/api\/quiz\/matches$/,
+  /^\/api\/quiz\/chests-today$/,
   /^\/api\/achievements$/,
   /^\/api\/missions$/,
-  /^\/api\/characters\/upcoming$/,
+  /^\/api\/daily-reward$/,
+  /^\/api\/events\/active$/,
+  /^\/api\/pass$/,
+  /^\/api\/campaign$/,
+  /^\/api\/cosmetics(\/profile\/\d+)?$/,
+  /^\/api\/game-modes(-public)?$/,
+  /^\/api\/minigames$/,
+  /^\/api\/duel\/(cards|decks)$/,
+  /^\/api\/social\/(summary|me|friends|reactions)$/,
+  /^\/api\/social\/friends\/\d+\/album$/,
 ];
 
 registerRoute(
@@ -58,7 +74,7 @@ registerRoute(
     plugins: [
       // Nunca guarda erros (ex.: 401), apenas respostas válidas.
       { cacheWillUpdate: async ({ response }) => (response.ok ? response : null) },
-      new ExpirationPlugin({ maxEntries: 40 }),
+      new ExpirationPlugin({ maxEntries: 150 }),
     ],
   }),
 );
@@ -70,7 +86,7 @@ registerRoute(
     plugins: [
       // Imagens de outro domínio sem CORS chegam "opacas" (status 0); também servem offline.
       { cacheWillUpdate: async ({ response }) => (response.ok || response.type === 'opaque' ? response : null) },
-      new ExpirationPlugin({ maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 30, purgeOnQuotaError: true }),
+      new ExpirationPlugin({ maxEntries: 250, maxAgeSeconds: 60 * 60 * 24 * 30, purgeOnQuotaError: true }),
     ],
   }),
 );

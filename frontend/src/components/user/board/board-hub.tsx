@@ -4,16 +4,18 @@ import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import MeetingRoomRoundedIcon from '@mui/icons-material/MeetingRoomRounded';
 import { createGame } from '@board/engine';
 import { boardRulesFor } from '@board/scenarios';
+import { Alert } from '@/components/game/game-ui';
 import { Button } from '@/components/ui/button';
 import { useDialogs } from '@/components/ui/dialogs';
 import { errorMessage, useToast } from '@/components/ui/toast';
 import { JoinRoomModal } from '@/components/user/board/join-room-modal';
 import { OnlineRoom } from '@/components/user/board/online-room';
 import { PENDING_ROOM_EVENT, createRoom, joinRoom, myRoom, takePendingRoom, type RoomView } from '@/lib/board-room-api';
+import { usePwa } from '@/components/pwa/pwa-provider';
 import { useCampaign } from '@/components/user/campaign/campaign-provider';
 import { BoardGame } from '@/components/user/board/board-game';
 import { BoardSetupModal, type BoardSetup } from '@/components/user/board/board-setup';
-import { fetchBoardQuestions } from '@/lib/board-api';
+import { fetchBoardQuestions, prefetchBoardQuestionPack } from '@/lib/board-api';
 import { clearLocalBoard, loadLocalBoard, saveLocalBoard, type LocalBoardGame } from '@/lib/board-local';
 
 /** Perguntas por partida: as do tabuleiro e dos jogadores; o motor recomeça o baralho se acabar. */
@@ -23,6 +25,7 @@ const MIN_QUESTIONS = 12;
 /** Cartão "Tabuleiro" da aba Jogar: cria uma partida local (um aparelho) ou retoma a que ficou guardada. */
 export function BoardHub({ playerName }: { playerName: string }) {
   const { campaign } = useCampaign();
+  const { isOnline } = usePwa();
   const dialogs = useDialogs();
   const toast = useToast();
   const [setupOpen, setSetupOpen] = useState(false);
@@ -40,6 +43,10 @@ export function BoardHub({ playerName }: { playerName: string }) {
 
   // Sala em que a pessoa já está (para voltar a ela) e salas pedidas por link ou convite de amigo.
   const refreshCurrent = useCallback(() => {
+    if (!navigator.onLine) {
+      setCurrent(null);
+      return;
+    }
     myRoom()
       .then((found) => setCurrent(found ? { code: found.code, scenarioName: found.scenarioName } : null))
       .catch(() => setCurrent(null));
@@ -59,6 +66,8 @@ export function BoardHub({ playerName }: { playerName: string }) {
   useEffect(() => {
     refreshCurrent();
     void openPending();
+    // Com internet, guarda um pacote de perguntas para a partida no mesmo aparelho funcionar offline.
+    void prefetchBoardQuestionPack();
     const listener = () => void openPending();
     window.addEventListener(PENDING_ROOM_EVENT, listener);
     return () => window.removeEventListener(PENDING_ROOM_EVENT, listener);
@@ -197,14 +206,16 @@ export function BoardHub({ playerName }: { playerName: string }) {
           </div>
         ) : null}
 
+        {!isOnline ? <Alert tone="info">Sem internet: a partida no mesmo aparelho funciona normalmente com as perguntas guardadas. As salas online voltam quando a conexão retornar.</Alert> : null}
+
         <div className="grid gap-2 sm:grid-cols-3">
           <Button size="lg" onClick={() => setSetupOpen(true)} disabled={scenarios.length === 0}>
             <CasinoRoundedIcon /> No mesmo aparelho
           </Button>
-          <Button size="lg" variant="accent" onClick={() => setOnlineSetup(true)} disabled={scenarios.length === 0}>
+          <Button size="lg" variant="accent" onClick={() => setOnlineSetup(true)} disabled={scenarios.length === 0 || !isOnline}>
             <GroupsRoundedIcon /> Criar sala online
           </Button>
-          <Button size="lg" variant="secondary" onClick={() => setJoinOpen(true)}>
+          <Button size="lg" variant="secondary" onClick={() => setJoinOpen(true)} disabled={!isOnline}>
             <MeetingRoomRoundedIcon /> Entrar com código
           </Button>
         </div>
