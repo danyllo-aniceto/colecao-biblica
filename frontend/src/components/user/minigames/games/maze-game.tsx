@@ -292,7 +292,7 @@ export function MazeGame({ puzzle, runId, submit, finished, result }: GameProps<
         className="relative mx-auto w-full max-w-md touch-none select-none overflow-hidden rounded-xl border-2 border-edge-strong bg-surface-3"
         style={{ aspectRatio: `${width} / ${height}`, containerType: 'inline-size' }}
       >
-        {puzzle.imageUrl ? <img src={puzzle.imageUrl} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-30" /> : null}
+        {puzzle.imageUrl ? <img decoding="async" loading="lazy" src={puzzle.imageUrl} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-30" /> : null}
         <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${width}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${height}, minmax(0, 1fr))`, fontSize: `${80 / width}cqw` }}>
           {cells.map((bits, index) => {
             const hidden = fogged(index);

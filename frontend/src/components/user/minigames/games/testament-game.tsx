@@ -131,7 +131,7 @@ export function TestamentGame({ puzzle, runId, report, finished }: GameProps<Tes
         onClick={ended ? next : undefined}
         className={cn('panel flex min-h-44 w-full flex-col items-center justify-center gap-2 border-2 p-4 text-center transition', ended ? (ended.end.right ? 'border-success' : 'border-danger') : 'border-transparent')}
       >
-        {ended?.end.imageUrl ? <img src={ended.end.imageUrl} alt="" className="h-20 w-20 rounded-2xl object-cover" /> : null}
+        {ended?.end.imageUrl ? <img decoding="async" loading="lazy" src={ended.end.imageUrl} alt="" className="h-20 w-20 rounded-2xl object-cover" /> : null}
         <span className="text-xs font-bold uppercase tracking-wider text-muted">{item.kind === 'book' ? 'Livro da Bíblia' : 'Personagem'}</span>
         <span className="font-display text-3xl font-bold text-ink">{ended ? ended.end.text : item.text}</span>
         {ended ? (

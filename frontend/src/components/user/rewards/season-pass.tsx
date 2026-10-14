@@ -65,7 +65,7 @@ export function PassCardView({ pass, onOpenTrail }: { pass: SeasonPass; onOpenTr
     <section className="panel relative space-y-3 overflow-hidden p-5" style={info.color ? { borderColor: info.color } : undefined}>
       {info.imageUrl ? (
         <>
-          <img src={info.imageUrl} alt="" aria-hidden="true" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-25" />
+          <img decoding="async" loading="lazy" src={info.imageUrl} alt="" aria-hidden="true" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-25" />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-surface/90 to-surface/30" />
         </>
       ) : null}

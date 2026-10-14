@@ -258,7 +258,7 @@ export function CrosswordGame({ puzzle, runId, submit, finished, result }: GameP
           <ul className="grid grid-cols-2 gap-2">
             {reveal.map((item) => (
               <li key={`${item.number}-${item.across}`} className="flex items-center gap-2 rounded-xl bg-surface-3 p-1.5">
-                {item.imageUrl ? <img src={item.imageUrl} alt="" loading="lazy" className="h-10 w-10 shrink-0 rounded-lg object-cover" /> : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface text-lg">📍</span>}
+                {item.imageUrl ? <img decoding="async" src={item.imageUrl} alt="" loading="lazy" className="h-10 w-10 shrink-0 rounded-lg object-cover" /> : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface text-lg">📍</span>}
                 <span className="min-w-0 text-xs font-bold text-ink">
                   <span className="block text-muted">
                     {item.number} {item.across ? '→' : '↓'}

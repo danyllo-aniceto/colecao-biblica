@@ -154,7 +154,7 @@ export function RarityBadge({ rarity }: { rarity: StickerRarity }) {
 export function Thumb({ src, rarity, alt = '' }: { src?: string | null; rarity: StickerRarity; alt?: string }) {
   return (
     <span data-rarity={rarity} className="rarity rarity-bg flex h-12 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border-2 border-[var(--r)]">
-      {src ? <img src={src} alt={alt} loading="lazy" className="h-full w-full object-cover" /> : <span className="rarity-text font-display text-xs font-bold">?</span>}
+      {src ? <img decoding="async" src={src} alt={alt} loading="lazy" className="h-full w-full object-cover" /> : <span className="rarity-text font-display text-xs font-bold">?</span>}
     </span>
   );
 }

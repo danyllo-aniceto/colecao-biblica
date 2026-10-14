@@ -66,7 +66,7 @@ function LineageSetup({ onStart }: { onStart: (options: object) => void }) {
 
 function Avatar({ name, images, size = 'h-9 w-9' }: { name: string; images: Record<string, string>; size?: string }) {
   const url = images[name];
-  return url ? <img src={url} alt="" loading="lazy" draggable={false} className={cn('shrink-0 rounded-lg bg-surface-3 object-cover', size)} /> : null;
+  return url ? <img decoding="async" src={url} alt="" loading="lazy" draggable={false} className={cn('shrink-0 rounded-lg bg-surface-3 object-cover', size)} /> : null;
 }
 
 /** Árvore genealógica: preencha os antepassados, do mais antigo (em cima) até o pai, acima da pessoa da base. */

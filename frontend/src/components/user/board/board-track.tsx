@@ -13,7 +13,7 @@ export function Pawn({ emoji, active = false, fx, className }: { emoji: string; 
       aria-hidden="true"
       className={cn('inline-block leading-none drop-shadow-[0_2px_1px_rgba(0,0,0,0.45)]', fx ? `pawn-fx-${fx}` : active && 'animate-bounce motion-reduce:animate-none', className)}
     >
-      {isPawnImage(emoji) ? <img src={emoji} alt="" draggable={false} className="inline-block h-[1.15em] w-[1.15em] object-contain align-middle" /> : emoji}
+      {isPawnImage(emoji) ? <img decoding="async" src={emoji} alt="" draggable={false} className="inline-block h-[1.15em] w-[1.15em] object-contain align-middle" /> : emoji}
     </span>
   );
 }
@@ -231,7 +231,7 @@ export function BoardCanvas({ tiles, rules, size, pawns, activeId, hazard = null
               className="pointer-events-none absolute flex items-center justify-center"
               style={{ left: pct(center.x, width), top: pct(center.y, height), width: pct(landmark.size, width), aspectRatio: '1', transform: 'translate(-50%, -50%)', fontSize: `${(landmark.size * 0.85) / width * 100}cqw` }}
             >
-              {landmark.imageUrl ? <img src={landmark.imageUrl} alt="" draggable={false} className="h-full w-full object-contain drop-shadow-[0_3px_3px_rgba(0,0,0,0.25)]" /> : <span className="leading-none drop-shadow-[0_3px_3px_rgba(0,0,0,0.25)]">{landmark.emoji}</span>}
+              {landmark.imageUrl ? <img decoding="async" src={landmark.imageUrl} alt="" draggable={false} className="h-full w-full object-contain drop-shadow-[0_3px_3px_rgba(0,0,0,0.25)]" /> : <span className="leading-none drop-shadow-[0_3px_3px_rgba(0,0,0,0.25)]">{landmark.emoji}</span>}
             </div>
           );
         })}

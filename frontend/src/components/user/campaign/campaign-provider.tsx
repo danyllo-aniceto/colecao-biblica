@@ -1,10 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
-import { CampaignModal } from '@/components/user/campaign/campaign-modal';
+import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { getCampaign, type Campaign, type CampaignScenario } from '@/lib/campaign-api';
 import { DEFAULT_XP_BANDS, type XpBand } from '@/components/game/game-ui';
 import { scenarioThemeVars } from '@/lib/campaign-theme';
 import type { UnlockedAchievement } from '@/lib/user-api';
 import type { UserProfile } from '@/types/auth';
+
+// A campanha (mapa, Peitoral, galeria) só é baixada na primeira vez em que a pessoa a abre.
+const CampaignModal = lazy(() => import('@/components/user/campaign/campaign-modal').then((m) => ({ default: m.CampaignModal })));
 
 type CampaignContextValue = {
   campaign: Campaign | null;
@@ -43,6 +45,7 @@ export function CampaignProvider({
 }) {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [open, setOpen] = useState(false);
+  const [opened, setOpened] = useState(false);
 
   const load = useCallback(() => {
     getCampaign()
@@ -55,13 +58,17 @@ export function CampaignProvider({
   const value = useMemo<CampaignContextValue>(() => {
     const current = campaign?.scenarios.find((scenario) => scenario.id === campaign.currentScenarioId) ?? null;
     const claimable = campaign?.scenarios.reduce((sum, scenario) => sum + scenario.nodes.filter((node) => node.state === 'available').length, 0) ?? 0;
-    return { campaign, current, claimable, themeStyle: current ? scenarioThemeVars(current.color) : undefined, xpBands: campaign?.xpBands ?? DEFAULT_XP_BANDS, open: () => setOpen(true) };
+    return { campaign, current, claimable, themeStyle: current ? scenarioThemeVars(current.color) : undefined, xpBands: campaign?.xpBands ?? DEFAULT_XP_BANDS, open: () => { setOpened(true); setOpen(true); } };
   }, [campaign]);
 
   return (
     <CampaignContext.Provider value={value}>
       {children}
-      <CampaignModal open={open} campaign={campaign} xp={xp} playerName={playerName} onClose={() => setOpen(false)} onChanged={load} onUserUpdate={onUserUpdate} />
+      {opened ? (
+        <Suspense fallback={null}>
+          <CampaignModal open={open} campaign={campaign} xp={xp} playerName={playerName} onClose={() => setOpen(false)} onChanged={load} onUserUpdate={onUserUpdate} />
+        </Suspense>
+      ) : null}
     </CampaignContext.Provider>
   );
 }

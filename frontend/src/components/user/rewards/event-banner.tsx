@@ -29,7 +29,7 @@ export function EventBanner({ onOpenShop }: { onOpenShop: () => void }) {
     >
       {event.imageUrl ? (
         <>
-          <img src={event.imageUrl} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
+          <img decoding="async" loading="lazy" src={event.imageUrl} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
           {/* Escurece da esquerda (texto) para a direita (imagem aparece) para o texto continuar legível. */}
           <div className="pointer-events-none absolute inset-0" style={{ background: `linear-gradient(90deg, color-mix(in srgb, ${color} 85%, #000) 0%, color-mix(in srgb, ${color} 55%, transparent) 55%, transparent 100%)` }} />
         </>

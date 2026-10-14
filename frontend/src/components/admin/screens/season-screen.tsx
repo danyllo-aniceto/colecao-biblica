@@ -158,7 +158,7 @@ function PassesPanel({ passes, loading, error, onChanged }: { passes: AdminPass[
             <Cell>
               <div className="flex items-center gap-3">
                 <span className="h-9 w-9 shrink-0 overflow-hidden rounded-xl border border-edge" style={{ background: pass.color ?? 'var(--surface-3)' }}>
-                  {pass.imageUrl ? <img src={pass.imageUrl} alt="" className="h-full w-full object-cover" /> : null}
+                  {pass.imageUrl ? <img decoding="async" loading="lazy" src={pass.imageUrl} alt="" className="h-full w-full object-cover" /> : null}
                 </span>
                 <div className="min-w-0">
                   <p className="font-display font-semibold text-ink">{pass.name}</p>

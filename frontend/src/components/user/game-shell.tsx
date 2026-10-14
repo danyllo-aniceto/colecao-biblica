@@ -65,7 +65,7 @@ export function PlayerHud({
   return (
     <header className="sticky top-0 z-40 border-b border-edge bg-bg/85 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
-        <img src="/icons/icon-192.png" alt="Coleção Bíblica" width={40} height={40} className="hidden h-10 w-10 rounded-xl sm:block" />
+        <img decoding="async" src="/icons/icon-192.png" alt="Coleção Bíblica" width={40} height={40} className="hidden h-10 w-10 rounded-xl sm:block" />
 
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <Tooltip content="Abrir a campanha" side="bottom">

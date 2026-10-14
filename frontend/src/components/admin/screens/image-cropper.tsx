@@ -127,7 +127,7 @@ export function ImageCropper({ file, onCancel, onDone }: Props) {
           onWheel={(event) => changeZoom(zoom - event.deltaY * 0.0015)}
         >
           {image && url ? (
-            <img
+            <img decoding="async"
               src={url}
               alt="Imagem a recortar"
               draggable={false}

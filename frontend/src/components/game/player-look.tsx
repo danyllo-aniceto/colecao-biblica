@@ -15,7 +15,7 @@ export function initials(name?: string | null) {
 function AvatarFace({ url, name }: { url?: string | null; name?: string | null }) {
   const [failed, setFailed] = useState(false);
   return url && !failed ? (
-    <img src={url} alt="" draggable={false} className="h-full w-full rounded-full object-cover" onError={() => setFailed(true)} />
+    <img decoding="async" src={url} alt="" draggable={false} className="h-full w-full rounded-full object-cover" onError={() => setFailed(true)} />
   ) : (
     <span className="flex h-full w-full items-center justify-center rounded-full bg-accent/20 font-display font-bold text-accent-strong dark:text-accent">{initials(name)}</span>
   );
@@ -41,7 +41,7 @@ export function PlayerAvatar({
   const style = { '--frame-color': frame.color ?? undefined } as CSSProperties;
   return (
     <span className={cn('avatar-frame inline-flex shrink-0', `frame-${frame.style ?? 'solid'}`, SIZES[size], RING[size], className)} style={style}>
-      {frame.imageUrl ? <img src={frame.imageUrl} alt="" className="pointer-events-none absolute inset-0 z-10 h-full w-full" /> : null}
+      {frame.imageUrl ? <img decoding="async" src={frame.imageUrl} alt="" className="pointer-events-none absolute inset-0 z-10 h-full w-full" /> : null}
       <span className="block h-full w-full overflow-hidden rounded-full bg-surface">{face}</span>
     </span>
   );
@@ -68,7 +68,7 @@ export function BadgeMark({ badge, size = 'md', className }: { badge?: PlayerLoo
       className={cn('inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full leading-none ring-2 ring-[var(--badge-color)]', box, className)}
       style={{ '--badge-color': badge.color ?? 'var(--primary)', backgroundColor: 'color-mix(in srgb, var(--badge-color) 22%, var(--surface))' } as CSSProperties}
     >
-      {badge.imageUrl ? <img src={badge.imageUrl} alt="" className="h-full w-full object-contain" /> : badge.style}
+      {badge.imageUrl ? <img decoding="async" src={badge.imageUrl} alt="" className="h-full w-full object-contain" /> : badge.style}
     </span>
   );
 }
@@ -93,7 +93,7 @@ export function ReactionGlyph({ reaction, size = 'md', animate = false }: { reac
   const box = size === 'lg' ? 'h-24 w-24 text-7xl' : size === 'md' ? 'h-12 w-12 text-4xl' : 'h-8 w-8 text-2xl';
   return (
     <span className={cn('inline-flex items-center justify-center leading-none', box, animate && `reaction-${reaction.animation && /^[a-z]+$/.test(reaction.animation) ? reaction.animation : 'pop'}`)} role="img" aria-label={reaction.name}>
-      {reaction.imageUrl ? <img src={reaction.imageUrl} alt="" className="h-full w-full object-contain" /> : reaction.style}
+      {reaction.imageUrl ? <img decoding="async" src={reaction.imageUrl} alt="" className="h-full w-full object-contain" /> : reaction.style}
     </span>
   );
 }

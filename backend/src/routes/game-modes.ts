@@ -18,7 +18,11 @@ const list = asyncHandler(async (_req, res) => {
   res.json(await prisma.gameModeDesign.findMany({ select }));
 });
 gameModesRouter.get("/", list);
-gameModesPublicRouter.get("/", list);
+// Capas da página inicial: iguais para todos, então a CDN e o navegador podem guardar por um minuto.
+gameModesPublicRouter.get("/", (_req, res, next) => {
+  res.setHeader("Cache-Control", "public, max-age=60, s-maxage=60, stale-while-revalidate=300");
+  next();
+}, list);
 
 gameModesRouter.put(
   "/admin/:mode",

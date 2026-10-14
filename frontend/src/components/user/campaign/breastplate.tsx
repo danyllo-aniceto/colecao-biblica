@@ -21,7 +21,7 @@ export function StoneGem({ stone, size = 96, className }: { stone: Pick<Stone, '
       style={{ width: size, height: size, filter: stone.state === 'claimed' ? `drop-shadow(0 0 ${Math.round(size / 8)}px ${stone.color})` : undefined }}
     >
       {stone.imageUrl ? (
-        <img src={stone.imageUrl} alt="" draggable={false} className="h-full w-full object-contain" />
+        <img decoding="async" loading="lazy" src={stone.imageUrl} alt="" draggable={false} className="h-full w-full object-contain" />
       ) : (
         <svg viewBox="0 0 100 100" className="h-full w-full" aria-hidden="true">
           <defs>

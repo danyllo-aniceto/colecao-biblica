@@ -7,6 +7,17 @@ type RichContentProps = {
   className?: string;
 };
 
+// Imagens do texto carregam só ao chegar perto da tela; links que abrem em outra aba não dão acesso à janela de origem.
+DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+  if (node.tagName === 'IMG') {
+    node.setAttribute('loading', 'lazy');
+    node.setAttribute('decoding', 'async');
+  }
+  if (node.tagName === 'A' && node.getAttribute('target') === '_blank') {
+    node.setAttribute('rel', 'noopener noreferrer');
+  }
+});
+
 function looksLikeHtml(value: string) {
   return /<\/?[a-z][\s\S]*>/i.test(value);
 }
@@ -21,7 +32,7 @@ export function RichContent({ value, className }: RichContentProps) {
     const sanitized = DOMPurify.sanitize(content, {
       USE_PROFILES: { html: true },
       ADD_ATTR: ['target'],
-      ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|data):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i,
+      ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i,
     });
 
     return <div className={`rich-content ${className ?? ''}`} dangerouslySetInnerHTML={{ __html: sanitized }} />;

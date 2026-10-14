@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -16,20 +16,12 @@ import { clearStickerReturn, saveStickerReturn, takeReturnSection } from '@/lib/
 import { MatchResult, type MatchSummary } from '@/components/user/match-result';
 import { ChestOpening } from '@/components/user/chest-opening';
 import { QuizAnswerScreen, type AnswerReveal, type QuizAnswerPayload } from '@/components/user/quiz-answer-screen';
-import { AlbumSection } from '@/components/user/sections/album-section';
 import { HomeSection } from '@/components/user/sections/home-section';
 import { PlaySection, type QuizFormState } from '@/components/user/sections/play-section';
-import { BoardHub } from '@/components/user/board/board-hub';
 import { PlayHub, PlayModeFrame, type PlayMode } from '@/components/user/play-hub';
-import { MiniGamesHub } from '@/components/user/minigames/minigames-hub';
-import { DuelHub } from '@/components/user/duel/duel-hub';
 import { BoardInviteWatcher, RoomInviteWatcher } from '@/components/user/board/board-invite-watcher';
 import { peekPendingRoom, setPendingRoom } from '@/lib/board-room-api';
 import { dismissDuelRoomInvite, listDuelRoomInvites, peekPendingDuelRoom, setPendingDuelRoom } from '@/lib/duel-room-api';
-import { ProfileSection } from '@/components/user/sections/profile-section';
-import { FriendsSection } from '@/components/user/sections/friends-section';
-import { RankingSection } from '@/components/user/sections/ranking-section';
-import { ShopSection } from '@/components/user/sections/shop-section';
 import { getRarityLabel } from '@/lib/rarity-theme';
 import {
   answerQuizQuestion,
@@ -73,6 +65,16 @@ import { QuizThemeFrame } from '@/components/user/campaign/quiz-theme-frame';
 import { getSocialSummary, type SocialSummary, type TradeResponse } from '@/lib/social-api';
 import type { UserProfile } from '@/types/auth';
 import { QUIZ_HELPERS, helperCounts, spentHelpers } from '@/lib/quiz-helpers';
+
+// Cada aba e cada modo de jogo vira um arquivo à parte: o app abre só com a Início e baixa o resto quando a pessoa entra nele.
+const AlbumSection = lazy(() => import('@/components/user/sections/album-section').then((m) => ({ default: m.AlbumSection })));
+const ProfileSection = lazy(() => import('@/components/user/sections/profile-section').then((m) => ({ default: m.ProfileSection })));
+const FriendsSection = lazy(() => import('@/components/user/sections/friends-section').then((m) => ({ default: m.FriendsSection })));
+const RankingSection = lazy(() => import('@/components/user/sections/ranking-section').then((m) => ({ default: m.RankingSection })));
+const ShopSection = lazy(() => import('@/components/user/sections/shop-section').then((m) => ({ default: m.ShopSection })));
+const BoardHub = lazy(() => import('@/components/user/board/board-hub').then((m) => ({ default: m.BoardHub })));
+const DuelHub = lazy(() => import('@/components/user/duel/duel-hub').then((m) => ({ default: m.DuelHub })));
+const MiniGamesHub = lazy(() => import('@/components/user/minigames/minigames-hub').then((m) => ({ default: m.MiniGamesHub })));
 
 /** Figurinha mostrada no modal depois de uma compra ou fusão. */
 type StickerReveal = Pick<ShopPurchaseResult, 'characterId' | 'characterName' | 'characterRarity' | 'characterImageUrl' | 'characterUnlocked' | 'duplicate'> & { title?: string };
@@ -601,6 +603,7 @@ export function UserDashboard() {
           <LoadingState label="Carregando sua jornada..." />
         ) : (
           <div key={section} className="animate-fade-up">
+            <Suspense fallback={<LoadingState />}>
             {section === 'home' ? (
               <HomeSection
                 profile={profile}
@@ -712,6 +715,7 @@ export function UserDashboard() {
                 onShowcaseChange={(showcase) => setProfile((current) => (current ? { ...current, showcase } : current))}
               />
             ) : null}
+            </Suspense>
           </div>
         )}
       </main>

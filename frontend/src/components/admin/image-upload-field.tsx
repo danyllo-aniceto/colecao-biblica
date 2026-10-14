@@ -30,7 +30,7 @@ export function ImageUploadField({ value, onChange, round = false, wide = false 
   return (
     <div className="flex items-center gap-3">
       <span className={`flex shrink-0 items-center justify-center overflow-hidden border-2 border-dashed border-edge bg-surface-2 ${wide ? 'h-20 w-36' : 'h-20 w-20'} ${round ? 'rounded-full' : 'rounded-2xl'}`}>
-        {value ? <img src={value} alt="" className={`h-full w-full ${wide ? 'object-cover' : 'object-contain'}`} /> : <UploadRoundedIcon className="text-muted" />}
+        {value ? <img decoding="async" loading="lazy" src={value} alt="" className={`h-full w-full ${wide ? 'object-cover' : 'object-contain'}`} /> : <UploadRoundedIcon className="text-muted" />}
       </span>
       <div className="min-w-0 flex-1 space-y-2">
         <div className="flex flex-wrap gap-2">

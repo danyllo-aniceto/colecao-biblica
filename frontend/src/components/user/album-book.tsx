@@ -300,7 +300,7 @@ export function AlbumIntro({ items, ownedCount, totalCharacters, coverImage }: {
   }
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-      <img src="/icons/icon-192.png" alt="" width={72} height={72} className="h-18 w-18 drop-shadow-md" />
+      <img decoding="async" src="/icons/icon-192.png" alt="" width={72} height={72} className="h-18 w-18 drop-shadow-md" />
       <div>
         <p className="text-xs font-bold uppercase tracking-[0.3em] text-muted">Coleção Bíblica</p>
         <h3 className="font-display text-3xl font-bold text-ink">Meu álbum</h3>

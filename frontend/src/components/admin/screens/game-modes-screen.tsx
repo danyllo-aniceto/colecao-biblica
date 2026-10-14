@@ -49,7 +49,7 @@ export function GameModesScreen() {
           return (
             <article key={mode.id} className="gap-4 space-y-3 rounded-3xl border-2 border-edge bg-surface p-4 md:flex md:space-y-0">
               <div className="relative aspect-[16/10] w-full shrink-0 self-start overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-accent md:w-72">
-                {value ? <img src={value} alt="" className="absolute inset-0 h-full w-full object-cover" /> : null}
+                {value ? <img decoding="async" loading="lazy" src={value} alt="" className="absolute inset-0 h-full w-full object-cover" /> : null}
                 <span className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/70 to-transparent" />
                 <span className="absolute bottom-3 left-3 font-display text-xl font-bold text-white drop-shadow">{mode.title}</span>
               </div>

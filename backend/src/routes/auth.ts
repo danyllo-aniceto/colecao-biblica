@@ -5,7 +5,7 @@ import { unauthorized } from "../lib/errors";
 import { issueTokens, verifyToken } from "../lib/jwt";
 import { z } from "../lib/validation";
 import { asyncHandler } from "../middleware/errorHandler";
-import { loginLimiter } from "../middleware/rateLimit";
+import { loginLimiter, refreshLimiter } from "../middleware/rateLimit";
 
 export const authRouter = Router();
 
@@ -13,6 +13,9 @@ const loginSchema = z.object({
   email: z.string().trim().min(1),
   password: z.string().min(1),
 });
+
+// Comparação feita mesmo sem conta, para que o tempo da resposta não revele quais e-mails existem.
+const DUMMY_HASH = bcrypt.hashSync("senha-inexistente", 10);
 
 authRouter.post(
   "/login",
@@ -22,7 +25,8 @@ authRouter.post(
     const user = await prisma.user.findFirst({ where: { email: email.toLowerCase(), deleted: false } });
 
     // Mesma mensagem para e-mail inexistente e senha errada, para não revelar quais e-mails têm conta.
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    const passwordOk = await bcrypt.compare(password, user?.password ?? DUMMY_HASH);
+    if (!user || !passwordOk) {
       throw unauthorized("E-mail ou senha inválidos");
     }
 
@@ -34,6 +38,7 @@ const refreshSchema = z.object({ refreshToken: z.string().min(1) });
 
 authRouter.post(
   "/refresh",
+  refreshLimiter,
   asyncHandler(async (req, res) => {
     const { refreshToken } = refreshSchema.parse(req.body);
     const email = verifyToken(refreshToken, "REFRESH");

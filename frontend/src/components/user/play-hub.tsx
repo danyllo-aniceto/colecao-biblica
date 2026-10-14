@@ -67,7 +67,7 @@ export function PlayHub({ onOpen, quizRunning }: { onOpen: (mode: PlayMode) => v
                 className="group flex h-full w-full flex-col overflow-hidden rounded-3xl border-2 border-edge bg-surface text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/40"
               >
                 <span className={cn('relative block aspect-[16/10] w-full overflow-hidden bg-gradient-to-br text-white', mode.fallback)}>
-                  {image ? <img src={image} alt="" draggable={false} className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : <span className="absolute inset-0 flex items-center justify-center opacity-90">{mode.icon}</span>}
+                  {image ? <img decoding="async" loading="lazy" src={image} alt="" draggable={false} className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : <span className="absolute inset-0 flex items-center justify-center opacity-90">{mode.icon}</span>}
                   <span className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/70 to-transparent" />
                   <span className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-4">
                     <span className="font-display text-2xl font-bold leading-tight drop-shadow">{mode.title}</span>

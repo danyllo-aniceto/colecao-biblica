@@ -137,7 +137,7 @@ export function HangmanGame({ puzzle, runId, report, finished }: GameProps<Hangm
         <TurnFeedback tone={ended.end.right ? 'success' : 'danger'} title={ended.end.right ? 'Acertou!' : ended.end.timedOut ? 'O tempo acabou' : 'Não foi dessa vez'} answer={ended.end.answer} points={ended.end.points} imageUrl={ended.end.imageUrl} onNext={ended.next ? next : undefined} />
       ) : (
         <div className="panel flex items-start gap-3 p-3">
-          {round.imageUrl ? <img src={round.imageUrl} alt="" className="h-16 w-16 shrink-0 rounded-xl bg-surface-3 object-cover transition-[filter] duration-500" style={{ filter: `blur(${Math.round((1 - progress) * 14)}px) grayscale(${1 - progress})` }} /> : null}
+          {round.imageUrl ? <img decoding="async" loading="lazy" src={round.imageUrl} alt="" className="h-16 w-16 shrink-0 rounded-xl bg-surface-3 object-cover transition-[filter] duration-500" style={{ filter: `blur(${Math.round((1 - progress) * 14)}px) grayscale(${1 - progress})` }} /> : null}
           <div className="min-w-0 space-y-1">
             <p className="text-xs font-bold uppercase tracking-wider text-muted">Dica{round.testament ? ` · ${round.testament}` : ''}</p>
             <p className="text-sm font-semibold text-ink">{round.hint}</p>

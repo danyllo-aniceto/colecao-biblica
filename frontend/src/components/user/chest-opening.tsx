@@ -69,7 +69,7 @@ export function ChestIcon({ tier, className, design, open = false }: { tier: Che
   const { color, dark, imageUrl, openImageUrl } = useChestLook(tier, design);
   // Com a arte do baú aberto cadastrada, ela troca no instante da abertura.
   const art = open && openImageUrl ? openImageUrl : imageUrl;
-  if (art) return <img src={art} alt="" draggable={false} className={cn('object-contain', className)} />;
+  if (art) return <img decoding="async" src={art} alt="" draggable={false} className={cn('object-contain', className)} />;
   return (
     <svg viewBox="0 0 160 140" className={className} aria-hidden="true">
       <defs>

@@ -70,7 +70,7 @@ registerRoute(
     plugins: [
       // Imagens de outro domínio sem CORS chegam "opacas" (status 0); também servem offline.
       { cacheWillUpdate: async ({ response }) => (response.ok || response.type === 'opaque' ? response : null) },
-      new ExpirationPlugin({ maxEntries: 80, purgeOnQuotaError: true }),
+      new ExpirationPlugin({ maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 30, purgeOnQuotaError: true }),
     ],
   }),
 );

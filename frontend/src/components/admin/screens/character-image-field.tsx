@@ -92,7 +92,7 @@ export function CharacterImageField({ value, onChange }: { value: string; onChan
         )}
       >
         {value && !broken ? (
-          <img src={value} alt="Imagem da figurinha" onError={() => setBroken(true)} className="max-h-72 rounded-2xl object-contain shadow-lg" />
+          <img decoding="async" loading="lazy" src={value} alt="Imagem da figurinha" onError={() => setBroken(true)} className="max-h-72 rounded-2xl object-contain shadow-lg" />
         ) : (
           <>
             <span className="flex h-16 w-16 items-center justify-center rounded-3xl bg-primary/20 text-primary-strong dark:text-primary">

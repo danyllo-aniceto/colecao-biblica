@@ -14,7 +14,7 @@ export function ScenarioIcon({ scenario, size = 48, className }: { scenario: Pic
       {failed ? (
         <ScenarioFallbackIcon slug={scenario.slug} fontSize={Math.round(size * 0.58)} />
       ) : (
-        <img src={scenarioIconSrc(scenario)} alt="" draggable={false} className="h-full w-full object-cover" onError={() => setFailed(true)} />
+        <img decoding="async" loading="lazy" src={scenarioIconSrc(scenario)} alt="" draggable={false} className="h-full w-full object-cover" onError={() => setFailed(true)} />
       )}
     </span>
   );

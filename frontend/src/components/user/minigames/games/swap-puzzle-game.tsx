@@ -76,7 +76,7 @@ function Piece({ puzzle, piece }: { puzzle: SwapPuzzle; piece: number }) {
     );
   }
   return (
-    <img
+    <img decoding="async" loading="lazy"
       src={puzzle.imageUrl}
       alt=""
       draggable={false}
@@ -289,7 +289,7 @@ export function SwapPuzzleGame({ puzzle, runId, submit, finished, result }: Game
             );
           })}
         </div>
-        {reference && puzzle.imageUrl ? <img src={puzzle.imageUrl} alt={`Imagem completa de ${puzzle.title}`} className="absolute inset-0 h-full w-full animate-pop-in rounded-2xl object-cover shadow-xl" /> : null}
+        {reference && puzzle.imageUrl ? <img decoding="async" loading="lazy" src={puzzle.imageUrl} alt={`Imagem completa de ${puzzle.title}`} className="absolute inset-0 h-full w-full animate-pop-in rounded-2xl object-cover shadow-xl" /> : null}
       </div>
 
       {!finished ? (
@@ -310,7 +310,7 @@ export function SwapPuzzleGame({ puzzle, runId, submit, finished, result }: Game
         </>
       ) : reveal ? (
         <div className="panel animate-pop-in space-y-2 p-3 text-center">
-          {reveal.imageUrl ? <img src={reveal.imageUrl} alt={reveal.title} className="mx-auto max-h-60 w-full max-w-60 rounded-2xl object-cover" /> : null}
+          {reveal.imageUrl ? <img decoding="async" loading="lazy" src={reveal.imageUrl} alt={reveal.title} className="mx-auto max-h-60 w-full max-w-60 rounded-2xl object-cover" /> : null}
           <p className="font-display text-xl font-bold text-ink">{reveal.title}</p>
           {reveal.summary ? <p className="text-sm font-semibold text-muted">{reveal.summary}</p> : null}
         </div>

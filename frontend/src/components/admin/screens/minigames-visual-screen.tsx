@@ -68,14 +68,14 @@ export function MiniGamesVisualScreen() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <Field label="Capa do cartão" hint="Horizontal 16:9 · 1600 × 900 px">
                     <div className="space-y-2">
-                      <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-accent">{draft.coverUrl ? <img src={draft.coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" /> : null}</div>
+                      <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-accent">{draft.coverUrl ? <img decoding="async" loading="lazy" src={draft.coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" /> : null}</div>
                       <ImageUploadField value={draft.coverUrl} onChange={(url) => update({ coverUrl: url })} wide />
                     </div>
                   </Field>
                   <Field label="Fundo da tela de jogo" hint="Vertical 9:16 · 1080 × 1920 px">
                     <div className="space-y-2">
                       <div className="relative mx-auto aspect-[9/16] w-32 overflow-hidden rounded-2xl bg-surface-3">
-                        {draft.backgroundUrl ? <img src={draft.backgroundUrl} alt="" className="absolute inset-0 h-full w-full object-cover" /> : null}
+                        {draft.backgroundUrl ? <img decoding="async" loading="lazy" src={draft.backgroundUrl} alt="" className="absolute inset-0 h-full w-full object-cover" /> : null}
                         {draft.backgroundUrl ? <span className="absolute inset-0 bg-bg/55" /> : null}
                         <span className="absolute inset-x-3 top-1/3 grid aspect-square grid-cols-4 gap-0.5 rounded-lg bg-surface/80 p-1" aria-hidden>
                           {Array.from({ length: 16 }, (_, index) => (
@@ -90,7 +90,7 @@ export function MiniGamesVisualScreen() {
                 {game.id === 'memoria' ? (
                   <Field label="Verso das cartas" hint="Vertical 3:4 · 768 × 1024 px · aparece em todas as cartas viradas para baixo; deixe o enfeite no centro e sem texto">
                     <div className="space-y-2">
-                      <div className="relative mx-auto aspect-[3/4] w-24 overflow-hidden rounded-xl bg-gradient-to-br from-primary to-accent">{draft.backUrl ? <img src={draft.backUrl} alt="" className="absolute inset-0 h-full w-full object-cover" /> : <span className="absolute inset-0 flex items-center justify-center text-2xl text-on-primary opacity-80">✦</span>}</div>
+                      <div className="relative mx-auto aspect-[3/4] w-24 overflow-hidden rounded-xl bg-gradient-to-br from-primary to-accent">{draft.backUrl ? <img decoding="async" loading="lazy" src={draft.backUrl} alt="" className="absolute inset-0 h-full w-full object-cover" /> : <span className="absolute inset-0 flex items-center justify-center text-2xl text-on-primary opacity-80">✦</span>}</div>
                       <ImageUploadField value={draft.backUrl} onChange={(url) => update({ backUrl: url })} wide />
                     </div>
                   </Field>

@@ -52,7 +52,7 @@ function ChainSetup({ onStart }: { onStart: (options: object) => void }) {
 // ---------- A partida ----------
 
 function Face({ name, images, size = 'h-7 w-7' }: { name: string; images: Record<string, string>; size?: string }) {
-  return images[name] ? <img src={images[name]} alt="" loading="lazy" draggable={false} className={cn('shrink-0 rounded-full bg-surface-3 object-cover', size)} /> : null;
+  return images[name] ? <img decoding="async" src={images[name]} alt="" loading="lazy" draggable={false} className={cn('shrink-0 rounded-full bg-surface-3 object-cover', size)} /> : null;
 }
 
 /** Interconexão: ligue o nome de partida ao de chegada por uma corrente de relações; ao fim de cada ligação aparece o caminho mais curto. */

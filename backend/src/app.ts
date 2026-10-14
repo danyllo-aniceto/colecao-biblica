@@ -42,6 +42,7 @@ export function createApp() {
   // Respostas da API nunca ficam em cache de CDN (o service worker cuida do offline).
   app.use("/api", (_req, res, next) => {
     res.setHeader("Cache-Control", "no-store");
+    res.setHeader("X-Content-Type-Options", "nosniff");
     next();
   });
 

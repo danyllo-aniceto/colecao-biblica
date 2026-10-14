@@ -556,7 +556,7 @@ function Arena({ lane, index, image, focus, dropHint, blindHint, onInfo }: { lan
         )}
         aria-label={lane.scenario ? `${lane.scenario.name}: ${lane.scenario.text}` : `Arena ${index + 1}, aparece no turno ${index + 1}`}
       >
-        {image && lane.open ? <img src={image} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" onError={(event) => (event.currentTarget.style.display = 'none')} /> : null}
+        {image && lane.open ? <img decoding="async" src={image} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" onError={(event) => (event.currentTarget.style.display = 'none')} /> : null}
         <span className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/70" />
         {lane.scenario ? (
           <>

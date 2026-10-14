@@ -483,7 +483,7 @@ export function WordSearchGame({ puzzle, runId, submit, finished, seconds, resul
 function ClueAvatar({ clue, found, small = false }: { clue: WordSearchClue; found: boolean; small?: boolean }) {
   const size = small ? 'h-10 w-10 rounded-xl' : 'h-14 w-14 rounded-2xl';
   return clue.imageUrl ? (
-    <img src={clue.imageUrl} alt="" loading="lazy" className={cn('shrink-0 bg-surface-3 object-cover transition duration-500', size, !found && 'opacity-60 blur-[1px] grayscale')} />
+    <img decoding="async" src={clue.imageUrl} alt="" loading="lazy" className={cn('shrink-0 bg-surface-3 object-cover transition duration-500', size, !found && 'opacity-60 blur-[1px] grayscale')} />
   ) : (
     <span className={cn('flex shrink-0 items-center justify-center bg-surface-3', size, small ? 'text-lg' : 'text-2xl', !found && 'opacity-60 grayscale')} aria-hidden>
       {KIND_EMOJI[clue.kind]}

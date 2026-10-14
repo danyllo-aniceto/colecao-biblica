@@ -184,7 +184,7 @@ export function MemoryGame({ puzzle, submit, finished, result }: GameProps<Memor
               {faceUp ? (
                 card.imageUrl ? (
                   <>
-                    <img src={card.imageUrl} alt="" loading="lazy" draggable={false} className="absolute inset-0 h-full w-full object-cover" />
+                    <img decoding="async" src={card.imageUrl} alt="" loading="lazy" draggable={false} className="absolute inset-0 h-full w-full object-cover" />
                     {done ? <span className="absolute inset-x-0 bottom-0 truncate bg-black/60 px-0.5 py-0.5 text-[10px] leading-3 text-white">{card.text}</span> : null}
                   </>
                 ) : (
@@ -192,7 +192,7 @@ export function MemoryGame({ puzzle, submit, finished, result }: GameProps<Memor
                 )
               ) : (
                 puzzle.backUrl ? (
-                  <img src={puzzle.backUrl} alt="" loading="lazy" draggable={false} className="absolute inset-0 h-full w-full object-cover" />
+                  <img decoding="async" src={puzzle.backUrl} alt="" loading="lazy" draggable={false} className="absolute inset-0 h-full w-full object-cover" />
                 ) : (
                   <span className="text-2xl opacity-80" aria-hidden>
                     ✦

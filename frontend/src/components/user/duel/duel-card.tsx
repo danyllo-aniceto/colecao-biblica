@@ -72,7 +72,7 @@ export function DuelCardFace({ def, art, power, size = 'board', selected, dimmed
         className,
       )}
     >
-      {image ? <img src={image} alt="" draggable={false} className="absolute inset-0 -z-10 h-full w-full object-cover" /> : <span className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/40 to-violet/50" />}
+      {image ? <img decoding="async" src={image} alt="" draggable={false} className="absolute inset-0 -z-10 h-full w-full object-cover" /> : <span className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/40 to-violet/50" />}
       {!image ? <span className="absolute inset-0 -z-10 flex items-center justify-center font-display text-3xl font-bold text-white/70">{def.name.slice(0, 1)}</span> : null}
       <span className="absolute inset-x-0 bottom-0 -z-10 h-1/2 bg-gradient-to-t from-black/80 to-transparent" />
       <span className={cn('absolute left-0 top-0 flex items-center justify-center rounded-br-lg rounded-tl-[inherit] bg-info/90 font-display font-bold leading-none text-white', badge)} aria-hidden="true">

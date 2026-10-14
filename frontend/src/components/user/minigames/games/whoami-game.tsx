@@ -105,7 +105,7 @@ export function WhoAmIGame({ puzzle, runId, report, finished }: GameProps<WhoAmI
           onNext={ended.next ? next : undefined}
           extra={
             <div className="space-y-3">
-              {ended.end.imageUrl ? <img src={ended.end.imageUrl} alt={ended.end.answer} className="mx-auto max-h-64 w-44 animate-pop-in rounded-2xl object-cover shadow-lg" /> : null}
+              {ended.end.imageUrl ? <img decoding="async" loading="lazy" src={ended.end.imageUrl} alt={ended.end.answer} className="mx-auto max-h-64 w-44 animate-pop-in rounded-2xl object-cover shadow-lg" /> : null}
               {ended.end.summary ? <p className="text-sm font-semibold text-muted">{ended.end.summary}</p> : null}
               <p className="text-xs font-bold text-muted">
                 Você usou {ended.end.shown} {ended.end.shown === 1 ? 'dica' : 'dicas'}.

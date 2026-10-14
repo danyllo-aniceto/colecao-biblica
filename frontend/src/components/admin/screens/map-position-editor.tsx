@@ -159,7 +159,7 @@ export function MapPositionEditor({ scenario, onClose, onSaved }: { scenario: Ad
             style={{ background: scenarioFallbackBackground(scenario.color) }}
             onPointerDown={(event) => event.target === event.currentTarget && setSelected(null)}
           >
-            {!mapFailed ? <img src={scenarioMapSrc(scenario)} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" onError={() => setMapFailed(true)} /> : null}
+            {!mapFailed ? <img decoding="async" loading="lazy" src={scenarioMapSrc(scenario)} alt="" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" onError={() => setMapFailed(true)} /> : null}
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
               <path d={pathThrough(pathPoints)} fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth="2.6" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
               <path d={pathThrough(pathPoints)} fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.6" strokeDasharray="1 3" strokeLinecap="round" vectorEffect="non-scaling-stroke" />

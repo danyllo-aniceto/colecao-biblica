@@ -55,7 +55,7 @@ function TimelineSetup({ onStart }: { onStart: (options: object) => void }) {
 
 function Thumb({ card, size = 'h-12 w-12' }: { card: TimelineCard; size?: string }) {
   return card.imageUrl ? (
-    <img src={card.imageUrl} alt="" loading="lazy" draggable={false} className={cn('shrink-0 rounded-xl bg-surface-3 object-cover', size)} />
+    <img decoding="async" src={card.imageUrl} alt="" loading="lazy" draggable={false} className={cn('shrink-0 rounded-xl bg-surface-3 object-cover', size)} />
   ) : (
     <span className={cn('flex shrink-0 items-center justify-center rounded-xl bg-surface-3 text-2xl', size)} aria-hidden>
       {card.emoji}

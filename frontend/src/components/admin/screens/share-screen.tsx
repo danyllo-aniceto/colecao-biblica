@@ -109,7 +109,7 @@ export function ShareScreen() {
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-4">
           <div className="overflow-hidden rounded-3xl border-2 border-edge bg-surface-2">
-            <img src={preview} alt="Imagem que acompanha o link" className="aspect-[1200/630] w-full object-cover" />
+            <img decoding="async" loading="lazy" src={preview} alt="Imagem que acompanha o link" className="aspect-[1200/630] w-full object-cover" />
             <div className="space-y-0.5 border-t border-edge p-3">
               <p className="truncate text-xs font-semibold text-muted">{window.location.host}</p>
               <p className="font-display text-base font-bold text-ink">Coleção Bíblica: aprenda a Bíblia jogando</p>

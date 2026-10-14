@@ -62,7 +62,7 @@ export function HomePage() {
     <main className="mx-auto w-full max-w-6xl px-4 pb-16 pt-4 sm:px-6">
       <header className="flex items-center justify-between gap-3 py-2">
         <div className="flex items-center gap-2">
-          <img src="/icons/icon-192.png" alt="" width={40} height={40} className="h-10 w-10 rounded-xl" />
+          <img decoding="async" src="/icons/icon-192.png" alt="" width={40} height={40} className="h-10 w-10 rounded-xl" />
           <span className="font-display text-lg font-bold text-ink">Coleção Bíblica</span>
         </div>
         <div className="flex items-center gap-2">
@@ -73,7 +73,7 @@ export function HomePage() {
 
       <section className="grid items-center gap-10 py-8 lg:grid-cols-[1.1fr_0.9fr] lg:py-12">
         <div className="animate-fade-up text-center lg:text-left">
-          <img src={logo} alt="Coleção Bíblica" width={640} height={804} fetchPriority="high" className="animate-float mx-auto h-auto w-56 drop-shadow-[0_20px_30px_rgba(0,0,0,0.3)] sm:w-72 lg:mx-0" />
+          <img decoding="async" src={logo} alt="Coleção Bíblica" width={640} height={804} fetchPriority="high" className="animate-float mx-auto h-auto w-56 drop-shadow-[0_20px_30px_rgba(0,0,0,0.3)] sm:w-72 lg:mx-0" />
           <h1 className="mt-6 font-display text-4xl font-bold leading-tight text-ink sm:text-6xl">
             Aprenda a Bíblia{' '}
             <span className="bg-[linear-gradient(90deg,var(--primary),var(--accent))] bg-clip-text text-transparent">jogando</span>
@@ -105,7 +105,7 @@ export function HomePage() {
               <li key={mode.id} className="animate-fade-up" style={{ animationDelay: `${index * 90}ms` }}>
                 <article className="flex h-full flex-col overflow-hidden rounded-3xl border-2 border-edge bg-surface shadow-sm">
                   <div className={cn('relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br text-white', mode.fallback)}>
-                    {image ? <img src={image} alt="" loading="lazy" draggable={false} className="absolute inset-0 h-full w-full object-cover" /> : <span className="absolute inset-0 flex items-center justify-center opacity-90">{mode.icon}</span>}
+                    {image ? <img decoding="async" src={image} alt="" loading="lazy" draggable={false} className="absolute inset-0 h-full w-full object-cover" /> : <span className="absolute inset-0 flex items-center justify-center opacity-90">{mode.icon}</span>}
                     <span className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/70 to-transparent" />
                     <h3 className="absolute bottom-0 left-0 p-4 font-display text-2xl font-bold leading-tight drop-shadow">{mode.title}</h3>
                   </div>

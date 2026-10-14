@@ -12,6 +12,7 @@ export const LANDING_STICKERS = ["Rute", "Davi", "Ester", "Paulo"] as const;
 landingRouter.get(
   "/stickers",
   asyncHandler(async (_req, res) => {
+    res.setHeader("Cache-Control", "public, max-age=60, s-maxage=60, stale-while-revalidate=300");
     const rows = await prisma.biblicalCharacter.findMany({
       where: { name: { in: [...LANDING_STICKERS] }, ...visibleCharacter() },
       select: { name: true, rarity: true, imageUrl: true },

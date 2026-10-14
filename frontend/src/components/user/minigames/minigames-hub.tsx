@@ -30,7 +30,7 @@ function FullScreen({ children, background }: { children: ReactNode; background?
       {background ? (
         // Fundo do jogo enviado pelo painel: cobre a tela e fica clareado para as letras e os botões continuarem legíveis.
         <div aria-hidden className="pointer-events-none fixed inset-0">
-          <img src={background} alt="" className="h-full w-full object-cover" />
+          <img decoding="async" loading="lazy" src={background} alt="" className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-bg/55" />
         </div>
       ) : null}
@@ -46,7 +46,7 @@ function GameCard({ game, onPlay }: { game: MiniGameInfo; onPlay: (game: MiniGam
     <li className={cn('panel flex flex-col overflow-hidden', state === 'locked' && 'opacity-70')}>
       {game.coverUrl ? (
         <div className="relative aspect-video w-full overflow-hidden bg-surface-3">
-          <img src={game.coverUrl} alt="" loading="lazy" className={cn('absolute inset-0 h-full w-full object-cover', state === 'locked' && 'grayscale')} />
+          <img decoding="async" src={game.coverUrl} alt="" loading="lazy" className={cn('absolute inset-0 h-full w-full object-cover', state === 'locked' && 'grayscale')} />
           {state === 'locked' ? (
             <span className="absolute inset-0 flex items-center justify-center bg-black/40 text-white">
               <LockRoundedIcon fontSize="large" />

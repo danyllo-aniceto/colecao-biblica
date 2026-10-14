@@ -351,6 +351,7 @@ model UserSticker {
   character BiblicalCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@unique([userId, characterId])
+  @@index([characterId])
   @@map("user_stickers")
 }
 
@@ -367,6 +368,7 @@ model CharacterStudy {
   character BiblicalCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@unique([userId, characterId])
+  @@index([characterId])
   @@map("character_studies")
 }
 
@@ -382,6 +384,7 @@ model UserComment {
   character BiblicalCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@index([userId, updatedAt])
+  @@index([characterId])
   @@map("user_comments")
 }
 
@@ -457,6 +460,7 @@ model QuizSession {
   character BiblicalCharacter? @relation(fields: [characterId], references: [id], onDelete: SetNull)
 
   @@index([userId, status])
+  @@index([characterId])
   @@map("quiz_sessions")
 }
 
@@ -503,6 +507,8 @@ model QuestionReport {
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([status, createdAt])
+  @@index([questionId])
+  @@index([userId])
   @@map("question_reports")
 }
 
@@ -551,6 +557,7 @@ model Message {
 
   @@index([senderId, receiverId, id])
   @@index([receiverId, readAt])
+  @@index([tradeId])
   @@map("messages")
 }
 
@@ -647,6 +654,7 @@ model UserCosmetic {
   cosmetic Cosmetic @relation(fields: [cosmeticId], references: [id], onDelete: Cascade)
 
   @@unique([userId, cosmeticId])
+  @@index([cosmeticId])
   @@map("user_cosmetics")
 }
 

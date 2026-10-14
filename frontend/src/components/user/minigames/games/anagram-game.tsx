@@ -277,7 +277,7 @@ export function AnagramGame({ puzzle, runId, report, finished }: GameProps<Anagr
 
       {ended ? (
         <div key={ended.end.answer} className={cn('panel animate-pop-in space-y-3 border-2 p-4 text-center', ended.end.right ? 'border-success' : 'border-danger')}>
-          {ended.end.imageUrl ? <img src={ended.end.imageUrl} alt="" className="mx-auto h-24 w-24 rounded-2xl object-cover" /> : null}
+          {ended.end.imageUrl ? <img decoding="async" loading="lazy" src={ended.end.imageUrl} alt="" className="mx-auto h-24 w-24 rounded-2xl object-cover" /> : null}
           <p className="font-display text-sm font-bold uppercase tracking-wide text-muted">{ended.end.right ? 'Acertou!' : ended.end.timedOut ? 'O tempo acabou' : 'Não foi dessa vez'}</p>
           <p className="font-display text-2xl font-bold text-ink">{ended.end.answer}</p>
           {ended.end.right ? <p className="font-display text-lg font-bold text-success-strong dark:text-success">+{ended.end.points} pontos</p> : null}
@@ -286,7 +286,7 @@ export function AnagramGame({ puzzle, runId, report, finished }: GameProps<Anagr
       ) : (
         <>
           <div className="panel flex items-start gap-3 p-3">
-            {round.imageUrl ? <img src={round.imageUrl} alt="" className={cn('h-16 w-16 shrink-0 rounded-xl bg-surface-3 object-cover', BLUR[round.difficulty])} /> : null}
+            {round.imageUrl ? <img decoding="async" loading="lazy" src={round.imageUrl} alt="" className={cn('h-16 w-16 shrink-0 rounded-xl bg-surface-3 object-cover', BLUR[round.difficulty])} /> : null}
             <div className="min-w-0 space-y-1">
               <p className="text-xs font-bold uppercase tracking-wider text-muted">Dica · {round.length} letras</p>
               <p className="text-sm font-semibold text-ink">{round.hint}</p>

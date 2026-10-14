@@ -168,7 +168,7 @@ export function useTurnClock({ total, active, resetKey, onZero }: { total: numbe
 export function TurnFeedback({ tone, title, answer, points, imageUrl, onNext, extra }: { tone: 'success' | 'danger'; title: string; answer: string; points?: number; imageUrl?: string | null; onNext?: () => void; extra?: ReactNode }) {
   return (
     <div key={answer + title} className={cn('panel animate-pop-in space-y-3 border-2 p-4 text-center', tone === 'success' ? 'border-success' : 'border-danger')}>
-      {imageUrl ? <img src={imageUrl} alt="" className="mx-auto h-24 w-24 rounded-2xl object-cover" /> : null}
+      {imageUrl ? <img decoding="async" loading="lazy" src={imageUrl} alt="" className="mx-auto h-24 w-24 rounded-2xl object-cover" /> : null}
       <p className="font-display text-sm font-bold uppercase tracking-wide text-muted">{title}</p>
       <p className="font-display text-2xl font-bold text-ink">{answer}</p>
       {points ? <p className="font-display text-lg font-bold text-success-strong dark:text-success">+{points} pontos</p> : null}

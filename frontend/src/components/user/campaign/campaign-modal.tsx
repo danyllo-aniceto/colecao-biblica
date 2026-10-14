@@ -88,7 +88,7 @@ function ScenarioMap({ scenario, onOpenNode }: { scenario: CampaignScenario; onO
       className="relative aspect-[3/4] overflow-hidden rounded-3xl border-4 border-edge-strong shadow-lg"
       style={{ width: 'min(100cqw, 75cqh)', background: scenarioFallbackBackground(scenario.color) }}
     >
-      {!mapFailed ? <img src={scenarioMapSrc(scenario)} alt="" draggable={false} className="absolute inset-0 h-full w-full object-cover" onError={() => setMapFailed(true)} /> : null}
+      {!mapFailed ? <img decoding="async" loading="lazy" src={scenarioMapSrc(scenario)} alt="" draggable={false} className="absolute inset-0 h-full w-full object-cover" onError={() => setMapFailed(true)} /> : null}
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full" aria-hidden="true">
         <path d={pathBetween(ordered)} fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth="2.6" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
         <path d={pathBetween(ordered)} fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.6" strokeDasharray="1 3" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
@@ -571,7 +571,7 @@ export function CampaignModal({ open, campaign, xp, playerName, onClose, onChang
                     className="relative flex h-full snap-start snap-always flex-col gap-2 overflow-hidden bg-bg px-2 pb-2 pt-2"
                   >
                     {/* O próprio mapa, desfocado, preenche as laterais quando a tela é mais larga que o mapa. */}
-                    <img src={scenarioMapSrc(item)} alt="" aria-hidden="true" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full scale-125 object-cover opacity-30 blur-2xl" onError={(event) => (event.currentTarget.style.display = 'none')} />
+                    <img decoding="async" loading="lazy" src={scenarioMapSrc(item)} alt="" aria-hidden="true" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full scale-125 object-cover opacity-30 blur-2xl" onError={(event) => (event.currentTarget.style.display = 'none')} />
                     <div className={cn('relative flex shrink-0 items-center gap-3 px-1 transition-all duration-500 ease-out', index === active ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0')}>
                       <ScenarioIcon scenario={item} size={52} />
                       <div className="min-w-0 flex-1">

@@ -113,7 +113,7 @@ function RemovableImageNodeView({ node, deleteNode }: NodeViewProps) {
 
   return (
     <NodeViewWrapper as="figure" className="group relative my-3 inline-block max-w-full">
-      <img src={src} alt={alt} className={imageElementClass} />
+      <img decoding="async" src={src} alt={alt} className={imageElementClass} />
       <button
         type="button"
         aria-label="Remover imagem"
