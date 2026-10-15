@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { holdAt, maxTicksOf, newPlayer, normalizeInputs, prepareLevel, progressOf, respawnAt, simulate, stepPlayer } from "./engine";
+import { emptyEffects, TURBO_TICKS } from "./powers";
 import { CEIL_Y, FLOOR_Y, PLAYER, SPEED, TILE, type Form, type Level, type LevelObject, type PlayerState } from "./types";
 
 const level = (objects: LevelObject[], options: { form?: Form; length?: number } = {}): Level => ({
@@ -216,3 +217,96 @@ describe("Corrida: toques", () => {
     expect(normalizeInputs(Array.from({ length: 4001 }, (_, index) => index), 10000)).toBeNull();
   });
 });
+
+describe("Corrida: poderes no caminho", () => {
+  const power = (x: number, kind: "TURBO" | "SHIELD" | "TRIPLE" | "MAGNET", y = 0): LevelObject => ({ kind: "power", x, y, power: kind });
+
+  it("pegar um poder o registra uma vez, e ele some do caminho", () => {
+    const prepared = prepareLevel(level([power(5, "MAGNET")]));
+    expect(prepared.powerCount).toBe(1);
+    const result = simulate(prepared, []);
+    expect(result.powers).toEqual([0]);
+    const player = run(prepared, 200);
+    expect(player.powers).toEqual([0]);
+    expect(player.effects.magnet).toBeGreaterThan(0);
+  });
+
+  it("Turbo: mais rápido e imune a espetos e a paredes; sem ele a fase derruba", () => {
+    const obstacles: LevelObject[] = [{ kind: "spike", x: 12 }, { kind: "block", x: 22, y: 0, w: 2, h: 3 }];
+    expect(simulate(prepareLevel(level(obstacles)), []).status).toBe("dead");
+    const withTurbo = prepareLevel(level([power(3, "TURBO"), ...obstacles]));
+    const result = simulate(withTurbo, []);
+    expect(result.status).toBe("finished");
+    // Chega antes que sem o poder (a mesma fase vazia leva mais passos).
+    const plain = simulate(prepareLevel(level([])), []);
+    expect(result.ticks).toBeLessThan(plain.ticks);
+    expect(TURBO_TICKS).toBe(240);
+  });
+
+  it("Turbo: se acabar com o personagem dentro de um bloco, a imunidade segue até ele sair (nunca cai por isso)", () => {
+    // Bloco enorme: o Turbo (4 s) termina lá dentro.
+    const prepared = prepareLevel(level([power(3, "TURBO"), { kind: "block", x: 15, y: 0, w: 60, h: 3 }], { length: 100 }));
+    const result = simulate(prepared, []);
+    expect(result.status).toBe("finished");
+  });
+
+  it("Escudo: absorve o primeiro erro e deixa passar; o segundo erro, depois da imunidade curta, derruba", () => {
+    const prepared = prepareLevel(level([power(3, "SHIELD"), { kind: "spike", x: 12 }, { kind: "spike", x: 30 }]));
+    const result = simulate(prepared, []);
+    expect(result.status).toBe("dead");
+    expect(result.cause).toBe("spike");
+    // Passou do primeiro espeto (coluna 12) e morreu no segundo (coluna 30).
+    expect(result.progress * 40).toBeGreaterThan(25);
+    const alone = simulate(prepareLevel(level([{ kind: "spike", x: 12 }, { kind: "spike", x: 30 }])), []);
+    expect(alone.progress * 40).toBeLessThan(15);
+  });
+
+  it("Escudo: também absorve uma parede (atravessa o bloco) e continua", () => {
+    const prepared = prepareLevel(level([power(3, "SHIELD"), { kind: "block", x: 12, y: 0, w: 3, h: 3 }]));
+    const result = simulate(prepared, []);
+    expect(result.status).toBe("finished");
+    expect(simulate(prepareLevel(level([{ kind: "block", x: 12, y: 0, w: 3, h: 3 }])), []).status).toBe("dead");
+  });
+
+  it("Pulo triplo: o terceiro toque no ar dá mais um impulso; sem o poder, não", () => {
+    const prepared = prepareLevel(level([]));
+    const apex = (effects: ReturnType<typeof emptyEffects>) => {
+      let player = { ...newPlayer(prepared), effects };
+      let top = player.y;
+      for (let tick = 0; tick < 150; tick += 1) {
+        player = stepPlayer(prepared, player, [0, 14, 28].includes(tick));
+        top = Math.min(top, player.y);
+      }
+      return FLOOR_Y - PLAYER - top;
+    };
+    const normal = apex(emptyEffects());
+    const triple = apex({ ...emptyEffects(), triple: 600 });
+    expect(triple).toBeGreaterThan(normal + 30);
+  });
+
+  it("Ímã: pega palavras que estão acima do alcance normal; sem ele, a palavra passa", () => {
+    // Palavra na linha 2 (~100 px acima do chão): correndo no chão sem pular, só o Ímã a alcança.
+    const prepared = prepareLevel(level([{ kind: "word", x: 15, y: 2, index: 0 }]));
+    expect(simulate(prepared, []).collected).toEqual([]);
+    let player = { ...newPlayer(prepared), effects: { ...emptyEffects(), magnet: 600 } };
+    for (let tick = 0; tick < 300 && player.status === "running"; tick += 1) player = stepPlayer(prepared, player, false);
+    expect(player.collected).toEqual([0]);
+  });
+
+  it("voltar a um checkpoint zera os efeitos e devolve os poderes e palavras guardados", () => {
+    const prepared = prepareLevel(level([{ kind: "checkpoint", x: 10 }, power(14, "TURBO")]));
+    const back = respawnAt(prepared, 1, [2], 70, [0]);
+    expect(back.effects).toEqual(emptyEffects());
+    expect(back.powers).toEqual([0]);
+    expect(back.collected).toEqual([2]);
+    expect(respawnAt(prepared, 1).powers).toEqual([]);
+    expect(respawnAt(prepared, 0, [], 0, [0]).powers).toEqual([0]);
+  });
+
+  it("é determinístico com poderes (mesmos toques, mesmo resultado)", () => {
+    const prepared = prepareLevel(level([power(3, "SHIELD"), { kind: "spike", x: 12 }, power(20, "TURBO"), { kind: "block", x: 30, y: 0, w: 2, h: 3 }]));
+    const toggles = [40, 42];
+    expect(simulate(prepared, toggles)).toEqual(simulate(prepared, toggles));
+  });
+});
+

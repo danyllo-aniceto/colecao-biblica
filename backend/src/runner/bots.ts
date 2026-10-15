@@ -1,6 +1,6 @@
 import { maxTicksOf, newPlayer, respawnAt, stepPlayer } from "./engine";
 import { randomFrom } from "./rng";
-import type { PlayerState, PreparedLevel } from "./types";
+import { PLAYER, TILE, type PlayerState, type PreparedLevel } from "./types";
 
 /** O bot decide a cada `DECISION_TICKS` passos e olha `DEPTH` decisões à frente (até 128 caminhos, ~56 passos de horizonte). */
 export const DECISION_TICKS = 8;
@@ -9,9 +9,28 @@ const DEPTH = 7;
 /** Atraso do toque (em passos) que o bot tenta aguentar: o dedo de gente real nunca é exato (~50 ms). */
 export const TOUCH_DELAY = 3;
 
+/** Até quantas colunas à frente (além do horizonte) o bot "enxerga" uma recompensa para escolher o caminho (de cima ou de baixo, chão ou teto). */
+const LURE_COLUMNS = 16;
+
+/**
+ * Atração pelas recompensas à frente (palavras e poderes ainda não pegos): quanto mais perto da altura delas o personagem termina o horizonte,
+ * mais pontos (no máximo 20: só desempata caminhos igualmente seguros). É o que leva o bot a subir ao caminho de cima onde há recompensa.
+ */
+function rewardLure(level: PreparedLevel, p: PlayerState): number {
+  const first = Math.max(0, Math.floor(p.x / TILE));
+  const centre = p.y + PLAYER / 2;
+  let best = 0;
+  for (let column = first; column <= first + LURE_COLUMNS && column < level.cols.length; column += 1) {
+    const col = level.cols[column];
+    for (const word of col.words) if (!p.collected.includes(word.index)) best = Math.max(best, 1 - Math.abs((word.t + word.b) / 2 - centre) / 160);
+    for (const power of col.powers) if (!p.powers.includes(power.id)) best = Math.max(best, 1 - Math.abs((power.t + power.b) / 2 - centre) / 160);
+  }
+  return Math.max(0, best) * 20;
+}
+
 /**
  * Escolhe segurar ou soltar olhando só o que o jogador também enxerga: percorre a árvore de decisões (cada nó repete a mesma ação por
- * `DECISION_TICKS` passos) e fica com o caminho que sobrevive, pega mais palavras e mexe menos no toque. Empate: prefere soltar (toques curtos, como gente: segurar dá pulo automático em sequência, que é frágil).
+ * `DECISION_TICKS` passos) e fica com o caminho que sobrevive, pega mais palavras e poderes, vai atrás das recompensas à frente e mexe menos no toque. Empate: prefere soltar (toques curtos, como gente: segurar dá pulo automático em sequência, que é frágil).
  * Cada caminho roda duas vezes, uma exata e outra com o toque atrasado em `delay` passos; o preferido sobrevive nas duas, então a fase
  * não depende de acertar o instante exato (nem o bot nem a fase ficam "no fio da navalha").
  */
@@ -23,7 +42,7 @@ export function planHold(level: PreparedLevel, player: PlayerState, current: boo
       const alive = exact.status !== "dead";
       const lateAlive = late.status !== "dead";
       const base = !alive ? exact.tick - player.tick : lateAlive ? 2e6 : 1e6;
-      const score = base + exact.collected.length * 100 - switches + (first ? 0 : 2);
+      const score = base + exact.collected.length * 100 + exact.powers.length * 40 + (alive ? rewardLure(level, exact) : 0) - switches + (first ? 0 : 2);
       if (score > bestScore) {
         bestScore = score;
         best = first;
@@ -107,7 +126,7 @@ export function createBot(level: PreparedLevel, options: BotOptions = {}): Bot {
       if (current.status === "dead") {
         waiting += 1;
         if (options.respawn && waiting >= BOT_RESPAWN_TICKS) {
-          bot.player = respawnAt(level, checkpoint, current.collected, current.tick);
+          bot.player = respawnAt(level, checkpoint, current.collected, current.tick, current.powers);
           hold = false;
           intended = false;
           pending = null;

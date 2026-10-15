@@ -1,3 +1,5 @@
+import type { Effects, PowerKind } from "./powers";
+
 /**
  * Modo Corrida: tipos e constantes do motor. Tudo em pixels do "mundo" (a tela só escala), passo de tempo fixo de 60 por segundo.
  * O campo tem 7 linhas de 40 px: o chão fica em `FLOOR_Y` e o teto em `CEIL_Y`.
@@ -29,7 +31,9 @@ export type PortalObject = { kind: "portal"; x: number; form: Form };
 export type WordObject = { kind: "word"; x: number; y: number; index: number };
 /** Checkpoint: bandeira num trecho livre; quem cai pode voltar a ela. Fica sempre a ~3 colunas ou mais do próximo obstáculo. */
 export type CheckpointObject = { kind: "checkpoint"; x: number };
-export type LevelObject = SpikeObject | BlockObject | PortalObject | WordObject | CheckpointObject;
+/** Poder no meio do caminho (Turbo, Escudo, Pulo triplo ou Ímã): some quando pego. `y` = linha (0 = chão). */
+export type PowerObject = { kind: "power"; x: number; y: number; power: PowerKind };
+export type LevelObject = SpikeObject | BlockObject | PortalObject | WordObject | CheckpointObject | PowerObject;
 
 /** Versículo escondido da fase: cada palavra coletada (`index`) aparece no lugar dele. */
 export type Verse = { ref: string; words: string[] };
@@ -54,8 +58,10 @@ export type PreparedLevel = {
   portals: Array<{ x: number; form: Form }>;
   /** Posição (px) de cada checkpoint, em ordem. */
   checkpoints: number[];
-  cols: Array<{ spikes: Rect[]; blocks: Rect[]; words: Array<Rect & { index: number }> }>;
+  cols: Array<{ spikes: Rect[]; blocks: Rect[]; words: Array<Rect & { index: number }>; powers: Array<Rect & { id: number; power: PowerKind }> }>;
   wordCount: number;
+  /** Quantos poderes a fase tem (os `id` vão de 0 a `powerCount - 1`, na ordem da lista de objetos). */
+  powerCount: number;
 };
 
 export type PlayerStatus = "running" | "dead" | "finished";
@@ -82,6 +88,10 @@ export type PlayerState = {
   status: PlayerStatus;
   cause: DeathCause | null;
   collected: number[];
+  /** Poderes já pegos (`id` na fase): não aparecem de novo. */
+  powers: number[];
+  /** Efeitos ativos dos poderes. */
+  effects: Effects;
 };
 
 export type RunResult = {
@@ -89,5 +99,6 @@ export type RunResult = {
   ticks: number;
   progress: number;
   collected: number[];
+  powers: number[];
   cause: DeathCause | null;
 };

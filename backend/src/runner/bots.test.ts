@@ -97,6 +97,19 @@ describe("Corrida: fases", () => {
     }
   }, 240_000);
 
+  it("as jornadas trazem poderes e bifurcações, e continuam possíveis sem nenhum poder (poder é bônus, nunca obrigação)", () => {
+    for (const seed of [2, 5, 9]) {
+      const level = buildJourney({ id: "t", name: "T", seed, seconds: 75, verse: { ref: "x", words: ["a", "b", "c", "d", "e", "f"] } });
+      const powers = level.objects.filter((object) => object.kind === "power");
+      expect(powers.length, `semente ${seed}: poderes`).toBeGreaterThan(2);
+      expect(new Set(powers.map((object) => (object as { power: string }).power)).size, `semente ${seed}: tipos`).toBeGreaterThan(1);
+      const without = prepareLevel({ ...level, objects: level.objects.filter((object) => object.kind !== "power") });
+      expect(simulate(without, botInputs(without, { lag: TOUCH_DELAY })).status, `semente ${seed} (sem poderes)`).toBe("finished");
+      const prepared = prepareLevel(level);
+      expect(simulate(prepared, botInputs(prepared, { lag: TOUCH_DELAY })).status, `semente ${seed} (com poderes)`).toBe("finished");
+    }
+  }, 240_000);
+
   it("bots ao vivo: voltam ao checkpoint depois de cair e terminam; o Mestre chega antes do Aprendiz", () => {
     const level = buildJourney({ id: "t", name: "T", seed: 3, seconds: 75, verse: { ref: "x", words: ["a", "b"] } });
     const prepared = prepareLevel(level);
