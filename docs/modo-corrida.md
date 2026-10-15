@@ -1,4 +1,4 @@
-# Modo Corrida (nome provisório) — proposta e checklist
+# Modo Corrida — proposta e checklist
 
 Auto-runner bíblico de um toque, no estilo **G-Switch** e **Geometry Dash**. Modo **próprio** na aba Jogar (como Quiz, Tabuleiro e Duelo),
 **não** é mini game. Atualize o checklist a cada etapa.
@@ -13,7 +13,10 @@ Auto-runner bíblico de um toque, no estilo **G-Switch** e **Geometry Dash**. Mo
   figurinhas, ranking geral, missões ou estatísticas de perguntas.
 - Mesmo molde do Tabuleiro e do Duelo: motor puro, estado serializável, sorteio com semente.
 
-## Padrão de jogo (proposta, a confirmar)
+- **Nome:** Corrida. **Padrão de controles:** confirmado (abaixo). **Desbloqueio:** personagens se abrem **por fase concluída**, na campanha solo,
+  no estilo da campanha do Quiz (vai passando de fase em fase e abrindo coisas).
+
+## Padrão de jogo (confirmado)
 
 - **Um único controle**: toque; segurar quando a forma da fase pedir.
 - A **fase** (e o trecho dela) define a **forma** do personagem, como portais:
@@ -72,8 +75,11 @@ Cada fase tem um **versículo escondido**: palavras/letras para coletar; ao fina
 
 ## Checklist
 
-- [ ] Confirmar o padrão de controles (acima) e o nome do modo.
-- [ ] Motor puro + testes (física das 3 formas, colisão, semente, repetição por frames) e protótipo jogável solo **só com formas**, 1 fase.
+- [x] Padrão de controles e nome confirmados.
+- [x] Motor puro + testes (`backend/src/runner/`: física das 3 formas, colisão, portais, palavras, repetição por toques, conferência de entradas) e bot
+  que prova que a fase é possível. Protótipo jogável solo **só com formas**, 1 fase (`Protótipo: as 3 formas`), na aba Jogar (alias `@runner/*`),
+  com "Ver um bot jogar". Ainda sem capa do modo (falta a chave `RUNNER` em Capas dos jogos), sem som e sem servidor.
+- [ ] Testar o toque no celular e ajustar a física (pulo, voo, gravidade, velocidade) com o que você sentir.
 - [ ] Formato de fases e biblioteca de trechos; as 3 primeiras fases sem arte.
 - [ ] Campanha solo: progresso, estrelas, versículo escondido, checkpoints, treino.
 - [ ] Antitrapaça: o servidor simula de novo e valida o fim da partida.
@@ -87,6 +93,5 @@ Cada fase tem um **versículo escondido**: palavras/letras para coletar; ao fina
 
 ## Perguntas em aberto
 
-- Nome final do modo.
-- Quantos personagens no lançamento e como se desbloqueiam (estrelas totais, fase concluída, ambos).
+- Quantos personagens no lançamento e em qual fase cada um se abre.
 - Sala online: só por convite/código (como o Tabuleiro) ou também sala aberta?

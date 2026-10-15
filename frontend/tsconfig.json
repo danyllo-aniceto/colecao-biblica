@@ -28,6 +28,9 @@
       ],
       "@duel/*": [
         "../backend/src/duel/*"
+      ],
+      "@runner/*": [
+        "../backend/src/runner/*"
       ]
     }
   },

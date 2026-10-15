@@ -1,0 +1,76 @@
+/**
+ * Modo Corrida: tipos e constantes do motor. Tudo em pixels do "mundo" (a tela só escala), passo de tempo fixo de 60 por segundo.
+ * O campo tem 7 linhas de 40 px: o chão fica em `FLOOR_Y` e o teto em `CEIL_Y`.
+ */
+export const TICKS_PER_SECOND = 60;
+export const TILE = 40;
+export const ROWS = 7;
+export const FLOOR_Y = 320;
+export const CEIL_Y = FLOOR_Y - ROWS * TILE;
+export const PLAYER = 32;
+/** Velocidade horizontal (px por passo): todos os personagens correm igual. */
+export const SPEED = 5.4;
+
+/** Forma do personagem no trecho: quem decide é a fase (portais), nunca o personagem. */
+export type Form = "RUN" | "FLY" | "GRAVITY";
+
+/** Espeto no chão (`y` = linha de baixo, 0 = chão). `down` pendura do teto/bloco apontando para baixo. */
+export type SpikeObject = { kind: "spike"; x: number; y?: number; down?: boolean };
+/** Bloco sólido (em linhas e colunas): dá para pousar em cima; bater de lado derruba. */
+export type BlockObject = { kind: "block"; x: number; y: number; w: number; h: number };
+/** Portal: a partir daqui o personagem passa a ter a forma indicada. */
+export type PortalObject = { kind: "portal"; x: number; form: Form };
+/** Palavra do versículo escondido (`index` = posição no versículo). */
+export type WordObject = { kind: "word"; x: number; y: number; index: number };
+export type LevelObject = SpikeObject | BlockObject | PortalObject | WordObject;
+
+export type Level = {
+  id: string;
+  name: string;
+  /** Forma no começo da fase. */
+  form: Form;
+  /** Comprimento em colunas: ao chegar ao fim a fase termina. */
+  length: number;
+  objects: LevelObject[];
+};
+
+export type Rect = { l: number; t: number; r: number; b: number };
+
+/** Fase pronta para simular: objetos indexados por coluna (a busca a cada passo é O(1)). */
+export type PreparedLevel = {
+  level: Level;
+  endX: number;
+  portals: Array<{ x: number; form: Form }>;
+  cols: Array<{ spikes: Rect[]; blocks: Rect[]; words: Array<Rect & { index: number }> }>;
+  wordCount: number;
+};
+
+export type PlayerStatus = "running" | "dead" | "finished";
+export type DeathCause = "spike" | "wall";
+
+/** Estado de um corredor: simples e serializável (vai e volta do servidor e do navegador). */
+export type PlayerState = {
+  tick: number;
+  x: number;
+  y: number;
+  vy: number;
+  /** 1 = cai para o chão; -1 = cai para o teto (forma Gravidade). */
+  grav: 1 | -1;
+  form: Form;
+  grounded: boolean;
+  /** O toque estava apertado no passo anterior (para detectar o instante do toque). */
+  held: boolean;
+  /** Próximo portal a cruzar. */
+  portal: number;
+  status: PlayerStatus;
+  cause: DeathCause | null;
+  collected: number[];
+};
+
+export type RunResult = {
+  status: PlayerStatus | "timeout";
+  ticks: number;
+  progress: number;
+  collected: number[];
+  cause: DeathCause | null;
+};
