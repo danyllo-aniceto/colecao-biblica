@@ -198,7 +198,7 @@ export function RunnerCharactersScreen() {
   return (
     <AdminPanel
       title="Personagens da Corrida"
-      description="Envie cada pose quadro por quadro (uma imagem por quadro): o painel monta a animação, deixa todos na mesma escala com os pés na base e, se quiser, tira o fundo verde. Também aceita uma tira já pronta (quadros quadrados lado a lado). Sem sprite, o jogo desenha a forma na cor de reserva. Todos os personagens correm com a mesma física: o que muda é só a aparência e os sons."
+      description="Envie cada pose quadro por quadro (uma imagem por quadro; tiras de até 6 quadros também podem ser enviadas juntas, informando quantos quadros cada imagem tem): o painel junta tudo numa tira só, monta a animação, deixa todos na mesma escala com os pés na base e, se quiser, tira o fundo verde. Também aceita uma tira já pronta (quadros quadrados lado a lado). Sem sprite, o jogo desenha a forma na cor de reserva. Todos os personagens correm com a mesma física: o que muda é só a aparência e os sons."
       actions={
         <Button onClick={() => open()}>
           <AddRoundedIcon fontSize="small" /> Novo personagem

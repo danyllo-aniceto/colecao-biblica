@@ -39,3 +39,20 @@ export function greenKey(r: number, g: number, b: number, a: number): [number, n
   // Tira o verde que sobrou nas bordas: o canal verde não passa do maior entre vermelho e azul.
   return [r, Math.min(g, Math.max(r, b)), b, nextAlpha];
 }
+
+export type CellRect = { sx: number; sy: number; w: number; h: number };
+
+/**
+ * Recortes de uma imagem que já é uma tira horizontal de `cells` quadros lado a lado: cada quadro tem largura `w / cells` (arredondada para baixo)
+ * e a altura inteira. Devolve também um aviso quando a tira provavelmente não é de quadros quadrados: largura não divisível pelo número de quadros
+ * ou quadro que difere da altura em mais de ~5%. Com 1 quadro a imagem toda vale (não precisa ser quadrada) e nunca há aviso.
+ */
+export function cellRects(size: FrameSize, cells: number): { rects: CellRect[]; warning: string | null } {
+  if (!Number.isInteger(cells) || cells < 1) throw new Error("Número de quadros inválido");
+  const cellW = Math.max(1, Math.floor(size.w / cells));
+  const rects = Array.from({ length: cells }, (_, index) => ({ sx: index * cellW, sy: 0, w: cellW, h: size.h }));
+  if (cells === 1) return { rects: [{ sx: 0, sy: 0, w: size.w, h: size.h }], warning: null };
+  if (size.w % cells !== 0) return { rects, warning: `A largura (${size.w} px) não divide por ${cells}: confira se são ${cells} quadros iguais.` };
+  if (Math.abs(cellW / size.h - 1) > 0.05) return { rects, warning: `Cada quadro ficaria com ${cellW} × ${size.h} px, que não é quadrado: confira o número de quadros.` };
+  return { rects, warning: null };
+}

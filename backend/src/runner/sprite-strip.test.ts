@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { greenKey, stripLayout, STRIP_CELL } from "./sprite-strip";
+import { cellRects, greenKey, stripLayout, STRIP_CELL } from "./sprite-strip";
 
 describe("Corrida: montagem da tira de sprites", () => {
   it("quadros iguais: células de 256, lado a lado, sem ampliar", () => {
@@ -47,5 +47,25 @@ describe("Corrida: montagem da tira de sprites", () => {
     expect(greenKey(30, 80, 30, 255)).toEqual([30, 80, 30, 255]);
     // Pixel já transparente continua transparente.
     expect(greenKey(0, 255, 0, 0)[3]).toBe(0);
+  });
+
+  it("tira pronta: recorta N quadros alinhados, de largura w / N e altura inteira", () => {
+    const { rects, warning } = cellRects({ w: 1536, h: 256 }, 6);
+    expect(warning).toBeNull();
+    expect(rects).toHaveLength(6);
+    expect(rects.map((rect) => rect.sx)).toEqual([0, 256, 512, 768, 1024, 1280]);
+    expect(rects.every((rect) => rect.sy === 0 && rect.w === 256 && rect.h === 256)).toBe(true);
+  });
+
+  it("1 quadro: a imagem toda, de qualquer proporção, sem aviso", () => {
+    expect(cellRects({ w: 300, h: 180 }, 1)).toEqual({ rects: [{ sx: 0, sy: 0, w: 300, h: 180 }], warning: null });
+  });
+
+  it("avisa quando a largura não divide pelo número de quadros ou o quadro não é quadrado", () => {
+    expect(cellRects({ w: 1000, h: 256 }, 6).warning).toMatch(/não divide por 6/);
+    expect(cellRects({ w: 1536, h: 256 }, 4).warning).toMatch(/não é quadrado/);
+    // Até ~5% de diferença passa.
+    expect(cellRects({ w: 1560, h: 256 }, 6).warning).toBeNull();
+    expect(() => cellRects({ w: 100, h: 100 }, 0)).toThrow();
   });
 });

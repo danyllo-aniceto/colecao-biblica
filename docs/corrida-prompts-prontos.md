@@ -9,7 +9,7 @@ Ficha técnica e passo a passo do Painel: `docs/corrida-prompts-de-arte.md`. Est
 2. **Gere UM QUADRO por imagem** (seção "Quadro por quadro" abaixo). É o jeito mais seguro: a IA erra a conta de quadros em tiras.
 3. **Nomeie os arquivos na ordem**: `correndo-1.png`, `correndo-2.png`, ... (o Painel ordena pelo nome; dá para reordenar lá também).
 4. **Fundo verde chapado (#00FF00)** em tudo. No Painel, ligue **"Remover o fundo verde"** (ou remova por fora, se o personagem tiver roupa verde).
-5. **Suba no Painel quadro por quadro:** Painel → Corrida: personagens → Editar → na pose, aba **"Quadro por quadro"** → escolha todos os arquivos da pose de uma vez → confira a prévia animada → **Usar estes quadros**. O Painel monta a tira sozinho (mesma escala, pés na base) e envia.
+5. **Suba no Painel quadro por quadro:** Painel → Corrida: personagens → Editar → na pose, aba **"Quadro por quadro"** → escolha todos os arquivos da pose de uma vez → confira a prévia animada → **Usar estes quadros**. O Painel monta a tira sozinho (mesma escala, pés na base) e envia. **Tiras de até 6 quadros podem ser enviadas juntas:** escolha o arquivo da tira e, no campo "Quadros nesta imagem" daquele item, informe quantos quadros ela tem (ex.: duas tiras de 6 = 12 quadros, o máximo por pose); o Painel recorta, junta tudo numa tira só e avisa se a imagem não parece ter quadros quadrados.
 6. Os quadros podem ser de qualquer tamanho, mas **todos do mesmo tamanho** (ex.: 1024 × 1024, quadrados), personagem de **perfil olhando para a direita** (menos retrato e vitória), **pés encostando na base** da imagem.
 
 ---
@@ -66,7 +66,7 @@ the character fills about 85% of the image height. Same scale and same camera di
 
 ## IMAGENS EM TIRA (opcional: se a sua ferramenta acerta tiras de quadros)
 
-Os prompts abaixo geram a pose inteira numa tira horizontal. Só use se a IA estiver acertando a contagem e a consistência; senão, prefira "Quadro por quadro".
+Os prompts abaixo geram a pose inteira numa tira horizontal. Só use se a IA estiver acertando a contagem e a consistência; senão, prefira "Quadro por quadro". Pode subir a tira na aba "Quadro por quadro" informando quantos quadros ela tem (dá para misturar tiras e quadros soltos, até 12 no total).
 
 ### 0) Ficha do personagem (referência — gere esta primeiro)
 

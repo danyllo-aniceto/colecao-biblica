@@ -1,17 +1,36 @@
-import { greenKey, stripLayout } from '@runner/sprite-strip';
+import { cellRects, greenKey, stripLayout } from '@runner/sprite-strip';
+
+/** Um arquivo de imagem e quantos quadros ele traz (1 = um quadro solto; N = tira horizontal de N quadros quadrados). */
+export type StripSource = { file: File; cells: number };
+
+/** Tamanho de uma imagem (para conferir se a tira é de quadros quadrados antes de montar). */
+export async function imageSize(file: File): Promise<{ w: number; h: number }> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const size = { w: bitmap.width, h: bitmap.height };
+    bitmap.close();
+    return size;
+  } catch {
+    throw new Error(`Não foi possível abrir "${file.name}". Use PNG, WEBP ou JPG.`);
+  }
+}
 
 /**
- * Monta a tira de sprites a partir de quadros soltos (arquivos de imagem, na ordem): mesma escala em todos, pés na base de cada célula e,
- * se pedido, sem o fundo verde chapado. As contas de disposição estão em `@runner/sprite-strip` (com teste).
+ * Monta a tira de sprites a partir de arquivos de imagem, na ordem (cada um vale 1 quadro solto ou uma tira de N quadros): mesma escala em todos,
+ * pés na base de cada célula e, se pedido, sem o fundo verde chapado. As contas de recorte e de disposição estão em `@runner/sprite-strip` (com teste).
+ * Devolve o total de quadros (a soma das células de todos os arquivos).
  */
-export async function buildStripCanvas(files: File[], options: { removeGreen: boolean }): Promise<{ canvas: HTMLCanvasElement; frames: number }> {
+export async function buildStripCanvas(sources: StripSource[], options: { removeGreen: boolean }): Promise<{ canvas: HTMLCanvasElement; frames: number }> {
   const bitmaps: ImageBitmap[] = [];
   try {
-    for (const file of files) {
-      try {
-        bitmaps.push(await createImageBitmap(file));
-      } catch {
-        throw new Error(`Não foi possível abrir "${file.name}". Use PNG, WEBP ou JPG.`);
+    for (const { file, cells } of sources) {
+      const size = await imageSize(file);
+      for (const rect of cellRects(size, cells).rects) {
+        try {
+          bitmaps.push(cells === 1 ? await createImageBitmap(file) : await createImageBitmap(file, rect.sx, rect.sy, rect.w, rect.h));
+        } catch {
+          throw new Error(`Não foi possível abrir "${file.name}". Use PNG, WEBP ou JPG.`);
+        }
       }
     }
     const layout = stripLayout(bitmaps.map((bitmap) => ({ w: bitmap.width, h: bitmap.height })));
