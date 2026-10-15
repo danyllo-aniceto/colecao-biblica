@@ -5,13 +5,14 @@ import ScreenRotationRoundedIcon from '@mui/icons-material/ScreenRotationRounded
 import { Button } from '@/components/ui/button';
 import { unlockAudio } from '@/lib/sound/context';
 import { playCharacterSound, preloadCharacterSounds } from '@/lib/sound/character-sfx';
+import { useBoardMusic } from '@/lib/sound/board-music';
 import { playSfx } from '@/lib/sound/sfx';
 import type { Pose, SoundKey, Sounds, Sprites } from '@runner/characters';
 import { createBot, BOT_RESPAWN_TICKS, type Bot } from '@runner/bots';
 import { newPlayer, prepareLevel, progressOf, respawnAt, stepPlayer } from '@runner/engine';
 import { TICKS_PER_SECOND, type Level, type PlayerState, type PreparedLevel } from '@runner/types';
 import { drawScene, type Note, type RivalView } from '@/components/user/corrida/corrida-draw';
-import { preloadSprites } from '@/components/user/corrida/corrida-sprites';
+import { preloadArt, preloadSprites } from '@/components/user/corrida/corrida-sprites';
 import { SpriteView } from '@/components/user/corrida/sprite-view';
 
 const STEP_MS = 1000 / TICKS_PER_SECOND;
@@ -85,6 +86,10 @@ export function CorridaGame({ level, character, practice = false, autopilot, riv
   soundsRef.current = sounds;
   /** Som do personagem (se enviado pelo painel) ou o padrão do modo. */
   const sound = useCallback((key: SoundKey, fallback: Parameters<typeof playSfx>[0]) => playCharacterSound(soundsRef.current, key, fallback), []);
+
+  // A trilha do cenário toca no lugar da música do app enquanto a fase estiver aberta (segue os ajustes de som do jogador).
+  useBoardMusic(level.music);
+  useEffect(() => preloadArt(level.art), [level.art]);
 
   // Aquece sprites e sons antes de a corrida começar (nada de "piscar" a forma colorida no primeiro quadro).
   useEffect(() => {

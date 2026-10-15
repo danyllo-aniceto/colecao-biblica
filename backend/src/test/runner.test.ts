@@ -92,3 +92,137 @@ describe.skipIf(!hasDatabase)("corrida: personagens pelo painel", () => {
     expect(refused.body.message).toMatch(/não podem ser excluídos/);
   });
 });
+
+describe.skipIf(!hasDatabase)("corrida: cenários e fases pelo painel", () => {
+  beforeEach(async () => {
+    await resetDatabase();
+    // Cenários e fases do seed vêm da migração: volta ao estado inicial e tira o que os testes criaram.
+    await prisma.runnerLevel.deleteMany({ where: { system: false } });
+    await prisma.runnerScenario.deleteMany({ where: { system: false } });
+    await prisma.runnerScenario.updateMany({ data: { active: true, art: {}, musicUrl: null } });
+    await prisma.runnerLevel.updateMany({ data: { active: true } });
+    await prisma.runnerCharacter.deleteMany({ where: { system: false } });
+  });
+
+  it("o jogador lê a campanha pronta: 3 cenários do seed, com as fases na ordem e o versículo", async () => {
+    const user = await login("user@email.com");
+    const res = await api.get("/api/runner/campaign").set(bearer(user));
+    expect(res.status).toBe(200);
+    expect(res.body.scenarios.map((scenario: { id: string }) => scenario.id)).toEqual(["cidade-de-davi", "mar-vermelho", "vale-dos-ossos-secos"]);
+    const davi = res.body.scenarios[0];
+    expect(davi.levels.map((level: { id: string }) => level.id)).toEqual(["cd-1", "cd-2", "cd-3", "cd-4", "cd-5"]);
+    expect(davi.levels[0]).toMatchObject({ name: "O pastor", seed: 101, seconds: 50, order: ["RUN"], ref: "Salmos 23:1", verse: "O Senhor é o meu pastor; nada me faltará." });
+    expect(davi.theme).toEqual({ skyTop: "#1c1917", skyBottom: "#78350f" });
+    expect(davi.art).toEqual({});
+  });
+
+  it("só admin vê e edita cenários e fases", async () => {
+    const user = await login("user@email.com");
+    expect((await api.get("/api/runner/admin/scenarios").set(bearer(user))).status).toBe(403);
+    expect((await api.get("/api/runner/admin/levels").set(bearer(user))).status).toBe(403);
+    expect((await api.post("/api/runner/admin/scenarios").set(bearer(user)).send({ name: "X" })).status).toBe(403);
+  });
+
+  it("cria cenário com arte e trilha; atualiza pedaços e some da campanha sem fases ativas", async () => {
+    const admin = await login("admin2@email.com");
+    const created = await api.post("/api/runner/admin/scenarios").set(bearer(admin)).send({ name: "Jericó", story: "As muralhas caíram.", skyTop: "#111111", skyBottom: "#aa5500", art: { far: "https://x/far.webp", spike: "https://x/espeto.webp" }, musicUrl: "https://x/trilha.mp3" });
+    expect(created.status).toBe(201);
+    expect(created.body).toMatchObject({ slug: "jerico", name: "Jericó", art: { far: "https://x/far.webp", spike: "https://x/espeto.webp" }, musicUrl: "https://x/trilha.mp3", levelCount: 0, system: false });
+
+    const partial = await api.put(`/api/runner/admin/scenarios/${created.body.id}`).set(bearer(admin)).send({ art: { far: null, block: "https://x/bloco.webp" }, story: null });
+    expect(partial.body.art).toEqual({ spike: "https://x/espeto.webp", block: "https://x/bloco.webp" });
+    expect(partial.body.story).toBeNull();
+    expect(partial.body.name).toBe("Jericó");
+
+    // Cor inválida e chave de arte desconhecida são recusadas.
+    expect((await api.put(`/api/runner/admin/scenarios/${created.body.id}`).set(bearer(admin)).send({ skyTop: "azul" })).status).toBe(400);
+    expect((await api.put(`/api/runner/admin/scenarios/${created.body.id}`).set(bearer(admin)).send({ art: { chao: "https://x/a.png" } })).status).toBe(400);
+
+    // Sem fase ativa, o cenário não aparece para o jogador.
+    const user = await login("user@email.com");
+    const before = await api.get("/api/runner/campaign").set(bearer(user));
+    expect(before.body.scenarios.map((scenario: { id: string }) => scenario.id)).not.toContain("jerico");
+    const level = await api.post("/api/runner/admin/levels").set(bearer(admin)).send({ scenarioId: created.body.id, name: "Sete voltas", seed: 401, seconds: 60, order: ["RUN", "FLY"], verseRef: "Hebreus 11:30", verseText: "Pela fé caíram os muros de Jericó" });
+    expect(level.status).toBe(201);
+    const after = await api.get("/api/runner/campaign").set(bearer(user));
+    const jerico = after.body.scenarios.find((scenario: { id: string }) => scenario.id === "jerico");
+    expect(jerico.art).toEqual({ spike: "https://x/espeto.webp", block: "https://x/bloco.webp" });
+    expect(jerico.music).toBe("https://x/trilha.mp3");
+    expect(jerico.levels).toEqual([{ id: "sete-voltas", name: "Sete voltas", seed: 401, seconds: 60, order: ["RUN", "FLY"], ref: "Hebreus 11:30", verse: "Pela fé caíram os muros de Jericó", forks: true, powers: true }]);
+    // Cenário novo vai para o fim da campanha (ordem 100).
+    expect(after.body.scenarios.at(-1).id).toBe("jerico");
+  });
+
+  it("valida a fase: semente, duração, formas e versículo", async () => {
+    const admin = await login("admin2@email.com");
+    const scenario = await prisma.runnerScenario.findUniqueOrThrow({ where: { slug: "mar-vermelho" } });
+    const base = { scenarioId: scenario.id, name: "Teste", seed: 5, seconds: 60, order: ["RUN"], verseRef: "Êxodo 1:1", verseText: "Estes são os nomes" };
+    expect((await api.post("/api/runner/admin/levels").set(bearer(admin)).send(base)).status).toBe(201);
+    for (const patch of [{ seed: 0 }, { seed: 1_000_000 }, { seconds: 10 }, { seconds: 900 }, { order: [] }, { order: ["VOAR"] }, { name: "" }, { verseText: "só" }, { scenarioId: 999999 }]) {
+      const res = await api.post("/api/runner/admin/levels").set(bearer(admin)).send({ ...base, ...patch });
+      expect([400, 404], JSON.stringify(patch)).toContain(res.status);
+    }
+    // Identificador repetido ganha sufixo.
+    const second = await api.post("/api/runner/admin/levels").set(bearer(admin)).send(base);
+    expect(second.body.slug).toBe("teste-2");
+  });
+
+  it("edita a fase por pedaços, move de cenário e desativa (some da campanha)", async () => {
+    const admin = await login("admin2@email.com");
+    const first = await prisma.runnerLevel.findUniqueOrThrow({ where: { slug: "cd-1" } });
+    const edited = await api.put(`/api/runner/admin/levels/${first.id}`).set(bearer(admin)).send({ seconds: 55, order: ["RUN", "GRAVITY"], forks: false });
+    expect(edited.status).toBe(200);
+    expect(edited.body).toMatchObject({ slug: "cd-1", seconds: 55, order: ["RUN", "GRAVITY"], forks: false, name: "O pastor", seed: 101 });
+    expect((await api.put(`/api/runner/admin/levels/${first.id}`).set(bearer(admin)).send({ verseText: "uma" })).status).toBe(400);
+    expect((await api.put("/api/runner/admin/levels/999999").set(bearer(admin)).send({ name: "x" })).status).toBe(404);
+
+    await api.put(`/api/runner/admin/levels/${first.id}`).set(bearer(admin)).send({ active: false });
+    const user = await login("user@email.com");
+    const res = await api.get("/api/runner/campaign").set(bearer(user));
+    expect(res.body.scenarios[0].levels.map((level: { id: string }) => level.id)).toEqual(["cd-2", "cd-3", "cd-4", "cd-5"]);
+  });
+
+  it("lista as fases do painel paginadas, com filtro por cenário e busca", async () => {
+    const admin = await login("admin2@email.com");
+    const mar = await prisma.runnerScenario.findUniqueOrThrow({ where: { slug: "mar-vermelho" } });
+    const filtered = await api.get(`/api/runner/admin/levels?scenarioId=${mar.id}&size=3&page=0`).set(bearer(admin));
+    expect(filtered.body).toMatchObject({ totalElements: 4, totalPages: 2, size: 3 });
+    expect(filtered.body.content.map((level: { slug: string }) => level.slug)).toEqual(["mv-1", "mv-2", "mv-3"]);
+    expect(filtered.body.content[0].scenarioName).toBe("Mar Vermelho");
+    const search = await api.get("/api/runner/admin/levels?q=pastor").set(bearer(admin));
+    expect(search.body.content.map((level: { slug: string }) => level.slug)).toEqual(["cd-1"]);
+    const scenarios = await api.get("/api/runner/admin/scenarios?size=2&page=0").set(bearer(admin));
+    expect(scenarios.body).toMatchObject({ totalElements: 3, totalPages: 2 });
+    expect(scenarios.body.content[0]).toMatchObject({ slug: "cidade-de-davi", levelCount: 5, system: true });
+    const options = await api.get("/api/runner/admin/scenario-options").set(bearer(admin));
+    expect(options.body.map((item: { name: string }) => item.name)).toEqual(["Cidade de Davi", "Mar Vermelho", "Vale dos Ossos Secos"]);
+    const levels = await api.get("/api/runner/admin/level-options").set(bearer(admin));
+    expect(levels.body).toHaveLength(12);
+    expect(levels.body[0]).toEqual({ slug: "cd-1", name: "O pastor", scenarioName: "Cidade de Davi" });
+  });
+
+  it("exclusão: do seed só desativa; cenário com fases e fase que abre personagem não saem", async () => {
+    const admin = await login("admin2@email.com");
+    const davi = await prisma.runnerScenario.findUniqueOrThrow({ where: { slug: "cidade-de-davi" } });
+    const seeded = await api.delete(`/api/runner/admin/scenarios/${davi.id}`).set(bearer(admin));
+    expect(seeded.status).toBe(400);
+    expect(seeded.body.message).toMatch(/não podem ser excluídos/);
+    const cd1 = await prisma.runnerLevel.findUniqueOrThrow({ where: { slug: "cd-1" } });
+    expect((await api.delete(`/api/runner/admin/levels/${cd1.id}`).set(bearer(admin))).status).toBe(400);
+
+    const scenario = await api.post("/api/runner/admin/scenarios").set(bearer(admin)).send({ name: "Monte Sinai" });
+    const level = await api.post("/api/runner/admin/levels").set(bearer(admin)).send({ scenarioId: scenario.body.id, name: "Tábuas", seed: 9, seconds: 60, order: ["RUN"], verseRef: "Êxodo 20:3", verseText: "Não terás outros deuses diante de mim" });
+    const withLevels = await api.delete(`/api/runner/admin/scenarios/${scenario.body.id}`).set(bearer(admin));
+    expect(withLevels.status).toBe(400);
+    expect(withLevels.body.message).toMatch(/Exclua ou mova as fases/);
+
+    // Personagem que depende da fase impede a exclusão dela.
+    await api.post("/api/runner/admin/characters").set(bearer(admin)).send({ name: "Josué", unlockLevel: level.body.slug });
+    const held = await api.delete(`/api/runner/admin/levels/${level.body.id}`).set(bearer(admin));
+    expect(held.status).toBe(400);
+    expect(held.body.message).toMatch(/Josué/);
+    await prisma.runnerCharacter.deleteMany({ where: { name: "Josué" } });
+    expect((await api.delete(`/api/runner/admin/levels/${level.body.id}`).set(bearer(admin))).status).toBe(204);
+    expect((await api.delete(`/api/runner/admin/scenarios/${scenario.body.id}`).set(bearer(admin))).status).toBe(204);
+  });
+});

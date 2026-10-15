@@ -28,6 +28,8 @@ export default defineConfig({
   define: {
     __BUILD_ID__: JSON.stringify(resolveBuildId()),
   },
+  // O teste de fase do Painel roda num worker; o nome "admin-" o deixa fora do pré-cache do jogador (como o resto do painel).
+  worker: { format: "es", rollupOptions: { output: { entryFileNames: "assets/admin-[name]-[hash].js" } } },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),

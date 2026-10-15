@@ -160,12 +160,13 @@ Telas (aba Jogar → Corrida), no mesmo molde do Duelo/Tabuleiro, sem servidor (
 - [x] **Personagens por fase concluída** (coluna `unlock_level` = id da fase, migração `corrida_personagens_cenarios`): Davi já começa; Jônatas (cd-3), Joabe (cd-5), Moisés (mv-2), Arão (mv-3), Miriã (mv-4), Ezequiel (vo-3). Fechados aparecem com cadeado e "Conclua a fase…"; ao abrir um, aparece aviso. Editável no Painel.
 - [ ] Crescer: novos cenários/fases entram em `SCENARIOS`; personagem novo = cadastro no Painel com `unlock_level` (id da fase). Os outros 5 padrão (Débora, Elias, Ester, Jonas, Daniel) ficam **desativados** (migração `corrida_personagens_inativos`); o Painel reativa quando quiser.
 
-### Etapa 4 — Fases e cenários pelo Painel (G)
-- [ ] Migração: `runner_levels` (nome, história, versículo e referência, duração, semente/ordem das formas, cenário: fundo em 3 camadas, trilha, imagens dos obstáculos).
-- [ ] Painel → Corrida → Fases: criar/editar, enviar arte e trilha, "testar a fase" com o bot (valida que é possível antes de publicar).
-- [ ] App: desenho com a arte da fase (paralaxe em 3 camadas, obstáculos em imagem), trilha por cenário.
-- [ ] `docs/corrida-prompts-de-arte.md` (fundos e obstáculos) e `docs/corrida-prompts-de-musica.md` (trilhas).
-- [ ] Rotação das fases como **lugares/histórias** com o versículo de cada uma (você escolhe a ordem; lotes de 3).
+### Etapa 4 — Fases e cenários pelo Painel (G) — feita (falta a arte e a trilha de verdade)
+- [x] Migração `corrida_cenarios_fases`: `runner_scenarios` (nome, história, céu, `art` = fundo em 3 camadas + espeto + bloco, trilha, ativo, ordem) e `runner_levels` (identificador, cenário, nome, semente, duração, ordem das formas, versículo, caminhos/poderes ligados, ativo, ordem). O seed é a campanha atual (3 cenários, 12 fases) e os identificadores das fases (`cd-1`...) são os do `unlock_level` dos personagens.
+- [x] API: `GET /api/runner/campaign` (jogador; entra em `CACHEABLE_API_PATHS`, abre offline) e, só admin, CRUD paginado de `/runner/admin/scenarios` e `/runner/admin/levels` (+ `scenario-options` e `level-options` para os seletores). Regras: os do seed só desativam; cenário com fases e fase que abre personagem não saem; limites validados (semente 1–999999, 30–300 s, até 8 formas, versículo 2–40 palavras).
+- [x] Painel → **Corrida: cenários** (céu com prévia, 5 imagens, trilha) e **Corrida: fases** (filtro por cenário, semente com "sortear", formas em ordem, versículo com contagem de palavras, caminhos/poderes). **Testar fase** roda num worker (`runner-level-test.worker.ts`, ~5 s para 90 s de fase): bot perfeito e bot de toque atrasado precisam terminar e pegar todas as palavras. Fase nova nasce inativa; **ativar exige teste aprovado** (ou fase já publicada sem mudar nada que a gere). O personagem escolhe a fase que o abre num seletor.
+- [x] App: a campanha vem do Painel (`useRunnerCampaign`; sem internet vale a de partida em `SCENARIOS`); as fases são montadas pela semente no aparelho. Desenho com **fundo em 3 camadas** (paralaxe, cópias espelhadas), **espeto e bloco em imagem** e **trilha do cenário** no lugar da música do app (segue os ajustes de som).
+- [ ] Você: criar a arte dos cenários (fundo em 3 camadas, espeto e bloco) e as trilhas; os prompts ficam em `docs/corrida-prompts-de-arte.md` (fundos e obstáculos) e `docs/corrida-prompts-de-musica.md` (trilhas) — ainda a escrever.
+- [ ] Mais cenários e fases (lotes de 3): você escolhe a ordem e o versículo; cadastro direto pelo Painel.
 
 ### Etapa 5 — Campanha solo com progresso (G)
 - [ ] Migração: progresso do jogador (fase concluída, estrelas, melhor %, palavras pegas) e personagens abertos.

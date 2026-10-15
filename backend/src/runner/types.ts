@@ -38,6 +38,11 @@ export type LevelObject = SpikeObject | BlockObject | PortalObject | WordObject 
 /** Versículo escondido da fase: cada palavra coletada (`index`) aparece no lugar dele. */
 export type Verse = { ref: string; words: string[] };
 
+/** Imagens do cenário (todas opcionais): três camadas de fundo (longe, meio, perto; repetem na horizontal) e a figura do espeto e do bloco. */
+export const ART_KEYS = ["far", "mid", "near", "spike", "block"] as const;
+export type ArtKey = (typeof ART_KEYS)[number];
+export type ScenarioArt = Partial<Record<ArtKey, string>>;
+
 export type Level = {
   id: string;
   name: string;
@@ -49,6 +54,10 @@ export type Level = {
   objects: LevelObject[];
   /** Cores do céu do cenário (só visual). */
   theme?: { skyTop: string; skyBottom: string };
+  /** Arte do cenário (só visual): fundo em 3 camadas e obstáculos em imagem. Sem arte, o app desenha formas simples. */
+  art?: ScenarioArt;
+  /** Trilha do cenário (endereço do áudio). */
+  music?: string;
 };
 
 export type Rect = { l: number; t: number; r: number; b: number };

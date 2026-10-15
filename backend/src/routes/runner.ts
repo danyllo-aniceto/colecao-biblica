@@ -4,7 +4,10 @@ import { readPage, queryText } from "../lib/pagination";
 import { clearableText, parseId, requiredText, z } from "../lib/validation";
 import { requireAdmin } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
+import { SECONDS_RANGE, SEED_RANGE, MAX_FORM_ORDER } from "../runner/campaign";
 import { isHexColor, MAX_FRAMES, POSES, SOUND_KEYS } from "../runner/characters";
+import { ART_KEYS } from "../runner/types";
+import { adminLevels, adminScenarios, createLevel, createScenario, deleteLevel, deleteScenario, getCampaign, levelOptions, scenarioOptions, updateLevel, updateScenario } from "../services/runner-campaign";
 import { adminRunnerCharacters, createRunnerCharacter, deleteRunnerCharacter, listRunnerCharacters, updateRunnerCharacter } from "../services/runner-characters";
 
 /** Modo Corrida: personagens (sprites e sons enviados pelo painel). Nada do modo dá XP, moedas, figurinhas nem ranking geral. */
@@ -70,6 +73,136 @@ runnerRouter.delete(
   requireAdmin,
   asyncHandler(async (req, res) => {
     await deleteRunnerCharacter(prisma, parseId(String(req.params.id), "Personagem"));
+    res.status(204).end();
+  }),
+);
+
+// ---------- Campanha: cenários e fases (o painel cria, edita e testa; o jogador lê a campanha pronta) ----------
+
+const artUrl = z
+  .string()
+  .trim()
+  .max(5_500_000, "Imagem muito grande")
+  .refine((value) => (value.startsWith("data:image/") ? true : value.length <= 2048), { message: "Endereço da imagem muito longo" });
+
+const scenarioBody = z.object({
+  name: requiredText(60).optional(),
+  story: clearableText(300),
+  skyTop: color.optional(),
+  skyBottom: color.optional(),
+  art: z.record(z.enum(ART_KEYS), z.union([artUrl, z.null()])).optional(),
+  musicUrl: clearableText(2048),
+  active: z.boolean().optional(),
+  sortOrder: z.number().int().min(0).max(999).optional(),
+});
+
+const levelBody = z.object({
+  scenarioId: z.number().int().positive().optional(),
+  name: requiredText(80).optional(),
+  seed: z.number().int().min(SEED_RANGE.min).max(SEED_RANGE.max).optional(),
+  seconds: z.number().int().min(SECONDS_RANGE.min).max(SECONDS_RANGE.max).optional(),
+  order: z.array(z.enum(["RUN", "FLY", "GRAVITY"])).min(1).max(MAX_FORM_ORDER).optional(),
+  verseRef: requiredText(60).optional(),
+  verseText: requiredText(400).optional(),
+  forks: z.boolean().optional(),
+  powers: z.boolean().optional(),
+  active: z.boolean().optional(),
+  sortOrder: z.number().int().min(0).max(999).optional(),
+});
+
+/** Campanha ativa (qualquer jogador logado lê; o app guarda para abrir offline). */
+runnerRouter.get(
+  "/campaign",
+  asyncHandler(async (_req, res) => {
+    res.json({ scenarios: await getCampaign(prisma) });
+  }),
+);
+
+runnerRouter.get(
+  "/admin/scenarios",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const { page, size, skip, take } = readPage(req, 10, 50);
+    res.json(await adminScenarios(prisma, skip, take, page, size, queryText(req.query.q)));
+  }),
+);
+
+runnerRouter.get(
+  "/admin/scenario-options",
+  requireAdmin,
+  asyncHandler(async (_req, res) => {
+    res.json(await scenarioOptions(prisma));
+  }),
+);
+
+runnerRouter.get(
+  "/admin/level-options",
+  requireAdmin,
+  asyncHandler(async (_req, res) => {
+    res.json(await levelOptions(prisma));
+  }),
+);
+
+runnerRouter.post(
+  "/admin/scenarios",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const input = scenarioBody.extend({ name: requiredText(60) }).parse(req.body);
+    res.status(201).json(await createScenario(prisma, input as typeof input & { name: string }));
+  }),
+);
+
+runnerRouter.put(
+  "/admin/scenarios/:id",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    res.json(await updateScenario(prisma, parseId(String(req.params.id), "Cenário"), scenarioBody.parse(req.body)));
+  }),
+);
+
+runnerRouter.delete(
+  "/admin/scenarios/:id",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    await deleteScenario(prisma, parseId(String(req.params.id), "Cenário"));
+    res.status(204).end();
+  }),
+);
+
+runnerRouter.get(
+  "/admin/levels",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const { page, size, skip, take } = readPage(req, 10, 50);
+    const scenario = Number(req.query.scenarioId);
+    res.json(await adminLevels(prisma, skip, take, page, size, { scenarioId: Number.isInteger(scenario) && scenario > 0 ? scenario : undefined, search: queryText(req.query.q) }));
+  }),
+);
+
+runnerRouter.post(
+  "/admin/levels",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const input = levelBody
+      .extend({ scenarioId: z.number().int().positive(), name: requiredText(80), seed: z.number().int().min(SEED_RANGE.min).max(SEED_RANGE.max), seconds: z.number().int().min(SECONDS_RANGE.min).max(SECONDS_RANGE.max), order: z.array(z.enum(["RUN", "FLY", "GRAVITY"])).min(1).max(MAX_FORM_ORDER), verseRef: requiredText(60), verseText: requiredText(400) })
+      .parse(req.body);
+    res.status(201).json(await createLevel(prisma, input));
+  }),
+);
+
+runnerRouter.put(
+  "/admin/levels/:id",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    res.json(await updateLevel(prisma, parseId(String(req.params.id), "Fase"), levelBody.parse(req.body)));
+  }),
+);
+
+runnerRouter.delete(
+  "/admin/levels/:id",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    await deleteLevel(prisma, parseId(String(req.params.id), "Fase"));
     res.status(204).end();
   }),
 );

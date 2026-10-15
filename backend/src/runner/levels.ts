@@ -59,7 +59,11 @@ function journey(): Level {
   });
 }
 
-export const LEVELS: Level[] = [journey(), quickTraining(), ...CAMPAIGN_LEVELS];
+/** Fases fixas do app (treino e jornada de teste). */
+export const BASE_LEVELS: Level[] = [journey(), quickTraining()];
+
+/** Todas as fases de partida (as fixas e a campanha de partida); o app usa as do Painel (`useRunnerCampaign`). */
+export const LEVELS: Level[] = [...BASE_LEVELS, ...CAMPAIGN_LEVELS];
 
 export function levelById(id: string): Level | undefined {
   return LEVELS.find((level) => level.id === id);

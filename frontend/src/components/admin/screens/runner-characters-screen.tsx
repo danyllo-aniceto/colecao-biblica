@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
@@ -9,11 +9,12 @@ import { Field } from '@/components/ui/field';
 import { Input, Textarea } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { Pagination } from '@/components/ui/pagination';
+import { Select } from '@/components/ui/select';
 import { LoadingState } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { errorMessage, useToast } from '@/components/ui/toast';
 import { cn } from '@/lib/cn';
-import { createRunnerCharacter, deleteRunnerCharacter, listAdminRunnerCharacters, updateRunnerCharacter, type RunnerCharacterDto, type RunnerCharacterInput } from '@/lib/runner-api';
+import { createRunnerCharacter, deleteRunnerCharacter, listAdminRunnerCharacters, runnerLevelOptions, updateRunnerCharacter, type RunnerCharacterDto, type RunnerCharacterInput } from '@/lib/runner-api';
 import { MAX_FRAMES, POSES, POSE_INFO, SOUND_INFO, SOUND_KEYS, isHexColor, type Pose, type SoundKey } from '@runner/characters';
 import { portraitOf } from '@/components/user/corrida/corrida-characters';
 import { SpriteView } from '@/components/user/corrida/sprite-view';
@@ -30,6 +31,8 @@ type Draft = {
   color: string;
   active: boolean;
   sortOrder: string;
+  /** Id da fase que abre o personagem (vazio = já começa liberado). */
+  unlockLevel: string;
   sprites: Record<Pose, { url: string; frames: string }>;
   sounds: Record<SoundKey, string>;
 };
@@ -43,6 +46,7 @@ const emptyDraft = (): Draft => ({
   color: SWATCHES[0],
   active: true,
   sortOrder: '100',
+  unlockLevel: '',
   sprites: Object.fromEntries(POSES.map((pose) => [pose, { url: '', frames: String(POSE_INFO[pose].defaultFrames) }])) as Draft['sprites'],
   sounds: Object.fromEntries(SOUND_KEYS.map((key) => [key, ''])) as Draft['sounds'],
 });
@@ -54,6 +58,7 @@ function draftOf(character: RunnerCharacterDto): Draft {
   draft.color = character.color;
   draft.active = character.active;
   draft.sortOrder = String(character.sortOrder);
+  draft.unlockLevel = character.unlockLevel ?? '';
   for (const pose of POSES) {
     const sheet = character.sprites[pose];
     if (sheet) draft.sprites[pose] = { url: sheet.url, frames: String(sheet.frames) };
@@ -87,6 +92,7 @@ function toInput(draft: Draft): RunnerCharacterInput & { name: string } {
     color: draft.color.trim(),
     active: draft.active,
     sortOrder: Number(draft.sortOrder),
+    unlockLevel: draft.unlockLevel || null,
     // Pose sem imagem vira null: remove do personagem (no cadastro novo não faz nada).
     sprites: Object.fromEntries(POSES.map((pose) => [pose, draft.sprites[pose].url.trim() ? { url: draft.sprites[pose].url.trim(), frames: Number(draft.sprites[pose].frames) } : null])),
     sounds: Object.fromEntries(SOUND_KEYS.map((key) => [key, draft.sounds[key].trim() || null])),
@@ -135,6 +141,14 @@ export function RunnerCharactersScreen() {
   const [editing, setEditing] = useState<{ id: number | null; draft: Draft } | null>(null);
   const [errors, setErrors] = useState<Errors>({});
   const [saving, setSaving] = useState(false);
+  const [levels, setLevels] = useState<Array<{ slug: string; name: string; scenarioName: string }>>([]);
+  useEffect(() => {
+    runnerLevelOptions()
+      .then(setLevels)
+      .catch((reason) => toast.error(errorMessage(reason)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const levelChoices = useMemo(() => [{ value: '', label: 'Já começa liberado' }, ...levels.map((level) => ({ value: level.slug, label: `${level.scenarioName}: ${level.name}`, description: level.slug }))], [levels]);
 
   function open(character?: RunnerCharacterDto) {
     setErrors({});
@@ -256,6 +270,9 @@ export function RunnerCharactersScreen() {
                 <Input id="runner-order" type="number" min={0} max={999} value={draft.sortOrder} onChange={(event) => change({ sortOrder: event.target.value })} />
               </Field>
             </div>
+            <Field label="Fase que abre este personagem" hint="O jogador ganha o personagem ao concluir a fase na campanha." htmlFor="runner-unlock">
+              <Select id="runner-unlock" value={draft.unlockLevel} onChange={(unlockLevel) => change({ unlockLevel })} options={levelChoices} searchable aria-label="Fase que abre o personagem" />
+            </Field>
             <Field label="Descrição" hint="Frase curta que aparece no cartão do personagem." error={errors.description} htmlFor="runner-description">
               <Textarea id="runner-description" value={draft.description} onChange={(event) => change({ description: event.target.value })} maxLength={200} className="min-h-20" />
             </Field>

@@ -1087,6 +1087,55 @@ model RunnerCharacter {
   @@map("runner_characters")
 }
 
+/// Cenário da campanha da Corrida (um lugar da Bíblia com várias fases): cores do céu, arte (fundo em 3 camadas e obstáculos em imagem) e trilha.
+/// `art` = { far, mid, near, spike, block } (urls; todas opcionais). Sem arte, o app desenha as formas simples nas cores do céu.
+model RunnerScenario {
+  id        Int           @id @default(autoincrement())
+  slug      String        @unique
+  name      String
+  story     String?
+  skyTop    String        @default("#0f172a") @map("sky_top")
+  skyBottom String        @default("#1e3a5f") @map("sky_bottom")
+  art       Json          @default("{}")
+  musicUrl  String?       @map("music_url")
+  active    Boolean       @default(true)
+  sortOrder Int           @default(0) @map("sort_order")
+  /// Os do seed não podem ser excluídos (só desativados).
+  system    Boolean       @default(false)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @default(now()) @updatedAt @map("updated_at")
+  levels    RunnerLevel[]
+
+  @@index([active, sortOrder])
+  @@map("runner_scenarios")
+}
+
+/// Fase da campanha da Corrida. O app monta a fase pela semente (`buildJourney`), então a fase é só dados: semente, duração, ordem das formas e versículo.
+/// O `slug` é o id usado em `runner_characters.unlock_level` e no progresso do jogador.
+model RunnerLevel {
+  id         Int            @id @default(autoincrement())
+  slug       String         @unique
+  scenarioId Int            @map("scenario_id")
+  scenario   RunnerScenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  name       String
+  seed       Int
+  seconds    Int
+  /// Sequência de formas (RUN, FLY, GRAVITY) que se repete até completar o tempo.
+  formOrder  Json           @default("[\"RUN\"]") @map("form_order")
+  verseRef   String         @map("verse_ref")
+  verseText  String         @map("verse_text")
+  forks      Boolean        @default(true)
+  powers     Boolean        @default(true)
+  active     Boolean        @default(true)
+  sortOrder  Int            @default(0) @map("sort_order")
+  system     Boolean        @default(false)
+  createdAt  DateTime       @default(now()) @map("created_at")
+  updatedAt  DateTime       @default(now()) @updatedAt @map("updated_at")
+
+  @@index([scenarioId, sortOrder])
+  @@map("runner_levels")
+}
+
 /// Imagens de cada mini game: capa do cartão (16:9) e fundo da tela de jogo (vertical).
 model MiniGameDesign {
   id            Int      @id @default(autoincrement())

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import FaceRoundedIcon from '@mui/icons-material/FaceRounded';
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
@@ -16,8 +16,9 @@ import { LoadingState } from '@/components/ui/spinner';
 import { cn } from '@/lib/cn';
 import { BOT_LEVELS, type BotLevel } from '@runner/bots';
 import { TILES_PER_SECOND } from '@runner/journey';
-import { isCharacterUnlocked, isLevelUnlocked, isScenarioUnlocked, SCENARIOS, type Scenario } from '@runner/campaign';
-import { LEVELS } from '@runner/levels';
+import { isCharacterUnlocked, isLevelUnlocked, isScenarioUnlocked, type Scenario } from '@runner/campaign';
+import { BASE_LEVELS } from '@runner/levels';
+import { useRunnerCampaign } from '@/components/user/corrida/corrida-campaign';
 import type { Level } from '@runner/types';
 import type { CorridaResult, CorridaRival } from '@/components/user/corrida/corrida-game';
 import { loadBests, saveBest } from '@/components/user/corrida/corrida-storage';
@@ -68,6 +69,8 @@ export function CorridaHub() {
   const [playing, setPlaying] = useState<Playing | null>(null);
   const [bests, setBests] = useState(loadBests);
   const toast = useToast();
+  const { scenarios, levels: campaignLevels } = useRunnerCampaign();
+  const levels = useMemo(() => [...BASE_LEVELS, ...campaignLevels], [campaignLevels]);
   const allCharacters = useRunnerCharacters();
   const finished = new Set(Object.entries(bests).filter(([, best]) => best.finished).map(([id]) => id));
   // Só entram na escolha (e nos rivais) os personagens já abertos pela campanha.
@@ -115,11 +118,11 @@ export function CorridaHub() {
         ))}
       </div>
 
-      {tab === 'campaign' ? <CampaignTab bests={bests} finished={finished} characters={allCharacters} onPlay={(level) => setPlaying({ level, mode: 'campaign' })} /> : null}
-      {tab === 'free' ? <FreeTab bests={bests} onPlay={(level, mode) => setPlaying({ level, mode })} /> : null}
-      {tab === 'bots' ? <BotsTab characters={characters} character={character} onStart={(level, rivals) => setPlaying({ level, mode: 'race', rivals })} /> : null}
+      {tab === 'campaign' ? <CampaignTab scenarios={scenarios} levels={levels} bests={bests} finished={finished} characters={allCharacters} onPlay={(level) => setPlaying({ level, mode: 'campaign' })} /> : null}
+      {tab === 'free' ? <FreeTab levels={levels} bests={bests} onPlay={(level, mode) => setPlaying({ level, mode })} /> : null}
+      {tab === 'bots' ? <BotsTab levels={levels} characters={characters} character={character} onStart={(level, rivals) => setPlaying({ level, mode: 'race', rivals })} /> : null}
       {tab === 'multi' ? <MultiTab /> : null}
-      {tab === 'characters' ? <CharactersTab characters={allCharacters} finished={finished} character={character} onChoose={choose} /> : null}
+      {tab === 'characters' ? <CharactersTab levels={levels} characters={allCharacters} finished={finished} character={character} onChoose={choose} /> : null}
 
       {playing ? (
         <Suspense fallback={<LoadingState />}>
@@ -158,10 +161,10 @@ function Controls() {
 }
 
 /** Campanha solo: cenários (lugares da Bíblia) com várias fases cada; a fase seguinte abre ao concluir a anterior e cada cenário abre ao concluir o anterior. */
-function CampaignTab({ bests, finished, characters, onPlay }: { bests: Bests; finished: ReadonlySet<string>; characters: RunnerCharacter[]; onPlay: (level: Level) => void }) {
+function CampaignTab({ scenarios: scenarioList, levels: allLevels, bests, finished, characters, onPlay }: { scenarios: Scenario[]; levels: Level[]; bests: Bests; finished: ReadonlySet<string>; characters: RunnerCharacter[]; onPlay: (level: Level) => void }) {
   const [scenarioId, setScenarioId] = useState<string | null>(null);
-  const scenario = SCENARIOS.find((item) => item.id === scenarioId) ?? null;
-  const scenarios = usePagination(SCENARIOS, 10);
+  const scenario = scenarioList.find((item) => item.id === scenarioId) ?? null;
+  const scenarios = usePagination(scenarioList, 10);
   const levels = usePagination(scenario?.levels ?? [], 10);
   const unlocksOf = (levelId: string) => characters.filter((item) => item.unlockLevel === levelId).map((item) => item.name);
 
@@ -178,10 +181,10 @@ function CampaignTab({ bests, finished, characters, onPlay }: { bests: Bests; fi
         <Alert tone="info">Conclua cada fase para abrir a próxima. Aqui o seu melhor resultado fica guardado e as bandeiras (checkpoints) ajudam, mas terminar sem usá-las vale uma estrela ★.</Alert>
         <ol className="space-y-3">
           {levels.pageItems.map((def) => {
-            const level = LEVELS.find((item) => item.id === def.id);
+            const level = allLevels.find((item) => item.id === def.id);
             if (!level) return null;
             const index = scenario.levels.indexOf(def);
-            const unlocked = isLevelUnlocked(def.id, finished);
+            const unlocked = isLevelUnlocked(def.id, finished, scenarioList);
             const prize = unlocksOf(def.id);
             return (
               <li key={def.id} className={cn('panel flex flex-wrap items-center gap-3 p-4', !unlocked && 'opacity-70')}>
@@ -211,7 +214,7 @@ function CampaignTab({ bests, finished, characters, onPlay }: { bests: Bests; fi
       <Alert tone="info">Cada cenário é um lugar da Bíblia com várias fases. Concluir fases abre personagens novos, e concluir o cenário inteiro abre o próximo.</Alert>
       <ul className="space-y-3">
         {scenarios.pageItems.map((item: Scenario) => {
-          const unlocked = isScenarioUnlocked(item.id, finished);
+          const unlocked = isScenarioUnlocked(item.id, finished, scenarioList);
           const done = item.levels.filter((def) => finished.has(def.id)).length;
           const prizes = item.levels.flatMap((def) => unlocksOf(def.id));
           return (
@@ -239,8 +242,8 @@ function CampaignTab({ bests, finished, characters, onPlay }: { bests: Bests; fi
 }
 
 /** Livre: jogar sem valer nada. Qualquer fase, com checkpoints, sem guardar resultado. */
-function FreeTab({ bests, onPlay }: { bests: Bests; onPlay: (level: Level, mode: 'practice' | 'watch') => void }) {
-  const list = usePagination(LEVELS, 10);
+function FreeTab({ levels, bests, onPlay }: { levels: Level[]; bests: Bests; onPlay: (level: Level, mode: 'practice' | 'watch') => void }) {
+  const list = usePagination(levels, 10);
   return (
     <div className="space-y-4">
       <Alert tone="info">Treine à vontade: qualquer fase, com checkpoints, e nada disso conta para o seu melhor resultado.</Alert>
@@ -268,11 +271,11 @@ function FreeTab({ bests, onPlay }: { bests: Bests; onPlay: (level: Level, mode:
 }
 
 /** Contra bots: você e de 1 a 3 bots na mesma tela, na mesma fase. Quem cair volta ao último checkpoint; vence quem cruzar a linha primeiro. */
-function BotsTab({ characters, character, onStart }: { characters: RunnerCharacter[]; character: RunnerCharacter; onStart: (level: Level, rivals: CorridaRival[]) => void }) {
-  const [levelId, setLevelId] = useState(LEVELS[0].id);
+function BotsTab({ levels, characters, character, onStart }: { levels: Level[]; characters: RunnerCharacter[]; character: RunnerCharacter; onStart: (level: Level, rivals: CorridaRival[]) => void }) {
+  const [levelId, setLevelId] = useState(levels[0].id);
   const [count, setCount] = useState<'1' | '2' | '3'>('2');
   const [difficulty, setDifficulty] = useState<BotLevel>('STUDENT');
-  const level = LEVELS.find((item) => item.id === levelId) ?? LEVELS[0];
+  const level = levels.find((item) => item.id === levelId) ?? levels[0];
   const mine = portraitOf(character.sprites);
   // Os rivais são os outros personagens, na ordem da lista (com os sprites deles).
   const rivals: CorridaRival[] = rivalsFor(characters, character.id, Number(count)).map((item) => ({ name: item.name, color: item.color, sprites: item.sprites, skill: BOT_LEVELS[difficulty].skill, lag: BOT_LEVELS[difficulty].lag }));
@@ -283,7 +286,7 @@ function BotsTab({ characters, character, onStart }: { characters: RunnerCharact
       <div className="panel space-y-4 p-4">
         <div className="space-y-1.5">
           <p className="font-display text-sm font-bold text-ink">Fase</p>
-          <Select value={levelId} onChange={setLevelId} options={LEVELS.map((item) => ({ value: item.id, label: item.name, description: levelInfo(item) }))} aria-label="Fase da corrida" />
+          <Select value={levelId} onChange={setLevelId} options={levels.map((item) => ({ value: item.id, label: item.name, description: levelInfo(item) }))} aria-label="Fase da corrida" />
         </div>
         <div className="space-y-1.5">
           <p className="font-display text-sm font-bold text-ink">Quantos bots</p>
@@ -344,7 +347,7 @@ function MultiTab() {
 }
 
 /** Personagens: escolha o corredor. Todos correm igual; muda só a aparência (sprites e sons vêm do Painel na etapa 3; na campanha, cada novo se abre ao concluir uma fase). */
-function CharactersTab({ characters, finished, character, onChoose }: { characters: RunnerCharacter[]; finished: ReadonlySet<string>; character: RunnerCharacter; onChoose: (character: RunnerCharacter) => void }) {
+function CharactersTab({ levels, characters, finished, character, onChoose }: { characters: RunnerCharacter[]; levels: Level[]; finished: ReadonlySet<string>; character: RunnerCharacter; onChoose: (character: RunnerCharacter) => void }) {
   const list = usePagination(characters, 8);
   return (
     <div className="space-y-4">
@@ -353,7 +356,7 @@ function CharactersTab({ characters, finished, character, onChoose }: { characte
         {list.pageItems.map((item) => {
           const selected = item.id === character.id;
           const open = isCharacterUnlocked(item.unlockLevel, finished);
-          const lockedBy = LEVELS.find((level) => level.id === item.unlockLevel)?.name;
+          const lockedBy = levels.find((level) => level.id === item.unlockLevel)?.name;
           return (
             <li key={item.id}>
               <button
