@@ -93,10 +93,18 @@ ideia de esforço relativo, não de prazo.
 - [x] Rodada de ajustes depois do seu primeiro teste: ritmo mais lento (`TIME_SCALE`), **pulo duplo**, **tela deitada** (zoom, aviso para girar), **fase de
   minutos** (jornada de 2 min 30 s gerada por trechos), versículo escondido aparecendo no rodapé.
 
-### Etapa 1 — Sensação e treino (P)
+### Etapa 1 — Sensação e treino (P) — feita (falta só o seu teste no celular)
 - [ ] Você testa o novo ritmo e o pulo duplo no celular; ajusto `TIME_SCALE`, pulos, voo e gravidade.
-- [ ] Checkpoints e "recomeçar do checkpoint" no treino; porcentagem do melhor resultado por fase.
-- [ ] Sons básicos (pulo, queda, palavra, chegada) com sons genéricos, para o motor de som já existir antes dos sons dos personagens.
+- [x] **Treinar** (com checkpoints) × **Jogar** (a fase inteira, vale para o melhor resultado) × **Ver um bot jogar**. Checkpoint salvo a cada portal; ao cair, "Voltar ao
+  checkpoint" (pede um toque para continuar) ou "Do começo". O treino não conta para o melhor resultado.
+- [x] **Melhor resultado por fase** (`records.ts`, testado): maior porcentagem, mais palavras e "concluída", guardado no aparelho (`corrida-storage.ts`) até a campanha
+  com servidor (etapa 5).
+- [x] **Sons** sintetizados (sem arquivos, funcionam offline): pulo, pulo duplo, palavra, inverter gravidade, portal, queda e vitória (`RunnerSfxName` em `sfx.ts`).
+  Seguem a configuração de som do jogador. Os sons por personagem entram na etapa 3/8.
+- [x] **Fases mais confortáveis.** O bot agora joga com o **toque atrasado em 3 passos** (`TOUCH_DELAY`, como o dedo de verdade) e toda fase precisa terminar assim
+  (teste em `bots.test.ts`). Isso achou e corrigiu trechos apertados do gerador: fileira de 3 espetos (só 5 passos de folga no pulo simples; agora 1 a 2), degraus de 3 colunas
+  (às vezes impossíveis; agora 5), bloco com espeto em cima (espeto mais longe) e túneis de voo com vão de 3 linhas (agora 4; `flyGap` para fases difíceis).
+  Regra de projeto: **o pulo simples precisa ter janela de pelo menos ~10 passos**; só fase marcada como difícil pode exigir pulo duplo cravado.
 
 ### Etapa 2 — Estrutura do modo: página principal (M)
 Telas (aba Jogar → Corrida), no mesmo molde do Duelo/Tabuleiro, sem servidor ainda:

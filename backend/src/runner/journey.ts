@@ -16,6 +16,8 @@ export type JourneyOptions = {
   verse: Verse;
   /** Sequência de formas (repete até completar o tempo). */
   order?: Form[];
+  /** Vão mínimo dos túneis de voo, em linhas (4 = confortável; 3 = difícil). */
+  flyGap?: number;
 };
 
 /** Quanto dura cada tipo de trecho, em segundos (varia um pouco por sorteio). */
@@ -28,43 +30,46 @@ const SECTION_SECONDS: Record<Form, number> = { RUN: 26, FLY: 18, GRAVITY: 22 };
 function runPattern(objects: LevelObject[], carriers: Carrier[], x: number, random: Random): number {
   const pick = random();
   if (pick < 0.3) {
-    const count = between(random, 1, 3);
+    // Até 2 espetos: com 3 o pulo simples sobra só ~5 passos de folga (só o pulo duplo salva), apertado demais para o toque de gente.
+    const count = between(random, 1, 2);
     carriers.push({ x: x + Math.floor(count / 2), y: 2 });
     for (let index = 0; index < count; index += 1) objects.push({ kind: "spike", x: x + index });
     return x + count + between(random, 6, 9);
   }
   if (pick < 0.55) {
-    const width = between(random, 3, 5);
+    const width = between(random, 4, 6);
     objects.push({ kind: "block", x, y: 0, w: width, h: 1 });
     carriers.push({ x: x + Math.floor(width / 2), y: 1 });
     return x + width + between(random, 6, 8);
   }
   if (pick < 0.7) {
-    objects.push({ kind: "block", x, y: 0, w: 3, h: 1 }, { kind: "block", x: x + 3, y: 0, w: 3, h: 2 });
-    carriers.push({ x: x + 4, y: 2 });
-    return x + 6 + 6;
+    // Degraus largos: com 3 colunas cada, o tempo entre o pouso e o pulo seguinte era curto demais (e às vezes impossível).
+    objects.push({ kind: "block", x, y: 0, w: 5, h: 1 }, { kind: "block", x: x + 5, y: 0, w: 5, h: 2 });
+    carriers.push({ x: x + 7, y: 2 });
+    return x + 10 + 7;
   }
   if (pick < 0.85) {
-    objects.push({ kind: "block", x, y: 0, w: 9, h: 1 }, { kind: "spike", x: x + 5, y: 1 });
-    return x + 9 + 6;
+    // Pousa no bloco e só depois pula o espeto: sobra ~6 colunas entre o pouso e o espeto (4 era apertado demais).
+    objects.push({ kind: "block", x, y: 0, w: 12, h: 1 }, { kind: "spike", x: x + 8, y: 1 });
+    return x + 12 + 6;
   }
   if (pick < 0.95) {
-    objects.push({ kind: "spike", x }, { kind: "spike", x: x + 6 });
-    return x + 7 + 7;
+    objects.push({ kind: "spike", x }, { kind: "spike", x: x + 8 });
+    return x + 9 + 7;
   }
   return x + 5;
 }
 
-/** Trecho de voo: túneis cujo vão (no mínimo 3 linhas) anda no máximo 1 linha por passagem. */
-function flySection(objects: LevelObject[], carriers: Carrier[], x: number, length: number, random: Random): number {
+/** Trecho de voo: túneis cujo vão (no mínimo `minGap` linhas) anda no máximo 1 linha por passagem em cada lado. */
+function flySection(objects: LevelObject[], carriers: Carrier[], x: number, length: number, random: Random, minGap: number): number {
   let floor = 1;
-  let ceil = 2;
+  let ceil = 1;
   let cursor = x;
   const end = x + length;
   while (cursor < end) {
-    floor = Math.max(0, Math.min(3, floor + between(random, -1, 1)));
-    ceil = Math.max(0, Math.min(ROWS - 3 - floor, ceil + between(random, -1, 1)));
-    if (ceil > ROWS - 3 - floor) ceil = ROWS - 3 - floor;
+    const room = ROWS - minGap;
+    floor = Math.max(0, Math.min(room, floor + between(random, -1, 1)));
+    ceil = Math.max(0, Math.min(room - floor, ceil + between(random, -1, 1)));
     if (floor > 0) objects.push({ kind: "block", x: cursor, y: 0, w: 2, h: floor });
     if (ceil > 0) objects.push({ kind: "block", x: cursor, y: ROWS - ceil, w: 2, h: ceil });
     carriers.push({ x: cursor, y: floor + Math.floor((ROWS - floor - ceil) / 2) });
@@ -115,7 +120,7 @@ export function buildJourney(options: JourneyOptions): Level {
     if (form === "RUN") {
       while (x < end) x = runPattern(objects, carriers, x, random);
     } else if (form === "FLY") {
-      x = flySection(objects, carriers, x, length, random);
+      x = flySection(objects, carriers, x, length, random, options.flyGap ?? 4);
     } else {
       x = gravitySection(objects, x, length, random);
     }

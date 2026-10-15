@@ -5,10 +5,13 @@ import { getSoundSettings } from '@/lib/sound/settings';
  * Efeitos sonoros sintetizados na hora (osciladores e ruído): não há arquivos para baixar
  * e funcionam offline. Cada som é curto e discreto.
  */
-export type SfxName = 'click' | 'soft' | 'toggleOn' | 'toggleOff' | 'open' | 'close' | 'flip' | 'swipe' | 'success' | 'error' | 'correct' | 'wrong' | 'coin' | 'reward' | ChestSfxName | MiniGameSfxName;
+export type SfxName = 'click' | 'soft' | 'toggleOn' | 'toggleOff' | 'open' | 'close' | 'flip' | 'swipe' | 'success' | 'error' | 'correct' | 'wrong' | 'coin' | 'reward' | ChestSfxName | MiniGameSfxName | RunnerSfxName;
 
 /** Sons dos mini games (hoje o caça-palavras): arrastar sobre as letras, achar, errar, dica, vitória e fim sem sucesso. */
 export type MiniGameSfxName = 'wsPick' | 'wsTick' | 'wsFound' | 'wsMiss' | 'wsHint' | 'wsWin' | 'wsLose' | 'wsReveal' | 'anPick' | 'anRemove' | 'anRight' | 'anWrong' | 'anTick' | 'anTimeout';
+
+/** Sons da Corrida: pulo, pulo duplo, palavra do versículo, inverter a gravidade, portal, queda e chegada. */
+export type RunnerSfxName = 'rnJump' | 'rnDouble' | 'rnWord' | 'rnFlip' | 'rnPortal' | 'rnDeath' | 'rnWin';
 
 /** Sons da abertura de baús: um por nível de baú, um por tipo de prêmio e os do suspense e do carretel. */
 export type ChestSfxName =
@@ -90,6 +93,28 @@ function thud(o: Out, start = 0, from = 140, to = 55, peak = 0.5) {
 }
 
 const RECIPES: Record<SfxName, (o: Out) => void> = {
+  rnJump: (o) => tone(o, 'triangle', 300, 640, 0, 0.12, 0.28),
+  rnDouble: (o) => {
+    tone(o, 'triangle', 480, 900, 0, 0.12, 0.26);
+    tone(o, 'sine', 720, 1250, 0.05, 0.1, 0.18);
+  },
+  rnWord: (o) => notes(o, 'sine', [880, 1175, 1568], 0.06, 0.14, 0.26),
+  rnFlip: (o) => {
+    whoosh(o, 500, 1900, 0, 0.16, 0.32, 0.9);
+    tone(o, 'sine', 420, 210, 0, 0.14, 0.14);
+  },
+  rnPortal: (o) => {
+    tone(o, 'sine', 260, 880, 0, 0.3, 0.22);
+    whoosh(o, 400, 2400, 0, 0.3, 0.25, 1);
+  },
+  rnDeath: (o) => {
+    tone(o, 'sawtooth', 320, 55, 0, 0.35, 0.3);
+    whoosh(o, 900, 140, 0, 0.28, 0.4, 0.8);
+  },
+  rnWin: (o) => {
+    notes(o, 'triangle', [523, 659, 784, 1047], 0.1, 0.28, 0.3);
+    notes(o, 'sine', [1047, 1319, 1568], 0.08, 0.5, 0.14, 0.4);
+  },
   click: (o) => tone(o, 'triangle', 620, 420, 0, 0.07, 0.35),
   soft: (o) => tone(o, 'sine', 480, 420, 0, 0.05, 0.25),
   toggleOn: (o) => {
@@ -279,7 +304,7 @@ const RECIPES: Record<SfxName, (o: Out) => void> = {
 };
 
 /** Sons mais longos que o padrão (a saída só é desligada depois que eles terminam). */
-const LENGTH_MS: Partial<Record<SfxName, number>> = { chestGold: 1800, chestDiamond: 2400, chestEmerald: 3200, stickerSpecial: 3200, suspenseEpic: 1500, suspenseLegendary: 2500, stickerEpic: 1500, stickerLegendary: 2800, wsWin: 1800 };
+const LENGTH_MS: Partial<Record<SfxName, number>> = { chestGold: 1800, chestDiamond: 2400, chestEmerald: 3200, stickerSpecial: 3200, suspenseEpic: 1500, suspenseLegendary: 2500, stickerEpic: 1500, stickerLegendary: 2800, wsWin: 1800, rnWin: 1200 };
 
 let lastPlayed = new Map<SfxName, number>();
 
