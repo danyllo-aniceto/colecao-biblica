@@ -6,6 +6,7 @@ import PhotoLibraryRoundedIcon from '@mui/icons-material/PhotoLibraryRounded';
 import { Button } from '@/components/ui/button';
 import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Segmented } from '@/components/ui/segmented';
 import { Switch } from '@/components/ui/switch';
 import { errorMessage, useToast } from '@/components/ui/toast';
 import { buildStripCanvas, canvasToFile, imageSize } from '@/lib/sprite-strip';
@@ -17,7 +18,7 @@ import { cn } from '@/lib/cn';
 import { IconAction } from './admin-ui';
 
 /** `cells` fica como texto (é o que o campo numérico guarda); `size` vem da própria imagem, para avisar se a tira não é de quadros quadrados. */
-type Item = { id: number; file: File; thumb: string; cells: string; size: { w: number; h: number } | null };
+type Item = { id: number; file: File; thumb: string; cells: string; split: 'ink' | 'equal'; size: { w: number; h: number } | null };
 
 /** Quadros que o item declara (1 a MAX_FRAMES) ou `null` se o campo estiver inválido. */
 function cellsOf(item: Item): number | null {
@@ -38,6 +39,7 @@ export function FrameStripBuilder({ poseName, fps = 8, onBuilt }: { poseName: st
   const [removeGreen, setRemoveGreen] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
   const itemsRef = useRef(items);
   itemsRef.current = items;
@@ -54,7 +56,7 @@ export function FrameStripBuilder({ poseName, fps = 8, onBuilt }: { poseName: st
   const allValid = items.length > 0 && items.every((item) => cellsOf(item) !== null);
   const overflow = total > MAX_FRAMES;
   const ready = allValid && !overflow;
-  const buildKey = items.map((item) => `${item.id}:${item.cells}`).join('|');
+  const buildKey = items.map((item) => `${item.id}:${item.cells}:${item.split}`).join('|');
 
   // Prévia local (sem enviar nada): remonta a cada mudança, quando os campos estão válidos.
   useEffect(() => {
@@ -66,11 +68,12 @@ export function FrameStripBuilder({ poseName, fps = 8, onBuilt }: { poseName: st
     if (!ready) return undefined;
     let cancelled = false;
     buildStripCanvas(
-      items.map((item) => ({ file: item.file, cells: cellsOf(item) ?? 1 })),
+      items.map((item) => ({ file: item.file, cells: cellsOf(item) ?? 1, split: item.split })),
       { removeGreen },
     )
-      .then(({ canvas }) => {
+      .then(({ canvas, warnings: found }) => {
         if (cancelled) return;
+        setWarnings(found);
         setPreview(canvas.toDataURL('image/png'));
         setPreviewError(null);
       })
@@ -90,7 +93,7 @@ export function FrameStripBuilder({ poseName, fps = 8, onBuilt }: { poseName: st
     // Cada arquivo novo entra com 1 quadro; o que passar do limite (somando os quadros já declarados) fica de fora.
     const room = Math.max(0, MAX_FRAMES - total);
     if (picked.length > room) toast.error(`No máximo ${MAX_FRAMES} quadros por pose (a soma de todas as imagens).`);
-    const added: Item[] = picked.slice(0, room).map((file) => ({ id: nextId++, file, thumb: URL.createObjectURL(file), cells: '1', size: null }));
+    const added: Item[] = picked.slice(0, room).map((file) => ({ id: nextId++, file, thumb: URL.createObjectURL(file), cells: '1', split: 'ink', size: null }));
     setItems((current) => [...current, ...added]);
     // O tamanho de cada imagem chega depois e serve só para o aviso de "tira que não parece de quadros quadrados".
     for (const item of added) {
@@ -99,6 +102,10 @@ export function FrameStripBuilder({ poseName, fps = 8, onBuilt }: { poseName: st
         .catch(() => undefined);
     }
     if (inputRef.current) inputRef.current.value = '';
+  }
+
+  function setSplit(index: number, split: 'ink' | 'equal') {
+    setItems((current) => current.map((item, position) => (position === index ? { ...item, split } : item)));
   }
 
   function setCells(index: number, cells: string) {
@@ -135,7 +142,7 @@ export function FrameStripBuilder({ poseName, fps = 8, onBuilt }: { poseName: st
     setSending(true);
     try {
       const { canvas, frames } = await buildStripCanvas(
-        items.map((item) => ({ file: item.file, cells: cellsOf(item) ?? 1 })),
+        items.map((item) => ({ file: item.file, cells: cellsOf(item) ?? 1, split: item.split })),
         { removeGreen },
       );
       const uploaded = await uploadImage(await canvasToFile(canvas, `${poseName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'pose'}.png`), 'conteudo');
@@ -156,7 +163,7 @@ export function FrameStripBuilder({ poseName, fps = 8, onBuilt }: { poseName: st
         <Button type="button" size="sm" variant="secondary" onClick={() => inputRef.current?.click()} disabled={sending || total >= MAX_FRAMES}>
           <PhotoLibraryRoundedIcon fontSize="small" /> {items.length ? 'Adicionar mais imagens' : 'Escolher as imagens'}
         </Button>
-        <span className="text-xs font-semibold text-muted">Escolha várias imagens de uma vez: quadros soltos (1 quadro cada) ou tiras prontas (informe quantos quadros há em cada uma). A ordem é a do nome do arquivo e dá para trocar abaixo. No máximo {MAX_FRAMES} quadros no total.</span>
+        <span className="text-xs font-semibold text-muted">Escolha várias imagens de uma vez: quadros soltos (1 quadro cada) ou tiras prontas (informe quantos quadros há em cada uma). Nas tiras, o Painel acha cada personagem pelo desenho (corta nos vãos entre eles e centra cada um), em vez de dividir em partes iguais. A ordem é a do nome do arquivo e dá para trocar abaixo. No máximo {MAX_FRAMES} quadros no total.</span>
         <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp,image/avif" multiple className="hidden" onChange={(event) => add(event.target.files)} />
       </div>
 
@@ -166,7 +173,8 @@ export function FrameStripBuilder({ poseName, fps = 8, onBuilt }: { poseName: st
             {items.map((item, index) => {
               const cells = cellsOf(item);
               const strip = (cells ?? 1) > 1;
-              const warning = cells !== null && item.size ? cellRects(item.size, cells).warning : null;
+              // Só a divisão em partes iguais precisa do aviso de "quadro não quadrado"; pelo desenho os avisos vêm da própria detecção (abaixo da lista).
+              const warning = cells !== null && cells > 1 && item.split === 'equal' && item.size ? cellRects(item.size, cells).warning : null;
               return (
                 <li key={item.id} className={cn('flex flex-col items-center gap-1 rounded-xl border-2 border-edge bg-surface p-1.5', strip ? 'w-48' : 'w-28')}>
                   <span className={cn('relative flex h-16 items-center justify-center overflow-hidden rounded-lg bg-[repeating-conic-gradient(var(--surface-3)_0%_25%,transparent_0%_50%)] bg-[length:12px_12px]', strip ? 'w-full' : 'w-16')}>
@@ -176,6 +184,18 @@ export function FrameStripBuilder({ poseName, fps = 8, onBuilt }: { poseName: st
                   <Field label="Quadros nesta imagem" error={cells === null ? `De 1 a ${MAX_FRAMES}.` : undefined} htmlFor={`strip-cells-${item.id}`} className="w-full">
                     <Input id={`strip-cells-${item.id}`} type="number" min={1} max={MAX_FRAMES} value={item.cells} onChange={(event) => setCells(index, event.target.value)} disabled={sending} />
                   </Field>
+                  {strip ? (
+                    <Segmented
+                      value={item.split}
+                      onChange={(split) => setSplit(index, split)}
+                      options={[
+                        { value: 'ink', label: 'Pelo desenho' },
+                        { value: 'equal', label: 'Partes iguais' },
+                      ]}
+                      aria-label={`Como dividir a tira ${index + 1}`}
+                      className="[&_button]:h-8 [&_button]:px-2 [&_button]:text-xs"
+                    />
+                  ) : null}
                   {warning ? <p className="w-full text-[11px] font-semibold leading-tight text-warning-strong dark:text-primary">{warning}</p> : null}
                   <span className="flex items-center">
                     <IconAction label="Mover para trás" onClick={() => move(index, -1)} disabled={index === 0 || sending}>
@@ -192,6 +212,15 @@ export function FrameStripBuilder({ poseName, fps = 8, onBuilt }: { poseName: st
               );
             })}
           </ol>
+          {warnings.length > 0 && ready ? (
+            <ul className="space-y-1">
+              {warnings.map((text) => (
+                <li key={text} className="text-xs font-semibold text-warning-strong dark:text-primary">
+                  {text}
+                </li>
+              ))}
+            </ul>
+          ) : null}
           {overflow ? <p className="text-xs font-semibold text-danger">Os quadros somam {total}, e o máximo é {MAX_FRAMES} por pose. Reduza o número de quadros de alguma imagem ou remova imagens.</p> : null}
           <Switch checked={removeGreen} onChange={setRemoveGreen} label="Remover o fundo verde (#00FF00)" description="Deixe ligado se gerou os quadros com fundo verde chapado. Se o personagem tiver roupa verde, deixe desligado e remova o fundo por fora." />
           <div className="flex flex-wrap items-end gap-4">
