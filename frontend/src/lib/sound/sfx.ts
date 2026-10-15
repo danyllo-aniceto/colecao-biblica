@@ -11,7 +11,7 @@ export type SfxName = 'click' | 'soft' | 'toggleOn' | 'toggleOff' | 'open' | 'cl
 export type MiniGameSfxName = 'wsPick' | 'wsTick' | 'wsFound' | 'wsMiss' | 'wsHint' | 'wsWin' | 'wsLose' | 'wsReveal' | 'anPick' | 'anRemove' | 'anRight' | 'anWrong' | 'anTick' | 'anTimeout';
 
 /** Sons da Corrida: pulo, pulo duplo, palavra do versículo, inverter a gravidade, portal, queda e chegada. */
-export type RunnerSfxName = 'rnJump' | 'rnDouble' | 'rnWord' | 'rnFlip' | 'rnPortal' | 'rnCheckpoint' | 'rnDeath' | 'rnWin';
+export type RunnerSfxName = 'rnJump' | 'rnDouble' | 'rnWord' | 'rnFlip' | 'rnPortal' | 'rnCheckpoint' | 'rnDeath' | 'rnWin' | 'rnPower' | 'rnShield';
 
 /** Sons da abertura de baús: um por nível de baú, um por tipo de prêmio e os do suspense e do carretel. */
 export type ChestSfxName =
@@ -106,6 +106,14 @@ const RECIPES: Record<SfxName, (o: Out) => void> = {
   rnPortal: (o) => {
     tone(o, 'sine', 260, 880, 0, 0.3, 0.22);
     whoosh(o, 400, 2400, 0, 0.3, 0.25, 1);
+  },
+  rnPower: (o) => {
+    notes(o, 'square', [523, 659, 784, 1047], 0.05, 0.12, 0.16);
+    whoosh(o, 300, 1800, 0, 0.22, 0.2, 0.9);
+  },
+  rnShield: (o) => {
+    tone(o, 'sawtooth', 700, 180, 0, 0.18, 0.22);
+    tone(o, 'sine', 1200, 500, 0, 0.12, 0.16);
   },
   rnCheckpoint: (o) => notes(o, 'sine', [660, 990], 0.07, 0.16, 0.22),
   rnDeath: (o) => {

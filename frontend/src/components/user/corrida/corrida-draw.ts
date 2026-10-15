@@ -1,7 +1,8 @@
 import { frameFor, pickSheet, poseFor, type Sprites } from '@runner/characters';
 import { progressOf } from '@runner/engine';
 import { spriteImage } from '@/components/user/corrida/corrida-sprites';
-import { CEIL_Y, FLOOR_Y, PLAYER, SPEED, TICKS_PER_SECOND, TILE, type Form, type PlayerState, type PreparedLevel } from '@runner/types';
+import { MAGNET_RANGE, MAGNET_TICKS, POWER_INFO, TRIPLE_TICKS, TURBO_TICKS, type PowerKind } from '@runner/powers';
+import { CEIL_Y, FLOOR_Y, PLAYER, SPEED, TICKS_PER_SECOND, TILE, type Form, type LevelObject, type PlayerState, type PreparedLevel } from '@runner/types';
 
 /** Altura do mundo em px (7 linhas do campo + 40 de teto + 40 de chão); a tela só escala. */
 export const WORLD_H = FLOOR_Y + 40;
@@ -64,6 +65,110 @@ function drawSprite(ctx: CanvasRenderingContext2D, p: PlayerState, sprites: Spri
   ctx.drawImage(image, frame * frameW, 0, frameW, image.height, -width / 2, PLAYER / 2 - SPRITE_SIZE, width, SPRITE_SIZE);
   ctx.restore();
   return true;
+}
+
+/** Número do poder (a ordem em que a fase os lista), o mesmo que o motor guarda em `powers` do jogador. */
+const powerIds = new WeakMap<PreparedLevel, Map<LevelObject, number>>();
+function powerIdOf(level: PreparedLevel, object: LevelObject): number {
+  let ids = powerIds.get(level);
+  if (!ids) {
+    ids = new Map();
+    for (const item of level.level.objects) if (item.kind === 'power') ids.set(item, ids.size);
+    powerIds.set(level, ids);
+  }
+  return ids.get(object) ?? -1;
+}
+
+/** Item de poder no caminho: quadrado colorido com o símbolo, flutuando e brilhando. */
+function drawPower(ctx: CanvasRenderingContext2D, power: PowerKind, cx: number, cy: number, tick: number) {
+  const info = POWER_INFO[power];
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.globalAlpha = 0.28 + 0.12 * Math.sin(tick / 9);
+  ctx.fillStyle = info.color;
+  ctx.beginPath();
+  ctx.arc(0, 0, 23, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.rotate(Math.sin(tick / 20) * 0.12);
+  ctx.fillStyle = info.color;
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.roundRect(-15, -15, 30, 30, 8);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#fff';
+  ctx.font = '800 18px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(info.symbol, 0, 1);
+  ctx.restore();
+}
+
+/** Corredor com os efeitos dos poderes: fantasma translúcido com rastro (Turbo/imune), bolha (Escudo), anel (Ímã) e brilho roxo (Pulo triplo). */
+function drawRunnerFx(ctx: CanvasRenderingContext2D, p: PlayerState, color: string, alpha: number, sprites: Sprites | undefined, deadFor: number, stopped: boolean, clock: number) {
+  const fx = p.effects;
+  const cx = p.x + PLAYER / 2;
+  const cy = p.y + PLAYER / 2;
+  if (p.status !== 'dead') {
+    if (fx.magnet > 0) {
+      ctx.save();
+      ctx.globalAlpha = 0.18 + 0.08 * Math.sin(clock / 6);
+      ctx.strokeStyle = POWER_INFO.MAGNET.color;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 8]);
+      ctx.lineDashOffset = -clock;
+      ctx.beginPath();
+      ctx.arc(cx, cy, MAGNET_RANGE, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+    if (fx.turbo > 0) {
+      ctx.save();
+      ctx.strokeStyle = POWER_INFO.TURBO.color;
+      ctx.lineCap = 'round';
+      ctx.lineWidth = 4;
+      for (let streak = 0; streak < 4; streak += 1) {
+        const y = cy - 14 + streak * 9;
+        const length = 26 + ((clock * 3 + streak * 17) % 22);
+        ctx.globalAlpha = 0.55 - streak * 0.08;
+        ctx.beginPath();
+        ctx.moveTo(p.x - 4, y);
+        ctx.lineTo(p.x - 4 - length, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+  const immune = fx.turbo > 0 || fx.grace > 0;
+  drawRunner(ctx, p, color, immune && p.status !== 'dead' ? alpha * (0.5 + 0.2 * Math.sin(clock / 3)) : alpha, sprites, deadFor, stopped, clock);
+  if (p.status === 'dead') return;
+  if (fx.triple > 0) {
+    ctx.save();
+    ctx.fillStyle = POWER_INFO.TRIPLE.color;
+    for (let dot = 0; dot < 3; dot += 1) {
+      const angle = clock / 14 + (dot * Math.PI * 2) / 3;
+      ctx.globalAlpha = 0.9;
+      ctx.beginPath();
+      ctx.arc(cx + Math.cos(angle) * 24, cy + Math.sin(angle) * 24, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  if (fx.shield > 0) {
+    ctx.save();
+    ctx.fillStyle = POWER_INFO.SHIELD.color;
+    ctx.strokeStyle = '#bfdbfe';
+    ctx.lineWidth = 3;
+    ctx.globalAlpha = 0.22;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 28, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 0.85;
+    ctx.stroke();
+    ctx.restore();
+  }
 }
 
 /** Corpo do corredor: o sprite da pose, se o personagem tiver; senão quadrado que gira (Corrida), flecha (Voo) ou bola (Gravidade) na cor dele. Vermelho ao cair. */
@@ -194,6 +299,8 @@ export function drawScene(ctx: CanvasRenderingContext2D, level: PreparedLevel, p
       ctx.fillRect(objectX, CEIL_Y, TILE * 0.6, FLOOR_Y - CEIL_Y);
       ctx.globalAlpha = 1;
       ctx.fillRect(objectX + TILE * 0.2, CEIL_Y, 4, FLOOR_Y - CEIL_Y);
+    } else if (object.kind === 'power') {
+      if (!p.powers.includes(powerIdOf(level, object))) drawPower(ctx, object.power, objectX + TILE / 2, FLOOR_Y - (object.y + 0.5) * TILE + Math.sin((p.tick + object.x * 7) / 12) * 3, p.tick);
     } else if (object.kind === 'word' && !p.collected.includes(object.index)) {
       const cx = objectX + TILE / 2;
       const cy = FLOOR_Y - (object.y + 0.5) * TILE + Math.sin((p.tick + object.index * 9) / 10) * 3;
@@ -215,7 +322,7 @@ export function drawScene(ctx: CanvasRenderingContext2D, level: PreparedLevel, p
   // Rivais (translúcidos, com o nome em cima) e depois o jogador por cima de todos.
   for (const [index, rival] of rivals.entries()) {
     if (rival.player.x + PLAYER < left || rival.player.x > right) continue;
-    drawRunner(ctx, rival.player, rival.color, 0.6, rival.sprites, 0, stopped, clock);
+    drawRunnerFx(ctx, rival.player, rival.color, 0.6, rival.sprites, 0, stopped, clock);
     ctx.save();
     ctx.font = 'bold 12px system-ui, sans-serif';
     ctx.textAlign = 'center';
@@ -229,7 +336,7 @@ export function drawScene(ctx: CanvasRenderingContext2D, level: PreparedLevel, p
     ctx.fillText(rival.name, rival.player.x + PLAYER / 2, labelY);
     ctx.restore();
   }
-  drawRunner(ctx, p, color, 1, sprites, deadFor, stopped, clock);
+  drawRunnerFx(ctx, p, color, 1, sprites, deadFor, stopped, clock);
   ctx.restore();
 
   // Painel: porcentagem, barra com as bandeiras, tempo que falta, forma atual e versículo. Tamanhos em px de tela (× dpr).
@@ -330,6 +437,39 @@ export function drawScene(ctx: CanvasRenderingContext2D, level: PreparedLevel, p
     ctx.textAlign = 'center';
     ctx.fillText(note.text, width / 2, y + h / 2 + u);
     ctx.restore();
+  }
+  // Poderes ativos: cápsulas com a barrinha do tempo que resta (Escudo fica até absorver um erro).
+  const active = (['TURBO', 'SHIELD', 'TRIPLE', 'MAGNET'] as const)
+    .map((kind) => {
+      const fx = p.effects;
+      const total = { TURBO: TURBO_TICKS, SHIELD: 0, TRIPLE: TRIPLE_TICKS, MAGNET: MAGNET_TICKS }[kind];
+      const value = { TURBO: fx.turbo, SHIELD: fx.shield, TRIPLE: fx.triple, MAGNET: fx.magnet }[kind];
+      return { kind, left: total ? Math.min(1, value / total) : 1, on: value > 0 };
+    })
+    .filter((chip) => chip.on);
+  if (active.length > 0) {
+    // Dentro do campo, no canto de cima à esquerda (embaixo fica o versículo).
+    const chipH = 22 * u;
+    const chipW = 108 * u;
+    const gapW = 8 * u;
+    const rowY = ceilScreenY + 10 * u;
+    for (const [index, chip] of active.entries()) {
+      const info = POWER_INFO[chip.kind];
+      const x = hudLeft + index * (chipW + gapW);
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.beginPath();
+      ctx.roundRect(x, rowY, chipW, chipH, chipH / 2);
+      ctx.fill();
+      ctx.fillStyle = info.color;
+      ctx.beginPath();
+      ctx.roundRect(x, rowY, Math.max(chipH, chipW * chip.left), chipH, chipH / 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = `800 ${12 * u}px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${info.symbol} ${info.label}`, x + chipW / 2, rowY + chipH / 2 + u);
+    }
   }
   // Versículo escondido: palavras coletadas em amarelo, as que faltam em "___". Cresce até caber na largura.
   const verse = level.level.verse;

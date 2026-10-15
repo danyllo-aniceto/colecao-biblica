@@ -11,6 +11,7 @@ import {
   type Rect,
   type RunResult,
 } from "./types";
+import { applyPower, emptyEffects, GRACE_TICKS, isImmune, MAGNET_RANGE, TURBO_SPEED, tickEffects } from "./powers";
 
 /**
  * Física única para todos os personagens. Valores de referência (ritmo rápido) multiplicados pela escala de tempo:
@@ -39,10 +40,11 @@ const toRect = (left: number, top: number, width: number, height: number): Rect 
 
 /** Indexa a fase por coluna. Espeto: caixa menor que a casa (50% de largura, 60% de altura, colada na base). */
 export function prepareLevel(level: Level): PreparedLevel {
-  const cols: PreparedLevel["cols"] = Array.from({ length: level.length + 4 }, () => ({ spikes: [], blocks: [], words: [] }));
+  const cols: PreparedLevel["cols"] = Array.from({ length: level.length + 4 }, () => ({ spikes: [], blocks: [], words: [], powers: [] }));
   const portals: PreparedLevel["portals"] = [];
   const checkpoints: number[] = [];
   let wordCount = 0;
+  let powerCount = 0;
   const colOf = (column: number) => cols[Math.max(0, Math.min(cols.length - 1, column))];
   for (const object of level.objects) {
     if (object.kind === "portal") {
@@ -60,6 +62,11 @@ export function prepareLevel(level: Level): PreparedLevel {
     } else if (object.kind === "block") {
       const rect = toRect(object.x * TILE, FLOOR_Y - (object.y + object.h) * TILE, object.w * TILE, object.h * TILE);
       for (let column = object.x; column < object.x + object.w; column += 1) colOf(column).blocks.push(rect);
+    } else if (object.kind === "power") {
+      const size = 30;
+      const rect = toRect(object.x * TILE + (TILE - size) / 2, FLOOR_Y - (object.y + 1) * TILE + (TILE - size) / 2, size, size);
+      colOf(object.x).powers.push({ ...rect, id: powerCount, power: object.power });
+      powerCount += 1;
     } else {
       const size = 28;
       const rect = toRect(object.x * TILE + (TILE - size) / 2, FLOOR_Y - (object.y + 1) * TILE + (TILE - size) / 2, size, size);
@@ -69,7 +76,7 @@ export function prepareLevel(level: Level): PreparedLevel {
   }
   portals.sort((a, b) => a.x - b.x);
   checkpoints.sort((a, b) => a - b);
-  return { level, endX: level.length * TILE, portals, checkpoints, cols, wordCount };
+  return { level, endX: level.length * TILE, portals, checkpoints, cols, wordCount, powerCount };
 }
 
 export function newPlayer(level: PreparedLevel): PlayerState {
@@ -89,16 +96,18 @@ export function newPlayer(level: PreparedLevel): PlayerState {
     status: "running",
     cause: null,
     collected: [],
+    powers: [],
+    effects: emptyEffects(),
   };
 }
 
 /**
  * Estado limpo para voltar a um checkpoint: parado no ponto da bandeira, no chão (Corrida e Gravidade) ou no meio do vão (Voo), na forma que a fase
- * tem ali, com o pulo duplo recarregado. Guarda as palavras já pegas e a contagem de passos. Sempre justo: nunca volta no meio de um pulo.
+ * tem ali, com o pulo duplo recarregado e sem efeitos de poderes. Guarda as palavras (e os poderes) já pegos e a contagem de passos. Sempre justo: nunca volta no meio de um pulo.
  * `count` = quantos checkpoints já foram cruzados (1 = o primeiro); 0 volta ao começo da fase.
  */
-export function respawnAt(level: PreparedLevel, count: number, collected: number[] = [], tick = 0): PlayerState {
-  if (count <= 0) return { ...newPlayer(level), collected: [...collected], tick };
+export function respawnAt(level: PreparedLevel, count: number, collected: number[] = [], tick = 0, powers: number[] = []): PlayerState {
+  if (count <= 0) return { ...newPlayer(level), collected: [...collected], powers: [...powers], tick };
   const x = level.checkpoints[Math.min(count, level.checkpoints.length) - 1];
   const centre = x + PLAYER / 2;
   let form = level.level.form;
@@ -122,27 +131,33 @@ export function respawnAt(level: PreparedLevel, count: number, collected: number
     status: "running",
     cause: null,
     collected: [...collected],
+    powers: [...powers],
+    effects: emptyEffects(),
   };
 }
 
 const overlaps = (a: Rect, b: Rect) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
 
-/** Blocos nas colunas que o personagem ocupa (no máximo 2 a 3 colunas). */
-function* nearby<T>(level: PreparedLevel, x: number, pick: (col: PreparedLevel["cols"][number]) => T[]): Generator<T> {
+/** Objetos nas colunas que o personagem ocupa (no máximo 2 a 3 colunas; mais largo com o Ímã). */
+function* nearby<T>(level: PreparedLevel, x: number, pick: (col: PreparedLevel["cols"][number]) => T[], width = PLAYER): Generator<T> {
   const first = Math.max(0, Math.floor(x / TILE));
-  const last = Math.min(level.cols.length - 1, Math.floor((x + PLAYER - 0.001) / TILE));
+  const last = Math.min(level.cols.length - 1, Math.floor((x + width - 0.001) / TILE));
   for (let column = first; column <= last; column += 1) yield* pick(level.cols[column]);
 }
 
 /**
  * Um passo de 1/60 s. `held` = o dedo está na tela neste passo.
- * - Corrida: segurar (ou tocar) no chão pula; um novo toque no ar dá o pulo duplo. - Voo: segurar sobe, soltar desce. - Gravidade: tocar no chão/teto inverte a gravidade.
- * Primeiro anda para o lado (bater de lado derruba), depois resolve o vertical (bater cabeça/pousar nunca derruba), depois espetos e palavras.
+ * - Corrida: segurar (ou tocar) no chão pula; um novo toque no ar dá o pulo duplo (triplo com o poder). - Voo: segurar sobe, soltar desce. - Gravidade: tocar no chão/teto inverte a gravidade.
+ * Primeiro anda para o lado (bater de lado derruba), depois resolve o vertical (bater cabeça/pousar nunca derruba), depois espetos, palavras e poderes.
+ * Poderes: Turbo (mais rápido e imune), Escudo (absorve um erro), Pulo triplo e Ímã (ver `powers.ts`). Imune = "fantasma": atravessa blocos e espetos.
  */
 export function stepPlayer(level: PreparedLevel, previous: PlayerState, held: boolean): PlayerState {
   if (previous.status !== "running") return previous;
-  const p: PlayerState = { ...previous, tick: previous.tick + 1, held };
+  const p: PlayerState = { ...previous, tick: previous.tick + 1, held, effects: { ...previous.effects } };
   const pressed = held && !previous.held;
+  const wasImmune = isImmune(previous.effects);
+  const maxAir = MAX_AIR_JUMPS + (p.effects.triple > 0 ? 1 : 0);
+  p.airJumps = Math.min(p.airJumps, maxAir);
 
   while (p.portal < level.portals.length && p.x + PLAYER / 2 >= level.portals[p.portal].x) {
     const form = level.portals[p.portal].form;
@@ -152,39 +167,54 @@ export function stepPlayer(level: PreparedLevel, previous: PlayerState, held: bo
       p.grav = 1;
       p.vy = Math.min(p.vy, 4 * T);
       p.grounded = false;
-      p.airJumps = MAX_AIR_JUMPS;
+      p.airJumps = maxAir;
     }
   }
 
   while (p.checkpoint < level.checkpoints.length && p.x + PLAYER / 2 >= level.checkpoints[p.checkpoint]) p.checkpoint += 1;
 
-  // Para o lado.
-  p.x += SPEED;
+  // Para o lado (o Turbo corre mais).
+  p.x += p.effects.turbo > 0 ? SPEED * TURBO_SPEED : SPEED;
   const body = (): Rect => toRect(p.x, p.y, PLAYER, PLAYER);
-  for (const block of nearby(level, p.x, (col) => col.blocks)) {
-    const box = body();
-    if (!overlaps(box, block)) continue;
-    const depthTop = box.b - block.t;
-    const depthBottom = block.b - box.t;
-    if (Math.min(depthTop, depthBottom) > STEP_UP) {
-      p.status = "dead";
-      p.cause = "wall";
-      return p;
-    }
-    if (depthTop <= depthBottom) {
-      p.y = block.t - PLAYER;
-      if (p.vy > 0) p.vy = 0;
-      if (p.grav === 1 && p.form !== "FLY") p.grounded = true;
-    } else {
-      p.y = block.b;
-      if (p.vy < 0) p.vy = 0;
-      if (p.grav === -1 && p.form !== "FLY") p.grounded = true;
+  // `ghost`: imune (ou o Escudo agiu neste passo): não bate em blocos nem em espetos.
+  let ghost = isImmune(p.effects);
+  /** O Escudo absorve o erro: desliga e dá uma imunidade curta para passar pelo que causou o erro. */
+  const absorb = () => {
+    if (p.effects.shield <= 0) return false;
+    p.effects.shield = 0;
+    p.effects.grace = GRACE_TICKS;
+    return true;
+  };
+  if (!ghost) {
+    for (const block of nearby(level, p.x, (col) => col.blocks)) {
+      const box = body();
+      if (!overlaps(box, block)) continue;
+      const depthTop = box.b - block.t;
+      const depthBottom = block.b - box.t;
+      if (Math.min(depthTop, depthBottom) > STEP_UP) {
+        if (absorb()) {
+          ghost = true;
+          break;
+        }
+        p.status = "dead";
+        p.cause = "wall";
+        return p;
+      }
+      if (depthTop <= depthBottom) {
+        p.y = block.t - PLAYER;
+        if (p.vy > 0) p.vy = 0;
+        if (p.grav === 1 && p.form !== "FLY") p.grounded = true;
+      } else {
+        p.y = block.b;
+        if (p.vy < 0) p.vy = 0;
+        if (p.grav === -1 && p.form !== "FLY") p.grounded = true;
+      }
     }
   }
 
   // Vertical.
   if (p.form === "RUN") {
-    if (p.grounded) p.airJumps = MAX_AIR_JUMPS;
+    if (p.grounded) p.airJumps = maxAir;
     if (held && p.grounded) {
       p.vy = -JUMP_SPEED;
     } else if (pressed && !p.grounded && p.airJumps > 0) {
@@ -215,32 +245,61 @@ export function stepPlayer(level: PreparedLevel, previous: PlayerState, held: bo
     if (p.vy < 0) p.vy = 0;
     if (canStand && p.grav === -1) p.grounded = true;
   }
-  for (const block of nearby(level, p.x, (col) => col.blocks)) {
-    const box = body();
-    if (!overlaps(box, block)) continue;
-    if (p.vy > 0) {
-      p.y = block.t - PLAYER;
-      p.vy = 0;
-      if (canStand && p.grav === 1) p.grounded = true;
-    } else if (p.vy < 0) {
-      p.y = block.b;
-      p.vy = 0;
-      if (canStand && p.grav === -1) p.grounded = true;
+  if (!ghost) {
+    for (const block of nearby(level, p.x, (col) => col.blocks)) {
+      const box = body();
+      if (!overlaps(box, block)) continue;
+      if (p.vy > 0) {
+        p.y = block.t - PLAYER;
+        p.vy = 0;
+        if (canStand && p.grav === 1) p.grounded = true;
+      } else if (p.vy < 0) {
+        p.y = block.b;
+        p.vy = 0;
+        if (canStand && p.grav === -1) p.grounded = true;
+      }
     }
   }
 
-  // Espetos e palavras.
-  const hurt = toRect(p.x + HURT_INSET, p.y + HURT_INSET, PLAYER - HURT_INSET * 2, PLAYER - HURT_INSET * 2);
-  for (const spike of nearby(level, p.x, (col) => col.spikes)) {
-    if (overlaps(hurt, spike)) {
+  // Espetos.
+  if (!ghost) {
+    const hurt = toRect(p.x + HURT_INSET, p.y + HURT_INSET, PLAYER - HURT_INSET * 2, PLAYER - HURT_INSET * 2);
+    for (const spike of nearby(level, p.x, (col) => col.spikes)) {
+      if (!overlaps(hurt, spike)) continue;
+      // Já imune (o Escudo acabou de agir neste mesmo passo) ou o Escudo absorve agora.
+      if (isImmune(p.effects) || absorb()) continue;
       p.status = "dead";
       p.cause = "spike";
       return p;
     }
   }
+
+  // Palavras (o Ímã alcança mais longe) e poderes.
+  const reach = p.effects.magnet > 0 ? MAGNET_RANGE : 0;
+  const wordBox = reach > 0 ? toRect(p.x - reach, p.y - reach, PLAYER + reach * 2, PLAYER + reach * 2) : body();
+  for (const word of nearby(level, p.x - reach, (col) => col.words, PLAYER + reach * 2)) {
+    if (overlaps(wordBox, word) && !p.collected.includes(word.index)) p.collected = [...p.collected, word.index];
+  }
   const box = body();
-  for (const word of nearby(level, p.x, (col) => col.words)) {
-    if (overlaps(box, word) && !p.collected.includes(word.index)) p.collected = [...p.collected, word.index];
+  for (const power of nearby(level, p.x, (col) => col.powers)) {
+    if (overlaps(box, power) && !p.powers.includes(power.id)) {
+      p.powers = [...p.powers, power.id];
+      p.effects = applyPower(p.effects, power.power);
+    }
+  }
+
+  // Os tempos dos poderes passam. Se a imunidade acabou com o personagem dentro de um bloco, ela segue até ele sair (nunca cai por isso).
+  const shield = p.effects.shield;
+  p.effects = tickEffects(p.effects);
+  p.effects.shield = shield;
+  if (wasImmune && !isImmune(p.effects)) {
+    const inside = body();
+    for (const block of nearby(level, p.x, (col) => col.blocks)) {
+      if (overlaps(inside, block)) {
+        p.effects.grace = 1;
+        break;
+      }
+    }
   }
 
   if (p.x >= level.endX) p.status = "finished";
@@ -296,6 +355,7 @@ export function simulate(level: PreparedLevel, toggles: number[], maxTicks = max
     ticks: player.tick,
     progress: progressOf(level, player),
     collected: [...player.collected].sort((a, b) => a - b),
+    powers: [...player.powers].sort((a, b) => a - b),
     cause: player.cause,
   };
 }

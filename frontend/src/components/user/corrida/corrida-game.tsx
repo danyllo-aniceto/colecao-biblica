@@ -62,7 +62,7 @@ export function CorridaGame({ level, character, practice = false, autopilot, riv
   const flashRef = useRef(0);
   const onResultRef = useRef(onResult);
   onResultRef.current = onResult;
-  const checkpointRef = useRef<{ count: number; collected: number[]; tick: number } | null>(null);
+  const checkpointRef = useRef<{ count: number; collected: number[]; powers: number[]; tick: number } | null>(null);
   const usedCheckpointRef = useRef(false);
   const noteRef = useRef<{ text: string; until: number } | null>(null);
   const botRef = useRef<Bot | null>(null);
@@ -117,7 +117,7 @@ export function CorridaGame({ level, character, practice = false, autopilot, riv
       usedCheckpointRef.current = saved !== null;
       noteRef.current = null;
       if (saved) {
-        playerRef.current = respawnAt(prepared.current, saved.count, saved.collected, saved.tick);
+        playerRef.current = respawnAt(prepared.current, saved.count, saved.collected, saved.tick, saved.powers);
       } else {
         playerRef.current = newPlayer(prepared.current);
         checkpointRef.current = null;
@@ -245,7 +245,7 @@ export function CorridaGame({ level, character, practice = false, autopilot, riv
           raceRef.current.deadFor += 1;
           if (raceRef.current.deadFor >= BOT_RESPAWN_TICKS) {
             const saved = checkpointRef.current;
-            after = saved ? respawnAt(prepared.current, saved.count, saved.collected, before.tick) : { ...newPlayer(prepared.current), collected: before.collected, tick: before.tick };
+            after = saved ? respawnAt(prepared.current, saved.count, saved.collected, before.tick, saved.powers) : { ...newPlayer(prepared.current), collected: before.collected, powers: before.powers, tick: before.tick };
             raceRef.current.deadFor = 0;
             holdRef.current = false;
             usedCheckpointRef.current = true;
@@ -259,11 +259,13 @@ export function CorridaGame({ level, character, practice = false, autopilot, riv
           if (after.airJumps < before.airJumps) sound('double', 'rnDouble');
           else if (before.grounded && after.form === 'RUN' && after.vy < -4) sound('jump', 'rnJump');
           if (after.collected.length > before.collected.length) sound('word', 'rnWord');
+          if (after.powers.length > before.powers.length) playSfx('rnPower');
+          if (before.effects.shield > 0 && after.effects.shield === 0) playSfx('rnShield');
           if (after.grav !== before.grav) sound('flip', 'rnFlip');
           if (after.portal > before.portal) playSfx('rnPortal');
         }
         if (after.checkpoint > before.checkpoint && !autopilot && after.status === 'running') {
-          checkpointRef.current = { count: after.checkpoint, collected: after.collected, tick: after.tick };
+          checkpointRef.current = { count: after.checkpoint, collected: after.collected, powers: after.powers, tick: after.tick };
           setHasCheckpoint(true);
           sound('checkpoint', 'rnCheckpoint');
           noteRef.current = { text: 'Checkpoint salvo', until: after.tick + 50 };
