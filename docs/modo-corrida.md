@@ -146,6 +146,13 @@ Telas (aba Jogar → Corrida), no mesmo molde do Duelo/Tabuleiro, sem servidor (
   A respiração leva 12 passos por quadro (mais lenta que o resto) e usa um relógio próprio, então anima mesmo com o jogo parado. Sprites ficam no cache de imagens do app (como as outras): quem abriu o hub/jogo uma vez vê offline; nada novo em `CACHEABLE_API_PATHS`.
 - [ ] Você gera os primeiros sprites e sons e envia pelo Painel (o jogo já usa assim que salvar). O desbloqueio por fase concluída usa `unlock_level` na etapa 5.
 
+### Etapa 3b — Poderes e caminhos diferentes (feita; falta só o seu teste no celular)
+- [x] **Poderes no meio do caminho** (`runner/powers.ts`, testado): **Turbo** (laranja, 4 s: mais rápido e imune, atravessa blocos e espetos), **Escudo** (azul: absorve um erro e dá 1 s de imunidade), **Pulo triplo** (roxo, 10 s: um pulo a mais no ar) e **Ímã** (rosa, 10 s: puxa as palavras próximas). Objeto `power` nas fases; o jogador guarda os já pegos (`powers`) e os efeitos ativos (`effects`); voltar a um checkpoint zera os efeitos mas não repõe o poder já pego.
+- [x] **Caminhos diferentes na Corrida** (`runner/forks.ts`): degraus levam a uma laje: **por cima** há palavras e poder (com espetos), **por baixo** o caminho é seguro e vazio. **Na Gravidade**: duas pistas (chão e teto), uma segura e outra com espetos, palavras e poder; troca-se de pista invertendo a gravidade.
+- [x] Gerador (`journey.ts`): bifurcações e poderes entram sozinhos (opções `forks`/`powers`), poderes saem em ordem embaralhada pela semente. **Regra de teste:** cada caminho é possível sozinho (com o outro fechado), a fase inteira passa sem nenhum poder (poder é bônus, nunca obrigação) e tudo vale também com o toque atrasado.
+- [x] Bots (`planHold`) se atraem por palavras e poderes próximos, mas nunca arriscam a vida por eles.
+- [x] App: itens desenhados no caminho, personagem translúcido com rastro (Turbo), bolha (Escudo), anel (Ímã) e pontos girando (triplo), cápsulas com o tempo restante embaixo, sons `rnPower`/`rnShield`.
+
 ### Etapa 4 — Fases e cenários pelo Painel (G)
 - [ ] Migração: `runner_levels` (nome, história, versículo e referência, duração, semente/ordem das formas, cenário: fundo em 3 camadas, trilha, imagens dos obstáculos).
 - [ ] Painel → Corrida → Fases: criar/editar, enviar arte e trilha, "testar a fase" com o bot (valida que é possível antes de publicar).
