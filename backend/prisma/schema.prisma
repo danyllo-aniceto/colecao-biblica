@@ -119,6 +119,12 @@ enum QuizSessionStatus {
 }
 
 /// Sala do Modo Tabuleiro online: LOBBY (reunindo), PLAYING (em jogo) ou FINISHED (pódio na tela).
+enum RunnerRoomStatus {
+  LOBBY
+  RACING
+  FINISHED
+}
+
 enum DuelRoomStatus {
   LOBBY
   PLAYING
@@ -200,23 +206,25 @@ model User {
   albumCover Cosmetic? @relation("UserAlbumCover", fields: [albumCoverId], references: [id], onDelete: SetNull)
   badge      Cosmetic? @relation("UserBadge", fields: [badgeId], references: [id], onDelete: SetNull)
 
-  friendRequestsSent     Friendship[]      @relation("FriendshipRequester")
-  friendRequestsReceived Friendship[]      @relation("FriendshipAddressee")
-  messagesSent           Message[]         @relation("MessageSender")
-  messagesReceived       Message[]         @relation("MessageReceiver")
-  tradesProposed         Trade[]           @relation("TradeProposer")
-  tradesReceived         Trade[]           @relation("TradeReceiver")
+  friendRequestsSent     Friendship[]       @relation("FriendshipRequester")
+  friendRequestsReceived Friendship[]       @relation("FriendshipAddressee")
+  messagesSent           Message[]          @relation("MessageSender")
+  messagesReceived       Message[]          @relation("MessageReceiver")
+  tradesProposed         Trade[]            @relation("TradeProposer")
+  tradesReceived         Trade[]            @relation("TradeReceiver")
   duelDecks              DuelDeck[]
-  hostedDuelRooms        DuelRoom[]        @relation("DuelRoomHost")
+  hostedDuelRooms        DuelRoom[]         @relation("DuelRoomHost")
   duelPlayers            DuelRoomPlayer[]
-  sentDuelInvites        DuelInvite[]      @relation("DuelInviteFrom")
-  receivedDuelInvites    DuelInvite[]      @relation("DuelInviteTo")
+  hostedRunnerRooms      RunnerRoom[]       @relation("RunnerRoomHost")
+  runnerRoomPlayers      RunnerRoomPlayer[]
+  sentDuelInvites        DuelInvite[]       @relation("DuelInviteFrom")
+  receivedDuelInvites    DuelInvite[]       @relation("DuelInviteTo")
   /// Vitórias em salas online do Tabuleiro (só conta com 2 ou mais pessoas na sala).
-  boardWins              Int               @default(0) @map("board_wins")
-  hostedBoardRooms       BoardRoom[]       @relation("BoardRoomHost")
+  boardWins              Int                @default(0) @map("board_wins")
+  hostedBoardRooms       BoardRoom[]        @relation("BoardRoomHost")
   boardPlayers           BoardRoomPlayer[]
-  sentBoardInvites       BoardInvite[]     @relation("BoardInviteFrom")
-  receivedBoardInvites   BoardInvite[]     @relation("BoardInviteTo")
+  sentBoardInvites       BoardInvite[]      @relation("BoardInviteFrom")
+  receivedBoardInvites   BoardInvite[]      @relation("BoardInviteTo")
 
   @@index([totalScore, xp])
   @@map("users")
@@ -1159,6 +1167,71 @@ model RunnerProgress {
 
   @@unique([userId, levelSlug])
   @@map("runner_progress")
+}
+
+/// Sala da corrida online (até 4): sem WebSocket, o app consulta a sala. Cada jogador corre no próprio aparelho, manda a posição a cada ~1 s e, ao terminar,
+/// a partida inteira (os toques), que o servidor repete e confere. Nada do modo dá XP, moedas, estrelas nem ranking.
+model RunnerRoom {
+  id            Int              @id @default(autoincrement())
+  code          String           @unique
+  hostId        Int              @map("host_id")
+  status        RunnerRoomStatus @default(LOBBY)
+  /// Identificador da fase (`runner_levels.slug` ou uma fase fixa do app).
+  levelSlug     String           @map("level_slug")
+  /// Sobe a cada mudança da sala (entrar, sair, largar, terminar); o app só baixa a sala quando muda.
+  version       Int              @default(1)
+  /// Largada marcada pelo servidor (relógio do servidor).
+  startAt       DateTime?        @map("start_at")
+  /// Primeira chegada conferida: depois dela os outros têm uma folga para terminar.
+  firstFinishAt DateTime?        @map("first_finish_at")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+  finishedAt    DateTime?        @map("finished_at")
+
+  host    User               @relation("RunnerRoomHost", fields: [hostId], references: [id], onDelete: Cascade)
+  players RunnerRoomPlayer[]
+
+  @@index([status, updatedAt])
+  @@map("runner_rooms")
+}
+
+/// Quem corre na sala: pessoa (userId) ou bot (bot = nível; o aparelho do anfitrião joga por ele e manda a partida para conferir).
+model RunnerRoomPlayer {
+  id            Int       @id @default(autoincrement())
+  roomId        Int       @map("room_id")
+  userId        Int?      @map("user_id")
+  /// 0 a 3.
+  slot          Int
+  name          String
+  /// Personagem da Corrida (`runner_characters.slug`) que aparece para os outros.
+  characterSlug String?   @map("character_slug")
+  /// APPRENTICE, STUDENT ou MASTER quando é bot.
+  bot           String?
+  /// Último relatório de posição (px da fase), para os rivais aparecerem na tela dos outros.
+  x             Float     @default(0)
+  y             Float     @default(0)
+  form          String    @default("RUN")
+  dead          Boolean   @default(false)
+  deaths        Int       @default(0)
+  words         Int       @default(0)
+  /// Parte da fase percorrida, em milésimos (0–1000).
+  progress      Int       @default(0)
+  finished      Boolean   @default(false)
+  /// Tempo oficial da chegada, em passos de 1/60 s (da partida conferida).
+  finishTicks   Int?      @map("finish_ticks")
+  /// Saiu ou ficou sem sinal no meio da corrida.
+  out           Boolean   @default(false)
+  reportedAt    DateTime? @map("reported_at")
+  lastSeenAt    DateTime  @default(now()) @map("last_seen_at")
+  joinedAt      DateTime  @default(now()) @map("joined_at")
+
+  room RunnerRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, slot])
+  @@unique([roomId, userId])
+  @@index([userId])
+  @@map("runner_room_players")
 }
 
 /// Imagens de cada mini game: capa do cartão (16:9) e fundo da tela de jogo (vertical).

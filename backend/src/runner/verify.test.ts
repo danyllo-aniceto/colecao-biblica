@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { botInputs, createBot } from "./bots";
-import { newPlayer, prepareLevel, respawnAt, stepPlayer } from "./engine";
+import { newPlayer, prepareLevel, respawnAt, simulate, stepPlayer } from "./engine";
 import { buildJourney } from "./journey";
+import { officialTicks } from "./room";
 import { MAX_SEGMENTS, parseSegments, starsOf, verifyRun } from "./verify";
 
 const level = prepareLevel(buildJourney({ id: "v", name: "V", seed: 7, seconds: 60, verse: { ref: "x", words: ["a", "b", "c", "d"] } }));
@@ -42,6 +43,8 @@ describe("Corrida: conferência da partida pelos toques", () => {
   it("bot perfeito numa tentativa só: terminou, todas as palavras, sem cair = 3 estrelas", () => {
     const verdict = verifyRun(level, [{ fromCheckpoint: false, toggles: botInputs(level) }]);
     expect(verdict).toMatchObject({ ok: true, finished: true, allWords: true, clean: true, deaths: 0, progress: 1 });
+    // O tempo da partida é a quantidade de passos (o mesmo número que o `simulate` conta).
+    expect(verdict.ok && verdict.steps).toBe(simulate(level, botInputs(level)).ticks);
     expect(starsOf(verdict as { finished: boolean; allWords: boolean; clean: boolean })).toBe(3);
   });
 
@@ -75,7 +78,9 @@ describe("Corrida: conferência da partida pelos toques", () => {
     expect(verifyRun(level, [{ fromCheckpoint: false, toggles: [] }, { fromCheckpoint: true, toggles: [] }])).toMatchObject({ ok: false, reason: expect.stringMatching(/checkpoint/) });
     // Depois de terminar não há mais tentativa; depois da 1ª só se sai de checkpoint.
     expect(verifyRun(level, [perfect, { fromCheckpoint: true, toggles: [] }])).toMatchObject({ ok: false });
-    expect(verifyRun(level, [{ fromCheckpoint: false, toggles: [] }, { fromCheckpoint: false, toggles: [] }])).toMatchObject({ ok: false });
+    // Recomeçar do início depois de cair é válido (só deixa de contar como "sem cair"), mas não depois de terminar.
+    expect(verifyRun(level, [{ fromCheckpoint: false, toggles: [] }, perfect])).toMatchObject({ ok: true, finished: true, clean: false, deaths: 1 });
+    expect(verifyRun(level, [perfect, perfect])).toMatchObject({ ok: false });
   });
 
   it("não dá para fingir: toques de outra fase não terminam esta", () => {
@@ -91,4 +96,15 @@ describe("Corrida: conferência da partida pelos toques", () => {
     }
     expect(parseSegments(Array.from({ length: MAX_SEGMENTS + 1 }, () => ({ fromCheckpoint: true, toggles: [] })), 1000)).toBeNull();
   });
+
+  it("a partida de um bot ao vivo (cai, espera e volta ao checkpoint ou ao início) é conferida e o tempo oficial é o dele", () => {
+    for (const seed of [1, 2, 3]) {
+      const bot = createBot(level, { skill: 0.6, lag: 3, seed, respawn: true });
+      while (bot.player.status !== "finished" && bot.elapsed < 60 * 400) bot.step();
+      expect(bot.player.status, `semente ${seed}`).toBe("finished");
+      const verdict = verifyRun(level, bot.segments);
+      expect(verdict, `semente ${seed}`).toMatchObject({ ok: true, finished: true, deaths: bot.deaths });
+      expect(verdict.ok && officialTicks(verdict.steps, verdict.deaths), `semente ${seed}`).toBe(bot.elapsed);
+    }
+  }, 120_000);
 });

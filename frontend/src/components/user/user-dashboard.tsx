@@ -23,6 +23,7 @@ import { PlayHub, PlayModeFrame, type PlayMode } from '@/components/user/play-hu
 import { BoardInviteWatcher, RoomInviteWatcher } from '@/components/user/board/board-invite-watcher';
 import { peekPendingRoom, setPendingRoom } from '@/lib/board-room-api';
 import { dismissDuelRoomInvite, listDuelRoomInvites, peekPendingDuelRoom, setPendingDuelRoom } from '@/lib/duel-room-api';
+import { peekPendingRunnerRoom } from '@/lib/runner-room-api';
 import { getRarityLabel } from '@/lib/rarity-theme';
 import {
   answerQuizQuestion,
@@ -94,9 +95,9 @@ export function UserDashboard() {
   const { confirm } = useDialogs();
 
   // Quem chegou por um convite de sala abre direto na aba Jogar, onde a sala é aberta.
-  const [section, setSection] = useState<SectionId>(() => (peekPendingRoom() || peekPendingDuelRoom() ? 'quiz' : takeReturnSection()));
+  const [section, setSection] = useState<SectionId>(() => (peekPendingRoom() || peekPendingDuelRoom() || peekPendingRunnerRoom() ? 'quiz' : takeReturnSection()));
   // Dentro da aba Jogar: null mostra os cartões dos jogos; senão, a tela do jogo escolhido (convite de sala abre direto o jogo dela).
-  const [playMode, setPlayMode] = useState<PlayMode | null>(() => (peekPendingRoom() ? 'board' : peekPendingDuelRoom() ? 'duel' : null));
+  const [playMode, setPlayMode] = useState<PlayMode | null>(() => (peekPendingRoom() ? 'board' : peekPendingDuelRoom() ? 'duel' : peekPendingRunnerRoom() ? 'runner' : null));
   const [profile, setProfile] = useState<UserProfile | null>(user);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

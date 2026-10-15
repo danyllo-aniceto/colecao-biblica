@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import CasinoRoundedIcon from '@mui/icons-material/CasinoRounded';
+import DirectionsRunRoundedIcon from '@mui/icons-material/DirectionsRunRounded';
 import StyleRoundedIcon from '@mui/icons-material/StyleRounded';
 import { Alert } from '@/components/game/game-ui';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -10,18 +11,20 @@ import { LoadingState } from '@/components/ui/spinner';
 import { ScenarioIcon } from '@/components/user/campaign/scenario-art';
 import { getPublicRoom, setPendingRoom, type PublicRoom } from '@/lib/board-room-api';
 import { getPublicDuelRoom, setPendingDuelRoom } from '@/lib/duel-room-api';
+import { getPublicRunnerRoom, setPendingRunnerRoom } from '@/lib/runner-room-api';
 import { scenarioThemeVars } from '@/lib/campaign-theme';
 
-type InviteRoom = Omit<PublicRoom, 'scenario'> & { scenario?: PublicRoom['scenario'] };
+type InviteRoom = Omit<PublicRoom, 'scenario' | 'status'> & { status: string; scenario?: PublicRoom['scenario']; levelName?: string | null };
 
 /**
- * Link de convite de uma sala do Tabuleiro (/sala/ABCDE) ou do Duelo de Figurinhas (/duelo/ABCDE). Quem já tem conta entra
+ * Link de convite de uma sala do Tabuleiro (/sala/ABCDE), do Duelo de Figurinhas (/duelo/ABCDE) ou da Corrida (/corrida/ABCDE). Quem já tem conta entra
  * direto; quem não tem vê o convite e é levado a criar a conta, que depois abre a sala sozinha.
  */
-export function RoomInvitePage({ game = 'board' }: { game?: 'board' | 'duel' }) {
+export function RoomInvitePage({ game = 'board' }: { game?: 'board' | 'duel' | 'runner' }) {
   const duel = game === 'duel';
-  const fetchRoom: (code: string) => Promise<InviteRoom> = duel ? getPublicDuelRoom : getPublicRoom;
-  const rememberRoom = duel ? setPendingDuelRoom : setPendingRoom;
+  const runner = game === 'runner';
+  const fetchRoom: (code: string) => Promise<InviteRoom> = runner ? getPublicRunnerRoom : duel ? getPublicDuelRoom : getPublicRoom;
+  const rememberRoom = runner ? setPendingRunnerRoom : duel ? setPendingDuelRoom : setPendingRoom;
   const { code = '' } = useParams();
   const navigate = useNavigate();
   const { isHydrated, isAuthenticated } = useAuth();
@@ -76,17 +79,17 @@ export function RoomInvitePage({ game = 'board' }: { game?: 'board' | 'duel' }) 
               <ScenarioIcon scenario={{ slug: room.scenario.slug, iconImageUrl: room.scenario.iconImageUrl }} size={88} />
             ) : (
               <span className="flex h-[88px] w-[88px] items-center justify-center rounded-3xl bg-primary text-on-primary">
-                <StyleRoundedIcon sx={{ fontSize: 52 }} />
+                {runner ? <DirectionsRunRoundedIcon sx={{ fontSize: 52 }} /> : <StyleRoundedIcon sx={{ fontSize: 52 }} />}
               </span>
             )}
           </span>
           <div className="space-y-1">
             <p className="flex items-center justify-center gap-1.5 text-sm font-bold text-muted">
-              {duel ? <StyleRoundedIcon fontSize="small" /> : <CasinoRoundedIcon fontSize="small" />} {duel ? 'Duelo de Figurinhas' : 'Tabuleiro Bíblico'}
+              {runner ? <DirectionsRunRoundedIcon fontSize="small" /> : duel ? <StyleRoundedIcon fontSize="small" /> : <CasinoRoundedIcon fontSize="small" />} {runner ? 'Corrida Bíblica' : duel ? 'Duelo de Figurinhas' : 'Tabuleiro Bíblico'}
             </p>
             <h1 className="font-display text-2xl font-bold text-ink">{room.hostName} chamou você para jogar!</h1>
             <p className="text-sm font-semibold text-muted">
-              {room.scenario ? `${room.scenario.name} · ` : ''}{room.players} de {room.maxPlayers} jogadores · sala <b className="tracking-widest text-ink">{room.code}</b>
+              {room.scenario ? `${room.scenario.name} · ` : room.levelName ? `${room.levelName} · ` : ''}{room.players} de {room.maxPlayers} jogadores · sala <b className="tracking-widest text-ink">{room.code}</b>
             </p>
           </div>
 

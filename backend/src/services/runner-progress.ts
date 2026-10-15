@@ -3,6 +3,7 @@ import { prisma, transaction, type Db } from "../db/prisma";
 import { badRequest, forbidden, notFound } from "../lib/errors";
 import { buildCampaignLevel, isLevelUnlocked, type CampaignLevelDef, type Scenario } from "../runner/campaign";
 import { maxTicksOf, prepareLevel } from "../runner/engine";
+import { BASE_LEVELS } from "../runner/levels";
 import type { PreparedLevel } from "../runner/types";
 import { parseSegments, starsOf, verifyRun } from "../runner/verify";
 import { getCampaign } from "./runner-campaign";
@@ -73,4 +74,23 @@ export async function submitRunnerResult(userId: number, levelSlug: string, rawS
     });
     return { ...toProgress(row), newlyFinished: merged.finished && !current?.finished };
   });
+}
+
+/** Fase pronta para simular a partir do identificador: as fixas do app (treino e jornada) ou uma fase ativa da campanha. `null` se não existir. */
+export async function preparedLevelBySlug(db: Db, slug: string): Promise<{ level: PreparedLevel; name: string } | null> {
+  const base = BASE_LEVELS.find((item) => item.id === slug);
+  if (base) {
+    const key = `base:${slug}`;
+    let found = prepared.get(key);
+    if (!found) {
+      found = prepareLevel(base);
+      prepared.set(key, found);
+    }
+    return { level: found, name: base.name };
+  }
+  const scenarios = await getCampaign(db);
+  const scenario = scenarios.find((item) => item.levels.some((def) => def.id === slug));
+  const def = scenario?.levels.find((item) => item.id === slug);
+  if (!scenario || !def) return null;
+  return { level: preparedFor(scenario, def), name: def.name };
 }
