@@ -1,3 +1,4 @@
+import { CAMPAIGN_LEVELS } from "./campaign";
 import { buildJourney } from "./journey";
 import { flyTunnel, gap, gravitySpikes, platform, portal, spikeRow, wordAt } from "./segments";
 import type { Level, LevelObject } from "./types";
@@ -58,7 +59,7 @@ function journey(): Level {
   });
 }
 
-export const LEVELS: Level[] = [journey(), quickTraining()];
+export const LEVELS: Level[] = [journey(), quickTraining(), ...CAMPAIGN_LEVELS];
 
 export function levelById(id: string): Level | undefined {
   return LEVELS.find((level) => level.id === id);

@@ -75,7 +75,8 @@ function runPattern(objects: LevelObject[], carriers: Carrier[], x: number, ctx:
     const length = RUN_FORK.stairs + RUN_FORK.gap + RUN_FORK.length + RUN_FORK.tail;
     if (ctx.forks && remaining >= length) {
       const info = runFork(objects, x, ctx.nextPower());
-      carriers.push(...info.rewardWords);
+      // As palavras do versículo ficam só no chão livre (o caminho de risco dá o poder: palavra lá poderia ficar fora do alcance de quem vai pelo seguro).
+      carriers.push({ x: info.end - 4, y: 0 });
       return info.end;
     }
     objects.push({ kind: "spike", x }, { kind: "spike", x: x + 8 });
@@ -125,7 +126,6 @@ function gravitySection(objects: LevelObject[], carriers: Carrier[], x: number, 
   while (cursor < end) {
     if (ctx.forks && end - cursor >= GRAVITY_LANE.length + 6 && random() < 0.3) {
       const info = gravityLane(objects, cursor, random() < 0.5 ? "ceiling" : "floor", ctx.nextPower());
-      carriers.push(...info.rewardWords);
       cursor = info.end + between(random, 3, 5);
       mark(cursor);
       continue;

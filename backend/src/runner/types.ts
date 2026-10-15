@@ -47,6 +47,8 @@ export type Level = {
   /** Comprimento em colunas: ao chegar ao fim a fase termina. */
   length: number;
   objects: LevelObject[];
+  /** Cores do céu do cenário (só visual). */
+  theme?: { skyTop: string; skyBottom: string };
 };
 
 export type Rect = { l: number; t: number; r: number; b: number };
