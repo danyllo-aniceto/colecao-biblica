@@ -1,4 +1,4 @@
-import { cellRects, columnInk, detectFrames, greenKey, stripLayout } from '@runner/sprite-strip';
+import { cellRects, extractFrames, foreignPixels, greenKey, inkMask, stripLayout } from '@runner/sprite-strip';
 
 /** Um arquivo de imagem e quantos quadros ele traz (1 = um quadro solto; N = tira horizontal de N quadros quadrados). */
 export type StripSource = { file: File; cells: number; /** Como dividir uma tira: pelo desenho (acha cada personagem) ou em partes iguais. Só vale com 2+ quadros; padrão: pelo desenho. */ split?: 'ink' | 'equal' };
@@ -16,8 +16,8 @@ export async function imageSize(file: File): Promise<{ w: number; h: number }> {
 }
 
 /**
- * Divide uma tira pelo desenho: vê onde há personagem em cada coluna (transparência ou diferença do fundo), corta nos vãos entre eles e centra
- * cada um pelo corpo, todos com a mesma largura (contas em `@runner/sprite-strip`, com teste). Cada quadro sai com a altura inteira da imagem,
+ * Divide uma tira pelo desenho: vê onde há personagem em cada coluna (transparência ou diferença do fundo), corta nos vãos entre eles, centra
+ * cada um pelo corpo (todos com a mesma largura) e apaga de cada quadro os retalhos que são do vizinho (contas em `@runner/sprite-strip`, com teste). Cada quadro sai com a altura inteira da imagem,
  * então o chão e a altura do personagem se mantêm.
  */
 async function splitByDrawing(file: File, cells: number, removeGreen: boolean, warnings: string[]): Promise<ImageBitmap[]> {
@@ -35,15 +35,22 @@ async function splitByDrawing(file: File, cells: number, removeGreen: boolean, w
     if (!probeCtx) throw new Error('Este navegador não consegue montar a imagem.');
     probeCtx.drawImage(source, 0, 0);
     const pixels = probeCtx.getImageData(0, 0, source.width, source.height).data;
-    const found = detectFrames(columnInk(pixels, source.width, source.height, { removeGreen }), cells);
+    const found = extractFrames(inkMask(pixels, source.width, source.height, { removeGreen }), source.width, source.height, cells);
     if (found.warning) warnings.push(`${file.name}: ${found.warning}`);
     const bitmaps: ImageBitmap[] = [];
-    for (const rect of found.rects) {
+    for (const [index, rect] of found.rects.entries()) {
       const frame = document.createElement('canvas');
       frame.width = rect.w;
       frame.height = source.height;
+      const frameCtx = frame.getContext('2d', { willReadFrequently: true });
+      if (!frameCtx) throw new Error('Este navegador não consegue montar a imagem.');
       // Fora da imagem (desenho perto da borda) fica transparente.
-      frame.getContext('2d')?.drawImage(source, -rect.sx, 0);
+      frameCtx.drawImage(source, -rect.sx, 0);
+      // Apaga os retalhos dos desenhos vizinhos (mão, espada, pé do quadro ao lado) e os fiapos soltos.
+      const erase = foreignPixels(found.owner, source.width, source.height, index, rect.sx, rect.w, 2);
+      const data = frameCtx.getImageData(0, 0, rect.w, source.height);
+      for (let at = 0; at < erase.length; at += 1) if (erase[at]) data.data[at * 4 + 3] = 0;
+      frameCtx.putImageData(data, 0, 0);
       bitmaps.push(await createImageBitmap(frame));
     }
     return bitmaps;

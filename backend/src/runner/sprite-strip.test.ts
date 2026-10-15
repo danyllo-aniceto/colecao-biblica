@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cellRects, columnInk, detectFrames, greenKey, stripLayout, STRIP_CELL } from "./sprite-strip";
+import { cellRects, columnInk, detectFrames, extractFrames, foreignPixels, greenKey, inkMask, ownerMap, stripLayout, STRIP_CELL } from "./sprite-strip";
 
 describe("Corrida: montagem da tira de sprites", () => {
   it("quadros iguais: células de 256, lado a lado, sem ampliar", () => {
@@ -135,6 +135,75 @@ describe("Corrida: montagem da tira de sprites", () => {
       for (let at = 0; at < w * h; at += 1) green.set([0, 255, 0, 255], at * 4);
       for (let y = 0; y < h; y += 1) green.set([200, 50, 50, 255], (y * w + 3) * 4);
       expect(columnInk(green, w, h, { removeGreen: true })).toEqual([0, 0, 0, 2, 0, 0]);
+    });
+  });
+
+  describe("tira pronta: tirar os retalhos dos vizinhos", () => {
+    const W = 240;
+    const H = 100;
+    const rect = (mask: Uint8Array, l: number, t: number, r: number, b: number) => {
+      for (let y = t; y < b; y += 1) for (let x = l; x < r; x += 1) mask[y * W + x] = 1;
+    };
+    const scene = () => {
+      const mask = new Uint8Array(W * H);
+      rect(mask, 20, 10, 60, 100); // corpo A
+      rect(mask, 75, 40, 85, 50); // mão solta de A (perto de A)
+      rect(mask, 110, 40, 125, 50); // mão solta de B, que fica no lado de A da divisa
+      rect(mask, 160, 10, 200, 100); // corpo B
+      rect(mask, 230, 5, 233, 8); // fiapo sem dono
+      return mask;
+    };
+
+    it("cada pedaço solto vai para o quadro do corpo mais perto; fiapo é descartado", () => {
+      const owner = ownerMap(scene(), W, H, [0, 142, W]);
+      const at = (x: number, y: number) => owner[y * W + x];
+      expect(at(30, 50)).toBe(0); // corpo A
+      expect(at(80, 45)).toBe(0); // mão de A
+      expect(at(115, 45)).toBe(1); // mão de B, mesmo estando na faixa de A
+      expect(at(180, 50)).toBe(1); // corpo B
+      expect(at(231, 6)).toBe(-2); // fiapo
+      expect(at(5, 5)).toBe(-1); // sem desenho
+    });
+
+    it("apaga do quadro o que é de outro (com margem), sem tocar no próprio desenho", () => {
+      const owner = ownerMap(scene(), W, H, [0, 142, W]);
+      const frameA = foreignPixels(owner, W, H, 0, 0, 140, 2);
+      expect(frameA[45 * 140 + 115]).toBe(1); // mão de B some do quadro de A
+      expect(frameA[45 * 140 + 112]).toBe(1); // e a margem em volta também
+      expect(frameA[45 * 140 + 80]).toBe(0); // a mão de A fica
+      expect(frameA[50 * 140 + 30]).toBe(0);
+      const frameB = foreignPixels(owner, W, H, 1, 100, 140, 2);
+      expect(frameB[45 * 140 + (115 - 100)]).toBe(0); // no quadro de B a mão dele fica
+      expect(frameB[45 * 140 + (80 - 100 + 100)]).toBe(0);
+      // Janela que sai da imagem não quebra.
+      expect(foreignPixels(owner, W, H, 0, -30, 100, 2)).toHaveLength(100 * H);
+    });
+
+    it("centro e largura vêm só do desenho de cada quadro (sem os retalhos)", () => {
+      const { rects, width } = extractFrames(scene(), W, H, 2);
+      expect(new Set(rects.map((r) => r.w))).toEqual(new Set([width]));
+      // O quadro B começa na mão dele (110) e vai até 200: o centro fica em torno de 170, não puxado para o fiapo (232) nem para A.
+      const centerB = rects[1].sx + rects[1].w / 2;
+      expect(centerB).toBeGreaterThan(150);
+      expect(centerB).toBeLessThan(185);
+      const centerA = rects[0].sx + rects[0].w / 2;
+      expect(centerA).toBeGreaterThan(30);
+      expect(centerA).toBeLessThan(65);
+    });
+
+    it("desenhos encostados (um pedaço só nos dois quadros) são repartidos pela faixa", () => {
+      const mask = new Uint8Array(W * H);
+      rect(mask, 20, 10, 120, 100);
+      rect(mask, 120, 10, 220, 100);
+      const owner = ownerMap(mask, W, H, [0, 120, W]);
+      expect(owner[50 * W + 60]).toBe(0);
+      expect(owner[50 * W + 180]).toBe(1);
+    });
+
+    it("máscara: transparência e fundo opaco", () => {
+      const rgba = new Uint8ClampedArray(4 * 2 * 4); // 4x2 transparente
+      rgba.set([9, 9, 9, 255], (0 * 4 + 1) * 4);
+      expect(Array.from(inkMask(rgba, 4, 2))).toEqual([0, 1, 0, 0, 0, 0, 0, 0]);
     });
   });
 });
