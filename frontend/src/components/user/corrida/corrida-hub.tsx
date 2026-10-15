@@ -21,7 +21,7 @@ import { BASE_LEVELS } from '@runner/levels';
 import { useRunnerCampaign } from '@/components/user/corrida/corrida-campaign';
 import type { Level } from '@runner/types';
 import type { CorridaResult, CorridaRival } from '@/components/user/corrida/corrida-game';
-import { RunStars } from '@/components/user/corrida/corrida-stars';
+import { CampaignMap, type MapStop } from '@/components/user/corrida/corrida-map';
 import { useRunnerProgress } from '@/components/user/corrida/corrida-progress';
 import { portraitOf, rivalsFor, saveCharacter, storedCharacterId, useRunnerCharacters, type RunnerCharacter } from '@/components/user/corrida/corrida-characters';
 import { SpriteView } from '@/components/user/corrida/sprite-view';
@@ -180,32 +180,32 @@ function CampaignTab({ scenarios: scenarioList, levels: allLevels, bests, finish
           <p className="text-sm font-semibold text-muted">{scenario.story}</p>
         </div>
         <Alert tone="info">Conclua cada fase para abrir a próxima. O servidor guarda o seu melhor resultado na conta depois de conferir a partida. Cada fase vale até 3 estrelas: terminar, pegar todas as palavras e terminar sem cair (voltar a um checkpoint tira esta).</Alert>
-        <ol className="space-y-3">
-          {levels.pageItems.map((def) => {
+        <CampaignMap
+          accent={scenario.theme.skyBottom}
+          stops={levels.pageItems.flatMap((def): MapStop[] => {
             const level = allLevels.find((item) => item.id === def.id);
-            if (!level) return null;
-            const index = scenario.levels.indexOf(def);
-            const unlocked = isLevelUnlocked(def.id, finished, scenarioList);
-            const prize = unlocksOf(def.id);
-            return (
-              <li key={def.id} className={cn('panel flex flex-wrap items-center gap-3 p-4', !unlocked && 'opacity-70')}>
-                <span className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl font-display text-xl font-bold', unlocked ? 'bg-primary text-on-primary' : 'bg-surface-3 text-muted')}>
-                  {unlocked ? index + 1 : <LockRoundedIcon fontSize="small" />}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="font-display text-lg font-bold text-ink">{level.name}</p>
-                  <p className="text-sm font-semibold text-muted">{levelInfo(level)}</p>
-                  <p className="text-sm font-bold text-ink">{unlocked ? bestText(bests[def.id], level.verse?.words.length ?? 0) : 'Conclua a fase anterior para abrir'}</p>
-                  {unlocked && bests[def.id]?.finished ? <RunStars className="mt-1" finished allWords={bests[def.id].words >= (level.verse?.words.length ?? 0)} clean={bests[def.id].clean} /> : null}
-                  {prize.length > 0 ? <p className="text-xs font-bold text-primary">{finished.has(def.id) ? 'Abriu' : 'Abre'}: {prize.join(', ')}</p> : null}
-                </div>
-                <Button disabled={!unlocked} onClick={() => onPlay(level)}>
-                  Jogar
-                </Button>
-              </li>
-            );
+            if (!level) return [];
+            const best = bests[def.id];
+            const total = level.verse?.words.length ?? 0;
+            return [
+              {
+                id: def.id,
+                number: scenario.levels.indexOf(def) + 1,
+                name: level.name,
+                info: levelInfo(level),
+                result: bestText(best, total),
+                unlocked: isLevelUnlocked(def.id, finished, scenarioList),
+                finished: best?.finished === true,
+                stars: best?.finished ? { allWords: best.words >= total, clean: best.clean } : null,
+                prize: unlocksOf(def.id),
+              },
+            ];
           })}
-        </ol>
+          onPlay={(id) => {
+            const level = allLevels.find((item) => item.id === id);
+            if (level) onPlay(level);
+          }}
+        />
         <Pagination page={levels.page} totalPages={levels.totalPages} totalElements={levels.totalElements} pageSize={levels.pageSize} onPageChange={levels.setPage} onPageSizeChange={levels.setPageSize} itemLabel="fases" />
       </div>
     );

@@ -176,7 +176,7 @@ Telas (aba Jogar → Corrida), no mesmo molde do Duelo/Tabuleiro, sem servidor (
 - [x] App: o progresso vem da conta (`useRunnerProgress`), estrelas na lista de fases e na tela de resultado, **versículo completo ao terminar**, aviso de personagem novo, fases e personagens abrem pelo progresso. O jogo grava os toques de cada tentativa (`runRef` em `corrida-game.tsx`).
 - [x] **Offline:** a partida fica numa fila no aparelho e é enviada quando a conexão volta (ao abrir o modo e no evento `online`); enquanto isso o melhor resultado aparece como confirmado e a fase seguinte abre. Recusa do servidor descarta a partida com aviso. (O que já estava só no aparelho antes desta etapa não é importado: não dá para conferir.)
 - [x] Conferido de ponta a ponta no navegador: fase limpa = 3 estrelas; cair, voltar ao checkpoint e terminar = 2 estrelas, os dois resultados confirmados pelo servidor.
-- [ ] Mapa visual da campanha (hoje é a lista de cenários e fases com estrelas).
+- [x] **Mapa visual** do cenário (`corrida-map.tsx`): trilha em zigue-zague ligando as fases (trecho percorrido colorido com a cor do cenário, o resto pontilhado), nó com número, check ou cadeado, anel na próxima fase, cartão com resultado, estrelas e personagem que a fase abre; paginado de 10 em 10 fases.
 
 ### Etapa 6 — Local: até 4 na mesma tela (M)
 - [ ] Faixas por jogador na horizontal, multitoque, cada um com seu personagem; bots completam as vagas.
