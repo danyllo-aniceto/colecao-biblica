@@ -10,8 +10,10 @@ import { playSfx } from '@/lib/sound/sfx';
 import type { Pose, SoundKey, Sounds, Sprites } from '@runner/characters';
 import { createBot, BOT_RESPAWN_TICKS, type Bot } from '@runner/bots';
 import { newPlayer, prepareLevel, progressOf, respawnAt, stepPlayer } from '@runner/engine';
+import type { RunSegment } from '@runner/verify';
 import { TICKS_PER_SECOND, type Level, type PlayerState, type PreparedLevel } from '@runner/types';
 import { drawScene, type Note, type RivalView } from '@/components/user/corrida/corrida-draw';
+import { RunStars } from '@/components/user/corrida/corrida-stars';
 import { preloadArt, preloadSprites } from '@/components/user/corrida/corrida-sprites';
 import { SpriteView } from '@/components/user/corrida/sprite-view';
 
@@ -25,7 +27,15 @@ export type CorridaCharacter = { color: string; sprites?: Sprites; sounds?: Soun
 type Phase = 'ready' | 'playing' | 'dead' | 'finished';
 type Summary = { progress: number; words: number; total: number };
 
-export type CorridaResult = { progress: number; words: number; finished: boolean; /** Concluída sem voltar a nenhum checkpoint. */ clean: boolean };
+export type CorridaResult = {
+  progress: number;
+  words: number;
+  finished: boolean;
+  /** Concluída sem voltar a nenhum checkpoint. */
+  clean: boolean;
+  /** A partida como o servidor a confere: tentativas (do início e dos checkpoints) com os passos em que o dedo desceu/subiu. */
+  segments: RunSegment[];
+};
 /** Um rival da corrida contra bots. `skill` e `lag` vêm de `BOT_LEVELS`. */
 export type CorridaRival = { name: string; color: string; sprites?: Sprites; skill: number; lag: number };
 export type Standing = { name: string; color: string; progress: number; finished: boolean; deaths: number; isPlayer: boolean; ticks: number };
@@ -65,6 +75,8 @@ export function CorridaGame({ level, character, practice = false, autopilot, riv
   onResultRef.current = onResult;
   const checkpointRef = useRef<{ count: number; collected: number[]; powers: number[]; tick: number } | null>(null);
   const usedCheckpointRef = useRef(false);
+  // Gravação da partida para o servidor conferir: toques de cada tentativa, contados em passos desde o começo dela.
+  const runRef = useRef<{ segments: RunSegment[]; held: boolean; steps: number }>({ segments: [{ fromCheckpoint: false, toggles: [] }], held: false, steps: 0 });
   const noteRef = useRef<{ text: string; until: number } | null>(null);
   const botRef = useRef<Bot | null>(null);
   const rivalsRef = useRef<Array<{ bot: Bot; spec: CorridaRival }>>([]);
@@ -123,7 +135,9 @@ export function CorridaGame({ level, character, practice = false, autopilot, riv
       noteRef.current = null;
       if (saved) {
         playerRef.current = respawnAt(prepared.current, saved.count, saved.collected, saved.tick, saved.powers);
+        runRef.current = { segments: [...runRef.current.segments, { fromCheckpoint: true, toggles: [] }], held: false, steps: 0 };
       } else {
+        runRef.current = { segments: [{ fromCheckpoint: false, toggles: [] }], held: false, steps: 0 };
         playerRef.current = newPlayer(prepared.current);
         checkpointRef.current = null;
         setHasCheckpoint(false);
@@ -256,6 +270,12 @@ export function CorridaGame({ level, character, practice = false, autopilot, riv
             usedCheckpointRef.current = true;
           }
         } else {
+          const run = runRef.current;
+          if (holdRef.current !== run.held) {
+            run.segments[run.segments.length - 1].toggles.push(run.steps);
+            run.held = holdRef.current;
+          }
+          run.steps += 1;
           after = stepPlayer(prepared.current, before, holdRef.current);
         }
         playerRef.current = after;
@@ -291,7 +311,7 @@ export function CorridaGame({ level, character, practice = false, autopilot, riv
         if (status !== 'running') {
           flashRef.current = status === 'dead' ? 1 : 0;
           sound(status === 'dead' ? 'death' : 'win', status === 'dead' ? 'rnDeath' : 'rnWin');
-          const result = { progress: progressOf(prepared.current, after), words: after.collected.length, finished: status === 'finished', clean: status === 'finished' && !usedCheckpointRef.current };
+          const result = { progress: progressOf(prepared.current, after), words: after.collected.length, finished: status === 'finished', clean: status === 'finished' && !usedCheckpointRef.current, segments: runRef.current.segments.map((segment) => ({ fromCheckpoint: segment.fromCheckpoint, toggles: [...segment.toggles] })) };
           setSummary({ progress: result.progress, words: result.words, total: prepared.current.wordCount });
           setPhaseBoth(status === 'dead' ? 'dead' : 'finished');
           if (!practice && !autopilot) onResultRef.current?.(result);
@@ -388,6 +408,12 @@ export function CorridaGame({ level, character, practice = false, autopilot, riv
                       ? `Você pegou ${summary?.words ?? 0} de ${total} palavras do versículo${level.verse ? ` (${level.verse.ref})` : ''}${usedCheckpointRef.current ? '.' : ' e não usou nenhum checkpoint!'}`
                       : `Você parou em ${Math.floor((summary?.progress ?? 0) * 100)}% e pegou ${summary?.words ?? 0} de ${total} palavras.${hasCheckpoint ? ` Seu último checkpoint está em ${checkpointPercent}%.` : ''}`}
                   </p>
+                  {finished && level.verse ? (
+                    <p className="rounded-xl bg-surface-3 p-3 text-sm font-semibold text-ink">
+                      “{level.verse.words.join(' ')}” <span className="text-muted">— {level.verse.ref}</span>
+                    </p>
+                  ) : null}
+                  {finished && !practice && !autopilot ? <RunStars className="justify-center" finished allWords={(summary?.words ?? 0) >= total} clean={!usedCheckpointRef.current} /> : null}
                 </>
               )}
               <div className="flex flex-col gap-2">

@@ -169,12 +169,14 @@ Telas (aba Jogar → Corrida), no mesmo molde do Duelo/Tabuleiro, sem servidor (
 - [ ] Você: criar a arte dos cenários (fundo em 3 camadas, espeto e bloco) e as trilhas; os prompts ficam em `docs/corrida-prompts-de-arte.md` (fundos e obstáculos) e `docs/corrida-prompts-de-musica.md` (trilhas) — ainda a escrever.
 - [ ] Mais cenários e fases (lotes de 3): você escolhe a ordem e o versículo; cadastro direto pelo Painel.
 
-### Etapa 5 — Campanha solo com progresso (G)
-- [ ] Migração: progresso do jogador (fase concluída, estrelas, melhor %, palavras pegas) e personagens abertos.
-- [ ] Servidor: `POST /runner/levels/:id/start` e `/finish` com a **lista de toques**; o servidor simula de novo, confere o resultado e calcula estrelas
-  (terminar, todas as palavras, sem morrer). Partida vale uma vez; tempo do servidor.
-- [ ] Mapa da campanha (fase a fase), estrelas, versículo completo ao terminar, desbloqueio de personagens por fase concluída.
-- [ ] Offline: jogar a fase offline e enviar o resultado quando voltar (regras no `docs/offline.md`).
+### Etapa 5 — Campanha solo com progresso (G) — feita (falta o seu teste no celular)
+- [x] Migração `corrida_progresso`: `runner_progress` (jogador × fase: melhor %, palavras, terminou, todas as palavras, sem cair, tentativas, quando terminou). Os personagens abertos vêm do progresso (`unlock_level` = fase concluída).
+- [x] **Conferência pelos toques** (`runner/verify.ts`, testado): a partida é uma **corrente de tentativas** (1ª do início; cada seguinte do último checkpoint, como o jogo faz ao cair) com os passos em que o dedo desceu/subiu. O servidor repete tudo (`verifyRun`), recusa tentativa impossível ou fora de ordem e calcula o resultado; a tela nunca manda pontos. Não precisa de "start": a fase é determinística (semente), então o servidor só repete. API: `POST /api/runner/levels/:slug/result` (a fase precisa estar aberta: a anterior concluída) e `GET /api/runner/progress` (cacheável offline). Melhor resultado por critério; resultado pior não tira nada.
+- [x] **Estrelas** (`starsOf`): terminar, pegar todas as palavras e terminar sem cair (voltar a checkpoint tira esta); cada critério guarda o melhor já conseguido.
+- [x] App: o progresso vem da conta (`useRunnerProgress`), estrelas na lista de fases e na tela de resultado, **versículo completo ao terminar**, aviso de personagem novo, fases e personagens abrem pelo progresso. O jogo grava os toques de cada tentativa (`runRef` em `corrida-game.tsx`).
+- [x] **Offline:** a partida fica numa fila no aparelho e é enviada quando a conexão volta (ao abrir o modo e no evento `online`); enquanto isso o melhor resultado aparece como confirmado e a fase seguinte abre. Recusa do servidor descarta a partida com aviso. (O que já estava só no aparelho antes desta etapa não é importado: não dá para conferir.)
+- [x] Conferido de ponta a ponta no navegador: fase limpa = 3 estrelas; cair, voltar ao checkpoint e terminar = 2 estrelas, os dois resultados confirmados pelo servidor.
+- [ ] Mapa visual da campanha (hoje é a lista de cenários e fases com estrelas).
 
 ### Etapa 6 — Local: até 4 na mesma tela (M)
 - [ ] Faixas por jogador na horizontal, multitoque, cada um com seu personagem; bots completam as vagas.

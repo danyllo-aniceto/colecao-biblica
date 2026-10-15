@@ -21,7 +21,8 @@ import { BASE_LEVELS } from '@runner/levels';
 import { useRunnerCampaign } from '@/components/user/corrida/corrida-campaign';
 import type { Level } from '@runner/types';
 import type { CorridaResult, CorridaRival } from '@/components/user/corrida/corrida-game';
-import { loadBests, saveBest } from '@/components/user/corrida/corrida-storage';
+import { RunStars } from '@/components/user/corrida/corrida-stars';
+import { useRunnerProgress } from '@/components/user/corrida/corrida-progress';
 import { portraitOf, rivalsFor, saveCharacter, storedCharacterId, useRunnerCharacters, type RunnerCharacter } from '@/components/user/corrida/corrida-characters';
 import { SpriteView } from '@/components/user/corrida/sprite-view';
 
@@ -44,12 +45,12 @@ function formatDuration(seconds: number) {
   return total >= 60 ? `${Math.floor(total / 60)} min${total % 60 ? ` ${total % 60} s` : ''}` : `${total} s`;
 }
 
-type Bests = ReturnType<typeof loadBests>;
+type Bests = ReturnType<typeof useRunnerProgress>['bests'];
 
 function bestText(best: Bests[string] | undefined, totalWords: number) {
   if (!best) return 'Ainda não jogada';
   const words = totalWords > 0 ? ` · ${best.words}/${totalWords} palavras` : '';
-  if (best.finished) return `${best.clean ? 'Concluída sem checkpoint ★' : 'Concluída'}${words}`;
+  if (best.finished) return `Concluída${words}`;
   return `Melhor: ${Math.floor(best.progress * 100)}%${words}`;
 }
 
@@ -67,12 +68,11 @@ const CONTROLS: Array<{ title: string; text: string }> = [
 export function CorridaHub() {
   const [tab, setTab] = useState<Tab>('campaign');
   const [playing, setPlaying] = useState<Playing | null>(null);
-  const [bests, setBests] = useState(loadBests);
+  const { bests, finished, submit, pendingCount } = useRunnerProgress();
   const toast = useToast();
   const { scenarios, levels: campaignLevels } = useRunnerCampaign();
   const levels = useMemo(() => [...BASE_LEVELS, ...campaignLevels], [campaignLevels]);
   const allCharacters = useRunnerCharacters();
-  const finished = new Set(Object.entries(bests).filter(([, best]) => best.finished).map(([id]) => id));
   // Só entram na escolha (e nos rivais) os personagens já abertos pela campanha.
   const characters = allCharacters.filter((item) => isCharacterUnlocked(item.unlockLevel, finished));
   const [selectedId, setSelectedId] = useState<string | null>(storedCharacterId);
@@ -87,7 +87,7 @@ export function CorridaHub() {
 
   return (
     <section className="space-y-4" aria-label="Corrida">
-      <Alert tone="info">Protótipo do novo modo: ainda sem o modo online. Use o celular deitado (no computador, a barra de espaço).</Alert>
+      <Alert tone="info">Protótipo do novo modo: ainda sem o modo online. Use o celular deitado (no computador, a barra de espaço).{pendingCount > 0 ? ` ${pendingCount === 1 ? '1 partida' : `${pendingCount} partidas`} da campanha aguardando conexão para ser conferida${pendingCount === 1 ? '' : 's'}.` : ''}</Alert>
 
       <div className="flex items-center justify-between gap-3 rounded-2xl bg-surface-3 px-3 py-2">
         <div className="flex min-w-0 items-center gap-2">
@@ -133,10 +133,11 @@ export function CorridaHub() {
             autopilot={playing.mode === 'watch' ? { skill: 1, lag: 2 } : undefined}
             rivals={playing.mode === 'race' ? playing.rivals : undefined}
             onResult={(result: CorridaResult) => {
-              const next = saveBest(playing.level.id, result);
-              setBests(next);
+              // O servidor repete os toques e guarda o melhor resultado (sem internet, fica numa fila e vai quando voltar).
+              submit(playing.level.id, result.segments, { progress: result.progress, words: result.words, finished: result.finished, clean: result.clean });
               // Concluir uma fase pode abrir personagens novos: avisa na hora.
-              const after = new Set(Object.entries(next).filter(([, best]) => best.finished).map(([id]) => id));
+              const after = new Set(finished);
+              if (result.finished) after.add(playing.level.id);
               for (const item of allCharacters) if (!isCharacterUnlocked(item.unlockLevel, finished) && isCharacterUnlocked(item.unlockLevel, after)) toast.success(`Personagem novo: ${item.name}!`);
             }}
             onExit={() => setPlaying(null)}
@@ -178,7 +179,7 @@ function CampaignTab({ scenarios: scenarioList, levels: allLevels, bests, finish
           <h3 className="font-display text-xl font-bold text-ink">{scenario.name}</h3>
           <p className="text-sm font-semibold text-muted">{scenario.story}</p>
         </div>
-        <Alert tone="info">Conclua cada fase para abrir a próxima. Aqui o seu melhor resultado fica guardado e as bandeiras (checkpoints) ajudam, mas terminar sem usá-las vale uma estrela ★.</Alert>
+        <Alert tone="info">Conclua cada fase para abrir a próxima. O servidor guarda o seu melhor resultado na conta depois de conferir a partida. Cada fase vale até 3 estrelas: terminar, pegar todas as palavras e terminar sem cair (voltar a um checkpoint tira esta).</Alert>
         <ol className="space-y-3">
           {levels.pageItems.map((def) => {
             const level = allLevels.find((item) => item.id === def.id);
@@ -195,6 +196,7 @@ function CampaignTab({ scenarios: scenarioList, levels: allLevels, bests, finish
                   <p className="font-display text-lg font-bold text-ink">{level.name}</p>
                   <p className="text-sm font-semibold text-muted">{levelInfo(level)}</p>
                   <p className="text-sm font-bold text-ink">{unlocked ? bestText(bests[def.id], level.verse?.words.length ?? 0) : 'Conclua a fase anterior para abrir'}</p>
+                  {unlocked && bests[def.id]?.finished ? <RunStars className="mt-1" finished allWords={bests[def.id].words >= (level.verse?.words.length ?? 0)} clean={bests[def.id].clean} /> : null}
                   {prize.length > 0 ? <p className="text-xs font-bold text-primary">{finished.has(def.id) ? 'Abriu' : 'Abre'}: {prize.join(', ')}</p> : null}
                 </div>
                 <Button disabled={!unlocked} onClick={() => onPlay(level)}>

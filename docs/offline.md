@@ -9,6 +9,8 @@ O app é um PWA: depois de aberto uma vez com internet, funciona sem conexão no
 - **Tabuleiro no mesmo aparelho**: motor roda no navegador; as perguntas vêm do pacote guardado em `localStorage` (`lib/board-api.ts`, atualizado a cada 12 h e a cada partida criada com internet).
 - **Duelo contra o computador**: motor no navegador; figurinhas e Times vêm do cache da API.
 
+- **Corrida (campanha)**: a lista de cenários/fases e o progresso abrem offline (`/api/runner/campaign` e `/progress` em `CACHEABLE_API_PATHS`); dá para jogar a campanha sem internet: a partida (os toques) fica numa fila no aparelho (`corrida-progress.ts`) e o servidor a confere quando a conexão volta. A trilha do cenário exige internet.
+
 ## O que exige internet
 Quiz (gabarito no servidor), mini games (partida no servidor), compras/resgates/baús, salas online do Tabuleiro e do Duelo, amigos/trocas/chat, gravar Times, música dos cenários.
 

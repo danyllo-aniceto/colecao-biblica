@@ -93,9 +93,21 @@ describe.skipIf(!hasDatabase)("corrida: personagens pelo painel", () => {
   });
 });
 
+/** Volta as fases e os cenários do seed ao que a migração gravou (os testes de edição mexem nelas). */
+async function restoreSeedCampaign() {
+  const { SCENARIOS } = await import("../runner/campaign");
+  for (const scenario of SCENARIOS) {
+    await prisma.runnerScenario.update({ where: { slug: scenario.id }, data: { name: scenario.name, story: scenario.story, skyTop: scenario.theme.skyTop, skyBottom: scenario.theme.skyBottom, active: true, art: {}, musicUrl: null } });
+    for (const def of scenario.levels) {
+      await prisma.runnerLevel.update({ where: { slug: def.id }, data: { name: def.name, seed: def.seed, seconds: def.seconds, formOrder: def.order, verseRef: def.ref, verseText: def.verse, forks: true, powers: true, active: true } });
+    }
+  }
+}
+
 describe.skipIf(!hasDatabase)("corrida: cenários e fases pelo painel", () => {
   beforeEach(async () => {
     await resetDatabase();
+    await restoreSeedCampaign();
     // Cenários e fases do seed vêm da migração: volta ao estado inicial e tira o que os testes criaram.
     await prisma.runnerLevel.deleteMany({ where: { system: false } });
     await prisma.runnerScenario.deleteMany({ where: { system: false } });
@@ -224,5 +236,85 @@ describe.skipIf(!hasDatabase)("corrida: cenários e fases pelo painel", () => {
     await prisma.runnerCharacter.deleteMany({ where: { name: "Josué" } });
     expect((await api.delete(`/api/runner/admin/levels/${level.body.id}`).set(bearer(admin))).status).toBe(204);
     expect((await api.delete(`/api/runner/admin/scenarios/${scenario.body.id}`).set(bearer(admin))).status).toBe(204);
+  });
+});
+
+describe.skipIf(!hasDatabase)("corrida: progresso da campanha conferido pelo servidor", () => {
+  beforeEach(async () => {
+    await resetDatabase();
+    await prisma.runnerProgress.deleteMany();
+    await restoreSeedCampaign();
+  });
+
+  /** Toques do bot perfeito numa fase do seed (a mesma fase que o servidor monta). */
+  async function perfectRun(slug: string) {
+    const { SCENARIOS, buildCampaignLevel } = await import("../runner/campaign");
+    const { botInputs } = await import("../runner/bots");
+    const { prepareLevel } = await import("../runner/engine");
+    const scenario = SCENARIOS.find((item) => item.levels.some((def) => def.id === slug))!;
+    const level = prepareLevel(buildCampaignLevel(scenario, scenario.levels.find((def) => def.id === slug)!));
+    return [{ fromCheckpoint: false, toggles: botInputs(level) }];
+  }
+
+  it("começa vazio, abre as fases em ordem e guarda o melhor resultado conferido (3 estrelas)", async () => {
+    const user = await login("user@email.com");
+    const empty = await api.get("/api/runner/progress").set(bearer(user));
+    expect(empty.body).toEqual({ levels: {} });
+
+    // A 2ª fase só abre depois de concluir a 1ª.
+    const locked = await api.post("/api/runner/levels/cd-2/result").set(bearer(user)).send({ segments: [{ fromCheckpoint: false, toggles: [] }] });
+    expect(locked.status).toBe(403);
+
+    // Sem tocar: cai cedo; conta como tentativa e guarda a % (não abre a próxima).
+    const fall = await api.post("/api/runner/levels/cd-1/result").set(bearer(user)).send({ segments: [{ fromCheckpoint: false, toggles: [] }] });
+    expect(fall.status).toBe(200);
+    expect(fall.body).toMatchObject({ finished: false, words: 0, stars: 0, newlyFinished: false });
+    expect(fall.body.progress).toBeGreaterThan(0);
+    expect(fall.body.progress).toBeLessThan(0.3);
+
+    const win = await api.post("/api/runner/levels/cd-1/result").set(bearer(user)).send({ segments: await perfectRun("cd-1") });
+    expect(win.status).toBe(200);
+    expect(win.body).toMatchObject({ progress: 1, finished: true, allWords: true, clean: true, stars: 3, newlyFinished: true });
+    expect(win.body.words).toBe(9);
+
+    // Um resultado pior depois não tira nada do melhor, e a conclusão já não é "nova".
+    const worse = await api.post("/api/runner/levels/cd-1/result").set(bearer(user)).send({ segments: [{ fromCheckpoint: false, toggles: [] }] });
+    expect(worse.body).toMatchObject({ progress: 1, finished: true, stars: 3, newlyFinished: false });
+
+    const progress = await api.get("/api/runner/progress").set(bearer(user));
+    expect(progress.body.levels["cd-1"]).toMatchObject({ progress: 1, words: 9, finished: true, allWords: true, clean: true, stars: 3 });
+    const row = await prisma.runnerProgress.findFirstOrThrow({ where: { levelSlug: "cd-1" } });
+    expect(row.attempts).toBe(3);
+    expect(row.finishedAt).not.toBeNull();
+
+    // Agora a 2ª fase abre.
+    const second = await api.post("/api/runner/levels/cd-2/result").set(bearer(user)).send({ segments: [{ fromCheckpoint: false, toggles: [] }] });
+    expect(second.status).toBe(200);
+  });
+
+  it("recusa partida que não confere: toques de outra fase, fora de ordem ou formato errado", async () => {
+    const user = await login("user@email.com");
+    const bad = (segments: unknown) => api.post("/api/runner/levels/cd-1/result").set(bearer(user)).send({ segments });
+    expect((await bad("x")).status).toBe(400);
+    expect((await bad([])).status).toBe(400);
+    expect((await bad([{ fromCheckpoint: false, toggles: [5, 3] }])).status).toBe(400);
+    const orderless = await bad([{ fromCheckpoint: true, toggles: [] }]);
+    expect(orderless.status).toBe(400);
+    expect(orderless.body.message).toMatch(/início/);
+    expect((await api.post("/api/runner/levels/nao-existe/result").set(bearer(user)).send({ segments: [{ fromCheckpoint: false, toggles: [] }] })).status).toBe(404);
+    // A fase certa, com os toques certos, termina (o servidor repete tudo: o resultado vem da repetição, nunca do que a tela diz).
+    const toggles = (await perfectRun("cd-1"))[0].toggles;
+    expect((await api.post("/api/runner/levels/cd-1/result").set(bearer(user)).send({ segments: [{ fromCheckpoint: false, toggles }] })).body.finished).toBe(true);
+    expect(await prisma.runnerProgress.count()).toBe(1);
+  });
+
+  it("o progresso é de cada jogador e a fase desativada some da campanha (resultado recusado)", async () => {
+    const user = await login("user@email.com");
+    const admin = await login("admin2@email.com");
+    await api.post("/api/runner/levels/cd-1/result").set(bearer(user)).send({ segments: await perfectRun("cd-1") });
+    expect((await api.get("/api/runner/progress").set(bearer(admin))).body).toEqual({ levels: {} });
+    await prisma.runnerLevel.update({ where: { slug: "cd-1" }, data: { active: false } });
+    const res = await api.post("/api/runner/levels/cd-1/result").set(bearer(user)).send({ segments: [{ fromCheckpoint: false, toggles: [] }] });
+    expect(res.status).toBe(404);
   });
 });
