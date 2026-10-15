@@ -124,7 +124,7 @@ código em **português do Brasil**.
 - Bots **ao vivo** (`createBot` em `bots.ts`: decidem como jogador, só veem o que o jogador vê; `BOT_LEVELS` = Aprendiz/Estudante/Mestre) correm contra o jogador na mesma tela; ao cair, jogador e bots voltam ao último checkpoint
   por `respawnAt` (estado limpo, nunca no meio de um pulo). Hub do modo em `components/user/corrida/` (Campanha, Livre, Bots, Multi, Personagens); desenho em `corrida-draw.ts`; capa `RUNNER` em Capas dos jogos.
 - **Personagens, sprites e sons vêm do Painel** (Painel → Corrida: personagens; tabela `runner_characters`, rotas `/api/runner`, regras puras em `runner/characters.ts`). Cada pose é UMA tira horizontal de 1–12 quadros quadrados; o jogo desenha o sprite
-  da pose certa e cai para a forma colorida se faltar; sons do personagem com o som padrão (`rn*`) de reserva. Os 6 padrão vêm da migração (só a cor) e não podem ser excluídos. Guia de arte e som em `docs/corrida-prompts-de-arte.md`.
+  da pose certa e cai para a forma colorida se faltar; sons do personagem com o som padrão (`rn*`) de reserva. Os 6 padrão vêm da migração (só a cor) e não podem ser excluídos. O Painel monta a tira a partir de quadros soltos (`frame-strip-builder.tsx`; contas puras e testadas em `runner/sprite-strip.ts`: mesma escala, pés na base, remoção do fundo verde). Guia de arte e som em `docs/corrida-prompts-de-arte.md` e prompts em `docs/corrida-prompts-prontos.md`.
 - Online (futuro): corrida paralela sem colisão entre jogadores, no molde das salas do Tabuleiro/Duelo (`?since=`, sem websocket); até 4 jogadores, bots completam.
 
 ## Comandos

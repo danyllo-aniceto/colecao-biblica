@@ -6,10 +6,11 @@ Ficha técnica e passo a passo do Painel: `docs/corrida-prompts-de-arte.md`. Est
 ## Como trabalhar (ordem que dá mais certo)
 
 1. **Gere a FICHA do personagem primeiro** (prompt 0) e escolha a melhor. Ela é a referência de TODAS as poses (anexe a imagem como referência em cada geração).
-2. **Gere poucas peças por imagem.** IA erra a conta de quadros em tiras longas. O mais seguro: **1 a 2 quadros por geração** e juntar depois (se quiser, eu faço um montador de tira no Painel).
-3. **Fundo verde chapado (#00FF00)** em tudo; depois remova o fundo (remove.bg, Photoroom, Canva) e exporte PNG/WebP transparente.
-4. Cada quadro final: **256 × 256 px**, personagem de **perfil olhando para a direita** (menos retrato e vitória), **pés na base**, mesmo tamanho em todos os quadros. Máximo **6 quadros por imagem** (1536 px de largura).
-5. Antes de enviar, confira: mesmos olhos, roupa e proporção em todos os quadros.
+2. **Gere UM QUADRO por imagem** (seção "Quadro por quadro" abaixo). É o jeito mais seguro: a IA erra a conta de quadros em tiras.
+3. **Nomeie os arquivos na ordem**: `correndo-1.png`, `correndo-2.png`, ... (o Painel ordena pelo nome; dá para reordenar lá também).
+4. **Fundo verde chapado (#00FF00)** em tudo. No Painel, ligue **"Remover o fundo verde"** (ou remova por fora, se o personagem tiver roupa verde).
+5. **Suba no Painel quadro por quadro:** Painel → Corrida: personagens → Editar → na pose, aba **"Quadro por quadro"** → escolha todos os arquivos da pose de uma vez → confira a prévia animada → **Usar estes quadros**. O Painel monta a tira sozinho (mesma escala, pés na base) e envia.
+6. Os quadros podem ser de qualquer tamanho, mas **todos do mesmo tamanho** (ex.: 1024 × 1024, quadrados), personagem de **perfil olhando para a direita** (menos retrato e vitória), **pés encostando na base** da imagem.
 
 ---
 
@@ -31,7 +32,40 @@ No photorealism, no 2D illustration, no flat vector art, no horror, no blood, no
 
 ---
 
-## IMAGENS
+## QUADRO POR QUADRO (recomendado: um quadro por imagem)
+
+**Prompt de um quadro** (troque `{POSE}`, `{N}`/`{TOTAL}` e `{DESCRIÇÃO DO QUADRO}` pela tabela logo abaixo):
+
+```
+Use the attached character sheet as the exact reference. Same character, same outfit, same proportions, same face.
+Single animation frame ({N} of {TOTAL}) of the "{POSE}" animation of {PERSONAGEM}. {DESCRIÇÃO DO QUADRO}
+One single character only, centered in a square image, full body, {side view facing right | facing the camera}, feet touching the bottom edge of the image,
+the character fills about 85% of the image height. Same scale and same camera distance as the other frames of this animation.
+{ESTILO}
+{FUNDO + NEGATIVOS}
+```
+
+**Descrições de cada quadro** (cole no lugar de `{DESCRIÇÃO DO QUADRO}`):
+
+| Pose | Qtde | Quadro a quadro |
+|---|---|---|
+| **Retrato** | 1 | `Friendly portrait pose facing the camera at a slight three-quarter angle, big smile, one hand waving.` |
+| **Correndo** | 4 | 1: `Run cycle, contact pose: right foot forward, left arm forward, body slightly low.` · 2: `Run cycle, passing pose: legs crossing under the body, body at its highest, arms mid-swing.` · 3: `Run cycle, contact pose: left foot forward, right arm forward, body slightly low.` · 4: `Run cycle, passing pose: legs crossing under the body, body at its highest, arms mid-swing (opposite to frame 2).` |
+| **Correndo** | 6 | Os 4 acima + intercalar `down pose (body lowest, knee bent absorbing the step)` entre o 1 e o 2 e entre o 3 e o 4. |
+| **No ar** | 3 | 1: `Jumping up, both arms raised, knees tucked.` · 2: `At the top of the jump, body stretched, clothing floating.` · 3: `Falling, legs reaching down, arms slightly out.` (Se quiser só 1 quadro: use o 1.) |
+| **Voando** | 2 | 1: `Gliding, body horizontal and streamlined, arms forward, {manto/véu/túnica} streaming behind.` · 2: `Same gliding pose, the flowing cloth slightly higher than in frame 1.` |
+| **Voando** | 4 | Os 2 acima + 3: `Gliding, cloth at its lowest point` + 4: `Gliding, cloth at mid height, going up`. |
+| **Gravidade** | 2 | 1: `Standing firmly in a "magnetic boots" pose: knees slightly bent, arms out for balance, determined happy face.` · 2: `Same pose with a tiny weight shift, clothing swaying slightly.` |
+| **Caindo** | 3 | 1: `Surprised face, arms flailing.` · 2: `Tipping over backwards, eyes squeezed shut.` · 3: `Sitting dazed on the ground, little cartoon stars circling the head, harmless and funny.` |
+| **Vencendo** | 4 | 1: `Facing the camera, arms down, big smile.` · 2: `Facing the camera, arms raised high, cheering.` · 3: `Facing the camera, small happy jump, feet off the ground.` · 4: `Facing the camera, arms raised again, cheering.` |
+
+> **Dica de consistência:** gere todos os quadros de uma pose na mesma sessão, com a ficha anexada, e mantenha a mesma distância de câmera. Se um quadro sair com o personagem maior/menor, refaça só esse quadro.
+
+---
+
+## IMAGENS EM TIRA (opcional: se a sua ferramenta acerta tiras de quadros)
+
+Os prompts abaixo geram a pose inteira numa tira horizontal. Só use se a IA estiver acertando a contagem e a consistência; senão, prefira "Quadro por quadro".
 
 ### 0) Ficha do personagem (referência — gere esta primeiro)
 
@@ -150,7 +184,7 @@ Todos **curtos (menos de 2 s)**, **sem música de fundo**, **sem eco**, formato 
 - [ ] Caindo (1–3)
 - [ ] Vencendo (2–6)
 - [ ] 7 sons (mesma voz)
-- [ ] Cadastrado no Painel → Corrida: personagens (informar a quantidade de quadros de cada pose)
+- [ ] Cadastrado no Painel → Corrida: personagens, aba "Quadro por quadro" em cada pose (a quantidade de quadros é preenchida sozinha)
 
 ## Quando for um personagem específico
 
