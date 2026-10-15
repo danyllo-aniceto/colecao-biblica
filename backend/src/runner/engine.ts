@@ -4,6 +4,7 @@ import {
   PLAYER,
   SPEED,
   TILE,
+  TIME_SCALE,
   type Level,
   type PlayerState,
   type PreparedLevel,
@@ -11,17 +12,24 @@ import {
   type RunResult,
 } from "./types";
 
-/** Física única para todos os personagens (px por passo). */
-const GRAVITY = 0.72;
-const JUMP_SPEED = 11.6;
-const MAX_FALL = 14;
-const FLY_UP = 0.55;
-const FLY_DOWN = 0.45;
-const FLY_MAX_UP = 6.5;
-const FLY_MAX_DOWN = 7;
-const FLIP_GRAVITY = 0.9;
-const FLIP_KICK = 2;
-const FLIP_MAX = 13;
+/**
+ * Física única para todos os personagens. Valores de referência (ritmo rápido) multiplicados pela escala de tempo:
+ * velocidades por `T`, acelerações por `T²`.
+ */
+const T = TIME_SCALE;
+const GRAVITY = 0.72 * T * T;
+const JUMP_SPEED = 11.6 * T;
+/** Pulos extras no ar (forma Corrida): um novo toque, depois de soltar, dá mais um impulso um pouco menor. */
+export const MAX_AIR_JUMPS = 1;
+const AIR_JUMP_SPEED = JUMP_SPEED * 0.92;
+const MAX_FALL = 14 * T;
+const FLY_UP = 0.55 * T * T;
+const FLY_DOWN = 0.45 * T * T;
+const FLY_MAX_UP = 6.5 * T;
+const FLY_MAX_DOWN = 7 * T;
+const FLIP_GRAVITY = 0.9 * T * T;
+const FLIP_KICK = 2 * T;
+const FLIP_MAX = 13 * T;
 /** Até quantos px o personagem "sobe" num canto de bloco em vez de bater (perdão para quem erra por pouco). */
 const STEP_UP = 14;
 /** Folga da caixa do personagem contra espetos e quinas (a colisão com espeto é mais gentil que o desenho). */
@@ -70,6 +78,7 @@ export function newPlayer(level: PreparedLevel): PlayerState {
     grav: 1,
     form,
     grounded: form !== "FLY",
+    airJumps: MAX_AIR_JUMPS,
     held: false,
     portal: 0,
     status: "running",
@@ -89,7 +98,7 @@ function* nearby<T>(level: PreparedLevel, x: number, pick: (col: PreparedLevel["
 
 /**
  * Um passo de 1/60 s. `held` = o dedo está na tela neste passo.
- * - Corrida: segurar (ou tocar) no chão pula. - Voo: segurar sobe, soltar desce. - Gravidade: tocar no chão/teto inverte a gravidade.
+ * - Corrida: segurar (ou tocar) no chão pula; um novo toque no ar dá o pulo duplo. - Voo: segurar sobe, soltar desce. - Gravidade: tocar no chão/teto inverte a gravidade.
  * Primeiro anda para o lado (bater de lado derruba), depois resolve o vertical (bater cabeça/pousar nunca derruba), depois espetos e palavras.
  */
 export function stepPlayer(level: PreparedLevel, previous: PlayerState, held: boolean): PlayerState {
@@ -103,8 +112,9 @@ export function stepPlayer(level: PreparedLevel, previous: PlayerState, held: bo
     if (form !== p.form) {
       p.form = form;
       p.grav = 1;
-      p.vy = Math.min(p.vy, 4);
+      p.vy = Math.min(p.vy, 4 * T);
       p.grounded = false;
+      p.airJumps = MAX_AIR_JUMPS;
     }
   }
 
@@ -134,7 +144,13 @@ export function stepPlayer(level: PreparedLevel, previous: PlayerState, held: bo
 
   // Vertical.
   if (p.form === "RUN") {
-    if (held && p.grounded) p.vy = -JUMP_SPEED;
+    if (p.grounded) p.airJumps = MAX_AIR_JUMPS;
+    if (held && p.grounded) {
+      p.vy = -JUMP_SPEED;
+    } else if (pressed && !p.grounded && p.airJumps > 0) {
+      p.vy = -AIR_JUMP_SPEED;
+      p.airJumps -= 1;
+    }
     p.vy = Math.min(MAX_FALL, p.vy + GRAVITY);
   } else if (p.form === "FLY") {
     p.vy += held ? -FLY_UP : FLY_DOWN;

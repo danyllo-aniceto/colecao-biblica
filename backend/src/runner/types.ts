@@ -8,8 +8,13 @@ export const ROWS = 7;
 export const FLOOR_Y = 320;
 export const CEIL_Y = FLOOR_Y - ROWS * TILE;
 export const PLAYER = 32;
+/**
+ * Escala de tempo da física: 1 = ritmo rápido original, menor = mais devagar. Velocidade, gravidade e pulos mudam juntos,
+ * então a geometria dos saltos (quantas colunas e linhas o pulo alcança) continua a mesma. É o botão para ajustar o ritmo.
+ */
+export const TIME_SCALE = 0.72;
 /** Velocidade horizontal (px por passo): todos os personagens correm igual. */
-export const SPEED = 5.4;
+export const SPEED = 5.4 * TIME_SCALE;
 
 /** Forma do personagem no trecho: quem decide é a fase (portais), nunca o personagem. */
 export type Form = "RUN" | "FLY" | "GRAVITY";
@@ -24,9 +29,13 @@ export type PortalObject = { kind: "portal"; x: number; form: Form };
 export type WordObject = { kind: "word"; x: number; y: number; index: number };
 export type LevelObject = SpikeObject | BlockObject | PortalObject | WordObject;
 
+/** Versículo escondido da fase: cada palavra coletada (`index`) aparece no lugar dele. */
+export type Verse = { ref: string; words: string[] };
+
 export type Level = {
   id: string;
   name: string;
+  verse?: Verse;
   /** Forma no começo da fase. */
   form: Form;
   /** Comprimento em colunas: ao chegar ao fim a fase termina. */
@@ -58,6 +67,8 @@ export type PlayerState = {
   grav: 1 | -1;
   form: Form;
   grounded: boolean;
+  /** Pulos extras que ainda restam no ar (forma Corrida): volta ao máximo ao pousar. */
+  airJumps: number;
   /** O toque estava apertado no passo anterior (para detectar o instante do toque). */
   held: boolean;
   /** Próximo portal a cruzar. */

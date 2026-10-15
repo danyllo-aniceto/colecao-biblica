@@ -1,11 +1,12 @@
+import { buildJourney } from "./journey";
 import { flyTunnel, gap, gravitySpikes, platform, portal, spikeRow, wordAt } from "./segments";
 import type { Level, LevelObject } from "./types";
 
 /**
- * Protótipo: uma fase curta que passa pelas 3 formas (corrida, voo, gravidade) para testar o toque.
- * As fases bíblicas de verdade entram depois (docs/modo-corrida.md); cada uma com a sua trilha e o seu versículo.
+ * Treino rápido: uma fase curta que passa pelas 3 formas, escrita à mão, para sentir cada uma delas.
+ * As fases bíblicas de verdade (docs/modo-corrida.md) são jornadas de minutos, cada uma com a sua trilha e o seu versículo.
  */
-function prototype(): Level {
+function quickTraining(): Level {
   const objects: LevelObject[] = [];
   let x = 14;
   // Corrida.
@@ -40,10 +41,21 @@ function prototype(): Level {
   x = gap(x, 8);
   x = gravitySpikes(objects, x, ["floor", "ceiling", "floor", "floor", "ceiling", "ceiling", "floor"]);
   x = gap(x, 6);
-  return { id: "prototipo", name: "Protótipo: as 3 formas", form: "RUN", length: x, objects };
+  return { id: "treino", name: "Treino rápido: as 3 formas", verse: { ref: "Treino", words: ["Corra", "voe", "inverta", "venha!"] }, form: "RUN", length: x, objects };
 }
 
-export const LEVELS: Level[] = [prototype()];
+/** Protótipo da jornada: ~2 min 30 s alternando corrida, voo e gravidade, com o Salmo 23:1 escondido em palavras. */
+function journey(): Level {
+  return buildJourney({
+    id: "jornada",
+    name: "Jornada de teste (2 min 30 s)",
+    seed: 23,
+    seconds: 150,
+    verse: { ref: "Salmos 23:1", words: ["O", "Senhor", "é", "o", "meu", "pastor;", "nada", "me", "faltará."] },
+  });
+}
+
+export const LEVELS: Level[] = [journey(), quickTraining()];
 
 export function levelById(id: string): Level | undefined {
   return LEVELS.find((level) => level.id === id);

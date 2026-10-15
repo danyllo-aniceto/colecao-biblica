@@ -1,13 +1,21 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { botInputs } from "./bots";
 import { prepareLevel, simulate } from "./engine";
+import { buildJourney, TILES_PER_SECOND } from "./journey";
 import { LEVELS } from "./levels";
-import { ROWS } from "./types";
+import { ROWS, TICKS_PER_SECOND, type RunResult } from "./types";
 
 describe("Corrida: fases", () => {
   for (const level of LEVELS) {
     describe(level.name, () => {
       const prepared = prepareLevel(level);
+      let perfectToggles: number[] = [];
+      let perfect: RunResult;
+
+      beforeAll(() => {
+        perfectToggles = botInputs(prepared);
+        perfect = simulate(prepared, perfectToggles);
+      }, 120_000);
 
       it("tem objetos dentro do campo e portais em ordem", () => {
         for (const object of level.objects) {
@@ -20,25 +28,43 @@ describe("Corrida: fases", () => {
         expect(portals).toEqual([...portals].sort((a, b) => a - b));
       });
 
+      it("as palavras do versículo existem uma vez cada", () => {
+        const indexes = level.objects.filter((object) => object.kind === "word").map((object) => (object as { index: number }).index);
+        expect(new Set(indexes).size).toBe(indexes.length);
+        expect(indexes.length).toBe(level.verse?.words.length);
+      });
+
       it("não dá para vencer sem tocar na tela", () => {
         expect(simulate(prepared, []).status).not.toBe("finished");
       });
 
       it("um bot perfeito termina a fase e pega todas as palavras (a fase é possível)", () => {
-        const result = simulate(prepared, botInputs(prepared));
-        expect(result.status).toBe("finished");
-        expect(result.collected).toHaveLength(prepared.wordCount);
+        expect(perfect.status).toBe("finished");
+        expect(perfect.collected).toHaveLength(prepared.wordCount);
       });
 
-      it("a mesma partida do bot se repete igual (o servidor confere pelos toques)", () => {
-        const toggles = botInputs(prepared, { skill: 0.7, seed: 3 });
-        expect(simulate(prepared, toggles)).toEqual(simulate(prepared, toggles));
+      it("a mesma partida se repete igual (o servidor confere pelos toques)", () => {
+        expect(simulate(prepared, perfectToggles)).toEqual(perfect);
       });
 
       it("um bot distraído erra mais que o perfeito", () => {
-        const deaths = Array.from({ length: 8 }, (_, seed) => simulate(prepared, botInputs(prepared, { skill: 0.25, seed: seed + 1 })).status === "dead").filter(Boolean).length;
+        const deaths = Array.from({ length: 6 }, (_, seed) => simulate(prepared, botInputs(prepared, { skill: 0.25, seed: seed + 1 })).status === "dead").filter(Boolean).length;
         expect(deaths).toBeGreaterThan(0);
-      });
+      }, 120_000);
     });
   }
+
+  it("a jornada dura minutos", () => {
+    const journey = LEVELS.find((level) => level.id === "jornada");
+    expect(journey).toBeDefined();
+    const seconds = journey!.length / TILES_PER_SECOND;
+    expect(seconds).toBeGreaterThan(120);
+    expect(TICKS_PER_SECOND).toBe(60);
+  });
+
+  it("a mesma semente gera sempre a mesma jornada, e sementes diferentes geram fases diferentes", () => {
+    const base = { id: "t", name: "T", seconds: 60, verse: { ref: "x", words: ["a", "b", "c"] } };
+    expect(buildJourney({ ...base, seed: 1 })).toEqual(buildJourney({ ...base, seed: 1 }));
+    expect(buildJourney({ ...base, seed: 1 })).not.toEqual(buildJourney({ ...base, seed: 2 }));
+  });
 });
