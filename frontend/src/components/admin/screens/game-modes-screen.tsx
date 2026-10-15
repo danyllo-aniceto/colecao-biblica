@@ -11,6 +11,7 @@ const MODES: Array<{ id: GameMode; title: string; hint: string }> = [
   { id: 'BOARD', title: 'Tabuleiro', hint: 'Jogo de dado e perguntas com os amigos.' },
   { id: 'DUEL', title: 'Duelo de Figurinhas', hint: 'Jogo de figurinhas com Dons, arenas e turnos.' },
   { id: 'MINIGAMES', title: 'Mini games', hint: '17 jogos rápidos: 5 já liberados e 12 que se abrem, um por pedra do Peitoral, com ranking semanal.' },
+  { id: 'RUNNER', title: 'Corrida', hint: 'Auto-runner bíblico de um toque: campanha, treino livre, contra bots e com amigos.' },
 ];
 
 /** Capas dos jogos da aba Jogar. Sem imagem, o app usa um fundo colorido padrão. */

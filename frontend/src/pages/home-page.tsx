@@ -100,7 +100,7 @@ export function HomePage() {
         <p className="mx-auto mt-2 max-w-2xl text-center text-muted">Um jogo principal para aprender e ganhar prêmios, dois para se divertir com os amigos, sem pressa e sem compromisso, e os 17 mini games, jogos rápidos para treinar a Bíblia: 5 já vêm liberados e os outros 12 se abrem, um por pedra do Peitoral, na Campanha.</p>
         <ul className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {/* O modo Corrida é protótipo: só aparece na aba Jogar, não na página pública. */}
-          {PLAY_MODES.filter((mode) => mode.design).map((mode, index) => {
+          {PLAY_MODES.filter((mode) => mode.id !== 'runner').map((mode, index) => {
             const image = mode.design ? images[mode.design] : null;
             return (
               <li key={mode.id} className="animate-fade-up" style={{ animationDelay: `${index * 90}ms` }}>

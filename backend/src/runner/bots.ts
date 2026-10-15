@@ -1,4 +1,4 @@
-import { maxTicksOf, newPlayer, stepPlayer } from "./engine";
+import { maxTicksOf, newPlayer, respawnAt, stepPlayer } from "./engine";
 import { randomFrom } from "./rng";
 import type { PlayerState, PreparedLevel } from "./types";
 
@@ -45,44 +45,115 @@ export function planHold(level: PreparedLevel, player: PlayerState, current: boo
 }
 
 /**
+ * Dificuldades dos bots da corrida (medidas na jornada de 160 s: Mestre ~165–180 s com 1–3 quedas, Estudante ~185–200 s, Aprendiz ~220–280 s).
+ * Todos correm na mesma velocidade; o que muda é quantas vezes caem e o tempo perdido voltando ao checkpoint.
+ */
+export const BOT_LEVELS = {
+  APPRENTICE: { label: "Aprendiz", skill: 0.88, lag: 3 },
+  STUDENT: { label: "Estudante", skill: 0.93, lag: 3 },
+  MASTER: { label: "Mestre", skill: 0.97, lag: 3 },
+} as const;
+export type BotLevel = keyof typeof BOT_LEVELS;
+
+/** Quantos passos um bot espera depois de cair antes de voltar ao último checkpoint. */
+export const BOT_RESPAWN_TICKS = 45;
+
+export type BotOptions = {
+  /** Chance de pensar a cada decisão (0 a 1); quando "distrai", repete o que estava fazendo. */
+  skill?: number;
+  seed?: number;
+  /** Atraso do toque em passos: a decisão só vale `lag` passos depois, como o dedo de gente real. */
+  lag?: number;
+  /** Desloca os passos em que o bot pensa, para vários bots não pensarem todos no mesmo quadro. */
+  phase?: number;
+  /** Ao cair, espera um pouco e volta ao último checkpoint (corrida contra bots). Sem isso, a partida do bot acaba na queda. */
+  respawn?: boolean;
+  /** Começa deste estado em vez do começo da fase (testes de checkpoint). */
+  from?: PlayerState;
+};
+
+/** Um bot jogando "ao vivo": a cada `step()` anda um passo, decidindo como um jogador (só vê o que o jogador vê). */
+export type Bot = {
+  player: PlayerState;
+  /** Quantas vezes caiu. */
+  deaths: number;
+  /** Passos de corrida decorridos (inclui o tempo perdido ao cair e voltar). */
+  elapsed: number;
+  /** Passos em que o toque desceu/subiu (a mesma forma da partida de um jogador). */
+  toggles: number[];
+  step: () => void;
+};
+
+/** Cria um bot ao vivo. `botInputs` (partida inteira) e a corrida contra bots usam exatamente a mesma lógica. */
+export function createBot(level: PreparedLevel, options: BotOptions = {}): Bot {
+  const skill = options.skill ?? 1;
+  const lag = Math.max(0, Math.floor(options.lag ?? 0));
+  const phase = Math.max(0, Math.floor(options.phase ?? 0));
+  const random = randomFrom(options.seed ?? 1);
+  let hold = false;
+  let intended = false;
+  let pending: { at: number; hold: boolean } | null = null;
+  let checkpoint = 0;
+  let waiting = 0;
+  const bot: Bot = {
+    player: options.from ?? newPlayer(level),
+    deaths: 0,
+    elapsed: 0,
+    toggles: [],
+    step() {
+      const current = bot.player;
+      if (current.status === "finished") return;
+      bot.elapsed += 1;
+      if (current.status === "dead") {
+        waiting += 1;
+        if (options.respawn && waiting >= BOT_RESPAWN_TICKS) {
+          bot.player = respawnAt(level, checkpoint, current.collected, current.tick);
+          hold = false;
+          intended = false;
+          pending = null;
+          waiting = 0;
+        }
+        return;
+      }
+      if ((current.tick + phase) % DECISION_TICKS === 0 && (skill >= 1 || random() < skill)) {
+        const next = planHold(level, current, hold);
+        if (next !== intended) {
+          intended = next;
+          if (lag === 0) {
+            if (next !== hold) {
+              bot.toggles.push(current.tick);
+              hold = next;
+            }
+          } else {
+            pending = { at: current.tick + lag, hold: next };
+          }
+        }
+      }
+      if (pending && current.tick >= pending.at) {
+        if (pending.hold !== hold) {
+          bot.toggles.push(current.tick);
+          hold = pending.hold;
+        }
+        pending = null;
+      }
+      const after = stepPlayer(level, current, hold);
+      if (after.checkpoint > current.checkpoint) checkpoint = after.checkpoint;
+      if (after.status === "dead") bot.deaths += 1;
+      bot.player = after;
+    },
+  };
+  return bot;
+}
+
+/**
  * Partida inteira de um bot, devolvida como lista de toques (a mesma forma do jogador).
  * `skill` (0 a 1) é a chance de pensar a cada decisão; quando "distrai", repete o que estava fazendo: quanto menor, mais erra.
  * `lag` é o atraso do toque em passos: a decisão só vale `lag` passos depois, como o dedo de gente real; o bot continua replanejando
  * a cada decisão a partir do que vê. Use `lag` ~ `TOUCH_DELAY` para provar que uma fase não exige precisão de 1 passo.
  */
 export function botInputs(level: PreparedLevel, options: { skill?: number; seed?: number; lag?: number } = {}): number[] {
-  const skill = options.skill ?? 1;
-  const lag = Math.max(0, Math.floor(options.lag ?? 0));
-  const random = randomFrom(options.seed ?? 1);
-  const toggles: number[] = [];
-  let player = newPlayer(level);
-  let hold = false;
-  let intended = false;
-  let pending: { at: number; hold: boolean } | null = null;
+  const bot = createBot(level, { ...options, respawn: false });
   const limit = maxTicksOf(level);
-  while (player.status === "running" && player.tick < limit) {
-    if (player.tick % DECISION_TICKS === 0 && (skill >= 1 || random() < skill)) {
-      const next = planHold(level, player, hold);
-      if (next !== intended) {
-        intended = next;
-        if (lag === 0) {
-          if (next !== hold) {
-            toggles.push(player.tick);
-            hold = next;
-          }
-        } else {
-          pending = { at: player.tick + lag, hold: next };
-        }
-      }
-    }
-    if (pending && player.tick >= pending.at) {
-      if (pending.hold !== hold) {
-        toggles.push(player.tick);
-        hold = pending.hold;
-      }
-      pending = null;
-    }
-    player = stepPlayer(level, player, hold);
-  }
-  return toggles;
+  while (bot.player.status === "running" && bot.player.tick < limit) bot.step();
+  return bot.toggles;
 }

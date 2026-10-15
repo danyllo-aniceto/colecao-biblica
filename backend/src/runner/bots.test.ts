@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { botInputs, TOUCH_DELAY } from "./bots";
-import { prepareLevel, simulate } from "./engine";
+import { BOT_LEVELS, botInputs, createBot, TOUCH_DELAY } from "./bots";
+import { prepareLevel, respawnAt, simulate } from "./engine";
 import { buildJourney, TILES_PER_SECOND } from "./journey";
 import { LEVELS } from "./levels";
 import { ROWS, TICKS_PER_SECOND, type RunResult } from "./types";
@@ -39,6 +39,15 @@ describe("Corrida: fases", () => {
         const marks = [0, ...checkpoints, level.length];
         for (let index = 1; index < marks.length; index += 1) expect((marks[index] - marks[index - 1]) / TILES_PER_SECOND).toBeLessThan(25);
       });
+
+      it("todo checkpoint é um ponto de volta seguro: voltando a ele, o bot segue por pelo menos 10 s sem cair", () => {
+        for (let count = 1; count <= prepared.checkpoints.length; count += 1) {
+          const bot = createBot(prepared, { from: respawnAt(prepared, count), lag: TOUCH_DELAY });
+          const until = 600;
+          while (bot.player.status === "running" && bot.elapsed < until) bot.step();
+          expect(bot.player.status, `checkpoint ${count} (coluna ${prepared.checkpoints[count - 1] / 40})`).not.toBe("dead");
+        }
+      }, 120_000);
 
       it("as palavras do versículo existem uma vez cada", () => {
         const indexes = level.objects.filter((object) => object.kind === "word").map((object) => (object as { index: number }).index);
@@ -86,6 +95,22 @@ describe("Corrida: fases", () => {
       expect(simulate(prepared, botInputs(prepared)).status, `semente ${seed} (exato)`).toBe("finished");
       expect(simulate(prepared, botInputs(prepared, { lag: TOUCH_DELAY })).status, `semente ${seed} (atrasado)`).toBe("finished");
     }
+  }, 240_000);
+
+  it("bots ao vivo: voltam ao checkpoint depois de cair e terminam; o Mestre chega antes do Aprendiz", () => {
+    const level = buildJourney({ id: "t", name: "T", seed: 3, seconds: 75, verse: { ref: "x", words: ["a", "b"] } });
+    const prepared = prepareLevel(level);
+    const finish = (name: keyof typeof BOT_LEVELS) => {
+      const bot = createBot(prepared, { skill: BOT_LEVELS[name].skill, lag: BOT_LEVELS[name].lag, seed: 5, respawn: true });
+      while (bot.player.status !== "finished" && bot.elapsed < 60 * 600) bot.step();
+      return bot;
+    };
+    const master = finish("MASTER");
+    const apprentice = finish("APPRENTICE");
+    expect(master.player.status).toBe("finished");
+    expect(apprentice.player.status).toBe("finished");
+    expect(apprentice.deaths).toBeGreaterThan(master.deaths);
+    expect(master.elapsed).toBeLessThan(apprentice.elapsed);
   }, 240_000);
 
   it("a mesma semente gera sempre a mesma jornada, e sementes diferentes geram fases diferentes", () => {
