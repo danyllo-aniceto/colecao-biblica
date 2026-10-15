@@ -5,6 +5,10 @@ import { badRequest, notFound } from "../lib/errors";
 import { z } from "../lib/validation";
 import { hangmanGameOutcome, maskHint, newHangman, pickHangmanRounds, playHangman, publicHangman, ROUND_CHOICES as HANGMAN_ROUNDS, TIME_CHOICES as HANGMAN_TIMES, type HangmanGameState } from "../minigames/hangman";
 import { lettersOnly, plainText, shuffled, rng, type Outcome } from "../minigames/common";
+import { FACTS_BANK } from "../minigames/content/facts";
+import { PEOPLE_BANK } from "../minigames/content/people";
+import { THINGS_BANK } from "../minigames/content/things";
+import { VERSES_BANK } from "../minigames/content/verses";
 import { anagramOutcome, newAnagram, pickRounds, playAnagram, publicRound, ROUND_CHOICES as ANAGRAM_ROUNDS, TIME_CHOICES as ANAGRAM_TIMES, type AnagramState } from "../minigames/anagram";
 import { bookOrderOutcome, BOOK_TIME_CHOICES, newBookOrder, playBookOrder, publicBookOrder, ROUND_CHOICES as BOOK_ROUNDS, type BookOrderState } from "../minigames/books";
 import { COUNT_CHOICES as TESTAMENT_COUNTS, newTestament, pickTestamentItems, playTestament, publicTestament, testamentOutcome, TIME_CHOICES as TESTAMENT_TIMES, type TestamentState } from "../minigames/testament";
@@ -133,6 +137,48 @@ async function loadBlitzQuestions() {
   });
 }
 
+/** Pessoas do banco fixo no formato dos personagens do painel (sem imagem): ampliam o repertório dos jogos de nomes. */
+const bankPersonas = PEOPLE_BANK.map((person) => ({
+  name: person.name,
+  testament: person.testament as string | null,
+  historicalPeriod: null as string | null,
+  bibleBooks: person.books as string | null,
+  narrativeRole: person.role as string | null,
+  keywords: null as string | null,
+  importantEvents: null as string | null,
+  curiosities: null as string | null,
+  shortSummary: person.summary,
+  imageUrl: null as string | null,
+}));
+
+/** Personagens do painel e, depois deles, os do banco fixo (quem tem o mesmo nome fica com a versão do painel). */
+function allCharacters(content: Awaited<ReturnType<typeof loadContent>>) {
+  return [...content.characters, ...bankPersonas];
+}
+
+/** Nomes, resumos e imagens de personagens, lugares e coisas: o que anagrama e forca sorteiam. */
+function nameSources(content: Awaited<ReturnType<typeof loadContent>>) {
+  return [
+    ...allCharacters(content).map((character) => ({ name: character.name, summary: character.shortSummary, testament: character.testament as string | null, imageUrl: character.imageUrl })),
+    ...content.scenarios.map((scenario) => ({ name: scenario.name, summary: scenario.description ?? "Um lugar da campanha.", testament: null as string | null, imageUrl: scenario.mapImageUrl })),
+    ...THINGS_BANK.map((thing) => ({ name: thing.name, summary: thing.clue, testament: null as string | null, imageUrl: null as string | null })),
+  ];
+}
+
+/** Versículos dos cenários e, depois, os do banco fixo. */
+function verseSources(content: Awaited<ReturnType<typeof loadContent>>) {
+  return [
+    ...content.scenarios.filter((scenario) => scenario.verse && scenario.verseReference).map((scenario) => ({ verse: scenario.verse!, reference: scenario.verseReference!, title: scenario.name, imageUrl: scenario.mapImageUrl })),
+    ...VERSES_BANK.map((verse) => ({ verse: verse.verse, reference: verse.reference, title: verse.title, imageUrl: null as string | null })),
+  ];
+}
+
+/** Perguntas do quiz e, depois, as do banco fixo do Relâmpago. */
+function allBlitzQuestions(questions: Awaited<ReturnType<typeof loadBlitzQuestions>>) {
+  const seen = new Set(questions.map((question) => question.text));
+  return [...questions, ...FACTS_BANK.filter((fact) => !seen.has(fact.text))];
+}
+
 /** Imagem de um nome (personagem pelo nome ou primeiro nome; cenário pelo nome): para a tela ilustrar árvores e ligações. */
 function imageFor(content: Awaited<ReturnType<typeof loadContent>>, name: string): string | null {
   const key = lettersOnly(name);
@@ -156,16 +202,13 @@ function build(game: string, seed: number, content: Awaited<ReturnType<typeof lo
   switch (game) {
     case "caca-palavras": {
       // Personagens, lugares e livros da Bíblia; as palavras das últimas partidas ficam por último para não parecer repetido.
-      const candidates = wordSearchCandidates({ characters: content.characters.map((character) => ({ name: character.name, imageUrl: character.imageUrl, testament: character.testament })), scenarios: content.scenarios });
+      const candidates = wordSearchCandidates({ characters: allCharacters(content).map((character) => ({ name: character.name, imageUrl: character.imageUrl, testament: character.testament })), scenarios: [...content.scenarios, ...THINGS_BANK.filter((thing) => thing.kind === "place").map((thing) => ({ name: thing.name, mapImageUrl: null as string | null }))] });
       const generated = generateWordSearch(seed, candidates, { difficulty: (DIFFICULTY_IDS as readonly string[]).includes(extras.options.difficulty ?? "") ? (extras.options.difficulty as never) : undefined, theme: extras.options.theme as never, avoid: extras.recentWords });
       if (!generated) throw badRequest("Ainda não há palavras suficientes para esta dificuldade");
       return { state: { game, puzzle: generated.puzzle, placements: generated.placements, hinted: [] }, puzzle: generated.puzzle };
     }
     case "forca": {
-      const sources = [
-        ...content.characters.map((character) => ({ name: character.name, summary: character.shortSummary, testament: character.testament as string | null, imageUrl: character.imageUrl })),
-        ...content.scenarios.map((scenario) => ({ name: scenario.name, summary: scenario.description ?? "Um lugar da campanha.", testament: null as string | null, imageUrl: scenario.mapImageUrl })),
-      ];
+      const sources = nameSources(content);
       const level = levelOf(extras.options.difficulty);
       const rounds = pickHangmanRounds(random, sources, level, choose(extras.options.rounds, HANGMAN_ROUNDS, 3), extras.recentWords);
       if (rounds.length === 0) throw badRequest("Ainda não há palavras suficientes para esta dificuldade");
@@ -197,7 +240,7 @@ function build(game: string, seed: number, content: Awaited<ReturnType<typeof lo
       return { state: { game, memory }, puzzle: memory };
     }
     case "versiculo": {
-      const sources = content.scenarios.filter((scenario) => scenario.verse && scenario.verseReference).map((scenario) => ({ verse: scenario.verse!, reference: scenario.verseReference!, title: scenario.name, imageUrl: scenario.mapImageUrl }));
+      const sources = verseSources(content);
       const level = levelOf(extras.options.difficulty);
       const rounds = pickVerseRounds(random, sources, level, choose(extras.options.rounds, VERSE_ROUNDS, 3), extras.recentWords);
       if (rounds.length === 0) throw badRequest("Ainda não há versículos para esta dificuldade");
@@ -213,10 +256,7 @@ function build(game: string, seed: number, content: Awaited<ReturnType<typeof lo
       return { state: { game, ...newMazeState(maze) }, puzzle: maze };
     }
     case "anagrama": {
-      const sources = [
-        ...content.characters.map((character) => ({ name: character.name, summary: character.shortSummary, imageUrl: character.imageUrl })),
-        ...content.scenarios.map((scenario) => ({ name: scenario.name, summary: scenario.description ?? "Um lugar da campanha.", imageUrl: scenario.mapImageUrl })),
-      ];
+      const sources = nameSources(content);
       const difficulty = levelOf(extras.options.difficulty);
       const wanted = choose(extras.options.rounds, ANAGRAM_ROUNDS, 5);
       const rounds = pickRounds(random, sources, difficulty, wanted, extras.recentWords);
@@ -226,7 +266,7 @@ function build(game: string, seed: number, content: Awaited<ReturnType<typeof lo
       return { state: { game, state }, puzzle: publicRound(state) };
     }
     case "testamento": {
-      const people = content.characters.map((character) => ({ name: character.name, testament: character.testament as string | null, imageUrl: character.imageUrl }));
+      const people = allCharacters(content).map((character) => ({ name: character.name, testament: character.testament as string | null, imageUrl: character.imageUrl }));
       const level = levelOf(extras.options.difficulty);
       const items = pickTestamentItems(random, people, level, choose(extras.options.rounds, TESTAMENT_COUNTS, 10), extras.recentWords);
       const state = newTestament(seed, items, level, chooseTime(extras.options.time, TESTAMENT_TIMES), Date.now());
@@ -237,15 +277,16 @@ function build(game: string, seed: number, content: Awaited<ReturnType<typeof lo
       return { state: { game, state }, puzzle: publicBookOrder(state) };
     }
     case "relampago": {
-      if (questions.length < 5) throw badRequest("Ainda não há perguntas suficientes para este jogo");
+      const pool = allBlitzQuestions(questions);
+      if (pool.length < 5) throw badRequest("Ainda não há perguntas suficientes para este jogo");
       const level = levelOf(extras.options.difficulty);
-      const items = pickBlitzItems(random, questions, level, choose(extras.options.rounds, BLITZ_COUNTS, 10), extras.recentWords);
+      const items = pickBlitzItems(random, pool, level, choose(extras.options.rounds, BLITZ_COUNTS, 10), extras.recentWords);
       const state = newBlitz(seed, items, level, chooseTime(extras.options.time, BLITZ_TIMES), Date.now());
       return { state: { game, state }, puzzle: publicBlitz(state) };
     }
     case "lacunas": {
-      const sources = content.scenarios.filter((scenario) => scenario.verse && scenario.verseReference).map((scenario) => ({ verse: scenario.verse!, reference: scenario.verseReference!, title: scenario.name, imageUrl: scenario.mapImageUrl }));
-      const decoys = content.scenarios.flatMap((scenario) => (scenario.verse ?? "").split(/\s+/)).map((word) => word.replace(/[^\p{L}'’-]/gu, ""));
+      const sources = verseSources(content);
+      const decoys = sources.flatMap((source) => source.verse.split(/\s+/)).map((word) => word.replace(/[^\p{L}'’-]/gu, ""));
       const level = levelOf(extras.options.difficulty);
       const rounds = pickBlanksRounds(random, sources, level, choose(extras.options.rounds, BLANKS_ROUNDS, 3), extras.recentWords, decoys);
       if (rounds.length === 0) throw badRequest("Ainda não há versículos para esta dificuldade");
@@ -289,8 +330,9 @@ function build(game: string, seed: number, content: Awaited<ReturnType<typeof lo
     case "palavras-cruzadas": {
       // Personagens e lugares: a dica é a descrição com o nome trocado por traços; a foto só aparece no fim.
       const entries = [
-        ...content.characters.map((character) => ({ word: lettersOnly(character.name), clue: maskHint(character.shortSummary, character.name), label: character.name, imageUrl: character.imageUrl })),
+        ...allCharacters(content).map((character) => ({ word: lettersOnly(character.name), clue: maskHint(character.shortSummary, character.name), label: character.name, imageUrl: character.imageUrl })),
         ...content.scenarios.map((scenario) => ({ word: lettersOnly(scenario.name), clue: `Lugar: ${maskHint(scenario.description ?? "um cenário da campanha", scenario.name)}`, label: scenario.name, imageUrl: scenario.mapImageUrl })),
+        ...THINGS_BANK.map((thing) => ({ word: lettersOnly(thing.name), clue: `${thing.kind === "place" ? "Lugar" : "Coisa"}: ${maskHint(thing.clue, thing.name)}`, label: thing.name, imageUrl: null as string | null })),
       ].filter((entry, index, all) => entry.word.length >= 3 && all.findIndex((other) => other.word === entry.word) === index);
       const level = levelOf(extras.options.difficulty);
       const generated = generateCrossword(seed, entries, level);
@@ -301,9 +343,10 @@ function build(game: string, seed: number, content: Awaited<ReturnType<typeof lo
       return { state: { game, state }, puzzle: { ...generated.puzzle, level, timeLimit, checksLeft: config.checks, peeksLeft: config.peeks, par: config.par, maxScore: maxScoreOf(level), checkPenalty: CHECK_PENALTY, peekPenalty: PEEK_PENALTY } };
     }
     case "quem-sou-eu": {
-      if (content.characters.length < 4) throw badRequest("Ainda não há personagens suficientes para este jogo");
+      const people = allCharacters(content);
+      if (people.length < 4) throw badRequest("Ainda não há personagens suficientes para este jogo");
       const level = levelOf(extras.options.difficulty);
-      const rounds = pickWhoAmIRounds(random, content.characters, level, choose(extras.options.rounds, WHOAMI_ROUNDS, 3), extras.recentWords);
+      const rounds = pickWhoAmIRounds(random, people, level, choose(extras.options.rounds, WHOAMI_ROUNDS, 3), extras.recentWords);
       const state = newWhoAmI(seed, rounds, level, chooseTime(extras.options.time, WHOAMI_TIMES), Date.now());
       return { state: { game, state }, puzzle: publicWhoAmI(state) };
     }
@@ -314,7 +357,7 @@ function build(game: string, seed: number, content: Awaited<ReturnType<typeof lo
 
 /** Palavras das últimas partidas do jogador (as do banco guardam 2 dias): o sorteio as deixa por último. */
 async function recentWords(userId: number, gameId: string): Promise<string[]> {
-  const runs = await prisma.miniGameRun.findMany({ where: { userId, gameId }, orderBy: { startedAt: "desc" }, take: 8, select: { state: true } });
+  const runs = await prisma.miniGameRun.findMany({ where: { userId, gameId }, orderBy: { startedAt: "desc" }, take: 20, select: { state: true } });
   const turn = TURN_GAMES[gameId];
   return runs.flatMap((run) => {
     const state = run.state as unknown as { puzzle?: { words?: string[]; title?: string }; memory?: { labels?: string[] }; maze?: { title?: string }; state?: unknown };

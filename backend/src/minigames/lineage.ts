@@ -6,11 +6,18 @@ import { LEVEL_LABEL, LEVEL_SCALE, maxScoreOf, TIME_GRACE, type Level } from "./
  * O tamanho da árvore (de 2 a 8 gerações) e a dificuldade (nomes de enfeite, ajuda inicial, dicas) são escolhidos antes de começar.
  */
 export const LINEAGES: Array<{ source: string; names: string[] }> = [
-  { source: "Gênesis 5", names: ["Adão", "Sete", "Enos", "Cainã", "Maalalel", "Jarede", "Enoque", "Matusalém", "Lameque", "Noé"] },
+  { source: "Gênesis 5 e 11", names: ["Adão", "Sete", "Enos", "Cainã", "Maalalel", "Jarede", "Enoque", "Matusalém", "Lameque", "Noé", "Sem", "Arfaxade", "Salá", "Héber", "Pelegue", "Reú", "Serugue", "Naor", "Terá", "Abraão"] },
   {
     source: "Mateus 1 e Lucas 3",
-    names: ["Terá", "Abraão", "Isaque", "Jacó", "Judá", "Perez", "Esrom", "Rão", "Aminadabe", "Naassom", "Salmom", "Boaz", "Obede", "Jessé", "Davi", "Salomão", "Roboão", "Abias", "Asa", "Josafá", "Jorão", "Uzias", "Jotão", "Acaz", "Ezequias", "Manassés", "Amom", "Josias", "Jeconias", "Salatiel", "Zorobabel"],
+    names: [
+      "Terá", "Abraão", "Isaque", "Jacó", "Judá", "Perez", "Esrom", "Rão", "Aminadabe", "Naassom", "Salmom", "Boaz", "Obede", "Jessé", "Davi", "Salomão", "Roboão", "Abias", "Asa", "Josafá", "Jorão", "Uzias", "Jotão", "Acaz", "Ezequias", "Manassés",
+      "Amom", "Josias", "Jeconias", "Salatiel", "Zorobabel", "Abiúde", "Eliaquim", "Azor", "Zadoque", "Aquim", "Eliúde", "Eleazar", "Matã",
+    ],
   },
+  { source: "1 Crônicas 6 (os sacerdotes)", names: ["Arão", "Eleazar", "Finéias", "Abisua", "Buqui", "Uzi", "Zeraías", "Meraiote", "Amarias", "Aitube", "Zadoque", "Aimaás"] },
+  { source: "Êxodo 6 (a tribo de Levi)", names: ["Levi", "Coate", "Anrão", "Moisés"] },
+  { source: "1 Samuel 9 e 2 Samuel 9", names: ["Quis", "Saul", "Jônatas", "Mefibosete", "Mica"] },
+  { source: "2 Reis 10–15 (os reis de Israel)", names: ["Jeú", "Jeoacaz", "Joás", "Jeroboão", "Zacarias"] },
 ];
 
 /** Como se chama cada antepassado, do mais próximo (pai) ao mais distante. */
@@ -59,8 +66,8 @@ export function generateLineage(seed: number, level: Level = "medio", generation
   const random = rng(seed);
   const ancestors = Math.min(Math.max(generations, 2), 8) - 1;
   const candidates = LINEAGES.filter((lineage) => lineage.names.length >= ancestors + 1);
-  // A linhagem longa (Mateus/Lucas) sai mais: tem muito mais janelas possíveis.
-  const lineage = candidates.length > 1 && random() < 0.25 ? candidates[0] : candidates[candidates.length - 1];
+  // Cada linhagem que comporta o tamanho pedido tem a mesma chance; dentro dela a janela também é sorteada.
+  const lineage = candidates[Math.floor(random() * candidates.length)];
   const start = Math.floor(random() * (lineage.names.length - ancestors));
   const window = lineage.names.slice(start, start + ancestors + 1);
   const answers = window.slice(0, ancestors);

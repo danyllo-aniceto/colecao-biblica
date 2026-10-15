@@ -18,7 +18,7 @@ describe("árvore genealógica", () => {
         expect(puzzle.slots.at(-1)!.label).toBe("Pai");
         expect(puzzle.slots[0].label).toBe(ANCESTOR_LABELS[generations - 2]);
         // As pessoas são consecutivas numa linhagem, terminando na da base.
-        const lineage = LINEAGES.find((item) => item.names.includes(state.reference))!;
+        const lineage = LINEAGES.find((item) => item.source === state.source)!;
         const index = lineage.names.indexOf(state.reference);
         expect(lineage.names.slice(index - (generations - 1), index)).toEqual(state.answers);
         const config = LINEAGE_LEVELS[level];
@@ -37,7 +37,7 @@ describe("árvore genealógica", () => {
   it("a tela não recebe as respostas das posições vazias; no difícil os enfeites são os vizinhos da janela", () => {
     const state = generateLineage(3, "dificil", 3);
     expect(JSON.stringify(state.puzzle.slots)).not.toContain(state.answers[0]);
-    const lineage = LINEAGES.find((item) => item.names.includes(state.reference))!;
+    const lineage = LINEAGES.find((item) => item.source === state.source)!;
     const start = lineage.names.indexOf(state.answers[0]);
     const decoys = state.puzzle.pool.filter((name) => !state.answers.includes(name));
     for (const decoy of decoys) expect(Math.min(Math.abs(lineage.names.indexOf(decoy) - start), Math.abs(lineage.names.indexOf(decoy) - start - 2))).toBeLessThanOrEqual(decoys.length);

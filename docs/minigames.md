@@ -64,6 +64,24 @@ liberar o hub de mini games. Evitar bônus permanente de moedas (mexe na economi
   Os dados são fixos no código (`backend/src/minigames/{timeline,places,lineage,graph}.ts`) e o mapa é um desenho simplificado (`frontend/src/lib/map-shapes.ts`).
 - [ ] Melhorias, jogo a jogo: datas/lugares/relações editáveis no painel; mapa com imagem enviada; perguntas no labirinto; figurinhas no quebra-cabeça; pares personagem ↔ figurinha na memória.
 
+### Bancos de conteúdo (variedade)
+
+Para as partidas não repetirem, os jogos não dependem só dos personagens e cenários do painel: `backend/src/minigames/content/` guarda bancos fixos que **se somam** ao que o painel cadastra
+(o painel vem primeiro; mesmo nome fica com a versão dele). Quem edita o banco precisa manter o teste `conteudo.test.ts` verde (nomes únicos, tamanho mínimo dos pools por dificuldade).
+
+| Banco | Tamanho | Quem usa |
+|---|---|---|
+| `people.ts` (pessoas, com resumo, livro e papel) | ~190 | anagrama, forca, caça-palavras, cruzadas, antigo ou novo?, quem sou eu? |
+| `things.ts` (lugares e coisas, com dica) | ~190 | anagrama, forca, cruzadas, caça-palavras (só lugares) |
+| `verses.ts` (versículos com tema) | ~200 | versículo em pedaços, complete o versículo (e as palavras de enfeite) |
+| `facts.ts` (perguntas com 3 erradas, em 3 níveis) | ~160 | relâmpago |
+| `events.ts` (acontecimentos datados) | +58 (98 no total) | linha do tempo |
+| `places.ts` (coordenadas) | +58 | mapa bíblico |
+| `edges.ts` (relações) | +190 (~250 no total) | interconexão |
+| `lineage.ts` | 6 linhagens (Gn 5 e 11, Mt 1/Lc 3, sacerdotes, Levi, Saul, reis de Israel) | árvore genealógica |
+
+Também: a lista de "palavras recentes" que o sorteio deixa por último agora cobre as últimas 20 partidas (antes 8). Memória, quebra-cabeça e labirinto continuam dependendo das imagens cadastradas no painel.
+
 ## Enriquecimento jogo a jogo (padrão)
 
 Cada mini game passa por: lógica (dificuldade, pontuação, variedade), UX/UI (tela de preparo, retorno visual), imagens que o app já tem (retratos de personagens e mapas de cenários),

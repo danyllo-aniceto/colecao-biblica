@@ -1,3 +1,4 @@
+import { MORE_EVENTS } from "./content/events";
 import { shuffled, type Outcome, type Random } from "./common";
 import { beginClock, clockAlmostOver, clockExpired, elapsedSeconds, endClock, LEVEL_LABEL, LEVEL_SCALE, maxScoreOf, newClock, speedFactor, turnShare, TurnError, type Clock, type Level, type TurnResult } from "./turns";
 
@@ -16,7 +17,7 @@ export type TimelineEvent = {
   match?: string[];
 };
 
-export const TIMELINE: TimelineEvent[] = [
+const BASE_TIMELINE: TimelineEvent[] = [
   { id: "adao", label: "Adão e Eva no Éden", year: -4000, emoji: "🍎", match: ["Adão", "Eva"] },
   { id: "caim", label: "Caim e Abel", year: -3900, emoji: "🌾", match: ["Caim", "Abel"] },
   { id: "noe", label: "Noé e o dilúvio", year: -2350, emoji: "🌈", match: ["Noé"] },
@@ -59,6 +60,9 @@ export const TIMELINE: TimelineEvent[] = [
   { id: "templo70", label: "A destruição do Templo", year: 70, emoji: "🏚️", match: [] },
   { id: "apocalipse", label: "João recebe o Apocalipse", year: 95, emoji: "📜", match: ["João", "Patmos"] },
 ];
+
+/** Todos os acontecimentos: os originais mais os de `content/events.ts`, do mais antigo ao mais recente. */
+export const TIMELINE: TimelineEvent[] = [...BASE_TIMELINE, ...MORE_EVENTS].sort((a, b) => a.year - b.year);
 
 export const TIMELINE_LEVELS: Record<Level, { lives: number; gap: number; hints: number }> = {
   facil: { lives: 5, gap: 150, hints: 3 },
