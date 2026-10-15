@@ -5,7 +5,7 @@ O estilo segue o **molde único** de `docs/prompts-3d-padrao.md` (3D animado est
 
 ## 0. Jeito mais fácil: um quadro por imagem
 
-No Painel, em cada pose, a aba **"Quadro por quadro"** recebe vários arquivos de uma vez (um por quadro, na ordem do nome do arquivo), mostra a prévia animada, **tira o fundo verde #00FF00** se você ligar a opção e monta a tira sozinho (mesma escala, pés na base). Os prompts por quadro estão em `docs/corrida-prompts-prontos.md`. A ficha abaixo vale para quem preferir enviar a tira já pronta.
+No Painel, em cada pose, a aba **"Quadro por quadro"** recebe vários arquivos de uma vez (um por quadro, na ordem do nome do arquivo), mostra a prévia animada, **tira o fundo verde #00FF00** se você ligar a opção e monta a tira sozinho (mesma escala, pés na base). Os prompts por quadro estão em `docs/corrida-prompts-prontos.md`. **Tiras de até 6 quadros podem ser enviadas juntas** na mesma aba: em cada arquivo, o campo "Quadros nesta imagem" diz quantos quadrados a tira tem (duas tiras de 6 = 12 quadros, o máximo por pose); o Painel recorta, junta e avisa se a largura não divide pelo número de quadros ou se o quadro não é quadrado. A ficha abaixo vale para quem preferir enviar a tira já pronta.
 
 ## 1. Ficha técnica dos sprites
 
