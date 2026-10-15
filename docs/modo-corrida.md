@@ -130,11 +130,16 @@ Telas (aba Jogar → Corrida), no mesmo molde do Duelo/Tabuleiro, sem servidor (
 - [x] **Ponto de volta limpo** (`respawnAt`): voltar a um checkpoint nunca recoloca no meio de um pulo; vale para o jogador e para os bots, e todo checkpoint das fases é testado (o bot segue 10 s sem cair).
 - [ ] Guia curto de como jogar (fica para a etapa 8, junto com os sons e a arte).
 
-### Etapa 3 — Personagens e sprites pelo Painel (M)
-- [ ] Migração: `runner_characters` (nome, descrição, sprites por pose, sons, regra de desbloqueio por fase).
-- [ ] Painel → Corrida → Personagens: criar/editar, enviar sprites e sons, pré-visualizar; lista com paginação.
-- [ ] App: seleção de personagem com os sprites do Painel; sem sprite usa a forma colorida. Animação por quadros (poses: correr, pular, voar, gravidade, cair, vencer).
-- [ ] `docs/corrida-prompts-de-arte.md`: prompts dos personagens (padrão 3D de `docs/prompts-3d-padrao.md`) e ficha técnica (tamanho, fundo transparente, nomes das poses).
+### Etapa 3 — Personagens e sprites pelo Painel (M) — feita
+- [x] Migração `runner_characters` (slug, nome, descrição, cor de reserva, ativo, ordem, fase que o abre `unlock_level`, `sprites` e `sounds` em JSON, `system`) com os 6 padrão do seed (Davi, Débora, Elias, Ester, Jonas, Daniel; só a cor).
+- [x] Regras puras em `backend/src/runner/characters.ts` (testadas): 7 **poses** (retrato, correndo, no ar, voando, gravidade, caindo, vencendo), cada uma **uma tira horizontal de 1 a 12 quadros quadrados**;
+  7 **sons** (pulo, pulo duplo, palavra, inverter gravidade, checkpoint, queda, vitória); `mergeSprites`/`mergeSounds` (ausente não altera, `null` limpa), `poseFor`, `frameFor`.
+- [x] API `GET /api/runner/characters` (ativos, qualquer jogador logado; entra em `CACHEABLE_API_PATHS`: abre offline) e, só admin, `GET/POST/PUT/DELETE /api/runner/admin/characters` (paginado no servidor, busca por nome; os do seed só podem ser desativados). Testes de integração.
+- [x] **Painel → Corrida: personagens:** lista paginada, busca, criar/editar/excluir; por pose, enviar imagem (`ImageUploadField`) + quadros + prévia animada; sons com `AudioUploadField`; validação no próprio campo.
+- [x] **App:** escolha de personagem com o retrato do Painel (ou a cor), o jogo desenha o sprite da pose certa e anima os quadros (corrida, pulo, voo, gravidade de cabeça para baixo no teto, queda, vitória na tela de resultado), rivais com os próprios sprites, sons do personagem
+  com o som padrão como reserva. Sem internet ou sem cadastro, valem os 6 padrão.
+- [x] `docs/corrida-prompts-de-arte.md`: ficha técnica (256 × 256 por quadro, no máximo 6 quadros por imagem, fundo transparente, de perfil para a direita, pés na base), prompts por pose no padrão 3D e guia de sons.
+- [ ] Você gera os primeiros sprites e sons e envia pelo Painel (o jogo já usa assim que salvar). O desbloqueio por fase concluída usa `unlock_level` na etapa 5.
 
 ### Etapa 4 — Fases e cenários pelo Painel (G)
 - [ ] Migração: `runner_levels` (nome, história, versículo e referência, duração, semente/ordem das formas, cenário: fundo em 3 camadas, trilha, imagens dos obstáculos).

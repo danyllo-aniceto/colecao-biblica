@@ -1,4 +1,6 @@
+import { frameFor, poseFor, type Sprites } from '@runner/characters';
 import { progressOf } from '@runner/engine';
+import { spriteImage } from '@/components/user/corrida/corrida-sprites';
 import { CEIL_Y, FLOOR_Y, PLAYER, SPEED, TICKS_PER_SECOND, TILE, type Form, type PlayerState, type PreparedLevel } from '@runner/types';
 
 /** Altura do mundo em px (7 linhas do campo + 40 de teto + 40 de chão); a tela só escala. */
@@ -16,12 +18,16 @@ export const FORM_LABEL: Record<Form, string> = {
 export const FORM_COLOR: Record<Form, string> = { RUN: '#38bdf8', FLY: '#f59e0b', GRAVITY: '#a78bfa' };
 
 /** Um rival na tela (corrida contra bots): nome, cor e onde está. */
-export type RivalView = { name: string; color: string; player: PlayerState };
+export type RivalView = { name: string; color: string; player: PlayerState; sprites?: Sprites };
 export type Note = { text: string; fade: number };
 
 export type SceneOptions = {
-  /** Cor do corpo do personagem do jogador. */
+  /** Cor do corpo do personagem do jogador (usada quando falta o sprite da pose). */
   color: string;
+  /** Sprites do personagem do jogador, por pose. */
+  sprites?: Sprites;
+  /** Quadros de animação desde que o jogador caiu (a pose "caindo" toca uma vez). */
+  deadFor: number;
   rivals: RivalView[];
   /** Posição do jogador na corrida (1 = na frente), só quando há rivais. */
   rank: { position: number; total: number } | null;
@@ -31,8 +37,32 @@ export type SceneOptions = {
   dpr: number;
 };
 
-/** Corpo do corredor: quadrado que gira (Corrida), flecha (Voo) ou bola (Gravidade). Cor própria; vermelho ao cair. */
-function drawRunner(ctx: CanvasRenderingContext2D, p: PlayerState, color: string, alpha: number) {
+/** Altura (px do mundo) com que o sprite é desenhado: um pouco maior que a caixa de colisão (32), com os pés alinhados nela. */
+const SPRITE_SIZE = 48;
+
+/** Desenha a pose do personagem (quadro certo da tira). Devolve `false` se ainda não há imagem (o corredor cai para a forma colorida). */
+function drawSprite(ctx: CanvasRenderingContext2D, p: PlayerState, sprites: Sprites | undefined, alpha: number, deadFor: number): boolean {
+  const pose = poseFor(p);
+  const sheet = sprites?.[pose];
+  const image = sheet ? spriteImage(sheet.url) : null;
+  if (!sheet || !image) return false;
+  const frameW = image.width / sheet.frames;
+  const frame = frameFor(pose, sheet.frames, pose === 'dead' ? deadFor : p.tick);
+  const width = (SPRITE_SIZE * frameW) / image.height;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(p.x + PLAYER / 2, p.y + PLAYER / 2);
+  if (p.form === 'FLY') ctx.rotate(Math.max(-0.4, Math.min(0.4, p.vy * 0.06)));
+  if (p.form === 'GRAVITY' && p.grav === -1) ctx.scale(1, -1);
+  // Pés na base da caixa de colisão; a cabeça passa um pouco por cima.
+  ctx.drawImage(image, frame * frameW, 0, frameW, image.height, -width / 2, PLAYER / 2 - SPRITE_SIZE, width, SPRITE_SIZE);
+  ctx.restore();
+  return true;
+}
+
+/** Corpo do corredor: o sprite da pose, se o personagem tiver; senão quadrado que gira (Corrida), flecha (Voo) ou bola (Gravidade) na cor dele. Vermelho ao cair. */
+function drawRunner(ctx: CanvasRenderingContext2D, p: PlayerState, color: string, alpha: number, sprites?: Sprites, deadFor = 0) {
+  if (drawSprite(ctx, p, sprites, alpha, deadFor)) return;
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.translate(p.x + PLAYER / 2, p.y + PLAYER / 2);
@@ -65,7 +95,7 @@ function drawRunner(ctx: CanvasRenderingContext2D, p: PlayerState, color: string
 
 /** Desenho da cena com formas simples (a arte entra depois). Cores fixas: é a "arte" do jogo, igual nos dois temas. */
 export function drawScene(ctx: CanvasRenderingContext2D, level: PreparedLevel, p: PlayerState, width: number, height: number, options: SceneOptions) {
-  const { flash, note, dpr, rivals, rank, color } = options;
+  const { flash, note, dpr, rivals, rank, color, sprites, deadFor } = options;
   const scale = (height / WORLD_H) * ZOOM;
   const viewW = width / scale;
   // Sobra de céu e chão acima e abaixo do campo: o campo fica centralizado.
@@ -179,7 +209,7 @@ export function drawScene(ctx: CanvasRenderingContext2D, level: PreparedLevel, p
   // Rivais (translúcidos, com o nome em cima) e depois o jogador por cima de todos.
   for (const [index, rival] of rivals.entries()) {
     if (rival.player.x + PLAYER < left || rival.player.x > right) continue;
-    drawRunner(ctx, rival.player, rival.color, 0.6);
+    drawRunner(ctx, rival.player, rival.color, 0.6, rival.sprites);
     ctx.save();
     ctx.font = 'bold 12px system-ui, sans-serif';
     ctx.textAlign = 'center';
@@ -193,7 +223,7 @@ export function drawScene(ctx: CanvasRenderingContext2D, level: PreparedLevel, p
     ctx.fillText(rival.name, rival.player.x + PLAYER / 2, labelY);
     ctx.restore();
   }
-  drawRunner(ctx, p, color, 1);
+  drawRunner(ctx, p, color, 1, sprites, deadFor);
   ctx.restore();
 
   // Painel: porcentagem, barra com as bandeiras, tempo que falta, forma atual e versículo. Tamanhos em px de tela (× dpr).

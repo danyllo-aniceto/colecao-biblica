@@ -4,22 +4,29 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ScreenRotationRoundedIcon from '@mui/icons-material/ScreenRotationRounded';
 import { Button } from '@/components/ui/button';
 import { unlockAudio } from '@/lib/sound/context';
+import { playCharacterSound, preloadCharacterSounds } from '@/lib/sound/character-sfx';
 import { playSfx } from '@/lib/sound/sfx';
+import type { Pose, SoundKey, Sounds, Sprites } from '@runner/characters';
 import { createBot, BOT_RESPAWN_TICKS, type Bot } from '@runner/bots';
 import { newPlayer, prepareLevel, progressOf, respawnAt, stepPlayer } from '@runner/engine';
 import { TICKS_PER_SECOND, type Level, type PlayerState, type PreparedLevel } from '@runner/types';
 import { drawScene, type Note, type RivalView } from '@/components/user/corrida/corrida-draw';
+import { preloadSprites } from '@/components/user/corrida/corrida-sprites';
+import { SpriteView } from '@/components/user/corrida/sprite-view';
 
 const STEP_MS = 1000 / TICKS_PER_SECOND;
 /** Cor do corredor quando nenhum personagem foi escolhido. */
 const DEFAULT_COLOR = '#38bdf8';
+
+/** O que a tela precisa do personagem escolhido: cor de reserva, sprites por pose e sons. */
+export type CorridaCharacter = { color: string; sprites?: Sprites; sounds?: Sounds };
 
 type Phase = 'ready' | 'playing' | 'dead' | 'finished';
 type Summary = { progress: number; words: number; total: number };
 
 export type CorridaResult = { progress: number; words: number; finished: boolean; /** Concluída sem voltar a nenhum checkpoint. */ clean: boolean };
 /** Um rival da corrida contra bots. `skill` e `lag` vêm de `BOT_LEVELS`. */
-export type CorridaRival = { name: string; color: string; skill: number; lag: number };
+export type CorridaRival = { name: string; color: string; sprites?: Sprites; skill: number; lag: number };
 export type Standing = { name: string; color: string; progress: number; finished: boolean; deaths: number; isPlayer: boolean; ticks: number };
 
 const formatTime = (ticks: number) => {
@@ -29,8 +36,8 @@ const formatTime = (ticks: number) => {
 
 type Props = {
   level: Level;
-  /** Cor do corpo do personagem escolhido. */
-  color?: string;
+  /** Personagem escolhido (cor, sprites e sons); sem ele, o corredor é um quadrado azul. */
+  character?: CorridaCharacter;
   /** Treino: não conta para o melhor resultado. */
   practice?: boolean;
   /** Um bot joga no seu lugar (para assistir): o jogador só olha. */
@@ -46,7 +53,7 @@ type Props = {
  * Tela da partida em tela cheia. Passo fixo de 60 por segundo (o mesmo motor que o servidor repete para conferir).
  * Todo checkpoint (bandeira) salva o ponto e, ao cair, dá para voltar a ele (sempre num estado limpo: `respawnAt`).
  */
-export function CorridaGame({ level, color = DEFAULT_COLOR, practice = false, autopilot, rivals: rivalSpecs, onResult, onExit }: Props) {
+export function CorridaGame({ level, character, practice = false, autopilot, rivals: rivalSpecs, onResult, onExit }: Props) {
   const prepared = useRef<PreparedLevel>(prepareLevel(level));
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const holdRef = useRef(false);
@@ -69,6 +76,21 @@ export function CorridaGame({ level, color = DEFAULT_COLOR, practice = false, au
   const portraitRef = useRef(false);
   const [portrait, setPortrait] = useState(false);
   const race = Boolean(rivalSpecs && rivalSpecs.length > 0);
+  const color = character?.color ?? DEFAULT_COLOR;
+  const sprites = character?.sprites;
+  const sounds = character?.sounds;
+  const deadForRef = useRef(0);
+  const soundsRef = useRef(sounds);
+  soundsRef.current = sounds;
+  /** Som do personagem (se enviado pelo painel) ou o padrão do modo. */
+  const sound = useCallback((key: SoundKey, fallback: Parameters<typeof playSfx>[0]) => playCharacterSound(soundsRef.current, key, fallback), []);
+
+  // Aquece sprites e sons antes de a corrida começar (nada de "piscar" a forma colorida no primeiro quadro).
+  useEffect(() => {
+    preloadSprites(sprites);
+    preloadCharacterSounds(sounds);
+    for (const rival of rivalSpecs ?? []) preloadSprites(rival.sprites);
+  }, [sprites, sounds, rivalSpecs]);
 
   useEffect(() => {
     const query = window.matchMedia('(orientation: portrait)');
@@ -111,6 +133,7 @@ export function CorridaGame({ level, color = DEFAULT_COLOR, practice = false, au
       }
       holdRef.current = false;
       flashRef.current = 0;
+      deadForRef.current = 0;
       setSummary(null);
       setStandings(null);
       setPhaseBoth(autopilot ? 'playing' : 'ready');
@@ -198,7 +221,7 @@ export function CorridaGame({ level, color = DEFAULT_COLOR, practice = false, au
       const me = playerRef.current;
       setSummary({ progress: progressOf(level, me), words: me.collected.length, total: level.wordCount });
       setPhaseBoth('finished');
-      playSfx(racers[0].isPlayer ? 'rnWin' : 'rnDeath');
+      sound(racers[0].isPlayer ? 'win' : 'death', racers[0].isPlayer ? 'rnWin' : 'rnDeath');
     };
 
     const frame = (now: number) => {
@@ -232,16 +255,16 @@ export function CorridaGame({ level, color = DEFAULT_COLOR, practice = false, au
         playerRef.current = after;
         // Sons dos acontecimentos deste passo.
         if (after.status !== 'dead' && before.status !== 'dead') {
-          if (after.airJumps < before.airJumps) playSfx('rnDouble');
-          else if (before.grounded && after.form === 'RUN' && after.vy < -4) playSfx('rnJump');
-          if (after.collected.length > before.collected.length) playSfx('rnWord');
-          if (after.grav !== before.grav) playSfx('rnFlip');
+          if (after.airJumps < before.airJumps) sound('double', 'rnDouble');
+          else if (before.grounded && after.form === 'RUN' && after.vy < -4) sound('jump', 'rnJump');
+          if (after.collected.length > before.collected.length) sound('word', 'rnWord');
+          if (after.grav !== before.grav) sound('flip', 'rnFlip');
           if (after.portal > before.portal) playSfx('rnPortal');
         }
         if (after.checkpoint > before.checkpoint && !autopilot && after.status === 'running') {
           checkpointRef.current = { count: after.checkpoint, collected: after.collected, tick: after.tick };
           setHasCheckpoint(true);
-          playSfx('rnCheckpoint');
+          sound('checkpoint', 'rnCheckpoint');
           noteRef.current = { text: 'Checkpoint salvo', until: after.tick + 50 };
         }
         if (race) {
@@ -252,14 +275,14 @@ export function CorridaGame({ level, color = DEFAULT_COLOR, practice = false, au
           if (after.status === 'dead' && before.status !== 'dead') {
             raceRef.current.deaths += 1;
             flashRef.current = 1;
-            playSfx('rnDeath');
+            sound('death', 'rnDeath');
           }
           continue;
         }
         const status = after.status;
         if (status !== 'running') {
           flashRef.current = status === 'dead' ? 1 : 0;
-          playSfx(status === 'dead' ? 'rnDeath' : 'rnWin');
+          sound(status === 'dead' ? 'death' : 'win', status === 'dead' ? 'rnDeath' : 'rnWin');
           const result = { progress: progressOf(prepared.current, after), words: after.collected.length, finished: status === 'finished', clean: status === 'finished' && !usedCheckpointRef.current };
           setSummary({ progress: result.progress, words: result.words, total: prepared.current.wordCount });
           setPhaseBoth(status === 'dead' ? 'dead' : 'finished');
@@ -268,15 +291,16 @@ export function CorridaGame({ level, color = DEFAULT_COLOR, practice = false, au
       }
       if (flashRef.current > 0) flashRef.current = Math.max(0, flashRef.current - 0.04);
       const player = playerRef.current;
+      deadForRef.current = player.status === 'dead' ? deadForRef.current + 1 : 0;
       const left = noteRef.current ? noteRef.current.until - player.tick : 0;
       const note: Note | null = noteRef.current && left > 0 ? { text: noteRef.current.text, fade: Math.min(1, left / 15) } : null;
-      const rivalViews: RivalView[] = rivalsRef.current.map(({ bot, spec }) => ({ name: spec.name, color: spec.color, player: bot.player }));
+      const rivalViews: RivalView[] = rivalsRef.current.map(({ bot, spec }) => ({ name: spec.name, color: spec.color, sprites: spec.sprites, player: bot.player }));
       let rank: { position: number; total: number } | null = null;
       if (race) {
         const mine = progressOf(prepared.current, player);
         rank = { position: 1 + rivalViews.filter((rival) => progressOf(prepared.current, rival.player) > mine).length, total: rivalViews.length + 1 };
       }
-      drawScene(ctx, prepared.current, player, canvas.width, canvas.height, { color, rivals: rivalViews, rank, flash: flashRef.current, note, dpr });
+      drawScene(ctx, prepared.current, player, canvas.width, canvas.height, { color, sprites, deadFor: Math.floor(deadForRef.current / 6), rivals: rivalViews, rank, flash: flashRef.current, note, dpr });
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
@@ -284,7 +308,7 @@ export function CorridaGame({ level, color = DEFAULT_COLOR, practice = false, au
       cancelAnimationFrame(raf);
       observer.disconnect();
     };
-  }, [autopilot, color, practice, race, setPhaseBoth]);
+  }, [autopilot, color, sprites, practice, race, setPhaseBoth, sound]);
 
   // Começa do zero ao abrir (e o piloto automático já começa correndo).
   useEffect(() => {
@@ -296,6 +320,9 @@ export function CorridaGame({ level, color = DEFAULT_COLOR, practice = false, au
   const total = summary?.total ?? prepared.current.wordCount;
   const checkpointPercent = checkpointRef.current ? Math.floor(progressOf(prepared.current, respawnAt(prepared.current, checkpointRef.current.count)) * 100) : 0;
   const winner = standings?.[0];
+  // Pose do personagem no resultado: vencendo (fase concluída ou corrida ganha) ou caindo.
+  const overlayPose: Pose = finished && (!standings || winner?.isPlayer) ? 'win' : 'dead';
+  const overlaySheet = sprites?.[overlayPose];
 
   return createPortal(
     <div role="dialog" aria-modal="true" aria-label={`Corrida: ${level.name}`} className="fixed inset-0 z-[60] flex flex-col bg-black">
@@ -324,6 +351,7 @@ export function CorridaGame({ level, color = DEFAULT_COLOR, practice = false, au
         {(dead || finished) && !portrait ? (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 px-5">
             <div className="panel w-full max-w-md space-y-4 p-5 text-center">
+              {overlaySheet ? <SpriteView url={overlaySheet.url} frames={overlaySheet.frames} size={96} className="mx-auto" /> : null}
               {standings ? (
                 <>
                   <h3 className="font-display text-2xl font-bold text-ink">{winner?.isPlayer ? 'Você venceu a corrida!' : `${winner?.name} chegou primeiro`}</h3>

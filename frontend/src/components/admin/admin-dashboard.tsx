@@ -35,6 +35,7 @@ import { DuelScreen } from './screens/duel-screen';
 import { GameModesScreen } from './screens/game-modes-screen';
 import { MiniGamesScreen } from './screens/minigames-screen';
 import { MiniGamesVisualScreen } from './screens/minigames-visual-screen';
+import { RunnerCharactersScreen } from './screens/runner-characters-screen';
 import { ShareScreen } from './screens/share-screen';
 import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
 import SportsEsportsRoundedIcon from '@mui/icons-material/SportsEsportsRounded';
@@ -42,12 +43,13 @@ import StyleRoundedIcon from '@mui/icons-material/StyleRounded';
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
+import DirectionsRunRoundedIcon from '@mui/icons-material/DirectionsRunRounded';
 import PaletteRoundedIcon from '@mui/icons-material/PaletteRounded';
 import WorkspacesRoundedIcon from '@mui/icons-material/WorkspacesRounded';
 import MilitaryTechRoundedIcon from '@mui/icons-material/MilitaryTechRounded';
 import { UsersScreen } from './screens/users-screen';
 
-export type AdminScreen = 'visao-geral' | 'usuarios' | 'personagens' | 'perguntas' | 'reportes' | 'recompensas' | 'loja' | 'visual' | 'colecoes' | 'temporada' | 'campanha' | 'missoes' | 'baus' | 'duelo' | 'modos' | 'minijogos' | 'minijogos-visual' | 'compartilhar' | 'configuracoes';
+export type AdminScreen = 'visao-geral' | 'usuarios' | 'personagens' | 'perguntas' | 'reportes' | 'recompensas' | 'loja' | 'visual' | 'colecoes' | 'temporada' | 'campanha' | 'missoes' | 'baus' | 'duelo' | 'modos' | 'minijogos' | 'minijogos-visual' | 'corrida-personagens' | 'compartilhar' | 'configuracoes';
 
 const SCREENS: Array<{ id: AdminScreen; label: string; description: string; icon: ReactNode }> = [
   { id: 'visao-geral', label: 'Visão geral', description: 'Números do jogo e o que falta no conteúdo.', icon: <DashboardRoundedIcon fontSize="inherit" /> },
@@ -65,6 +67,7 @@ const SCREENS: Array<{ id: AdminScreen; label: string; description: string; icon
   { id: 'modos', label: 'Capas dos jogos', description: 'Imagens dos cartões de Quiz, Tabuleiro, Duelo e Mini games na aba Jogar.', icon: <SportsEsportsRoundedIcon fontSize="inherit" /> },
   { id: 'minijogos-visual', label: 'Visual dos mini games', description: 'Capa do cartão e fundo da tela de cada mini game.', icon: <PaletteRoundedIcon fontSize="inherit" /> },
   { id: 'minijogos', label: 'Testar mini games', description: 'Jogue os mini games como um jogador, com todos liberados, para conferir se estão bons.', icon: <VideogameAssetRoundedIcon fontSize="inherit" /> },
+  { id: 'corrida-personagens', label: 'Corrida: personagens', description: 'Sprites por pose e sons de cada personagem da Corrida.', icon: <DirectionsRunRoundedIcon fontSize="inherit" /> },
   { id: 'compartilhar', label: 'Compartilhar o app', description: 'Link com imagem e texto que explicam o app, para enviar no WhatsApp e nas redes.', icon: <ShareRoundedIcon fontSize="inherit" /> },
   { id: 'baus', label: 'Simulador de baús', description: 'Abre baús de teste e mostra o que cada nível entrega, com as regras de agora.', icon: <Inventory2RoundedIcon fontSize="inherit" /> },
   { id: 'usuarios', label: 'Usuários', description: 'Contas, papéis e ajustes de saldo.', icon: <PeopleAltRoundedIcon fontSize="inherit" /> },
@@ -187,6 +190,7 @@ export function AdminDashboard() {
             {screen === 'modos' ? <GameModesScreen /> : null}
             {screen === 'minijogos' ? <MiniGamesScreen /> : null}
             {screen === 'minijogos-visual' ? <MiniGamesVisualScreen /> : null}
+            {screen === 'corrida-personagens' ? <RunnerCharactersScreen /> : null}
             {screen === 'compartilhar' ? <ShareScreen /> : null}
             {screen === 'usuarios' ? <UsersScreen /> : null}
             {screen === 'configuracoes' ? <SettingsScreen /> : null}

@@ -1064,6 +1064,29 @@ model GameModeDesign {
   @@map("game_mode_designs")
 }
 
+/// Personagens da Corrida (modo próprio): sprites por pose e sons enviados pelo painel. Todos correm com a mesma física; o personagem só muda a aparência.
+/// `sprites` = { pose: { url, frames } } (tira horizontal de quadros quadrados); `sounds` = { som: url }. Sem sprite, o app desenha a forma na cor `color`.
+model RunnerCharacter {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  name        String
+  description String?
+  color       String   @default("#38bdf8")
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0) @map("sort_order")
+  /// Id da fase da campanha que abre este personagem (vazio = já vem liberado). Usado na campanha com servidor.
+  unlockLevel String?  @map("unlock_level")
+  sprites     Json     @default("{}")
+  sounds      Json     @default("{}")
+  /// Os do seed não podem ser excluídos (só desativados).
+  system      Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@index([active, sortOrder])
+  @@map("runner_characters")
+}
+
 /// Imagens de cada mini game: capa do cartão (16:9) e fundo da tela de jogo (vertical).
 model MiniGameDesign {
   id            Int      @id @default(autoincrement())

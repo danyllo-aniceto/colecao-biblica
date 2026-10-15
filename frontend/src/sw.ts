@@ -61,6 +61,7 @@ const CACHEABLE_API_PATHS = [
   /^\/api\/cosmetics(\/profile\/\d+)?$/,
   /^\/api\/game-modes(-public)?$/,
   /^\/api\/minigames$/,
+  /^\/api\/runner\/characters$/,
   /^\/api\/duel\/(cards|decks)$/,
   /^\/api\/social\/(summary|me|friends|reactions)$/,
   /^\/api\/social\/friends\/\d+\/album$/,
