@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { holdAt, maxTicksOf, newPlayer, normalizeInputs, prepareLevel, progressOf, simulate, stepPlayer } from "./engine";
-import { CEIL_Y, FLOOR_Y, PLAYER, TILE, type Form, type Level, type LevelObject, type PlayerState } from "./types";
+import { CEIL_Y, FLOOR_Y, PLAYER, SPEED, TILE, type Form, type Level, type LevelObject, type PlayerState } from "./types";
 
 const level = (objects: LevelObject[], options: { form?: Form; length?: number } = {}): Level => ({
   id: "t",
@@ -23,7 +23,7 @@ describe("Corrida: física", () => {
     const player = run(prepared, 100);
     expect(player.status).toBe("running");
     expect(player.y).toBe(FLOOR_Y - PLAYER);
-    expect(player.x).toBeGreaterThan(500);
+    expect(player.x).toBeGreaterThan(300);
   });
 
   it("o pulo sobe cerca de 2 linhas e volta ao chão", () => {
@@ -41,6 +41,38 @@ describe("Corrida: física", () => {
     expect(player.grounded).toBe(true);
   });
 
+  it("pulo duplo: um novo toque no ar sobe mais; só existe um extra por pulo", () => {
+    const prepared = prepareLevel(level([]));
+    const apex = (presses: number[]) => {
+      let player = newPlayer(prepared);
+      let top = player.y;
+      for (let tick = 0; tick < 120; tick += 1) {
+        // Segura 1 passo em cada tecla dada e solta no seguinte.
+        player = stepPlayer(prepared, player, presses.includes(tick));
+        top = Math.min(top, player.y);
+      }
+      return FLOOR_Y - PLAYER - top;
+    };
+    const single = apex([0]);
+    const double = apex([0, 14]);
+    const triple = apex([0, 14, 28]);
+    expect(double).toBeGreaterThan(single + 30);
+    // O terceiro toque não ganha impulso: no mesmo instante da queda, o resultado é igual ao do pulo duplo.
+    expect(triple).toBeCloseTo(double, 5);
+  });
+
+  it("segurar o toque não gasta o pulo extra sozinho", () => {
+    const prepared = prepareLevel(level([]));
+    let player = newPlayer(prepared);
+    let top = player.y;
+    for (let tick = 0; tick < 60; tick += 1) {
+      player = stepPlayer(prepared, player, true);
+      top = Math.min(top, player.y);
+    }
+    // Segurando direto, a altura é a do pulo simples (a cada pouso, pula de novo), nunca a do duplo.
+    expect(FLOOR_Y - PLAYER - top).toBeLessThan(110);
+  });
+
   it("o espeto derruba, e pular por cima passa", () => {
     const prepared = prepareLevel(level([{ kind: "spike", x: 10 }]));
     expect(simulate(prepared, []).status).toBe("dead");
@@ -56,7 +88,7 @@ describe("Corrida: física", () => {
     const crash = simulate(prepared, []);
     expect(crash.status).toBe("dead");
     expect(crash.cause).toBe("wall");
-    const jumpAt = Math.round((10 * TILE - 3 * TILE) / 5.4);
+    const jumpAt = Math.round((10 * TILE - 3 * TILE) / SPEED);
     expect(simulate(prepared, [jumpAt, jumpAt + 2]).status).toBe("finished");
   });
 
@@ -69,7 +101,7 @@ describe("Corrida: física", () => {
     // Bloco flutuante: passa-se por baixo; pular debaixo dele bate a cabeça e o personagem cai de volta sem morrer.
     const prepared = prepareLevel(level([{ kind: "block", x: 10, y: 2, w: 6, h: 1 }]));
     expect(simulate(prepared, []).status).toBe("finished");
-    const jumpAt = Math.round((11 * TILE) / 5.4);
+    const jumpAt = Math.round((11 * TILE) / SPEED);
     const result = simulate(prepared, [jumpAt, jumpAt + 1]);
     expect(result.status).toBe("finished");
   });

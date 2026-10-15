@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ScreenRotationRoundedIcon from '@mui/icons-material/ScreenRotationRounded';
 import { Button } from '@/components/ui/button';
 import { newPlayer, prepareLevel, progressOf, stepPlayer } from '@runner/engine';
 import { CEIL_Y, FLOOR_Y, PLAYER, TICKS_PER_SECOND, TILE, type Form, type Level, type PlayerState, type PreparedLevel } from '@runner/types';
@@ -9,9 +10,11 @@ import { CEIL_Y, FLOOR_Y, PLAYER, TICKS_PER_SECOND, TILE, type Form, type Level,
 const WORLD_H = FLOOR_Y + 40;
 /** O personagem fica a 28% da largura da tela. */
 const CAMERA_AT = 0.28;
+/** Zoom da câmera (menor = personagem menor e mapa mais amplo; sobra céu e chão nas bordas). Pensado para a tela deitada e para várias corredores no multijogador. */
+const ZOOM = 0.82;
 const STEP_MS = 1000 / TICKS_PER_SECOND;
 
-const FORM_LABEL: Record<Form, string> = { RUN: 'Corrida: toque para pular', FLY: 'Voo: segure para subir', GRAVITY: 'Gravidade: toque para inverter' };
+const FORM_LABEL: Record<Form, string> = { RUN: 'Corrida: toque para pular (toque de novo no ar: pulo duplo)', FLY: 'Voo: segure para subir', GRAVITY: 'Gravidade: toque para inverter' };
 const FORM_COLOR: Record<Form, string> = { RUN: '#38bdf8', FLY: '#f59e0b', GRAVITY: '#a78bfa' };
 
 type Phase = 'ready' | 'playing' | 'dead' | 'finished';
@@ -19,19 +22,22 @@ type Summary = { progress: number; words: number; total: number };
 
 /** Desenho da cena com formas simples (a arte entra depois). Cores fixas: é a "arte" do jogo, igual nos dois temas. */
 function draw(ctx: CanvasRenderingContext2D, level: PreparedLevel, p: PlayerState, width: number, height: number, flash: number) {
-  const scale = height / WORLD_H;
+  const scale = (height / WORLD_H) * ZOOM;
   const viewW = width / scale;
+  // Sobra de céu e chão acima e abaixo do campo: o campo fica centralizado.
+  const margin = (height / scale - WORLD_H) / 2;
   const camX = p.x - viewW * CAMERA_AT;
   const accent = FORM_COLOR[p.form];
   ctx.save();
   ctx.clearRect(0, 0, width, height);
   ctx.scale(scale, scale);
+  ctx.translate(0, margin);
 
-  const sky = ctx.createLinearGradient(0, 0, 0, WORLD_H);
+  const sky = ctx.createLinearGradient(0, -margin, 0, WORLD_H + margin);
   sky.addColorStop(0, '#0f172a');
   sky.addColorStop(1, '#1e3a5f');
   ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, viewW, WORLD_H);
+  ctx.fillRect(0, -margin, viewW, WORLD_H + margin * 2);
 
   // Morros distantes (paralaxe lenta).
   ctx.fillStyle = 'rgba(148,163,184,0.12)';
@@ -55,8 +61,8 @@ function draw(ctx: CanvasRenderingContext2D, level: PreparedLevel, p: PlayerStat
 
   // Teto e chão.
   ctx.fillStyle = '#0b1220';
-  ctx.fillRect(0, 0, viewW, CEIL_Y);
-  ctx.fillRect(0, FLOOR_Y, viewW, WORLD_H - FLOOR_Y);
+  ctx.fillRect(0, -margin, viewW, CEIL_Y + margin);
+  ctx.fillRect(0, FLOOR_Y, viewW, WORLD_H - FLOOR_Y + margin);
   ctx.fillStyle = accent;
   ctx.fillRect(0, CEIL_Y - 3, viewW, 3);
   ctx.fillRect(0, FLOOR_Y, viewW, 3);
@@ -155,6 +161,18 @@ function draw(ctx: CanvasRenderingContext2D, level: PreparedLevel, p: PlayerStat
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   ctx.fillText(`${Math.floor(progress * 100)}%  ·  ${FORM_LABEL[p.form]}`, width / 2, 20);
+  const verse = level.level.verse;
+  if (verse) {
+    // Versículo escondido: palavras coletadas aparecem, as outras ficam em branco.
+    const text = verse.words.map((word, index) => (p.collected.includes(index) ? word : '___')).join(' ');
+    ctx.font = 'bold 14px system-ui, sans-serif';
+    ctx.textBaseline = 'bottom';
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    const boxWidth = Math.min(width * 0.94, ctx.measureText(text).width + 24);
+    ctx.fillRect((width - boxWidth) / 2, height - 30, boxWidth, 24);
+    ctx.fillStyle = '#facc15';
+    ctx.fillText(text, width / 2, height - 10, boxWidth - 16);
+  }
   if (flash > 0) {
     ctx.fillStyle = `rgba(239,68,68,${flash * 0.45})`;
     ctx.fillRect(0, 0, width, height);
@@ -175,6 +193,20 @@ export function CorridaGame({ level, replay, onExit }: { level: Level; replay?: 
   const replayRef = useRef({ next: 0, held: false });
   const [phase, setPhase] = useState<Phase>('ready');
   const [summary, setSummary] = useState<Summary | null>(null);
+  // O jogo é só para a tela deitada: em pé, pausa e pede para girar o celular.
+  const portraitRef = useRef(false);
+  const [portrait, setPortrait] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia('(orientation: portrait)');
+    const sync = () => {
+      portraitRef.current = query.matches;
+      setPortrait(query.matches);
+      if (query.matches) holdRef.current = false;
+    };
+    sync();
+    query.addEventListener('change', sync);
+    return () => query.removeEventListener('change', sync);
+  }, []);
 
   const setPhaseBoth = useCallback((next: Phase) => {
     phaseRef.current = next;
@@ -260,7 +292,7 @@ export function CorridaGame({ level, replay, onExit }: { level: Level; replay?: 
       last = now;
       while (acc >= STEP_MS) {
         acc -= STEP_MS;
-        if (phaseRef.current !== 'playing') continue;
+        if (phaseRef.current !== 'playing' || portraitRef.current) continue;
         let held = holdRef.current;
         if (replay) {
           const state = replayRef.current;
@@ -299,28 +331,34 @@ export function CorridaGame({ level, replay, onExit }: { level: Level; replay?: 
   const total = summary?.total ?? prepared.current.wordCount;
 
   return createPortal(
-    <div role="dialog" aria-modal="true" aria-label={`Corrida: ${level.name}`} className="fixed inset-0 z-[60] flex flex-col bg-bg pt-[env(safe-area-inset-top)]">
-      <div className="flex items-center justify-between gap-3 px-3 py-2">
-        <button type="button" onClick={onExit} aria-label="Sair da fase" className="flex h-11 w-11 items-center justify-center rounded-2xl bg-surface-3 text-muted transition hover:text-ink">
-          <CloseRoundedIcon />
-        </button>
-        <p className="min-w-0 truncate font-display text-base font-bold text-ink">{level.name}</p>
-        <span className="w-11" />
-      </div>
+    <div role="dialog" aria-modal="true" aria-label={`Corrida: ${level.name}`} className="fixed inset-0 z-[60] flex flex-col bg-black">
       <div className="relative min-h-0 flex-1 select-none">
         <canvas ref={canvasRef} className="absolute inset-0 h-full w-full touch-none" aria-label="Área do jogo" />
-        {phase === 'ready' ? (
+        <button type="button" onClick={onExit} aria-label="Sair da fase" className="absolute left-[max(0.5rem,env(safe-area-inset-left))] top-[max(0.5rem,env(safe-area-inset-top))] flex h-10 w-10 items-center justify-center rounded-2xl bg-black/50 text-white transition hover:bg-black/70">
+          <CloseRoundedIcon />
+        </button>
+        {portrait ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/85 px-8 text-center text-white">
+            <ScreenRotationRoundedIcon sx={{ fontSize: 64 }} />
+            <p className="font-display text-xl font-bold">Gire o celular para jogar na horizontal</p>
+            <p className="text-sm font-semibold text-white/70">A Corrida usa a tela deitada para mostrar mais do caminho.</p>
+            <Button variant="secondary" onClick={onExit}>
+              Sair
+            </Button>
+          </div>
+        ) : null}
+        {phase === 'ready' && !portrait ? (
           <div className="pointer-events-none absolute inset-x-0 bottom-[18%] flex justify-center px-6">
             <p className="rounded-2xl bg-black/60 px-5 py-3 text-center font-display text-lg font-bold text-white">Toque na tela para começar</p>
           </div>
         ) : null}
-        {dead || finished ? (
+        {(dead || finished) && !portrait ? (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 px-5">
             <div className="panel w-full max-w-sm space-y-4 p-5 text-center">
               <h3 className="font-display text-2xl font-bold text-ink">{finished ? 'Fase concluída!' : 'Quase lá!'}</h3>
               <p className="text-sm font-semibold text-muted">
                 {finished
-                  ? `Você pegou ${summary?.words ?? 0} de ${total} palavras do versículo.`
+                  ? `Você pegou ${summary?.words ?? 0} de ${total} palavras do versículo${level.verse ? ` (${level.verse.ref}).` : '.'}`
                   : `Você parou em ${Math.floor((summary?.progress ?? 0) * 100)}% e pegou ${summary?.words ?? 0} de ${total} palavras.`}
               </p>
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">

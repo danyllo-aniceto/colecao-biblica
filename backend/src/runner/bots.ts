@@ -1,47 +1,36 @@
 import { maxTicksOf, newPlayer, stepPlayer } from "./engine";
+import { randomFrom } from "./rng";
 import type { PlayerState, PreparedLevel } from "./types";
 
-/** O bot decide a cada `DECISION_TICKS` passos e olha `DEPTH` decisões à frente (64 caminhos de 48 passos). */
+/** O bot decide a cada `DECISION_TICKS` passos e olha `DEPTH` decisões à frente (até 128 caminhos, ~56 passos de horizonte). */
 export const DECISION_TICKS = 8;
-const DEPTH = 6;
+const DEPTH = 7;
 
 /**
- * Escolhe segurar ou soltar olhando só o que o jogador também enxerga: simula os caminhos possíveis e fica com o que sobrevive,
- * pega mais palavras e mexe menos no toque. Empate: continua como estava.
+ * Escolhe segurar ou soltar olhando só o que o jogador também enxerga: percorre a árvore de decisões (cada nó repete a mesma ação por
+ * `DECISION_TICKS` passos) e fica com o caminho que sobrevive, pega mais palavras e mexe menos no toque. Empate: continua como estava.
  */
 export function planHold(level: PreparedLevel, player: PlayerState, current: boolean): boolean {
   let best = current;
   let bestScore = -Infinity;
-  for (let mask = 0; mask < 1 << DEPTH; mask += 1) {
-    let sim = player;
-    let switches = 0;
-    let last = current;
-    for (let decision = 0; decision < DEPTH && sim.status === "running"; decision += 1) {
-      const hold = ((mask >> decision) & 1) === 1;
-      if (hold !== last) switches += 1;
-      last = hold;
-      for (let step = 0; step < DECISION_TICKS && sim.status === "running"; step += 1) sim = stepPlayer(level, sim, hold);
+  const visit = (sim: PlayerState, depth: number, last: boolean, switches: number, first: boolean) => {
+    if (depth === DEPTH || sim.status !== "running") {
+      const alive = sim.status !== "dead";
+      const score = (alive ? 1e6 : sim.tick - player.tick) + sim.collected.length * 100 - switches + (first === current ? 0.5 : 0);
+      if (score > bestScore) {
+        bestScore = score;
+        best = first;
+      }
+      return;
     }
-    const alive = sim.status !== "dead";
-    const first = (mask & 1) === 1;
-    const score = (alive ? 1e6 : sim.tick - player.tick) + sim.collected.length * 100 - switches + (first === current ? 0.5 : 0);
-    if (score > bestScore) {
-      bestScore = score;
-      best = first;
+    for (const hold of [last, !last]) {
+      let next = sim;
+      for (let step = 0; step < DECISION_TICKS && next.status === "running"; step += 1) next = stepPlayer(level, next, hold);
+      visit(next, depth + 1, hold, switches + (hold !== last ? 1 : 0), depth === 0 ? hold : first);
     }
-  }
-  return best;
-}
-
-/** Sorteio com semente (mulberry32), próprio do modo: o motor não importa nada de fora da pasta. */
-export function randomFrom(seed: number) {
-  let state = seed | 0;
-  return () => {
-    state = (state + 0x6d2b79f5) | 0;
-    let t = Math.imul(state ^ (state >>> 15), state | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+  visit(player, 0, current, 0, current);
+  return best;
 }
 
 /**
