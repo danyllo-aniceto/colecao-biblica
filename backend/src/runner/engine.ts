@@ -168,6 +168,8 @@ export function stepPlayer(level: PreparedLevel, previous: PlayerState, held: bo
       p.vy = Math.min(p.vy, 4 * T);
       p.grounded = false;
       p.airJumps = maxAir;
+      // O Pulo triplo só serve na Corrida: ao virar Voo ou Gravidade ele se apaga.
+      if (form !== "RUN") p.effects = { ...p.effects, triple: 0 };
     }
   }
 

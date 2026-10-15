@@ -10,6 +10,8 @@ describe.skipIf(!hasDatabase)("corrida: personagens pelo painel", () => {
     // Os 6 personagens do seed vêm da migração (o reset do teste não os apaga): volta tudo ao estado inicial.
     await prisma.runnerCharacter.deleteMany({ where: { system: false } });
     await prisma.runnerCharacter.updateMany({ data: { active: true, sprites: {}, sounds: {}, unlockLevel: null } });
+    // Volta as fases que abrem os personagens dos cenários (os da migração).
+    for (const [slug, unlockLevel] of Object.entries({ jonatas: "cd-3", joabe: "cd-5", moises: "mv-2", arao: "mv-3", miria: "mv-4", ezequiel: "vo-3" })) await prisma.runnerCharacter.update({ where: { slug }, data: { unlockLevel } });
   });
 
   it("o jogador vê só os personagens ativos, na ordem do painel; só admin edita", async () => {
@@ -17,7 +19,9 @@ describe.skipIf(!hasDatabase)("corrida: personagens pelo painel", () => {
     const admin = await login("admin2@email.com");
     const list = await api.get("/api/runner/characters").set(bearer(user));
     expect(list.status).toBe(200);
-    expect(list.body.map((character: { slug: string }) => character.slug)).toEqual(["davi", "debora", "elias", "ester", "jonas", "daniel"]);
+    expect(list.body.map((character: { slug: string }) => character.slug)).toEqual(["davi", "debora", "elias", "ester", "jonas", "daniel", "jonatas", "joabe", "moises", "arao", "miria", "ezequiel"]);
+    // Os personagens dos cenários abrem ao concluir a fase indicada.
+    expect(list.body.find((character: { slug: string }) => character.slug === "jonatas")).toMatchObject({ unlockLevel: "cd-3" });
     expect(list.body[0]).toMatchObject({ name: "Davi", color: "#38bdf8", sprites: {}, sounds: {}, system: true });
 
     const davi = list.body[0];
@@ -30,7 +34,7 @@ describe.skipIf(!hasDatabase)("corrida: personagens pelo painel", () => {
     expect(after.body.map((character: { slug: string }) => character.slug)).not.toContain("davi");
     // O painel continua vendo o desativado.
     const adminList = await api.get("/api/runner/admin/characters?size=3&page=0").set(bearer(admin));
-    expect(adminList.body).toMatchObject({ totalElements: 6, totalPages: 2, size: 3 });
+    expect(adminList.body).toMatchObject({ totalElements: 12, totalPages: 4, size: 3 });
     expect(adminList.body.content.map((character: { slug: string }) => character.slug)).toEqual(["davi", "debora", "elias"]);
   });
 

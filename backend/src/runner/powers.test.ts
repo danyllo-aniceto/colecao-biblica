@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyPower, emptyEffects, GRACE_TICKS, isImmune, MAGNET_TICKS, POWER_INFO, POWER_KINDS, tickEffects, TRIPLE_TICKS, TURBO_TICKS } from "./powers";
+import { applyPower, emptyEffects, GRACE_TICKS, isImmune, MAGNET_TICKS, POWER_INFO, POWER_KINDS, POWERS_BY_FORM, tickEffects, TRIPLE_TICKS, TURBO_TICKS } from "./powers";
 
 describe("Corrida: poderes (regras puras)", () => {
   it("cada poder liga o seu efeito e pegar de novo renova", () => {
@@ -35,5 +35,12 @@ describe("Corrida: poderes (regras puras)", () => {
       expect(POWER_INFO[kind].symbol.length).toBe(1);
     }
     expect(POWER_INFO.SHIELD.ticks).toBeNull();
+  });
+
+  it("só aparecem poderes que fazem sentido na forma: triplo só na Corrida, ímã só onde há palavras", () => {
+    expect(POWERS_BY_FORM.RUN).toContain("TRIPLE");
+    expect(POWERS_BY_FORM.FLY).not.toContain("TRIPLE");
+    expect(POWERS_BY_FORM.GRAVITY).not.toContain("TRIPLE");
+    expect(POWERS_BY_FORM.GRAVITY).not.toContain("MAGNET");
   });
 });

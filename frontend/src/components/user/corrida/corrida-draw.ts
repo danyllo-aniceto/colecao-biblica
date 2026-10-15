@@ -219,8 +219,8 @@ export function drawScene(ctx: CanvasRenderingContext2D, level: PreparedLevel, p
   ctx.translate(0, margin);
 
   const sky = ctx.createLinearGradient(0, -margin, 0, WORLD_H + margin);
-  sky.addColorStop(0, '#0f172a');
-  sky.addColorStop(1, '#1e3a5f');
+  sky.addColorStop(0, level.level.theme?.skyTop ?? '#0f172a');
+  sky.addColorStop(1, level.level.theme?.skyBottom ?? '#1e3a5f');
   ctx.fillStyle = sky;
   ctx.fillRect(0, -margin, viewW, WORLD_H + margin * 2);
 

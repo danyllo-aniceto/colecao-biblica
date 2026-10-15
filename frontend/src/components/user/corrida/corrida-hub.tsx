@@ -11,10 +11,12 @@ import { Button } from '@/components/ui/button';
 import { Pagination, usePagination } from '@/components/ui/pagination';
 import { Segmented } from '@/components/ui/segmented';
 import { Select } from '@/components/ui/select';
+import { useToast } from '@/components/ui/toast';
 import { LoadingState } from '@/components/ui/spinner';
 import { cn } from '@/lib/cn';
 import { BOT_LEVELS, type BotLevel } from '@runner/bots';
 import { TILES_PER_SECOND } from '@runner/journey';
+import { isCharacterUnlocked, isLevelUnlocked, isScenarioUnlocked, SCENARIOS, type Scenario } from '@runner/campaign';
 import { LEVELS } from '@runner/levels';
 import type { Level } from '@runner/types';
 import type { CorridaResult, CorridaRival } from '@/components/user/corrida/corrida-game';
@@ -27,10 +29,6 @@ const CorridaGame = lazy(() => import('@/components/user/corrida/corrida-game').
 type Tab = 'campaign' | 'free' | 'bots' | 'multi' | 'characters';
 /** Como a partida começou: campanha (vale para o melhor resultado), treino, assistindo um bot ou corrida contra bots. */
 type Playing = { level: Level; mode: 'campaign' | 'practice' | 'watch' | 'race'; rivals?: CorridaRival[] };
-
-/** Ordem da campanha solo (a próxima fase só abre ao concluir a anterior; o progresso com servidor vem na etapa 5). */
-const CAMPAIGN_IDS = ['treino', 'jornada'];
-const CAMPAIGN = CAMPAIGN_IDS.map((id) => LEVELS.find((level) => level.id === id)).filter((level): level is Level => Boolean(level));
 
 const TABS: Array<{ id: Tab; label: string; icon: ReactNode }> = [
   { id: 'campaign', label: 'Campanha', icon: <MapRoundedIcon fontSize="small" /> },
@@ -69,10 +67,14 @@ export function CorridaHub() {
   const [tab, setTab] = useState<Tab>('campaign');
   const [playing, setPlaying] = useState<Playing | null>(null);
   const [bests, setBests] = useState(loadBests);
-  const characters = useRunnerCharacters();
+  const toast = useToast();
+  const allCharacters = useRunnerCharacters();
+  const finished = new Set(Object.entries(bests).filter(([, best]) => best.finished).map(([id]) => id));
+  // Só entram na escolha (e nos rivais) os personagens já abertos pela campanha.
+  const characters = allCharacters.filter((item) => isCharacterUnlocked(item.unlockLevel, finished));
   const [selectedId, setSelectedId] = useState<string | null>(storedCharacterId);
-  // O escolhido pode ter sumido do Painel (desativado): volta ao primeiro da lista.
-  const character = characters.find((item) => item.id === selectedId) ?? characters[0];
+  // O escolhido pode ter sumido do Painel (desativado) ou estar fechado: volta ao primeiro da lista.
+  const character = characters.find((item) => item.id === selectedId) ?? characters[0] ?? allCharacters[0];
   const portrait = portraitOf(character.sprites);
 
   function choose(next: RunnerCharacter) {
@@ -113,11 +115,11 @@ export function CorridaHub() {
         ))}
       </div>
 
-      {tab === 'campaign' ? <CampaignTab bests={bests} onPlay={(level) => setPlaying({ level, mode: 'campaign' })} /> : null}
+      {tab === 'campaign' ? <CampaignTab bests={bests} finished={finished} characters={allCharacters} onPlay={(level) => setPlaying({ level, mode: 'campaign' })} /> : null}
       {tab === 'free' ? <FreeTab bests={bests} onPlay={(level, mode) => setPlaying({ level, mode })} /> : null}
       {tab === 'bots' ? <BotsTab characters={characters} character={character} onStart={(level, rivals) => setPlaying({ level, mode: 'race', rivals })} /> : null}
       {tab === 'multi' ? <MultiTab /> : null}
-      {tab === 'characters' ? <CharactersTab characters={characters} character={character} onChoose={choose} /> : null}
+      {tab === 'characters' ? <CharactersTab characters={allCharacters} finished={finished} character={character} onChoose={choose} /> : null}
 
       {playing ? (
         <Suspense fallback={<LoadingState />}>
@@ -127,7 +129,13 @@ export function CorridaHub() {
             practice={playing.mode === 'practice'}
             autopilot={playing.mode === 'watch' ? { skill: 1, lag: 2 } : undefined}
             rivals={playing.mode === 'race' ? playing.rivals : undefined}
-            onResult={(result: CorridaResult) => setBests(saveBest(playing.level.id, result))}
+            onResult={(result: CorridaResult) => {
+              const next = saveBest(playing.level.id, result);
+              setBests(next);
+              // Concluir uma fase pode abrir personagens novos: avisa na hora.
+              const after = new Set(Object.entries(next).filter(([, best]) => best.finished).map(([id]) => id));
+              for (const item of allCharacters) if (!isCharacterUnlocked(item.unlockLevel, finished) && isCharacterUnlocked(item.unlockLevel, after)) toast.success(`Personagem novo: ${item.name}!`);
+            }}
             onExit={() => setPlaying(null)}
           />
         </Suspense>
@@ -149,34 +157,83 @@ function Controls() {
   );
 }
 
-/** Campanha solo: fases em sequência; a próxima abre ao concluir a anterior. Estrelas, personagens e progresso com servidor vêm nas etapas 3 a 5. */
-function CampaignTab({ bests, onPlay }: { bests: Bests; onPlay: (level: Level) => void }) {
-  const list = usePagination(CAMPAIGN, 10);
+/** Campanha solo: cenários (lugares da Bíblia) com várias fases cada; a fase seguinte abre ao concluir a anterior e cada cenário abre ao concluir o anterior. */
+function CampaignTab({ bests, finished, characters, onPlay }: { bests: Bests; finished: ReadonlySet<string>; characters: RunnerCharacter[]; onPlay: (level: Level) => void }) {
+  const [scenarioId, setScenarioId] = useState<string | null>(null);
+  const scenario = SCENARIOS.find((item) => item.id === scenarioId) ?? null;
+  const scenarios = usePagination(SCENARIOS, 10);
+  const levels = usePagination(scenario?.levels ?? [], 10);
+  const unlocksOf = (levelId: string) => characters.filter((item) => item.unlockLevel === levelId).map((item) => item.name);
+
+  if (scenario) {
+    return (
+      <div className="space-y-4">
+        <Button size="sm" variant="ghost" onClick={() => setScenarioId(null)}>
+          ← Cenários
+        </Button>
+        <div>
+          <h3 className="font-display text-xl font-bold text-ink">{scenario.name}</h3>
+          <p className="text-sm font-semibold text-muted">{scenario.story}</p>
+        </div>
+        <Alert tone="info">Conclua cada fase para abrir a próxima. Aqui o seu melhor resultado fica guardado e as bandeiras (checkpoints) ajudam, mas terminar sem usá-las vale uma estrela ★.</Alert>
+        <ol className="space-y-3">
+          {levels.pageItems.map((def) => {
+            const level = LEVELS.find((item) => item.id === def.id);
+            if (!level) return null;
+            const index = scenario.levels.indexOf(def);
+            const unlocked = isLevelUnlocked(def.id, finished);
+            const prize = unlocksOf(def.id);
+            return (
+              <li key={def.id} className={cn('panel flex flex-wrap items-center gap-3 p-4', !unlocked && 'opacity-70')}>
+                <span className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl font-display text-xl font-bold', unlocked ? 'bg-primary text-on-primary' : 'bg-surface-3 text-muted')}>
+                  {unlocked ? index + 1 : <LockRoundedIcon fontSize="small" />}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-display text-lg font-bold text-ink">{level.name}</p>
+                  <p className="text-sm font-semibold text-muted">{levelInfo(level)}</p>
+                  <p className="text-sm font-bold text-ink">{unlocked ? bestText(bests[def.id], level.verse?.words.length ?? 0) : 'Conclua a fase anterior para abrir'}</p>
+                  {prize.length > 0 ? <p className="text-xs font-bold text-primary">{finished.has(def.id) ? 'Abriu' : 'Abre'}: {prize.join(', ')}</p> : null}
+                </div>
+                <Button disabled={!unlocked} onClick={() => onPlay(level)}>
+                  Jogar
+                </Button>
+              </li>
+            );
+          })}
+        </ol>
+        <Pagination page={levels.page} totalPages={levels.totalPages} totalElements={levels.totalElements} pageSize={levels.pageSize} onPageChange={levels.setPage} onPageSizeChange={levels.setPageSize} itemLabel="fases" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <Alert tone="info">Conclua cada fase para abrir a próxima. Aqui o seu melhor resultado fica guardado e as bandeiras (checkpoints) ajudam, mas terminar sem usá-las vale uma estrela ★.</Alert>
-      <ol className="space-y-3">
-        {list.pageItems.map((level) => {
-          const index = CAMPAIGN.indexOf(level);
-          const unlocked = index === 0 || bests[CAMPAIGN[index - 1].id]?.finished === true;
+      <Alert tone="info">Cada cenário é um lugar da Bíblia com várias fases. Concluir fases abre personagens novos, e concluir o cenário inteiro abre o próximo.</Alert>
+      <ul className="space-y-3">
+        {scenarios.pageItems.map((item: Scenario) => {
+          const unlocked = isScenarioUnlocked(item.id, finished);
+          const done = item.levels.filter((def) => finished.has(def.id)).length;
+          const prizes = item.levels.flatMap((def) => unlocksOf(def.id));
           return (
-            <li key={level.id} className={cn('panel flex flex-wrap items-center gap-3 p-4', !unlocked && 'opacity-70')}>
-              <span className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl font-display text-xl font-bold', unlocked ? 'bg-primary text-on-primary' : 'bg-surface-3 text-muted')}>
-                {unlocked ? index + 1 : <LockRoundedIcon fontSize="small" />}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="font-display text-lg font-bold text-ink">{level.name}</p>
-                <p className="text-sm font-semibold text-muted">{levelInfo(level)}</p>
-                <p className="text-sm font-bold text-ink">{unlocked ? bestText(bests[level.id], level.verse?.words.length ?? 0) : 'Conclua a fase anterior para abrir'}</p>
+            <li key={item.id} className={cn('panel space-y-2 p-4', !unlocked && 'opacity-70')} style={unlocked ? { borderLeft: `6px solid ${item.theme.skyBottom}` } : undefined}>
+              <div className="flex items-center gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-display text-lg font-bold text-ink">{item.name}</p>
+                  <p className="text-sm font-semibold text-muted">{item.story}</p>
+                </div>
+                {unlocked ? null : <LockRoundedIcon className="text-muted" />}
               </div>
-              <Button disabled={!unlocked} onClick={() => onPlay(level)}>
-                Jogar
+              <p className="text-sm font-bold text-ink">
+                {done}/{item.levels.length} fases{prizes.length > 0 ? ` · personagens: ${prizes.join(', ')}` : ''}
+              </p>
+              <Button disabled={!unlocked} onClick={() => setScenarioId(item.id)}>
+                {unlocked ? 'Abrir cenário' : 'Conclua o cenário anterior'}
               </Button>
             </li>
           );
         })}
-      </ol>
-      <Pagination page={list.page} totalPages={list.totalPages} totalElements={list.totalElements} pageSize={list.pageSize} onPageChange={list.setPage} onPageSizeChange={list.setPageSize} itemLabel="fases" />
+      </ul>
+      <Pagination page={scenarios.page} totalPages={scenarios.totalPages} totalElements={scenarios.totalElements} pageSize={scenarios.pageSize} onPageChange={scenarios.setPage} onPageSizeChange={scenarios.setPageSize} itemLabel="cenários" />
     </div>
   );
 }
@@ -287,27 +344,35 @@ function MultiTab() {
 }
 
 /** Personagens: escolha o corredor. Todos correm igual; muda só a aparência (sprites e sons vêm do Painel na etapa 3; na campanha, cada novo se abre ao concluir uma fase). */
-function CharactersTab({ characters, character, onChoose }: { characters: RunnerCharacter[]; character: RunnerCharacter; onChoose: (character: RunnerCharacter) => void }) {
+function CharactersTab({ characters, finished, character, onChoose }: { characters: RunnerCharacter[]; finished: ReadonlySet<string>; character: RunnerCharacter; onChoose: (character: RunnerCharacter) => void }) {
   const list = usePagination(characters, 8);
   return (
     <div className="space-y-4">
-      <Alert tone="info">Todos os personagens correm igual: o que muda é só a aparência e os sons. Na campanha, novos personagens vão abrindo conforme você conclui as fases.</Alert>
+      <Alert tone="info">Todos os personagens correm igual: o que muda é só a aparência e os sons. Na campanha, personagens novos abrem conforme você conclui as fases de cada cenário.</Alert>
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {list.pageItems.map((item) => {
           const selected = item.id === character.id;
+          const open = isCharacterUnlocked(item.unlockLevel, finished);
+          const lockedBy = LEVELS.find((level) => level.id === item.unlockLevel)?.name;
           return (
             <li key={item.id}>
               <button
                 type="button"
                 onClick={() => onChoose(item)}
+                disabled={!open}
                 aria-pressed={selected}
-                className={cn('flex h-full w-full flex-col items-center gap-2 rounded-2xl border-2 bg-surface p-3 text-center transition', selected ? 'border-primary shadow-md' : 'border-edge hover:border-primary/60')}
+                className={cn('flex h-full w-full flex-col items-center gap-2 rounded-2xl border-2 bg-surface p-3 text-center transition', !open && 'opacity-60', selected ? 'border-primary shadow-md' : 'border-edge hover:border-primary/60')}
               >
                 <span className="flex h-20 w-20 items-center justify-center rounded-2xl" style={{ background: `${item.color}33` }}>
                   <SpriteView url={portraitOf(item.sprites)?.url} frames={portraitOf(item.sprites)?.frames} fps={portraitOf(item.sprites)?.fps} color={item.color} size={72} />
                 </span>
                 <span className="font-display text-base font-bold text-ink">{item.name}</span>
                 <span className="text-xs font-semibold text-muted">{item.text}</span>
+                {open ? null : (
+                  <span className="flex items-center gap-1 text-xs font-bold text-ink">
+                    <LockRoundedIcon sx={{ fontSize: 14 }} /> Conclua a fase “{lockedBy ?? item.unlockLevel}”
+                  </span>
+                )}
                 {selected ? <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-bold text-on-primary">Escolhido</span> : null}
               </button>
             </li>
