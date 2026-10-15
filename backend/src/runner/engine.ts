@@ -92,6 +92,39 @@ export function newPlayer(level: PreparedLevel): PlayerState {
   };
 }
 
+/**
+ * Estado limpo para voltar a um checkpoint: parado no ponto da bandeira, no chão (Corrida e Gravidade) ou no meio do vão (Voo), na forma que a fase
+ * tem ali, com o pulo duplo recarregado. Guarda as palavras já pegas e a contagem de passos. Sempre justo: nunca volta no meio de um pulo.
+ * `count` = quantos checkpoints já foram cruzados (1 = o primeiro); 0 volta ao começo da fase.
+ */
+export function respawnAt(level: PreparedLevel, count: number, collected: number[] = [], tick = 0): PlayerState {
+  if (count <= 0) return { ...newPlayer(level), collected: [...collected], tick };
+  const x = level.checkpoints[Math.min(count, level.checkpoints.length) - 1];
+  const centre = x + PLAYER / 2;
+  let form = level.level.form;
+  let portal = 0;
+  while (portal < level.portals.length && level.portals[portal].x <= centre) {
+    form = level.portals[portal].form;
+    portal += 1;
+  }
+  return {
+    tick,
+    x: x - PLAYER / 2,
+    y: form === "FLY" ? (FLOOR_Y + CEIL_Y - PLAYER) / 2 : FLOOR_Y - PLAYER,
+    vy: 0,
+    grav: 1,
+    form,
+    grounded: form !== "FLY",
+    airJumps: MAX_AIR_JUMPS,
+    held: false,
+    portal,
+    checkpoint: Math.min(count, level.checkpoints.length),
+    status: "running",
+    cause: null,
+    collected: [...collected],
+  };
+}
+
 const overlaps = (a: Rect, b: Rect) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
 
 /** Blocos nas colunas que o personagem ocupa (no máximo 2 a 3 colunas). */

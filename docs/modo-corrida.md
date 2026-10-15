@@ -117,14 +117,18 @@ ideia de esforço relativo, não de prazo.
 - [x] **Mais altura de jogo** (`ZOOM` 0,82 → 0,95) e painel refeito: **porcentagem grande e colorida** (cor da forma), **barra** com marcas dos checkpoints, **tempo que falta**,
   versículo maior (cresce até caber, palavras pegas em amarelo). O painel agora respeita a densidade da tela (antes o texto saía com a metade do tamanho em celular).
 
-### Etapa 2 — Estrutura do modo: página principal (M)
-Telas (aba Jogar → Corrida), no mesmo molde do Duelo/Tabuleiro, sem servidor ainda:
-- [ ] **Campanha** (jogar sozinho): mapa de fases em sequência (casca; o progresso de verdade vem na etapa 5).
-- [ ] **Livre** ("jogar sem valer nada"): qualquer fase, treino, sem prêmio.
-- [ ] **Contra bots**: você + 1 a 3 bots na mesma corrida (corrida paralela no aparelho); dificuldade do bot = erro menor.
-- [ ] **Multijogador**: local (até 4 na tela) e online (etapas 6 e 7); por enquanto só a casca.
-- [ ] **Personagens**: escolher o corredor (formas coloridas enquanto não há sprite).
-- [ ] Capa do modo (`RUNNER` em Capas dos jogos, com a migração) e guia curto de como jogar.
+### Etapa 2 — Estrutura do modo: página principal (M) — feita
+Telas (aba Jogar → Corrida), no mesmo molde do Duelo/Tabuleiro, sem servidor (progresso guardado no aparelho até a etapa 5):
+- [x] **Campanha** (solo): fases em sequência, a próxima só abre ao concluir a anterior (`Treino rápido` → `Jornada`); melhor resultado, "sem checkpoint ★". Só a campanha guarda resultado.
+- [x] **Livre** ("jogar sem valer nada"): qualquer fase, com checkpoints, nada é guardado; também "Ver um bot jogar" (agora o bot joga **ao vivo**, sem travar a tela).
+- [x] **Contra bots**: você + 1 a 3 bots **na mesma tela** (rivais translúcidos com nome, bolinhas na barra de progresso, "2º de 4" e placar no fim). Quem cai volta sozinho ao
+  último checkpoint (o tempo não para); vence quem cruzar a linha primeiro. Dificuldade `BOT_LEVELS`: Aprendiz, Estudante e Mestre (medidos na jornada de 160 s: Mestre ~165–180 s,
+  Estudante ~185–200 s, Aprendiz ~220–280 s). Os rivais são os outros personagens. As **faixas separadas** ficam para o modo local (etapa 6).
+- [x] **Multijogador**: casca com "No mesmo aparelho" e "Online com amigos" (em breve; etapas 6 e 7).
+- [x] **Personagens**: escolher o corredor (6 cores com nomes bíblicos; o escolhido fica salvo no aparelho e vale em todos os modos). Todos correm igual.
+- [x] **Capa do modo:** chave `RUNNER` em Painel → Capas dos jogos (a coluna é texto: não precisou de migração).
+- [x] **Ponto de volta limpo** (`respawnAt`): voltar a um checkpoint nunca recoloca no meio de um pulo; vale para o jogador e para os bots, e todo checkpoint das fases é testado (o bot segue 10 s sem cair).
+- [ ] Guia curto de como jogar (fica para a etapa 8, junto com os sons e a arte).
 
 ### Etapa 3 — Personagens e sprites pelo Painel (M)
 - [ ] Migração: `runner_characters` (nome, descrição, sprites por pose, sons, regra de desbloqueio por fase).

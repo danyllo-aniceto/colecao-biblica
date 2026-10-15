@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { holdAt, maxTicksOf, newPlayer, normalizeInputs, prepareLevel, progressOf, simulate, stepPlayer } from "./engine";
+import { holdAt, maxTicksOf, newPlayer, normalizeInputs, prepareLevel, progressOf, respawnAt, simulate, stepPlayer } from "./engine";
 import { CEIL_Y, FLOOR_Y, PLAYER, SPEED, TILE, type Form, type Level, type LevelObject, type PlayerState } from "./types";
 
 const level = (objects: LevelObject[], options: { form?: Form; length?: number } = {}): Level => ({
@@ -153,6 +153,27 @@ describe("Corrida: física", () => {
     expect(run(prepared, 50).checkpoint).toBe(0);
     expect(run(prepared, 100).checkpoint).toBe(1);
     expect(run(prepared, 230).checkpoint).toBe(2);
+  });
+
+  it("respawnAt volta limpo ao checkpoint: parado, no chão (ou no meio do vão no voo), na forma certa e com as palavras já pegas", () => {
+    const prepared = prepareLevel(
+      level([{ kind: "checkpoint", x: 10 }, { kind: "portal", x: 15, form: "FLY" }, { kind: "checkpoint", x: 20 }, { kind: "portal", x: 25, form: "GRAVITY" }, { kind: "checkpoint", x: 30 }]),
+    );
+    const start = respawnAt(prepared, 0, [3], 77);
+    expect(start.x).toBe(0);
+    expect(start.collected).toEqual([3]);
+    const first = respawnAt(prepared, 1, [1, 2], 50);
+    expect(first).toMatchObject({ form: "RUN", checkpoint: 1, portal: 0, vy: 0, grounded: true, airJumps: 1, status: "running", tick: 50 });
+    expect(first.x).toBe(10 * TILE - PLAYER / 2);
+    expect(first.y).toBe(FLOOR_Y - PLAYER);
+    const second = respawnAt(prepared, 2);
+    expect(second).toMatchObject({ form: "FLY", portal: 1, checkpoint: 2, grounded: false });
+    expect(second.y).toBe((FLOOR_Y + CEIL_Y - PLAYER) / 2);
+    expect(respawnAt(prepared, 3)).toMatchObject({ form: "GRAVITY", portal: 2, grav: 1, grounded: true });
+    // Voltar a um checkpoint não o faz ser contado de novo, e a corrida segue dali.
+    const next = stepPlayer(prepared, first, false);
+    expect(next.checkpoint).toBe(1);
+    expect(next.status).toBe("running");
   });
 
   it("termina ao chegar ao fim e o progresso vai a 100%", () => {

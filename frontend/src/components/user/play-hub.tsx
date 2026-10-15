@@ -55,11 +55,10 @@ export const PLAY_MODES: Array<{ id: PlayMode; design: GameMode | null; title: s
   },
   {
     id: 'runner',
-    // Sem capa enviada ainda (falta a chave do modo em Capas dos jogos); usa o fundo padrão.
-    design: null,
+    design: 'RUNNER',
     title: 'Corrida',
-    text: 'Corra por fases das histórias da Bíblia tocando na tela: pule obstáculos, voe e inverta a gravidade. Protótipo em teste.',
-    tags: ['Sozinho', 'Toque na tela', 'Sem XP: só diversão'],
+    text: 'Corra por fases das histórias da Bíblia tocando na tela: pule obstáculos, voe e inverta a gravidade. Campanha, treino livre e corrida contra bots. Protótipo em teste.',
+    tags: ['Sozinho ou contra bots', 'Toque na tela', 'Sem XP: só diversão'],
     icon: <DirectionsRunRoundedIcon sx={{ fontSize: 56 }} />,
     fallback: 'from-accent to-primary',
   },

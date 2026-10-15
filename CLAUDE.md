@@ -121,6 +121,8 @@ código em **português do Brasil**.
 - Fases longas (minutos) saem de `journey.ts` (trechos sorteados com semente); sprites, sons, trilhas e fases serão enviados pelo Painel (cronograma em `docs/modo-corrida.md`).
 - Fase = sequência de trechos (`segments.ts`); toda fase nova precisa passar nos testes do bot (`bots.test.ts`): perfeito (pega todas as palavras) **e com o toque atrasado** (`TOUCH_DELAY`),
   que prova que é possível e confortável. Regra: o pulo simples tem janela de ≥ ~10 passos; sem fileira de 3 espetos nem degraus curtos em fase comum.
+- Bots **ao vivo** (`createBot` em `bots.ts`: decidem como jogador, só veem o que o jogador vê; `BOT_LEVELS` = Aprendiz/Estudante/Mestre) correm contra o jogador na mesma tela; ao cair, jogador e bots voltam ao último checkpoint
+  por `respawnAt` (estado limpo, nunca no meio de um pulo). Hub do modo em `components/user/corrida/` (Campanha, Livre, Bots, Multi, Personagens); desenho em `corrida-draw.ts`; capa `RUNNER` em Capas dos jogos.
 - Online (futuro): corrida paralela sem colisão entre jogadores, no molde das salas do Tabuleiro/Duelo (`?since=`, sem websocket); até 4 jogadores, bots completam.
 
 ## Comandos
