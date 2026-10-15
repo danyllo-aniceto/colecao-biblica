@@ -1,0 +1,11 @@
+﻿Personagem;Raridade;Papel na história;Período;Testamento;Palavras-chave;Resumo curto;Vigor;Influência;Etiquetas;Gatilho;Efeitos;Texto do Dom;Disponível
+Absalão;;;;;;;5;2;Príncipe, Adversário;revelar;converter;;Sim
+Barnabé;;;;;;;2;2;Apóstolo, Levita;aliado-jogado;poder valor=+2 alvo=si;;Sim
+Bate-Seba;;;;;;;3;3;Rainha, Mulher;revelar;criar ficha=Descendente onde=aqui;;Sim
+Cornélio;;;;;;;3;2;Soldado;continuo;poder-por valor=+1 por=figurinhas-aqui;;Sim
+Esdras;;;;;;;3;2;Sacerdote, Escriba;revelar;vigor-extra valor=1;;Sim
+Filipe;;;;;;;3;3;Apóstolo, Discípulo;revelar;criar ficha=Pão onde=aqui;;Sim
+Jefté;;;;;;;3;3;Juiz, Guerreiro;revelar;multiplicar fator=2;;Sim
+Judá;;;;;;;2;2;Patriarca;fim-do-turno;poder valor=+1 alvo=si;;Sim
+Lia;;;;;;;3;3;Matriarca, Mulher;continuo;aura valor=+1 em=aliados etiqueta=Patriarca;;Sim
+Marta;;;;;;;3;2;Discípula, Mulher;revelar;poder valor=+1 alvo=outros-aliados;;Sim

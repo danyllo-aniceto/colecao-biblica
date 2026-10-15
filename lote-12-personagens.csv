@@ -1,0 +1,285 @@
+﻿"Nome";"Resumo curto";"História completa";"Curiosidades";"Onde ler";"Papel na história";"Período";"Livros";"Versículos-chave";"Palavras-chave";"Publicado";"Árvore genealógica";"Linha do tempo"
+"Absalão";"Filho de Davi, belo e popular, que vingou a irmã Tamar matando Amnom, conquistou o povo com sedução e promessas e se rebelou contra o pai; morreu preso pelos cabelos num carvalho e foi pranteado por Davi.";"Absalão era filho de Davi com Maacá, filha de Talmai, rei de Gesur. A Bíblia diz que em todo Israel não havia homem tão elogiado pela sua beleza: da planta do pé ao alto da cabeça, não havia nele defeito. Quando cortava o cabelo, uma vez por ano, por ser muito pesado, o cabelo cortado pesava duzentos siclos. Teve três filhos e uma filha, Tamar, que se tornou uma mulher muito bela.
+A tragédia começou quando Amnom, meio-irmão de Absalão, violentou Tamar, irmã dele. Davi ficou muito irado, mas não castigou o filho. Absalão não disse nada a Amnom, nem bem nem mal, mas o odiou. Dois anos depois, na festa da tosquia em Baal-Hazor, mandou os servos matarem Amnom quando estivesse alegre de vinho, e fugiu para Gesur, onde ficou três anos.
+Joabe percebeu que Davi tinha saudades do filho e mandou uma mulher sábia de Tecoa contar uma história ao rei, que o convenceu a trazê-lo de volta. Absalão voltou a Jerusalém, mas ficou dois anos sem ver o rosto do pai. Para chamar a atenção de Joabe, mandou atear fogo ao seu campo de cevada. Por fim, Davi o recebeu e o beijou.
+Absalão começou a se preparar para o trono. Mandou fazer carros, cavalos e cinquenta homens que corressem diante dele. Levantava-se cedo e ficava à porta da cidade. A quem vinha com uma causa, dizia que a causa era boa e justa, mas que o rei não tinha quem o ouvisse, e acrescentava que, se fosse juiz, faria justiça a todos. Quando alguém se prostrava, ele o levantava e beijava. Assim ""furtava o coração"" dos homens de Israel.
+Depois de alguns anos, pediu licença a Davi para ir a Hebrom cumprir um voto, e ali se fez proclamar rei. O conselheiro de Davi, Aitofel, passou para o seu lado. Davi fugiu de Jerusalém com seus servos, chorando e de cabeça coberta, subindo o monte das Oliveiras. Husai, amigo de Davi, voltou a Jerusalém e fingiu servir Absalão, e seu conselho foi preferido ao de Aitofel, que, ao ver o conselho recusado, se enforcou.
+A batalha foi na floresta de Efraim. Davi pediu aos comandantes: ""Tratai com brandura o jovem Absalão"". Absalão, montado numa mula, passou sob um grande carvalho e a cabeça ficou presa nos ramos, e a mula passou adiante. Joabe, ao saber, o atravessou com três dardos no coração. Absalão foi lançado numa cova na floresta e coberto com um grande montão de pedras. Davi chorou ao saber: ""Meu filho Absalão, meu filho, meu filho Absalão! Quem me dera que eu morrera por ti"".";"Absalão tinha uma coluna, chamada ""Mão de Absalão"", que ele mesmo levantou no vale do Rei, porque dizia não ter filho para guardar o seu nome (2 Samuel 18:18).
+O cabelo de Absalão pesava duzentos siclos, cortados uma vez por ano (2 Samuel 14:26).
+O Salmo 3 traz no título que Davi o escreveu quando fugia de Absalão.
+Absalão quer dizer ""pai da paz"" em hebraico, nome irônico para um rebelde.
+Aitofel, que provavelmente era avô de Bate-Seba (2 Samuel 11:3 e 23:34), foi o conselheiro que passou para o lado de Absalão.
+A mãe de Absalão, Maacá, era filha do rei de Gesur, e por isso ele fugiu para a casa do avô.";"2 Samuel 13 (Amnom, Tamar e a vingança)
+2 Samuel 14 (a mulher de Tecoa e a volta)
+2 Samuel 15 (a conspiração e a fuga de Davi)
+2 Samuel 17 (os conselhos de Aitofel e Husai)
+2 Samuel 18 (a batalha, a morte e o pranto de Davi)
+Salmo 3 (o salmo da fuga)";"Filho de Davi que, por vingança e ambição, se rebelou contra o pai e morreu na batalha, deixando Davi em luto";"Reinado de Davi (cerca de 990 a 970 a.C.)";"2 Samuel, 1 Reis, Salmos";"2 Samuel 14:25; 2 Samuel 15:6; 2 Samuel 18:9; 2 Samuel 18:33";"filho de Davi, rebelião, Tamar, Amnom, Aitofel, cabelo, carvalho, Joabe";"Sim";"graph TD
+  Davi[""Rei Davi""] --> Absalao[""Absalão""]
+  Maaca[""Maacá, filha de Talmai""] --> Absalao
+  Davi --> Amnom[""Amnom""]
+  Davi --> Tamar[""Tamar, irmã de Absalão""]
+  Absalao -.vingou.-> Tamar
+  Absalao -.matou.-> Amnom
+  Absalao -.rebelou-se contra.-> Davi
+  Joabe[""Joabe""] -.matou.-> Absalao";"timeline
+  title A vida de Absalão
+  2 Samuel 13 : Mata Amnom por causa de Tamar
+  2 Samuel 13 : Foge para Gesur
+  2 Samuel 14 : Volta a Jerusalém pela intervenção de Joabe
+  2 Samuel 15 : Conquista o coração do povo
+  2 Samuel 15 : Proclama-se rei em Hebrom
+  2 Samuel 17 : Rejeita o conselho de Aitofel
+  2 Samuel 18 : Morre na floresta de Efraim"
+"Barnabé";"José, levita de Chipre, chamado Barnabé, ""filho de consolação"", que vendeu um campo para ajudar os pobres, apresentou Saulo aos apóstolos, foi buscá-lo em Tarso e viajou com Paulo na primeira viagem missionária.";"Barnabé se chamava José, era levita e nascido em Chipre. Os apóstolos lhe deram o nome Barnabé, que quer dizer ""filho de consolação"" ou ""de exortação"". Quando a igreja de Jerusalém repartia os bens com os necessitados, ele vendeu um campo que tinha e pôs o dinheiro aos pés dos apóstolos. É a primeira vez que ele aparece em Atos, logo antes de Ananias e Safira.
+Quando Saulo, o antigo perseguidor, voltou a Jerusalém depois da conversão, os discípulos tinham medo dele. Foi Barnabé quem o tomou, o levou aos apóstolos e contou como ele vira o Senhor no caminho e pregara com ousadia em Damasco. Assim, Saulo foi aceito.
+Quando chegou a Jerusalém a notícia de que muitos gregos de Antioquia tinham crido, a igreja enviou Barnabé até lá. Ele viu a graça de Deus, alegrou-se e exortou a todos a permanecerem no Senhor. Lucas o descreve como ""homem bom, cheio do Espírito Santo e de fé"". Depois, Barnabé foi buscar Saulo em Tarso e o trouxe para Antioquia, e durante um ano ensinaram juntos uma grande multidão. Foi ali que os discípulos foram chamados cristãos pela primeira vez.
+Os dois levaram uma oferta da igreja de Antioquia para os irmãos da Judeia, na fome. Depois, o Espírito Santo mandou que a igreja separasse Barnabé e Saulo para a obra. Com João Marcos, primo de Barnabé, partiram para Chipre e para a Ásia Menor, na primeira viagem missionária. Em Listra, depois que Paulo curou um paralítico, o povo chamou Barnabé de Zeus e Paulo de Hermes, e os dois rasgaram as roupas e os impediram de lhes oferecer sacrifícios.
+No Concílio de Jerusalém, Barnabé e Paulo contaram o que Deus fizera entre os gentios. Depois, quando chegou a hora de uma segunda viagem, Barnabé queria levar Marcos, que os havia deixado na Panfília, e Paulo não. A discussão foi tão forte que se separaram. Paulo seguiu com Silas, e Barnabé levou Marcos para Chipre. Mais tarde, Paulo falou bem de Marcos, e a Bíblia mostra Barnabé como quem acreditou numa segunda chance. Gálatas conta que, em Antioquia, até Barnabé foi levado pela hipocrisia de outros judeus a evitar os gentios, mas isso não encerrou a parceria deles na obra.";"O nome Barnabé quer dizer ""filho de consolação"" ou ""filho da exortação"" (Atos 4:36).
+Barnabé era levita e nasceu em Chipre, ilha para onde levaria Marcos mais tarde.
+Foi Barnabé quem foi buscar Saulo em Tarso e o levou a Antioquia (Atos 11:25-26).
+Em Listra, o povo o chamou de Zeus (Atos 14:12).
+Paulo cita Barnabé em 1 Coríntios 9:6 como outro que também trabalhava com as próprias mãos.
+Marcos, que mais tarde escreveu o Evangelho, era seu primo, segundo Colossenses 4:10.";"Atos 4:36-37 (o campo vendido)
+Atos 9:26-30 (Barnabé apresenta Saulo)
+Atos 11:19-30 (Antioquia)
+Atos 13-14 (a primeira viagem)
+Atos 15:36-41 (a separação por causa de Marcos)";"Levita de Chipre que foi apoio de Paulo e de Marcos, e cujo nome mostra o seu dom de animar e dar segunda chance";"Início da igreja (cerca de 33 a 55 d.C.)";"Atos, 1 Coríntios, Gálatas, Colossenses";"Atos 4:36-37; Atos 9:27; Atos 11:24; Atos 15:39";"filho de consolação, Chipre, Antioquia, Saulo, Marcos, primeira viagem, levita, generosidade";"Sim";"graph TD
+  Barnabe[""Barnabé, também José""] -.apresenta.-> Saulo[""Saulo, depois Paulo""]
+  Barnabe -.primo de.-> Marcos[""João Marcos""]
+  Barnabe -.viaja com.-> Saulo
+  Barnabe -.leva a Chipre.-> Marcos
+  Paulo[""Paulo""] -.escolhe.-> Silas[""Silas""]";"timeline
+  title A vida de Barnabé
+  Atos 4 : Vende um campo e entrega o dinheiro aos apóstolos
+  Atos 9 : Apresenta Saulo aos apóstolos em Jerusalém
+  Atos 11 : É enviado a Antioquia e busca Saulo em Tarso
+  Atos 13 : Parte com Saulo e Marcos na primeira viagem
+  Atos 14 : Em Listra é chamado de Zeus
+  Atos 15 : Defende os gentios no Concílio de Jerusalém
+  Atos 15 : Separa-se de Paulo e leva Marcos a Chipre"
+"Bate-Seba";"Filha de Eliã e esposa de Urias, o heteu, com quem o rei Davi pecou; depois esposa de Davi e mãe de Salomão, ajudou a assegurar o trono ao filho e é lembrada na genealogia de Jesus.";"Bate-Seba era filha de Eliã e mulher de Urias, o heteu, um dos valentes de Davi. A história começa numa tarde, quando Davi, que não tinha ido à guerra com o exército, levantou-se da cama e andou pelo terraço do palácio. De lá viu uma mulher muito bela que se banhava. Mandou saber quem era, e lhe disseram que era Bate-Seba, mulher de Urias. Davi mandou buscá-la e ela voltou para casa grávida.
+Davi tentou esconder o fato: chamou Urias da guerra, para que fosse para casa, mas Urias dormiu à porta do palácio com os servos, dizendo que não podia descansar em casa enquanto a arca e o exército estavam em tendas. Então Davi escreveu uma carta a Joabe, que Urias mesmo levou, mandando pôr Urias na frente da batalha mais forte e depois deixá-lo. Urias morreu. Bate-Seba lamentou o marido e, passado o luto, Davi a trouxe para casa e ela se tornou sua mulher. O texto diz que isso foi mau aos olhos do Senhor.
+O Senhor enviou o profeta Natã, que contou a Davi a parábola da cordeirinha. Davi reconheceu o pecado, e o filho que Bate-Seba deu à luz adoeceu e morreu depois de sete dias. Davi consolou Bate-Seba e ela teve outro filho, Salomão, que o Senhor amou.
+Mais tarde, quando Davi estava velho, o filho Adonias se proclamou rei. O profeta Natã foi até Bate-Seba e lhe disse que fosse ao rei lembrar-lhe a promessa de que Salomão reinaria. Ela entrou e se inclinou diante do rei e disse que Adonias reinava sem que o rei soubesse. Davi jurou que Salomão reinaria, e ordenou que o ungissem em Giom.
+Depois que Salomão reinou, Bate-Seba foi a ele com um pedido de Adonias, que queria Abisague, a sunamita, por esposa. O rei se levantou, inclinou-se diante da mãe e mandou pôr um trono à sua direita. Salomão viu no pedido uma jogada para o trono, e recusou. Bate-Seba também aparece na genealogia de Jesus em Mateus 1:6, sem ser nomeada, como ""a que foi de Urias"".";"Mateus a cita na genealogia de Jesus apenas como ""a que foi mulher de Urias"" (Mateus 1:6).
+Seu pai, Eliã, era filho de Aitofel, segundo 2 Samuel 23:34, o que a liga a um dos conselheiros de Davi.
+O primeiro filho de Davi com Bate-Seba morreu, e o segundo foi Salomão (2 Samuel 12).
+Em 1 Crônicas 3:5, ela é chamada Bate-Sua, filha de Amiel, e é mãe de quatro filhos: Simeia, Sobabe, Natã e Salomão.
+O Salmo 51 conta a história do pecado de Davi com ela, no título.
+Ela é uma das cinco mulheres citadas na genealogia de Jesus em Mateus 1, ao lado de Tamar, Raabe, Rute e Maria.";"2 Samuel 11 (Davi, Bate-Seba e Urias)
+2 Samuel 12 (Natã e o nascimento de Salomão)
+1 Reis 1 (Bate-Seba e a sucessão)
+1 Reis 2:13-25 (o pedido de Adonias)
+Mateus 1:6 (a genealogia de Jesus)";"Esposa de Urias e depois de Davi, mãe de Salomão, que defendeu o direito do filho ao trono e aparece na genealogia de Jesus";"Reinado de Davi e início do reinado de Salomão (cerca de 1000 a 960 a.C.)";"2 Samuel, 1 Reis, 1 Crônicas, Salmos, Mateus";"2 Samuel 11:2-4; 2 Samuel 12:24; 1 Reis 1:17; Mateus 1:6";"Davi, Urias, Salomão, Natã, pecado, rainha-mãe, Adonias, genealogia";"Sim";"graph TD
+  Eli[""Eliã, seu pai""] --> BateSeba[""Bate-Seba""]
+  Urias[""Urias, o heteu""] --- BateSeba
+  Davi[""Rei Davi""] --- BateSeba
+  BateSeba --> Salomao[""Salomão""]
+  Davi --> Salomao
+  Salomao -.rei de Israel.-> Trono[""O trono de Davi""]
+  Mateus[""Mateus 1""] -.cita.-> BateSeba";"timeline
+  title A vida de Bate-Seba
+  2 Samuel 11 : Davi a vê do terraço e a manda buscar
+  2 Samuel 11 : Urias é morto na guerra
+  2 Samuel 12 : Natã confronta Davi e o primeiro filho morre
+  2 Samuel 12 : Nasce Salomão
+  1 Reis 1 : Defende o direito de Salomão ao trono
+  1 Reis 2 : Leva a Salomão o pedido de Adonias"
+"Cornélio";"Centurião romano de Cesareia, piedoso e temente a Deus, a quem um anjo mandou chamar Pedro; foi o primeiro gentio a receber o Espírito Santo e o batismo, abrindo o evangelho aos não judeus.";"Cornélio era um centurião da coorte chamada Italiana, em Cesareia. Lucas o apresenta como piedoso e temente a Deus com toda a sua casa, que dava muitas esmolas ao povo e orava a Deus continuamente. Era um gentio, isto é, não judeu, mas adorava o Deus de Israel.
+Certo dia, por volta da hora nona, ele viu claramente um anjo de Deus que entrou e lhe disse: ""Cornélio, as tuas orações e as tuas esmolas subiram para memória diante de Deus"". O anjo mandou que enviasse homens a Jope, para chamar Simão, de sobrenome Pedro, que estava na casa de Simão, um curtidor, à beira-mar. Cornélio mandou dois servos e um soldado piedoso.
+No dia seguinte, enquanto eles se aproximavam, Pedro subiu ao terraço para orar e teve fome. Em êxtase, viu o céu aberto e um grande lençol que descia com todo tipo de animais, e ouviu uma voz: ""Levanta-te, Pedro; mata e come"". Pedro respondeu que nunca comera coisa comum ou imunda, e a voz respondeu: ""Não faças tu comum ao que Deus purificou"". Isso aconteceu três vezes. Enquanto Pedro pensava, os homens de Cornélio chegaram, e o Espírito lhe disse que fosse com eles sem hesitar.
+Pedro foi a Cesareia com alguns irmãos de Jope e encontrou Cornélio esperando com parentes e amigos íntimos. Cornélio se prostrou aos seus pés, mas Pedro o levantou e disse que ele também era homem. Pedro explicou que, para um judeu, era proibido juntar-se a um estrangeiro, mas Deus lhe mostrara que não devia chamar a nenhum homem comum ou imundo. Cornélio contou a visão do anjo e disse: ""Agora, pois, estamos todos aqui presentes diante de Deus, para ouvir tudo o que te foi mandado da parte de Deus"".
+Pedro começou a falar sobre Jesus: a sua vida, a sua morte na cruz, a ressurreição e o perdão de pecados para todo o que nele crê. Ainda Pedro falava quando o Espírito Santo desceu sobre todos os que ouviam. Os judeus que tinham vindo com Pedro ficaram admirados porque o dom do Espírito foi derramado também sobre os gentios, que falavam línguas e engrandeciam a Deus. Pedro mandou batizá-los em nome do Senhor Jesus, e eles lhe pediram que ficasse alguns dias.
+Em Jerusalém, alguns irmãos criticaram Pedro por ter comido com incircuncisos. Ele contou tudo e os irmãos se calaram e glorificaram a Deus, dizendo que Deus também aos gentios deu arrependimento para a vida.";"Cornélio foi o primeiro gentio a receber o Espírito Santo, segundo Atos 10.
+Seu nome é de origem romana, e a ""coorte Italiana"" era uma unidade do exército romano com cerca de seiscentos soldados.
+Cesareia Marítima, onde ele vivia, era a capital romana da Judeia.
+A visão do lençol com animais teve de ser repetida três vezes (Atos 10:16).
+Pedro lembrou o episódio no Concílio de Jerusalém, em Atos 15:7-9.
+Ainda hoje a história de Cornélio é lida como o momento em que o evangelho se abriu a todos os povos.";"Atos 10:1-8 (a visão de Cornélio)
+Atos 10:9-23 (a visão de Pedro)
+Atos 10:24-48 (Pedro na casa de Cornélio)
+Atos 11:1-18 (Pedro explica em Jerusalém)
+Atos 15:7-11 (a lembrança no Concílio)";"Centurião romano temente a Deus que foi o primeiro gentio a receber o Espírito Santo e o batismo, marcando a abertura do evangelho a todos os povos";"Início da igreja (cerca de 40 d.C.)";"Atos";"Atos 10:2; Atos 10:34-35; Atos 10:44-45; Atos 11:18";"centurião, Cesareia, gentio, Pedro, visão, Espírito Santo, batismo, Jope";"Sim";"graph TD
+  Cornelio[""Cornélio, centurião""] -.coorte.-> Italiana[""Coorte Italiana""]
+  Anjo[""Um anjo de Deus""] -.fala a.-> Cornelio
+  Cornelio -.manda chamar.-> Pedro[""Pedro, em Jope""]
+  Pedro -.batiza.-> Cornelio
+  Pedro -.explica em.-> Jerusalem[""Igreja de Jerusalém""]";"timeline
+  title Cornélio e Pedro
+  Atos 10 : Cornélio ora e vê um anjo em Cesareia
+  Atos 10 : Pedro vê o lençol com animais em Jope
+  Atos 10 : Os homens de Cornélio chegam a Jope
+  Atos 10 : Pedro prega na casa de Cornélio
+  Atos 10 : O Espírito Santo desce sobre os gentios
+  Atos 11 : Pedro explica tudo aos irmãos de Jerusalém"
+"Esdras";"Sacerdote e escriba, descendente de Arão, que voltou da Babilônia a Jerusalém com um grupo de judeus, ensinou a Lei ao povo e liderou a volta à fidelidade, depois de ter preparado o coração para buscar a Lei do Senhor.";"Esdras era sacerdote, descendente de Arão pela linhagem de Zadoque, e escriba hábil na Lei de Moisés. No sétimo ano do rei persa Artaxerxes, o rei lhe deu tudo o que pediu, porque a mão do Senhor estava sobre ele. A Bíblia diz o motivo: Esdras tinha disposto o coração para buscar a Lei do Senhor, para a cumprir e para ensinar em Israel os seus estatutos.
+Artaxerxes lhe deu uma carta que permitia que os judeus que quisessem voltar a Jerusalém fossem com ele, e que lhes concedia prata e ouro para o templo e a autoridade para nomear juízes e ensinar a Lei. Esdras reuniu o povo junto ao rio Aava, e ali procurou levitas, que faltavam. Proclamou jejum para pedir a Deus um caminho seguro para eles e para os meninos, porque se envergonhava de pedir escolta ao rei, depois de ter dito que a mão de Deus é para o bem dos que o buscam. Eles foram protegidos e chegaram a Jerusalém, em cerca de quatro meses, e entregaram ao templo a prata e o ouro pesados.
+Pouco depois, os líderes contaram a Esdras que muitos do povo, até sacerdotes e levitas, tinham se casado com mulheres dos povos vizinhos, e que os próprios chefes tinham sido os primeiros. Esdras rasgou o manto e a túnica, arrancou cabelo da cabeça e da barba, e se assentou espantado até o sacrifício da tarde. Depois, de joelhos, orou em voz alta confessando o pecado do povo como se fosse dele. Muita gente se juntou chorando, e um deles disse que havia esperança para Israel. O povo concordou em separar-se das mulheres estrangeiras, e se reuniu em Jerusalém sob uma chuva forte, para tratar do caso.
+Anos depois, na festa das Trombetas, Esdras leu o livro da Lei na praça diante da porta das Águas, do amanhecer ao meio-dia, em cima de uma tribuna de madeira, ao lado de Neemias. Todo o povo ouviu atentamente. Quando o povo chorou, Neemias e Esdras disseram que aquele dia era santo, que não se entristecessem, porque a alegria do Senhor era a sua força. Esdras ainda leu a Lei todos os dias da festa dos Tabernáculos que veio depois.
+Judeus antigos lembram Esdras como ""segundo Moisés"". A Bíblia não conta como ele morreu.";"Esdras escreveu em duas línguas: o livro que leva o seu nome tem partes em aramaico, a língua do império persa.
+Esdras 7:10 resume a sua vida: buscar, cumprir e ensinar a Lei do Senhor.
+A viagem de Babilônia a Jerusalém durou cerca de quatro meses (Esdras 7:9).
+Esdras e Neemias, nos manuscritos hebraicos, formavam um só livro.
+Os judeus de tradição posterior o chamam de ""segundo Moisés"", por ter reconduzido o povo à Lei.
+Jejuou no rio Aava em vez de pedir tropas ao rei, porque tinha dito que Deus guarda os que o buscam (Esdras 8:21-23).";"Esdras 7 (a chegada e a carta do rei)
+Esdras 8 (a viagem e o jejum no rio Aava)
+Esdras 9 (a oração de confissão)
+Esdras 10 (a decisão do povo)
+Neemias 8 (a leitura da Lei)";"Sacerdote e escriba que voltou da Babilônia, ensinou a Lei ao povo e ajudou a restaurar a fidelidade em Jerusalém";"Volta do exílio (cerca de 458 a 430 a.C.)";"Esdras, Neemias";"Esdras 7:10; Esdras 7:27-28; Esdras 9:6; Neemias 8:8";"escriba, sacerdote, Lei, Artaxerxes, volta do exílio, jejum, Neemias, leitura";"Sim";"graph TD
+  Arao[""Arão""] --> Zadoque[""Zadoque""]
+  Zadoque --> Seraias[""Seraías""]
+  Seraias --> Esdras[""Esdras, sacerdote e escriba""]
+  Esdras -.serve.-> Artaxerxes[""Rei Artaxerxes""]
+  Esdras -.ensina com.-> Neemias[""Neemias""]";"timeline
+  title A vida de Esdras
+  Esdras 7 : Recebe a carta de Artaxerxes e parte da Babilônia
+  Esdras 8 : Jejua no rio Aava
+  Esdras 8 : Chega a Jerusalém e entrega a prata e o ouro
+  Esdras 9 : Ora em lágrimas pelo pecado do povo
+  Esdras 10 : O povo decide se corrigir
+  Neemias 8 : Lê a Lei diante da porta das Águas"
+"Filipe";"Discípulo de Betsaida, chamado por Jesus com as palavras ""Segue-me"", que levou Natanael a Jesus, se perguntou onde comprar pão para a multidão e pediu ""Senhor, mostra-nos o Pai""; um dos Doze apóstolos.";"Filipe era de Betsaida, a mesma cidade de André e de Pedro, na Galileia. Ele aparece no Evangelho de João logo no começo: Jesus decidiu ir à Galileia e achou Filipe, e lhe disse apenas: ""Segue-me"". É um dos poucos casos em que o Evangelho diz que Jesus o procurou e o achou. Filipe, por sua vez, foi atrás de Natanael e lhe disse: ""Havemos achado aquele de quem Moisés escreveu na Lei, e os profetas: Jesus de Nazaré"". Quando Natanael duvidou, perguntando se de Nazaré podia sair algo de bom, Filipe respondeu apenas: ""Vem e vê"".
+Na multiplicação dos pães, Jesus levantou os olhos, viu a grande multidão e perguntou a Filipe: ""Onde compraremos pão para estes comerem?"". João diz que perguntou isso para o provar, pois ele já sabia o que ia fazer. Filipe respondeu que duzentos denários de pão não bastariam para que cada um recebesse um pouco. André, por sua vez, é quem trouxe o rapaz com cinco pães e dois peixes.
+Alguns dias antes da Páscoa, em Jerusalém, alguns gregos que tinham subido para a festa foram a Filipe e lhe pediram: ""Senhor, queremos ver Jesus"". Filipe falou com André, e os dois contaram a Jesus. Foi aí que Jesus disse que tinha chegado a hora de o Filho do Homem ser glorificado.
+Na última ceia, quando Jesus falava aos discípulos sobre o Pai, Filipe pediu: ""Senhor, mostra-nos o Pai, e isso nos basta"". Jesus respondeu: ""Há tanto tempo que estou convosco, e não me tens conhecido, Filipe? Quem me vê a mim vê o Pai"". Foi uma resposta que revelou o centro do Evangelho de João: em Jesus, Deus se faz visível.
+Depois da ascensão, Filipe estava no cenáculo, em Atos 1, com os outros apóstolos. A Bíblia não conta mais nada dele. Uma tradição antiga, sem apoio nas Escrituras, diz que ele pregou na Frígia e foi morto em Hierápolis. Não deve ser confundido com Filipe, o evangelista, um dos sete escolhidos com Estêvão.";"O nome Filipe é grego e quer dizer ""amigo dos cavalos"".
+Filipe aparece quatro vezes no Evangelho de João e sempre em diálogo com Jesus.
+Na multiplicação dos pães, Jesus fez a pergunta a Filipe para o provar (João 6:6).
+Quando os gregos queriam ver Jesus, foi a Filipe, que tem nome grego, que eles pediram ajuda (João 12:20-22).
+A frase ""Vem e vê"" é usada por Filipe e também por Jesus em João 1:39.
+Não é o mesmo Filipe de Atos 8, o evangelista que batizou o eunuco etíope.";"João 1:43-51 (Filipe e Natanael)
+João 6:5-7 (a pergunta de Jesus sobre o pão)
+João 12:20-22 (os gregos querem ver Jesus)
+João 14:8-11 (Mostra-nos o Pai)
+Atos 1:13 (Filipe com os apóstolos em Jerusalém)";"Apóstolo de Betsaida que levou Natanael a Jesus e, ao pedir que Jesus mostrasse o Pai, recebeu uma das respostas mais importantes do Evangelho de João";"Ministério de Jesus e início da igreja (cerca de 27 a 60 d.C.)";"Mateus, Marcos, Lucas, João, Atos";"João 1:43; João 1:46; João 6:7; João 14:8-9";"apóstolo, Betsaida, Natanael, Vem e vê, pão, Pai, discípulo, gregos";"Sim";"graph TD
+  Filipe[""Filipe, apóstolo""] -.cidade de.-> Betsaida[""Betsaida""]
+  Jesus[""Jesus""] -.chama.-> Filipe
+  Filipe -.leva a Jesus.-> Natanael[""Natanael""]
+  Filipe -.com André leva.-> Gregos[""Os gregos""]
+  Filipe -.um dos Doze.-> Doze[""Os Doze apóstolos""]";"timeline
+  title A vida de Filipe
+  João 1 : Jesus o chama com as palavras Segue-me
+  João 1 : Leva Natanael a Jesus com as palavras Vem e vê
+  João 6 : Jesus pergunta onde comprar pão para a multidão
+  João 12 : Leva com André os gregos até Jesus
+  João 14 : Pede que Jesus lhes mostre o Pai
+  Atos 1 : Está com os apóstolos no cenáculo"
+"Jefté";"Juiz de Israel, gileadita, filho de uma prostituta, expulso pelos irmãos e depois chamado para liderar o povo contra os amonitas; fez um voto precipitado antes da batalha, que custou a vida de sua única filha.";"Jefté era gileadita, um homem valente, filho de Gileade e de uma prostituta. A mulher legítima de Gileade teve outros filhos, que o expulsaram de casa dizendo que não herdaria nada. Jefté fugiu para a terra de Tobe, onde se juntaram a ele homens ociosos que saíam com ele.
+Quando os amonitas fizeram guerra a Israel, os anciãos de Gileade foram buscar Jefté em Tobe e pediram que fosse seu chefe. Ele lembrou que eles o tinham odiado e expulsado, mas aceitou, desde que, vencendo os amonitas, ficasse como cabeça de todos. Os anciãos juraram. Em Mispá, Jefté repetiu as suas palavras diante do Senhor.
+Primeiro, Jefté enviou mensageiros ao rei de Amom. Perguntou por que o atacavam, e quando o rei respondeu que Israel tinha tomado a sua terra ao sair do Egito, Jefté contou a história: Israel não tinha tomado terra de Moabe nem de Amom, mas só do rei amorreu Siom, depois de ele ter lhe negado passagem. Pediu que o Senhor, o Juiz, julgasse entre eles. O rei de Amom não ouviu.
+O Espírito do Senhor veio sobre Jefté. Ele fez um voto: ""Se me entregares os filhos de Amom nas minhas mãos, aquele que sair da porta de minha casa ao meu encontro, quando eu voltar em paz, será do Senhor, e eu o oferecerei em holocausto"". Jefté derrotou os amonitas, tomando vinte cidades.
+Quando voltou para Mispá, a sua filha saiu ao seu encontro com tamborins e danças. Era a sua única filha, e ele não tinha outro filho. Jefté rasgou as vestes e disse: ""Ai, filha minha! Muito me abateste, és tu a causa da minha dor, porque abri a minha boca ao Senhor e não poderei retroceder"". Ela respondeu: ""Meu pai, fizeste voto ao Senhor, faze de mim como saiu da tua boca"". Pediu dois meses para ir pelos montes com as companheiras chorar a sua virgindade. Depois, ele fez com ela o que tinha prometido, e as moças de Israel iam todos os anos, quatro dias, lamentar a filha de Jefté. Estudiosos discutem se o voto terminou em sacrifício ou em dedicá-la a viver só para o Senhor, mas o texto é sóbrio e não explica.
+Em seguida, os homens de Efraim se queixaram de não terem sido chamados e ameaçaram queimar a casa de Jefté. Houve uma batalha, e Jefté dominou os vaus do Jordão. Quando um fugitivo efraimita dizia ""deixe-me passar"", perguntavam-lhe se era efraimita, e mandavam dizer ""Chibolete"". Se dissesse ""Sibolete"", era morto. Morreram quarenta e dois mil. Jefté julgou Israel seis anos e foi sepultado em uma cidade de Gileade. Hebreus 11:32 o lista entre os exemplos de fé.";"A palavra ""Sibolete"" ainda é usada para uma senha que revela a origem de quem a diz (Juízes 12:5-6).
+Jefté é o único dos juízes cuja família o expulsou antes de o chamar (Juízes 11:1-3).
+Hebreus 11:32 cita Jefté entre os heróis da fé, ao lado de Gideão, Baraque, Sansão, Davi e Samuel.
+Juízes 11 diz que ele tomou vinte cidades dos amonitas.
+Ele julgou Israel por seis anos (Juízes 12:7).
+O voto de Jefté é um dos textos mais debatidos do livro de Juízes, e a Lei proíbe sacrifícios humanos (Deuteronômio 12:31).";"Juízes 11:1-11 (a escolha de Jefté)
+Juízes 11:12-28 (a mensagem ao rei de Amom)
+Juízes 11:29-40 (o voto e a filha)
+Juízes 12:1-7 (Efraim e Sibolete)
+Hebreus 11:32 (Jefté entre os heróis da fé)";"Juiz de Israel que libertou o povo dos amonitas, mas fez um voto precipitado cujo desfecho marcou a vida de sua única filha";"Tempo dos juízes (cerca de 1100 a.C.)";"Juízes, 1 Samuel, Hebreus";"Juízes 11:30-31; Juízes 11:35-36; Juízes 12:5-6; Hebreus 11:32";"juiz, Gileade, amonitas, voto, filha, Mispá, Efraim, Sibolete";"Sim";"graph TD
+  Gileade[""Gileade""] --> Jefte[""Jefté, o gileadita""]
+  Prostituta[""Uma prostituta""] --> Jefte
+  Gileade --> Irmaos[""Os filhos da esposa de Gileade""]
+  Jefte --> Filha[""Sua única filha""]
+  Irmaos -.expulsaram.-> Jefte
+  Jefte -.venceu.-> Amom[""Os amonitas""]";"timeline
+  title A vida de Jefté
+  Juízes 11 : É expulso pelos irmãos e vai para Tobe
+  Juízes 11 : Os anciãos o chamam para liderar Gileade
+  Juízes 11 : Envia mensageiros ao rei de Amom
+  Juízes 11 : Faz o voto e derrota os amonitas
+  Juízes 11 : A filha sai ao seu encontro
+  Juízes 12 : Vence Efraim e a senha Sibolete
+  Juízes 12 : Julga Israel por seis anos"
+"Judá";"Quarto filho de Jacó e Lia, que propôs vender José, reconheceu o erro com Tamar e se ofereceu como escravo no lugar de Benjamim; recebeu de Jacó a bênção do cetro e foi o pai da tribo de Davi e de Jesus.";"Judá foi o quarto filho de Jacó e de Lia. Quando Lia o deu à luz, disse: ""Esta vez louvarei ao Senhor"", e por isso lhe deu o nome Judá, que lembra ""louvor"". Ele cresceu entre os doze irmãos, e foi um dos que se irritaram com José, o filho preferido do pai.
+Quando os irmãos viram José chegando para encontrá-los em Dotã, quiseram matá-lo. Rúben o defendeu. Depois, ao ver uma caravana de ismaelitas, Judá disse: ""Que proveito há em matarmos o nosso irmão e escondermos o seu sangue? Vinde, vendamo-lo aos ismaelitas, e não seja nossa mão sobre ele, pois é nosso irmão"". Venderam José por vinte moedas de prata e enganaram Jacó com a túnica manchada de sangue.
+Judá se afastou dos irmãos e se casou com a filha de um cananeu. Teve três filhos: Er, Onã e Selá. Er se casou com Tamar e morreu, Onã também. Judá pediu a Tamar que esperasse até Selá crescer, mas não cumpriu a palavra. Tamar se disfarçou de prostituta na estrada de Timna, e Judá se aproximou dela, deixando como penhor o seu selo, o cordão e o cajado. Quando soube que Tamar estava grávida, mandou queimá-la, mas ela mostrou os objetos, dizendo que o dono deles era o pai. Judá reconheceu e disse: ""Mais justa é ela do que eu, porquanto não a dei a meu filho Selá"". Tamar teve gêmeos, Perez e Zerá. Perez é antepassado de Davi e de Jesus.
+Anos depois, com a fome, os irmãos desceram ao Egito, sem saber que o governador era José. Quando Jacó hesitou em deixar Benjamim ir, Judá disse: ""Eu serei responsável por ele; da minha mão o requererás"". Quando a taça de José foi achada no saco de Benjamim, Judá se aproximou do governador e contou toda a história de seu pai, e pediu: ""Fique, pois, agora o teu servo em lugar do moço por servo de meu senhor"". José não aguentou e se revelou.
+Antes de morrer, Jacó abençoou os filhos. A Judá disse: ""Judá, os teus irmãos te louvarão; a tua mão estará sobre o pescoço dos teus inimigos"". Chamou-o de leãozinho e disse: ""O cetro não se arredará de Judá, nem o bastão de entre seus pés, até que venha Siló"". Desta tribo vieram Davi e Jesus. O Apocalipse chama Jesus de o Leão da tribo de Judá.";"O nome Judá quer dizer ""louvor"", e dele vêm as palavras ""judeu"" e ""Judeia"".
+Judá liderou a proposta de vender José, mas também a de oferecer-se no lugar de Benjamim.
+Tamar, nora de Judá, aparece na genealogia de Jesus em Mateus 1:3.
+Jacó o chamou de ""leãozinho"", e o Apocalipse chama Jesus de ""o Leão da tribo de Judá"" (Apocalipse 5:5).
+Das doze tribos, Judá foi a maior em guerreiros no recenseamento do deserto (Números 1:27).
+Com o tempo, o reino do sul, com a capital Jerusalém, ficou conhecido como Judá.";"Gênesis 29:35 (o nascimento de Judá)
+Gênesis 37:26-28 (Judá propõe vender José)
+Gênesis 38 (Judá e Tamar)
+Gênesis 44:18-34 (Judá intercede por Benjamim)
+Gênesis 49:8-12 (a bênção de Jacó)
+Apocalipse 5:5 (o Leão da tribo de Judá)";"Filho de Jacó que, depois de errar, se tornou líder entre os irmãos e pai da tribo da qual vieram Davi e Jesus";"Era dos patriarcas (cerca de 1900 a 1700 a.C.)";"Gênesis, 1 Crônicas, Mateus, Hebreus, Apocalipse";"Gênesis 38:26; Gênesis 44:33; Gênesis 49:8-10; Apocalipse 5:5";"tribo de Judá, Jacó, Lia, Tamar, José, Benjamim, leão, cetro";"Sim";"graph TD
+  Jaco[""Jacó""] --> Juda[""Judá""]
+  Lia[""Lia""] --> Juda
+  Juda --> Er[""Er""]
+  Juda --> Ona[""Onã""]
+  Juda --> Sela[""Selá""]
+  Juda --> Perez[""Perez""]
+  Tamar[""Tamar""] --> Perez
+  Perez -.descendente.-> Davi[""Davi""]
+  Davi -.descendente.-> Jesus[""Jesus""]";"timeline
+  title A vida de Judá
+  Gênesis 29 : Nasce o quarto filho de Jacó e Lia
+  Gênesis 37 : Propõe vender José aos ismaelitas
+  Gênesis 38 : Reconhece que Tamar foi mais justa
+  Gênesis 43 : Responde por Benjamim diante de Jacó
+  Gênesis 44 : Oferece-se como escravo no lugar de Benjamim
+  Gênesis 49 : Recebe a bênção do cetro"
+"Lia";"Filha mais velha de Labão, dada a Jacó pelo engano do pai, esposa menos amada de Jacó mas mãe de seis dos seus filhos e de Diná, entre eles Levi e Judá; foi sepultada em Macpela.";"Lia era a filha mais velha de Labão, e sua irmã mais nova era Raquel. A Bíblia diz que Lia tinha ""olhos tenros"", enquanto Raquel era formosa de aparência e de rosto. Jacó se apaixonou por Raquel e trabalhou sete anos para casar com ela. Na noite do casamento, Labão trouxe Lia, coberta pelo véu, e Jacó só percebeu de manhã. Labão justificou-se dizendo que não se dava a mais nova antes da mais velha, e prometeu dar-lhe também Raquel por mais sete anos de trabalho.
+O Senhor viu que Lia era menos amada e abriu-lhe a madre, enquanto Raquel era estéril. Lia deu à luz quatro filhos, e deu a cada um nome ligado a sua dor. Chamou o primeiro Rúben, dizendo: ""Porque o Senhor atentou para a minha aflição; agora, pois, me amará o meu marido"". O segundo foi Simeão: ""Porquanto o Senhor ouviu que eu era aborrecida"". O terceiro foi Levi: ""Agora, desta vez, se unirá a mim o meu marido"". E o quarto foi Judá, e dessa vez ela disse: ""Esta vez louvarei ao Senhor"". Depois disso, deixou de ter filhos por um tempo.
+Quando Raquel deu a serva Bila a Jacó, Lia deu a sua serva Zilpa, que teve Gade e Aser. Rúben achou mandrágoras no campo e levou à mãe, e Raquel pediu algumas. Lia respondeu: ""Pouco é que tomaste o meu marido, e tomarás também as mandrágoras de meu filho?"". Raquel cedeu uma noite com Jacó em troca. Lia concebeu e deu à luz Issacar e depois Zebulom, dizendo que agora Jacó habitaria com ela. Por fim, teve uma filha, Diná.
+Quando Jacó decidiu voltar a Canaã, chamou Raquel e Lia, e as duas concordaram em acompanhá-lo, dizendo que o pai tinha-as tratado como estrangeiras. Quando Jacó teve medo do encontro com Esaú, repartiu os filhos entre as duas esposas e as servas, e pôs Raquel e José por último. Em Gênesis 49, Jacó mandou que o sepultassem na caverna de Macpela, onde ""sepultaram Lia"".
+A Bíblia não mostra Lia dizendo mais do que o necessário, mas o seu nome entrou na história de Israel: de Levi veio o sacerdócio, e de Judá vieram Davi e Jesus. No livro de Rute, os anciãos pedem que a nova esposa de Boaz seja ""como Raquel e como Lia, as quais edificaram a casa de Israel"".";"A Bíblia não explica o sentido do nome Lia, mas explica o nome de cada um dos seus filhos.
+Lia teve seis filhos e uma filha, enquanto Raquel teve dois filhos.
+Dos filhos de Lia vieram o sacerdócio (Levi) e a realeza (Judá).
+Lia foi sepultada na caverna de Macpela, como Sara e Rebeca (Gênesis 49:31).
+Os nomes dos filhos mostram o desejo de ser amada: Rúben quer dizer ""vede, um filho"".
+Quando Jacó voltou, Lia e Raquel disseram que o pai as tinha vendido, em Gênesis 31:15.";"Gênesis 29:16-35 (casamento e primeiros filhos)
+Gênesis 30:9-21 (Zilpa, mandrágoras, Issacar, Zebulom e Diná)
+Gênesis 31:4-16 (Lia e Raquel decidem acompanhar Jacó)
+Gênesis 49:31 (Lia sepultada em Macpela)
+Rute 4:11 (Raquel e Lia, que edificaram a casa de Israel)";"Esposa de Jacó dada pelo engano de Labão, menos amada, mas mãe de seis tribos de Israel, entre elas Levi e Judá";"Era dos patriarcas (cerca de 1900 a 1800 a.C.)";"Gênesis, Rute";"Gênesis 29:31; Gênesis 29:35; Gênesis 30:20; Rute 4:11";"Jacó, Labão, Raquel, Judá, Levi, filhos, Macpela, matriarca";"Sim";"graph TD
+  Labao[""Labão""] --> Lia[""Lia""]
+  Labao --> Raquel[""Raquel""]
+  Jaco[""Jacó""] --- Lia
+  Lia --> Rubem[""Rúben""]
+  Lia --> Simeao[""Simeão""]
+  Lia --> Levi[""Levi""]
+  Lia --> Juda[""Judá""]
+  Lia --> Issacar[""Issacar""]
+  Lia --> Zebulom[""Zebulom""]
+  Lia --> Dina[""Diná""]
+  Zilpa[""Zilpa, serva de Lia""] --> Gade[""Gade""]
+  Zilpa --> Aser[""Aser""]";"timeline
+  title A vida de Lia
+  Gênesis 29 : É dada a Jacó por Labão no lugar de Raquel
+  Gênesis 29 : Dá à luz Rúben, Simeão, Levi e Judá
+  Gênesis 30 : Dá Zilpa a Jacó e nascem Gade e Aser
+  Gênesis 30 : Dá à luz Issacar, Zebulom e Diná
+  Gênesis 31 : Acompanha Jacó na volta a Canaã
+  Gênesis 49 : É sepultada na caverna de Macpela"
+"Marta";"Irmã de Maria e de Lázaro, de Betânia, que recebeu Jesus em sua casa e foi repreendida com carinho por andar inquieta com muitos afazeres; na morte do irmão confessou que Jesus é o Cristo, o Filho de Deus.";"Marta morava em Betânia, uma aldeia perto de Jerusalém, com a irmã Maria e o irmão Lázaro. O Evangelho de João diz que Jesus amava Marta, e sua irmã, e Lázaro. A família é uma das poucas em que Jesus se sente à vontade, e provavelmente foi onde ele se hospedou nas últimas semanas.
+Em Lucas, Jesus entra numa aldeia e uma mulher chamada Marta o recebe em sua casa. Maria, sua irmã, sentou-se aos pés de Jesus e ouvia a sua palavra. Marta, ocupada em muitos serviços, aproximou-se e disse: ""Senhor, não te importas de que minha irmã me deixe servir só? Dize-lhe que me ajude"". Jesus respondeu: ""Marta, Marta, estás ansiosa e afadigada com muitas coisas, mas uma só é necessária; e Maria escolheu a boa parte, a qual não lhe será tirada"". Jesus não despreza o serviço de Marta, mas mostra o que vem primeiro.
+Quando Lázaro adoeceu, as irmãs mandaram avisar Jesus: ""Senhor, está enfermo aquele que amas"". Jesus demorou dois dias. Quando chegou, Lázaro já estava morto havia quatro dias. Marta foi a primeira a ir ao encontro dele, enquanto Maria ficou em casa. Disse: ""Senhor, se tivesses estado aqui, meu irmão não teria morrido; mas também sei que, agora mesmo, tudo o que pedires a Deus, Deus to concederá"".
+Jesus disse que seu irmão ressuscitaria. Marta respondeu que sabia que ele ressuscitaria na ressurreição, no último dia. Jesus disse: ""Eu sou a ressurreição e a vida; quem crê em mim, ainda que esteja morto, viverá. E todo aquele que vive e crê em mim nunca morrerá. Crês tu isto?"". Ela respondeu: ""Sim, Senhor, creio que tu és o Cristo, o Filho de Deus, que havia de vir ao mundo"". Depois chamou Maria em segredo, dizendo que o Mestre estava ali e a chamava. Quando Jesus mandou tirar a pedra, foi Marta quem objetou que o corpo já cheirava mal, e Jesus respondeu: ""Não te hei dito que, se creres, verás a glória de Deus?"". Lázaro saiu do sepulcro.
+Seis dias antes da Páscoa, os três fizeram uma ceia para Jesus em Betânia, e João diz simplesmente: ""Marta servia"". Ela continua o que fazia em Lucas, mas agora sem queixas. A Bíblia não conta mais nada dela.";"O nome Marta vem do aramaico e quer dizer ""senhora"" ou ""dona da casa"".
+Marta, e não Maria, fala primeiro com Jesus quando ele chega a Betânia (João 11:20).
+A confissão de Marta, ""Tu és o Cristo, o Filho de Deus"", é parecida com a de Pedro em Mateus 16:16.
+Em João 12:2, Marta aparece servindo de novo, desta vez sem se queixar.
+Betânia, a casa de Marta, ficava a cerca de três quilômetros de Jerusalém (João 11:18).
+Jesus a chamou duas vezes pelo nome, ""Marta, Marta"", como fez com Simão e com Saulo.";"Lucas 10:38-42 (Marta e Maria)
+João 11:1-44 (a morte e a ressurreição de Lázaro)
+João 12:1-3 (a ceia em Betânia)";"Irmã de Maria e de Lázaro que serviu Jesus em sua casa e, na morte do irmão, confessou que Jesus é o Cristo, o Filho de Deus";"Ministério de Jesus (cerca de 29 a 33 d.C.)";"Lucas, João";"Lucas 10:41-42; João 11:21-22; João 11:27; João 12:2";"Betânia, Lázaro, Maria, serviço, hospitalidade, fé, ressurreição, confissão";"Sim";"graph TD
+  Lazaro[""Lázaro""] --- Marta[""Marta""]
+  Marta --- Maria[""Maria de Betânia""]
+  Lazaro --- Maria
+  Jesus[""Jesus""] -.amava.-> Marta
+  Marta -.confessa.-> Jesus
+  Jesus -.ressuscitou.-> Lazaro";"timeline
+  title A vida de Marta
+  Lucas 10 : Recebe Jesus em sua casa em Betânia
+  Lucas 10 : Jesus lhe fala sobre a boa parte
+  João 11 : Avisa Jesus de que Lázaro está doente
+  João 11 : Confessa que Jesus é o Cristo
+  João 11 : Lázaro é ressuscitado
+  João 12 : Serve a ceia a Jesus em Betânia"
