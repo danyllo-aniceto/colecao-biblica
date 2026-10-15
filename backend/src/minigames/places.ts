@@ -1,3 +1,4 @@
+import { MORE_PLACES } from "./content/places";
 import { ACCURACY_MAX, rng, shuffled, timeBonus, type Outcome } from "./common";
 import { LEVEL_LABEL, LEVEL_SCALE, maxScoreOf, TIME_GRACE, type Level } from "./turns";
 
@@ -20,7 +21,7 @@ export const MAX_ERROR_KM = 800;
 
 export type Place = { name: string; lat: number; lon: number };
 
-export const PLACES: Place[] = [
+const BASE_PLACES: Place[] = [
   { name: "Jerusalém", lat: 31.78, lon: 35.22 },
   { name: "Belém", lat: 31.7, lon: 35.2 },
   { name: "Nazaré", lat: 32.7, lon: 35.3 },
@@ -48,6 +49,10 @@ export const PLACES: Place[] = [
   { name: "Betel", lat: 31.94, lon: 35.22 },
   { name: "Hebrom", lat: 31.53, lon: 35.1 },
 ];
+
+/** Todos os lugares: os originais mais os de `content/places.ts`. */
+export const PLACES: Place[] = [...BASE_PLACES, ...MORE_PLACES];
+
 
 export type MapState = { seed: number; level: Level; places: Place[]; timeLimit: number | null; hints: number; hinted: number[] };
 export type MapPuzzle = {

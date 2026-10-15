@@ -1,3 +1,4 @@
+import { MORE_EDGES } from "./content/edges";
 import { rng, shuffled, type Outcome, type Random } from "./common";
 import { beginClock, clockAlmostOver, clockExpired, elapsedSeconds, endClock, LEVEL_LABEL, LEVEL_SCALE, maxScoreOf, newClock, speedFactor, turnShare, TurnError, type Clock, type Level, type TurnResult } from "./turns";
 
@@ -17,7 +18,7 @@ export const HINT_COST = 0.2;
 export type Edge = [from: string, to: string, forward: string, backward: string];
 
 /** Relações bíblicas: `forward` lê de `from` para `to`; `backward` lê de `to` para `from`. */
-export const EDGES: Edge[] = [
+const BASE_EDGES: Edge[] = [
   ["Isaías", "Ezequias", "profetizou ao rei", "recebeu a profecia de"],
   ["Isaías", "Jesus", "anunciou a vinda de", "foi anunciado por"],
   ["Ezequias", "Jerusalém", "reinou em", "foi governada por"],
@@ -74,11 +75,20 @@ export const EDGES: Edge[] = [
   ["João", "Patmos", "foi exilado em", "recebeu o exílio de"],
 ];
 
+/** Relações do jogo: as originais mais as de `content/edges.ts`. */
+export const EDGES: Edge[] = [...BASE_EDGES, ...MORE_EDGES];
+
 export const NODES = [...new Set(EDGES.flatMap(([from, to]) => [from, to]))];
+
+const ADJACENCY = new Map<string, Array<{ to: string; phrase: string }>>();
+for (const [from, to, forward, backward] of EDGES) {
+  ADJACENCY.set(from, [...(ADJACENCY.get(from) ?? []), { to, phrase: forward }]);
+  ADJACENCY.set(to, [...(ADJACENCY.get(to) ?? []), { to: from, phrase: backward }]);
+}
 
 /** Vizinhos de um nó, com a frase da relação lida a partir dele. */
 export function neighbors(node: string): Array<{ to: string; phrase: string }> {
-  return EDGES.flatMap(([from, to, forward, backward]) => (from === node ? [{ to, phrase: forward }] : to === node ? [{ to: from, phrase: backward }] : []));
+  return ADJACENCY.get(node) ?? [];
 }
 
 /** Menor número de passos entre dois nós (null se não houver caminho). */
