@@ -25,6 +25,7 @@ import { questionsRouter } from "./routes/questions";
 import { quizRouter } from "./routes/quiz";
 import { rankingRouter } from "./routes/ranking";
 import { rewardsRouter } from "./routes/rewards";
+import { runnerRouter } from "./routes/runner";
 import { settingsRouter } from "./routes/settings";
 import { shopRouter } from "./routes/shop";
 import { uploadsRouter } from "./routes/uploads";
@@ -80,6 +81,7 @@ export function createApp() {
   app.use("/api/cosmetics", requireAuth, cosmeticsRouter);
   app.use("/api/chests", requireAuth, chestsRouter);
   app.use("/api/game-modes", requireAuth, gameModesRouter);
+  app.use("/api/runner", requireAuth, runnerRouter);
   app.use("/api/collections", requireAuth, collectionsRouter);
   app.use("/api/pass", requireAuth, passRouter);
   app.use("/api/events", requireAuth, eventsRouter);

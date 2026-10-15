@@ -19,7 +19,8 @@ import { LEVELS } from '@runner/levels';
 import type { Level } from '@runner/types';
 import type { CorridaResult, CorridaRival } from '@/components/user/corrida/corrida-game';
 import { loadBests, saveBest } from '@/components/user/corrida/corrida-storage';
-import { loadCharacter, RUNNER_CHARACTERS, saveCharacter, type RunnerCharacter } from '@/components/user/corrida/corrida-characters';
+import { portraitOf, rivalsFor, saveCharacter, storedCharacterId, useRunnerCharacters, type RunnerCharacter } from '@/components/user/corrida/corrida-characters';
+import { SpriteView } from '@/components/user/corrida/sprite-view';
 
 const CorridaGame = lazy(() => import('@/components/user/corrida/corrida-game').then((m) => ({ default: m.CorridaGame })));
 
@@ -68,20 +69,24 @@ export function CorridaHub() {
   const [tab, setTab] = useState<Tab>('campaign');
   const [playing, setPlaying] = useState<Playing | null>(null);
   const [bests, setBests] = useState(loadBests);
-  const [character, setCharacter] = useState<RunnerCharacter>(loadCharacter);
+  const characters = useRunnerCharacters();
+  const [selectedId, setSelectedId] = useState<string | null>(storedCharacterId);
+  // O escolhido pode ter sumido do Painel (desativado): volta ao primeiro da lista.
+  const character = characters.find((item) => item.id === selectedId) ?? characters[0];
+  const portrait = portraitOf(character);
 
   function choose(next: RunnerCharacter) {
-    setCharacter(next);
+    setSelectedId(next.id);
     saveCharacter(next.id);
   }
 
   return (
     <section className="space-y-4" aria-label="Corrida">
-      <Alert tone="info">Protótipo do novo modo: ainda sem arte, sons de personagem nem online. Use o celular deitado (no computador, a barra de espaço).</Alert>
+      <Alert tone="info">Protótipo do novo modo: ainda sem o modo online. Use o celular deitado (no computador, a barra de espaço).</Alert>
 
       <div className="flex items-center justify-between gap-3 rounded-2xl bg-surface-3 px-3 py-2">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="h-5 w-5 shrink-0 rounded" style={{ background: character.color }} aria-hidden />
+          <SpriteView url={portrait?.url} frames={portrait?.frames} color={character.color} size={40} />
           <p className="truncate text-sm font-bold text-ink">Seu corredor: {character.name}</p>
         </div>
         <Button size="sm" variant="ghost" onClick={() => setTab('characters')}>
@@ -110,15 +115,15 @@ export function CorridaHub() {
 
       {tab === 'campaign' ? <CampaignTab bests={bests} onPlay={(level) => setPlaying({ level, mode: 'campaign' })} /> : null}
       {tab === 'free' ? <FreeTab bests={bests} onPlay={(level, mode) => setPlaying({ level, mode })} /> : null}
-      {tab === 'bots' ? <BotsTab character={character} onStart={(level, rivals) => setPlaying({ level, mode: 'race', rivals })} /> : null}
+      {tab === 'bots' ? <BotsTab characters={characters} character={character} onStart={(level, rivals) => setPlaying({ level, mode: 'race', rivals })} /> : null}
       {tab === 'multi' ? <MultiTab /> : null}
-      {tab === 'characters' ? <CharactersTab character={character} onChoose={choose} /> : null}
+      {tab === 'characters' ? <CharactersTab characters={characters} character={character} onChoose={choose} /> : null}
 
       {playing ? (
         <Suspense fallback={<LoadingState />}>
           <CorridaGame
             level={playing.level}
-            color={character.color}
+            character={character}
             practice={playing.mode === 'practice'}
             autopilot={playing.mode === 'watch' ? { skill: 1, lag: 2 } : undefined}
             rivals={playing.mode === 'race' ? playing.rivals : undefined}
@@ -206,15 +211,13 @@ function FreeTab({ bests, onPlay }: { bests: Bests; onPlay: (level: Level, mode:
 }
 
 /** Contra bots: você e de 1 a 3 bots na mesma tela, na mesma fase. Quem cair volta ao último checkpoint; vence quem cruzar a linha primeiro. */
-function BotsTab({ character, onStart }: { character: RunnerCharacter; onStart: (level: Level, rivals: CorridaRival[]) => void }) {
+function BotsTab({ characters, character, onStart }: { characters: RunnerCharacter[]; character: RunnerCharacter; onStart: (level: Level, rivals: CorridaRival[]) => void }) {
   const [levelId, setLevelId] = useState(LEVELS[0].id);
   const [count, setCount] = useState<'1' | '2' | '3'>('2');
   const [difficulty, setDifficulty] = useState<BotLevel>('STUDENT');
   const level = LEVELS.find((item) => item.id === levelId) ?? LEVELS[0];
-  // Os rivais são os outros personagens, na ordem da lista.
-  const rivals: CorridaRival[] = RUNNER_CHARACTERS.filter((item) => item.id !== character.id)
-    .slice(0, Number(count))
-    .map((item) => ({ name: item.name, color: item.color, skill: BOT_LEVELS[difficulty].skill, lag: BOT_LEVELS[difficulty].lag }));
+  // Os rivais são os outros personagens, na ordem da lista (com os sprites deles).
+  const rivals: CorridaRival[] = rivalsFor(characters, character.id, Number(count)).map((item) => ({ name: item.name, color: item.color, sprites: item.sprites, skill: BOT_LEVELS[difficulty].skill, lag: BOT_LEVELS[difficulty].lag }));
 
   return (
     <div className="space-y-4">
@@ -239,12 +242,12 @@ function BotsTab({ character, onStart }: { character: RunnerCharacter; onStart: 
         </div>
         <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-muted">
           <span className="flex items-center gap-1.5 rounded-full bg-surface-3 px-2.5 py-1 text-ink">
-            <span className="h-3 w-3 rounded" style={{ background: character.color }} aria-hidden />
+            <SpriteView url={portraitOf(character)?.url} frames={portraitOf(character)?.frames} color={character.color} size={22} />
             Você ({character.name})
           </span>
           {rivals.map((rival) => (
             <span key={rival.name} className="flex items-center gap-1.5 rounded-full bg-surface-3 px-2.5 py-1 text-ink">
-              <span className="h-3 w-3 rounded" style={{ background: rival.color }} aria-hidden />
+              <SpriteView url={rival.sprites?.portrait?.url ?? rival.sprites?.run?.url} frames={rival.sprites?.portrait?.frames ?? rival.sprites?.run?.frames} color={rival.color} size={22} />
               {rival.name}
             </span>
           ))}
@@ -283,11 +286,11 @@ function MultiTab() {
 }
 
 /** Personagens: escolha o corredor. Todos correm igual; muda só a aparência (sprites e sons vêm do Painel na etapa 3; na campanha, cada novo se abre ao concluir uma fase). */
-function CharactersTab({ character, onChoose }: { character: RunnerCharacter; onChoose: (character: RunnerCharacter) => void }) {
-  const list = usePagination(RUNNER_CHARACTERS, 8);
+function CharactersTab({ characters, character, onChoose }: { characters: RunnerCharacter[]; character: RunnerCharacter; onChoose: (character: RunnerCharacter) => void }) {
+  const list = usePagination(characters, 8);
   return (
     <div className="space-y-4">
-      <Alert tone="info">Todos os personagens correm igual: o que muda é só a aparência. Na campanha, novos personagens vão abrindo conforme você conclui as fases.</Alert>
+      <Alert tone="info">Todos os personagens correm igual: o que muda é só a aparência e os sons. Na campanha, novos personagens vão abrindo conforme você conclui as fases.</Alert>
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {list.pageItems.map((item) => {
           const selected = item.id === character.id;
@@ -299,8 +302,8 @@ function CharactersTab({ character, onChoose }: { character: RunnerCharacter; on
                 aria-pressed={selected}
                 className={cn('flex h-full w-full flex-col items-center gap-2 rounded-2xl border-2 bg-surface p-3 text-center transition', selected ? 'border-primary shadow-md' : 'border-edge hover:border-primary/60')}
               >
-                <span className="flex h-16 w-16 items-center justify-center rounded-2xl" style={{ background: `${item.color}33` }}>
-                  <span className="h-9 w-9 rounded-lg" style={{ background: item.color }} />
+                <span className="flex h-20 w-20 items-center justify-center rounded-2xl" style={{ background: `${item.color}33` }}>
+                  <SpriteView url={portraitOf(item)?.url} frames={portraitOf(item)?.frames} color={item.color} size={72} />
                 </span>
                 <span className="font-display text-base font-bold text-ink">{item.name}</span>
                 <span className="text-xs font-semibold text-muted">{item.text}</span>
