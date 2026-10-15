@@ -1,0 +1,51 @@
+import { describe, expect, it } from "vitest";
+import { greenKey, stripLayout, STRIP_CELL } from "./sprite-strip";
+
+describe("Corrida: montagem da tira de sprites", () => {
+  it("quadros iguais: células de 256, lado a lado, sem ampliar", () => {
+    const layout = stripLayout([{ w: 256, h: 256 }, { w: 256, h: 256 }, { w: 256, h: 256 }, { w: 256, h: 256 }]);
+    expect(layout).toMatchObject({ cell: 256, width: 1024, height: 256, scale: 1 });
+    expect(layout.placements.map((p) => p.x)).toEqual([0, 256, 512, 768]);
+    expect(layout.placements.every((p) => p.y === 0 && p.w === 256 && p.h === 256)).toBe(true);
+  });
+
+  it("quadros grandes (1024) são reduzidos com a mesma escala; menores não são ampliados", () => {
+    const big = stripLayout([{ w: 1024, h: 1024 }, { w: 1024, h: 1024 }]);
+    expect(big.scale).toBe(0.25);
+    expect(big.placements[0]).toMatchObject({ w: 256, h: 256 });
+    const small = stripLayout([{ w: 128, h: 128 }]);
+    expect(small.scale).toBe(1);
+    expect(small.placements[0]).toMatchObject({ x: 64, y: 128, w: 128, h: 128 });
+  });
+
+  it("mesma escala para todos os quadros: o personagem não muda de tamanho; pés na base, centrado", () => {
+    // Quadro 2 é mais baixo (ex.: abaixado): a escala vem do maior quadro e ele fica com a base alinhada.
+    const layout = stripLayout([{ w: 512, h: 512 }, { w: 512, h: 400 }]);
+    expect(layout.scale).toBe(0.5);
+    expect(layout.placements[0]).toMatchObject({ y: 0, h: 256 });
+    expect(layout.placements[1]).toMatchObject({ x: 256, y: 56, h: 200 });
+    expect(layout.placements[1].y + layout.placements[1].h).toBe(STRIP_CELL);
+  });
+
+  it("muitos quadros: a célula diminui para a tira não passar de 1536 px", () => {
+    const layout = stripLayout(Array.from({ length: 8 }, () => ({ w: 256, h: 256 })));
+    expect(layout.cell).toBe(192);
+    expect(layout.width).toBeLessThanOrEqual(1536);
+    expect(layout.scale).toBe(0.75);
+    expect(() => stripLayout([])).toThrow();
+  });
+
+  it("greenKey: verde puro some, bordas ficam meio transparentes, o resto passa intacto", () => {
+    expect(greenKey(0, 255, 0, 255)[3]).toBe(0);
+    expect(greenKey(20, 240, 30, 255)[3]).toBe(0);
+    const edge = greenKey(120, 170, 120, 255);
+    expect(edge[3]).toBeGreaterThan(0);
+    expect(edge[3]).toBeLessThan(255);
+    expect(edge[1]).toBeLessThanOrEqual(120);
+    expect(greenKey(56, 189, 248, 255)).toEqual([56, 189, 248, 255]);
+    expect(greenKey(255, 224, 189, 255)).toEqual([255, 224, 189, 255]);
+    expect(greenKey(30, 80, 30, 255)).toEqual([30, 80, 30, 255]);
+    // Pixel já transparente continua transparente.
+    expect(greenKey(0, 255, 0, 0)[3]).toBe(0);
+  });
+});

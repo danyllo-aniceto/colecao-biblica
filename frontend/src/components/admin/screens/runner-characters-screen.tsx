@@ -18,7 +18,9 @@ import { MAX_FRAMES, POSES, POSE_INFO, SOUND_INFO, SOUND_KEYS, isHexColor, type 
 import { SpriteView } from '@/components/user/corrida/sprite-view';
 import { AdminPanel, IconAction, SearchInput, StatusBadge } from '../admin-ui';
 import { AudioUploadField } from '../audio-upload-field';
+import { FrameStripBuilder } from '../frame-strip-builder';
 import { ImageUploadField } from '../image-upload-field';
+import { Segmented } from '@/components/ui/segmented';
 import { useDebouncedValue, usePagedList } from '../use-paged-list';
 
 type Draft = {
@@ -90,6 +92,37 @@ function toInput(draft: Draft): RunnerCharacterInput & { name: string } {
   };
 }
 
+type Sheet = { url: string; frames: string };
+
+/** Imagem de uma pose: montar a partir de quadros soltos (um arquivo por quadro) ou enviar uma tira já pronta. */
+function PoseImageField({ pose, sheet, onChange }: { pose: Pose; sheet: Sheet; onChange: (sheet: Sheet) => void }) {
+  const [mode, setMode] = useState<'frames' | 'strip'>(sheet.url ? 'strip' : 'frames');
+  return (
+    <div className="space-y-3">
+      <Segmented
+        value={mode}
+        onChange={setMode}
+        options={[
+          { value: 'frames', label: 'Quadro por quadro' },
+          { value: 'strip', label: 'Tira pronta' },
+        ]}
+        aria-label={`Como enviar a pose ${POSE_INFO[pose].label}`}
+      />
+      {mode === 'frames' ? (
+        <FrameStripBuilder
+          poseName={POSE_INFO[pose].label}
+          onBuilt={(url, frames) => {
+            onChange({ url, frames: String(frames) });
+            setMode('strip');
+          }}
+        />
+      ) : (
+        <ImageUploadField value={sheet.url} onChange={(url) => onChange({ ...sheet, url })} />
+      )}
+    </div>
+  );
+}
+
 /** Painel → Corrida → Personagens: nome, cor de reserva, sprites por pose (tira de quadros) e sons. Sem sprite, o app desenha a forma colorida. */
 export function RunnerCharactersScreen() {
   const toast = useToast();
@@ -149,7 +182,7 @@ export function RunnerCharactersScreen() {
   return (
     <AdminPanel
       title="Personagens da Corrida"
-      description="Cada pose é UMA imagem com os quadros lado a lado (quadros quadrados, fundo transparente, 256 × 256 px por quadro; no máximo 6 quadros por imagem para não passar de 1536 px de largura). Sem sprite, o jogo desenha a forma na cor de reserva. Todos os personagens correm com a mesma física: o que muda é só a aparência e os sons."
+      description="Envie cada pose quadro por quadro (uma imagem por quadro): o painel monta a animação, deixa todos na mesma escala com os pés na base e, se quiser, tira o fundo verde. Também aceita uma tira já pronta (quadros quadrados lado a lado). Sem sprite, o jogo desenha a forma na cor de reserva. Todos os personagens correm com a mesma física: o que muda é só a aparência e os sons."
       actions={
         <Button onClick={() => open()}>
           <AddRoundedIcon fontSize="small" /> Novo personagem
@@ -253,7 +286,7 @@ export function RunnerCharactersScreen() {
                         <p className="font-display text-base font-bold text-ink">{POSE_INFO[pose].label}</p>
                         <p className="text-xs font-semibold text-muted">{POSE_INFO[pose].hint}</p>
                       </div>
-                      <ImageUploadField value={sheet.url} onChange={(url) => change({ sprites: { ...draft.sprites, [pose]: { ...sheet, url } } })} />
+                      <PoseImageField pose={pose} sheet={sheet} onChange={(next) => change({ sprites: { ...draft.sprites, [pose]: next } })} />
                       {sheet.url ? (
                         <div className="flex flex-wrap items-end gap-4">
                           <Field label="Quadros" error={errors[`frames-${pose}`]} htmlFor={`runner-frames-${pose}`} className="w-28">

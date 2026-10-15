@@ -139,6 +139,7 @@ Telas (aba Jogar → Corrida), no mesmo molde do Duelo/Tabuleiro, sem servidor (
 - [x] **App:** escolha de personagem com o retrato do Painel (ou a cor), o jogo desenha o sprite da pose certa e anima os quadros (corrida, pulo, voo, gravidade de cabeça para baixo no teto, queda, vitória na tela de resultado), rivais com os próprios sprites, sons do personagem
   com o som padrão como reserva. Sem internet ou sem cadastro, valem os 6 padrão.
 - [x] `docs/corrida-prompts-de-arte.md`: ficha técnica (256 × 256 por quadro, no máximo 6 quadros por imagem, fundo transparente, de perfil para a direita, pés na base), prompts por pose no padrão 3D e guia de sons.
+- [x] **Montador de quadros no Painel** (`frame-strip-builder.tsx`, regras puras testadas em `runner/sprite-strip.ts`): em cada pose, "Quadro por quadro" recebe vários arquivos (ordem pelo nome, dá para reordenar/remover), prévia animada, opção de **remover o fundo verde #00FF00**, mesma escala em todos e pés na base; monta e envia a tira sozinho. "Tira pronta" continua existindo.
 - [ ] Você gera os primeiros sprites e sons e envia pelo Painel (o jogo já usa assim que salvar). O desbloqueio por fase concluída usa `unlock_level` na etapa 5.
 
 ### Etapa 4 — Fases e cenários pelo Painel (G)

@@ -3,6 +3,10 @@
 Tudo é enviado pelo **Painel → Corrida: personagens** (sem mexer no código). Sem sprite, o jogo desenha um quadrado na cor de reserva; sem som, toca o som padrão do modo.
 O estilo segue o **molde único** de `docs/prompts-3d-padrao.md` (3D animado estilo Disney/Pixar, família, sem texto).
 
+## 0. Jeito mais fácil: um quadro por imagem
+
+No Painel, em cada pose, a aba **"Quadro por quadro"** recebe vários arquivos de uma vez (um por quadro, na ordem do nome do arquivo), mostra a prévia animada, **tira o fundo verde #00FF00** se você ligar a opção e monta a tira sozinho (mesma escala, pés na base). Os prompts por quadro estão em `docs/corrida-prompts-prontos.md`. A ficha abaixo vale para quem preferir enviar a tira já pronta.
+
 ## 1. Ficha técnica dos sprites
 
 - **Uma imagem por pose**, com os **quadros lado a lado** numa tira horizontal; todos os quadros **quadrados e do mesmo tamanho**.
