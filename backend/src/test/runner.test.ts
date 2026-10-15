@@ -57,9 +57,15 @@ describe.skipIf(!hasDatabase)("corrida: personagens pelo painel", () => {
     expect(withSprites.body.sprites).toEqual({ run: { url: "https://x/run.webp", frames: 4 }, jump: { url: "https://x/jump.webp", frames: 1 } });
     expect(withSprites.body.sounds).toEqual({ jump: "https://x/jump.mp3" });
 
+    // A pose "Parado" é guardada como as outras (sem mudança de banco: os sprites são JSON).
+    const idle = await api.put(`/api/runner/admin/characters/${id}`).set(bearer(admin)).send({ sprites: { idle: { url: "https://x/idle.webp", frames: 4 } } });
+    expect(idle.status).toBe(200);
+    expect(idle.body.sprites.idle).toEqual({ url: "https://x/idle.webp", frames: 4 });
+    expect(idle.body.sprites.run).toEqual({ url: "https://x/run.webp", frames: 4 });
+
     // Campo ausente não altera; null limpa só aquela pose/som/campo.
     const partial = await api.put(`/api/runner/admin/characters/${id}`).set(bearer(admin)).send({ sprites: { jump: null, fly: { url: "https://x/fly.webp", frames: 2 } }, sounds: { jump: null, win: "https://x/win.mp3" }, description: null });
-    expect(partial.body.sprites).toEqual({ run: { url: "https://x/run.webp", frames: 4 }, fly: { url: "https://x/fly.webp", frames: 2 } });
+    expect(partial.body.sprites).toEqual({ run: { url: "https://x/run.webp", frames: 4 }, idle: { url: "https://x/idle.webp", frames: 4 }, fly: { url: "https://x/fly.webp", frames: 2 } });
     expect(partial.body.sounds).toEqual({ win: "https://x/win.mp3" });
     expect(partial.body.description).toBeNull();
     expect(partial.body.name).toBe("Maria Madalena");

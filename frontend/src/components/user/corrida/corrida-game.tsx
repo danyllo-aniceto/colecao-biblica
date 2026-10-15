@@ -80,6 +80,7 @@ export function CorridaGame({ level, character, practice = false, autopilot, riv
   const sprites = character?.sprites;
   const sounds = character?.sounds;
   const deadForRef = useRef(0);
+  const clockRef = useRef(0);
   const soundsRef = useRef(sounds);
   soundsRef.current = sounds;
   /** Som do personagem (se enviado pelo painel) ou o padrão do modo. */
@@ -292,6 +293,9 @@ export function CorridaGame({ level, character, practice = false, autopilot, riv
       if (flashRef.current > 0) flashRef.current = Math.max(0, flashRef.current - 0.04);
       const player = playerRef.current;
       deadForRef.current = player.status === 'dead' ? deadForRef.current + 1 : 0;
+      clockRef.current += 1;
+      // Parado no lugar (antes da largada, esperando o toque ou pausado em pé): pose "Parado".
+      const stopped = phaseRef.current === 'ready' || portraitRef.current;
       const left = noteRef.current ? noteRef.current.until - player.tick : 0;
       const note: Note | null = noteRef.current && left > 0 ? { text: noteRef.current.text, fade: Math.min(1, left / 15) } : null;
       const rivalViews: RivalView[] = rivalsRef.current.map(({ bot, spec }) => ({ name: spec.name, color: spec.color, sprites: spec.sprites, player: bot.player }));
@@ -300,7 +304,7 @@ export function CorridaGame({ level, character, practice = false, autopilot, riv
         const mine = progressOf(prepared.current, player);
         rank = { position: 1 + rivalViews.filter((rival) => progressOf(prepared.current, rival.player) > mine).length, total: rivalViews.length + 1 };
       }
-      drawScene(ctx, prepared.current, player, canvas.width, canvas.height, { color, sprites, deadFor: Math.floor(deadForRef.current / 6), rivals: rivalViews, rank, flash: flashRef.current, note, dpr });
+      drawScene(ctx, prepared.current, player, canvas.width, canvas.height, { color, sprites, deadFor: Math.floor(deadForRef.current / 6), stopped, clock: clockRef.current, rivals: rivalViews, rank, flash: flashRef.current, note, dpr });
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);

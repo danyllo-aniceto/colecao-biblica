@@ -50,6 +50,7 @@ the character fills about 85% of the image height. Same scale and same camera di
 | Pose | Qtde | Quadro a quadro |
 |---|---|---|
 | **Retrato** | 1 | `Friendly portrait pose facing the camera at a slight three-quarter angle, big smile, one hand waving.` |
+| **Parado** | 4 | 1: `Idle standing pose, relaxed, chest slightly lowered after exhaling, arms hanging naturally, gentle smile.` · 2: `Idle standing pose, inhaling: chest slightly raised, shoulders rising a little, same stance.` · 3: `Idle standing pose, full inhale: chest at its highest, head very slightly up, clothing hem lifting a tiny bit.` · 4: `Idle standing pose, exhaling: chest lowering, shoulders relaxing, clothing settling, between frame 3 and frame 1.` (Em TODOS: `side view facing right`, pés **exatamente** no mesmo lugar e na mesma posição; só o tronco, os ombros e o tecido se mexem.) |
 | **Correndo** | 4 | 1: `Run cycle, contact pose: right foot forward, left arm forward, body slightly low.` · 2: `Run cycle, passing pose: legs crossing under the body, body at its highest, arms mid-swing.` · 3: `Run cycle, contact pose: left foot forward, right arm forward, body slightly low.` · 4: `Run cycle, passing pose: legs crossing under the body, body at its highest, arms mid-swing (opposite to frame 2).` |
 | **Correndo** | 6 | Os 4 acima + intercalar `down pose (body lowest, knee bent absorbing the step)` entre o 1 e o 2 e entre o 3 e o 4. |
 | **No ar** | 3 | 1: `Jumping up, both arms raised, knees tucked.` · 2: `At the top of the jump, body stretched, clothing floating.` · 3: `Falling, legs reaching down, arms slightly out.` (Se quiser só 1 quadro: use o 1.) |
@@ -83,6 +84,18 @@ same baseline, feet at the same height.
 Use the attached character sheet as the exact reference. Same character, same outfit, same proportions.
 Full-body character portrait of {PERSONAGEM}, facing the camera at a slight three-quarter angle, friendly smile, one hand waving, confident welcoming pose.
 Single image, centered, character fills about 85% of the height, feet at the bottom edge.
+{ESTILO}
+{FUNDO + NEGATIVOS}
+```
+
+### 1b) Parado (2 a 6 quadros em ciclo de respiração)
+
+```
+Use the attached character sheet as the exact reference. Same character, same outfit, same proportions in every frame.
+Horizontal sprite sheet of {PERSONAGEM}: an idle breathing loop in {4} frames side by side in one single row, equal square frames, same scale,
+full body, side view facing right, standing still. The feet stay in EXACTLY the same position in every frame; only the chest, shoulders, head and clothing move slightly.
+Frame 1: relaxed, chest slightly lowered. Frame 2: inhaling, chest slightly raised. Frame 3: full inhale, chest at its highest, head very slightly up.
+Frame 4: exhaling, chest lowering, clothing settling. The last frame flows smoothly into the first (loop). Gentle smile.
 {ESTILO}
 {FUNDO + NEGATIVOS}
 ```
@@ -177,6 +190,7 @@ Todos **curtos (menos de 2 s)**, **sem música de fundo**, **sem eco**, formato 
 
 - [ ] Ficha (0) aprovada
 - [ ] Retrato (1 quadro)
+- [ ] Parado (4 quadros, respirando; pés fixos)
 - [ ] Correndo (4–6 quadros)
 - [ ] No ar (1–3)
 - [ ] Voando (2–4)

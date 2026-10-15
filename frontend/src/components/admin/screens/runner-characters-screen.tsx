@@ -15,6 +15,7 @@ import { errorMessage, useToast } from '@/components/ui/toast';
 import { cn } from '@/lib/cn';
 import { createRunnerCharacter, deleteRunnerCharacter, listAdminRunnerCharacters, updateRunnerCharacter, type RunnerCharacterDto, type RunnerCharacterInput } from '@/lib/runner-api';
 import { MAX_FRAMES, POSES, POSE_INFO, SOUND_INFO, SOUND_KEYS, isHexColor, type Pose, type SoundKey } from '@runner/characters';
+import { portraitOf } from '@/components/user/corrida/corrida-characters';
 import { SpriteView } from '@/components/user/corrida/sprite-view';
 import { AdminPanel, IconAction, SearchInput, StatusBadge } from '../admin-ui';
 import { AudioUploadField } from '../audio-upload-field';
@@ -111,6 +112,7 @@ function PoseImageField({ pose, sheet, onChange }: { pose: Pose; sheet: Sheet; o
       {mode === 'frames' ? (
         <FrameStripBuilder
           poseName={POSE_INFO[pose].label}
+          fps={pose === 'idle' ? 5 : 8}
           onBuilt={(url, frames) => {
             onChange({ url, frames: String(frames) });
             setMode('strip');
@@ -194,13 +196,13 @@ export function RunnerCharactersScreen() {
       {list.loading && list.items.length === 0 ? <LoadingState label="Carregando personagens..." /> : null}
       <ul className="space-y-3">
         {list.items.map((character) => {
-          const sheet = character.sprites.portrait ?? character.sprites.run;
+          const sheet = portraitOf(character.sprites);
           const poses = POSES.filter((pose) => character.sprites[pose]).length;
           const sounds = SOUND_KEYS.filter((key) => character.sounds[key]).length;
           return (
             <li key={character.id} className={cn('flex flex-wrap items-center gap-3 rounded-2xl border-2 border-edge bg-surface-2 p-3', !character.active && 'opacity-70')}>
               <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl" style={{ background: `${character.color}33` }}>
-                <SpriteView url={sheet?.url} frames={sheet?.frames} color={character.color} size={56} />
+                <SpriteView url={sheet?.url} frames={sheet?.frames} fps={sheet?.fps} color={character.color} size={56} />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="flex flex-wrap items-center gap-2 font-display text-base font-bold text-ink">
@@ -295,7 +297,7 @@ export function RunnerCharactersScreen() {
                           <div className="flex flex-col items-center gap-1">
                             <span className="text-xs font-bold text-muted">Prévia</span>
                             <span className="rounded-xl bg-surface-3 p-1">
-                              <SpriteView url={sheet.url} frames={Number(sheet.frames) || 1} size={72} />
+                              <SpriteView url={sheet.url} frames={Number(sheet.frames) || 1} fps={pose === 'idle' ? 5 : 8} size={72} />
                             </span>
                           </div>
                         </div>

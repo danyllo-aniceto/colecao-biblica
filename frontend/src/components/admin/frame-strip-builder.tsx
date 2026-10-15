@@ -20,7 +20,7 @@ let nextId = 1;
  * Monta a pose a partir de quadros soltos: escolha as imagens (uma por quadro), confira a ordem e a prévia animada, e use. O painel junta tudo
  * numa tira (mesma escala, pés na base), tira o fundo verde se pedido e envia. O resultado volta por `onBuilt` (endereço + quantidade de quadros).
  */
-export function FrameStripBuilder({ poseName, onBuilt }: { poseName: string; onBuilt: (url: string, frames: number) => void }) {
+export function FrameStripBuilder({ poseName, fps = 8, onBuilt }: { poseName: string; fps?: number; onBuilt: (url: string, frames: number) => void }) {
   const toast = useToast();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [items, setItems] = useState<Item[]>([]);
@@ -151,7 +151,7 @@ export function FrameStripBuilder({ poseName, onBuilt }: { poseName: string; onB
             <div className="flex flex-col items-center gap-1">
               <span className="text-xs font-bold text-muted">Prévia da animação</span>
               <span className="rounded-xl bg-[repeating-conic-gradient(var(--surface-3)_0%_25%,transparent_0%_50%)] bg-[length:12px_12px] p-1">
-                <SpriteView url={preview} frames={items.length} size={96} />
+                <SpriteView url={preview} frames={items.length} fps={fps} size={96} />
               </span>
             </div>
             <div className="min-w-0 flex-1 space-y-2">

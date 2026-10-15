@@ -73,7 +73,7 @@ export function CorridaHub() {
   const [selectedId, setSelectedId] = useState<string | null>(storedCharacterId);
   // O escolhido pode ter sumido do Painel (desativado): volta ao primeiro da lista.
   const character = characters.find((item) => item.id === selectedId) ?? characters[0];
-  const portrait = portraitOf(character);
+  const portrait = portraitOf(character.sprites);
 
   function choose(next: RunnerCharacter) {
     setSelectedId(next.id);
@@ -86,7 +86,7 @@ export function CorridaHub() {
 
       <div className="flex items-center justify-between gap-3 rounded-2xl bg-surface-3 px-3 py-2">
         <div className="flex min-w-0 items-center gap-2">
-          <SpriteView url={portrait?.url} frames={portrait?.frames} color={character.color} size={40} />
+          <SpriteView url={portrait?.url} frames={portrait?.frames} fps={portrait?.fps} color={character.color} size={40} />
           <p className="truncate text-sm font-bold text-ink">Seu corredor: {character.name}</p>
         </div>
         <Button size="sm" variant="ghost" onClick={() => setTab('characters')}>
@@ -216,6 +216,7 @@ function BotsTab({ characters, character, onStart }: { characters: RunnerCharact
   const [count, setCount] = useState<'1' | '2' | '3'>('2');
   const [difficulty, setDifficulty] = useState<BotLevel>('STUDENT');
   const level = LEVELS.find((item) => item.id === levelId) ?? LEVELS[0];
+  const mine = portraitOf(character.sprites);
   // Os rivais são os outros personagens, na ordem da lista (com os sprites deles).
   const rivals: CorridaRival[] = rivalsFor(characters, character.id, Number(count)).map((item) => ({ name: item.name, color: item.color, sprites: item.sprites, skill: BOT_LEVELS[difficulty].skill, lag: BOT_LEVELS[difficulty].lag }));
 
@@ -242,12 +243,12 @@ function BotsTab({ characters, character, onStart }: { characters: RunnerCharact
         </div>
         <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-muted">
           <span className="flex items-center gap-1.5 rounded-full bg-surface-3 px-2.5 py-1 text-ink">
-            <SpriteView url={portraitOf(character)?.url} frames={portraitOf(character)?.frames} color={character.color} size={22} />
+            <SpriteView url={mine?.url} frames={mine?.frames} fps={mine?.fps} color={character.color} size={22} />
             Você ({character.name})
           </span>
           {rivals.map((rival) => (
             <span key={rival.name} className="flex items-center gap-1.5 rounded-full bg-surface-3 px-2.5 py-1 text-ink">
-              <SpriteView url={rival.sprites?.portrait?.url ?? rival.sprites?.run?.url} frames={rival.sprites?.portrait?.frames ?? rival.sprites?.run?.frames} color={rival.color} size={22} />
+              <SpriteView url={portraitOf(rival.sprites ?? {})?.url} frames={portraitOf(rival.sprites ?? {})?.frames} fps={portraitOf(rival.sprites ?? {})?.fps} color={rival.color} size={22} />
               {rival.name}
             </span>
           ))}
@@ -303,7 +304,7 @@ function CharactersTab({ characters, character, onChoose }: { characters: Runner
                 className={cn('flex h-full w-full flex-col items-center gap-2 rounded-2xl border-2 bg-surface p-3 text-center transition', selected ? 'border-primary shadow-md' : 'border-edge hover:border-primary/60')}
               >
                 <span className="flex h-20 w-20 items-center justify-center rounded-2xl" style={{ background: `${item.color}33` }}>
-                  <SpriteView url={portraitOf(item)?.url} frames={portraitOf(item)?.frames} color={item.color} size={72} />
+                  <SpriteView url={portraitOf(item.sprites)?.url} frames={portraitOf(item.sprites)?.frames} fps={portraitOf(item.sprites)?.fps} color={item.color} size={72} />
                 </span>
                 <span className="font-display text-base font-bold text-ink">{item.name}</span>
                 <span className="text-xs font-semibold text-muted">{item.text}</span>

@@ -4,11 +4,12 @@
  */
 
 /** Poses do personagem. Cada pose é UMA imagem com os quadros lado a lado (tira horizontal de quadros quadrados). */
-export const POSES = ["portrait", "run", "jump", "fly", "gravity", "dead", "win"] as const;
+export const POSES = ["portrait", "idle", "run", "jump", "fly", "gravity", "dead", "win"] as const;
 export type Pose = (typeof POSES)[number];
 
 export const POSE_INFO: Record<Pose, { label: string; hint: string; defaultFrames: number }> = {
   portrait: { label: "Retrato", hint: "Cartão de escolha do personagem (1 quadro). Sem ele, usa o 1º quadro da corrida.", defaultFrames: 1 },
+  idle: { label: "Parado", hint: "Personagem parado, de perfil olhando para a direita, respirando (2 a 6 quadros em ciclo; os pés ficam sempre no mesmo lugar). Aparece antes da largada, na escolha do personagem e sempre que ele está no chão sem andar.", defaultFrames: 4 },
   run: { label: "Correndo", hint: "No chão, na forma Corrida. Roda em ciclo (4 a 6 quadros).", defaultFrames: 4 },
   jump: { label: "No ar", hint: "Pulando ou caindo, na forma Corrida (1 a 3 quadros).", defaultFrames: 1 },
   fly: { label: "Voando", hint: "Forma Voo (2 a 4 quadros em ciclo).", defaultFrames: 2 },
@@ -91,20 +92,37 @@ export function mergeSounds(current: Sounds, patch: Partial<Record<SoundKey, str
   return next;
 }
 
-/** Qual pose desenhar agora (o app usa a pose se o personagem tiver; senão desenha a forma colorida). */
-export function poseFor(state: { form: "RUN" | "FLY" | "GRAVITY"; grounded: boolean; status: "running" | "dead" | "finished" }): Pose {
+/**
+ * Qual pose desenhar agora. `stopped` = o jogo está parado com o personagem no lugar (antes da largada, esperando o toque, pausado).
+ * Parado, ou ao chegar ao fim da fase, no chão: pose "Parado" (no voo ele continua pairando). O resto segue a forma da fase.
+ */
+export function poseFor(state: { form: "RUN" | "FLY" | "GRAVITY"; grounded: boolean; status: "running" | "dead" | "finished" }, stopped = false): Pose {
   if (state.status === "dead") return "dead";
+  if ((stopped || state.status === "finished") && state.form !== "FLY") return "idle";
   if (state.form === "FLY") return "fly";
   if (state.form === "GRAVITY") return "gravity";
   return state.grounded ? "run" : "jump";
 }
 
-/** Quadro a mostrar: poses em ciclo (correndo, voando, vencendo...) avançam com o tempo; as outras ficam no primeiro (queda toca uma vez e fica no último). */
+/** Passos de jogo (60 por segundo) que cada quadro dura. A respiração do "Parado" é mais lenta que o resto. */
+const FRAME_TICKS: Record<Pose, number> = { portrait: 6, idle: 12, run: 6, jump: 6, fly: 6, gravity: 6, dead: 6, win: 6 };
+
+/** Quadro a mostrar: poses em ciclo (parado, correndo, voando, vencendo...) avançam com o tempo; a queda toca uma vez e fica no último; o retrato fica no primeiro. */
 export function frameFor(pose: Pose, frames: number, tick: number): number {
-  if (frames <= 1) return 0;
-  if (pose === "dead") return Math.min(frames - 1, Math.floor(tick / 6));
-  if (pose === "run" || pose === "fly" || pose === "win" || pose === "gravity" || pose === "jump") return Math.floor(tick / 6) % frames;
-  return 0;
+  if (frames <= 1 || pose === "portrait") return 0;
+  const step = Math.floor(Math.max(0, tick) / FRAME_TICKS[pose]);
+  return pose === "dead" ? Math.min(frames - 1, step) : step % frames;
+}
+
+/**
+ * A imagem da pose. Sem arte "Parado", usa o 1º quadro da corrida (parado, sem animar: `still`); as demais poses sem arte voltam `null`
+ * (o jogo desenha a forma colorida).
+ */
+export function pickSheet(sprites: Sprites | undefined, pose: Pose): { sheet: SpriteSheet; still: boolean } | null {
+  const own = sprites?.[pose];
+  if (own) return { sheet: own, still: false };
+  if (pose === "idle" && sprites?.run) return { sheet: sprites.run, still: true };
+  return null;
 }
 
 /** Cor de reserva válida (#RRGGBB). */
