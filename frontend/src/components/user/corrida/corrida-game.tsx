@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ScreenRotationRoundedIcon from '@mui/icons-material/ScreenRotationRounded';
 import { Button } from '@/components/ui/button';
+import { unlockAudio } from '@/lib/sound/context';
+import { playSfx } from '@/lib/sound/sfx';
 import { newPlayer, prepareLevel, progressOf, stepPlayer } from '@runner/engine';
 import { CEIL_Y, FLOOR_Y, PLAYER, TICKS_PER_SECOND, TILE, type Form, type Level, type PlayerState, type PreparedLevel } from '@runner/types';
 
@@ -21,7 +23,7 @@ type Phase = 'ready' | 'playing' | 'dead' | 'finished';
 type Summary = { progress: number; words: number; total: number };
 
 /** Desenho da cena com formas simples (a arte entra depois). Cores fixas: é a "arte" do jogo, igual nos dois temas. */
-function draw(ctx: CanvasRenderingContext2D, level: PreparedLevel, p: PlayerState, width: number, height: number, flash: number) {
+function draw(ctx: CanvasRenderingContext2D, level: PreparedLevel, p: PlayerState, width: number, height: number, flash: number, note: string | null) {
   const scale = (height / WORLD_H) * ZOOM;
   const viewW = width / scale;
   // Sobra de céu e chão acima e abaixo do campo: o campo fica centralizado.
@@ -161,6 +163,12 @@ function draw(ctx: CanvasRenderingContext2D, level: PreparedLevel, p: PlayerStat
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   ctx.fillText(`${Math.floor(progress * 100)}%  ·  ${FORM_LABEL[p.form]}`, width / 2, 20);
+  if (note) {
+    ctx.font = 'bold 15px system-ui, sans-serif';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#facc15';
+    ctx.fillText(note, width / 2, 40);
+  }
   const verse = level.level.verse;
   if (verse) {
     // Versículo escondido: palavras coletadas aparecem, as outras ficam em branco.
@@ -183,7 +191,13 @@ function draw(ctx: CanvasRenderingContext2D, level: PreparedLevel, p: PlayerStat
  * Tela da partida em tela cheia. Passo fixo de 60 por segundo (o mesmo motor que o servidor repete para conferir).
  * `replay` (lista de toques de um bot) faz a tela só assistir, sem aceitar toque.
  */
-export function CorridaGame({ level, replay, onExit }: { level: Level; replay?: number[]; onExit: () => void }) {
+export type CorridaResult = { progress: number; words: number; finished: boolean };
+
+/**
+ * `practice` = treino: salva um checkpoint a cada portal e deixa voltar a ele; não conta para o melhor resultado.
+ * Fora do treino e do replay, o resultado da partida vai para `onResult`.
+ */
+export function CorridaGame({ level, replay, practice = false, onResult, onExit }: { level: Level; replay?: number[]; practice?: boolean; onResult?: (result: CorridaResult) => void; onExit: () => void }) {
   const prepared = useRef<PreparedLevel>(prepareLevel(level));
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const holdRef = useRef(false);
@@ -191,6 +205,11 @@ export function CorridaGame({ level, replay, onExit }: { level: Level; replay?: 
   const phaseRef = useRef<Phase>('ready');
   const flashRef = useRef(0);
   const replayRef = useRef({ next: 0, held: false });
+  const onResultRef = useRef(onResult);
+  onResultRef.current = onResult;
+  const checkpointRef = useRef<PlayerState | null>(null);
+  const noteRef = useRef<{ text: string; until: number } | null>(null);
+  const [hasCheckpoint, setHasCheckpoint] = useState(false);
   const [phase, setPhase] = useState<Phase>('ready');
   const [summary, setSummary] = useState<Summary | null>(null);
   // O jogo é só para a tela deitada: em pé, pausa e pede para girar o celular.
@@ -213,14 +232,22 @@ export function CorridaGame({ level, replay, onExit }: { level: Level; replay?: 
     setPhase(next);
   }, []);
 
-  const restart = useCallback(() => {
-    playerRef.current = newPlayer(prepared.current);
-    holdRef.current = false;
-    flashRef.current = 0;
-    replayRef.current = { next: 0, held: false };
-    setSummary(null);
-    setPhaseBoth(replay ? 'playing' : 'ready');
-  }, [replay, setPhaseBoth]);
+  const restart = useCallback(
+    (fromCheckpoint = false) => {
+      const saved = fromCheckpoint ? checkpointRef.current : null;
+      playerRef.current = saved ? { ...saved, status: 'running', cause: null, held: false } : newPlayer(prepared.current);
+      if (!saved) {
+        checkpointRef.current = null;
+        setHasCheckpoint(false);
+      }
+      holdRef.current = false;
+      flashRef.current = 0;
+      replayRef.current = { next: 0, held: false };
+      setSummary(null);
+      setPhaseBoth(replay ? 'playing' : 'ready');
+    },
+    [replay, setPhaseBoth],
+  );
 
   // Trava a rolagem da página por baixo do jogo.
   useEffect(() => {
@@ -235,6 +262,7 @@ export function CorridaGame({ level, replay, onExit }: { level: Level; replay?: 
   useEffect(() => {
     if (replay) return undefined;
     const press = () => {
+      unlockAudio();
       if (phaseRef.current === 'ready') setPhaseBoth('playing');
       holdRef.current = true;
     };
@@ -302,16 +330,35 @@ export function CorridaGame({ level, replay, onExit }: { level: Level; replay?: 
           }
           held = state.held;
         }
-        playerRef.current = stepPlayer(prepared.current, playerRef.current, held);
-        const status = playerRef.current.status;
+        const before = playerRef.current;
+        const after = stepPlayer(prepared.current, before, held);
+        playerRef.current = after;
+        // Sons dos acontecimentos deste passo.
+        if (after.airJumps < before.airJumps) playSfx('rnDouble');
+        else if (before.grounded && after.form === 'RUN' && after.vy < -4) playSfx('rnJump');
+        if (after.collected.length > before.collected.length) playSfx('rnWord');
+        if (after.grav !== before.grav) playSfx('rnFlip');
+        if (after.portal > before.portal) {
+          playSfx('rnPortal');
+          if (practice && !replay) {
+            checkpointRef.current = after;
+            setHasCheckpoint(true);
+            noteRef.current = { text: 'Checkpoint salvo', until: after.tick + 100 };
+          }
+        }
+        const status = after.status;
         if (status !== 'running') {
           flashRef.current = status === 'dead' ? 1 : 0;
-          setSummary({ progress: progressOf(prepared.current, playerRef.current), words: playerRef.current.collected.length, total: prepared.current.wordCount });
+          playSfx(status === 'dead' ? 'rnDeath' : 'rnWin');
+          const result = { progress: progressOf(prepared.current, after), words: after.collected.length, finished: status === 'finished' };
+          setSummary({ progress: result.progress, words: result.words, total: prepared.current.wordCount });
           setPhaseBoth(status === 'dead' ? 'dead' : 'finished');
+          if (!practice && !replay) onResultRef.current?.(result);
         }
       }
       if (flashRef.current > 0) flashRef.current = Math.max(0, flashRef.current - 0.04);
-      draw(ctx, prepared.current, playerRef.current, canvas.width, canvas.height, flashRef.current);
+      const note = noteRef.current && noteRef.current.until > playerRef.current.tick ? noteRef.current.text : null;
+      draw(ctx, prepared.current, playerRef.current, canvas.width, canvas.height, flashRef.current, note);
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
@@ -319,12 +366,14 @@ export function CorridaGame({ level, replay, onExit }: { level: Level; replay?: 
       cancelAnimationFrame(raf);
       observer.disconnect();
     };
-  }, [replay, setPhaseBoth]);
+  }, [practice, replay, setPhaseBoth]);
 
   // Começa do zero ao abrir (e o replay de bot já começa rodando).
   useEffect(() => {
     restart();
   }, [restart]);
+
+  const checkpointPercent = checkpointRef.current ? Math.floor(progressOf(prepared.current, checkpointRef.current) * 100) : 0;
 
   const dead = phase === 'dead';
   const finished = phase === 'finished';
@@ -349,21 +398,26 @@ export function CorridaGame({ level, replay, onExit }: { level: Level; replay?: 
         ) : null}
         {phase === 'ready' && !portrait ? (
           <div className="pointer-events-none absolute inset-x-0 bottom-[18%] flex justify-center px-6">
-            <p className="rounded-2xl bg-black/60 px-5 py-3 text-center font-display text-lg font-bold text-white">Toque na tela para começar</p>
+            <p className="rounded-2xl bg-black/60 px-5 py-3 text-center font-display text-lg font-bold text-white">{playerRef.current.tick > 0 ? 'Toque na tela para continuar' : 'Toque na tela para começar'}</p>
           </div>
         ) : null}
         {(dead || finished) && !portrait ? (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 px-5">
             <div className="panel w-full max-w-sm space-y-4 p-5 text-center">
-              <h3 className="font-display text-2xl font-bold text-ink">{finished ? 'Fase concluída!' : 'Quase lá!'}</h3>
+              <h3 className="font-display text-2xl font-bold text-ink">{finished ? (practice ? 'Treino concluído!' : 'Fase concluída!') : 'Quase lá!'}</h3>
               <p className="text-sm font-semibold text-muted">
                 {finished
                   ? `Você pegou ${summary?.words ?? 0} de ${total} palavras do versículo${level.verse ? ` (${level.verse.ref}).` : '.'}`
                   : `Você parou em ${Math.floor((summary?.progress ?? 0) * 100)}% e pegou ${summary?.words ?? 0} de ${total} palavras.`}
               </p>
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-                <Button onClick={restart} size="lg">
-                  {replay ? 'Ver de novo' : 'Tentar de novo'}
+                {dead && practice && hasCheckpoint ? (
+                  <Button onClick={() => restart(true)} size="lg">
+                    Voltar ao checkpoint ({checkpointPercent}%)
+                  </Button>
+                ) : null}
+                <Button onClick={() => restart()} size="lg" variant={dead && practice && hasCheckpoint ? 'secondary' : 'primary'}>
+                  {replay ? 'Ver de novo' : practice && hasCheckpoint ? 'Do começo' : 'Tentar de novo'}
                 </Button>
                 <Button onClick={onExit} variant="secondary" size="lg">
                   Sair

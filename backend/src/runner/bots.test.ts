@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { botInputs } from "./bots";
+import { botInputs, TOUCH_DELAY } from "./bots";
 import { prepareLevel, simulate } from "./engine";
 import { buildJourney, TILES_PER_SECOND } from "./journey";
 import { LEVELS } from "./levels";
@@ -43,6 +43,11 @@ describe("Corrida: fases", () => {
         expect(perfect.collected).toHaveLength(prepared.wordCount);
       });
 
+      it("com o toque atrasado (como um dedo de verdade), o bot também termina: a fase não exige precisão de 1 passo", () => {
+        const result = simulate(prepared, botInputs(prepared, { lag: TOUCH_DELAY }));
+        expect(result.status).toBe("finished");
+      }, 120_000);
+
       it("a mesma partida se repete igual (o servidor confere pelos toques)", () => {
         expect(simulate(prepared, perfectToggles)).toEqual(perfect);
       });
@@ -61,6 +66,15 @@ describe("Corrida: fases", () => {
     expect(seconds).toBeGreaterThan(120);
     expect(TICKS_PER_SECOND).toBe(60);
   });
+
+  it("jornadas geradas por sementes diferentes são possíveis e confortáveis (toque atrasado)", () => {
+    for (const seed of [1, 6]) {
+      const level = buildJourney({ id: "t", name: "T", seed, seconds: 60, verse: { ref: "x", words: ["a", "b", "c", "d"] } });
+      const prepared = prepareLevel(level);
+      expect(simulate(prepared, botInputs(prepared)).status, `semente ${seed} (exato)`).toBe("finished");
+      expect(simulate(prepared, botInputs(prepared, { lag: TOUCH_DELAY })).status, `semente ${seed} (atrasado)`).toBe("finished");
+    }
+  }, 240_000);
 
   it("a mesma semente gera sempre a mesma jornada, e sementes diferentes geram fases diferentes", () => {
     const base = { id: "t", name: "T", seconds: 60, verse: { ref: "x", words: ["a", "b", "c"] } };

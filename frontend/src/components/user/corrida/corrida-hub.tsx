@@ -7,15 +7,23 @@ import { botInputs } from '@runner/bots';
 import { prepareLevel } from '@runner/engine';
 import { TILES_PER_SECOND } from '@runner/journey';
 import { LEVELS } from '@runner/levels';
+import { loadBests, saveBest } from '@/components/user/corrida/corrida-storage';
+import type { CorridaResult } from '@/components/user/corrida/corrida-game';
 import type { Level } from '@runner/types';
 
 const CorridaGame = lazy(() => import('@/components/user/corrida/corrida-game').then((m) => ({ default: m.CorridaGame })));
 
-type Playing = { level: Level; replay?: number[] };
+type Playing = { level: Level; replay?: number[]; practice?: boolean };
 
 function formatDuration(seconds: number) {
   const total = Math.round(seconds);
   return total >= 60 ? `${Math.floor(total / 60)} min${total % 60 ? ` ${total % 60} s` : ''}` : `${total} s`;
+}
+
+function bestText(best: { progress: number; words: number; finished: boolean } | undefined, totalWords: number) {
+  if (!best) return 'Ainda não jogada';
+  const words = totalWords > 0 ? ` · ${best.words}/${totalWords} palavras` : '';
+  return best.finished ? `Concluída${words}` : `Melhor: ${Math.floor(best.progress * 100)}%${words}`;
 }
 
 const CONTROLS: Array<{ title: string; text: string }> = [
@@ -28,6 +36,7 @@ const CONTROLS: Array<{ title: string; text: string }> = [
 export function CorridaHub() {
   const [playing, setPlaying] = useState<Playing | null>(null);
   const list = usePagination(LEVELS, 10);
+  const [bests, setBests] = useState(loadBests);
 
   // Tenta tela cheia e travar na horizontal (só Android/PWA deixa; no iPhone a tela pede para girar o celular).
   const start = (next: Playing) => {
@@ -60,7 +69,7 @@ export function CorridaHub() {
 
   return (
     <section className="space-y-5" aria-label="Corrida">
-      <Alert tone="info">Protótipo do novo modo: ainda sem arte, sons nem online. Use o celular deitado. No computador, use a barra de espaço.</Alert>
+      <Alert tone="info">Protótipo do novo modo: ainda sem arte, sons nem online. Use o celular deitado (no computador, a barra de espaço). "Treinar" salva um checkpoint em cada portal e não conta para o seu melhor resultado.</Alert>
       <ul className="grid gap-3 sm:grid-cols-3">
         {CONTROLS.map((control) => (
           <li key={control.title} className="panel p-4">
@@ -78,10 +87,14 @@ export function CorridaHub() {
                 Passa pelas 3 formas · {formatDuration(level.length / TILES_PER_SECOND)}
                 {level.verse ? ` · versículo escondido (${level.verse.ref})` : ''}
               </p>
+              <p className="text-sm font-bold text-ink">{bestText(bests[level.id], level.verse?.words.length ?? 0)}</p>
             </div>
-            <div className="flex gap-2">
-              <Button variant="secondary" loading={botLoading === level.id} disabled={botLoading !== null} onClick={() => watchBot(level)}>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="ghost" loading={botLoading === level.id} disabled={botLoading !== null} onClick={() => watchBot(level)}>
                 Ver um bot jogar
+              </Button>
+              <Button variant="secondary" onClick={() => start({ level, practice: true })}>
+                Treinar
               </Button>
               <Button onClick={() => start({ level })}>Jogar</Button>
             </div>
@@ -91,7 +104,7 @@ export function CorridaHub() {
       <Pagination page={list.page} totalPages={list.totalPages} totalElements={list.totalElements} pageSize={list.pageSize} onPageChange={list.setPage} onPageSizeChange={list.setPageSize} itemLabel="fases" />
       {playing ? (
         <Suspense fallback={<LoadingState />}>
-          <CorridaGame level={playing.level} replay={playing.replay} onExit={exit} />
+          <CorridaGame level={playing.level} replay={playing.replay} practice={playing.practice} onResult={(result: CorridaResult) => setBests(saveBest(playing.level.id, result))} onExit={exit} />
         </Suspense>
       ) : null}
     </section>

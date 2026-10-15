@@ -16,8 +16,8 @@ function quickTraining(): Level {
   x = gap(x, 8);
   x = platform(objects, x, 4, 1, 0);
   x = gap(x, 7);
-  x = spikeRow(objects, x, 3);
-  wordAt(objects, x - 2, 2, 1);
+  x = spikeRow(objects, x, 2);
+  wordAt(objects, x - 1, 2, 1);
   x = gap(x, 8);
   x = platform(objects, x, 3, 1);
   x = platform(objects, x, 3, 2);

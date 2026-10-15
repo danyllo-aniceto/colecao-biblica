@@ -119,7 +119,8 @@ código em **português do Brasil**.
 - **Física única para todos os personagens** (online e local justos): a **fase** define a forma (Corrida, Voo, Gravidade) por portais. Personagem muda só sprite e sons.
   Pulo duplo na forma Corrida; ritmo único em `TIME_SCALE` (`types.ts`); o jogo é **só na tela deitada** (em pé, pausa e pede para girar).
 - Fases longas (minutos) saem de `journey.ts` (trechos sorteados com semente); sprites, sons, trilhas e fases serão enviados pelo Painel (cronograma em `docs/modo-corrida.md`).
-- Fase = sequência de trechos (`segments.ts`); toda fase nova precisa passar no teste do bot perfeito (`bots.test.ts`), que prova que é possível terminar e pegar as palavras.
+- Fase = sequência de trechos (`segments.ts`); toda fase nova precisa passar nos testes do bot (`bots.test.ts`): perfeito (pega todas as palavras) **e com o toque atrasado** (`TOUCH_DELAY`),
+  que prova que é possível e confortável. Regra: o pulo simples tem janela de ≥ ~10 passos; sem fileira de 3 espetos nem degraus curtos em fase comum.
 - Online (futuro): corrida paralela sem colisão entre jogadores, no molde das salas do Tabuleiro/Duelo (`?since=`, sem websocket); até 4 jogadores, bots completam.
 
 ## Comandos
