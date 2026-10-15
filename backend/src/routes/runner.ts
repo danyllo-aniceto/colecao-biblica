@@ -7,7 +7,7 @@ import { asyncHandler } from "../middleware/errorHandler";
 import { SECONDS_RANGE, SEED_RANGE, MAX_FORM_ORDER } from "../runner/campaign";
 import { isHexColor, MAX_FRAMES, POSES, SOUND_KEYS } from "../runner/characters";
 import { ART_KEYS } from "../runner/types";
-import { adminLevels, adminScenarios, createLevel, createScenario, deleteLevel, deleteScenario, getCampaign, scenarioOptions, updateLevel, updateScenario } from "../services/runner-campaign";
+import { adminLevels, adminScenarios, createLevel, createScenario, deleteLevel, deleteScenario, getCampaign, levelOptions, scenarioOptions, updateLevel, updateScenario } from "../services/runner-campaign";
 import { adminRunnerCharacters, createRunnerCharacter, deleteRunnerCharacter, listRunnerCharacters, updateRunnerCharacter } from "../services/runner-characters";
 
 /** Modo Corrida: personagens (sprites e sons enviados pelo painel). Nada do modo dá XP, moedas, figurinhas nem ranking geral. */
@@ -132,6 +132,14 @@ runnerRouter.get(
   requireAdmin,
   asyncHandler(async (_req, res) => {
     res.json(await scenarioOptions(prisma));
+  }),
+);
+
+runnerRouter.get(
+  "/admin/level-options",
+  requireAdmin,
+  asyncHandler(async (_req, res) => {
+    res.json(await levelOptions(prisma));
   }),
 );
 

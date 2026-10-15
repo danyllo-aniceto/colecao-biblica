@@ -26,3 +26,8 @@ export function spriteImage(url: string): HTMLImageElement | null {
 export function preloadSprites(sprites: Sprites | undefined) {
   for (const sheet of Object.values(sprites ?? {})) if (sheet) spriteImage(sheet.url);
 }
+
+/** Aquece o cache com a arte do cenário (fundo e obstáculos), antes da fase começar. */
+export function preloadArt(art: Partial<Record<string, string>> | undefined) {
+  for (const url of Object.values(art ?? {})) if (url) spriteImage(url);
+}

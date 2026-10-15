@@ -42,6 +42,27 @@ export type SceneOptions = {
   dpr: number;
 };
 
+/** Altura das camadas do meio e de perto (de cima do campo até o chão). */
+const LAYER_H = FLOOR_Y;
+
+/** Camada de fundo repetida na horizontal, andando `offset` px; as cópias vizinhas se espelham para as pontas sempre se encontrarem. */
+function drawLayer(ctx: CanvasRenderingContext2D, image: HTMLImageElement, offset: number, viewW: number, top: number, height: number) {
+  const tileW = Math.max(1, (image.width * height) / image.height);
+  const first = Math.floor(offset / tileW);
+  for (let index = first; index * tileW - offset < viewW; index += 1) {
+    const x = index * tileW - offset;
+    if (index % 2 === 0) {
+      ctx.drawImage(image, x, top, tileW + 1, height);
+    } else {
+      ctx.save();
+      ctx.translate(x + tileW, top);
+      ctx.scale(-1, 1);
+      ctx.drawImage(image, 0, 0, tileW + 1, height);
+      ctx.restore();
+    }
+  }
+}
+
 /** Altura (px do mundo) com que o sprite é desenhado: um pouco maior que a caixa de colisão (32), com os pés alinhados nela. */
 const SPRITE_SIZE = 48;
 
@@ -224,15 +245,25 @@ export function drawScene(ctx: CanvasRenderingContext2D, level: PreparedLevel, p
   ctx.fillStyle = sky;
   ctx.fillRect(0, -margin, viewW, WORLD_H + margin * 2);
 
-  // Morros distantes (paralaxe lenta).
-  ctx.fillStyle = 'rgba(148,163,184,0.12)';
-  const shift = -((camX * 0.25) % 360);
-  for (let x = shift - 360; x < viewW + 360; x += 360) {
-    ctx.beginPath();
-    ctx.moveTo(x, FLOOR_Y);
-    ctx.quadraticCurveTo(x + 180, FLOOR_Y - 190, x + 360, FLOOR_Y);
-    ctx.fill();
+  // Fundo: as 3 camadas do cenário (paralaxe) ou, sem arte, morros distantes.
+  const art = level.level.art;
+  const farImage = art?.far ? spriteImage(art.far) : null;
+  if (!farImage) {
+    ctx.fillStyle = 'rgba(148,163,184,0.12)';
+    const shift = -((camX * 0.25) % 360);
+    for (let x = shift - 360; x < viewW + 360; x += 360) {
+      ctx.beginPath();
+      ctx.moveTo(x, FLOOR_Y);
+      ctx.quadraticCurveTo(x + 180, FLOOR_Y - 190, x + 360, FLOOR_Y);
+      ctx.fill();
+    }
+  } else {
+    drawLayer(ctx, farImage, camX * 0.15, viewW, -margin, WORLD_H + margin * 2);
   }
+  const midImage = art?.mid ? spriteImage(art.mid) : null;
+  if (midImage) drawLayer(ctx, midImage, camX * 0.35, viewW, FLOOR_Y - LAYER_H, LAYER_H);
+  const nearImage = art?.near ? spriteImage(art.near) : null;
+  if (nearImage) drawLayer(ctx, nearImage, camX * 0.65, viewW, FLOOR_Y - LAYER_H, LAYER_H);
 
   // Grade do campo, para sentir a velocidade.
   ctx.strokeStyle = 'rgba(255,255,255,0.05)';
@@ -260,14 +291,34 @@ export function drawScene(ctx: CanvasRenderingContext2D, level: PreparedLevel, p
     if (objectX < left - TILE * 12 || objectX > right) continue;
     if (object.kind === 'block') {
       const top = FLOOR_Y - (object.y + object.h) * TILE;
-      ctx.fillStyle = '#7c4a21';
-      ctx.fillRect(objectX, top, object.w * TILE, object.h * TILE);
-      ctx.strokeStyle = '#d6a15f';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(objectX + 1.5, top + 1.5, object.w * TILE - 3, object.h * TILE - 3);
+      const blockImage = art?.block ? spriteImage(art.block) : null;
+      if (blockImage) {
+        // Uma figura por casa do bloco.
+        for (let column = 0; column < object.w; column += 1) for (let row = 0; row < object.h; row += 1) ctx.drawImage(blockImage, objectX + column * TILE, top + row * TILE, TILE, TILE);
+      } else {
+        ctx.fillStyle = '#7c4a21';
+        ctx.fillRect(objectX, top, object.w * TILE, object.h * TILE);
+        ctx.strokeStyle = '#d6a15f';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(objectX + 1.5, top + 1.5, object.w * TILE - 3, object.h * TILE - 3);
+      }
     } else if (object.kind === 'spike') {
       const row = object.y ?? 0;
       const cellTop = FLOOR_Y - (row + 1) * TILE;
+      const spikeImage = art?.spike ? spriteImage(art.spike) : null;
+      if (spikeImage) {
+        // Figura com a ponta para cima; o espeto do teto vira de cabeça para baixo.
+        ctx.save();
+        if (object.down) {
+          ctx.translate(objectX, cellTop + TILE);
+          ctx.scale(1, -1);
+          ctx.drawImage(spikeImage, 0, 0, TILE, TILE);
+        } else {
+          ctx.drawImage(spikeImage, objectX, cellTop, TILE, TILE);
+        }
+        ctx.restore();
+        continue;
+      }
       ctx.fillStyle = '#e2e8f0';
       ctx.beginPath();
       if (object.down) {

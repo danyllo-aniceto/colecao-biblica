@@ -196,6 +196,9 @@ describe.skipIf(!hasDatabase)("corrida: cenários e fases pelo painel", () => {
     expect(scenarios.body.content[0]).toMatchObject({ slug: "cidade-de-davi", levelCount: 5, system: true });
     const options = await api.get("/api/runner/admin/scenario-options").set(bearer(admin));
     expect(options.body.map((item: { name: string }) => item.name)).toEqual(["Cidade de Davi", "Mar Vermelho", "Vale dos Ossos Secos"]);
+    const levels = await api.get("/api/runner/admin/level-options").set(bearer(admin));
+    expect(levels.body).toHaveLength(12);
+    expect(levels.body[0]).toEqual({ slug: "cd-1", name: "O pastor", scenarioName: "Cidade de Davi" });
   });
 
   it("exclusão: do seed só desativa; cenário com fases e fase que abre personagem não saem", async () => {

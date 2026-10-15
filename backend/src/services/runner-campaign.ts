@@ -115,6 +115,12 @@ export async function scenarioOptions(db: Db) {
   return rows;
 }
 
+/** Todas as fases (identificador, nome e cenário), para o seletor "fase que abre o personagem" do painel. */
+export async function levelOptions(db: Db) {
+  const rows = await db.runnerLevel.findMany({ orderBy: [{ scenario: { sortOrder: "asc" } }, { sortOrder: "asc" }, { id: "asc" }], select: { slug: true, name: true, scenario: { select: { name: true } } } });
+  return rows.map((row) => ({ slug: row.slug, name: row.name, scenarioName: row.scenario.name }));
+}
+
 export type ScenarioInput = {
   name?: string;
   story?: string | null;
