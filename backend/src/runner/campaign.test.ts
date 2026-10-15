@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CAMPAIGN_LEVELS, CAMPAIGN_ORDER, isCharacterUnlocked, isLevelUnlocked, isScenarioUnlocked, SCENARIOS } from "./campaign";
+import { buildCampaignLevel, CAMPAIGN_LEVELS, CAMPAIGN_ORDER, isCharacterUnlocked, isLevelUnlocked, isScenarioUnlocked, SCENARIOS, validateLevelDef, verseWords } from "./campaign";
 
 /** Personagens da migração 20261106090000: fase que abre cada um. */
 const UNLOCKS = { jonatas: "cd-3", joabe: "cd-5", moises: "mv-2", arao: "mv-3", miria: "mv-4", ezequiel: "vo-3" };
@@ -44,5 +44,30 @@ describe("Corrida: campanha por cenários", () => {
     expect(isCharacterUnlocked(null, new Set())).toBe(true);
     expect(isCharacterUnlocked("cd-3", new Set(["cd-2"]))).toBe(false);
     expect(isCharacterUnlocked("cd-3", new Set(["cd-3"]))).toBe(true);
+  });
+
+  it("a campanha aceita cenários e fases de qualquer lista (do banco), na ordem dada", () => {
+    const [davi, mar] = SCENARIOS;
+    const reversed = [mar, davi];
+    expect(isLevelUnlocked("mv-1", new Set(), reversed)).toBe(true);
+    expect(isLevelUnlocked("cd-1", new Set(["mv-4"]), reversed)).toBe(true);
+    expect(isLevelUnlocked("cd-1", new Set(), reversed)).toBe(false);
+    expect(isScenarioUnlocked("cidade-de-davi", new Set(), reversed)).toBe(false);
+  });
+
+  it("o cenário leva céu, arte e trilha para dentro da fase (só os campos preenchidos)", () => {
+    const scenario = { ...SCENARIOS[0], art: { far: "/a.png", spike: "/s.png", block: "" }, music: "/m.mp3" };
+    const level = buildCampaignLevel(scenario, scenario.levels[0]);
+    expect(level.art).toEqual({ far: "/a.png", spike: "/s.png" });
+    expect(level.music).toBe("/m.mp3");
+    expect(level.theme).toEqual(scenario.theme);
+    expect(buildCampaignLevel(SCENARIOS[0], SCENARIOS[0].levels[0]).art).toBeUndefined();
+  });
+
+  it("valida os campos de uma fase", () => {
+    const ok = { name: "Fase", seed: 7, seconds: 60, order: ["RUN" as const], ref: "Salmos 1:1", verse: "Bem-aventurado o homem" };
+    expect(validateLevelDef(ok)).toEqual({});
+    expect(Object.keys(validateLevelDef({ ...ok, name: " ", seed: 0, seconds: 10, order: [], ref: "", verse: "uma" })).sort()).toEqual(["name", "order", "ref", "seconds", "seed", "verse"]);
+    expect(verseWords("  O  Senhor \n é ")).toEqual(["O", "Senhor", "é"]);
   });
 });

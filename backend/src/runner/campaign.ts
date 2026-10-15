@@ -1,11 +1,12 @@
 import { buildJourney } from "./journey";
-import type { Form, Level } from "./types";
+import { ART_KEYS, type Form, type Level, type ScenarioArt } from "./types";
 
 /**
  * Campanha solo da Corrida: **cenários** (lugares da Bíblia), cada um com várias **fases** (histórias) em sequência.
  * A fase seguinte só abre ao concluir a anterior e o cenário seguinte só abre ao concluir o último do anterior.
- * Os personagens abrem pela coluna `unlock_level` do Painel (id da fase); a lista abaixo é só o plano de conteúdo (docs/modo-corrida.md).
- * Cenário e fase novos entram aqui e passam sozinhos nos testes do bot (`bots.test.ts`).
+ * Os personagens abrem pela coluna `unlock_level` do Painel (id da fase).
+ * A campanha de verdade vem do banco (Painel → Corrida: cenários e fases, tabelas `runner_scenarios`/`runner_levels`); `SCENARIOS` abaixo é o
+ * conteúdo de partida (a migração o grava) e o reserva do app quando falta internet. Toda fase nova passa no teste do bot (no Painel, "Testar fase").
  */
 export type CampaignLevelDef = {
   id: string;
@@ -15,6 +16,9 @@ export type CampaignLevelDef = {
   order: Form[];
   ref: string;
   verse: string;
+  /** Bifurcações e poderes (padrão: ligados). */
+  forks?: boolean;
+  powers?: boolean;
 };
 
 export type Scenario = {
@@ -22,6 +26,9 @@ export type Scenario = {
   name: string;
   story: string;
   theme: { skyTop: string; skyBottom: string };
+  art?: ScenarioArt;
+  /** Trilha do cenário. */
+  music?: string;
   levels: CampaignLevelDef[];
 };
 
@@ -66,28 +73,55 @@ export const SCENARIOS: Scenario[] = [
   },
 ];
 
+/** Palavras do versículo (separadas por espaço; a pontuação fica colada na palavra). */
+export const verseWords = (verse: string) => verse.trim().split(/\s+/).filter(Boolean);
+
 export function buildCampaignLevel(scenario: Scenario, def: CampaignLevelDef): Level {
-  const level = buildJourney({ id: def.id, name: def.name, seed: def.seed, seconds: def.seconds, order: def.order, verse: { ref: def.ref, words: def.verse.split(" ") } });
-  return { ...level, theme: scenario.theme };
+  const level = buildJourney({ id: def.id, name: def.name, seed: def.seed, seconds: def.seconds, order: def.order, forks: def.forks, powers: def.powers, verse: { ref: def.ref, words: verseWords(def.verse) } });
+  const art = Object.fromEntries(ART_KEYS.filter((key) => scenario.art?.[key]).map((key) => [key, scenario.art![key]]));
+  return { ...level, theme: scenario.theme, ...(Object.keys(art).length > 0 ? { art } : {}), ...(scenario.music ? { music: scenario.music } : {}) };
 }
 
-export const CAMPAIGN_LEVELS: Level[] = SCENARIOS.flatMap((scenario) => scenario.levels.map((def) => buildCampaignLevel(scenario, def)));
+export const SEED_RANGE = { min: 1, max: 999_999 };
+export const SECONDS_RANGE = { min: 30, max: 300 };
+export const MAX_FORM_ORDER = 8;
+export const VERSE_WORDS_RANGE = { min: 2, max: 40 };
 
-/** Fases da campanha na ordem de jogo (cenário a cenário). */
-export const CAMPAIGN_ORDER: string[] = SCENARIOS.flatMap((scenario) => scenario.levels.map((def) => def.id));
+/** Confere os campos de uma fase antes de salvar ou testar (os limites também valem no servidor). Devolve só os erros, por campo. */
+export function validateLevelDef(def: Pick<CampaignLevelDef, "name" | "seed" | "seconds" | "order" | "ref" | "verse">): Record<string, string> {
+  const errors: Record<string, string> = {};
+  if (!def.name.trim()) errors.name = "Informe o nome da fase.";
+  if (!Number.isInteger(def.seed) || def.seed < SEED_RANGE.min || def.seed > SEED_RANGE.max) errors.seed = `Use um número inteiro de ${SEED_RANGE.min} a ${SEED_RANGE.max}.`;
+  if (!Number.isInteger(def.seconds) || def.seconds < SECONDS_RANGE.min || def.seconds > SECONDS_RANGE.max) errors.seconds = `A fase dura de ${SECONDS_RANGE.min} a ${SECONDS_RANGE.max} segundos.`;
+  if (def.order.length === 0 || def.order.length > MAX_FORM_ORDER || def.order.some((form) => form !== "RUN" && form !== "FLY" && form !== "GRAVITY")) errors.order = `Escolha de 1 a ${MAX_FORM_ORDER} formas.`;
+  if (!def.ref.trim()) errors.ref = "Informe a referência do versículo.";
+  const words = verseWords(def.verse).length;
+  if (words < VERSE_WORDS_RANGE.min || words > VERSE_WORDS_RANGE.max) errors.verse = `O versículo precisa ter de ${VERSE_WORDS_RANGE.min} a ${VERSE_WORDS_RANGE.max} palavras (tem ${words}).`;
+  return errors;
+}
+
+export const campaignLevels = (scenarios: readonly Scenario[]): Level[] => scenarios.flatMap((scenario) => scenario.levels.map((def) => buildCampaignLevel(scenario, def)));
+
+export const CAMPAIGN_LEVELS: Level[] = campaignLevels(SCENARIOS);
+
+/** Ids das fases na ordem de jogo (cenário a cenário). */
+export const levelOrder = (scenarios: readonly Scenario[]): string[] => scenarios.flatMap((scenario) => scenario.levels.map((def) => def.id));
+
+export const CAMPAIGN_ORDER: string[] = levelOrder(SCENARIOS);
 
 /** A fase abre se for a primeira da campanha ou se a anterior (do mesmo cenário ou a última do cenário anterior) foi concluída. */
-export function isLevelUnlocked(levelId: string, finished: ReadonlySet<string>): boolean {
-  const index = CAMPAIGN_ORDER.indexOf(levelId);
+export function isLevelUnlocked(levelId: string, finished: ReadonlySet<string>, scenarios: readonly Scenario[] = SCENARIOS): boolean {
+  const order = levelOrder(scenarios);
+  const index = order.indexOf(levelId);
   if (index < 0) return true;
-  return index === 0 || finished.has(CAMPAIGN_ORDER[index - 1]);
+  return index === 0 || finished.has(order[index - 1]);
 }
 
 /** Cenário aberto: o primeiro sempre; os outros quando o anterior foi concluído por inteiro. */
-export function isScenarioUnlocked(scenarioId: string, finished: ReadonlySet<string>): boolean {
-  const index = SCENARIOS.findIndex((scenario) => scenario.id === scenarioId);
+export function isScenarioUnlocked(scenarioId: string, finished: ReadonlySet<string>, scenarios: readonly Scenario[] = SCENARIOS): boolean {
+  const index = scenarios.findIndex((scenario) => scenario.id === scenarioId);
   if (index <= 0) return index === 0;
-  return SCENARIOS[index - 1].levels.every((def) => finished.has(def.id));
+  return scenarios[index - 1].levels.every((def) => finished.has(def.id));
 }
 
 /** Personagem aberto: sem `unlockLevel` é do começo; com ele, abre ao concluir aquela fase. */
