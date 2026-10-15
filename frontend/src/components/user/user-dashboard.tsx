@@ -75,6 +75,7 @@ const RankingSection = lazy(() => import('@/components/user/sections/ranking-sec
 const ShopSection = lazy(() => import('@/components/user/sections/shop-section').then((m) => ({ default: m.ShopSection })));
 const BoardHub = lazy(() => import('@/components/user/board/board-hub').then((m) => ({ default: m.BoardHub })));
 const DuelHub = lazy(() => import('@/components/user/duel/duel-hub').then((m) => ({ default: m.DuelHub })));
+const CorridaHub = lazy(() => import('@/components/user/corrida/corrida-hub').then((m) => ({ default: m.CorridaHub })));
 const MiniGamesHub = lazy(() => import('@/components/user/minigames/minigames-hub').then((m) => ({ default: m.MiniGamesHub })));
 
 /** Figurinha mostrada no modal depois de uma compra ou fusão. */
@@ -688,6 +689,7 @@ export function UserDashboard() {
                     ) : null}
                     {mode === 'board' ? <BoardHub playerName={profile?.name ?? ''} /> : null}
                     {mode === 'duel' ? <DuelHub characters={characters} collection={collection} /> : null}
+                    {mode === 'runner' ? <CorridaHub /> : null}
                     {mode === 'minigames' ? <MiniGamesHub currentUserId={profile?.id} onWallet={updateWallet} /> : null}
                   </PlayModeFrame>
                 );

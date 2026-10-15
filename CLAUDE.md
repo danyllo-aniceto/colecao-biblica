@@ -110,6 +110,16 @@ código em **português do Brasil**.
 - A imagem do modo na aba Jogar é a capa `MINIGAMES` (Painel → Capas dos jogos), como Quiz, Tabuleiro e Duelo. Cada jogo tem ainda capa de cartão e fundo de tela próprios (`mini_game_designs`, Painel → Visual dos mini games).
 - Cada jogo é enriquecido um a um (dificuldade, preparo, sons, imagens): padrão e andamento em `docs/minigames.md` ("Enriquecimento jogo a jogo"). Jogo com escolhas usa `setup` da `MiniGameFrame` e valida as opções no `start`.
 
+## Modo Corrida (auto-runner bíblico de um toque, sem progresso de perfil)
+
+- Proposta, decisões e checklist em `docs/modo-corrida.md`; atualize o checklist a cada etapa. Modo **próprio** (não é mini game); recompensas só do modo
+  (personagens da Corrida, abertos por fase concluída na campanha solo). Nada de XP, moedas, figurinhas nem ranking geral.
+- Motor **puro e sem dependências** em `backend/src/runner/` (`engine.ts`, `segments.ts`, `levels.ts`, `bots.ts`), passo fixo de 60 por segundo, sem sorte;
+  o front o importa pelo alias `@runner/*`. A partida é uma **lista de toques** (`simulate`): é o que o servidor repete para conferir; nunca confiar em pontos do cliente.
+- **Física única para todos os personagens** (online e local justos): a **fase** define a forma (Corrida, Voo, Gravidade) por portais. Personagem muda só sprite e sons.
+- Fase = sequência de trechos (`segments.ts`); toda fase nova precisa passar no teste do bot perfeito (`bots.test.ts`), que prova que é possível terminar e pegar as palavras.
+- Online (futuro): corrida paralela sem colisão entre jogadores, no molde das salas do Tabuleiro/Duelo (`?since=`, sem websocket); até 4 jogadores, bots completam.
+
 ## Comandos
 
 ```bash

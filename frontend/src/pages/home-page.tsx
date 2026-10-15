@@ -99,8 +99,9 @@ export function HomePage() {
         <h2 className="text-center font-display text-3xl font-bold text-ink sm:text-4xl">Quatro jeitos de jogar</h2>
         <p className="mx-auto mt-2 max-w-2xl text-center text-muted">Um jogo principal para aprender e ganhar prêmios, dois para se divertir com os amigos, sem pressa e sem compromisso, e os 17 mini games, jogos rápidos para treinar a Bíblia: 5 já vêm liberados e os outros 12 se abrem, um por pedra do Peitoral, na Campanha.</p>
         <ul className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {PLAY_MODES.map((mode, index) => {
-            const image = images[mode.design];
+          {/* O modo Corrida é protótipo: só aparece na aba Jogar, não na página pública. */}
+          {PLAY_MODES.filter((mode) => mode.design).map((mode, index) => {
+            const image = mode.design ? images[mode.design] : null;
             return (
               <li key={mode.id} className="animate-fade-up" style={{ animationDelay: `${index * 90}ms` }}>
                 <article className="flex h-full flex-col overflow-hidden rounded-3xl border-2 border-edge bg-surface shadow-sm">

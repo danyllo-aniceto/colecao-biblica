@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import CasinoRoundedIcon from '@mui/icons-material/CasinoRounded';
+import DirectionsRunRoundedIcon from '@mui/icons-material/DirectionsRunRounded';
 import ExtensionRoundedIcon from '@mui/icons-material/ExtensionRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
@@ -9,12 +10,12 @@ import { usePwa } from '@/components/pwa/pwa-provider';
 import { cn } from '@/lib/cn';
 import { useGameModeImages, type GameMode } from '@/lib/game-modes';
 
-export type PlayMode = 'quiz' | 'board' | 'duel' | 'minigames';
+export type PlayMode = 'quiz' | 'board' | 'duel' | 'minigames' | 'runner';
 
 /** Modos que rodam no aparelho (partida local do Tabuleiro e treino do Duelo); os outros dependem do servidor. */
-const WORKS_OFFLINE: PlayMode[] = ['board', 'duel'];
+const WORKS_OFFLINE: PlayMode[] = ['board', 'duel', 'runner'];
 
-export const PLAY_MODES: Array<{ id: PlayMode; design: GameMode; title: string; text: string; tags: string[]; icon: ReactNode; fallback: string; /** Aviso de como liberar o modo (aparece no cartão). */ unlock?: string }> = [
+export const PLAY_MODES: Array<{ id: PlayMode; design: GameMode | null; title: string; text: string; tags: string[]; icon: ReactNode; fallback: string; /** Aviso de como liberar o modo (aparece no cartão). */ unlock?: string }> = [
   {
     id: 'quiz',
     design: 'QUIZ',
@@ -52,6 +53,16 @@ export const PLAY_MODES: Array<{ id: PlayMode; design: GameMode; title: string; 
     fallback: 'from-success to-info',
     unlock: '5 mini games já estão liberados para você. Os outros 12 se abrem um por pedra do Peitoral conquistada na Campanha. Complete o Peitoral e entre no ranking semanal.',
   },
+  {
+    id: 'runner',
+    // Sem capa enviada ainda (falta a chave do modo em Capas dos jogos); usa o fundo padrão.
+    design: null,
+    title: 'Corrida',
+    text: 'Corra por fases das histórias da Bíblia tocando na tela: pule obstáculos, voe e inverta a gravidade. Protótipo em teste.',
+    tags: ['Sozinho', 'Toque na tela', 'Sem XP: só diversão'],
+    icon: <DirectionsRunRoundedIcon sx={{ fontSize: 56 }} />,
+    fallback: 'from-accent to-primary',
+  },
 ];
 
 /** Aba Jogar: um cartão explicativo para cada jogo. A capa de cada um é enviada pelo painel. */
@@ -63,7 +74,7 @@ export function PlayHub({ onOpen, quizRunning }: { onOpen: (mode: PlayMode) => v
       <SectionHeading title="Jogar" subtitle="Escolha um jogo. Cada um tem a sua tela." />
       <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {PLAY_MODES.map((mode) => {
-          const image = images[mode.design];
+          const image = mode.design ? images[mode.design] : null;
           const blocked = !isOnline && !WORKS_OFFLINE.includes(mode.id);
           return (
             <li key={mode.id}>
@@ -111,6 +122,7 @@ const TITLES: Record<PlayMode, { title: string; subtitle: string }> = {
   board: { title: 'Tabuleiro', subtitle: 'Partidas sem XP nem moedas: é só diversão.' },
   duel: { title: 'Duelo de Figurinhas', subtitle: 'Figurinhas com Dons, 3 arenas e 6 turnos. Sem XP nem moedas.' },
   minigames: { title: 'Mini games', subtitle: '5 jogos já liberados e um novo a cada pedra do Peitoral. Sem XP; a 1ª vitória do dia rende moedas.' },
+  runner: { title: 'Corrida', subtitle: 'Fases das histórias bíblicas, um toque na tela. Sem XP nem moedas.' },
 };
 
 /** Moldura da tela de um jogo: botão para voltar aos jogos e o título. */

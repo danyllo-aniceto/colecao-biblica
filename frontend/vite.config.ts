@@ -35,6 +35,8 @@ export default defineConfig({
       "@board": path.resolve(__dirname, "../backend/src/board"),
       // Motor do Duelo de Cartas (treino contra bot roda aqui; o online, no servidor).
       "@duel": path.resolve(__dirname, "../backend/src/duel"),
+      // Motor do modo Corrida (partida solo/local roda aqui; o servidor repete os toques para conferir).
+      "@runner": path.resolve(__dirname, "../backend/src/runner"),
     },
   },
   plugins: [
