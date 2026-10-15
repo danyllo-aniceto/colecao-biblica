@@ -15,6 +15,7 @@ import { useToast } from '@/components/ui/toast';
 import { LoadingState } from '@/components/ui/spinner';
 import { cn } from '@/lib/cn';
 import { BOT_LEVELS, type BotLevel } from '@runner/bots';
+import { LOCAL_KEYS, planSlots, uniqueNames } from '@runner/local';
 import { TILES_PER_SECOND } from '@runner/journey';
 import { isCharacterUnlocked, isLevelUnlocked, isScenarioUnlocked, type Scenario } from '@runner/campaign';
 import { BASE_LEVELS } from '@runner/levels';
@@ -22,6 +23,7 @@ import { useRunnerCampaign } from '@/components/user/corrida/corrida-campaign';
 import type { Level } from '@runner/types';
 import type { CorridaResult, CorridaRival } from '@/components/user/corrida/corrida-game';
 import { CampaignMap, type MapStop } from '@/components/user/corrida/corrida-map';
+import { CorridaLocal, PlayerChip, type LocalPlayer } from '@/components/user/corrida/corrida-local';
 import { useRunnerProgress } from '@/components/user/corrida/corrida-progress';
 import { portraitOf, rivalsFor, saveCharacter, storedCharacterId, useRunnerCharacters, type RunnerCharacter } from '@/components/user/corrida/corrida-characters';
 import { SpriteView } from '@/components/user/corrida/sprite-view';
@@ -30,7 +32,7 @@ const CorridaGame = lazy(() => import('@/components/user/corrida/corrida-game').
 
 type Tab = 'campaign' | 'free' | 'bots' | 'multi' | 'characters';
 /** Como a partida começou: campanha (vale para o melhor resultado), treino, assistindo um bot ou corrida contra bots. */
-type Playing = { level: Level; mode: 'campaign' | 'practice' | 'watch' | 'race'; rivals?: CorridaRival[] };
+type Playing = { level: Level; mode: 'campaign' | 'practice' | 'watch' | 'race' | 'local'; rivals?: CorridaRival[]; players?: LocalPlayer[] };
 
 const TABS: Array<{ id: Tab; label: string; icon: ReactNode }> = [
   { id: 'campaign', label: 'Campanha', icon: <MapRoundedIcon fontSize="small" /> },
@@ -121,10 +123,13 @@ export function CorridaHub() {
       {tab === 'campaign' ? <CampaignTab scenarios={scenarios} levels={levels} bests={bests} finished={finished} characters={allCharacters} onPlay={(level) => setPlaying({ level, mode: 'campaign' })} /> : null}
       {tab === 'free' ? <FreeTab levels={levels} bests={bests} onPlay={(level, mode) => setPlaying({ level, mode })} /> : null}
       {tab === 'bots' ? <BotsTab levels={levels} characters={characters} character={character} onStart={(level, rivals) => setPlaying({ level, mode: 'race', rivals })} /> : null}
-      {tab === 'multi' ? <MultiTab /> : null}
+      {tab === 'multi' ? <MultiTab levels={levels} characters={characters} character={character} onStartLocal={(level, players) => setPlaying({ level, mode: 'local', players })} /> : null}
       {tab === 'characters' ? <CharactersTab levels={levels} characters={allCharacters} finished={finished} character={character} onChoose={choose} /> : null}
 
-      {playing ? (
+      {playing?.mode === 'local' && playing.players ? (
+        <CorridaLocal level={playing.level} players={playing.players} onExit={() => setPlaying(null)} />
+      ) : null}
+      {playing && playing.mode !== 'local' ? (
         <Suspense fallback={<LoadingState />}>
           <CorridaGame
             level={playing.level}
@@ -324,26 +329,112 @@ function BotsTab({ levels, characters, character, onStart }: { levels: Level[]; 
 }
 
 /** Multijogador: local (até 4 na mesma tela) e online (até 4 jogadores). Chegam nas etapas 6 e 7 do cronograma. */
-function MultiTab() {
+function MultiTab({ levels, characters, character, onStartLocal }: { levels: Level[]; characters: RunnerCharacter[]; character: RunnerCharacter; onStartLocal: (level: Level, players: LocalPlayer[]) => void }) {
+  const [total, setTotal] = useState<'2' | '3' | '4'>('2');
+  const [humans, setHumans] = useState<'1' | '2' | '3' | '4'>('2');
+  const [levelId, setLevelId] = useState(levels[0].id);
+  const [difficulty, setDifficulty] = useState<BotLevel>('STUDENT');
+  // Personagem de cada humano (o 1º começa com o escolhido no app; os outros, nos seguintes da lista).
+  const [picks, setPicks] = useState<string[]>([]);
+  const level = levels.find((item) => item.id === levelId) ?? levels[0];
+  const humanCount = Math.min(Number(humans), Number(total));
+  const kinds = planSlots(humanCount, Number(total));
+  const chosen = (index: number) => {
+    const saved = characters.find((item) => item.id === picks[index]);
+    if (saved) return saved;
+    const order = [character, ...characters.filter((item) => item.id !== character.id)];
+    return order[index % order.length] ?? character;
+  };
+  const humanChars = Array.from({ length: humanCount }, (_, index) => chosen(index));
+  // Os bots são outros personagens (que não estão em uso por humanos), com a dificuldade escolhida.
+  const used = new Set(humanChars.map((item) => item.id));
+  const botPool = rivalsFor(characters, humanChars[0].id, 8).filter((item) => !used.has(item.id));
+  const botChars = kinds.slice(humanCount).map((_, index) => botPool[index % Math.max(1, botPool.length)] ?? humanChars[0]);
+  const names = uniqueNames([...humanChars, ...botChars].map((item) => item.name));
+  const players: LocalPlayer[] = [...humanChars.map((item) => ({ ...item, human: true })), ...botChars.map((item) => ({ ...item, human: false }))].map((item, index) => ({
+    name: names[index],
+    color: item.color,
+    sprites: item.sprites,
+    sounds: item.sounds,
+    human: item.human,
+    skill: BOT_LEVELS[difficulty].skill,
+    lag: BOT_LEVELS[difficulty].lag,
+  }));
+  const characterOptions = characters.map((item) => ({ value: item.id, label: item.name }));
+
   return (
     <div className="space-y-4">
-      <Alert tone="info">Estas duas formas de jogar com amigos chegam nas próximas etapas. Os bots completam as vagas que faltarem.</Alert>
-      <ul className="grid gap-3 sm:grid-cols-2">
-        <li className="panel space-y-2 p-4">
-          <p className="font-display text-lg font-bold text-ink">No mesmo aparelho</p>
-          <p className="text-sm font-semibold text-muted">De 2 a 4 jogadores na mesma tela deitada, cada um tocando na sua faixa.</p>
-          <Button disabled className="w-full">
-            Em breve
-          </Button>
-        </li>
-        <li className="panel space-y-2 p-4">
-          <p className="font-display text-lg font-bold text-ink">Online com amigos</p>
-          <p className="text-sm font-semibold text-muted">Crie uma sala, convide até 3 amigos por código ou link e corram na mesma fase.</p>
-          <Button disabled className="w-full">
-            Em breve
-          </Button>
-        </li>
-      </ul>
+      <Alert tone="info">Corrida no mesmo aparelho: a tela deitada se divide em uma faixa para cada jogador, e cada um toca na sua (vários dedos ao mesmo tempo). Os bots completam as vagas. Sem XP nem moedas.</Alert>
+      <div className="panel space-y-4 p-4">
+        <p className="font-display text-lg font-bold text-ink">No mesmo aparelho</p>
+        <div className="space-y-1.5">
+          <p className="font-display text-sm font-bold text-ink">Fase</p>
+          <Select value={levelId} onChange={setLevelId} options={levels.map((item) => ({ value: item.id, label: item.name, description: levelInfo(item) }))} aria-label="Fase da corrida" />
+        </div>
+        <div className="space-y-1.5">
+          <p className="font-display text-sm font-bold text-ink">Quantos corredores na tela</p>
+          <Segmented
+            value={total}
+            onChange={(value) => {
+              setTotal(value);
+              if (Number(humans) > Number(value)) setHumans(value as '2' | '3' | '4');
+            }}
+            options={[{ value: '2', label: '2' }, { value: '3', label: '3' }, { value: '4', label: '4' }]}
+            aria-label="Quantidade de corredores"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <p className="font-display text-sm font-bold text-ink">Quantos são pessoas (o resto são bots)</p>
+          <Segmented
+            value={String(humanCount) as '1' | '2' | '3' | '4'}
+            onChange={setHumans}
+            options={(['1', '2', '3', '4'] as const).filter((value) => Number(value) <= Number(total)).map((value) => ({ value, label: value }))}
+            aria-label="Quantidade de pessoas"
+          />
+        </div>
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {humanChars.map((item, index) => (
+            <li key={index} className="space-y-1.5">
+              <p className="font-display text-sm font-bold text-ink">
+                Jogador {index + 1} <span className="font-semibold text-muted">(tecla {LOCAL_KEYS[index].replace('Digit', '')} no computador)</span>
+              </p>
+              <Select
+                value={item.id}
+                onChange={(id) => setPicks((current) => Object.assign([...current], { [index]: id }))}
+                options={characterOptions}
+                searchable
+                aria-label={`Personagem do jogador ${index + 1}`}
+              />
+            </li>
+          ))}
+        </ul>
+        {humanCount < Number(total) ? (
+          <div className="space-y-1.5">
+            <p className="font-display text-sm font-bold text-ink">Dificuldade dos bots</p>
+            <Segmented
+              value={difficulty}
+              onChange={setDifficulty}
+              options={(Object.keys(BOT_LEVELS) as BotLevel[]).map((value) => ({ value, label: BOT_LEVELS[value].label }))}
+              aria-label="Dificuldade dos bots"
+            />
+          </div>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {players.map((player, index) => (
+            <PlayerChip key={`${player.name}-${index}`} name={player.name} color={player.color} sprites={player.sprites} suffix={player.human ? undefined : '(bot)'} />
+          ))}
+        </div>
+        <Button size="lg" className="w-full" onClick={() => onStartLocal(level, players)}>
+          Montar a largada
+        </Button>
+      </div>
+      <div className="panel space-y-2 p-4">
+        <p className="font-display text-lg font-bold text-ink">Online com amigos</p>
+        <p className="text-sm font-semibold text-muted">Crie uma sala, convide até 3 amigos por código ou link e corram na mesma fase. Chega na próxima etapa.</p>
+        <Button disabled className="w-full">
+          Em breve
+        </Button>
+      </div>
     </div>
   );
 }

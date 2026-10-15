@@ -178,9 +178,13 @@ Telas (aba Jogar → Corrida), no mesmo molde do Duelo/Tabuleiro, sem servidor (
 - [x] Conferido de ponta a ponta no navegador: fase limpa = 3 estrelas; cair, voltar ao checkpoint e terminar = 2 estrelas, os dois resultados confirmados pelo servidor.
 - [x] **Mapa visual** do cenário (`corrida-map.tsx`): trilha em zigue-zague ligando as fases (trecho percorrido colorido com a cor do cenário, o resto pontilhado), nó com número, check ou cadeado, anel na próxima fase, cartão com resultado, estrelas e personagem que a fase abre; paginado de 10 em 10 fases.
 
-### Etapa 6 — Local: até 4 na mesma tela (M)
-- [ ] Faixas por jogador na horizontal, multitoque, cada um com seu personagem; bots completam as vagas.
-- [ ] Placar da rodada (quem chegou primeiro, quem foi mais longe, palavras), revanche.
+### Etapa 6 — Local: até 4 na mesma tela (M) — feita (falta o seu teste no celular)
+- [x] **Faixas por jogador** (`corrida-local.tsx`, contas puras em `runner/local.ts`, testadas): a tela deitada se divide em 2 faixas empilhadas (2 jogadores), 2 em cima + 1 embaixo (3) ou grade 2×2 (4). Cada faixa tem a câmera, o personagem (sprite e sons) e um painel pequeno (nome, %, barra com bandeiras, poderes ativos) do jogador. **Multitoque:** cada dedo vale para a faixa onde encostou; no computador, teclas 1 a 4. Bots completam as vagas (dificuldade escolhida).
+- [x] Largada: cada pessoa toca na própria faixa ("Toque aqui para entrar" → "Pronto!"), contagem 3-2-1 e "Já!". Quem cai volta sozinho ao próprio último checkpoint. Termina quando o primeiro cruza a linha.
+- [x] **Placar da rodada** (`rankLocal`): quem chegou primeiro (com o tempo), depois quem foi mais longe (%); empate por palavras e quedas. **Revanche** com os mesmos jogadores e a mesma fase.
+- [x] Aba Multi do hub: fase, quantos na tela (2–4), quantos são pessoas (o resto bots), personagem de cada jogador (nomes repetidos ganham número), dificuldade dos bots.
+- [x] Conferido de ponta a ponta no navegador (2 dedos + 2 bots na grade 2×2, largada, corrida, placar). Nada do modo dá XP, moedas nem ranking: a partida no mesmo aparelho não grava progresso.
+- [ ] Faixas separadas por jogador na horizontal de verdade (hoje: grade, para os personagens não ficarem pequenos demais em celular).
 
 ### Etapa 7 — Online: até 4 jogadores (G)
 - [ ] Migração e `services/runner-room.ts` + `routes/runner-room.ts` (sala, código de convite, lobby, bots completando), no molde do Tabuleiro/Duelo

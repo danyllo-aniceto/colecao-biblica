@@ -40,6 +40,8 @@ export type SceneOptions = {
   note: Note | null;
   /** Densidade da tela (o painel é desenhado em px de tela). */
   dpr: number;
+  /** Faixa de uma partida no mesmo aparelho: só o nome, a porcentagem e uma barra fininha (sem versículo, forma nem tempo). */
+  compact?: { name: string };
 };
 
 /** Altura das camadas do meio e de perto (de cima do campo até o chão). */
@@ -225,6 +227,65 @@ function drawRunner(ctx: CanvasRenderingContext2D, p: PlayerState, color: string
   ctx.restore();
 }
 
+/** Painel pequeno das faixas do modo no mesmo aparelho: nome, porcentagem, barra e poderes ativos (letras). Tamanhos em px de tela (× dpr). */
+function drawCompactHud(ctx: CanvasRenderingContext2D, level: PreparedLevel, p: PlayerState, width: number, height: number, options: SceneOptions) {
+  const { dpr: u, color, flash, compact } = options;
+  const progress = progressOf(level, p);
+  ctx.save();
+  ctx.textBaseline = 'middle';
+  ctx.lineWidth = 3 * u;
+  ctx.strokeStyle = 'rgba(0,0,0,0.65)';
+  const y = 11 * u;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(14 * u, y, 5 * u, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = `800 ${13 * u}px system-ui, sans-serif`;
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#fff';
+  ctx.strokeText(compact?.name ?? '', 24 * u, y);
+  ctx.fillText(compact?.name ?? '', 24 * u, y);
+  ctx.textAlign = 'right';
+  ctx.fillStyle = FORM_COLOR[p.form];
+  const percent = `${Math.floor(progress * 100)}%`;
+  ctx.strokeText(percent, width - 8 * u, y);
+  ctx.fillText(percent, width - 8 * u, y);
+  // Barra fininha de progresso com as bandeiras.
+  const barY = 22 * u;
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillRect(8 * u, barY, width - 16 * u, 4 * u);
+  ctx.fillStyle = FORM_COLOR[p.form];
+  ctx.fillRect(8 * u, barY, (width - 16 * u) * progress, 4 * u);
+  for (const at of level.checkpoints) {
+    ctx.fillStyle = p.x + PLAYER / 2 >= at ? '#22c55e' : '#fde047';
+    ctx.fillRect(8 * u + (width - 16 * u) * (at / level.endX) - u, barY - 2 * u, 2 * u, 8 * u);
+  }
+  // Poderes ativos: uma letra colorida por poder.
+  const fx = p.effects;
+  const active = [
+    { on: fx.turbo > 0, kind: 'TURBO' as const },
+    { on: fx.shield > 0, kind: 'SHIELD' as const },
+    { on: fx.triple > 0, kind: 'TRIPLE' as const },
+    { on: fx.magnet > 0, kind: 'MAGNET' as const },
+  ].filter((item) => item.on);
+  ctx.textAlign = 'left';
+  ctx.font = `800 ${11 * u}px system-ui, sans-serif`;
+  active.forEach((item, index) => {
+    ctx.fillStyle = POWER_INFO[item.kind].color;
+    ctx.beginPath();
+    ctx.arc(14 * u + index * 20 * u, 38 * u, 8 * u, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.fillText(POWER_INFO[item.kind].symbol, 14 * u + index * 20 * u, 38.5 * u);
+  });
+  if (flash > 0) {
+    ctx.fillStyle = `rgba(239,68,68,${flash * 0.45})`;
+    ctx.fillRect(0, 0, width, height);
+  }
+  ctx.restore();
+}
+
 /** Desenho da cena com formas simples (a arte entra depois). Cores fixas: é a "arte" do jogo, igual nos dois temas. */
 export function drawScene(ctx: CanvasRenderingContext2D, level: PreparedLevel, p: PlayerState, width: number, height: number, options: SceneOptions) {
   const { flash, note, dpr, rivals, rank, color, sprites, deadFor, stopped, clock } = options;
@@ -389,6 +450,10 @@ export function drawScene(ctx: CanvasRenderingContext2D, level: PreparedLevel, p
   }
   drawRunnerFx(ctx, p, color, 1, sprites, deadFor, stopped, clock);
   ctx.restore();
+  if (options.compact) {
+    drawCompactHud(ctx, level, p, width, height, options);
+    return;
+  }
 
   // Painel: porcentagem, barra com as bandeiras, tempo que falta, forma atual e versículo. Tamanhos em px de tela (× dpr).
   const u = dpr;
