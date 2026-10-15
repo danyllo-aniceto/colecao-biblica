@@ -147,6 +147,14 @@ describe("Corrida: física", () => {
     expect(prepared.wordCount).toBe(2);
   });
 
+  it("checkpoints são contados quando o personagem passa por eles, em ordem", () => {
+    const prepared = prepareLevel(level([{ kind: "checkpoint", x: 20 }, { kind: "checkpoint", x: 10 }]));
+    expect(prepared.checkpoints).toEqual([10 * TILE, 20 * TILE]);
+    expect(run(prepared, 50).checkpoint).toBe(0);
+    expect(run(prepared, 100).checkpoint).toBe(1);
+    expect(run(prepared, 230).checkpoint).toBe(2);
+  });
+
   it("termina ao chegar ao fim e o progresso vai a 100%", () => {
     const prepared = prepareLevel(level([], { length: 12 }));
     const result = simulate(prepared, []);

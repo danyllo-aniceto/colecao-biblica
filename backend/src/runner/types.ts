@@ -27,7 +27,9 @@ export type BlockObject = { kind: "block"; x: number; y: number; w: number; h: n
 export type PortalObject = { kind: "portal"; x: number; form: Form };
 /** Palavra do versículo escondido (`index` = posição no versículo). */
 export type WordObject = { kind: "word"; x: number; y: number; index: number };
-export type LevelObject = SpikeObject | BlockObject | PortalObject | WordObject;
+/** Checkpoint: bandeira num trecho livre; quem cai pode voltar a ela. Fica sempre a ~3 colunas ou mais do próximo obstáculo. */
+export type CheckpointObject = { kind: "checkpoint"; x: number };
+export type LevelObject = SpikeObject | BlockObject | PortalObject | WordObject | CheckpointObject;
 
 /** Versículo escondido da fase: cada palavra coletada (`index`) aparece no lugar dele. */
 export type Verse = { ref: string; words: string[] };
@@ -50,6 +52,8 @@ export type PreparedLevel = {
   level: Level;
   endX: number;
   portals: Array<{ x: number; form: Form }>;
+  /** Posição (px) de cada checkpoint, em ordem. */
+  checkpoints: number[];
   cols: Array<{ spikes: Rect[]; blocks: Rect[]; words: Array<Rect & { index: number }> }>;
   wordCount: number;
 };
@@ -73,6 +77,8 @@ export type PlayerState = {
   held: boolean;
   /** Próximo portal a cruzar. */
   portal: number;
+  /** Quantos checkpoints já foram cruzados. */
+  checkpoint: number;
   status: PlayerStatus;
   cause: DeathCause | null;
   collected: number[];

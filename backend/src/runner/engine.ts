@@ -41,11 +41,14 @@ const toRect = (left: number, top: number, width: number, height: number): Rect 
 export function prepareLevel(level: Level): PreparedLevel {
   const cols: PreparedLevel["cols"] = Array.from({ length: level.length + 4 }, () => ({ spikes: [], blocks: [], words: [] }));
   const portals: PreparedLevel["portals"] = [];
+  const checkpoints: number[] = [];
   let wordCount = 0;
   const colOf = (column: number) => cols[Math.max(0, Math.min(cols.length - 1, column))];
   for (const object of level.objects) {
     if (object.kind === "portal") {
       portals.push({ x: object.x * TILE, form: object.form });
+    } else if (object.kind === "checkpoint") {
+      checkpoints.push(object.x * TILE);
     } else if (object.kind === "spike") {
       const row = object.y ?? 0;
       const cellTop = FLOOR_Y - (row + 1) * TILE;
@@ -65,7 +68,8 @@ export function prepareLevel(level: Level): PreparedLevel {
     }
   }
   portals.sort((a, b) => a.x - b.x);
-  return { level, endX: level.length * TILE, portals, cols, wordCount };
+  checkpoints.sort((a, b) => a - b);
+  return { level, endX: level.length * TILE, portals, checkpoints, cols, wordCount };
 }
 
 export function newPlayer(level: PreparedLevel): PlayerState {
@@ -81,6 +85,7 @@ export function newPlayer(level: PreparedLevel): PlayerState {
     airJumps: MAX_AIR_JUMPS,
     held: false,
     portal: 0,
+    checkpoint: 0,
     status: "running",
     cause: null,
     collected: [],
@@ -117,6 +122,8 @@ export function stepPlayer(level: PreparedLevel, previous: PlayerState, held: bo
       p.airJumps = MAX_AIR_JUMPS;
     }
   }
+
+  while (p.checkpoint < level.checkpoints.length && p.x + PLAYER / 2 >= level.checkpoints[p.checkpoint]) p.checkpoint += 1;
 
   // Para o lado.
   p.x += SPEED;

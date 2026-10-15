@@ -106,6 +106,17 @@ ideia de esforço relativo, não de prazo.
   (às vezes impossíveis; agora 5), bloco com espeto em cima (espeto mais longe) e túneis de voo com vão de 3 linhas (agora 4; `flyGap` para fases difíceis).
   Regra de projeto: **o pulo simples precisa ter janela de pelo menos ~10 passos**; só fase marcada como difícil pode exigir pulo duplo cravado.
 
+### Etapa 1b — Ajustes depois do seu teste (feita)
+- [x] **Checkpoints de verdade:** objeto `checkpoint` nas fases (bandeira no cenário, cinza até passar e verde depois); a jornada tem uma **a cada ~12 s** e uma no começo de
+  cada trecho (antes só havia nos portais, e quem caía antes do 1º portal ficava sem nenhum). Valem no **Jogar** e no **Treinar**. Teste confere que ficam em lugar livre e que
+  nunca passam de ~25 s sem bandeira.
+- [x] Ao cair: **"Voltar ao último checkpoint (X%)"** em destaque, "Do início" e "Sair". Voltar pede um toque para continuar. Concluir sem voltar a nenhum checkpoint vale
+  "Concluída sem checkpoint ★" (`clean` em `records.ts`) — base das estrelas da campanha.
+- [x] **Aviso nativo do navegador removido:** era o aviso de tela cheia ("pressione Esc"), que não dá para estilizar. O jogo não pede mais tela cheia (cobre o app inteiro;
+  instalado como PWA usa a tela toda). O aviso "Checkpoint salvo" agora é uma cápsula estilizada de ~1 s.
+- [x] **Mais altura de jogo** (`ZOOM` 0,82 → 0,95) e painel refeito: **porcentagem grande e colorida** (cor da forma), **barra** com marcas dos checkpoints, **tempo que falta**,
+  versículo maior (cresce até caber, palavras pegas em amarelo). O painel agora respeita a densidade da tela (antes o texto saía com a metade do tamanho em celular).
+
 ### Etapa 2 — Estrutura do modo: página principal (M)
 Telas (aba Jogar → Corrida), no mesmo molde do Duelo/Tabuleiro, sem servidor ainda:
 - [ ] **Campanha** (jogar sozinho): mapa de fases em sequência (casca; o progresso de verdade vem na etapa 5).

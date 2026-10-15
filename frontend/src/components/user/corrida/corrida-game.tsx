@@ -6,24 +6,24 @@ import { Button } from '@/components/ui/button';
 import { unlockAudio } from '@/lib/sound/context';
 import { playSfx } from '@/lib/sound/sfx';
 import { newPlayer, prepareLevel, progressOf, stepPlayer } from '@runner/engine';
-import { CEIL_Y, FLOOR_Y, PLAYER, TICKS_PER_SECOND, TILE, type Form, type Level, type PlayerState, type PreparedLevel } from '@runner/types';
+import { CEIL_Y, FLOOR_Y, PLAYER, SPEED, TICKS_PER_SECOND, TILE, type Form, type Level, type PlayerState, type PreparedLevel } from '@runner/types';
 
 /** Altura do mundo em px (7 linhas do campo + 40 de teto + 40 de chão); a tela só escala. */
 const WORLD_H = FLOOR_Y + 40;
 /** O personagem fica a 28% da largura da tela. */
 const CAMERA_AT = 0.28;
 /** Zoom da câmera (menor = personagem menor e mapa mais amplo; sobra céu e chão nas bordas). Pensado para a tela deitada e para várias corredores no multijogador. */
-const ZOOM = 0.82;
+const ZOOM = 0.95;
 const STEP_MS = 1000 / TICKS_PER_SECOND;
 
-const FORM_LABEL: Record<Form, string> = { RUN: 'Corrida: toque para pular (toque de novo no ar: pulo duplo)', FLY: 'Voo: segure para subir', GRAVITY: 'Gravidade: toque para inverter' };
+const FORM_LABEL: Record<Form, string> = { RUN: 'Corrida · toque para pular, toque de novo no ar: pulo duplo', FLY: 'Voo · segure para subir, solte para descer', GRAVITY: 'Gravidade · toque para inverter' };
 const FORM_COLOR: Record<Form, string> = { RUN: '#38bdf8', FLY: '#f59e0b', GRAVITY: '#a78bfa' };
 
 type Phase = 'ready' | 'playing' | 'dead' | 'finished';
 type Summary = { progress: number; words: number; total: number };
 
 /** Desenho da cena com formas simples (a arte entra depois). Cores fixas: é a "arte" do jogo, igual nos dois temas. */
-function draw(ctx: CanvasRenderingContext2D, level: PreparedLevel, p: PlayerState, width: number, height: number, flash: number, note: string | null) {
+function draw(ctx: CanvasRenderingContext2D, level: PreparedLevel, p: PlayerState, width: number, height: number, flash: number, note: { text: string; fade: number } | null, dpr: number) {
   const scale = (height / WORLD_H) * ZOOM;
   const viewW = width / scale;
   // Sobra de céu e chão acima e abaixo do campo: o campo fica centralizado.
@@ -98,6 +98,18 @@ function draw(ctx: CanvasRenderingContext2D, level: PreparedLevel, p: PlayerStat
       }
       ctx.closePath();
       ctx.fill();
+    } else if (object.kind === 'checkpoint') {
+      // Bandeira: cinza até passar, verde depois.
+      const reached = p.x + PLAYER / 2 >= objectX;
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(objectX + TILE / 2 - 2, FLOOR_Y - 56, 4, 56);
+      ctx.fillStyle = reached ? '#22c55e' : '#94a3b8';
+      ctx.beginPath();
+      ctx.moveTo(objectX + TILE / 2 + 2, FLOOR_Y - 56);
+      ctx.lineTo(objectX + TILE / 2 + 30, FLOOR_Y - 45);
+      ctx.lineTo(objectX + TILE / 2 + 2, FLOOR_Y - 34);
+      ctx.closePath();
+      ctx.fill();
     } else if (object.kind === 'portal') {
       ctx.fillStyle = FORM_COLOR[object.form];
       ctx.globalAlpha = 0.35 + 0.15 * Math.sin(p.tick / 8);
@@ -152,34 +164,111 @@ function draw(ctx: CanvasRenderingContext2D, level: PreparedLevel, p: PlayerStat
   ctx.restore();
   ctx.restore();
 
-  // Barra de progresso e forma atual.
+  // Painel: porcentagem, barra com as bandeiras, tempo que falta, forma atual e versículo. Tamanhos em px de tela (× dpr).
+  const u = dpr;
   const progress = progressOf(level, p);
-  ctx.fillStyle = 'rgba(0,0,0,0.45)';
-  ctx.fillRect(width * 0.1, 7, width * 0.8, 8);
+  const hudLeft = 64 * u;
+  const hudRight = width - 16 * u;
+  const pctWidth = 66 * u;
+  const timeWidth = 96 * u;
+  const barX = hudLeft + pctWidth;
+  const barW = Math.max(40 * u, hudRight - timeWidth - barX);
+  const barY = 9 * u;
+  const barH = 15 * u;
+  // O painel cabe nas faixas de cima e de baixo do campo, em qualquer altura de tela.
+  const ceilScreenY = (margin + CEIL_Y) * scale;
+  const bandH = height - (margin + FLOOR_Y) * scale;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  ctx.font = `800 ${24 * u}px system-ui, sans-serif`;
+  ctx.lineWidth = 4 * u;
+  ctx.strokeStyle = 'rgba(0,0,0,0.65)';
   ctx.fillStyle = accent;
-  ctx.fillRect(width * 0.1, 7, width * 0.8 * progress, 8);
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 12px system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
-  ctx.fillText(`${Math.floor(progress * 100)}%  ·  ${FORM_LABEL[p.form]}`, width / 2, 20);
-  if (note) {
-    ctx.font = 'bold 15px system-ui, sans-serif';
-    ctx.textBaseline = 'top';
-    ctx.fillStyle = '#facc15';
-    ctx.fillText(note, width / 2, 40);
+  const percentText = `${Math.floor(progress * 100)}%`;
+  ctx.strokeText(percentText, hudLeft, barY + barH / 2);
+  ctx.fillText(percentText, hudLeft, barY + barH / 2);
+  // Barra.
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.beginPath();
+  ctx.roundRect(barX, barY, barW, barH, barH / 2);
+  ctx.fill();
+  if (progress > 0) {
+    ctx.fillStyle = accent;
+    ctx.beginPath();
+    ctx.roundRect(barX, barY, Math.max(barH, barW * progress), barH, barH / 2);
+    ctx.fill();
   }
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+  ctx.lineWidth = 2 * u;
+  ctx.beginPath();
+  ctx.roundRect(barX, barY, barW, barH, barH / 2);
+  ctx.stroke();
+  // Marcas dos checkpoints na barra (amarelas até passar, verdes depois).
+  for (const at of level.checkpoints) {
+    const markX = barX + barW * (at / level.endX);
+    ctx.fillStyle = p.x + PLAYER / 2 >= at ? '#22c55e' : '#fde047';
+    ctx.fillRect(markX - 1.5 * u, barY - 3 * u, 3 * u, barH + 6 * u);
+  }
+  // Tempo que falta.
+  const remaining = Math.max(0, Math.ceil((level.endX - p.x) / (SPEED * TICKS_PER_SECOND)));
+  ctx.textAlign = 'right';
+  ctx.font = `700 ${15 * u}px system-ui, sans-serif`;
+  ctx.fillStyle = '#fff';
+  ctx.strokeText(`faltam ${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`, hudRight, barY + barH / 2);
+  ctx.fillText(`faltam ${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`, hudRight, barY + barH / 2);
+  // Forma atual.
+  ctx.textAlign = 'center';
+  ctx.font = `700 ${13 * u}px system-ui, sans-serif`;
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  const labelY = Math.min(barY + barH + 14 * u, ceilScreenY - 9 * u);
+  ctx.strokeText(FORM_LABEL[p.form], width / 2, labelY);
+  ctx.fillText(FORM_LABEL[p.form], width / 2, labelY);
+  // Aviso curto (checkpoint salvo): cápsula que some rápido.
+  if (note) {
+    ctx.save();
+    ctx.globalAlpha = note.fade;
+    ctx.font = `800 ${16 * u}px system-ui, sans-serif`;
+    const w = ctx.measureText(note.text).width + 28 * u;
+    const h = 30 * u;
+    const y = Math.max(barY + barH + 36 * u, ceilScreenY + 10 * u);
+    ctx.fillStyle = 'rgba(21,128,61,0.92)';
+    ctx.beginPath();
+    ctx.roundRect((width - w) / 2, y, w, h, h / 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.fillText(note.text, width / 2, y + h / 2 + u);
+    ctx.restore();
+  }
+  // Versículo escondido: palavras coletadas em amarelo, as que faltam em "___". Cresce até caber na largura.
   const verse = level.level.verse;
   if (verse) {
-    // Versículo escondido: palavras coletadas aparecem, as outras ficam em branco.
-    const text = verse.words.map((word, index) => (p.collected.includes(index) ? word : '___')).join(' ');
-    ctx.font = 'bold 14px system-ui, sans-serif';
-    ctx.textBaseline = 'bottom';
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    const boxWidth = Math.min(width * 0.94, ctx.measureText(text).width + 24);
-    ctx.fillRect((width - boxWidth) / 2, height - 30, boxWidth, 24);
-    ctx.fillStyle = '#facc15';
-    ctx.fillText(text, width / 2, height - 10, boxWidth - 16);
+    const tokens = verse.words.map((word, index) => ({ text: p.collected.includes(index) ? word : '___', got: p.collected.includes(index) }));
+    // Altura do quadro: cabe na faixa do chão (sem invadir o campo); a letra cresce até caber na largura e nessa altura.
+    let size = Math.min(24 * u, (bandH - 8 * u) / 1.7);
+    const maxW = width * 0.94 - 32 * u;
+    const measure = () => {
+      ctx.font = `800 ${size}px system-ui, sans-serif`;
+      return tokens.reduce((sum, token) => sum + ctx.measureText(`${token.text} `).width, 0) - ctx.measureText(' ').width;
+    };
+    while (measure() > maxW && size > 13 * u) size -= u;
+    const total = measure();
+    const boxW = Math.min(width * 0.96, total + 32 * u);
+    const boxH = size * 1.7;
+    const boxY = height - boxH - Math.max(4 * u, (bandH - boxH) / 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.62)';
+    ctx.beginPath();
+    ctx.roundRect((width - boxW) / 2, boxY, boxW, boxH, boxH / 2);
+    ctx.fill();
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    let cursorX = (width - total) / 2;
+    for (const token of tokens) {
+      ctx.fillStyle = token.got ? '#facc15' : 'rgba(255,255,255,0.5)';
+      ctx.fillText(token.text, cursorX, boxY + boxH / 2 + u);
+      cursorX += ctx.measureText(`${token.text} `).width;
+    }
+    ctx.textAlign = 'center';
   }
   if (flash > 0) {
     ctx.fillStyle = `rgba(239,68,68,${flash * 0.45})`;
@@ -191,11 +280,11 @@ function draw(ctx: CanvasRenderingContext2D, level: PreparedLevel, p: PlayerStat
  * Tela da partida em tela cheia. Passo fixo de 60 por segundo (o mesmo motor que o servidor repete para conferir).
  * `replay` (lista de toques de um bot) faz a tela só assistir, sem aceitar toque.
  */
-export type CorridaResult = { progress: number; words: number; finished: boolean };
+export type CorridaResult = { progress: number; words: number; finished: boolean; /** Concluída sem voltar a nenhum checkpoint. */ clean: boolean };
 
 /**
- * `practice` = treino: salva um checkpoint a cada portal e deixa voltar a ele; não conta para o melhor resultado.
- * Fora do treino e do replay, o resultado da partida vai para `onResult`.
+ * Todo checkpoint (bandeira) salva o ponto e, ao cair, dá para voltar a ele. `practice` = treino: não conta para o melhor resultado.
+ * Fora do treino e do replay, o resultado da partida vai para `onResult` (`clean` = concluída sem voltar a nenhum checkpoint).
  */
 export function CorridaGame({ level, replay, practice = false, onResult, onExit }: { level: Level; replay?: number[]; practice?: boolean; onResult?: (result: CorridaResult) => void; onExit: () => void }) {
   const prepared = useRef<PreparedLevel>(prepareLevel(level));
@@ -208,6 +297,7 @@ export function CorridaGame({ level, replay, practice = false, onResult, onExit 
   const onResultRef = useRef(onResult);
   onResultRef.current = onResult;
   const checkpointRef = useRef<PlayerState | null>(null);
+  const usedCheckpointRef = useRef(false);
   const noteRef = useRef<{ text: string; until: number } | null>(null);
   const [hasCheckpoint, setHasCheckpoint] = useState(false);
   const [phase, setPhase] = useState<Phase>('ready');
@@ -235,6 +325,8 @@ export function CorridaGame({ level, replay, practice = false, onResult, onExit 
   const restart = useCallback(
     (fromCheckpoint = false) => {
       const saved = fromCheckpoint ? checkpointRef.current : null;
+      usedCheckpointRef.current = saved !== null;
+      noteRef.current = null;
       playerRef.current = saved ? { ...saved, status: 'running', cause: null, held: false } : newPlayer(prepared.current);
       if (!saved) {
         checkpointRef.current = null;
@@ -305,8 +397,10 @@ export function CorridaGame({ level, replay, practice = false, onResult, onExit 
     let raf = 0;
     let last = performance.now();
     let acc = 0;
+    let dpr = 1;
     const resize = () => {
       const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      dpr = ratio;
       const box = canvas.getBoundingClientRect();
       canvas.width = Math.max(1, Math.round(box.width * ratio));
       canvas.height = Math.max(1, Math.round(box.height * ratio));
@@ -338,27 +432,27 @@ export function CorridaGame({ level, replay, practice = false, onResult, onExit 
         else if (before.grounded && after.form === 'RUN' && after.vy < -4) playSfx('rnJump');
         if (after.collected.length > before.collected.length) playSfx('rnWord');
         if (after.grav !== before.grav) playSfx('rnFlip');
-        if (after.portal > before.portal) {
-          playSfx('rnPortal');
-          if (practice && !replay) {
-            checkpointRef.current = after;
-            setHasCheckpoint(true);
-            noteRef.current = { text: 'Checkpoint salvo', until: after.tick + 100 };
-          }
+        if (after.portal > before.portal) playSfx('rnPortal');
+        if (after.checkpoint > before.checkpoint && !replay) {
+          checkpointRef.current = after;
+          setHasCheckpoint(true);
+          playSfx('rnCheckpoint');
+          noteRef.current = { text: 'Checkpoint salvo', until: after.tick + 50 };
         }
         const status = after.status;
         if (status !== 'running') {
           flashRef.current = status === 'dead' ? 1 : 0;
           playSfx(status === 'dead' ? 'rnDeath' : 'rnWin');
-          const result = { progress: progressOf(prepared.current, after), words: after.collected.length, finished: status === 'finished' };
+          const result = { progress: progressOf(prepared.current, after), words: after.collected.length, finished: status === 'finished', clean: status === 'finished' && !usedCheckpointRef.current };
           setSummary({ progress: result.progress, words: result.words, total: prepared.current.wordCount });
           setPhaseBoth(status === 'dead' ? 'dead' : 'finished');
           if (!practice && !replay) onResultRef.current?.(result);
         }
       }
       if (flashRef.current > 0) flashRef.current = Math.max(0, flashRef.current - 0.04);
-      const note = noteRef.current && noteRef.current.until > playerRef.current.tick ? noteRef.current.text : null;
-      draw(ctx, prepared.current, playerRef.current, canvas.width, canvas.height, flashRef.current, note);
+      const left = noteRef.current ? noteRef.current.until - playerRef.current.tick : 0;
+      const note = noteRef.current && left > 0 ? { text: noteRef.current.text, fade: Math.min(1, left / 15) } : null;
+      draw(ctx, prepared.current, playerRef.current, canvas.width, canvas.height, flashRef.current, note, dpr);
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
@@ -403,25 +497,27 @@ export function CorridaGame({ level, replay, practice = false, onResult, onExit 
         ) : null}
         {(dead || finished) && !portrait ? (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 px-5">
-            <div className="panel w-full max-w-sm space-y-4 p-5 text-center">
+            <div className="panel w-full max-w-md space-y-4 p-5 text-center">
               <h3 className="font-display text-2xl font-bold text-ink">{finished ? (practice ? 'Treino concluído!' : 'Fase concluída!') : 'Quase lá!'}</h3>
               <p className="text-sm font-semibold text-muted">
                 {finished
-                  ? `Você pegou ${summary?.words ?? 0} de ${total} palavras do versículo${level.verse ? ` (${level.verse.ref}).` : '.'}`
-                  : `Você parou em ${Math.floor((summary?.progress ?? 0) * 100)}% e pegou ${summary?.words ?? 0} de ${total} palavras.`}
+                  ? `Você pegou ${summary?.words ?? 0} de ${total} palavras do versículo${level.verse ? ` (${level.verse.ref})` : ''}${usedCheckpointRef.current ? '.' : ' e não usou nenhum checkpoint!'}`
+                  : `Você parou em ${Math.floor((summary?.progress ?? 0) * 100)}% e pegou ${summary?.words ?? 0} de ${total} palavras.${hasCheckpoint ? ` Seu último checkpoint está em ${checkpointPercent}%.` : ''}`}
               </p>
-              <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-                {dead && practice && hasCheckpoint ? (
-                  <Button onClick={() => restart(true)} size="lg">
-                    Voltar ao checkpoint ({checkpointPercent}%)
+              <div className="flex flex-col gap-2">
+                {dead && hasCheckpoint ? (
+                  <Button onClick={() => restart(true)} size="lg" className="w-full whitespace-nowrap">
+                    Voltar ao último checkpoint ({checkpointPercent}%)
                   </Button>
                 ) : null}
-                <Button onClick={() => restart()} size="lg" variant={dead && practice && hasCheckpoint ? 'secondary' : 'primary'}>
-                  {replay ? 'Ver de novo' : practice && hasCheckpoint ? 'Do começo' : 'Tentar de novo'}
-                </Button>
-                <Button onClick={onExit} variant="secondary" size="lg">
-                  Sair
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button onClick={() => restart()} size="lg" variant={dead && hasCheckpoint ? 'secondary' : 'primary'} className="whitespace-nowrap">
+                    {replay ? 'Ver de novo' : finished ? 'Jogar de novo' : hasCheckpoint ? 'Do início' : 'Tentar de novo'}
+                  </Button>
+                  <Button onClick={onExit} variant="ghost" size="lg">
+                    Sair
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
