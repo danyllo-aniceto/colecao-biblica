@@ -3,6 +3,7 @@ import { BOT_LEVELS, botInputs, createBot, TOUCH_DELAY } from "./bots";
 import { prepareLevel, respawnAt, simulate } from "./engine";
 import { buildJourney, TILES_PER_SECOND } from "./journey";
 import { LEVELS } from "./levels";
+import { POWERS_BY_FORM } from "./powers";
 import { ROWS, TICKS_PER_SECOND, type RunResult } from "./types";
 
 describe("Corrida: fases", () => {
@@ -109,6 +110,18 @@ describe("Corrida: fases", () => {
       expect(simulate(prepared, botInputs(prepared, { lag: TOUCH_DELAY })).status, `semente ${seed} (com poderes)`).toBe("finished");
     }
   }, 240_000);
+
+  it("cada poder aparece numa forma em que faz sentido (sem Pulo triplo no voo nem na gravidade)", () => {
+    for (const seed of [2, 5, 9, 14]) {
+      const level = buildJourney({ id: "t", name: "T", seed, seconds: 90, verse: { ref: "x", words: ["a", "b", "c", "d", "e", "f"] } });
+      const portals = level.objects.filter((object) => object.kind === "portal") as Array<{ x: number; form: "RUN" | "FLY" | "GRAVITY" }>;
+      for (const object of level.objects) {
+        if (object.kind !== "power") continue;
+        const form = portals.filter((portal) => portal.x <= object.x).pop()?.form ?? level.form;
+        expect(POWERS_BY_FORM[form], `semente ${seed}: ${object.power} na coluna ${object.x} (${form})`).toContain(object.power);
+      }
+    }
+  });
 
   it("bots ao vivo: voltam ao checkpoint depois de cair e terminam; o Mestre chega antes do Aprendiz", () => {
     const level = buildJourney({ id: "t", name: "T", seed: 3, seconds: 75, verse: { ref: "x", words: ["a", "b"] } });

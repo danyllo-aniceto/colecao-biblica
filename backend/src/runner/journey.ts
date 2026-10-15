@@ -1,5 +1,5 @@
 import { gravityLane, GRAVITY_LANE, runFork, RUN_FORK } from "./forks";
-import { POWER_KINDS, type PowerKind } from "./powers";
+import { POWER_KINDS, POWERS_BY_FORM, type PowerKind } from "./powers";
 import { between, randomFrom, type Random } from "./rng";
 import { gap, portal } from "./segments";
 import { ROWS, SPEED, TICKS_PER_SECOND, TILE, type Form, type Level, type LevelObject, type Verse } from "./types";
@@ -27,7 +27,7 @@ export type JourneyOptions = {
 };
 
 /** O que os trechos precisam saber: sorteio, se há bifurcações e de onde vem o próximo poder (ou `null` se a fase não tem poderes). */
-type Context = { random: Random; forks: boolean; nextPower: () => PowerKind | null };
+type Context = { random: Random; forks: boolean; nextPower: (form: Form) => PowerKind | null };
 
 /** Distância entre checkpoints, em segundos de corrida (a fase tem uma bandeira a cada ~12 s). */
 const CHECKPOINT_SECONDS = 12;
@@ -74,7 +74,7 @@ function runPattern(objects: LevelObject[], carriers: Carrier[], x: number, ctx:
     // Bifurcação: degraus levam a uma laje (caminho de cima, com recompensas) ou segue-se por baixo (seguro). Só cabe se sobrar trecho.
     const length = RUN_FORK.stairs + RUN_FORK.gap + RUN_FORK.length + RUN_FORK.tail;
     if (ctx.forks && remaining >= length) {
-      const info = runFork(objects, x, ctx.nextPower());
+      const info = runFork(objects, x, ctx.nextPower("RUN"));
       // As palavras do versículo ficam só no chão livre (o caminho de risco dá o poder: palavra lá poderia ficar fora do alcance de quem vai pelo seguro).
       carriers.push({ x: info.end - 4, y: 0 });
       return info.end;
@@ -83,7 +83,7 @@ function runPattern(objects: LevelObject[], carriers: Carrier[], x: number, ctx:
     return x + 9 + 7;
   }
   // Respiro com um poder no chão (se a fase tem poderes).
-  const power = ctx.nextPower();
+  const power = ctx.nextPower("RUN");
   if (power) objects.push({ kind: "power", x: x + 3, y: 0, power });
   return x + 8;
 }
@@ -105,7 +105,7 @@ function flySection(objects: LevelObject[], carriers: Carrier[], x: number, leng
     carriers.push({ x: cursor, y: centre });
     // De vez em quando um poder no meio do vão (na 2ª coluna do portão).
     if (random() < 0.3) {
-      const power = ctx.nextPower();
+      const power = ctx.nextPower("FLY");
       if (power) objects.push({ kind: "power", x: cursor + 1, y: centre, power });
     }
     cursor += 2 + between(random, 5, 6);
@@ -125,7 +125,7 @@ function gravitySection(objects: LevelObject[], carriers: Carrier[], x: number, 
   const end = x + length;
   while (cursor < end) {
     if (ctx.forks && end - cursor >= GRAVITY_LANE.length + 6 && random() < 0.3) {
-      const info = gravityLane(objects, cursor, random() < 0.5 ? "ceiling" : "floor", ctx.nextPower());
+      const info = gravityLane(objects, cursor, random() < 0.5 ? "ceiling" : "floor", ctx.nextPower("GRAVITY"));
       cursor = info.end + between(random, 3, 5);
       mark(cursor);
       continue;
@@ -153,7 +153,19 @@ export function buildJourney(options: JourneyOptions): Level {
   let given = 0;
   const useForks = options.forks ?? true;
   const usePowers = options.powers ?? true;
-  const ctx: Context = { random, forks: useForks, nextPower: () => (usePowers ? queue[given++ % queue.length] : null) };
+  const ctx: Context = { random, forks: useForks, nextPower: (form) => {
+      if (!usePowers) return null;
+      // O próximo da fila que faz sentido na forma (os que não servem ficam para a vez seguinte).
+      for (let tries = 0; tries < queue.length; tries += 1) {
+        const index = (given + tries) % queue.length;
+        if (POWERS_BY_FORM[form].includes(queue[index])) {
+          given = index + 1;
+          return queue[index];
+        }
+      }
+      return null;
+    },
+  };
   const order = options.order ?? ["RUN", "FLY", "RUN", "GRAVITY"];
   const objects: LevelObject[] = [];
   const carriers: Carrier[] = [];

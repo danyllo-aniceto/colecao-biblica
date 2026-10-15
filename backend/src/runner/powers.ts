@@ -28,6 +28,16 @@ export type Effects = { turbo: number; shield: number; triple: number; magnet: n
 
 export const emptyEffects = (): Effects => ({ turbo: 0, shield: 0, triple: 0, magnet: 0, grace: 0 });
 
+/**
+ * Poderes que fazem sentido em cada forma: Pulo triplo só na Corrida (no voo e na gravidade não há pulo); Ímã onde há palavras no caminho
+ * (Corrida e Voo; a Gravidade não tem palavras); Turbo e Escudo valem em qualquer forma.
+ */
+export const POWERS_BY_FORM: Record<"RUN" | "FLY" | "GRAVITY", readonly PowerKind[]> = {
+  RUN: ["TURBO", "SHIELD", "TRIPLE", "MAGNET"],
+  FLY: ["TURBO", "SHIELD", "MAGNET"],
+  GRAVITY: ["TURBO", "SHIELD"],
+};
+
 /** Liga o efeito do poder que acabou de ser pego (pegar de novo renova o tempo). */
 export function applyPower(effects: Effects, power: PowerKind): Effects {
   const next = { ...effects };
