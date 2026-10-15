@@ -20,6 +20,7 @@ No Painel, em cada pose, a aba **"Quadro por quadro"** recebe vários arquivos d
 | Pose | Quadros | O que mostrar |
 |---|---|---|
 | **Retrato** | 1 | Corpo inteiro (ou meio corpo), de frente/¾, sorrindo. Aparece no cartão de escolha. Opcional: sem ele usa a corrida. |
+| **Parado** | 2 a 6 (4) | De perfil olhando para a direita, em pé, **respirando** (ciclo de 4 quadros: o tronco sobe e desce um pouco). **Os pés ficam exatamente no mesmo lugar em todos os quadros.** Aparece antes da largada, na escolha do personagem e sempre que ele está no chão sem andar. Sem esta pose, o jogo usa o 1º quadro de "Correndo", parado. |
 | **Correndo** | 4 a 6 | Ciclo de corrida em loop (o último quadro emenda no primeiro). |
 | **No ar** | 1 a 3 | Pulando/caindo, braços para cima ou abertos. |
 | **Voando** | 2 a 4 | Planando de lado (capa/manto ao vento, ou em cima de algo que combine com a história). Ciclo curto. |

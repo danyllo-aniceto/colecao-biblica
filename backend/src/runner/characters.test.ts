@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { frameFor, isHexColor, MAX_FRAMES, mergeSounds, mergeSprites, poseFor, sanitizeSounds, sanitizeSprites } from "./characters";
+import { frameFor, isHexColor, MAX_FRAMES, mergeSounds, mergeSprites, pickSheet, POSE_INFO, POSES, poseFor, sanitizeSounds, sanitizeSprites } from "./characters";
 
 describe("Corrida: personagens", () => {
   it("sanitizeSprites guarda só poses conhecidas com endereço, e limita os quadros a 1–12", () => {
@@ -39,6 +39,14 @@ describe("Corrida: personagens", () => {
     expect(mergeSounds(current, { death: "c" })).toEqual({ jump: "a", win: "b", death: "c" });
   });
 
+  it("a pose Parado existe, com 4 quadros por padrão, e é guardada como as outras", () => {
+    expect(POSES).toContain("idle");
+    expect(POSE_INFO.idle).toMatchObject({ label: "Parado", defaultFrames: 4 });
+    expect(sanitizeSprites({ idle: { url: "https://x/idle.webp", frames: 4 } })).toEqual({ idle: { url: "https://x/idle.webp", frames: 4 } });
+    expect(mergeSprites({}, { idle: { url: "https://x/i.webp", frames: 6 } })).toEqual({ idle: { url: "https://x/i.webp", frames: 6 } });
+    expect(mergeSprites({ idle: { url: "a", frames: 4 }, run: { url: "b", frames: 4 } }, { idle: null })).toEqual({ run: { url: "b", frames: 4 } });
+  });
+
   it("poseFor escolhe a pose pelo estado do corredor", () => {
     expect(poseFor({ form: "RUN", grounded: true, status: "running" })).toBe("run");
     expect(poseFor({ form: "RUN", grounded: false, status: "running" })).toBe("jump");
@@ -47,11 +55,32 @@ describe("Corrida: personagens", () => {
     expect(poseFor({ form: "RUN", grounded: true, status: "dead" })).toBe("dead");
   });
 
-  it("frameFor: ciclo nas poses animadas; queda toca uma vez e fica no último; 1 quadro sempre 0", () => {
+  it("poseFor: parado (antes da largada, esperando o toque, pausado) ou na chegada, no chão, usa Parado; no voo continua pairando; cair vence tudo", () => {
+    expect(poseFor({ form: "RUN", grounded: true, status: "running" }, true)).toBe("idle");
+    expect(poseFor({ form: "GRAVITY", grounded: true, status: "running" }, true)).toBe("idle");
+    expect(poseFor({ form: "FLY", grounded: false, status: "running" }, true)).toBe("fly");
+    expect(poseFor({ form: "RUN", grounded: true, status: "finished" })).toBe("idle");
+    expect(poseFor({ form: "FLY", grounded: false, status: "finished" })).toBe("fly");
+    expect(poseFor({ form: "RUN", grounded: true, status: "dead" }, true)).toBe("dead");
+  });
+
+  it("frameFor: ciclo nas poses animadas; Parado respira mais devagar; queda toca uma vez e fica no último; retrato e 1 quadro ficam no 0", () => {
     expect(frameFor("run", 1, 100)).toBe(0);
     expect([0, 6, 12, 18, 24].map((tick) => frameFor("run", 4, tick))).toEqual([0, 1, 2, 3, 0]);
+    expect([0, 11, 12, 24, 36, 48, 60].map((tick) => frameFor("idle", 4, tick))).toEqual([0, 0, 1, 2, 3, 0, 1]);
     expect([0, 6, 12, 60].map((tick) => frameFor("dead", 3, tick))).toEqual([0, 1, 2, 2]);
     expect(frameFor("portrait", 3, 50)).toBe(0);
+    expect(frameFor("idle", 4, -5)).toBe(0);
+  });
+
+  it("pickSheet: usa a imagem da pose; sem arte Parado cai para o 1º quadro da corrida (parado); as outras poses sem arte não têm reserva", () => {
+    const run = { url: "https://x/run.webp", frames: 4 };
+    const idle = { url: "https://x/idle.webp", frames: 4 };
+    expect(pickSheet({ run, idle }, "idle")).toEqual({ sheet: idle, still: false });
+    expect(pickSheet({ run }, "idle")).toEqual({ sheet: run, still: true });
+    expect(pickSheet({ idle }, "run")).toBeNull();
+    expect(pickSheet({}, "idle")).toBeNull();
+    expect(pickSheet(undefined, "idle")).toBeNull();
   });
 
   it("isHexColor aceita só #RRGGBB", () => {

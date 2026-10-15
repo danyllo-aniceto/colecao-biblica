@@ -73,9 +73,13 @@ export function saveCharacter(id: string) {
   }
 }
 
-/** Sprite para mostrar o personagem em cartões: o retrato, ou a corrida (que anima); sem nenhum, a cor. */
-export function portraitOf(character: RunnerCharacter) {
-  return character.sprites.portrait ?? character.sprites.run ?? null;
+/** Quadros por segundo de cada pose nos cartões (a respiração do "Parado" é mais lenta). */
+const CARD_FPS = { portrait: 8, idle: 5, run: 8 } as const;
+
+/** Sprite para mostrar o personagem em cartões e listas: o retrato, senão o "Parado" (respirando), senão a corrida; sem nenhum, a cor. Já traz a velocidade da animação. */
+export function portraitOf(sprites: Sprites): { url: string; frames: number; fps: number } | null {
+  const pick = (pose: keyof typeof CARD_FPS) => (sprites[pose] ? { ...sprites[pose]!, fps: CARD_FPS[pose] } : null);
+  return pick('portrait') ?? pick('idle') ?? pick('run');
 }
 
 /** Os rivais da corrida contra bots: os outros personagens, na ordem da lista; se faltarem, completa com os padrão. */
