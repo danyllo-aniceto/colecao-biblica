@@ -1,7 +1,7 @@
-import { cellRects, greenKey, stripLayout } from '@runner/sprite-strip';
+import { cellRects, columnInk, detectFrames, greenKey, stripLayout } from '@runner/sprite-strip';
 
 /** Um arquivo de imagem e quantos quadros ele traz (1 = um quadro solto; N = tira horizontal de N quadros quadrados). */
-export type StripSource = { file: File; cells: number };
+export type StripSource = { file: File; cells: number; /** Como dividir uma tira: pelo desenho (acha cada personagem) ou em partes iguais. Só vale com 2+ quadros; padrão: pelo desenho. */ split?: 'ink' | 'equal' };
 
 /** Tamanho de uma imagem (para conferir se a tira é de quadros quadrados antes de montar). */
 export async function imageSize(file: File): Promise<{ w: number; h: number }> {
@@ -16,16 +16,60 @@ export async function imageSize(file: File): Promise<{ w: number; h: number }> {
 }
 
 /**
+ * Divide uma tira pelo desenho: vê onde há personagem em cada coluna (transparência ou diferença do fundo), corta nos vãos entre eles e centra
+ * cada um pelo corpo, todos com a mesma largura (contas em `@runner/sprite-strip`, com teste). Cada quadro sai com a altura inteira da imagem,
+ * então o chão e a altura do personagem se mantêm.
+ */
+async function splitByDrawing(file: File, cells: number, removeGreen: boolean, warnings: string[]): Promise<ImageBitmap[]> {
+  let source: ImageBitmap;
+  try {
+    source = await createImageBitmap(file);
+  } catch {
+    throw new Error(`Não foi possível abrir "${file.name}". Use PNG, WEBP ou JPG.`);
+  }
+  try {
+    const probe = document.createElement('canvas');
+    probe.width = source.width;
+    probe.height = source.height;
+    const probeCtx = probe.getContext('2d', { willReadFrequently: true });
+    if (!probeCtx) throw new Error('Este navegador não consegue montar a imagem.');
+    probeCtx.drawImage(source, 0, 0);
+    const pixels = probeCtx.getImageData(0, 0, source.width, source.height).data;
+    const found = detectFrames(columnInk(pixels, source.width, source.height, { removeGreen }), cells);
+    if (found.warning) warnings.push(`${file.name}: ${found.warning}`);
+    const bitmaps: ImageBitmap[] = [];
+    for (const rect of found.rects) {
+      const frame = document.createElement('canvas');
+      frame.width = rect.w;
+      frame.height = source.height;
+      // Fora da imagem (desenho perto da borda) fica transparente.
+      frame.getContext('2d')?.drawImage(source, -rect.sx, 0);
+      bitmaps.push(await createImageBitmap(frame));
+    }
+    return bitmaps;
+  } finally {
+    source.close();
+  }
+}
+
+/**
  * Monta a tira de sprites a partir de arquivos de imagem, na ordem (cada um vale 1 quadro solto ou uma tira de N quadros): mesma escala em todos,
  * pés na base de cada célula e, se pedido, sem o fundo verde chapado. As contas de recorte e de disposição estão em `@runner/sprite-strip` (com teste).
  * Devolve o total de quadros (a soma das células de todos os arquivos).
  */
-export async function buildStripCanvas(sources: StripSource[], options: { removeGreen: boolean }): Promise<{ canvas: HTMLCanvasElement; frames: number }> {
+export async function buildStripCanvas(sources: StripSource[], options: { removeGreen: boolean }): Promise<{ canvas: HTMLCanvasElement; frames: number; warnings: string[] }> {
   const bitmaps: ImageBitmap[] = [];
+  const warnings: string[] = [];
   try {
-    for (const { file, cells } of sources) {
+    for (const { file, cells, split = 'ink' } of sources) {
+      if (cells > 1 && split === 'ink') {
+        bitmaps.push(...(await splitByDrawing(file, cells, options.removeGreen, warnings)));
+        continue;
+      }
       const size = await imageSize(file);
-      for (const rect of cellRects(size, cells).rects) {
+      const { rects, warning } = cellRects(size, cells);
+      if (warning) warnings.push(`${file.name}: ${warning}`);
+      for (const rect of rects) {
         try {
           bitmaps.push(cells === 1 ? await createImageBitmap(file) : await createImageBitmap(file, rect.sx, rect.sy, rect.w, rect.h));
         } catch {
@@ -57,7 +101,7 @@ export async function buildStripCanvas(sources: StripSource[], options: { remove
       }
       ctx.putImageData(data, 0, 0);
     }
-    return { canvas, frames: bitmaps.length };
+    return { canvas, frames: bitmaps.length, warnings };
   } finally {
     bitmaps.forEach((bitmap) => bitmap.close());
   }
