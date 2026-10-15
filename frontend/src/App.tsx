@@ -23,6 +23,7 @@ export function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/sala/:code" element={<RoomInvitePage />} />
               <Route path="/duelo/:code" element={<RoomInvitePage game="duel" />} />
+              <Route path="/corrida/:code" element={<RoomInvitePage game="runner" />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route
                 path="/dashboard/figurinhas/:characterId"

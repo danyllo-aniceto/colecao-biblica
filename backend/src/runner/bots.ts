@@ -1,6 +1,7 @@
 import { maxTicksOf, newPlayer, respawnAt, stepPlayer } from "./engine";
 import { randomFrom } from "./rng";
 import { PLAYER, TILE, type PlayerState, type PreparedLevel } from "./types";
+import type { RunSegment } from "./verify";
 
 /** O bot decide a cada `DECISION_TICKS` passos e olha `DEPTH` decisões à frente (até 128 caminhos, ~56 passos de horizonte). */
 export const DECISION_TICKS = 8;
@@ -100,6 +101,11 @@ export type Bot = {
   elapsed: number;
   /** Passos em que o toque desceu/subiu (a mesma forma da partida de um jogador). */
   toggles: number[];
+  /**
+   * A partida como o servidor a confere (`verifyRun`): corrente de tentativas, cada uma com os toques contados desde o começo dela. Ao cair, o bot volta
+   * ao último checkpoint (com o que tinha ao cruzá-lo) ou, sem checkpoint, recomeça do início.
+   */
+  segments: RunSegment[];
   step: () => void;
 };
 
@@ -112,13 +118,15 @@ export function createBot(level: PreparedLevel, options: BotOptions = {}): Bot {
   let hold = false;
   let intended = false;
   let pending: { at: number; hold: boolean } | null = null;
-  let checkpoint = 0;
+  let snapshot: { count: number; collected: number[]; powers: number[]; tick: number } | null = null;
+  let segmentStart = options.from?.tick ?? 0;
   let waiting = 0;
   const bot: Bot = {
     player: options.from ?? newPlayer(level),
     deaths: 0,
     elapsed: 0,
     toggles: [],
+    segments: [{ fromCheckpoint: false, toggles: [] }],
     step() {
       const current = bot.player;
       if (current.status === "finished") return;
@@ -126,7 +134,15 @@ export function createBot(level: PreparedLevel, options: BotOptions = {}): Bot {
       if (current.status === "dead") {
         waiting += 1;
         if (options.respawn && waiting >= BOT_RESPAWN_TICKS) {
-          bot.player = respawnAt(level, checkpoint, current.collected, current.tick, current.powers);
+          if (snapshot) {
+            bot.player = respawnAt(level, snapshot.count, snapshot.collected, snapshot.tick, snapshot.powers);
+            segmentStart = snapshot.tick;
+            bot.segments.push({ fromCheckpoint: true, toggles: [] });
+          } else {
+            bot.player = newPlayer(level);
+            segmentStart = 0;
+            bot.segments.push({ fromCheckpoint: false, toggles: [] });
+          }
           hold = false;
           intended = false;
           pending = null;
@@ -141,6 +157,7 @@ export function createBot(level: PreparedLevel, options: BotOptions = {}): Bot {
           if (lag === 0) {
             if (next !== hold) {
               bot.toggles.push(current.tick);
+              bot.segments[bot.segments.length - 1].toggles.push(current.tick - segmentStart);
               hold = next;
             }
           } else {
@@ -151,12 +168,14 @@ export function createBot(level: PreparedLevel, options: BotOptions = {}): Bot {
       if (pending && current.tick >= pending.at) {
         if (pending.hold !== hold) {
           bot.toggles.push(current.tick);
+          bot.segments[bot.segments.length - 1].toggles.push(current.tick - segmentStart);
           hold = pending.hold;
         }
         pending = null;
       }
       const after = stepPlayer(level, current, hold);
-      if (after.checkpoint > current.checkpoint) checkpoint = after.checkpoint;
+      // Mesma regra do jogo e do servidor: o checkpoint vale ao cruzar a bandeira com o personagem vivo, guardando o que ele tinha nesse instante.
+      if (after.checkpoint > current.checkpoint && after.status === "running") snapshot = { count: after.checkpoint, collected: [...after.collected], powers: [...after.powers], tick: after.tick };
       if (after.status === "dead") bot.deaths += 1;
       bot.player = after;
     },

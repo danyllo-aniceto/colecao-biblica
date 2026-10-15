@@ -12,6 +12,7 @@ import { duelRouter } from "./routes/duel";
 import { gameModesPublicRouter, gameModesRouter } from "./routes/game-modes";
 import { landingRouter, sharePageRouter } from "./routes/landing";
 import { duelPublicRouter, duelRoomRouter } from "./routes/duel-room";
+import { runnerPublicRouter, runnerRoomRouter } from "./routes/runner-room";
 import { charactersRouter } from "./routes/characters";
 import { collectionRouter } from "./routes/collection";
 import { commentsRouter } from "./routes/comments";
@@ -57,6 +58,7 @@ export function createApp() {
   app.use("/api/board-public", boardPublicRouter);
   app.use("/api/game-modes-public", gameModesPublicRouter);
   app.use("/api/duel-public", duelPublicRouter);
+  app.use("/api/runner-public", runnerPublicRouter);
   app.use("/api/landing", landingRouter);
   app.use("/api/compartilhar", sharePageRouter);
 
@@ -90,6 +92,7 @@ export function createApp() {
   app.use("/api/board", requireAuth, boardRouter);
   app.use("/api/duel", requireAuth, duelRouter);
   app.use("/api/duel-room", requireAuth, duelRoomRouter);
+  app.use("/api/runner-room", requireAuth, runnerRoomRouter);
 
   app.use("/api", notFoundHandler);
   app.use(errorHandler);

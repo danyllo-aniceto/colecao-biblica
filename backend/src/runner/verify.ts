@@ -4,7 +4,7 @@ import type { PlayerState, PreparedLevel } from "./types";
 /**
  * Conferência de uma partida da campanha pelos toques (o servidor repete tudo; a tela nunca manda pontos).
  * Uma partida é uma **corrente de tentativas**: a 1ª sai do início da fase; cada uma das seguintes sai do último checkpoint alcançado (é o que
- * o jogo faz ao cair e tocar em "Voltar ao último checkpoint"). Cada tentativa é uma lista de passos em que o dedo desce/sobe, contados **a partir
+ * o jogo faz ao cair e tocar em "Voltar ao último checkpoint") ou, sem `fromCheckpoint`, recomeça do início (cair sem checkpoint na corrida online). Cada tentativa é uma lista de passos em que o dedo desce/sobe, contados **a partir
  * do começo da própria tentativa** (a mesma lista que `simulate` usa). Recomeçar do início zera a corrente (o app só manda a corrente atual).
  */
 export type RunSegment = { fromCheckpoint: boolean; toggles: number[] };
@@ -34,7 +34,7 @@ export function parseSegments(raw: unknown, maxTicks: number): RunSegment[] | nu
 }
 
 export type RunVerdict =
-  | { ok: true; /** Maior parte da fase percorrida (0–1). */ progress: number; /** Palavras pegas na melhor tentativa. */ words: number; finished: boolean; allWords: boolean; clean: boolean; deaths: number }
+  | { ok: true; /** Maior parte da fase percorrida (0–1). */ progress: number; /** Palavras pegas na melhor tentativa. */ words: number; finished: boolean; allWords: boolean; clean: boolean; deaths: number; /** Passos jogados em todas as tentativas (o tempo da partida, sem a espera para voltar ao checkpoint). */ steps: number }
   | { ok: false; reason: string };
 
 /** Estrelas da fase: terminar, pegar todas as palavras e terminar sem cair (cada critério vale uma, só contam com a fase terminada). */
@@ -51,12 +51,14 @@ export function verifyRun(level: PreparedLevel, segments: RunSegment[]): RunVerd
   let progress = 0;
   let words = 0;
   let last: PlayerState = newPlayer(level);
+  let steps = 0;
   for (const [index, segment] of segments.entries()) {
     if (index === 0 && segment.fromCheckpoint) return { ok: false, reason: "A primeira tentativa sai do início da fase." };
-    if (index > 0 && !segment.fromCheckpoint) return { ok: false, reason: "Depois de cair, a tentativa sai do último checkpoint." };
     let player: PlayerState;
-    if (index === 0) {
+    if (!segment.fromCheckpoint) {
+      // Do início: a primeira tentativa ou, depois de cair sem checkpoint, um recomeço (o que já tinha se perde, o tempo gasto continua contando).
       player = newPlayer(level);
+      snapshot = null;
     } else if (snapshot) {
       player = respawnAt(level, snapshot.count, snapshot.collected, snapshot.tick, snapshot.powers);
     } else {
@@ -71,6 +73,7 @@ export function verifyRun(level: PreparedLevel, segments: RunSegment[]): RunVerd
       }
       const before = player;
       player = stepPlayer(level, player, held);
+      steps += 1;
       // Mesma regra do jogo: o checkpoint vale ao cruzar a bandeira com o personagem vivo.
       if (player.checkpoint > before.checkpoint && player.status === "running") snapshot = { count: player.checkpoint, collected: [...player.collected], powers: [...player.powers], tick: player.tick };
     }
@@ -90,5 +93,6 @@ export function verifyRun(level: PreparedLevel, segments: RunSegment[]): RunVerd
     allWords: finished && level.wordCount > 0 && last.collected.length === level.wordCount,
     clean: finished && segments.length === 1,
     deaths: segments.length - 1 + (finished ? 0 : 1),
+    steps,
   };
 }

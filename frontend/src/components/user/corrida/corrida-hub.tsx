@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import FaceRoundedIcon from '@mui/icons-material/FaceRounded';
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Pagination, usePagination } from '@/components/ui/pagination';
 import { Segmented } from '@/components/ui/segmented';
 import { Select } from '@/components/ui/select';
-import { useToast } from '@/components/ui/toast';
+import { errorMessage, useToast } from '@/components/ui/toast';
 import { LoadingState } from '@/components/ui/spinner';
 import { cn } from '@/lib/cn';
 import { BOT_LEVELS, type BotLevel } from '@runner/bots';
@@ -24,6 +24,11 @@ import type { Level } from '@runner/types';
 import type { CorridaResult, CorridaRival } from '@/components/user/corrida/corrida-game';
 import { CampaignMap, type MapStop } from '@/components/user/corrida/corrida-map';
 import { CorridaLocal, PlayerChip, type LocalPlayer } from '@/components/user/corrida/corrida-local';
+import { CorridaRoom } from '@/components/user/corrida/corrida-room';
+import { createRunnerRoom, joinRunnerRoom, myRunnerRoom, PENDING_RUNNER_EVENT, takePendingRunnerRoom, type RunnerRoomView } from '@/lib/runner-room-api';
+import { usePwa } from '@/components/pwa/pwa-provider';
+import { Field } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
 import { useRunnerProgress } from '@/components/user/corrida/corrida-progress';
 import { portraitOf, rivalsFor, saveCharacter, storedCharacterId, useRunnerCharacters, type RunnerCharacter } from '@/components/user/corrida/corrida-characters';
 import { SpriteView } from '@/components/user/corrida/sprite-view';
@@ -81,6 +86,27 @@ export function CorridaHub() {
   // O escolhido pode ter sumido do Painel (desativado) ou estar fechado: volta ao primeiro da lista.
   const character = characters.find((item) => item.id === selectedId) ?? characters[0] ?? allCharacters[0];
   const portrait = portraitOf(character.sprites);
+  // Sala online aberta nesta tela (a pessoa pode sair da tela sem sair da sala e voltar depois).
+  const [room, setRoom] = useState<RunnerRoomView | null>(null);
+
+  // Sala pedida por link de convite (/corrida/CÓDIGO): entra assim que o hub abre.
+  const characterId = character.id;
+  const openPending = useCallback(async () => {
+    const code = takePendingRunnerRoom();
+    if (!code) return;
+    setTab('multi');
+    try {
+      setRoom(await joinRunnerRoom(code, characterId));
+    } catch (reason) {
+      toast.error(errorMessage(reason, 'Não foi possível entrar na sala.'));
+    }
+  }, [characterId, toast]);
+  useEffect(() => {
+    void openPending();
+    const listener = () => void openPending();
+    window.addEventListener(PENDING_RUNNER_EVENT, listener);
+    return () => window.removeEventListener(PENDING_RUNNER_EVENT, listener);
+  }, [openPending]);
 
   function choose(next: RunnerCharacter) {
     setSelectedId(next.id);
@@ -89,8 +115,12 @@ export function CorridaHub() {
 
   return (
     <section className="space-y-4" aria-label="Corrida">
-      <Alert tone="info">Protótipo do novo modo: ainda sem o modo online. Use o celular deitado (no computador, a barra de espaço).{pendingCount > 0 ? ` ${pendingCount === 1 ? '1 partida' : `${pendingCount} partidas`} da campanha aguardando conexão para ser conferida${pendingCount === 1 ? '' : 's'}.` : ''}</Alert>
+      <Alert tone="info">Use o celular deitado (no computador, a barra de espaço).{pendingCount > 0 ? ` ${pendingCount === 1 ? '1 partida' : `${pendingCount} partidas`} da campanha aguardando conexão para ser conferida${pendingCount === 1 ? '' : 's'}.` : ''}</Alert>
 
+      {room ? (
+        <CorridaRoom initial={room} levels={levels} allCharacters={allCharacters} choices={characters} onExit={() => setRoom(null)} />
+      ) : (
+        <>
       <div className="flex items-center justify-between gap-3 rounded-2xl bg-surface-3 px-3 py-2">
         <div className="flex min-w-0 items-center gap-2">
           <SpriteView url={portrait?.url} frames={portrait?.frames} fps={portrait?.fps} color={character.color} size={40} />
@@ -123,8 +153,11 @@ export function CorridaHub() {
       {tab === 'campaign' ? <CampaignTab scenarios={scenarios} levels={levels} bests={bests} finished={finished} characters={allCharacters} onPlay={(level) => setPlaying({ level, mode: 'campaign' })} /> : null}
       {tab === 'free' ? <FreeTab levels={levels} bests={bests} onPlay={(level, mode) => setPlaying({ level, mode })} /> : null}
       {tab === 'bots' ? <BotsTab levels={levels} characters={characters} character={character} onStart={(level, rivals) => setPlaying({ level, mode: 'race', rivals })} /> : null}
-      {tab === 'multi' ? <MultiTab levels={levels} characters={characters} character={character} onStartLocal={(level, players) => setPlaying({ level, mode: 'local', players })} /> : null}
+      {tab === 'multi' ? <MultiTab levels={levels} characters={characters} character={character} onStartLocal={(level, players) => setPlaying({ level, mode: 'local', players })} onOpenRoom={setRoom} /> : null}
       {tab === 'characters' ? <CharactersTab levels={levels} characters={allCharacters} finished={finished} character={character} onChoose={choose} /> : null}
+
+        </>
+      )}
 
       {playing?.mode === 'local' && playing.players ? (
         <CorridaLocal level={playing.level} players={playing.players} onExit={() => setPlaying(null)} />
@@ -329,7 +362,7 @@ function BotsTab({ levels, characters, character, onStart }: { levels: Level[]; 
 }
 
 /** Multijogador: local (até 4 na mesma tela) e online (até 4 jogadores). Chegam nas etapas 6 e 7 do cronograma. */
-function MultiTab({ levels, characters, character, onStartLocal }: { levels: Level[]; characters: RunnerCharacter[]; character: RunnerCharacter; onStartLocal: (level: Level, players: LocalPlayer[]) => void }) {
+function MultiTab({ levels, characters, character, onStartLocal, onOpenRoom }: { levels: Level[]; characters: RunnerCharacter[]; character: RunnerCharacter; onStartLocal: (level: Level, players: LocalPlayer[]) => void; onOpenRoom: (view: RunnerRoomView) => void }) {
   const [total, setTotal] = useState<'2' | '3' | '4'>('2');
   const [humans, setHumans] = useState<'1' | '2' | '3' | '4'>('2');
   const [levelId, setLevelId] = useState(levels[0].id);
@@ -428,13 +461,88 @@ function MultiTab({ levels, characters, character, onStartLocal }: { levels: Lev
           Montar a largada
         </Button>
       </div>
-      <div className="panel space-y-2 p-4">
-        <p className="font-display text-lg font-bold text-ink">Online com amigos</p>
-        <p className="text-sm font-semibold text-muted">Crie uma sala, convide até 3 amigos por código ou link e corram na mesma fase. Chega na próxima etapa.</p>
-        <Button disabled className="w-full">
-          Em breve
-        </Button>
+      <OnlineRooms levels={levels} character={character} onOpenRoom={onOpenRoom} />
+    </div>
+  );
+}
+
+/** Corrida online com amigos: criar uma sala (fase + personagem), entrar por código ou voltar à sala em que a pessoa já está. */
+function OnlineRooms({ levels, character, onOpenRoom }: { levels: Level[]; character: RunnerCharacter; onOpenRoom: (view: RunnerRoomView) => void }) {
+  const toast = useToast();
+  const { isOnline } = usePwa();
+  const [levelId, setLevelId] = useState(levels[0].id);
+  const [code, setCode] = useState('');
+  const [codeError, setCodeError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<'create' | 'join' | 'back' | null>(null);
+  const [current, setCurrent] = useState<{ code: string } | null>(null);
+
+  useEffect(() => {
+    if (!navigator.onLine) return;
+    myRunnerRoom()
+      .then((found) => setCurrent(found ? { code: found.code } : null))
+      .catch(() => setCurrent(null));
+  }, []);
+
+  async function create() {
+    setBusy('create');
+    try {
+      onOpenRoom(await createRunnerRoom({ levelSlug: levelId, characterSlug: character.id }));
+    } catch (reason) {
+      toast.error(errorMessage(reason, 'Não foi possível criar a sala.'));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function join(roomCode: string, mode: 'join' | 'back') {
+    const clean = roomCode.trim().toUpperCase();
+    if (clean.length < 4) {
+      setCodeError('Digite o código da sala (5 letras ou números).');
+      return;
+    }
+    setCodeError(null);
+    setBusy(mode);
+    try {
+      onOpenRoom(await joinRunnerRoom(clean, character.id));
+    } catch (reason) {
+      const message = errorMessage(reason, 'Não foi possível entrar na sala.');
+      if (mode === 'join') setCodeError(message);
+      else toast.error(message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div className="panel space-y-4 p-4">
+      <p className="font-display text-lg font-bold text-ink">Online com amigos</p>
+      <p className="text-sm font-semibold text-muted">Crie uma sala, convide até 3 amigos por código ou link e corram juntos na mesma fase. Os bots completam as vagas. Cada um corre no seu aparelho e o servidor confere o tempo.</p>
+      {!isOnline ? <Alert tone="info">A corrida online precisa de internet.</Alert> : null}
+      {current ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-surface-3 p-3">
+          <p className="min-w-0 flex-1 text-sm font-bold text-ink">
+            Você está na sala <span className="tracking-widest">{current.code}</span>
+          </p>
+          <Button size="sm" onClick={() => void join(current.code, 'back')} loading={busy === 'back'} disabled={!isOnline}>
+            Voltar à sala
+          </Button>
+        </div>
+      ) : null}
+      <div className="space-y-1.5">
+        <p className="font-display text-sm font-bold text-ink">Fase</p>
+        <Select value={levelId} onChange={setLevelId} options={levels.map((item) => ({ value: item.id, label: item.name, description: levelInfo(item) }))} aria-label="Fase da corrida online" searchable />
       </div>
+      <Button size="lg" className="w-full" onClick={() => void create()} loading={busy === 'create'} disabled={!isOnline}>
+        Criar sala
+      </Button>
+      <Field label="Tem um código?" error={codeError ?? undefined} htmlFor="runner-room-code">
+        <div className="flex gap-2">
+          <Input id="runner-room-code" value={code} onChange={(event) => setCode(event.target.value.toUpperCase())} maxLength={8} placeholder="ABCDE" className="tracking-widest" />
+          <Button variant="secondary" onClick={() => void join(code, 'join')} loading={busy === 'join'} disabled={!isOnline}>
+            Entrar
+          </Button>
+        </div>
+      </Field>
     </div>
   );
 }

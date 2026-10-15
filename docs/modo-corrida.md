@@ -186,12 +186,14 @@ Telas (aba Jogar → Corrida), no mesmo molde do Duelo/Tabuleiro, sem servidor (
 - [x] Conferido de ponta a ponta no navegador (2 dedos + 2 bots na grade 2×2, largada, corrida, placar). Nada do modo dá XP, moedas nem ranking: a partida no mesmo aparelho não grava progresso.
 - [ ] Faixas separadas por jogador na horizontal de verdade (hoje: grade, para os personagens não ficarem pequenos demais em celular).
 
-### Etapa 7 — Online: até 4 jogadores (G)
-- [ ] Migração e `services/runner-room.ts` + `routes/runner-room.ts` (sala, código de convite, lobby, bots completando), no molde do Tabuleiro/Duelo
-  (sem websocket; `?since=<versão>`; `advance()` com a sala trancada).
-- [ ] Corrida paralela: mesma fase e semente; progresso enviado a cada ~1 s; rivais aparecem como corredores levemente atrasados; início pelo relógio do servidor.
-- [ ] Resultado final conferido pelo servidor (repete os toques de cada jogador); desconectado = fora da corrida.
-- [ ] Convite por link (`/corrida/CÓDIGO`, mesma página de convite dos outros modos).
+### Etapa 7 — Online: até 4 jogadores (G) — feita (falta o seu teste com amigos)
+- [x] Migração `corrida_salas_online` (`runner_rooms`, `runner_room_players`) e `services/runner-room.ts` + `routes/runner-room.ts` no molde do Tabuleiro/Duelo: sem websocket, `?since=<versão>` no lobby, `advance()` preguiçoso com a sala trancada (`FOR UPDATE`). Sala com código de 5 letras, lobby (fase, personagem, bots com nível, anfitrião tira bot/pessoa), até 4 corredores (pessoas + bots; com a sala cheia, quem chega toma o lugar de um bot), revanche.
+- [x] **Corrida paralela** (`corrida-online-race.tsx`): mesma fase e física; **largada pelo relógio do servidor** (6 s de contagem, o aparelho acerta o relógio por `serverNow`); a posição vai para a sala a cada ~1 s (`POST /progress`, que devolve a sala) e os outros aparecem como fantasmas levemente atrasados (chegam aos poucos à posição relatada). Cair volta sozinho ao último checkpoint (ou ao início, sem checkpoint).
+- [x] **Resultado conferido pelo servidor** (`runner/room.ts` + `verify.ts`): ao chegar, o aparelho manda a partida inteira (corrente de tentativas com os toques) e o servidor a repete; **tempo oficial = passos da partida conferida + 45 passos por queda** (igual ao tempo do bot ao vivo, testado). O aparelho do anfitrião joga pelos bots (sementes fixas) e manda a partida deles, também conferida. Placar: quem chegou (tempo oficial), depois quem foi mais longe, palavras e quedas.
+- [x] Sem sinal por 20 s (ou saindo no meio) = **fora da corrida**; se o anfitrião sai, os bots saem juntos. A corrida acaba quando todos terminam/saem, 30 s depois da 1ª chegada ou no tempo máximo da fase.
+- [x] Convite por link `/corrida/CÓDIGO` (mesma página de convite dos outros modos) e por código na aba Multi; "Voltar à sala" se a pessoa saiu da tela sem sair da sala.
+- [x] Conferido de ponta a ponta no navegador com dois jogadores reais + 1 bot (criar, entrar por código, bot, largada, corrida, placar). Nada do modo dá XP, moedas, estrelas nem ranking.
+- [ ] Convite direto a um amigo da lista (como no Duelo) e vários bots de uma vez; hoje o convite é por link ou código.
 
 ### Etapa 8 — Polimento e conteúdo (contínua)
 - [ ] Sons e voz por personagem; trilhas por cenário (e fases de ritmo, como Jericó).
