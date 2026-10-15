@@ -20,6 +20,9 @@ export type JourneyOptions = {
   flyGap?: number;
 };
 
+/** Distância entre checkpoints, em segundos de corrida (a fase tem uma bandeira a cada ~12 s). */
+const CHECKPOINT_SECONDS = 12;
+
 /** Quanto dura cada tipo de trecho, em segundos (varia um pouco por sorteio). */
 const SECTION_SECONDS: Record<Form, number> = { RUN: 26, FLY: 18, GRAVITY: 22 };
 
@@ -61,7 +64,7 @@ function runPattern(objects: LevelObject[], carriers: Carrier[], x: number, rand
 }
 
 /** Trecho de voo: túneis cujo vão (no mínimo `minGap` linhas) anda no máximo 1 linha por passagem em cada lado. */
-function flySection(objects: LevelObject[], carriers: Carrier[], x: number, length: number, random: Random, minGap: number): number {
+function flySection(objects: LevelObject[], carriers: Carrier[], x: number, length: number, random: Random, minGap: number, mark: (nextObstacleX: number) => void): number {
   let floor = 1;
   let ceil = 1;
   let cursor = x;
@@ -74,12 +77,13 @@ function flySection(objects: LevelObject[], carriers: Carrier[], x: number, leng
     if (ceil > 0) objects.push({ kind: "block", x: cursor, y: ROWS - ceil, w: 2, h: ceil });
     carriers.push({ x: cursor, y: floor + Math.floor((ROWS - floor - ceil) / 2) });
     cursor += 2 + between(random, 5, 6);
+    mark(cursor);
   }
   return cursor;
 }
 
 /** Trecho de gravidade: espetos no chão e no teto; quem passa inverte a gravidade quando o espeto está do lado onde está. */
-function gravitySection(objects: LevelObject[], x: number, length: number, random: Random): number {
+function gravitySection(objects: LevelObject[], x: number, length: number, random: Random, mark: (nextObstacleX: number) => void): number {
   let cursor = x;
   let side: "floor" | "ceiling" = "floor";
   const end = x + length;
@@ -87,6 +91,7 @@ function gravitySection(objects: LevelObject[], x: number, length: number, rando
     if (random() < 0.65) side = side === "floor" ? "ceiling" : "floor";
     objects.push(side === "floor" ? { kind: "spike", x: cursor } : { kind: "spike", x: cursor, y: ROWS - 1, down: true });
     cursor += between(random, 7, 9);
+    mark(cursor);
   }
   return cursor;
 }
@@ -101,6 +106,14 @@ export function buildJourney(options: JourneyOptions): Level {
   const objects: LevelObject[] = [];
   const carriers: Carrier[] = [];
   let x = 16;
+  let lastCheckpoint = 0;
+  // Bandeira no trecho livre antes do próximo obstáculo (3 colunas antes dele), quando já passou tempo desde a última.
+  const mark = (nextObstacleX: number) => {
+    if (nextObstacleX - lastCheckpoint >= CHECKPOINT_SECONDS * TILES_PER_SECOND) {
+      lastCheckpoint = nextObstacleX - 3;
+      objects.push({ kind: "checkpoint", x: lastCheckpoint });
+    }
+  };
   let form: Form = "RUN";
   let sectionIndex = 0;
   const target = options.seconds * TILES_PER_SECOND;
@@ -110,6 +123,9 @@ export function buildJourney(options: JourneyOptions): Level {
     if (sectionIndex > 0 && next !== form) {
       x = portal(objects, gap(x, 4), next);
       x = gap(x, 12);
+      // Começo de cada trecho novo: bandeira logo depois do portal.
+      lastCheckpoint = x - 6;
+      objects.push({ kind: "checkpoint", x: lastCheckpoint });
     } else if (sectionIndex === 0 && next !== "RUN") {
       x = portal(objects, x, next);
       x = gap(x, 12);
@@ -118,11 +134,14 @@ export function buildJourney(options: JourneyOptions): Level {
     const length = Math.round(SECTION_SECONDS[form] * TILES_PER_SECOND * (0.8 + random() * 0.4));
     const end = x + length;
     if (form === "RUN") {
-      while (x < end) x = runPattern(objects, carriers, x, random);
+      while (x < end) {
+        x = runPattern(objects, carriers, x, random);
+        mark(x);
+      }
     } else if (form === "FLY") {
-      x = flySection(objects, carriers, x, length, random, options.flyGap ?? 4);
+      x = flySection(objects, carriers, x, length, random, options.flyGap ?? 4, mark);
     } else {
-      x = gravitySection(objects, x, length, random);
+      x = gravitySection(objects, x, length, random, mark);
     }
     sectionIndex += 1;
   }

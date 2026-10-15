@@ -28,6 +28,18 @@ describe("Corrida: fases", () => {
         expect(portals).toEqual([...portals].sort((a, b) => a - b));
       });
 
+      it("tem checkpoints em lugares livres (3+ colunas antes de qualquer obstáculo) e a cada ~12 s", () => {
+        const checkpoints = level.objects.filter((object) => object.kind === "checkpoint").map((object) => object.x).sort((a, b) => a - b);
+        expect(checkpoints.length).toBeGreaterThan(2);
+        for (const x of checkpoints) {
+          const hazards = level.objects.filter((object) => object.kind === "spike" || object.kind === "block").filter((object) => object.x >= x - 1 && object.x < x + 3);
+          expect(hazards, `checkpoint na coluna ${x}`).toEqual([]);
+        }
+        // Nunca mais de ~25 s sem bandeira.
+        const marks = [0, ...checkpoints, level.length];
+        for (let index = 1; index < marks.length; index += 1) expect((marks[index] - marks[index - 1]) / TILES_PER_SECOND).toBeLessThan(25);
+      });
+
       it("as palavras do versículo existem uma vez cada", () => {
         const indexes = level.objects.filter((object) => object.kind === "word").map((object) => (object as { index: number }).index);
         expect(new Set(indexes).size).toBe(indexes.length);

@@ -16,6 +16,7 @@ function quickTraining(): Level {
   x = gap(x, 8);
   x = platform(objects, x, 4, 1, 0);
   x = gap(x, 7);
+  objects.push({ kind: "checkpoint", x: x - 3 });
   x = spikeRow(objects, x, 2);
   wordAt(objects, x - 1, 2, 1);
   x = gap(x, 8);
@@ -27,6 +28,7 @@ function quickTraining(): Level {
   // Voo.
   x = portal(objects, x, "FLY");
   x = gap(x, 8);
+  objects.push({ kind: "checkpoint", x: x - 4 });
   x = flyTunnel(objects, x, [
     { floor: 1, ceil: 2, word: 2 },
     { floor: 2, ceil: 2 },
@@ -39,6 +41,7 @@ function quickTraining(): Level {
   // Gravidade.
   x = portal(objects, x, "GRAVITY");
   x = gap(x, 8);
+  objects.push({ kind: "checkpoint", x: x - 4 });
   x = gravitySpikes(objects, x, ["floor", "ceiling", "floor", "floor", "ceiling", "ceiling", "floor"]);
   x = gap(x, 6);
   return { id: "treino", name: "Treino rápido: as 3 formas", verse: { ref: "Treino", words: ["Corra", "voe", "inverta", "venha!"] }, form: "RUN", length: x, objects };

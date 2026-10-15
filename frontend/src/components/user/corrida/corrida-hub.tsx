@@ -20,10 +20,11 @@ function formatDuration(seconds: number) {
   return total >= 60 ? `${Math.floor(total / 60)} min${total % 60 ? ` ${total % 60} s` : ''}` : `${total} s`;
 }
 
-function bestText(best: { progress: number; words: number; finished: boolean } | undefined, totalWords: number) {
+function bestText(best: { progress: number; words: number; finished: boolean; clean: boolean } | undefined, totalWords: number) {
   if (!best) return 'Ainda não jogada';
   const words = totalWords > 0 ? ` · ${best.words}/${totalWords} palavras` : '';
-  return best.finished ? `Concluída${words}` : `Melhor: ${Math.floor(best.progress * 100)}%${words}`;
+  if (best.finished) return `${best.clean ? 'Concluída sem checkpoint ★' : 'Concluída'}${words}`;
+  return `Melhor: ${Math.floor(best.progress * 100)}%${words}`;
 }
 
 const CONTROLS: Array<{ title: string; text: string }> = [
@@ -38,23 +39,9 @@ export function CorridaHub() {
   const list = usePagination(LEVELS, 10);
   const [bests, setBests] = useState(loadBests);
 
-  // Tenta tela cheia e travar na horizontal (só Android/PWA deixa; no iPhone a tela pede para girar o celular).
-  const start = (next: Playing) => {
-    try {
-      void document.documentElement.requestFullscreen?.().then(() => (screen.orientation as ScreenOrientation & { lock?: (type: string) => Promise<void> }).lock?.('landscape')).catch(() => undefined);
-    } catch {
-      /* sem suporte: segue sem tela cheia */
-    }
-    setPlaying(next);
-  };
-  const exit = () => {
-    try {
-      if (document.fullscreenElement) void document.exitFullscreen();
-    } catch {
-      /* sem suporte */
-    }
-    setPlaying(null);
-  };
+  // Sem tela cheia: o aviso de "tela cheia" do navegador não dá para estilizar. O jogo cobre o app inteiro; instalado como app (PWA) usa a tela toda.
+  const start = (next: Playing) => setPlaying(next);
+  const exit = () => setPlaying(null);
 
   // O bot "pensa" a fase inteira antes do replay: numa fase de minutos leva alguns segundos, então mostra o carregamento.
   const [botLoading, setBotLoading] = useState<string | null>(null);
@@ -69,7 +56,7 @@ export function CorridaHub() {
 
   return (
     <section className="space-y-5" aria-label="Corrida">
-      <Alert tone="info">Protótipo do novo modo: ainda sem arte, sons nem online. Use o celular deitado (no computador, a barra de espaço). "Treinar" salva um checkpoint em cada portal e não conta para o seu melhor resultado.</Alert>
+      <Alert tone="info">Protótipo do novo modo: ainda sem arte, sons nem online. Use o celular deitado (no computador, a barra de espaço). As bandeiras são checkpoints: ao cair, você volta à última. "Treinar" não conta para o seu melhor resultado.</Alert>
       <ul className="grid gap-3 sm:grid-cols-3">
         {CONTROLS.map((control) => (
           <li key={control.title} className="panel p-4">
