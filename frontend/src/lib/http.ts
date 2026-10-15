@@ -5,7 +5,7 @@ import type { ApiErrorResponse, AuthResponse } from '@/types/auth';
 /** Disparado quando a sessão não pode mais ser renovada; o AuthProvider faz o logout. */
 export const SESSION_EXPIRED_EVENT = 'colecao-biblica:session-expired';
 
-const NETWORK_ERROR_MESSAGE = 'Sem conexão com o servidor. Verifique sua internet e tente novamente.';
+export const NETWORK_ERROR_MESSAGE = 'Sem conexão com o servidor. Verifique sua internet e tente novamente.';
 
 type RefreshResult = { kind: 'ok'; accessToken: string } | { kind: 'invalid' } | { kind: 'network' };
 
@@ -126,3 +126,6 @@ export async function apiRequestVoid(path: string, init: RequestInit, fallbackEr
     throw new Error(extractErrorMessage(body, fallbackError));
   }
 }
+
+/** O erro foi só falta de conexão (e não uma recusa do servidor)? Quem guarda algo para enviar depois usa isto para decidir se tenta de novo. */
+export const isNetworkError = (error: unknown) => error instanceof Error && error.message === NETWORK_ERROR_MESSAGE;

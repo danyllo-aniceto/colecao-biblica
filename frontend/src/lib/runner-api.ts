@@ -3,6 +3,7 @@ import type { PaginatedResponse } from '@/lib/admin-api';
 import type { Scenario } from '@runner/campaign';
 import type { Pose, SoundKey, Sounds, SpriteSheet, Sprites } from '@runner/characters';
 import type { ArtKey, Form } from '@runner/types';
+import type { RunSegment } from '@runner/verify';
 
 /** Personagem da Corrida como o servidor entrega (sprites e sons enviados pelo painel). */
 export type RunnerCharacterDto = {
@@ -140,3 +141,14 @@ export const createRunnerLevel = (input: RunnerLevelInput & Required<Pick<Runner
   apiRequest<RunnerLevelDto>('/runner/admin/levels', json('POST', input), 'Não foi possível criar a fase.');
 export const updateRunnerLevel = (id: number, input: RunnerLevelInput) => apiRequest<RunnerLevelDto>(`/runner/admin/levels/${id}`, json('PUT', input), 'Não foi possível salvar a fase.');
 export const deleteRunnerLevel = (id: number) => apiRequestVoid(`/runner/admin/levels/${id}`, { method: 'DELETE' }, 'Não foi possível excluir a fase.');
+
+// ---------- Progresso da campanha (conferido pelo servidor) ----------
+
+/** Melhor resultado do jogador numa fase. */
+export type RunnerProgressDto = { progress: number; words: number; finished: boolean; allWords: boolean; clean: boolean; stars: number };
+
+export const getRunnerProgress = () => apiRequest<{ levels: Record<string, RunnerProgressDto> }>('/runner/progress', { method: 'GET' }, 'Não foi possível carregar o seu progresso na Corrida.');
+
+/** Manda a partida (corrente de tentativas com os toques): o servidor repete tudo, confere e guarda o melhor. */
+export const postRunnerResult = (levelSlug: string, segments: RunSegment[]) =>
+  apiRequest<RunnerProgressDto & { newlyFinished: boolean }>(`/runner/levels/${encodeURIComponent(levelSlug)}/result`, json('POST', { segments }), 'Não foi possível enviar o resultado da fase.');

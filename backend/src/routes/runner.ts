@@ -2,11 +2,12 @@ import { Router } from "express";
 import { prisma } from "../db/prisma";
 import { readPage, queryText } from "../lib/pagination";
 import { clearableText, parseId, requiredText, z } from "../lib/validation";
-import { requireAdmin } from "../middleware/auth";
+import { currentUser, requireAdmin } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
 import { SECONDS_RANGE, SEED_RANGE, MAX_FORM_ORDER } from "../runner/campaign";
 import { isHexColor, MAX_FRAMES, POSES, SOUND_KEYS } from "../runner/characters";
 import { ART_KEYS } from "../runner/types";
+import { getRunnerProgress, submitRunnerResult } from "../services/runner-progress";
 import { adminLevels, adminScenarios, createLevel, createScenario, deleteLevel, deleteScenario, getCampaign, levelOptions, scenarioOptions, updateLevel, updateScenario } from "../services/runner-campaign";
 import { adminRunnerCharacters, createRunnerCharacter, deleteRunnerCharacter, listRunnerCharacters, updateRunnerCharacter } from "../services/runner-characters";
 
@@ -109,6 +110,23 @@ const levelBody = z.object({
   active: z.boolean().optional(),
   sortOrder: z.number().int().min(0).max(999).optional(),
 });
+
+/** Progresso do jogador na campanha (melhor resultado de cada fase, conferido pelo servidor; o app guarda para abrir offline). */
+runnerRouter.get(
+  "/progress",
+  asyncHandler(async (req, res) => {
+    res.json(await getRunnerProgress(prisma, currentUser(req).id));
+  }),
+);
+
+/** Resultado de uma partida da campanha: a corrente de tentativas com os toques (o servidor repete tudo e confere). */
+runnerRouter.post(
+  "/levels/:slug/result",
+  asyncHandler(async (req, res) => {
+    const body = z.object({ segments: z.unknown() }).parse(req.body);
+    res.json(await submitRunnerResult(currentUser(req).id, String(req.params.slug), body.segments));
+  }),
+);
 
 /** Campanha ativa (qualquer jogador logado lê; o app guarda para abrir offline). */
 runnerRouter.get(
