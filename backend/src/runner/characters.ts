@@ -21,23 +21,35 @@ export const POSE_INFO: Record<Pose, { label: string; hint: string; defaultFrame
 export const MAX_FRAMES = 12;
 
 /** Sons do personagem (opcionais; sem arquivo, o app usa o som padrão do modo). */
-export const SOUND_KEYS = ["jump", "double", "word", "flip", "checkpoint", "death", "win"] as const;
+export const SOUND_KEYS = ["jump", "double", "word", "flip", "checkpoint", "death", "win", "flyStart", "gravityStart", "runStart", "power"] as const;
 export type SoundKey = (typeof SOUND_KEYS)[number];
 
-export const SOUND_INFO: Record<SoundKey, { label: string; hint: string }> = {
-  jump: { label: "Pulo", hint: "Toca a cada pulo." },
-  double: { label: "Pulo duplo", hint: "Toca no segundo pulo, no ar." },
-  word: { label: "Palavra", hint: "Ao pegar uma palavra do versículo." },
-  flip: { label: "Inverter gravidade", hint: "Ao trocar chão e teto." },
-  checkpoint: { label: "Checkpoint", hint: "Ao passar por uma bandeira." },
-  death: { label: "Queda", hint: "Quando erra." },
-  win: { label: "Vitória", hint: "Ao concluir a fase ou vencer a corrida." },
+/**
+ * Cada ação aceita VÁRIAS falas (`MAX_VARIANTS`): o app sorteia uma a cada vez, sem repetir a mesma duas vezes seguidas, e só fala em parte das vezes
+ * (`chance`), para não enjoar. `chance` = probabilidade de falar quando o personagem tem fala cadastrada para a ação.
+ */
+export const SOUND_INFO: Record<SoundKey, { label: string; hint: string; chance: number }> = {
+  jump: { label: "Pulo", hint: "Toca em parte dos pulos.", chance: 0.3 },
+  double: { label: "Pulo duplo", hint: "Toca em parte dos pulos duplos, no ar.", chance: 0.4 },
+  word: { label: "Palavra", hint: "Ao pegar uma palavra do versículo (às vezes).", chance: 0.5 },
+  flip: { label: "Inverter gravidade", hint: "Ao trocar chão e teto (às vezes).", chance: 0.3 },
+  checkpoint: { label: "Checkpoint", hint: "Ao passar por uma bandeira (às vezes).", chance: 0.6 },
+  death: { label: "Queda", hint: "Quando erra (quase sempre).", chance: 0.8 },
+  win: { label: "Vitória", hint: "Ao concluir a fase ou vencer a corrida (sempre).", chance: 1 },
+  flyStart: { label: "Começa a voar", hint: "Ao passar pelo portal que vira voo.", chance: 0.75 },
+  gravityStart: { label: "Entra na gravidade", hint: "Ao passar pelo portal da gravidade.", chance: 0.75 },
+  runStart: { label: "Volta a correr", hint: "Ao passar pelo portal que volta à corrida.", chance: 0.5 },
+  power: { label: "Pegou um poder", hint: "Ao pegar Turbo, Escudo, Pulo triplo ou Ímã (às vezes).", chance: 0.6 },
 };
+
+/** Quantas falas diferentes cada ação pode ter. */
+export const MAX_VARIANTS = 8;
 
 /** Uma pose: o endereço da imagem e quantos quadros quadrados ela tem lado a lado. */
 export type SpriteSheet = { url: string; frames: number };
 export type Sprites = Partial<Record<Pose, SpriteSheet>>;
-export type Sounds = Partial<Record<SoundKey, string>>;
+/** Falas de cada ação (lista; o app sorteia uma). */
+export type Sounds = Partial<Record<SoundKey, string[]>>;
 
 const isPose = (value: string): value is Pose => (POSES as readonly string[]).includes(value);
 const isSoundKey = (value: string): value is SoundKey => (SOUND_KEYS as readonly string[]).includes(value);
@@ -60,13 +72,34 @@ export function sanitizeSprites(raw: unknown): Sprites {
   return result;
 }
 
+/** Aceita uma fala só (formato antigo) ou uma lista; tira vazios e repetidos e limita a `MAX_VARIANTS`. */
+function cleanVariants(value: unknown): string[] {
+  const list = Array.isArray(value) ? value : [value];
+  const urls = list.filter((item): item is string => typeof item === "string" && item.trim() !== "").map((item) => item.trim());
+  return [...new Set(urls)].slice(0, MAX_VARIANTS);
+}
+
 export function sanitizeSounds(raw: unknown): Sounds {
   const result: Sounds = {};
   if (!raw || typeof raw !== "object") return result;
   for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
-    if (isSoundKey(key) && typeof value === "string" && value.trim()) result[key] = value.trim();
+    if (!isSoundKey(key)) continue;
+    const urls = cleanVariants(value);
+    if (urls.length > 0) result[key] = urls;
   }
   return result;
+}
+
+/** Sorteia uma fala sem repetir a anterior (`last` = índice da última tocada, ou -1). `random` devolve de 0 a 1. */
+export function pickVariant(count: number, last: number, random: () => number = Math.random): number {
+  if (count <= 1) return 0;
+  const pick = Math.floor(random() * (count - 1));
+  return pick >= last && last >= 0 ? pick + 1 : pick;
+}
+
+/** O personagem fala nesta vez? (às vezes fica quieto, para não enjoar). */
+export function shouldSpeak(key: SoundKey, random: () => number = Math.random): boolean {
+  return random() < SOUND_INFO[key].chance;
 }
 
 /** Atualização parcial: pose ausente não muda; `null` remove a pose. */
@@ -81,13 +114,13 @@ export function mergeSprites(current: Sprites, patch: Partial<Record<Pose, Sprit
   return next;
 }
 
-export function mergeSounds(current: Sounds, patch: Partial<Record<SoundKey, string | null>>): Sounds {
+export function mergeSounds(current: Sounds, patch: Partial<Record<SoundKey, string | string[] | null>>): Sounds {
   const next: Sounds = { ...current };
   for (const key of SOUND_KEYS) {
     if (!(key in patch)) continue;
-    const value = patch[key];
-    if (!value || !value.trim()) delete next[key];
-    else next[key] = value.trim();
+    const urls = cleanVariants(patch[key]);
+    if (urls.length === 0) delete next[key];
+    else next[key] = urls;
   }
   return next;
 }

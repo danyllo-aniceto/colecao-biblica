@@ -5,7 +5,7 @@ import { clearableText, parseId, requiredText, z } from "../lib/validation";
 import { currentUser, requireAdmin } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
 import { DIFFICULTY_RANGE, SECONDS_RANGE, SEED_RANGE, MAX_FORM_ORDER } from "../runner/campaign";
-import { isHexColor, MAX_FRAMES, POSES, SOUND_KEYS } from "../runner/characters";
+import { isHexColor, MAX_FRAMES, MAX_VARIANTS, POSES, SOUND_KEYS } from "../runner/characters";
 import { ART_KEYS } from "../runner/types";
 import { getRunnerProgress, submitRunnerResult } from "../services/runner-progress";
 import { adminLevels, adminScenarios, createLevel, createScenario, deleteLevel, deleteScenario, getCampaign, levelOptions, scenarioOptions, updateLevel, updateScenario } from "../services/runner-campaign";
@@ -32,7 +32,7 @@ const body = z.object({
   sortOrder: z.number().int().min(0).max(999).optional(),
   unlockLevel: clearableText(60),
   sprites: z.record(z.enum(POSES), z.union([sheet, z.null()])).optional(),
-  sounds: z.record(z.enum(SOUND_KEYS), z.union([soundUrl, z.null()])).optional(),
+  sounds: z.record(z.enum(SOUND_KEYS), z.union([soundUrl, z.array(soundUrl).max(MAX_VARIANTS), z.null()])).optional(),
 });
 
 /** Personagens ativos (qualquer jogador logado lê; o app guarda para abrir offline). */

@@ -288,7 +288,7 @@ export function CorridaOnlineRace({
     resize();
     const observer = new ResizeObserver(resize);
     observer.observe(canvas);
-    const sound = (key: SoundKey, fallback: Parameters<typeof playSfx>[0]) => playCharacterSound(myCharRef.current?.sounds, key, fallback);
+    const sound = (key: SoundKey, fallback: Parameters<typeof playSfx>[0] | null) => playCharacterSound(myCharRef.current?.sounds, key, fallback);
 
     const startRace = () => {
       startedRef.current = true;
@@ -355,10 +355,16 @@ export function CorridaOnlineRace({
         if (after.airJumps < before.airJumps) sound('double', 'rnDouble');
         else if (before.grounded && after.form === 'RUN' && after.vy < -4) sound('jump', 'rnJump');
         if (after.collected.length > before.collected.length) sound('word', 'rnWord');
-        if (after.powers.length > before.powers.length) playSfx('rnPower');
+        if (after.powers.length > before.powers.length) {
+          playSfx('rnPower');
+          sound('power', null);
+        }
         if (before.effects.shield > 0 && after.effects.shield === 0) playSfx('rnShield');
         if (after.grav !== before.grav) sound('flip', 'rnFlip');
-        if (after.portal > before.portal) playSfx('rnPortal');
+        if (after.portal > before.portal) {
+          playSfx('rnPortal');
+          sound(after.form === 'FLY' ? 'flyStart' : after.form === 'GRAVITY' ? 'gravityStart' : 'runStart', null);
+        }
       }
       if (after.checkpoint > before.checkpoint && after.status === 'running')
         own.checkpoint = {

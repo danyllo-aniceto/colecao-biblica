@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { frameFor, isHexColor, MAX_FRAMES, mergeSounds, mergeSprites, pickSheet, POSE_INFO, POSES, poseFor, sanitizeSounds, sanitizeSprites } from "./characters";
+import { frameFor, isHexColor, MAX_FRAMES, MAX_VARIANTS, mergeSounds, mergeSprites, pickSheet, pickVariant, POSE_INFO, POSES, poseFor, sanitizeSounds, sanitizeSprites, shouldSpeak, SOUND_INFO, SOUND_KEYS } from "./characters";
 
 describe("Corrida: personagens", () => {
   it("sanitizeSprites guarda só poses conhecidas com endereço, e limita os quadros a 1–12", () => {
@@ -19,7 +19,7 @@ describe("Corrida: personagens", () => {
   });
 
   it("sanitizeSounds guarda só sons conhecidos com endereço", () => {
-    expect(sanitizeSounds({ jump: " https://x/j.mp3 ", bu: "https://x/b.mp3", win: "", death: 3 })).toEqual({ jump: "https://x/j.mp3" });
+    expect(sanitizeSounds({ jump: " https://x/j.mp3 ", bu: "https://x/b.mp3", win: "", death: 3 })).toEqual({ jump: ["https://x/j.mp3"] });
     expect(sanitizeSounds(undefined)).toEqual({});
   });
 
@@ -33,10 +33,54 @@ describe("Corrida: personagens", () => {
   });
 
   it("mergeSounds: ausente não muda; null ou vazio remove", () => {
-    const current = { jump: "a", win: "b" };
+    const current = { jump: ["a"], win: ["b"] };
     expect(mergeSounds(current, {})).toEqual(current);
     expect(mergeSounds(current, { jump: null, win: "  " })).toEqual({});
-    expect(mergeSounds(current, { death: "c" })).toEqual({ jump: "a", win: "b", death: "c" });
+    expect(mergeSounds(current, { death: "c" })).toEqual({ jump: ["a"], win: ["b"], death: ["c"] });
+  });
+
+  it("cada ação aceita várias falas (sem vazias nem repetidas, até o limite) e lê o formato antigo de uma fala só", () => {
+    expect(sanitizeSounds({ jump: ["a", " b ", "a", "", 3] })).toEqual({ jump: ["a", "b"] });
+    expect(sanitizeSounds({ jump: Array.from({ length: 20 }, (_, index) => `s${index}`) }).jump).toHaveLength(MAX_VARIANTS);
+    expect(sanitizeSounds({ jump: [] })).toEqual({});
+    expect(mergeSounds({ jump: ["a"] }, { jump: ["x", "y"] })).toEqual({ jump: ["x", "y"] });
+  });
+
+  it("as falas novas (começa a voar, gravidade, volta a correr, poder) existem e todas têm chance entre 0 e 1", () => {
+    for (const key of ["flyStart", "gravityStart", "runStart", "power"] as const) expect(SOUND_KEYS).toContain(key);
+    for (const key of SOUND_KEYS) {
+      expect(SOUND_INFO[key].chance).toBeGreaterThan(0);
+      expect(SOUND_INFO[key].chance).toBeLessThanOrEqual(1);
+    }
+    // Pulo fala menos que a queda; a vitória fala sempre.
+    expect(SOUND_INFO.jump.chance).toBeLessThan(SOUND_INFO.death.chance);
+    expect(SOUND_INFO.win.chance).toBe(1);
+  });
+
+  it("sorteia a fala sem repetir a anterior seguidamente e cobre todas; às vezes fica quieto", () => {
+    expect(pickVariant(1, 0)).toBe(0);
+    for (const count of [2, 3, 5]) {
+      const seen = new Set<number>();
+      let last = -1;
+      for (let index = 0; index < 200; index += 1) {
+        const pick = pickVariant(count, last);
+        expect(pick).toBeGreaterThanOrEqual(0);
+        expect(pick).toBeLessThan(count);
+        expect(pick).not.toBe(last);
+        seen.add(pick);
+        last = pick;
+      }
+      expect(seen.size).toBe(count);
+    }
+    // Sorteio previsível: 0,99 sempre dá a última possível, 0 dá a primeira (pulando a anterior).
+    expect(pickVariant(3, 0, () => 0)).toBe(1);
+    expect(pickVariant(3, 2, () => 0.99)).toBe(1);
+    expect(shouldSpeak("win", () => 0.999)).toBe(true);
+    expect(shouldSpeak("jump", () => 0.9)).toBe(false);
+    expect(shouldSpeak("jump", () => 0.1)).toBe(true);
+    const talks = Array.from({ length: 1000 }, () => shouldSpeak("jump")).filter(Boolean).length;
+    expect(talks).toBeGreaterThan(200);
+    expect(talks).toBeLessThan(420);
   });
 
   it("a pose Parado existe, com 4 quadros por padrão, e é guardada como as outras", () => {
