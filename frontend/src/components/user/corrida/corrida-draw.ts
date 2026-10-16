@@ -65,6 +65,37 @@ function drawLayer(ctx: CanvasRenderingContext2D, image: HTMLImageElement, offse
   }
 }
 
+/** Serra: disco de aço com dentes girando e um miolo escuro; um brilho vermelho avisa que machuca. */
+function drawSaw(ctx: CanvasRenderingContext2D, cx: number, cy: number, tick: number) {
+  const outer = 21;
+  const inner = 13;
+  const teeth = 10;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(tick / 5);
+  ctx.fillStyle = '#cbd5e1';
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let index = 0; index < teeth * 2; index += 1) {
+    const angle = (index * Math.PI) / teeth;
+    const radius = index % 2 === 0 ? outer : inner;
+    ctx.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#334155';
+  ctx.beginPath();
+  ctx.arc(0, 0, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ef4444';
+  ctx.beginPath();
+  ctx.arc(0, 0, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 /** Altura (px do mundo) com que o sprite é desenhado: um pouco maior que a caixa de colisão (32), com os pés alinhados nela. */
 const SPRITE_SIZE = 62;
 
@@ -396,6 +427,12 @@ export function drawScene(ctx: CanvasRenderingContext2D, level: PreparedLevel, p
         ctx.lineWidth = 3;
         ctx.strokeRect(objectX + 1.5, top + 1.5, object.w * TILE - 3, object.h * TILE - 3);
       }
+    } else if (object.kind === 'saw') {
+      // Serra giratória: disco com dentes; se tem onda, sobe e desce conforme a posição do jogador (igual à colisão do motor).
+      const cx = objectX + TILE / 2;
+      const base = FLOOR_Y - (object.y + 0.5) * TILE;
+      const wave = object.amp ? object.amp * TILE * Math.sin(((p.x - cx) / ((object.period ?? 12) * TILE)) * Math.PI * 2) : 0;
+      drawSaw(ctx, cx, base + wave, p.tick);
     } else if (object.kind === 'spike') {
       const row = object.y ?? 0;
       const cellTop = FLOOR_Y - (row + 1) * TILE;
@@ -545,7 +582,7 @@ export function drawScene(ctx: CanvasRenderingContext2D, level: PreparedLevel, p
     ctx.stroke();
   }
   // Tempo que falta.
-  const remaining = Math.max(0, Math.ceil((level.endX - p.x) / (SPEED * TICKS_PER_SECOND)));
+  const remaining = Math.max(0, Math.ceil((level.endX - p.x) / (SPEED * level.speed * TICKS_PER_SECOND)));
   const remainingText = `faltam ${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`;
   ctx.textAlign = 'right';
   ctx.font = `700 ${15 * u}px system-ui, sans-serif`;

@@ -10,6 +10,8 @@ import {
   type PreparedLevel,
   type Rect,
   type RunResult,
+  type Saw,
+  SPEED_RANGE,
 } from "./types";
 import { applyPower, emptyEffects, GRACE_TICKS, isImmune, MAGNET_RANGE, TURBO_SPEED, tickEffects } from "./powers";
 
@@ -44,11 +46,17 @@ function overPit(level: PreparedLevel, x: number, side: "floor" | "ceiling"): bo
   return false;
 }
 
+/** Raio de colisão da serra (px): o desenho é um pouco maior, a colisão é gentil. */
+const SAW_RADIUS = 15;
+
+/** Altura (px, de cima para baixo) do centro da serra quando o jogador está em `playerX`: parada, ou numa onda que depende da posição dele. */
+export const sawCentreY = (saw: Saw, playerX: number) => (saw.amp === 0 ? saw.cy : saw.cy + saw.amp * Math.sin(((playerX - saw.cx) / saw.period) * Math.PI * 2));
+
 const toRect = (left: number, top: number, width: number, height: number): Rect => ({ l: left, t: top, r: left + width, b: top + height });
 
 /** Indexa a fase por coluna. Espeto: caixa menor que a casa (50% de largura, 60% de altura, colada na base). */
 export function prepareLevel(level: Level): PreparedLevel {
-  const cols: PreparedLevel["cols"] = Array.from({ length: level.length + 4 }, () => ({ spikes: [], blocks: [], words: [], powers: [] }));
+  const cols: PreparedLevel["cols"] = Array.from({ length: level.length + 4 }, () => ({ spikes: [], saws: [], blocks: [], words: [], powers: [] }));
   const portals: PreparedLevel["portals"] = [];
   const pits: PreparedLevel["pits"] = [];
   const checkpoints: number[] = [];
@@ -62,6 +70,10 @@ export function prepareLevel(level: Level): PreparedLevel {
       checkpoints.push(object.x * TILE);
     } else if (object.kind === "pit") {
       pits.push({ side: object.side, l: object.x * TILE, r: (object.x + object.w) * TILE });
+    } else if (object.kind === "saw") {
+      const saw: Saw = { cx: object.x * TILE + TILE / 2, cy: FLOOR_Y - (object.y + 0.5) * TILE, radius: SAW_RADIUS, amp: (object.amp ?? 0) * TILE, period: Math.max(4, object.period ?? 12) * TILE };
+      // Vale nas colunas por onde a serra passa (o corpo do jogador a alcança até 1 coluna ao redor).
+      for (let column = object.x - 1; column <= object.x + 1; column += 1) colOf(column).saws.push(saw);
     } else if (object.kind === "spike") {
       const row = object.y ?? 0;
       const cellTop = FLOOR_Y - (row + 1) * TILE;
@@ -87,7 +99,8 @@ export function prepareLevel(level: Level): PreparedLevel {
   }
   portals.sort((a, b) => a.x - b.x);
   checkpoints.sort((a, b) => a - b);
-  return { level, endX: level.length * TILE, portals, checkpoints, cols, pits, wordCount, powerCount };
+  const speed = Math.max(SPEED_RANGE.min, Math.min(SPEED_RANGE.max, level.speed ?? 1));
+  return { level, endX: level.length * TILE, portals, checkpoints, cols, pits, speed, wordCount, powerCount };
 }
 
 export function newPlayer(level: PreparedLevel): PlayerState {
@@ -187,7 +200,7 @@ export function stepPlayer(level: PreparedLevel, previous: PlayerState, held: bo
   while (p.checkpoint < level.checkpoints.length && p.x + PLAYER / 2 >= level.checkpoints[p.checkpoint]) p.checkpoint += 1;
 
   // Para o lado (o Turbo corre mais).
-  p.x += p.effects.turbo > 0 ? SPEED * TURBO_SPEED : SPEED;
+  p.x += SPEED * level.speed * (p.effects.turbo > 0 ? TURBO_SPEED : 1);
   const body = (): Rect => toRect(p.x, p.y, PLAYER, PLAYER);
   // `ghost`: imune (ou o Escudo agiu neste passo): não bate em blocos nem em espetos.
   let ghost = isImmune(p.effects);
@@ -204,7 +217,8 @@ export function stepPlayer(level: PreparedLevel, previous: PlayerState, held: bo
       if (!overlaps(box, block)) continue;
       const depthTop = box.b - block.t;
       const depthBottom = block.b - box.t;
-      if (Math.min(depthTop, depthBottom) > STEP_UP) {
+      // No voo não há "subir no canto": qualquer encostão num bloco derruba (só o chão e o teto do campo são seguros).
+      if (p.form === "FLY" || Math.min(depthTop, depthBottom) > STEP_UP) {
         if (absorb()) {
           ghost = true;
           break;
@@ -216,11 +230,11 @@ export function stepPlayer(level: PreparedLevel, previous: PlayerState, held: bo
       if (depthTop <= depthBottom) {
         p.y = block.t - PLAYER;
         if (p.vy > 0) p.vy = 0;
-        if (p.grav === 1 && p.form !== "FLY") p.grounded = true;
+        if (p.grav === 1) p.grounded = true;
       } else {
         p.y = block.b;
         if (p.vy < 0) p.vy = 0;
-        if (p.grav === -1 && p.form !== "FLY") p.grounded = true;
+        if (p.grav === -1) p.grounded = true;
       }
     }
   }
@@ -268,6 +282,15 @@ export function stepPlayer(level: PreparedLevel, previous: PlayerState, held: bo
     for (const block of nearby(level, p.x, (col) => col.blocks)) {
       const box = body();
       if (!overlaps(box, block)) continue;
+      if (p.form === "FLY") {
+        if (absorb()) {
+          ghost = true;
+          break;
+        }
+        p.status = "dead";
+        p.cause = "wall";
+        return p;
+      }
       if (p.vy > 0) {
         p.y = block.t - PLAYER;
         p.vy = 0;
@@ -289,6 +312,22 @@ export function stepPlayer(level: PreparedLevel, previous: PlayerState, held: bo
       if (isImmune(p.effects) || absorb()) continue;
       p.status = "dead";
       p.cause = "spike";
+      return p;
+    }
+  }
+
+  // Serras: círculo contra o centro do corpo (a onda vertical depende de onde o jogador está).
+  if (!ghost) {
+    const cx = p.x + PLAYER / 2;
+    const cy = p.y + PLAYER / 2;
+    const reachSq = (SAW_RADIUS + PLAYER / 2 - HURT_INSET) ** 2;
+    for (const saw of nearby(level, p.x, (col) => col.saws)) {
+      const dx = cx - saw.cx;
+      const dy = cy - sawCentreY(saw, p.x);
+      if (dx * dx + dy * dy >= reachSq) continue;
+      if (isImmune(p.effects) || absorb()) continue;
+      p.status = "dead";
+      p.cause = "saw";
       return p;
     }
   }
@@ -350,7 +389,7 @@ export function normalizeInputs(raw: unknown, maxTicks: number): number[] | null
 
 /** Tempo máximo de uma partida: o necessário para correr a fase inteira mais uma folga. */
 export function maxTicksOf(level: PreparedLevel): number {
-  return Math.ceil(level.endX / SPEED) + 600;
+  return Math.ceil(level.endX / (SPEED * level.speed)) + 600;
 }
 
 export function progressOf(level: PreparedLevel, player: PlayerState): number {

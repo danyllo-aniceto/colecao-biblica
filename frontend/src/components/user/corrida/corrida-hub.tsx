@@ -15,7 +15,7 @@ import { LoadingState } from '@/components/ui/spinner';
 import { cn } from '@/lib/cn';
 import { BOT_LEVELS, type BotLevel } from '@runner/bots';
 import { LOCAL_KEYS, planSlots, uniqueNames } from '@runner/local';
-import { TILES_PER_SECOND } from '@runner/journey';
+import { levelSeconds } from '@runner/journey';
 import { DEFAULT_DIFFICULTY, difficultyLabel, isCharacterUnlocked, isLevelUnlocked, isScenarioUnlocked, type Scenario } from '@runner/campaign';
 import { BASE_LEVELS } from '@runner/levels';
 import { useRunnerCampaign } from '@/components/user/corrida/corrida-campaign';
@@ -60,7 +60,7 @@ function bestText(best: Bests[string] | undefined, totalWords: number) {
 }
 
 function levelInfo(level: Level) {
-  return `${formatDuration(level.length / TILES_PER_SECOND)}${level.verse ? ` · versículo escondido (${level.verse.ref})` : ''}`;
+  return `${formatDuration(levelSeconds(level))}${level.verse ? ` · versículo escondido (${level.verse.ref})` : ''}`;
 }
 
 const CONTROLS: Array<{ title: string; text: string }> = [

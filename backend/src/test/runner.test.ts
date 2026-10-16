@@ -125,8 +125,8 @@ describe.skipIf(!hasDatabase)("corrida: cenários e fases pelo painel", () => {
     expect(res.status).toBe(200);
     expect(res.body.scenarios.map((scenario: { id: string }) => scenario.id)).toEqual(["cidade-de-davi", "mar-vermelho", "vale-dos-ossos-secos"]);
     const davi = res.body.scenarios[0];
-    expect(davi.levels.map((level: { id: string }) => level.id)).toEqual(["cd-1", "cd-2", "cd-3", "cd-4", "cd-5"]);
-    expect(davi.levels[0]).toMatchObject({ name: "O pastor", seed: 101, seconds: 80, difficulty: 10, order: ["RUN"], ref: "Salmos 23:1", verse: "O Senhor é o meu pastor; nada me faltará." });
+    expect(davi.levels.map((level: { id: string }) => level.id)).toEqual(["cd-1", "cd-2", "cd-3", "cd-4", "cd-5", "cd-6", "cd-7", "cd-8", "cd-9", "cd-10"]);
+    expect(davi.levels[0]).toMatchObject({ name: "O pastor", seed: 101, seconds: 90, difficulty: 5, order: ["RUN"], ref: "Salmos 23:1", verse: "O Senhor é o meu pastor; nada me faltará." });
     expect(davi.theme).toEqual({ skyTop: "#1c1917", skyBottom: "#78350f" });
     expect(davi.art).toEqual({});
   });
@@ -194,25 +194,25 @@ describe.skipIf(!hasDatabase)("corrida: cenários e fases pelo painel", () => {
     await api.put(`/api/runner/admin/levels/${first.id}`).set(bearer(admin)).send({ active: false });
     const user = await login("user@email.com");
     const res = await api.get("/api/runner/campaign").set(bearer(user));
-    expect(res.body.scenarios[0].levels.map((level: { id: string }) => level.id)).toEqual(["cd-2", "cd-3", "cd-4", "cd-5"]);
+    expect(res.body.scenarios[0].levels.map((level: { id: string }) => level.id)).toEqual(["cd-2", "cd-3", "cd-4", "cd-5", "cd-6", "cd-7", "cd-8", "cd-9", "cd-10"]);
   });
 
   it("lista as fases do painel paginadas, com filtro por cenário e busca", async () => {
     const admin = await login("admin2@email.com");
     const mar = await prisma.runnerScenario.findUniqueOrThrow({ where: { slug: "mar-vermelho" } });
     const filtered = await api.get(`/api/runner/admin/levels?scenarioId=${mar.id}&size=3&page=0`).set(bearer(admin));
-    expect(filtered.body).toMatchObject({ totalElements: 4, totalPages: 2, size: 3 });
+    expect(filtered.body).toMatchObject({ totalElements: 10, totalPages: 4, size: 3 });
     expect(filtered.body.content.map((level: { slug: string }) => level.slug)).toEqual(["mv-1", "mv-2", "mv-3"]);
     expect(filtered.body.content[0].scenarioName).toBe("Mar Vermelho");
     const search = await api.get("/api/runner/admin/levels?q=pastor").set(bearer(admin));
     expect(search.body.content.map((level: { slug: string }) => level.slug)).toEqual(["cd-1"]);
     const scenarios = await api.get("/api/runner/admin/scenarios?size=2&page=0").set(bearer(admin));
     expect(scenarios.body).toMatchObject({ totalElements: 3, totalPages: 2 });
-    expect(scenarios.body.content[0]).toMatchObject({ slug: "cidade-de-davi", levelCount: 5, system: true });
+    expect(scenarios.body.content[0]).toMatchObject({ slug: "cidade-de-davi", levelCount: 10, system: true });
     const options = await api.get("/api/runner/admin/scenario-options").set(bearer(admin));
     expect(options.body.map((item: { name: string }) => item.name)).toEqual(["Cidade de Davi", "Mar Vermelho", "Vale dos Ossos Secos"]);
     const levels = await api.get("/api/runner/admin/level-options").set(bearer(admin));
-    expect(levels.body).toHaveLength(12);
+    expect(levels.body).toHaveLength(30);
     expect(levels.body[0]).toEqual({ slug: "cd-1", name: "O pastor", scenarioName: "Cidade de Davi" });
   });
 
