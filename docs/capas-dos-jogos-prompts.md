@@ -1,6 +1,6 @@
 # Capas dos jogos (aba Jogar) — formato e prompts de imagem
 
-A aba **Jogar** mostra um cartão explicativo para cada jogo: **Quiz Bíblico**, **Tabuleiro** e **Duelo de Figurinhas**. Cada cartão tem uma imagem de capa,
+A aba **Jogar** mostra um cartão explicativo para cada jogo: **Quiz Bíblico**, **Tabuleiro**, **Duelo de Figurinhas** e **Corrida** (a capa dos Mini games segue o mesmo formato). Cada cartão tem uma imagem de capa,
 enviada em **Painel → Capas dos jogos**. Sem imagem, o app usa um fundo colorido padrão.
 
 ## Formato
@@ -54,6 +54,12 @@ A beautiful 3D diorama game board seen from an elevated three-quarter angle: a w
 
 ```
 Three glowing circular stone arenas in a row on a polished temple courtyard, seen from an elevated three-quarter angle, each lit in a different vivid color (emerald green, royal blue and warm amber). Above each arena hover and fly large collectible sticker cards (rounded rectangles with ornate glossy golden borders, shiny holographic shimmer and bright blank artwork areas) in a dynamic fan, as if being played; two rival groups of three cards face each other from the left and right sides of the center arena. Golden magical sparks and soft light trails connect the cards to the arenas. Ancient limestone columns, olive branches, banners without symbols and a luminous sky with golden clouds in the background. Exciting, strategic, festive mood of a friendly duel.
+```
+
+## 4. Corrida — `RUNNER`
+
+```
+A dynamic 3D diorama of an ancient adventure race track seen from a low, slightly elevated three-quarter side angle: a glowing golden comet-like light orb with a long streaking trail dashes along a winding sandstone road across vivid green hills and red-gold desert cliffs, leaping over a polished stone spike, a spinning silver saw blade, and a small gap in the road. In the middle of the frame three huge glowing portal rings float one after another over the track, one emerald green, one sky blue with tiny wing-like light feathers, one violet with the road curving upside down above it, to hint at three ways of moving. Around the track float glowing golden word-orbs, a small red flame orb for speed, a shining round shield orb and a magnet-shaped orb, plus a stone arch with a green checkpoint flag. Strong sense of speed: motion streaks, drifting dust, flying sparks, wind-blown banners, warm late-afternoon light rays. The road and the action stay in the upper-center; the lower 40% is a calm, simple soft sandy ground with a gentle gradient and soft shadow.
 ```
 
 ## Dicas
