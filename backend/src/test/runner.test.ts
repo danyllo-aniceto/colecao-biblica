@@ -22,7 +22,7 @@ describe.skipIf(!hasDatabase)("corrida: personagens pelo painel", () => {
     const admin = await login("admin2@email.com");
     const list = await api.get("/api/runner/characters").set(bearer(user));
     expect(list.status).toBe(200);
-    expect(list.body.map((character: { slug: string }) => character.slug)).toEqual(["davi", "debora", "elias", "ester", "jonas", "daniel", "jonatas", "joabe", "moises", "arao", "miria", "ezequiel"]);
+    expect(list.body.map((character: { slug: string }) => character.slug)).toEqual(["davi", "jonatas", "joabe", "moises", "arao", "miria", "ezequiel"]);
     // Os personagens dos cenários abrem ao concluir a fase indicada.
     expect(list.body.find((character: { slug: string }) => character.slug === "jonatas")).toMatchObject({ unlockLevel: "cd-3" });
     expect(list.body[0]).toMatchObject({ name: "Davi", color: "#38bdf8", sprites: {}, sounds: {}, system: true });
@@ -37,8 +37,8 @@ describe.skipIf(!hasDatabase)("corrida: personagens pelo painel", () => {
     expect(after.body.map((character: { slug: string }) => character.slug)).not.toContain("davi");
     // O painel continua vendo o desativado.
     const adminList = await api.get("/api/runner/admin/characters?size=3&page=0").set(bearer(admin));
-    expect(adminList.body).toMatchObject({ totalElements: 12, totalPages: 4, size: 3 });
-    expect(adminList.body.content.map((character: { slug: string }) => character.slug)).toEqual(["davi", "debora", "elias"]);
+    expect(adminList.body).toMatchObject({ totalElements: 7, totalPages: 3, size: 3 });
+    expect(adminList.body.content.map((character: { slug: string }) => character.slug)).toEqual(["davi", "jonatas", "joabe"]);
   });
 
   it("cria, atualiza pedaços (sprites e sons por pose) e valida os campos", async () => {
