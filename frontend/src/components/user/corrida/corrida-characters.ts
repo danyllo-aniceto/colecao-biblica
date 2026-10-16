@@ -6,19 +6,19 @@ import type { Sounds, Sprites } from '@runner/characters';
  * Personagem da Corrida no app. Todos correm com a mesma física: o personagem só muda como aparece (sprites por pose, ou a cor quando falta)
  * e como soa (sons opcionais). Vêm do Painel; sem internet ou sem nenhum cadastrado, valem os 7 padrão abaixo (só cores).
  */
-export type RunnerCharacter = { id: string; name: string; color: string; text: string; sprites: Sprites; sounds: Sounds; unlockLevel: string | null };
+export type RunnerCharacter = { id: string; name: string; color: string; text: string; sprites: Sprites; sounds: Sounds; unlockLevel: string | null; scenarioId: string | null };
 
 export const DEFAULT_CHARACTERS: RunnerCharacter[] = [
-  { id: 'davi', name: 'Davi', color: '#38bdf8', text: 'O pastor que enfrentou o gigante.', unlockLevel: null },
-  { id: 'jonatas', name: 'Jônatas', color: '#34d399', text: 'O amigo fiel de Davi.', unlockLevel: 'cd-3' },
-  { id: 'joabe', name: 'Joabe', color: '#f87171', text: 'O comandante do exército de Davi.', unlockLevel: 'cd-5' },
-  { id: 'moises', name: 'Moisés', color: '#60a5fa', text: 'Guiou o povo pelo Mar Vermelho.', unlockLevel: 'mv-2' },
-  { id: 'arao', name: 'Arão', color: '#fbbf24', text: 'O irmão e porta-voz de Moisés.', unlockLevel: 'mv-3' },
-  { id: 'miria', name: 'Miriã', color: '#f9a8d4', text: 'A profetisa que cantou à beira do mar.', unlockLevel: 'mv-4' },
-  { id: 'ezequiel', name: 'Ezequiel', color: '#a3e635', text: 'O profeta do vale dos ossos secos.', unlockLevel: 'vo-3' },
+  { id: 'davi', name: 'Davi', color: '#38bdf8', text: 'O pastor que enfrentou o gigante.', unlockLevel: null, scenarioId: 'cidade-de-davi' },
+  { id: 'jonatas', name: 'Jônatas', color: '#34d399', text: 'O amigo fiel de Davi.', unlockLevel: 'cd-3', scenarioId: 'cidade-de-davi' },
+  { id: 'joabe', name: 'Joabe', color: '#f87171', text: 'O comandante do exército de Davi.', unlockLevel: 'cd-5', scenarioId: 'cidade-de-davi' },
+  { id: 'moises', name: 'Moisés', color: '#60a5fa', text: 'Guiou o povo pelo Mar Vermelho.', unlockLevel: 'mv-2', scenarioId: 'mar-vermelho' },
+  { id: 'arao', name: 'Arão', color: '#fbbf24', text: 'O irmão e porta-voz de Moisés.', unlockLevel: 'mv-3', scenarioId: 'mar-vermelho' },
+  { id: 'miria', name: 'Miriã', color: '#f9a8d4', text: 'A profetisa que cantou à beira do mar.', unlockLevel: 'mv-4', scenarioId: 'mar-vermelho' },
+  { id: 'ezequiel', name: 'Ezequiel', color: '#a3e635', text: 'O profeta do vale dos ossos secos.', unlockLevel: 'vo-3', scenarioId: 'vale-dos-ossos-secos' },
 ].map((character) => ({ ...character, sprites: {}, sounds: {} }));
 
-const fromDto = (dto: RunnerCharacterDto): RunnerCharacter => ({ id: dto.slug, name: dto.name, color: dto.color, text: dto.description ?? '', sprites: dto.sprites, sounds: dto.sounds, unlockLevel: dto.unlockLevel });
+const fromDto = (dto: RunnerCharacterDto): RunnerCharacter => ({ id: dto.slug, name: dto.name, color: dto.color, text: dto.description ?? '', sprites: dto.sprites, sounds: dto.sounds, unlockLevel: dto.unlockLevel, scenarioId: dto.scenarioSlug });
 
 let cache: RunnerCharacter[] | null = null;
 let loading: Promise<void> | null = null;

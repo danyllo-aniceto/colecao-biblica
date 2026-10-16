@@ -31,6 +31,7 @@ const body = z.object({
   active: z.boolean().optional(),
   sortOrder: z.number().int().min(0).max(999).optional(),
   unlockLevel: clearableText(60),
+  scenarioSlug: clearableText(60),
   sprites: z.record(z.enum(POSES), z.union([sheet, z.null()])).optional(),
   sounds: z.record(z.enum(SOUND_KEYS), z.union([soundUrl, z.array(soundUrl).max(MAX_VARIANTS), z.null()])).optional(),
 });

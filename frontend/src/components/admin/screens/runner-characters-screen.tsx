@@ -14,7 +14,7 @@ import { LoadingState } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { errorMessage, useToast } from '@/components/ui/toast';
 import { cn } from '@/lib/cn';
-import { createRunnerCharacter, deleteRunnerCharacter, listAdminRunnerCharacters, runnerLevelOptions, updateRunnerCharacter, type RunnerCharacterDto, type RunnerCharacterInput } from '@/lib/runner-api';
+import { createRunnerCharacter, deleteRunnerCharacter, listAdminRunnerCharacters, runnerLevelOptions, runnerScenarioOptions, updateRunnerCharacter, type RunnerCharacterDto, type RunnerCharacterInput } from '@/lib/runner-api';
 import { MAX_FRAMES, MAX_VARIANTS, POSES, POSE_INFO, SOUND_INFO, SOUND_KEYS, isHexColor, type Pose, type SoundKey } from '@runner/characters';
 import { portraitOf } from '@/components/user/corrida/corrida-characters';
 import { SpriteView } from '@/components/user/corrida/sprite-view';
@@ -33,6 +33,8 @@ type Draft = {
   sortOrder: string;
   /** Id da fase que abre o personagem (vazio = já começa liberado). */
   unlockLevel: string;
+  /** Cenário a que o personagem pertence (vazio = sem grupo). */
+  scenarioSlug: string;
   sprites: Record<Pose, { url: string; frames: string }>;
   /** Falas de cada ação (um espaço em branco = ainda sem arquivo). */
   sounds: Record<SoundKey, string[]>;
@@ -48,6 +50,7 @@ const emptyDraft = (): Draft => ({
   active: true,
   sortOrder: '100',
   unlockLevel: '',
+  scenarioSlug: '',
   sprites: Object.fromEntries(POSES.map((pose) => [pose, { url: '', frames: String(POSE_INFO[pose].defaultFrames) }])) as Draft['sprites'],
   sounds: Object.fromEntries(SOUND_KEYS.map((key) => [key, []])) as unknown as Draft['sounds'],
 });
@@ -60,6 +63,7 @@ function draftOf(character: RunnerCharacterDto): Draft {
   draft.active = character.active;
   draft.sortOrder = String(character.sortOrder);
   draft.unlockLevel = character.unlockLevel ?? '';
+  draft.scenarioSlug = character.scenarioSlug ?? '';
   for (const pose of POSES) {
     const sheet = character.sprites[pose];
     if (sheet) draft.sprites[pose] = { url: sheet.url, frames: String(sheet.frames) };
@@ -94,6 +98,7 @@ function toInput(draft: Draft): RunnerCharacterInput & { name: string } {
     active: draft.active,
     sortOrder: Number(draft.sortOrder),
     unlockLevel: draft.unlockLevel || null,
+    scenarioSlug: draft.scenarioSlug || null,
     // Pose sem imagem vira null: remove do personagem (no cadastro novo não faz nada).
     sprites: Object.fromEntries(POSES.map((pose) => [pose, draft.sprites[pose].url.trim() ? { url: draft.sprites[pose].url.trim(), frames: Number(draft.sprites[pose].frames) } : null])),
     sounds: Object.fromEntries(SOUND_KEYS.map((key) => [key, draft.sounds[key].map((url) => url.trim()).filter(Boolean)])) as RunnerCharacterInput['sounds'],
@@ -149,6 +154,14 @@ export function RunnerCharactersScreen() {
       .catch((reason) => toast.error(errorMessage(reason)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  const [scenarios, setScenarios] = useState<Array<{ slug: string; name: string }>>([]);
+  useEffect(() => {
+    runnerScenarioOptions()
+      .then(setScenarios)
+      .catch((reason) => toast.error(errorMessage(reason)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const scenarioChoices = useMemo(() => [{ value: '', label: 'Sem cenário' }, ...scenarios.map((scenario) => ({ value: scenario.slug, label: scenario.name }))], [scenarios]);
   const levelChoices = useMemo(() => [{ value: '', label: 'Já começa liberado' }, ...levels.map((level) => ({ value: level.slug, label: `${level.scenarioName}: ${level.name}`, description: level.slug }))], [levels]);
 
   function open(character?: RunnerCharacterDto) {
@@ -271,6 +284,9 @@ export function RunnerCharactersScreen() {
                 <Input id="runner-order" type="number" min={0} max={999} value={draft.sortOrder} onChange={(event) => change({ sortOrder: event.target.value })} />
               </Field>
             </div>
+            <Field label="Cenário do personagem" hint="Cada cenário tem 3 personagens; eles aparecem juntos no cartão do cenário na campanha." htmlFor="runner-scenario">
+              <Select id="runner-scenario" value={draft.scenarioSlug} onChange={(scenarioSlug) => change({ scenarioSlug })} options={scenarioChoices} searchable aria-label="Cenário do personagem" />
+            </Field>
             <Field label="Fase que abre este personagem" hint="O jogador ganha o personagem ao concluir a fase na campanha." htmlFor="runner-unlock">
               <Select id="runner-unlock" value={draft.unlockLevel} onChange={(unlockLevel) => change({ unlockLevel })} options={levelChoices} searchable aria-label="Fase que abre o personagem" />
             </Field>

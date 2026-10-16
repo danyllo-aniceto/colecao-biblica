@@ -25,7 +25,12 @@ describe.skipIf(!hasDatabase)("corrida: personagens pelo painel", () => {
     expect(list.body.map((character: { slug: string }) => character.slug)).toEqual(["davi", "jonatas", "joabe", "moises", "arao", "miria", "ezequiel"]);
     // Os personagens dos cenários abrem ao concluir a fase indicada.
     expect(list.body.find((character: { slug: string }) => character.slug === "jonatas")).toMatchObject({ unlockLevel: "cd-3" });
-    expect(list.body[0]).toMatchObject({ name: "Davi", color: "#38bdf8", sprites: {}, sounds: {}, system: true });
+    expect(list.body[0]).toMatchObject({ name: "Davi", color: "#38bdf8", sprites: {}, sounds: {}, system: true, scenarioSlug: "cidade-de-davi" });
+    // Cada cenário do seed tem o grupo dele (o Davi começa liberado mas é da Cidade de Davi).
+    const groupOf = (slug: string) => list.body.filter((character: { scenarioSlug: string | null }) => character.scenarioSlug === slug).map((character: { slug: string }) => character.slug);
+    expect(groupOf("cidade-de-davi")).toEqual(["davi", "jonatas", "joabe"]);
+    expect(groupOf("mar-vermelho")).toEqual(["moises", "arao", "miria"]);
+    expect(groupOf("vale-dos-ossos-secos")).toEqual(["ezequiel"]);
 
     const davi = list.body[0];
     expect((await api.put(`/api/runner/admin/characters/${davi.id}`).set(bearer(user)).send({ active: false })).status).toBe(403);
