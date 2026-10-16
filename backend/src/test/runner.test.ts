@@ -1,6 +1,9 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "../db/prisma";
 import { api, bearer, login, resetDatabase } from "./helpers";
+
+// As fases do seed são longas (minutos): conferir a partida inteira no servidor passa dos 5 s padrão.
+vi.setConfig({ testTimeout: 60_000 });
 
 const hasDatabase = Boolean(process.env.TEST_DATABASE_URL);
 
@@ -123,7 +126,7 @@ describe.skipIf(!hasDatabase)("corrida: cenários e fases pelo painel", () => {
     expect(res.body.scenarios.map((scenario: { id: string }) => scenario.id)).toEqual(["cidade-de-davi", "mar-vermelho", "vale-dos-ossos-secos"]);
     const davi = res.body.scenarios[0];
     expect(davi.levels.map((level: { id: string }) => level.id)).toEqual(["cd-1", "cd-2", "cd-3", "cd-4", "cd-5"]);
-    expect(davi.levels[0]).toMatchObject({ name: "O pastor", seed: 101, seconds: 50, order: ["RUN"], ref: "Salmos 23:1", verse: "O Senhor é o meu pastor; nada me faltará." });
+    expect(davi.levels[0]).toMatchObject({ name: "O pastor", seed: 101, seconds: 80, difficulty: 10, order: ["RUN"], ref: "Salmos 23:1", verse: "O Senhor é o meu pastor; nada me faltará." });
     expect(davi.theme).toEqual({ skyTop: "#1c1917", skyBottom: "#78350f" });
     expect(davi.art).toEqual({});
   });

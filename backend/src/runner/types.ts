@@ -44,7 +44,8 @@ export type LevelObject = SpikeObject | BlockObject | PortalObject | WordObject 
 export type Verse = { ref: string; words: string[] };
 
 /** Imagens do cenário (todas opcionais): três camadas de fundo (longe, meio, perto; repetem na horizontal) e a figura do espeto e do bloco. */
-export const ART_KEYS = ["far", "mid", "near", "spike", "block"] as const;
+/** `cover` é só a capa do cartão do cenário (não entra na fase). */
+export const ART_KEYS = ["far", "mid", "near", "spike", "block", "cover"] as const;
 export type ArtKey = (typeof ART_KEYS)[number];
 export type ScenarioArt = Partial<Record<ArtKey, string>>;
 

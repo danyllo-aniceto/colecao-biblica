@@ -293,6 +293,7 @@ export function CorridaGame({ level, character, practice = false, autopilot, riv
           checkpointRef.current = { count: after.checkpoint, collected: after.collected, powers: after.powers, tick: after.tick };
           setHasCheckpoint(true);
           sound('checkpoint', 'rnCheckpoint');
+          navigator.vibrate?.(20);
           noteRef.current = { text: 'Checkpoint salvo', until: after.tick + 50 };
         }
         if (race) {
@@ -304,12 +305,14 @@ export function CorridaGame({ level, character, practice = false, autopilot, riv
             raceRef.current.deaths += 1;
             flashRef.current = 1;
             sound('death', 'rnDeath');
+            navigator.vibrate?.([40, 30, 60]);
           }
           continue;
         }
         const status = after.status;
         if (status !== 'running') {
           flashRef.current = status === 'dead' ? 1 : 0;
+          if (status === 'dead') navigator.vibrate?.([40, 30, 60]);
           sound(status === 'dead' ? 'death' : 'win', status === 'dead' ? 'rnDeath' : 'rnWin');
           const result = { progress: progressOf(prepared.current, after), words: after.collected.length, finished: status === 'finished', clean: status === 'finished' && !usedCheckpointRef.current, segments: runRef.current.segments.map((segment) => ({ fromCheckpoint: segment.fromCheckpoint, toggles: [...segment.toggles] })) };
           setSummary({ progress: result.progress, words: result.words, total: prepared.current.wordCount });

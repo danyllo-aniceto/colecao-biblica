@@ -80,7 +80,7 @@ export const verseWords = (verse: string) => verse.trim().split(/\s+/).filter(Bo
 
 export function buildCampaignLevel(scenario: Scenario, def: CampaignLevelDef): Level {
   const level = buildJourney({ id: def.id, name: def.name, seed: def.seed, seconds: def.seconds, order: def.order, forks: def.forks, powers: def.powers, difficulty: (def.difficulty ?? DEFAULT_DIFFICULTY) / 100, verse: { ref: def.ref, words: verseWords(def.verse) } });
-  const art = Object.fromEntries(ART_KEYS.filter((key) => scenario.art?.[key]).map((key) => [key, scenario.art![key]]));
+  const art = Object.fromEntries(ART_KEYS.filter((key) => key !== "cover" && scenario.art?.[key]).map((key) => [key, scenario.art![key]]));
   return { ...level, theme: scenario.theme, ...(Object.keys(art).length > 0 ? { art } : {}), ...(scenario.music ? { music: scenario.music } : {}) };
 }
 

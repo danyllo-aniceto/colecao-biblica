@@ -44,7 +44,7 @@ export function runFork(objects: LevelObject[], x: number, power: PowerKind | nu
   objects.push({ kind: "block", x: start, y: DIVIDER_ROW, w: length, h: 1 });
   // Caminho de baixo: dois espetos ou, na variante do buraco, um buraco no chão para pular (a laje de cima fica a 120 px: o pulo cabe).
   if (variant === "PIT") objects.push({ kind: "pit", x: start + 11, w: 3, side: "floor" });
-  else objects.push({ kind: "spike", x: start + 10 }, { kind: "spike", x: start + 20 });
+  else objects.push({ kind: "spike", x: start + 9 }, { kind: "spike", x: start + 21 });
   // Caminho de cima (em cima da laje, linha 4).
   objects.push({ kind: "spike", x: start + 8, y: DIVIDER_ROW + 1 }, { kind: "spike", x: start + 18, y: DIVIDER_ROW + 1 });
   if (power) objects.push({ kind: "power", x: start + 13, y: DIVIDER_ROW + 1, power });

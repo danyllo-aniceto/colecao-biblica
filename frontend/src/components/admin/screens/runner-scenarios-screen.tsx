@@ -26,13 +26,14 @@ const ART_INFO: Record<ArtKey, { label: string; hint: string }> = {
   mid: { label: 'Fundo: camada do meio', hint: 'Colinas, muros, árvores. Anda numa velocidade média. Fundo transparente na parte de cima.' },
   near: { label: 'Fundo: camada de perto', hint: 'Detalhes próximos (plantas, pedras). Anda mais rápido. Fundo transparente.' },
   spike: { label: 'Obstáculo: espeto', hint: 'Imagem quadrada com a ponta para cima (o jogo vira para o teto). Fundo transparente.' },
+  cover: { label: 'Capa do cenário', hint: 'Imagem larga (16:7) do cartão do cenário na campanha. Não aparece dentro da fase.' },
   block: { label: 'Obstáculo: bloco', hint: 'Imagem quadrada que se repete em cada casa do bloco (pedra, tijolo, plataforma).' },
 };
 
 type Draft = { name: string; story: string; skyTop: string; skyBottom: string; art: Record<ArtKey, string>; musicUrl: string; active: boolean; sortOrder: string };
 type Errors = Record<string, string>;
 
-const emptyDraft = (): Draft => ({ name: '', story: '', skyTop: '#0f172a', skyBottom: '#1e3a5f', art: { far: '', mid: '', near: '', spike: '', block: '' }, musicUrl: '', active: true, sortOrder: '100' });
+const emptyDraft = (): Draft => ({ name: '', story: '', skyTop: '#0f172a', skyBottom: '#1e3a5f', art: { far: '', mid: '', near: '', spike: '', block: '', cover: '' }, musicUrl: '', active: true, sortOrder: '100' });
 
 function draftOf(scenario: RunnerScenarioDto): Draft {
   return {
@@ -40,7 +41,7 @@ function draftOf(scenario: RunnerScenarioDto): Draft {
     story: scenario.story ?? '',
     skyTop: scenario.skyTop,
     skyBottom: scenario.skyBottom,
-    art: { far: scenario.art.far ?? '', mid: scenario.art.mid ?? '', near: scenario.art.near ?? '', spike: scenario.art.spike ?? '', block: scenario.art.block ?? '' },
+    art: { far: scenario.art.far ?? '', mid: scenario.art.mid ?? '', near: scenario.art.near ?? '', spike: scenario.art.spike ?? '', block: scenario.art.block ?? '', cover: scenario.art.cover ?? '' },
     musicUrl: scenario.musicUrl ?? '',
     active: scenario.active,
     sortOrder: String(scenario.sortOrder),
@@ -226,7 +227,7 @@ export function RunnerScenariosScreen() {
                       <p className="font-display text-base font-bold text-ink">{ART_INFO[key].label}</p>
                       <p className="text-xs font-semibold text-muted">{ART_INFO[key].hint}</p>
                     </div>
-                    <ImageUploadField value={draft.art[key]} onChange={(url) => change({ art: { ...draft.art, [key]: url } })} wide={key === 'far' || key === 'mid' || key === 'near'} />
+                    <ImageUploadField value={draft.art[key]} onChange={(url) => change({ art: { ...draft.art, [key]: url } })} wide={key === 'far' || key === 'mid' || key === 'near' || key === 'cover'} />
                   </li>
                 ))}
               </ul>

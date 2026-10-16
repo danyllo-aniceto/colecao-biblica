@@ -1,9 +1,12 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "../db/prisma";
 import { botInputs } from "../runner/bots";
 import { buildCampaignLevel, SCENARIOS } from "../runner/campaign";
 import { prepareLevel } from "../runner/engine";
 import { api, bearer, login, resetDatabase } from "./helpers";
+
+// As fases do seed são longas (minutos): conferir a partida inteira no servidor passa dos 5 s padrão.
+vi.setConfig({ testTimeout: 60_000 });
 
 const hasDatabase = Boolean(process.env.TEST_DATABASE_URL);
 
