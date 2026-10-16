@@ -205,6 +205,10 @@ Telas (aba Jogar → Corrida), no mesmo molde do Duelo/Tabuleiro, sem servidor (
 - [x] **Correção:** a laje de cima da bifurcação sumia da tela antes do corredor sair dela (o corte do desenho usava o início do objeto; agora usa o fim).
 - [x] Fases do seed mais longas (80 a 155 s) e o limite de duração subiu para 600 s. Vibração ao cair e ao pegar checkpoint.
 
+### Etapa 7.6 — Falas variadas (feita)
+- [x] Cada ação do personagem aceita **até 8 falas** (`Sounds` = lista por ação; o formato antigo de uma fala só ainda é lido). O app sorteia uma por vez, **sem repetir a anterior**, e **só fala em parte das vezes** (`SOUND_INFO[ação].chance`; ficar quieto não toca nada); intervalo mínimo de 1,2 s entre falas (queda e vitória sempre passam). Regras puras e testadas em `runner/characters.ts` (`pickVariant`, `shouldSpeak`); tocador em `lib/sound/character-sfx.ts`.
+- [x] Ações novas: **começa a voar**, **entra na gravidade**, **volta a correr** (portais) e **pegou um poder**; sem fala cadastrada ficam em silêncio (não há som padrão para elas).
+
 ### Etapa 8 — Polimento e conteúdo (contínua)
 - [ ] Sons e voz por personagem; trilhas por cenário (e fases de ritmo, como Jericó).
 - [ ] Efeitos (poeira, estouro ao cair, brilho da palavra), vibração no toque.

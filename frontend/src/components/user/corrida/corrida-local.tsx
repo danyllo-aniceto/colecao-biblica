@@ -238,7 +238,7 @@ export function CorridaLocal({ level, players, onExit }: { level: Level; players
       playSfx(ranked[0].human ? 'rnWin' : 'rnDeath');
     };
 
-    const sound = (slot: Slot, key: SoundKey, fallback: Parameters<typeof playSfx>[0]) => playCharacterSound(slot.player.sounds, key, fallback);
+    const sound = (slot: Slot, key: SoundKey, fallback: Parameters<typeof playSfx>[0] | null) => playCharacterSound(slot.player.sounds, key, fallback);
 
     /** Um passo de um humano: cai, espera um instante e volta sozinho ao último checkpoint. */
     const stepHuman = (slot: Slot) => {
@@ -265,9 +265,13 @@ export function CorridaLocal({ level, players, onExit }: { level: Level; players
         if (after.airJumps < before.airJumps) sound(slot, 'double', 'rnDouble');
         else if (before.grounded && after.form === 'RUN' && after.vy < -4) sound(slot, 'jump', 'rnJump');
         if (after.collected.length > before.collected.length) sound(slot, 'word', 'rnWord');
-        if (after.powers.length > before.powers.length) playSfx('rnPower');
+        if (after.powers.length > before.powers.length) {
+          playSfx('rnPower');
+          sound(slot, 'power', null);
+        }
         if (before.effects.shield > 0 && after.effects.shield === 0) playSfx('rnShield');
         if (after.grav !== before.grav) sound(slot, 'flip', 'rnFlip');
+        if (after.portal > before.portal) sound(slot, after.form === 'FLY' ? 'flyStart' : after.form === 'GRAVITY' ? 'gravityStart' : 'runStart', null);
       }
       if (after.checkpoint > before.checkpoint && after.status === 'running')
         slot.checkpoint = {

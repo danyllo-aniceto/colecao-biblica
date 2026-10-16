@@ -15,7 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { errorMessage, useToast } from '@/components/ui/toast';
 import { cn } from '@/lib/cn';
 import { createRunnerCharacter, deleteRunnerCharacter, listAdminRunnerCharacters, runnerLevelOptions, updateRunnerCharacter, type RunnerCharacterDto, type RunnerCharacterInput } from '@/lib/runner-api';
-import { MAX_FRAMES, POSES, POSE_INFO, SOUND_INFO, SOUND_KEYS, isHexColor, type Pose, type SoundKey } from '@runner/characters';
+import { MAX_FRAMES, MAX_VARIANTS, POSES, POSE_INFO, SOUND_INFO, SOUND_KEYS, isHexColor, type Pose, type SoundKey } from '@runner/characters';
 import { portraitOf } from '@/components/user/corrida/corrida-characters';
 import { SpriteView } from '@/components/user/corrida/sprite-view';
 import { AdminPanel, IconAction, SearchInput, StatusBadge } from '../admin-ui';
@@ -34,7 +34,8 @@ type Draft = {
   /** Id da fase que abre o personagem (vazio = já começa liberado). */
   unlockLevel: string;
   sprites: Record<Pose, { url: string; frames: string }>;
-  sounds: Record<SoundKey, string>;
+  /** Falas de cada ação (um espaço em branco = ainda sem arquivo). */
+  sounds: Record<SoundKey, string[]>;
 };
 type Errors = Record<string, string>;
 
@@ -48,7 +49,7 @@ const emptyDraft = (): Draft => ({
   sortOrder: '100',
   unlockLevel: '',
   sprites: Object.fromEntries(POSES.map((pose) => [pose, { url: '', frames: String(POSE_INFO[pose].defaultFrames) }])) as Draft['sprites'],
-  sounds: Object.fromEntries(SOUND_KEYS.map((key) => [key, ''])) as Draft['sounds'],
+  sounds: Object.fromEntries(SOUND_KEYS.map((key) => [key, []])) as unknown as Draft['sounds'],
 });
 
 function draftOf(character: RunnerCharacterDto): Draft {
@@ -63,7 +64,7 @@ function draftOf(character: RunnerCharacterDto): Draft {
     const sheet = character.sprites[pose];
     if (sheet) draft.sprites[pose] = { url: sheet.url, frames: String(sheet.frames) };
   }
-  for (const key of SOUND_KEYS) draft.sounds[key] = character.sounds[key] ?? '';
+  for (const key of SOUND_KEYS) draft.sounds[key] = [...(character.sounds[key] ?? [])];
   return draft;
 }
 
@@ -95,7 +96,7 @@ function toInput(draft: Draft): RunnerCharacterInput & { name: string } {
     unlockLevel: draft.unlockLevel || null,
     // Pose sem imagem vira null: remove do personagem (no cadastro novo não faz nada).
     sprites: Object.fromEntries(POSES.map((pose) => [pose, draft.sprites[pose].url.trim() ? { url: draft.sprites[pose].url.trim(), frames: Number(draft.sprites[pose].frames) } : null])),
-    sounds: Object.fromEntries(SOUND_KEYS.map((key) => [key, draft.sounds[key].trim() || null])),
+    sounds: Object.fromEntries(SOUND_KEYS.map((key) => [key, draft.sounds[key].map((url) => url.trim()).filter(Boolean)])) as RunnerCharacterInput['sounds'],
   };
 }
 
@@ -327,7 +328,7 @@ export function RunnerCharactersScreen() {
 
             <section className="space-y-3">
               <h3 className="font-display text-lg font-bold text-ink">Sons do personagem</h3>
-              <p className="text-sm text-muted">Opcionais. Sem arquivo, toca o som padrão do modo. Sons curtos (menos de 2 segundos) funcionam melhor.</p>
+              <p className="text-sm text-muted">Opcionais. Cada ação aceita até {MAX_VARIANTS} falas: o jogo sorteia uma de cada vez (sem repetir a anterior) e só fala em parte das vezes, para não enjoar. Sem nenhuma fala, toca o som padrão do modo (as ações novas ficam em silêncio). Sons curtos (menos de 2 segundos) funcionam melhor.</p>
               <ul className="grid gap-4 lg:grid-cols-2">
                 {SOUND_KEYS.map((key) => (
                   <li key={key} className="space-y-2 rounded-2xl border-2 border-edge bg-surface-2 p-3">
@@ -335,7 +336,21 @@ export function RunnerCharactersScreen() {
                       <p className="font-display text-base font-bold text-ink">{SOUND_INFO[key].label}</p>
                       <p className="text-xs font-semibold text-muted">{SOUND_INFO[key].hint}</p>
                     </div>
-                    <AudioUploadField value={draft.sounds[key]} onChange={(url) => change({ sounds: { ...draft.sounds, [key]: url } })} />
+                    <div className="space-y-2">
+                      {draft.sounds[key].map((url, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <div className="min-w-0 flex-1">
+                            <AudioUploadField value={url} onChange={(next) => change({ sounds: { ...draft.sounds, [key]: draft.sounds[key].map((item, at) => (at === index ? next : item)) } })} />
+                          </div>
+                          <IconAction label={`Remover fala ${index + 1} de ${SOUND_INFO[key].label}`} onClick={() => change({ sounds: { ...draft.sounds, [key]: draft.sounds[key].filter((_, at) => at !== index) } })}>
+                            <DeleteOutlineRoundedIcon fontSize="small" />
+                          </IconAction>
+                        </div>
+                      ))}
+                      <Button size="sm" variant="ghost" disabled={draft.sounds[key].length >= MAX_VARIANTS} onClick={() => change({ sounds: { ...draft.sounds, [key]: [...draft.sounds[key], ''] } })}>
+                        <AddRoundedIcon fontSize="small" /> Adicionar fala ({draft.sounds[key].length}/{MAX_VARIANTS})
+                      </Button>
+                    </div>
                   </li>
                 ))}
               </ul>

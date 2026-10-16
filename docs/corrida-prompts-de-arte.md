@@ -53,17 +53,21 @@ Ideia de pose "Voando" por personagem (liga com a história): Elias (carruagem d
 
 ## 3. Sons (opcionais, por personagem)
 
-Arquivo **curto (menos de 2 s)**, MP3/M4A/OGG/WAV, até 12 MB. Sem arquivo, toca o som padrão. Um som por evento:
+Arquivo **curto (menos de 2 s)**, MP3/M4A/OGG/WAV, até 12 MB. Sem arquivo, toca o som padrão. **Cada evento aceita até 8 falas diferentes** (botão "Adicionar fala"): o jogo sorteia uma a cada vez, nunca repete a mesma duas vezes seguidas e **só fala em parte das vezes** (a % está na coluna "Fala"), para não enjoar. Quanto mais variações, melhor (3 a 6 por evento já resolve):
 
-| Som | Quando toca | Ideia |
-|---|---|---|
-| **Pulo** | A cada pulo | "hup!" curto e alegre, voz do personagem |
-| **Pulo duplo** | Segundo pulo no ar | "hup-hup!" mais agudo |
-| **Palavra** | Pegou uma palavra do versículo | brilho/sininho ou "olha só!" |
-| **Inverter gravidade** | Trocou chão/teto | "uáu!" ou whoosh |
-| **Checkpoint** | Passou numa bandeira | "marcado!" ou fanfarra curtinha |
-| **Queda** | Errou | "ai!" cômico (nada assustador) |
-| **Vitória** | Concluiu a fase / ganhou a corrida | comemoração curta |
+| Som | Quando toca | Fala | Ideia |
+|---|---|---|---|
+| **Pulo** | Em parte dos pulos | 30 % | "hup!" curto e alegre, voz do personagem |
+| **Pulo duplo** | Segundo pulo no ar | 40 % | "hup-hup!" mais agudo |
+| **Palavra** | Pegou uma palavra do versículo | 50 % | brilho/sininho ou "olha só!" |
+| **Inverter gravidade** | Trocou chão/teto | 30 % | "uáu!" ou whoosh |
+| **Checkpoint** | Passou numa bandeira | 60 % | "marcado!" ou fanfarra curtinha |
+| **Queda** | Errou | 80 % | "ai!" cômico (nada assustador) |
+| **Vitória** | Concluiu a fase / ganhou a corrida | sempre | comemoração curta |
+| **Começa a voar** | Portal que vira voo | 75 % | "voando!", "lá vou eu!", risada animada |
+| **Entra na gravidade** | Portal da gravidade | 75 % | "de cabeça pra baixo!", "uau, sem peso!" |
+| **Volta a correr** | Portal que volta à corrida | 50 % | "pés no chão!", "de volta à estrada!" |
+| **Pegou um poder** | Turbo, Escudo, Pulo triplo ou Ímã | 60 % | "que força!", "consegui!" |
 
 Prompt de som (para ferramentas de efeitos/voz): `Short cheerful cartoon voice "{texto}" of a {idade/tipo} {personagem}, family-friendly, clean, no background noise, no music, {duração} seconds`.
 Para efeitos sem voz: `Short {descrição} sound effect, clean, no reverb, no music, under 1 second`.

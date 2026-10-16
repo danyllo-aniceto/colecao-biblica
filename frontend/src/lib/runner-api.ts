@@ -30,7 +30,7 @@ export type RunnerCharacterInput = {
   sortOrder?: number;
   unlockLevel?: string | null;
   sprites?: Partial<Record<Pose, SpriteSheet | null>>;
-  sounds?: Partial<Record<SoundKey, string | null>>;
+  sounds?: Partial<Record<SoundKey, string[] | null>>;
 };
 
 const json = (method: string, body: unknown): RequestInit => ({ method, body: JSON.stringify(body) });

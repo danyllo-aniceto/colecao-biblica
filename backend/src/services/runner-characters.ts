@@ -48,7 +48,7 @@ export type RunnerCharacterInput = {
   sortOrder?: number;
   unlockLevel?: string | null;
   sprites?: Partial<Record<Pose, SpriteSheet | null>>;
-  sounds?: Partial<Record<SoundKey, string | null>>;
+  sounds?: Partial<Record<SoundKey, string | string[] | null>>;
 };
 
 /** Identificador curto e único a partir do nome ("Maria Madalena" → "maria-madalena"; repetido ganha -2, -3...). */
