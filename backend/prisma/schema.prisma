@@ -1085,6 +1085,8 @@ model RunnerCharacter {
   sortOrder   Int      @default(0) @map("sort_order")
   /// Id da fase da campanha que abre este personagem (vazio = já vem liberado). Usado na campanha com servidor.
   unlockLevel String?  @map("unlock_level")
+  /// Cenário da campanha a que o personagem pertence (`runner_scenarios.slug`): cada cenário tem 3 personagens. Vazio = sem grupo.
+  scenarioSlug String? @map("scenario_slug")
   sprites     Json     @default("{}")
   sounds      Json     @default("{}")
   /// Os do seed não podem ser excluídos (só desativados).

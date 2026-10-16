@@ -14,7 +14,7 @@ describe.skipIf(!hasDatabase)("corrida: personagens pelo painel", () => {
     await prisma.runnerCharacter.deleteMany({ where: { system: false } });
     await prisma.runnerCharacter.updateMany({ data: { active: true, sprites: {}, sounds: {}, unlockLevel: null } });
     // Volta as fases que abrem os personagens dos cenários (os da migração).
-    for (const [slug, unlockLevel] of Object.entries({ jonatas: "cd-3", joabe: "cd-5", moises: "mv-2", arao: "mv-3", miria: "mv-4", ezequiel: "vo-3" })) await prisma.runnerCharacter.update({ where: { slug }, data: { unlockLevel } });
+    for (const [slug, unlockLevel] of Object.entries({ jonatas: "cd-3", joabe: "cd-5", moises: "mv-2", arao: "mv-3", miria: "mv-4", ezequiel: "vo-3", daniel: "vo-6", jeremias: "vo-9" })) await prisma.runnerCharacter.update({ where: { slug }, data: { unlockLevel } });
   });
 
   it("o jogador vê só os personagens ativos, na ordem do painel; só admin edita", async () => {
@@ -22,10 +22,17 @@ describe.skipIf(!hasDatabase)("corrida: personagens pelo painel", () => {
     const admin = await login("admin2@email.com");
     const list = await api.get("/api/runner/characters").set(bearer(user));
     expect(list.status).toBe(200);
-    expect(list.body.map((character: { slug: string }) => character.slug)).toEqual(["davi", "jonatas", "joabe", "moises", "arao", "miria", "ezequiel"]);
+    expect(list.body.map((character: { slug: string }) => character.slug)).toEqual(["davi", "jonatas", "joabe", "moises", "arao", "miria", "ezequiel", "daniel", "jeremias"]);
     // Os personagens dos cenários abrem ao concluir a fase indicada.
     expect(list.body.find((character: { slug: string }) => character.slug === "jonatas")).toMatchObject({ unlockLevel: "cd-3" });
-    expect(list.body[0]).toMatchObject({ name: "Davi", color: "#38bdf8", sprites: {}, sounds: {}, system: true });
+    expect(list.body[0]).toMatchObject({ name: "Davi", color: "#38bdf8", sprites: {}, sounds: {}, system: true, scenarioSlug: "cidade-de-davi" });
+    // Cada cenário do seed tem o grupo dele (o Davi começa liberado mas é da Cidade de Davi).
+    const groupOf = (slug: string) => list.body.filter((character: { scenarioSlug: string | null }) => character.scenarioSlug === slug).map((character: { slug: string }) => character.slug);
+    expect(groupOf("cidade-de-davi")).toEqual(["davi", "jonatas", "joabe"]);
+    expect(groupOf("mar-vermelho")).toEqual(["moises", "arao", "miria"]);
+    expect(groupOf("vale-dos-ossos-secos")).toEqual(["ezequiel", "daniel", "jeremias"]);
+    expect(list.body.find((character: { slug: string }) => character.slug === "daniel")).toMatchObject({ unlockLevel: "vo-6" });
+    expect(list.body.find((character: { slug: string }) => character.slug === "jeremias")).toMatchObject({ unlockLevel: "vo-9" });
 
     const davi = list.body[0];
     expect((await api.put(`/api/runner/admin/characters/${davi.id}`).set(bearer(user)).send({ active: false })).status).toBe(403);
@@ -37,7 +44,7 @@ describe.skipIf(!hasDatabase)("corrida: personagens pelo painel", () => {
     expect(after.body.map((character: { slug: string }) => character.slug)).not.toContain("davi");
     // O painel continua vendo o desativado.
     const adminList = await api.get("/api/runner/admin/characters?size=3&page=0").set(bearer(admin));
-    expect(adminList.body).toMatchObject({ totalElements: 7, totalPages: 3, size: 3 });
+    expect(adminList.body).toMatchObject({ totalElements: 9, totalPages: 3, size: 3 });
     expect(adminList.body.content.map((character: { slug: string }) => character.slug)).toEqual(["davi", "jonatas", "joabe"]);
   });
 

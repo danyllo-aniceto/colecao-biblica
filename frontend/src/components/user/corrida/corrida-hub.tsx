@@ -271,7 +271,9 @@ function CampaignTab({ scenarios: scenarioList, levels: allLevels, bests, finish
         {scenarios.pageItems.map((item: Scenario) => {
           const unlocked = isScenarioUnlocked(item.id, finished, scenarioList);
           const done = item.levels.filter((def) => finished.has(def.id)).length;
-          const prizes = item.levels.flatMap((def) => unlocksOf(def.id));
+          // Os personagens do cenário (inclusive o que já começa liberado, como o Davi); sem grupo cadastrado, valem os que abrem nas fases dele.
+          const group = characters.filter((character) => character.scenarioId === item.id).map((character) => character.name);
+          const prizes = group.length > 0 ? group : item.levels.flatMap((def) => unlocksOf(def.id));
           return (
             <li key={item.id} className={cn('panel space-y-2 p-4', !unlocked && 'opacity-70')} style={unlocked ? { borderLeft: `6px solid ${item.theme.skyBottom}` } : undefined}>
               <ScenarioCover scenario={item} className="max-w-xl" locked={!unlocked} />

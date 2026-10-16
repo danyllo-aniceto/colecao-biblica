@@ -18,6 +18,7 @@ export function toRunnerCharacter(row: Row) {
     active: row.active,
     sortOrder: row.sortOrder,
     unlockLevel: row.unlockLevel,
+    scenarioSlug: row.scenarioSlug,
     sprites: sanitizeSprites(row.sprites),
     sounds: sanitizeSounds(row.sounds),
     system: row.system,
@@ -47,6 +48,7 @@ export type RunnerCharacterInput = {
   active?: boolean;
   sortOrder?: number;
   unlockLevel?: string | null;
+  scenarioSlug?: string | null;
   sprites?: Partial<Record<Pose, SpriteSheet | null>>;
   sounds?: Partial<Record<SoundKey, string | string[] | null>>;
 };
@@ -71,6 +73,7 @@ export async function createRunnerCharacter(db: Db, input: RunnerCharacterInput 
       active: input.active ?? true,
       sortOrder: input.sortOrder ?? 100,
       unlockLevel: input.unlockLevel ?? null,
+      scenarioSlug: input.scenarioSlug ?? null,
       sprites: mergeSprites({}, input.sprites ?? {}) as Prisma.InputJsonValue,
       sounds: mergeSounds({}, input.sounds ?? {}) as Prisma.InputJsonValue,
     },
@@ -91,6 +94,7 @@ export async function updateRunnerCharacter(db: Db, id: number, input: RunnerCha
       ...(input.active !== undefined ? { active: input.active } : {}),
       ...(input.sortOrder !== undefined ? { sortOrder: input.sortOrder } : {}),
       ...(input.unlockLevel !== undefined ? { unlockLevel: input.unlockLevel } : {}),
+      ...(input.scenarioSlug !== undefined ? { scenarioSlug: input.scenarioSlug } : {}),
       ...(input.sprites !== undefined ? { sprites: mergeSprites(sanitizeSprites(current.sprites), input.sprites) as Prisma.InputJsonValue } : {}),
       ...(input.sounds !== undefined ? { sounds: mergeSounds(sanitizeSounds(current.sounds), input.sounds) as Prisma.InputJsonValue } : {}),
     },

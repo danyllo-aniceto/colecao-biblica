@@ -200,6 +200,20 @@ Todos **curtos (menos de 2 s)**, **sem música de fundo**, **sem eco**, formato 
 - [ ] 7 sons (mesma voz)
 - [ ] Cadastrado no Painel → Corrida: personagens, aba "Quadro por quadro" em cada pose (a quantidade de quadros é preenchida sozinha)
 
+## Personagens do Vale dos Ossos Secos (Daniel e Jeremias)
+
+Preencha a ficha (item 0) com estes dados e siga o resto igual ao Ezequiel. Estilo e negativos são os blocos fixos acima.
+
+**Daniel** — `{PERSONAGEM}`: Daniel; `{descrição}`: young Hebrew man around 20, short dark hair, clean-shaven, calm confident face, Babylonian court robe in deep royal blue with gold trim and a white inner tunic, simple gold chain, a small scroll in one hand; cor de reserva `#facc15`.
+- Pose de voo: flutua de pé com o manto aberto como asas, olhando à frente, **dois leões dourados de luz** correndo ao lado (silhuetas pequenas e amigáveis, sem dentes à mostra).
+- Pose caindo: leve susto, mão no peito, o manto balançando (nada assustador).
+- Voz (4 a 6 falas por ação, curtas): "Deus está comigo!", "Sem medo!", "Vamos lá!", "A fé me guia!", "Foi por pouco!".
+
+**Jeremias** — `{PERSONAGEM}`: Jeremias; `{descrição}`: middle-aged Hebrew prophet around 45, gentle tired kind eyes, short dark beard with a few grey hairs, rough brown cloak over a cream tunic with a rope belt, a small clay jar and a rolled scroll tied at his side; cor de reserva `#818cf8`.
+- Pose de voo: voa de braços abertos com o manto ao vento e fitas de pergaminho de luz dourada saindo do rolo ao redor.
+- Pose caindo: cai com o rolo protegido junto ao peito, expressão de espanto suave.
+- Voz (4 a 6 falas por ação, curtas): "Há esperança!", "O Senhor me sustenta!", "Firme!", "Eu sigo em frente!", "Ufa, essa foi perto!".
+
 ## Quando for um personagem específico
 
-Me diga o nome e eu preencho `{PERSONAGEM}`, `{descrição}`, o objeto simbólico, a pose de voo que combina com a história e a voz base. Os 6 padrão já cadastrados: Davi, Débora, Elias, Ester, Jonas e Daniel.
+Me diga o nome e eu preencho `{PERSONAGEM}`, `{descrição}`, o objeto simbólico, a pose de voo que combina com a história e a voz base. Os 9 padrão cadastrados: Davi, Jônatas, Joabe (Cidade de Davi), Moisés, Arão, Miriã (Mar Vermelho), Ezequiel, Daniel e Jeremias (Vale dos Ossos Secos).

@@ -15,6 +15,8 @@ export type RunnerCharacterDto = {
   active: boolean;
   sortOrder: number;
   unlockLevel: string | null;
+  /** Cenário a que pertence (`slug`): cada cenário tem 3 personagens. */
+  scenarioSlug: string | null;
   sprites: Sprites;
   sounds: Sounds;
   /** Os que já vêm com o jogo não podem ser excluídos (só desativados). */
@@ -29,6 +31,7 @@ export type RunnerCharacterInput = {
   active?: boolean;
   sortOrder?: number;
   unlockLevel?: string | null;
+  scenarioSlug?: string | null;
   sprites?: Partial<Record<Pose, SpriteSheet | null>>;
   sounds?: Partial<Record<SoundKey, string[] | null>>;
 };
@@ -130,7 +133,7 @@ function pageQuery(params: { page: number; size: number; q?: string; scenarioId?
 
 export const listAdminRunnerScenarios = (params: { page: number; size: number; q?: string }) =>
   apiRequest<PaginatedResponse<RunnerScenarioDto>>(`/runner/admin/scenarios?${pageQuery(params)}`, { method: 'GET' }, 'Não foi possível carregar os cenários.');
-export const runnerScenarioOptions = () => apiRequest<Array<{ id: number; name: string }>>('/runner/admin/scenario-options', { method: 'GET' }, 'Não foi possível carregar os cenários.');
+export const runnerScenarioOptions = () => apiRequest<Array<{ id: number; slug: string; name: string }>>('/runner/admin/scenario-options', { method: 'GET' }, 'Não foi possível carregar os cenários.');
 export const createRunnerScenario = (input: RunnerScenarioInput & { name: string }) => apiRequest<RunnerScenarioDto>('/runner/admin/scenarios', json('POST', input), 'Não foi possível criar o cenário.');
 export const updateRunnerScenario = (id: number, input: RunnerScenarioInput) => apiRequest<RunnerScenarioDto>(`/runner/admin/scenarios/${id}`, json('PUT', input), 'Não foi possível salvar o cenário.');
 export const deleteRunnerScenario = (id: number) => apiRequestVoid(`/runner/admin/scenarios/${id}`, { method: 'DELETE' }, 'Não foi possível excluir o cenário.');

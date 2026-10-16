@@ -112,7 +112,7 @@ export async function adminScenarios(db: Db, skip: number, take: number, page: n
 
 /** Todos os cenários (só id e nome), para o seletor do painel. */
 export async function scenarioOptions(db: Db) {
-  const rows = await db.runnerScenario.findMany({ orderBy: [{ sortOrder: "asc" }, { id: "asc" }], select: { id: true, name: true } });
+  const rows = await db.runnerScenario.findMany({ orderBy: [{ sortOrder: "asc" }, { id: "asc" }], select: { id: true, slug: true, name: true } });
   return rows;
 }
 
