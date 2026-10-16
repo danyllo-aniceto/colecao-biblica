@@ -202,7 +202,7 @@ function Controls() {
 function ScenarioCover({ scenario, className, locked = false }: { scenario: Scenario; className?: string; locked?: boolean }) {
   const cover = scenario.art?.cover;
   return (
-    <div className={cn('relative w-full overflow-hidden rounded-2xl border-2 border-edge', className)} style={{ background: `linear-gradient(${scenario.theme.skyTop}, ${scenario.theme.skyBottom})` }}>
+    <div className={cn('relative aspect-video w-full overflow-hidden rounded-2xl border-2 border-edge', className)} style={{ background: `linear-gradient(${scenario.theme.skyTop}, ${scenario.theme.skyBottom})` }}>
       {cover ? <img src={cover} alt={`Capa do cenário ${scenario.name}`} className={cn('h-full w-full object-cover', locked && 'grayscale')} loading="lazy" /> : null}
       {locked ? (
         <span className="absolute right-2 top-2 grid size-9 place-items-center rounded-full bg-black/60 text-white">
@@ -227,7 +227,7 @@ function CampaignTab({ scenarios: scenarioList, levels: allLevels, bests, finish
         <Button size="sm" variant="ghost" onClick={() => setScenarioId(null)}>
           ← Cenários
         </Button>
-        <ScenarioCover scenario={scenario} className="h-32 sm:h-40" />
+        <ScenarioCover scenario={scenario} className="mx-auto max-w-xl" />
         <div>
           <h3 className="font-display text-xl font-bold text-ink">{scenario.name}</h3>
           <p className="text-sm font-semibold text-muted">{scenario.story}</p>
@@ -274,7 +274,7 @@ function CampaignTab({ scenarios: scenarioList, levels: allLevels, bests, finish
           const prizes = item.levels.flatMap((def) => unlocksOf(def.id));
           return (
             <li key={item.id} className={cn('panel space-y-2 p-4', !unlocked && 'opacity-70')} style={unlocked ? { borderLeft: `6px solid ${item.theme.skyBottom}` } : undefined}>
-              <ScenarioCover scenario={item} className="h-28 sm:h-36" locked={!unlocked} />
+              <ScenarioCover scenario={item} className="max-w-xl" locked={!unlocked} />
               <div className="flex items-center gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="font-display text-lg font-bold text-ink">{item.name}</p>
