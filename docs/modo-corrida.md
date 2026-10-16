@@ -218,10 +218,10 @@ Referências estudadas (Geometry Dash, G-Switch e afins): obstáculos básicos (
 - [x] **Mais obstáculos:** corrida (serra no chão, serra no ar sobre o caminho, trem de blocos, buraco + espeto, bloco com 2 espetos); voo (escada de portões, portões de serras, zigue-zague, voo dividido com espetos); gravidade (paredes de bloco, espetos em par, serra no meio — não se vira enquanto passa por ela —, sequência rápida de 3, além de buracos, pistas e lajes). Toda palavra do versículo fica em lugar seguro, também na gravidade.
 - [x] Testes: `campaign-levels-*.test.ts` (um por cenário, em paralelo) conferem as 30 fases (bot perfeito, toque atrasado, sem poderes, bandeiras).
 
-### Etapa 7.8 — 3 personagens por cenário (em andamento)
+### Etapa 7.8 — 3 personagens por cenário (feita; falta a arte)
 - [x] Coluna `runner_characters.scenario_slug` (migração `corrida_personagens_por_cenario`; campo "Cenário do personagem" no Painel): o cartão do cenário na campanha lista o grupo inteiro, **inclusive o que já começa liberado** (Davi na Cidade de Davi: "Davi, Jônatas, Joabe").
-- Grupos: Cidade de Davi = Davi, Jônatas, Joabe · Mar Vermelho = Moisés, Arão, Miriã · **Vale dos Ossos Secos = Ezequiel + 2 a escolher** (candidatos: Daniel, Jeremias, Baruque, Ebede-Meleque, Sadraque/Mesaque/Abede-Nego, Joaquim/Jeconias).
-- [ ] Cadastrar os 2 personagens do Vale (nome, descrição, cor, fase que abre, nos dois lugares: migração do seed e lista de reserva do app) e os prompts de arte deles.
+- Grupos: Cidade de Davi = Davi, Jônatas, Joabe · Mar Vermelho = Moisés, Arão, Miriã · **Vale dos Ossos Secos = Ezequiel (abre em vo-3), Daniel (vo-6) e Jeremias (vo-9)**, todos do exílio na Babilônia (~597–571 a.C.). Migração `corrida_daniel_jeremias`; fichas e vozes em `docs/corrida-prompts-prontos.md`.
+- [ ] Sprites e vozes dos 9 personagens (enviados pelo Painel).
 
 ### Etapa 8 — Polimento e conteúdo (contínua)
 - [ ] Sons e voz por personagem; trilhas por cenário (e fases de ritmo, como Jericó).

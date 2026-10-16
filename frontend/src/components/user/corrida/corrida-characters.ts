@@ -4,7 +4,7 @@ import type { Sounds, Sprites } from '@runner/characters';
 
 /**
  * Personagem da Corrida no app. Todos correm com a mesma física: o personagem só muda como aparece (sprites por pose, ou a cor quando falta)
- * e como soa (sons opcionais). Vêm do Painel; sem internet ou sem nenhum cadastrado, valem os 7 padrão abaixo (só cores).
+ * e como soa (sons opcionais). Vêm do Painel; sem internet ou sem nenhum cadastrado, valem os 9 padrão abaixo (só cores).
  */
 export type RunnerCharacter = { id: string; name: string; color: string; text: string; sprites: Sprites; sounds: Sounds; unlockLevel: string | null; scenarioId: string | null };
 
@@ -16,6 +16,8 @@ export const DEFAULT_CHARACTERS: RunnerCharacter[] = [
   { id: 'arao', name: 'Arão', color: '#fbbf24', text: 'O irmão e porta-voz de Moisés.', unlockLevel: 'mv-3', scenarioId: 'mar-vermelho' },
   { id: 'miria', name: 'Miriã', color: '#f9a8d4', text: 'A profetisa que cantou à beira do mar.', unlockLevel: 'mv-4', scenarioId: 'mar-vermelho' },
   { id: 'ezequiel', name: 'Ezequiel', color: '#a3e635', text: 'O profeta do vale dos ossos secos.', unlockLevel: 'vo-3', scenarioId: 'vale-dos-ossos-secos' },
+  { id: 'daniel', name: 'Daniel', color: '#facc15', text: 'Não temeu a cova dos leões na Babilônia.', unlockLevel: 'vo-6', scenarioId: 'vale-dos-ossos-secos' },
+  { id: 'jeremias', name: 'Jeremias', color: '#818cf8', text: 'O profeta que chorou por Jerusalém e anunciou esperança.', unlockLevel: 'vo-9', scenarioId: 'vale-dos-ossos-secos' },
 ].map((character) => ({ ...character, sprites: {}, sounds: {} }));
 
 const fromDto = (dto: RunnerCharacterDto): RunnerCharacter => ({ id: dto.slug, name: dto.name, color: dto.color, text: dto.description ?? '', sprites: dto.sprites, sounds: dto.sounds, unlockLevel: dto.unlockLevel, scenarioId: dto.scenarioSlug });
