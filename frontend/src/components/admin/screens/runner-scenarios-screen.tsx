@@ -26,7 +26,7 @@ const ART_INFO: Record<ArtKey, { label: string; hint: string }> = {
   mid: { label: 'Fundo: camada do meio', hint: 'Colinas, muros, árvores. Anda numa velocidade média. Fundo transparente na parte de cima.' },
   near: { label: 'Fundo: camada de perto', hint: 'Detalhes próximos (plantas, pedras). Anda mais rápido. Fundo transparente.' },
   spike: { label: 'Obstáculo: espeto', hint: 'Imagem quadrada com a ponta para cima (o jogo vira para o teto). Fundo transparente.' },
-  cover: { label: 'Capa do cenário', hint: 'Imagem larga (16:7) do cartão do cenário na campanha. Não aparece dentro da fase.' },
+  cover: { label: 'Capa do cenário', hint: 'Medidas: 1672 × 941 pixels (proporção 16:9, horizontal). Aparece no cartão do cenário na campanha; não aparece dentro da fase.' },
   block: { label: 'Obstáculo: bloco', hint: 'Imagem quadrada que se repete em cada casa do bloco (pedra, tijolo, plataforma).' },
 };
 
