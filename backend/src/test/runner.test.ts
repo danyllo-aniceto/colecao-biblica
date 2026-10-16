@@ -99,7 +99,7 @@ async function restoreSeedCampaign() {
   for (const scenario of SCENARIOS) {
     await prisma.runnerScenario.update({ where: { slug: scenario.id }, data: { name: scenario.name, story: scenario.story, skyTop: scenario.theme.skyTop, skyBottom: scenario.theme.skyBottom, active: true, art: {}, musicUrl: null } });
     for (const def of scenario.levels) {
-      await prisma.runnerLevel.update({ where: { slug: def.id }, data: { name: def.name, seed: def.seed, seconds: def.seconds, formOrder: def.order, verseRef: def.ref, verseText: def.verse, forks: true, powers: true, active: true } });
+      await prisma.runnerLevel.update({ where: { slug: def.id }, data: { name: def.name, seed: def.seed, seconds: def.seconds, formOrder: def.order, verseRef: def.ref, verseText: def.verse, forks: true, powers: true, difficulty: def.difficulty ?? 50, active: true } });
     }
   }
 }
@@ -160,7 +160,7 @@ describe.skipIf(!hasDatabase)("corrida: cenários e fases pelo painel", () => {
     const jerico = after.body.scenarios.find((scenario: { id: string }) => scenario.id === "jerico");
     expect(jerico.art).toEqual({ spike: "https://x/espeto.webp", block: "https://x/bloco.webp" });
     expect(jerico.music).toBe("https://x/trilha.mp3");
-    expect(jerico.levels).toEqual([{ id: "sete-voltas", name: "Sete voltas", seed: 401, seconds: 60, order: ["RUN", "FLY"], ref: "Hebreus 11:30", verse: "Pela fé caíram os muros de Jericó", forks: true, powers: true }]);
+    expect(jerico.levels).toEqual([{ id: "sete-voltas", name: "Sete voltas", seed: 401, seconds: 60, order: ["RUN", "FLY"], ref: "Hebreus 11:30", verse: "Pela fé caíram os muros de Jericó", forks: true, powers: true, difficulty: 50 }]);
     // Cenário novo vai para o fim da campanha (ordem 100).
     expect(after.body.scenarios.at(-1).id).toBe("jerico");
   });

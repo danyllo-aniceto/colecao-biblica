@@ -35,6 +35,14 @@ const FLIP_MAX = 13 * T;
 const STEP_UP = 14;
 /** Folga da caixa do personagem contra espetos e quinas (a colisão com espeto é mais gentil que o desenho). */
 const HURT_INSET = 4;
+/** Quantos px do corpo podem afundar num buraco antes de ser queda (afundar menos que isso e sair pela borda é perdoado). */
+const PIT_DEATH = 14;
+
+/** O corpo (de `x` a `x + PLAYER`) está INTEIRO dentro de um buraco deste lado? Só então ele fica sem apoio. */
+function overPit(level: PreparedLevel, x: number, side: "floor" | "ceiling"): boolean {
+  for (const pit of level.pits) if (pit.side === side && x >= pit.l && x + PLAYER <= pit.r) return true;
+  return false;
+}
 
 const toRect = (left: number, top: number, width: number, height: number): Rect => ({ l: left, t: top, r: left + width, b: top + height });
 
@@ -42,6 +50,7 @@ const toRect = (left: number, top: number, width: number, height: number): Rect 
 export function prepareLevel(level: Level): PreparedLevel {
   const cols: PreparedLevel["cols"] = Array.from({ length: level.length + 4 }, () => ({ spikes: [], blocks: [], words: [], powers: [] }));
   const portals: PreparedLevel["portals"] = [];
+  const pits: PreparedLevel["pits"] = [];
   const checkpoints: number[] = [];
   let wordCount = 0;
   let powerCount = 0;
@@ -51,6 +60,8 @@ export function prepareLevel(level: Level): PreparedLevel {
       portals.push({ x: object.x * TILE, form: object.form });
     } else if (object.kind === "checkpoint") {
       checkpoints.push(object.x * TILE);
+    } else if (object.kind === "pit") {
+      pits.push({ side: object.side, l: object.x * TILE, r: (object.x + object.w) * TILE });
     } else if (object.kind === "spike") {
       const row = object.y ?? 0;
       const cellTop = FLOOR_Y - (row + 1) * TILE;
@@ -76,7 +87,7 @@ export function prepareLevel(level: Level): PreparedLevel {
   }
   portals.sort((a, b) => a.x - b.x);
   checkpoints.sort((a, b) => a - b);
-  return { level, endX: level.length * TILE, portals, checkpoints, cols, wordCount, powerCount };
+  return { level, endX: level.length * TILE, portals, checkpoints, cols, pits, wordCount, powerCount };
 }
 
 export function newPlayer(level: PreparedLevel): PlayerState {
@@ -149,7 +160,7 @@ function* nearby<T>(level: PreparedLevel, x: number, pick: (col: PreparedLevel["
  * Um passo de 1/60 s. `held` = o dedo está na tela neste passo.
  * - Corrida: segurar (ou tocar) no chão pula; um novo toque no ar dá o pulo duplo (triplo com o poder). - Voo: segurar sobe, soltar desce. - Gravidade: tocar no chão/teto inverte a gravidade.
  * Primeiro anda para o lado (bater de lado derruba), depois resolve o vertical (bater cabeça/pousar nunca derruba), depois espetos, palavras e poderes.
- * Poderes: Turbo (mais rápido e imune), Escudo (absorve um erro), Pulo triplo e Ímã (ver `powers.ts`). Imune = "fantasma": atravessa blocos e espetos.
+ * Poderes: Turbo (só mais rápido), Escudo (absorve um erro), Pulo triplo e Ímã (ver `powers.ts`). Imune = "fantasma" (só os passos depois de o Escudo agir): atravessa blocos e espetos.
  */
 export function stepPlayer(level: PreparedLevel, previous: PlayerState, held: boolean): PlayerState {
   if (previous.status !== "running") return previous;
@@ -237,12 +248,18 @@ export function stepPlayer(level: PreparedLevel, previous: PlayerState, held: bo
   p.grounded = false;
   p.y += p.vy;
   const canStand = p.form !== "FLY";
-  if (p.y + PLAYER > FLOOR_Y) {
+  // Buracos: sem apoio, o corpo afunda; afundou demais, caiu.
+  if (p.y + PLAYER > FLOOR_Y + PIT_DEATH || p.y < CEIL_Y - PIT_DEATH) {
+    p.status = "dead";
+    p.cause = "pit";
+    return p;
+  }
+  if (p.y + PLAYER > FLOOR_Y && !overPit(level, p.x, "floor")) {
     p.y = FLOOR_Y - PLAYER;
     if (p.vy > 0) p.vy = 0;
     if (canStand && p.grav === 1) p.grounded = true;
   }
-  if (p.y < CEIL_Y) {
+  if (p.y < CEIL_Y && !overPit(level, p.x, "ceiling")) {
     p.y = CEIL_Y;
     if (p.vy < 0) p.vy = 0;
     if (canStand && p.grav === -1) p.grounded = true;

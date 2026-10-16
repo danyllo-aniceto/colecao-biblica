@@ -23,6 +23,17 @@ describe("Corrida: campanha por cenários", () => {
     }
   });
 
+  it("a dificuldade começa baixa e só sobe dentro de cada cenário", () => {
+    for (const scenario of SCENARIOS) {
+      const levels = scenario.levels.map((def) => def.difficulty ?? 50);
+      expect(levels[0], scenario.name).toBeLessThanOrEqual(20);
+      expect(levels).toEqual([...levels].sort((a, b) => a - b));
+      expect(new Set(levels).size).toBe(levels.length);
+    }
+    expect(validateLevelDef({ name: "x", seed: 5, seconds: 60, order: ["RUN"], ref: "a", verse: "uma duas", difficulty: 101 }).difficulty).toBeDefined();
+    expect(validateLevelDef({ name: "x", seed: 5, seconds: 60, order: ["RUN"], ref: "a", verse: "uma duas", difficulty: 40 }).difficulty).toBeUndefined();
+  });
+
   it("a fase seguinte só abre ao concluir a anterior, atravessando os cenários", () => {
     const none = new Set<string>();
     expect(isLevelUnlocked("cd-1", none)).toBe(true);

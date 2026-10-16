@@ -3,7 +3,7 @@ import type { Db } from "../db/prisma";
 import { badRequest, notFound } from "../lib/errors";
 import { pageOf } from "../lib/pagination";
 import { normalizeKey } from "../lib/validation";
-import { validateLevelDef, type CampaignLevelDef, type Scenario } from "../runner/campaign";
+import { DEFAULT_DIFFICULTY, validateLevelDef, type CampaignLevelDef, type Scenario } from "../runner/campaign";
 import { ART_KEYS, type Form, type ScenarioArt } from "../runner/types";
 
 type ScenarioRow = Prisma.RunnerScenarioGetPayload<Record<string, never>>;
@@ -27,7 +27,7 @@ export function sanitizeOrder(raw: unknown): Form[] {
 }
 
 export function toLevelDef(row: LevelRow): CampaignLevelDef {
-  return { id: row.slug, name: row.name, seed: row.seed, seconds: row.seconds, order: sanitizeOrder(row.formOrder), ref: row.verseRef, verse: row.verseText, forks: row.forks, powers: row.powers };
+  return { id: row.slug, name: row.name, seed: row.seed, seconds: row.seconds, order: sanitizeOrder(row.formOrder), ref: row.verseRef, verse: row.verseText, forks: row.forks, powers: row.powers, difficulty: row.difficulty };
 }
 
 /** Cenário do painel (com a contagem de fases). */
@@ -62,6 +62,7 @@ export function toAdminLevel(row: LevelRow & { scenario?: { slug: string; name: 
     verseText: row.verseText,
     forks: row.forks,
     powers: row.powers,
+    difficulty: row.difficulty,
     active: row.active,
     sortOrder: row.sortOrder,
     system: row.system,
@@ -213,12 +214,13 @@ export type LevelInput = {
   verseText?: string;
   forks?: boolean;
   powers?: boolean;
+  difficulty?: number;
   active?: boolean;
   sortOrder?: number;
 };
 
-function assertLevelValid(input: Required<Pick<LevelInput, "name" | "seed" | "seconds" | "order" | "verseRef" | "verseText">>) {
-  const errors = validateLevelDef({ name: input.name, seed: input.seed, seconds: input.seconds, order: input.order, ref: input.verseRef, verse: input.verseText });
+function assertLevelValid(input: Required<Pick<LevelInput, "name" | "seed" | "seconds" | "order" | "verseRef" | "verseText">> & { difficulty?: number }) {
+  const errors = validateLevelDef({ difficulty: input.difficulty, name: input.name, seed: input.seed, seconds: input.seconds, order: input.order, ref: input.verseRef, verse: input.verseText });
   const first = Object.values(errors)[0];
   if (first) throw badRequest(first);
 }
@@ -238,6 +240,7 @@ export async function createLevel(db: Db, input: LevelInput & Required<Pick<Leve
       verseText: input.verseText,
       forks: input.forks ?? true,
       powers: input.powers ?? true,
+      difficulty: input.difficulty ?? DEFAULT_DIFFICULTY,
       active: input.active ?? true,
       sortOrder: input.sortOrder ?? 100,
     },
@@ -257,6 +260,7 @@ export async function updateLevel(db: Db, id: number, input: LevelInput) {
     order: input.order ?? sanitizeOrder(current.formOrder),
     verseRef: input.verseRef ?? current.verseRef,
     verseText: input.verseText ?? current.verseText,
+    difficulty: input.difficulty ?? current.difficulty,
   });
   const row = await db.runnerLevel.update({
     where: { id },
@@ -270,6 +274,7 @@ export async function updateLevel(db: Db, id: number, input: LevelInput) {
       ...(input.verseText !== undefined ? { verseText: input.verseText } : {}),
       ...(input.forks !== undefined ? { forks: input.forks } : {}),
       ...(input.powers !== undefined ? { powers: input.powers } : {}),
+      ...(input.difficulty !== undefined ? { difficulty: input.difficulty } : {}),
       ...(input.active !== undefined ? { active: input.active } : {}),
       ...(input.sortOrder !== undefined ? { sortOrder: input.sortOrder } : {}),
     },

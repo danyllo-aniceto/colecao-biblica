@@ -1135,6 +1135,8 @@ model RunnerLevel {
   verseText  String         @map("verse_text")
   forks      Boolean        @default(true)
   powers     Boolean        @default(true)
+  /// Dificuldade de 0 (bem fácil) a 100 (a mais difícil): dentro de cada cenário ela sobe de fase em fase.
+  difficulty Int            @default(50)
   active     Boolean        @default(true)
   sortOrder  Int            @default(0) @map("sort_order")
   system     Boolean        @default(false)

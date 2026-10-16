@@ -14,9 +14,9 @@ describe("Corrida: poderes (regras puras)", () => {
     expect(half.magnet).toBe(0);
   });
 
-  it("só o Turbo e a imunidade curta do Escudo deixam imune", () => {
+  it("só a imunidade curta do Escudo deixa imune: o Turbo é só velocidade", () => {
     expect(isImmune(emptyEffects())).toBe(false);
-    expect(isImmune({ ...emptyEffects(), turbo: 1 })).toBe(true);
+    expect(isImmune({ ...emptyEffects(), turbo: 100 })).toBe(false);
     expect(isImmune({ ...emptyEffects(), grace: GRACE_TICKS })).toBe(true);
     expect(isImmune({ ...emptyEffects(), shield: 1, triple: 50, magnet: 50 })).toBe(false);
   });

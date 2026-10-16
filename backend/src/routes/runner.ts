@@ -4,7 +4,7 @@ import { readPage, queryText } from "../lib/pagination";
 import { clearableText, parseId, requiredText, z } from "../lib/validation";
 import { currentUser, requireAdmin } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
-import { SECONDS_RANGE, SEED_RANGE, MAX_FORM_ORDER } from "../runner/campaign";
+import { DIFFICULTY_RANGE, SECONDS_RANGE, SEED_RANGE, MAX_FORM_ORDER } from "../runner/campaign";
 import { isHexColor, MAX_FRAMES, POSES, SOUND_KEYS } from "../runner/characters";
 import { ART_KEYS } from "../runner/types";
 import { getRunnerProgress, submitRunnerResult } from "../services/runner-progress";
@@ -107,6 +107,7 @@ const levelBody = z.object({
   verseText: requiredText(400).optional(),
   forks: z.boolean().optional(),
   powers: z.boolean().optional(),
+  difficulty: z.number().int().min(DIFFICULTY_RANGE.min).max(DIFFICULTY_RANGE.max).optional(),
   active: z.boolean().optional(),
   sortOrder: z.number().int().min(0).max(999).optional(),
 });
