@@ -72,22 +72,22 @@ export function gravityLane(objects: LevelObject[], x: number, reward: "floor" |
 }
 
 /** Medidas do voo dividido. */
-export const FLY_SPLIT = { /** Portão de entrada. */ lead: 2, /** Comprimento do divisor. */ length: 18, /** Voo livre depois do divisor. */ tail: 5 } as const;
+export const FLY_SPLIT = { /** Portão de entrada: espaço para escolher o corredor. */ lead: 6, /** Comprimento do divisor. */ length: 18, /** Voo livre depois do divisor. */ tail: 5 } as const;
 
 export type FlySplitInfo = { end: number; dividerFrom: number; dividerTo: number };
 
 /**
- * Voo: um divisor no meio do campo (linha 3) separa dois corredores de 3 linhas, o de cima e o de baixo. Cada um tem os seus obstáculos (espeto, bloco
- * pendurado ou subindo) e o poder, se houver, fica no de cima. Os dois são possíveis sozinhos: quem chega escolhe subindo ou descendo antes do divisor.
+ * Voo: um divisor no meio do campo (linha 3) separa dois corredores de 3 linhas, o de cima e o de baixo. Cada um tem os seus obstáculos (espetos no chão, no teto e no divisor)
+ * e o poder, se houver, fica no de cima. Os dois são possíveis sozinhos: quem chega escolhe subindo ou descendo antes do divisor.
  */
 export function flySplit(objects: LevelObject[], x: number, power: PowerKind | null): FlySplitInfo {
   const { lead, length, tail } = FLY_SPLIT;
   const start = x + lead;
   objects.push({ kind: "block", x: start, y: 3, w: length, h: 1 });
-  // Corredor de cima (linhas 4 a 6): espeto sobre o divisor e bloco pendurado do teto.
-  objects.push({ kind: "spike", x: start + 5, y: 4 }, { kind: "block", x: start + 12, y: ROWS - 1, w: 2, h: 1 });
-  // Corredor de baixo (linhas 0 a 2): espeto no chão e bloco subindo do chão.
-  objects.push({ kind: "spike", x: start + 7 }, { kind: "block", x: start + 13, y: 0, w: 2, h: 1 });
+  // Corredor de baixo (linhas 0 a 2): espeto no chão e, mais adiante, espeto pendurado no fundo do divisor (a faixa livre fica sempre com mais de 60 px).
+  objects.push({ kind: "spike", x: start + 6 }, { kind: "spike", x: start + 12, y: 2, down: true });
+  // Corredor de cima (linhas 4 a 6): espeto em cima do divisor e, mais adiante, espeto pendurado no teto.
+  objects.push({ kind: "spike", x: start + 7, y: 4 }, { kind: "spike", x: start + 13, y: ROWS - 1, down: true });
   if (power) objects.push({ kind: "power", x: start + 9, y: 5, power });
   return { end: start + length + tail, dividerFrom: start, dividerTo: start + length };
 }

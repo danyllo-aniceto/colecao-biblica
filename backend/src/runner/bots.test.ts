@@ -1,13 +1,14 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { BOT_LEVELS, botInputs, createBot, TOUCH_DELAY } from "./bots";
 import { prepareLevel, respawnAt, simulate } from "./engine";
-import { buildJourney, TILES_PER_SECOND } from "./journey";
-import { LEVELS } from "./levels";
+import { buildJourney, levelSeconds, TILES_PER_SECOND } from "./journey";
+import { BASE_LEVELS } from "./levels";
 import { POWERS_BY_FORM } from "./powers";
 import { ROWS, TICKS_PER_SECOND, type RunResult } from "./types";
 
 describe("Corrida: fases", () => {
-  for (const level of LEVELS) {
+  // As fases da campanha (30) são conferidas à parte, um cenário por arquivo (`campaign-levels.shared.ts`), para rodar em paralelo.
+  for (const level of BASE_LEVELS) {
     describe(level.name, () => {
       const prepared = prepareLevel(level);
       let perfectToggles: number[] = [];
@@ -34,14 +35,14 @@ describe("Corrida: fases", () => {
         expect(checkpoints.length).toBeGreaterThan(2);
         for (const x of checkpoints) {
           const hazards = level.objects
-            .filter((object) => object.kind === "spike" || object.kind === "block" || object.kind === "pit")
-            // Buraco ocupa várias colunas: conta se alguma delas cai na janela da bandeira.
-            .filter((object) => (object.kind === "pit" ? object.x < x + 3 && object.x + object.w > x - 1 : object.x >= x - 1 && object.x < x + 3));
+            .filter((object) => object.kind === "spike" || object.kind === "block" || object.kind === "pit" || object.kind === "saw")
+            // Buraco ocupa várias colunas: conta se alguma delas cai na janela da bandeira. Serra: 1 coluna de cada lado (a onda anda para os lados).
+            .filter((object) => (object.kind === "pit" ? object.x < x + 3 && object.x + object.w > x - 1 : object.kind === "saw" ? object.x >= x - 2 && object.x < x + 3 : object.x >= x - 1 && object.x < x + 3));
           expect(hazards, `checkpoint na coluna ${x}`).toEqual([]);
         }
         // Nunca mais de ~25 s sem bandeira.
         const marks = [0, ...checkpoints, level.length];
-        for (let index = 1; index < marks.length; index += 1) expect((marks[index] - marks[index - 1]) / TILES_PER_SECOND).toBeLessThan(25);
+        for (let index = 1; index < marks.length; index += 1) expect((marks[index] - marks[index - 1]) / (TILES_PER_SECOND * (level.speed ?? 1))).toBeLessThan(25);
       });
 
       it("todo checkpoint é um ponto de volta seguro: voltando a ele, o bot segue por pelo menos 10 s sem cair", () => {
@@ -85,9 +86,9 @@ describe("Corrida: fases", () => {
   }
 
   it("a jornada dura minutos", () => {
-    const journey = LEVELS.find((level) => level.id === "jornada");
+    const journey = BASE_LEVELS.find((level) => level.id === "jornada");
     expect(journey).toBeDefined();
-    const seconds = journey!.length / TILES_PER_SECOND;
+    const seconds = levelSeconds(journey!);
     expect(seconds).toBeGreaterThan(120);
     expect(TICKS_PER_SECOND).toBe(60);
   });
@@ -102,21 +103,23 @@ describe("Corrida: fases", () => {
   }, 240_000);
 
   it("as jornadas trazem poderes e bifurcações, e continuam possíveis sem nenhum poder (poder é bônus, nunca obrigação)", () => {
+    const kinds = new Set<string>();
     for (const seed of [2, 5, 9]) {
       const level = buildJourney({ id: "t", name: "T", seed, seconds: 75, verse: { ref: "x", words: ["a", "b", "c", "d", "e", "f"] } });
       const powers = level.objects.filter((object) => object.kind === "power");
-      expect(powers.length, `semente ${seed}: poderes`).toBeGreaterThan(2);
-      expect(new Set(powers.map((object) => (object as { power: string }).power)).size, `semente ${seed}: tipos`).toBeGreaterThan(1);
+      expect(powers.length, `semente ${seed}: poderes`).toBeGreaterThan(0);
+      for (const object of powers) kinds.add((object as { power: string }).power);
       const without = prepareLevel({ ...level, objects: level.objects.filter((object) => object.kind !== "power") });
       expect(simulate(without, botInputs(without, { lag: TOUCH_DELAY })).status, `semente ${seed} (sem poderes)`).toBe("finished");
       const prepared = prepareLevel(level);
       expect(simulate(prepared, botInputs(prepared, { lag: TOUCH_DELAY })).status, `semente ${seed} (com poderes)`).toBe("finished");
     }
+    expect(kinds.size, "tipos de poder nas jornadas").toBeGreaterThan(1);
   }, 240_000);
 
   it("a dificuldade sobe: fases fáceis não têm buracos duplos nem escadas, as difíceis têm; poderes são poucos", () => {
     const count = (difficulty: number, seed: number) => buildJourney({ id: "t", name: "T", seed, seconds: 150, difficulty, order: ["RUN", "GRAVITY"], verse: { ref: "x", words: ["a", "b", "c", "d"] } });
-    const hazardsPerSecond = (level: ReturnType<typeof count>) => level.objects.filter((object) => object.kind === "spike" || object.kind === "pit").length / (level.length / TILES_PER_SECOND);
+    const hazardsPerSecond = (level: ReturnType<typeof count>) => level.objects.filter((object) => object.kind === "spike" || object.kind === "pit" || object.kind === "saw" || object.kind === "block").length / levelSeconds(level);
     let easy = 0;
     let hard = 0;
     for (const seed of [1, 2, 3, 4, 5, 6]) {

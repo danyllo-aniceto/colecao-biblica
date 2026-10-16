@@ -2,7 +2,7 @@
 import { botInputs, TOUCH_DELAY } from '@runner/bots';
 import { buildCampaignLevel, validateLevelDef, type CampaignLevelDef, type Scenario } from '@runner/campaign';
 import { prepareLevel, simulate } from '@runner/engine';
-import { TILES_PER_SECOND } from '@runner/journey';
+import { levelSeconds } from '@runner/journey';
 
 /** Teste de uma fase no Painel, fora da tela principal (leva alguns segundos): monta a fase, joga com o bot perfeito e com o bot de toque atrasado (o dedo de verdade). */
 export type LevelTestRequest = { def: CampaignLevelDef };
@@ -28,7 +28,7 @@ scope.onmessage = (event: MessageEvent<LevelTestRequest>) => {
   }
   const level = prepared.level;
   const forks = level.objects.filter((object) => object.kind === 'block' && object.y === 3 && object.w === 26).length;
-  const details = { seconds: Math.round(level.length / TILES_PER_SECOND), words: prepared.wordCount, wordsCollected: 0, powers: prepared.powerCount, forks };
+  const details = { seconds: Math.round(levelSeconds(level)), words: prepared.wordCount, wordsCollected: 0, powers: prepared.powerCount, forks };
   scope.postMessage({ kind: 'progress', step: 'exact' } satisfies LevelTestResult);
   const exact = simulate(prepared, botInputs(prepared));
   details.wordsCollected = exact.collected.length;

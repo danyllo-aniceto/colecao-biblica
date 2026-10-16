@@ -38,7 +38,13 @@ export type PowerObject = { kind: "power"; x: number; y: number; power: PowerKin
  * buraco cai e morre. O corpo só fica sem apoio quando está INTEIRO dentro do buraco (por isso a largura é de pelo menos 3 colunas).
  */
 export type PitObject = { kind: "pit"; x: number; w: number; side: "floor" | "ceiling" };
-export type LevelObject = SpikeObject | BlockObject | PortalObject | WordObject | CheckpointObject | PowerObject | PitObject;
+/**
+ * Serra giratória (como as do Geometry Dash e do G-Switch): hazard redondo no meio do campo, mata ao encostar. `y` = linha do centro (0 = chão; pode ser
+ * fracionário). Com `amp` (em linhas) ela sobe e desce: a altura depende de ONDE o jogador está (`sawCentreY`), não do relógio, então a fase continua
+ * igual em qualquer retomada/conferência. `period` = comprimento da onda em colunas.
+ */
+export type SawObject = { kind: "saw"; x: number; y: number; amp?: number; period?: number };
+export type LevelObject = SpikeObject | BlockObject | PortalObject | WordObject | CheckpointObject | PowerObject | PitObject | SawObject;
 
 /** Versículo escondido da fase: cada palavra coletada (`index`) aparece no lugar dele. */
 export type Verse = { ref: string; words: string[] };
@@ -64,9 +70,16 @@ export type Level = {
   art?: ScenarioArt;
   /** Trilha do cenário (endereço do áudio). */
   music?: string;
+  /** Multiplicador da velocidade horizontal (1 = normal; fases difíceis correm mais). Entre `SPEED_RANGE.min` e `.max`. */
+  speed?: number;
 };
 
+export const SPEED_RANGE = { min: 0.8, max: 1.6 };
+
 export type Rect = { l: number; t: number; r: number; b: number };
+
+/** Serra pronta para simular (px): centro, raio e a onda vertical. */
+export type Saw = { cx: number; cy: number; radius: number; amp: number; period: number };
 
 /** Fase pronta para simular: objetos indexados por coluna (a busca a cada passo é O(1)). */
 export type PreparedLevel = {
@@ -75,16 +88,18 @@ export type PreparedLevel = {
   portals: Array<{ x: number; form: Form }>;
   /** Posição (px) de cada checkpoint, em ordem. */
   checkpoints: number[];
-  cols: Array<{ spikes: Rect[]; blocks: Rect[]; words: Array<Rect & { index: number }>; powers: Array<Rect & { id: number; power: PowerKind }> }>;
+  cols: Array<{ spikes: Rect[]; saws: Saw[]; blocks: Rect[]; words: Array<Rect & { index: number }>; powers: Array<Rect & { id: number; power: PowerKind }> }>;
   /** Buracos do chão e do teto (px), para o motor tirar o apoio de quem está dentro deles. */
   pits: Array<{ side: "floor" | "ceiling"; l: number; r: number }>;
+  /** Multiplicador de velocidade da fase (1 = normal). */
+  speed: number;
   wordCount: number;
   /** Quantos poderes a fase tem (os `id` vão de 0 a `powerCount - 1`, na ordem da lista de objetos). */
   powerCount: number;
 };
 
 export type PlayerStatus = "running" | "dead" | "finished";
-export type DeathCause = "spike" | "wall" | "pit";
+export type DeathCause = "spike" | "wall" | "pit" | "saw";
 
 /** Estado de um corredor: simples e serializável (vai e volta do servidor e do navegador). */
 export type PlayerState = {

@@ -209,6 +209,15 @@ Telas (aba Jogar → Corrida), no mesmo molde do Duelo/Tabuleiro, sem servidor (
 - [x] Cada ação do personagem aceita **até 8 falas** (`Sounds` = lista por ação; o formato antigo de uma fala só ainda é lido). O app sorteia uma por vez, **sem repetir a anterior**, e **só fala em parte das vezes** (`SOUND_INFO[ação].chance`; ficar quieto não toca nada); intervalo mínimo de 1,2 s entre falas (queda e vitória sempre passam). Regras puras e testadas em `runner/characters.ts` (`pickVariant`, `shouldSpeak`); tocador em `lib/sound/character-sfx.ts`.
 - [x] Ações novas: **começa a voar**, **entra na gravidade**, **volta a correr** (portais) e **pegou um poder**; sem fala cadastrada ficam em silêncio (não há som padrão para elas).
 
+### Etapa 7.7 — Fases elaboradas: 10 por cenário, mais obstáculos e velocidade (feita)
+Referências estudadas (Geometry Dash, G-Switch e afins): obstáculos básicos (espetos, **serras giratórias**, buracos), modos que mudam a física por portal, dificuldade que sobe dentro de cada fase/cenário, ritmo (respiro entre sequências), fases bem distintas entre si e velocidade maior nas mais difíceis.
+- [x] **10 fases por cenário** (30 no total, `SCENARIOS`; migração `corrida_dez_fases_por_cenario`): cada uma com ordem de formas própria (≥ 6 desenhos distintos por cenário, nunca a mesma ordem em duas fases seguidas), dificuldade 5, 15, … 95, duração 90 a 198 s e um versículo novo (os das 12 antigas ficam). Há fases só de gravidade, só de voo, etc.
+- [x] **Velocidade sobe com a dificuldade** (`Level.speed`, `speedFor`: 1,00× a 1,25×, só horizontal; o tempo de jogo da fase se mantém: `levelSeconds`). Entra em `prepareLevel` e no servidor, que repete a partida com a mesma velocidade.
+- [x] **Voo letal:** encostar em qualquer bloco, espeto ou serra derruba (antes o bloco só empurrava); só o chão e o teto do campo são seguros. O Escudo ainda absorve.
+- [x] **Serra** (`kind: "saw"`): hazard redondo no meio do campo, parada ou subindo e descendo (`amp`/`period`); a altura depende **de onde o jogador está**, não do relógio, para a fase repetir igual em qualquer retomada/conferência.
+- [x] **Mais obstáculos:** corrida (serra no chão, serra no ar sobre o caminho, trem de blocos, buraco + espeto, bloco com 2 espetos); voo (escada de portões, portões de serras, zigue-zague, voo dividido com espetos); gravidade (paredes de bloco, espetos em par, serra no meio — não se vira enquanto passa por ela —, sequência rápida de 3, além de buracos, pistas e lajes). Toda palavra do versículo fica em lugar seguro, também na gravidade.
+- [x] Testes: `campaign-levels-*.test.ts` (um por cenário, em paralelo) conferem as 30 fases (bot perfeito, toque atrasado, sem poderes, bandeiras).
+
 ### Etapa 8 — Polimento e conteúdo (contínua)
 - [ ] Sons e voz por personagem; trilhas por cenário (e fases de ritmo, como Jericó).
 - [ ] Efeitos (poeira, estouro ao cair, brilho da palavra), vibração no toque.

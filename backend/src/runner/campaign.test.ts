@@ -23,6 +23,26 @@ describe("Corrida: campanha por cenários", () => {
     }
   });
 
+  it("cada cenário tem pelo menos 10 fases, e as fases de um cenário não repetem a mesma ordem de formas em sequência", () => {
+    for (const scenario of SCENARIOS) {
+      expect(scenario.levels.length, scenario.name).toBeGreaterThanOrEqual(10);
+      for (let index = 1; index < scenario.levels.length; index += 1) {
+        expect(JSON.stringify(scenario.levels[index].order), `${scenario.name}: fase ${index + 1}`).not.toBe(JSON.stringify(scenario.levels[index - 1].order));
+      }
+      // Fases bem distintas: pelo menos 6 desenhos de formas diferentes por cenário.
+      expect(new Set(scenario.levels.map((def) => JSON.stringify(def.order))).size).toBeGreaterThanOrEqual(6);
+    }
+  });
+
+  it("a velocidade sobe com a dificuldade dentro do cenário (de 1,00 a 1,25)", () => {
+    for (const scenario of SCENARIOS) {
+      const speeds = scenario.levels.map((def) => buildCampaignLevel(scenario, def).speed ?? 1);
+      expect(speeds[0]).toBeLessThan(1.05);
+      expect(speeds).toEqual([...speeds].sort((a, b) => a - b));
+      expect(speeds[speeds.length - 1]).toBeGreaterThan(1.2);
+    }
+  });
+
   it("a dificuldade começa baixa e só sobe dentro de cada cenário", () => {
     for (const scenario of SCENARIOS) {
       const levels = scenario.levels.map((def) => def.difficulty ?? 50);
@@ -39,8 +59,8 @@ describe("Corrida: campanha por cenários", () => {
     expect(isLevelUnlocked("cd-1", none)).toBe(true);
     expect(isLevelUnlocked("cd-2", none)).toBe(false);
     expect(isLevelUnlocked("cd-2", new Set(["cd-1"]))).toBe(true);
-    expect(isLevelUnlocked("mv-1", new Set(["cd-4"]))).toBe(false);
-    expect(isLevelUnlocked("mv-1", new Set(["cd-5"]))).toBe(true);
+    expect(isLevelUnlocked("mv-1", new Set(["cd-9"]))).toBe(false);
+    expect(isLevelUnlocked("mv-1", new Set(["cd-10"]))).toBe(true);
   });
 
   it("o cenário seguinte abre só com o anterior concluído por inteiro", () => {
@@ -61,7 +81,7 @@ describe("Corrida: campanha por cenários", () => {
     const [davi, mar] = SCENARIOS;
     const reversed = [mar, davi];
     expect(isLevelUnlocked("mv-1", new Set(), reversed)).toBe(true);
-    expect(isLevelUnlocked("cd-1", new Set(["mv-4"]), reversed)).toBe(true);
+    expect(isLevelUnlocked("cd-1", new Set(["mv-10"]), reversed)).toBe(true);
     expect(isLevelUnlocked("cd-1", new Set(), reversed)).toBe(false);
     expect(isScenarioUnlocked("cidade-de-davi", new Set(), reversed)).toBe(false);
   });

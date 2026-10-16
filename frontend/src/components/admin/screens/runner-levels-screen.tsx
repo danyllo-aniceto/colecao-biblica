@@ -309,7 +309,7 @@ export function RunnerLevelsScreen() {
             </div>
             <Field
               label="Dificuldade"
-              hint={`${difficultyLabel(Number(draft.difficulty) || 0)}. De ${DIFFICULTY_RANGE.min} a ${DIFFICULTY_RANGE.max}: dentro do cenário a primeira fase é fácil (10) e cada seguinte sobe 20. Muda o tipo e a frequência dos obstáculos.`}
+              hint={`${difficultyLabel(Number(draft.difficulty) || 0)}. De ${DIFFICULTY_RANGE.min} a ${DIFFICULTY_RANGE.max}: dentro do cenário a primeira fase é fácil (5) e cada seguinte sobe 10. Muda o tipo e a frequência dos obstáculos e também a velocidade (de 1,00× a 1,25×).`}
               error={errors.difficulty}
               htmlFor="level-difficulty"
             >

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { holdAt, maxTicksOf, newPlayer, normalizeInputs, prepareLevel, progressOf, respawnAt, simulate, stepPlayer } from "./engine";
+import { holdAt, maxTicksOf, newPlayer, normalizeInputs, prepareLevel, progressOf, respawnAt, sawCentreY, simulate, stepPlayer } from "./engine";
 import { emptyEffects, TURBO_TICKS } from "./powers";
-import { CEIL_Y, FLOOR_Y, PLAYER, SPEED, TILE, type Form, type Level, type LevelObject, type PlayerState } from "./types";
+import { CEIL_Y, FLOOR_Y, PLAYER, SPEED, SPEED_RANGE, TILE, type Form, type Level, type LevelObject, type PlayerState } from "./types";
 
 const level = (objects: LevelObject[], options: { form?: Form; length?: number } = {}): Level => ({
   id: "t",
@@ -362,5 +362,58 @@ describe("Corrida: buracos no chão e no teto", () => {
     const prepared = prepareLevel(level([floorPit, ceilingPit]));
     expect(prepared.pits).toEqual([{ side: "floor", l: 480, r: 640 }, { side: "ceiling", l: 480, r: 640 }]);
     expect(simulate(prepared, [])).toEqual(simulate(prepared, []));
+  });
+});
+
+describe("Corrida: voo letal, serras e velocidade da fase", () => {
+  it("no voo, encostar num bloco derruba (de lado, por cima ou por baixo); o chão e o teto do campo continuam seguros", () => {
+    // Bloco no meio do caminho do voo, na altura do personagem (meio do campo).
+    const side = prepareLevel(level([{ kind: "block", x: 10, y: 0, w: 2, h: 5 }], { form: "FLY" }));
+    const hit = run(side, 300);
+    expect(hit.status).toBe("dead");
+    expect(hit.cause).toBe("wall");
+    // Roçar a borda de cima do bloco também derruba (antes só empurrava): voando rente, sem folga.
+    const graze = prepareLevel(level([{ kind: "block", x: 10, y: 0, w: 6, h: 3 }], { form: "FLY" }));
+    let player = newPlayer(graze);
+    for (let tick = 0; tick < 400 && player.status === "running"; tick += 1) player = stepPlayer(graze, player, false);
+    expect(player.status).toBe("dead");
+    // Sem nada à frente, deslizar no chão do campo não derruba.
+    const free = prepareLevel(level([], { form: "FLY" }));
+    expect(run(free, 100).status).toBe("running");
+  });
+
+  it("o Escudo ainda absorve a batida no voo", () => {
+    const prepared = prepareLevel(level([{ kind: "power", x: 2, y: 3, power: "SHIELD" }, { kind: "block", x: 10, y: 0, w: 2, h: 5 }], { form: "FLY" }));
+    const player = run(prepared, 120);
+    expect(player.status).toBe("running");
+  });
+
+  it("serra parada mata ao encostar; a serra que sobe e desce depende de onde o jogador está (mesma fase, mesma conferência)", () => {
+    const still = prepareLevel(level([{ kind: "saw", x: 10, y: 0 }]));
+    expect(run(still, 200).cause).toBe("saw");
+    // Pulando por cima na hora certa passa.
+    const jumped = run(still, 200, (tick) => tick >= 80 && tick < 83);
+    expect(jumped.status).toBe("running");
+    // Com onda: o centro muda conforme o jogador anda, e é o mesmo para quem repete a partida.
+    const wavy = prepareLevel(level([{ kind: "saw", x: 10, y: 2, amp: 1.5, period: 10 }]));
+    const saw = wavy.cols[10].saws[0];
+    expect(saw.amp).toBe(1.5 * TILE);
+    const a = sawCentreY(saw, saw.cx - 100);
+    const b = sawCentreY(saw, saw.cx - 100);
+    expect(a).toBe(b);
+    expect(sawCentreY(saw, saw.cx)).toBeCloseTo(saw.cy, 5);
+    expect(Math.abs(sawCentreY(saw, saw.cx + saw.period / 4) - saw.cy)).toBeCloseTo(saw.amp, 3);
+  });
+
+  it("a velocidade da fase encurta o tempo para chegar (e fica entre os limites)", () => {
+    const normal = prepareLevel({ ...level([]), speed: 1 });
+    const fast = prepareLevel({ ...level([]), speed: 1.25 });
+    const ticksOf = (prepared: ReturnType<typeof prepareLevel>) => simulate(prepared, [], 2000).ticks;
+    expect(ticksOf(fast)).toBeLessThan(ticksOf(normal));
+    expect(ticksOf(normal) / ticksOf(fast)).toBeCloseTo(1.25, 1);
+    expect(prepareLevel({ ...level([]), speed: 99 }).speed).toBe(SPEED_RANGE.max);
+    expect(prepareLevel({ ...level([]), speed: 0.1 }).speed).toBe(SPEED_RANGE.min);
+    expect(prepareLevel(level([])).speed).toBe(1);
+    expect(maxTicksOf(fast)).toBeLessThan(maxTicksOf(normal));
   });
 });

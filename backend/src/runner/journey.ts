@@ -32,7 +32,7 @@ export type JourneyOptions = {
  * O que os trechos precisam saber: sorteio, dificuldade (0 = bem fácil, 1 = a mais difícil do cenário), se há bifurcações e de onde vem o próximo poder
  * (`null` se a fase não tem poderes).
  */
-type Context = { random: Random; difficulty: number; forks: boolean; nextPower: (form: Form) => PowerKind | null };
+type Context = { random: Random; difficulty: number; speed: number; forks: boolean; nextPower: (form: Form) => PowerKind | null };
 
 /** Distância entre checkpoints, em segundos de corrida (a fase tem uma bandeira a cada ~12 s). */
 const CHECKPOINT_SECONDS = 12;
@@ -54,30 +54,38 @@ function weighted<T>(random: Random, items: Array<[T, number]>): T {
   return items[items.length - 1][0];
 }
 
-type RunKind = "spikes" | "block" | "stairs" | "blockSpike" | "twoSpikes" | "pit" | "pitPair" | "ladder" | "fork" | "rest";
+type RunKind = "spikes" | "block" | "stairs" | "blockSpike" | "twoSpikes" | "pit" | "pitPair" | "ladder" | "fork" | "rest" | "saw" | "sawBridge" | "hopTrain" | "pitSpike" | "blockSpikes";
 
 /** Respiro entre obstáculos: encurta de leve com a dificuldade (nunca abaixo de 5 colunas, para o toque atrasado caber). */
 const breath = (ctx: Context, low: number, high: number) => between(ctx.random, Math.round(low - ctx.difficulty), Math.round(high - 2 * ctx.difficulty));
 
+/** Respiro em colunas que mantém o TEMPO (virar a gravidade, mudar o vão do voo) quando a fase é mais rápida: mais colunas na mesma proporção da velocidade. */
+const breathAt = (ctx: Context, low: number, high: number) => Math.round(breath(ctx, low, high) * ctx.speed);
+
 /**
  * Trechos de corrida: sequência de obstáculos com respiro entre eles. Cada trecho pode oferecer um lugar para uma palavra
  * (`carriers`); as palavras do versículo são distribuídas depois, uniformemente, nos lugares oferecidos. Os pesos mudam com a dificuldade:
- * no começo do cenário só há espetos e blocos; depois entram degraus, buracos, pares de buracos e escadas.
+ * no começo só há espetos, serras no chão e blocos; depois entram degraus, buracos, pares de buracos, escadas, trens de blocos, serras no ar e combos.
  */
 function runPattern(objects: LevelObject[], carriers: Carrier[], x: number, ctx: Context, remaining: number): number {
   const { random, difficulty: d } = ctx;
   const forkLength = RUN_FORK.stairs + RUN_FORK.gap + RUN_FORK.length + RUN_FORK.tail;
   const kind = weighted<RunKind>(random, [
-    ["spikes", 24 - 8 * d],
-    ["block", 20 - 6 * d],
+    ["spikes", 20 - 8 * d],
+    ["saw", 8 + 2 * d],
+    ["block", 16 - 6 * d],
     ["stairs", 6 + 5 * d],
-    ["blockSpike", 8 + 8 * d],
+    ["blockSpike", 8 + 6 * d],
     ["twoSpikes", 3 + 8 * d],
     ["pit", 3 + 12 * d],
     ["pitPair", d > 0.45 ? 10 * d : 0],
     ["ladder", d > 0.3 ? 8 * d : 0],
+    ["hopTrain", d > 0.2 ? 4 + 8 * d : 0],
+    ["sawBridge", d > 0.25 ? 4 + 9 * d : 0],
+    ["pitSpike", d > 0.4 ? 10 * d : 0],
+    ["blockSpikes", d > 0.5 ? 10 * d : 0],
     ["fork", ctx.forks && remaining >= forkLength ? 11 : 0],
-    ["rest", 6 - 3 * d],
+    ["rest", 5 - 3 * d],
   ]);
   switch (kind) {
     case "spikes": {
@@ -87,6 +95,15 @@ function runPattern(objects: LevelObject[], carriers: Carrier[], x: number, ctx:
       for (let index = 0; index < count; index += 1) objects.push({ kind: "spike", x: x + index });
       return x + count + breath(ctx, 6, 9);
     }
+    case "saw":
+      // Serra no chão (uma, às vezes duas coladas de 2 em 2 colunas não: uma só, ou duas com 8 colunas): é pular na hora.
+      objects.push({ kind: "saw", x, y: 0 });
+      carriers.push({ x, y: 2 });
+      if (d > 0.35 && random() < 0.5) {
+        objects.push({ kind: "saw", x: x + 8, y: 0 });
+        return x + 9 + breath(ctx, 6, 8);
+      }
+      return x + 1 + breath(ctx, 6, 9);
     case "block": {
       const width = between(random, 4, 6);
       objects.push({ kind: "block", x, y: 0, w: width, h: 1 });
@@ -103,6 +120,10 @@ function runPattern(objects: LevelObject[], carriers: Carrier[], x: number, ctx:
       // Pousa no bloco e só depois pula o espeto: sobra ~6 colunas entre o pouso e o espeto (4 era apertado demais).
       objects.push({ kind: "block", x, y: 0, w: 12, h: 1 }, { kind: "spike", x: x + 8, y: 1 });
       return x + 12 + 6;
+    case "blockSpikes":
+      // Bloco comprido com dois espetos em cima: pousa, pula o 1º, pousa de novo e pula o 2º.
+      objects.push({ kind: "block", x, y: 0, w: 20, h: 1 }, { kind: "spike", x: x + 8, y: 1 }, { kind: "spike", x: x + 16, y: 1 });
+      return x + 20 + 6;
     case "twoSpikes":
       objects.push({ kind: "spike", x }, { kind: "spike", x: x + 8 });
       return x + 9 + 7;
@@ -117,18 +138,33 @@ function runPattern(objects: LevelObject[], carriers: Carrier[], x: number, ctx:
       // Dois buracos separados por um pedaço de chão para pousar e pular de novo.
       objects.push({ kind: "pit", x, w: 3, side: "floor" }, { kind: "pit", x: x + 3 + 6, w: 3, side: "floor" });
       return x + 3 + 6 + 3 + 7;
+    case "pitSpike":
+      // Buraco e, logo depois de pousar, um espeto: dois pulos seguidos com chão de sobra para o segundo.
+      objects.push({ kind: "pit", x, w: 3, side: "floor" }, { kind: "spike", x: x + 3 + 8 });
+      return x + 3 + 8 + 1 + 7;
     case "ladder":
       // Escada que sobe, desce e termina num espeto: pousa em cada degrau antes de saltar para o seguinte.
       objects.push({ kind: "block", x, y: 0, w: 5, h: 1 }, { kind: "block", x: x + 5, y: 0, w: 5, h: 2 }, { kind: "block", x: x + 10, y: 0, w: 5, h: 1 }, { kind: "spike", x: x + 17 });
       carriers.push({ x: x + 7, y: 2 });
       return x + 17 + 1 + 7;
+    case "hopTrain":
+      // Três blocos baixos em fila, com 4 colunas de chão entre eles: pula um por um (ou pousa em cima e segue).
+      for (let index = 0; index < 3; index += 1) objects.push({ kind: "block", x: x + index * 8, y: 0, w: 4, h: 1 });
+      carriers.push({ x: x + 10, y: 2 });
+      return x + 3 * 8 + 4;
+    case "sawBridge":
+      // Espeto no chão e, mais adiante, uma serra no ar na altura de um pulo: pula o espeto, pousa e passa por baixo da serra SEM pular.
+      objects.push({ kind: "spike", x }, { kind: "saw", x: x + 11, y: 2, ...(d > 0.6 ? { amp: 0.4, period: 10 } : {}) });
+      carriers.push({ x: x + 4, y: 2 });
+      return x + 11 + 1 + breath(ctx, 6, 8);
     case "fork": {
       // Bifurcação: degraus levam a uma laje (caminho de cima, com recompensas) ou segue-se por baixo (seguro).
       const power = random() < POWER_CHANCE.fork ? ctx.nextPower("RUN") : null;
       const info = runFork(objects, x, power, random() < 0.3 + 0.3 * d ? "PIT" : "SPIKES");
       // As palavras do versículo ficam só no chão livre (o caminho de risco dá o poder: palavra lá poderia ficar fora do alcance de quem vai pelo seguro).
-      carriers.push({ x: info.end - 4, y: 0 });
-      return info.end;
+      // A palavra fica no chão depois da laje (quem foi por cima já pousou) e longe do próximo obstáculo (com a fase mais rápida o pulo começa mais cedo).
+      carriers.push({ x: info.end - 1, y: 0 });
+      return info.end + 6;
     }
     default: {
       // Respiro, às vezes com um poder no chão (se a fase tem poderes).
@@ -139,57 +175,128 @@ function runPattern(objects: LevelObject[], carriers: Carrier[], x: number, ctx:
   }
 }
 
-/** Trecho de voo: túneis cujo vão (no mínimo `minGap` linhas) anda no máximo 1 linha por passagem em cada lado; às vezes um divisor abre dois corredores. */
+type FlyKind = "gates" | "steps" | "sawGates" | "zigzag" | "split";
+
+/**
+ * Trecho de voo. Tocar em qualquer bloco, espeto ou serra derruba (só o chão e o teto do campo são seguros). Cada trecho de ~5 portões sorteia um desenho:
+ * portões comuns (o vão anda no máximo 1 linha por passagem), escada (o vão sobe e desce em sequência), portões de serras (como os blocos, mas serras
+ * girando, às vezes subindo e descendo juntas), zigue-zague (vão que muda de lado, só mais adiante) e o voo dividido (dois corredores).
+ */
 function flySection(objects: LevelObject[], carriers: Carrier[], x: number, length: number, ctx: Context, minGap: number, mark: (nextObstacleX: number) => void): number {
-  const { random } = ctx;
+  const { random, difficulty: d } = ctx;
   let floor = 1;
   let ceil = 1;
   let cursor = x;
   const end = x + length;
+  const room = ROWS - minGap;
+  /** Portão de blocos: `floor` linhas embaixo e `ceil` em cima. */
+  const blockGate = (at: number) => {
+    if (floor > 0) objects.push({ kind: "block", x: at, y: 0, w: 2, h: floor });
+    if (ceil > 0) objects.push({ kind: "block", x: at, y: ROWS - ceil, w: 2, h: ceil });
+  };
+  /** Portão de serras: uma serra na primeira linha do vão (embaixo) e outra na última (em cima); as duas sobem e descem juntas, então o vão não aperta. */
+  const sawGate = (at: number, bob: boolean) => {
+    const wave = bob ? { amp: 0.5, period: 12 } : {};
+    objects.push({ kind: "saw", x: at, y: floor, ...wave }, { kind: "saw", x: at, y: ROWS - ceil - 1, ...wave });
+  };
+  const place = (at: number, mode: "blocks" | "saws", bob = false) => {
+    if (mode === "blocks") blockGate(at);
+    else sawGate(at, bob);
+    // Palavra bem no meio do vão (entre as serras, a meia-linha, quando o vão é par).
+    const centre = mode === "saws" ? (floor + ROWS - ceil - 1) / 2 : floor + Math.floor((ROWS - floor - ceil) / 2);
+    carriers.push({ x: at, y: centre });
+    // De vez em quando um poder no meio do vão (na 2ª coluna do portão).
+    if (random() < POWER_CHANCE.flyGate) {
+      const power = ctx.nextPower("FLY");
+      if (power) objects.push({ kind: "power", x: at + 1, y: centre, power });
+    }
+  };
   while (cursor < end) {
-    if (ctx.forks && end - cursor >= FLY_SPLIT.lead + FLY_SPLIT.length + FLY_SPLIT.tail + 6 && random() < 0.16) {
+    const left = end - cursor;
+    const kind = weighted<FlyKind>(random, [
+      ["gates", 30 - 10 * d],
+      ["steps", 14],
+      ["sawGates", 10 + 12 * d],
+      ["zigzag", d > 0.4 ? 10 * d : 0],
+      ["split", ctx.forks && left >= FLY_SPLIT.lead + FLY_SPLIT.length + FLY_SPLIT.tail + 6 ? 12 : 0],
+    ]);
+    if (kind === "split") {
       const info = flySplit(objects, cursor, random() < POWER_CHANCE.fork ? ctx.nextPower("FLY") : null);
-      // O vão antes do próximo túnel volta a ser o do meio.
+      // O vão antes do próximo trecho volta a ser o do meio.
       floor = 1;
       ceil = 1;
       cursor = info.end + between(random, 4, 6);
       mark(cursor);
       continue;
     }
-    const room = ROWS - minGap;
-    floor = Math.max(0, Math.min(room, floor + between(random, -1, 1)));
-    ceil = Math.max(0, Math.min(room - floor, ceil + between(random, -1, 1)));
-    if (floor > 0) objects.push({ kind: "block", x: cursor, y: 0, w: 2, h: floor });
-    if (ceil > 0) objects.push({ kind: "block", x: cursor, y: ROWS - ceil, w: 2, h: ceil });
-    const centre = floor + Math.floor((ROWS - floor - ceil) / 2);
-    carriers.push({ x: cursor, y: centre });
-    // De vez em quando um poder no meio do vão (na 2ª coluna do portão).
-    if (random() < POWER_CHANCE.flyGate) {
-      const power = ctx.nextPower("FLY");
-      if (power) objects.push({ kind: "power", x: cursor + 1, y: centre, power });
+    // Antes de cada desenho novo, um portão com o vão no meio: a troca de um desenho para o outro nunca pede um salto grande de altura.
+    if (cursor > x) {
+      floor = 1;
+      ceil = 1;
+      place(cursor, "blocks");
+      cursor += 2 + breathAt(ctx, 5, 6);
+      mark(cursor);
     }
-    cursor += 2 + breath(ctx, 5, 6);
+    const gates = between(random, 4, 6);
+    const mode = kind === "sawGates" ? "saws" : "blocks";
+    // Nos portões de serras elas ficam dentro do vão (uma em cada ponta): o vão precisa de 2 linhas a mais: sobra folga para pegar a palavra no meio sem arriscar.
+    const limit = mode === "saws" ? room - 2 : room;
+    const bob = kind === "sawGates" && d > 0.5 && random() < 0.6;
+    let direction = random() < 0.5 ? 1 : -1;
+    for (let index = 0; index < gates && cursor < end; index += 1) {
+      if (kind === "steps") {
+        // A escada: o vão anda sempre para o mesmo lado e vira quando chega no limite.
+        if (floor + direction < 0 || floor + direction > limit) direction = -direction;
+        floor = Math.max(0, Math.min(limit, floor + direction));
+        ceil = Math.max(0, Math.min(limit - floor, 1));
+      } else if (kind === "zigzag") {
+        // Zigue-zague: o vão pula para o outro lado (no máximo 3 linhas) a cada portão, com mais espaço entre eles.
+        floor = Math.max(0, index % 2 === 0 ? 0 : limit - 1);
+        ceil = Math.max(0, limit - floor);
+      } else {
+        floor = Math.max(0, Math.min(limit, floor + between(random, -1, 1)));
+        ceil = Math.max(0, Math.min(limit - floor, ceil + between(random, -1, 1)));
+      }
+      place(cursor, mode, bob);
+      cursor += 2 + (kind === "zigzag" ? breathAt(ctx, 9, 10) : breathAt(ctx, 5, 6));
+      mark(cursor);
+    }
+    // Entre um desenho e o seguinte, um pouco de respiro (o vão fica no meio).
+    floor = 1;
+    ceil = 1;
+    cursor += 3;
     mark(cursor);
   }
   return cursor;
 }
 
+type GravityKind = "spike" | "pit" | "lane" | "slab" | "wall" | "sawMid" | "rush" | "spikePair";
+
 /**
  * Trecho de gravidade: espetos no chão e no teto (quem passa inverte a gravidade quando o espeto está do lado onde está), buracos no chão ou no teto
- * (é preciso estar do lado oposto ao passar), pistas de recompensa e lajes que abrem dois corredores. `side` é o lado em que o jogador está.
+ * (é preciso estar do lado oposto ao passar), paredes de bloco (idem), serras no meio do campo (não se pode virar enquanto passa por elas), sequências rápidas,
+ * pistas de recompensa e lajes que abrem dois corredores. `side` é o lado em que o jogador está.
  */
 function gravitySection(objects: LevelObject[], carriers: Carrier[], x: number, length: number, ctx: Context, mark: (nextObstacleX: number) => void): number {
   const { random, difficulty: d } = ctx;
   let cursor = x;
   let side: "floor" | "ceiling" = "floor";
   const end = x + length;
+  const spikeOn = (at: number, onSide: "floor" | "ceiling"): LevelObject => (onSide === "floor" ? { kind: "spike", x: at } : { kind: "spike", x: at, y: ROWS - 1, down: true });
+  const other = () => (side === "floor" ? "ceiling" : "floor");
+  /** Palavra logo depois de um obstáculo, na superfície em que o jogador fica depois de virar (ele passa ali, nunca no meio de uma virada). */
+  const carry = (at: number) => carriers.push({ x: at, y: side === "floor" ? 0 : ROWS - 1 });
   while (cursor < end) {
     const room = end - cursor;
-    const kind = weighted<"spike" | "pit" | "lane" | "slab">(random, [
-      ["spike", 60 - 20 * d],
-      ["pit", 8 + 28 * d],
-      ["lane", ctx.forks && room >= GRAVITY_LANE.length + 6 ? 18 : 0],
-      ["slab", ctx.forks && room >= GRAVITY_SLAB.lead + GRAVITY_SLAB.length + GRAVITY_SLAB.tail + 6 ? 12 : 0],
+    const kind = weighted<GravityKind>(random, [
+      ["spike", 36 - 14 * d],
+      ["pit", 8 + 22 * d],
+      ["wall", 14 + 8 * d],
+      ["spikePair", d > 0.25 ? 6 + 10 * d : 0],
+      ["sawMid", d > 0.2 ? 6 + 12 * d : 0],
+      ["rush", d > 0.5 && room >= 28 ? 14 * d : 0],
+      ["lane", ctx.forks && room >= GRAVITY_LANE.length + 6 ? 14 : 0],
+      ["slab", ctx.forks && room >= GRAVITY_SLAB.lead + GRAVITY_SLAB.length + GRAVITY_SLAB.tail + 6 ? 10 : 0],
     ]);
     if (kind === "lane") {
       const info = gravityLane(objects, cursor, random() < 0.5 ? "ceiling" : "floor", random() < POWER_CHANCE.lane ? ctx.nextPower("GRAVITY") : null);
@@ -208,18 +315,69 @@ function gravitySection(objects: LevelObject[], carriers: Carrier[], x: number, 
       // O buraco fica do lado em que o jogador está: ele precisa virar para o outro lado antes e só volta depois.
       const width = between(random, 3, 4);
       objects.push({ kind: "pit", x: cursor, w: width, side });
-      cursor += width + breath(ctx, 8, 10);
-      side = side === "floor" ? "ceiling" : "floor";
+      carry(cursor + width + 3);
+      cursor += width + breathAt(ctx, 8, 10);
+      side = other();
+      carriers[carriers.length - 1].y = side === "floor" ? 0 : ROWS - 1;
       mark(cursor);
       continue;
     }
-    if (random() < 0.65) side = side === "floor" ? "ceiling" : "floor";
-    objects.push(side === "floor" ? { kind: "spike", x: cursor } : { kind: "spike", x: cursor, y: ROWS - 1, down: true });
-    cursor += breath(ctx, 7, 9);
+    if (kind === "wall") {
+      // Parede de bloco (1 a 2 linhas) do lado em que o jogador está: bater de frente derruba, então ele vira antes.
+      objects.push(side === "floor" ? { kind: "block", x: cursor, y: 0, w: 2, h: between(random, 1, 2) } : { kind: "block", x: cursor, y: ROWS - 2, w: 2, h: 2 });
+      side = other();
+      carry(cursor + 5);
+      cursor += 2 + breathAt(ctx, 8, 10);
+      mark(cursor);
+      continue;
+    }
+    if (kind === "spikePair") {
+      // Dois espetos juntos do lado do jogador: ele vira e fica do outro lado.
+      objects.push(spikeOn(cursor, side), spikeOn(cursor + 1, side));
+      side = other();
+      carry(cursor + 5);
+      cursor += 2 + breathAt(ctx, 8, 10);
+      mark(cursor);
+      continue;
+    }
+    if (kind === "sawMid") {
+      // Serra no meio do campo (às vezes subindo e descendo): não se pode virar enquanto passa por ela. Depois, um espeto obriga a virar.
+      objects.push({ kind: "saw", x: cursor, y: 3, ...(d > 0.45 && random() < 0.6 ? { amp: 1.5, period: 14 } : {}) });
+      const at = cursor + Math.round(10 * ctx.speed);
+      objects.push(spikeOn(at, side));
+      side = other();
+      carry(at + 4);
+      cursor = at + 1 + breathAt(ctx, 8, 10);
+      mark(cursor);
+      continue;
+    }
+    if (kind === "rush") {
+      // Três obstáculos seguidos, cada um do lado oposto ao anterior: vira, vira, vira (7 colunas entre eles).
+      for (let index = 0; index < 3; index += 1) {
+        objects.push(index % 2 === 0 ? spikeOn(cursor, side) : { kind: "block", x: cursor, y: side === "floor" ? 0 : ROWS - 1, w: 2, h: 1 });
+        side = other();
+        cursor += Math.round(7 * ctx.speed);
+      }
+      cursor += breathAt(ctx, 5, 7);
+      mark(cursor);
+      continue;
+    }
+    // Espeto: na maioria das vezes do lado em que o jogador está (ele precisa virar); às vezes do outro (ele só segue).
+    const spikeSide = random() < 0.65 ? side : other();
+    objects.push(spikeOn(cursor, spikeSide));
+    side = spikeSide === "floor" ? "ceiling" : "floor";
+    carry(cursor + 4);
+    cursor += breathAt(ctx, 7, 9);
     mark(cursor);
   }
   return cursor;
 }
+
+/** Velocidade da fase pela dificuldade: de 1,00 (fácil) a 1,25 (a mais difícil). */
+export const speedFor = (difficulty: number) => 1 + 0.25 * Math.max(0, Math.min(1, difficulty));
+
+/** Duração da fase em segundos de jogo (considera a velocidade dela). */
+export const levelSeconds = (level: Pick<Level, "length" | "speed">) => level.length / (TILES_PER_SECOND * (level.speed ?? 1));
 
 /**
  * Monta uma fase longa (minutos) alternando as formas, com portais e respiros entre elas, e espalha as palavras do versículo.
@@ -237,7 +395,10 @@ export function buildJourney(options: JourneyOptions): Level {
   const useForks = options.forks ?? true;
   const usePowers = options.powers ?? true;
   const difficulty = Math.max(0, Math.min(1, options.difficulty ?? 0.5));
-  const ctx: Context = { random, difficulty, forks: useForks, nextPower: (form) => {
+  const speed = speedFor(difficulty);
+  // Colunas por segundo de jogo: com a velocidade maior, a mesma duração pede uma fase mais comprida.
+  const tps = TILES_PER_SECOND * speed;
+  const ctx: Context = { random, difficulty, speed, forks: useForks, nextPower: (form) => {
       if (!usePowers) return null;
       // O próximo da fila que faz sentido na forma (os que não servem ficam para a vez seguinte).
       for (let tries = 0; tries < queue.length; tries += 1) {
@@ -257,14 +418,14 @@ export function buildJourney(options: JourneyOptions): Level {
   let lastCheckpoint = 0;
   // Bandeira no trecho livre antes do próximo obstáculo (3 colunas antes dele), quando já passou tempo desde a última.
   const mark = (nextObstacleX: number) => {
-    if (nextObstacleX - lastCheckpoint >= CHECKPOINT_SECONDS * TILES_PER_SECOND) {
+    if (nextObstacleX - lastCheckpoint >= CHECKPOINT_SECONDS * tps) {
       lastCheckpoint = nextObstacleX - 3;
       objects.push({ kind: "checkpoint", x: lastCheckpoint });
     }
   };
   let form: Form = "RUN";
   let sectionIndex = 0;
-  const target = options.seconds * TILES_PER_SECOND;
+  const target = options.seconds * tps;
   const firstForm = order[0];
   while (x < target) {
     const next = order[sectionIndex % order.length];
@@ -279,7 +440,7 @@ export function buildJourney(options: JourneyOptions): Level {
       x = gap(x, 12);
     }
     form = next;
-    const length = Math.round(SECTION_SECONDS[form] * TILES_PER_SECOND * (0.8 + random() * 0.4));
+    const length = Math.round(SECTION_SECONDS[form] * tps * (0.8 + random() * 0.4));
     const end = x + length;
     if (form === "RUN") {
       while (x < end) {
@@ -287,7 +448,7 @@ export function buildJourney(options: JourneyOptions): Level {
         mark(x);
       }
     } else if (form === "FLY") {
-      x = flySection(objects, carriers, x, length, ctx, options.flyGap ?? 4, mark);
+      x = flySection(objects, carriers, x, length, ctx, options.flyGap ?? (difficulty > 0.8 ? 3 : 4), mark);
     } else {
       x = gravitySection(objects, carriers, x, length, ctx, mark);
     }
@@ -303,5 +464,5 @@ export function buildJourney(options: JourneyOptions): Level {
     const carrier = carriers[Math.floor(((index + 0.5) * carriers.length) / words)];
     objects.push({ kind: "word", x: carrier.x, y: carrier.y, index });
   }
-  return { id: options.id, name: options.name, verse: options.verse, form: firstForm === "RUN" ? "RUN" : firstForm, length: x, objects };
+  return { id: options.id, name: options.name, verse: options.verse, form: firstForm === "RUN" ? "RUN" : firstForm, length: x, objects, speed: Number(speed.toFixed(3)) };
 }
