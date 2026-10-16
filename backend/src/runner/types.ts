@@ -33,13 +33,19 @@ export type WordObject = { kind: "word"; x: number; y: number; index: number };
 export type CheckpointObject = { kind: "checkpoint"; x: number };
 /** Poder no meio do caminho (Turbo, Escudo, Pulo triplo ou Ímã): some quando pego. `y` = linha (0 = chão). */
 export type PowerObject = { kind: "power"; x: number; y: number; power: PowerKind };
-export type LevelObject = SpikeObject | BlockObject | PortalObject | WordObject | CheckpointObject | PowerObject;
+/**
+ * Buraco no chão ou no teto (`side`), de `x` a `x + w` colunas: quem passa por cima sem estar no ar (corrida), do outro lado (gravidade) ou fora do
+ * buraco cai e morre. O corpo só fica sem apoio quando está INTEIRO dentro do buraco (por isso a largura é de pelo menos 3 colunas).
+ */
+export type PitObject = { kind: "pit"; x: number; w: number; side: "floor" | "ceiling" };
+export type LevelObject = SpikeObject | BlockObject | PortalObject | WordObject | CheckpointObject | PowerObject | PitObject;
 
 /** Versículo escondido da fase: cada palavra coletada (`index`) aparece no lugar dele. */
 export type Verse = { ref: string; words: string[] };
 
 /** Imagens do cenário (todas opcionais): três camadas de fundo (longe, meio, perto; repetem na horizontal) e a figura do espeto e do bloco. */
-export const ART_KEYS = ["far", "mid", "near", "spike", "block"] as const;
+/** `cover` é só a capa do cartão do cenário (não entra na fase). */
+export const ART_KEYS = ["far", "mid", "near", "spike", "block", "cover"] as const;
 export type ArtKey = (typeof ART_KEYS)[number];
 export type ScenarioArt = Partial<Record<ArtKey, string>>;
 
@@ -70,13 +76,15 @@ export type PreparedLevel = {
   /** Posição (px) de cada checkpoint, em ordem. */
   checkpoints: number[];
   cols: Array<{ spikes: Rect[]; blocks: Rect[]; words: Array<Rect & { index: number }>; powers: Array<Rect & { id: number; power: PowerKind }> }>;
+  /** Buracos do chão e do teto (px), para o motor tirar o apoio de quem está dentro deles. */
+  pits: Array<{ side: "floor" | "ceiling"; l: number; r: number }>;
   wordCount: number;
   /** Quantos poderes a fase tem (os `id` vão de 0 a `powerCount - 1`, na ordem da lista de objetos). */
   powerCount: number;
 };
 
 export type PlayerStatus = "running" | "dead" | "finished";
-export type DeathCause = "spike" | "wall";
+export type DeathCause = "spike" | "wall" | "pit";
 
 /** Estado de um corredor: simples e serializável (vai e volta do servidor e do navegador). */
 export type PlayerState = {

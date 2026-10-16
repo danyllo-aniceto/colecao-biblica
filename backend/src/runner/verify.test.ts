@@ -5,7 +5,7 @@ import { buildJourney } from "./journey";
 import { officialTicks } from "./room";
 import { MAX_SEGMENTS, parseSegments, starsOf, verifyRun } from "./verify";
 
-const level = prepareLevel(buildJourney({ id: "v", name: "V", seed: 7, seconds: 60, verse: { ref: "x", words: ["a", "b", "c", "d"] } }));
+const level = prepareLevel(buildJourney({ id: "v", name: "V", seed: 7, seconds: 60, difficulty: 0.3, verse: { ref: "x", words: ["a", "b", "c", "d"] } }));
 
 /** Até a bandeira 1 + `after` passos com o bot e depois sem tocar mais (cai), mais o estado do checkpoint. */
 function fallAfterCheckpoint(after: number) {
@@ -100,11 +100,11 @@ describe("Corrida: conferência da partida pelos toques", () => {
   it("a partida de um bot ao vivo (cai, espera e volta ao checkpoint ou ao início) é conferida e o tempo oficial é o dele", () => {
     for (const seed of [1, 2, 3]) {
       const bot = createBot(level, { skill: 0.6, lag: 3, seed, respawn: true });
-      while (bot.player.status !== "finished" && bot.elapsed < 60 * 400) bot.step();
+      while (bot.player.status !== "finished" && bot.elapsed < 60 * 1500) bot.step();
       expect(bot.player.status, `semente ${seed}`).toBe("finished");
       const verdict = verifyRun(level, bot.segments);
       expect(verdict, `semente ${seed}`).toMatchObject({ ok: true, finished: true, deaths: bot.deaths });
       expect(verdict.ok && officialTicks(verdict.steps, verdict.deaths), `semente ${seed}`).toBe(bot.elapsed);
     }
-  }, 120_000);
+  }, 300_000);
 });

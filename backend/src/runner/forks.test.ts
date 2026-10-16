@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { botInputs, TOUCH_DELAY } from "./bots";
 import { prepareLevel, simulate } from "./engine";
-import { gravityLane, runFork, RUN_FORK } from "./forks";
+import { flySplit, gravityLane, gravitySlab, runFork, RUN_FORK } from "./forks";
 import { ROWS, type Level, type LevelObject } from "./types";
 
 /** Fase curta com uma bifurcação no meio: chão livre antes e depois. */
@@ -70,6 +70,44 @@ describe("Corrida: pistas da gravidade (segura e de recompensa)", () => {
       gravityLane(objects, 20, reward, null);
       const safeSide = (object: LevelObject) => (object.kind === "spike" ? (reward === "floor" ? object.down === true : object.down !== true) : false);
       expect(objects.filter(safeSide)).toEqual([]);
+    });
+  }
+});
+
+describe("Corrida: variantes de caminho (buraco, voo dividido, laje na gravidade)", () => {
+  const both = (level: Level) => {
+    const prepared = prepareLevel(level);
+    return [simulate(prepared, botInputs(prepared)).status, simulate(prepared, botInputs(prepared, { lag: TOUCH_DELAY })).status];
+  };
+
+  it("bifurcação da corrida com buraco no caminho de baixo: possível por cima e por baixo", () => {
+    const objects: LevelObject[] = [];
+    const info = runFork(objects, 14, null, "PIT");
+    expect(objects.some((object) => object.kind === "pit")).toBe(true);
+    const base = { id: "f", name: "F", form: "RUN" as const, length: info.end + 8, verse: { ref: "x", words: ["a"] } };
+    expect(both({ ...base, objects: [...objects, { kind: "word", x: info.end - 4, y: 0, index: 0 }] })).toEqual(["finished", "finished"]);
+    // Só por baixo (teto fechado sobre a laje) e só por cima (chão sob a laje preenchido).
+    expect(both({ ...base, objects: [...objects, { kind: "block", x: info.dividerFrom, y: 4, w: info.dividerTo - info.dividerFrom, h: ROWS - 4 }, { kind: "word", x: info.end - 4, y: 0, index: 0 }] })).toEqual(["finished", "finished"]);
+  });
+
+  it("voo dividido: cada corredor é possível sozinho", () => {
+    const build = (extra: (info: ReturnType<typeof flySplit>) => LevelObject[]): Level => {
+      const objects: LevelObject[] = [{ kind: "portal", x: 6, form: "FLY" }];
+      const info = flySplit(objects, 20, "SHIELD");
+      objects.push(...extra(info));
+      return { id: "s", name: "S", form: "RUN", length: info.end + 8, verse: { ref: "x", words: ["a"] }, objects: [...objects, { kind: "word", x: info.end - 2, y: 3, index: 0 }] };
+    };
+    expect(both(build(() => []))).toEqual(["finished", "finished"]);
+    // Corredor de baixo fechado (linhas 0 a 2 sob o divisor): só pelo de cima.
+    expect(both(build((info) => [{ kind: "block", x: info.dividerFrom, y: 0, w: info.dividerTo - info.dividerFrom, h: 3 }]))).toEqual(["finished", "finished"]);
+  });
+
+  for (const powerUp of [true, false]) {
+    it(`gravidade com laje (poder ${powerUp ? "em cima" : "embaixo"}): o bot termina e pega o poder, também com o toque atrasado`, () => {
+      const objects: LevelObject[] = [{ kind: "portal", x: 6, form: "GRAVITY" }];
+      const info = gravitySlab(objects, 20, "SHIELD", powerUp);
+      const level: Level = { id: "g", name: "G", form: "RUN", length: info.end + 8, verse: { ref: "x", words: ["a"] }, objects: [...objects, { kind: "word", x: info.end - 1, y: 0, index: 0 }] };
+      expect(both(level)).toEqual(["finished", "finished"]);
     });
   }
 });

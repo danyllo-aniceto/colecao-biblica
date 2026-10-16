@@ -4,7 +4,6 @@ import FaceRoundedIcon from '@mui/icons-material/FaceRounded';
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
-import SmartToyRoundedIcon from '@mui/icons-material/SmartToyRounded';
 import SportsEsportsRoundedIcon from '@mui/icons-material/SportsEsportsRounded';
 import { Alert } from '@/components/game/game-ui';
 import { Button } from '@/components/ui/button';
@@ -17,7 +16,7 @@ import { cn } from '@/lib/cn';
 import { BOT_LEVELS, type BotLevel } from '@runner/bots';
 import { LOCAL_KEYS, planSlots, uniqueNames } from '@runner/local';
 import { TILES_PER_SECOND } from '@runner/journey';
-import { isCharacterUnlocked, isLevelUnlocked, isScenarioUnlocked, type Scenario } from '@runner/campaign';
+import { DEFAULT_DIFFICULTY, difficultyLabel, isCharacterUnlocked, isLevelUnlocked, isScenarioUnlocked, type Scenario } from '@runner/campaign';
 import { BASE_LEVELS } from '@runner/levels';
 import { useRunnerCampaign } from '@/components/user/corrida/corrida-campaign';
 import type { Level } from '@runner/types';
@@ -35,14 +34,13 @@ import { SpriteView } from '@/components/user/corrida/sprite-view';
 
 const CorridaGame = lazy(() => import('@/components/user/corrida/corrida-game').then((m) => ({ default: m.CorridaGame })));
 
-type Tab = 'campaign' | 'free' | 'bots' | 'multi' | 'characters';
+type Tab = 'campaign' | 'free' | 'multi' | 'characters';
 /** Como a partida começou: campanha (vale para o melhor resultado), treino, assistindo um bot ou corrida contra bots. */
 type Playing = { level: Level; mode: 'campaign' | 'practice' | 'watch' | 'race' | 'local'; rivals?: CorridaRival[]; players?: LocalPlayer[] };
 
 const TABS: Array<{ id: Tab; label: string; icon: ReactNode }> = [
   { id: 'campaign', label: 'Campanha', icon: <MapRoundedIcon fontSize="small" /> },
   { id: 'free', label: 'Livre', icon: <SportsEsportsRoundedIcon fontSize="small" /> },
-  { id: 'bots', label: 'Bots', icon: <SmartToyRoundedIcon fontSize="small" /> },
   { id: 'multi', label: 'Multi', icon: <GroupsRoundedIcon fontSize="small" /> },
   { id: 'characters', label: 'Personagens', icon: <FaceRoundedIcon fontSize="small" /> },
 ];
@@ -151,8 +149,9 @@ export function CorridaHub() {
       </div>
 
       {tab === 'campaign' ? <CampaignTab scenarios={scenarios} levels={levels} bests={bests} finished={finished} characters={allCharacters} onPlay={(level) => setPlaying({ level, mode: 'campaign' })} /> : null}
-      {tab === 'free' ? <FreeTab levels={levels} bests={bests} onPlay={(level, mode) => setPlaying({ level, mode })} /> : null}
-      {tab === 'bots' ? <BotsTab levels={levels} characters={characters} character={character} onStart={(level, rivals) => setPlaying({ level, mode: 'race', rivals })} /> : null}
+      {tab === 'free' ? (
+        <FreeTab levels={levels} bests={bests} characters={characters} character={character} onPlay={(level, mode) => setPlaying({ level, mode })} onRace={(level, rivals) => setPlaying({ level, mode: 'race', rivals })} />
+      ) : null}
       {tab === 'multi' ? <MultiTab levels={levels} characters={characters} character={character} onStartLocal={(level, players) => setPlaying({ level, mode: 'local', players })} onOpenRoom={setRoom} /> : null}
       {tab === 'characters' ? <CharactersTab levels={levels} characters={allCharacters} finished={finished} character={character} onChoose={choose} /> : null}
 
@@ -199,6 +198,21 @@ function Controls() {
   );
 }
 
+/** Capa do cenário (imagem do Painel); sem imagem, o céu do cenário em degradê. */
+function ScenarioCover({ scenario, className, locked = false }: { scenario: Scenario; className?: string; locked?: boolean }) {
+  const cover = scenario.art?.cover;
+  return (
+    <div className={cn('relative w-full overflow-hidden rounded-2xl border-2 border-edge', className)} style={{ background: `linear-gradient(${scenario.theme.skyTop}, ${scenario.theme.skyBottom})` }}>
+      {cover ? <img src={cover} alt={`Capa do cenário ${scenario.name}`} className={cn('h-full w-full object-cover', locked && 'grayscale')} loading="lazy" /> : null}
+      {locked ? (
+        <span className="absolute right-2 top-2 grid size-9 place-items-center rounded-full bg-black/60 text-white">
+          <LockRoundedIcon fontSize="small" />
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 /** Campanha solo: cenários (lugares da Bíblia) com várias fases cada; a fase seguinte abre ao concluir a anterior e cada cenário abre ao concluir o anterior. */
 function CampaignTab({ scenarios: scenarioList, levels: allLevels, bests, finished, characters, onPlay }: { scenarios: Scenario[]; levels: Level[]; bests: Bests; finished: ReadonlySet<string>; characters: RunnerCharacter[]; onPlay: (level: Level) => void }) {
   const [scenarioId, setScenarioId] = useState<string | null>(null);
@@ -213,6 +227,7 @@ function CampaignTab({ scenarios: scenarioList, levels: allLevels, bests, finish
         <Button size="sm" variant="ghost" onClick={() => setScenarioId(null)}>
           ← Cenários
         </Button>
+        <ScenarioCover scenario={scenario} className="h-32 sm:h-40" />
         <div>
           <h3 className="font-display text-xl font-bold text-ink">{scenario.name}</h3>
           <p className="text-sm font-semibold text-muted">{scenario.story}</p>
@@ -230,7 +245,7 @@ function CampaignTab({ scenarios: scenarioList, levels: allLevels, bests, finish
                 id: def.id,
                 number: scenario.levels.indexOf(def) + 1,
                 name: level.name,
-                info: levelInfo(level),
+                info: `${levelInfo(level)} · ${difficultyLabel(def.difficulty ?? DEFAULT_DIFFICULTY)}`,
                 result: bestText(best, total),
                 unlocked: isLevelUnlocked(def.id, finished, scenarioList),
                 finished: best?.finished === true,
@@ -259,6 +274,7 @@ function CampaignTab({ scenarios: scenarioList, levels: allLevels, bests, finish
           const prizes = item.levels.flatMap((def) => unlocksOf(def.id));
           return (
             <li key={item.id} className={cn('panel space-y-2 p-4', !unlocked && 'opacity-70')} style={unlocked ? { borderLeft: `6px solid ${item.theme.skyBottom}` } : undefined}>
+              <ScenarioCover scenario={item} className="h-28 sm:h-36" locked={!unlocked} />
               <div className="flex items-center gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="font-display text-lg font-bold text-ink">{item.name}</p>
@@ -281,80 +297,92 @@ function CampaignTab({ scenarios: scenarioList, levels: allLevels, bests, finish
   );
 }
 
-/** Livre: jogar sem valer nada. Qualquer fase, com checkpoints, sem guardar resultado. */
-function FreeTab({ levels, bests, onPlay }: { levels: Level[]; bests: Bests; onPlay: (level: Level, mode: 'practice' | 'watch') => void }) {
-  const list = usePagination(levels, 10);
-  return (
-    <div className="space-y-4">
-      <Alert tone="info">Treine à vontade: qualquer fase, com checkpoints, e nada disso conta para o seu melhor resultado.</Alert>
-      <Controls />
-      <ul className="space-y-3">
-        {list.pageItems.map((level) => (
-          <li key={level.id} className="panel flex flex-wrap items-center justify-between gap-3 p-4">
-            <div className="min-w-0">
-              <p className="font-display text-lg font-bold text-ink">{level.name}</p>
-              <p className="text-sm font-semibold text-muted">{levelInfo(level)}</p>
-              <p className="text-sm font-bold text-ink">{bestText(bests[level.id], level.verse?.words.length ?? 0)}</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="ghost" onClick={() => onPlay(level, 'watch')}>
-                Ver um bot jogar
-              </Button>
-              <Button onClick={() => onPlay(level, 'practice')}>Treinar</Button>
-            </div>
-          </li>
-        ))}
-      </ul>
-      <Pagination page={list.page} totalPages={list.totalPages} totalElements={list.totalElements} pageSize={list.pageSize} onPageChange={list.setPage} onPageSizeChange={list.setPageSize} itemLabel="fases" />
-    </div>
-  );
-}
+type FreeMode = 'practice' | 'watch' | 'race';
 
-/** Contra bots: você e de 1 a 3 bots na mesma tela, na mesma fase. Quem cair volta ao último checkpoint; vence quem cruzar a linha primeiro. */
-function BotsTab({ levels, characters, character, onStart }: { levels: Level[]; characters: RunnerCharacter[]; character: RunnerCharacter; onStart: (level: Level, rivals: CorridaRival[]) => void }) {
+/** Livre: jogar sem valer nada, tudo numa aba só. Escolha a fase e como jogar: treinar sozinho, ver um bot jogar ou correr contra de 1 a 3 bots (quem cai volta ao último checkpoint; vence quem cruzar a linha primeiro). */
+function FreeTab({
+  levels,
+  bests,
+  characters,
+  character,
+  onPlay,
+  onRace,
+}: {
+  levels: Level[];
+  bests: Bests;
+  characters: RunnerCharacter[];
+  character: RunnerCharacter;
+  onPlay: (level: Level, mode: 'practice' | 'watch') => void;
+  onRace: (level: Level, rivals: CorridaRival[]) => void;
+}) {
   const [levelId, setLevelId] = useState(levels[0].id);
+  const [mode, setMode] = useState<FreeMode>('practice');
   const [count, setCount] = useState<'1' | '2' | '3'>('2');
   const [difficulty, setDifficulty] = useState<BotLevel>('STUDENT');
   const level = levels.find((item) => item.id === levelId) ?? levels[0];
   const mine = portraitOf(character.sprites);
   // Os rivais são os outros personagens, na ordem da lista (com os sprites deles).
   const rivals: CorridaRival[] = rivalsFor(characters, character.id, Number(count)).map((item) => ({ name: item.name, color: item.color, sprites: item.sprites, skill: BOT_LEVELS[difficulty].skill, lag: BOT_LEVELS[difficulty].lag }));
+  const hint: Record<FreeMode, string> = {
+    practice: 'Treine à vontade: qualquer fase, com checkpoints, e nada disso conta para o seu melhor resultado.',
+    watch: 'Um bot joga a fase inteira enquanto você assiste e aprende os caminhos.',
+    race: 'Corra contra os bots na mesma tela. Quem cai volta sozinho ao último checkpoint, e vence quem cruzar a linha de chegada primeiro. Sem XP nem moedas.',
+  };
 
   return (
     <div className="space-y-4">
-      <Alert tone="info">Corra contra os bots na mesma tela. Quem cai volta sozinho ao último checkpoint, e vence quem cruzar a linha de chegada primeiro. Sem XP nem moedas.</Alert>
+      <Alert tone="info">{hint[mode]}</Alert>
+      <Controls />
       <div className="panel space-y-4 p-4">
         <div className="space-y-1.5">
           <p className="font-display text-sm font-bold text-ink">Fase</p>
-          <Select value={levelId} onChange={setLevelId} options={levels.map((item) => ({ value: item.id, label: item.name, description: levelInfo(item) }))} aria-label="Fase da corrida" />
+          <Select value={levelId} onChange={setLevelId} options={levels.map((item) => ({ value: item.id, label: item.name, description: levelInfo(item) }))} searchable aria-label="Fase" />
+          <p className="text-sm font-bold text-ink">{bestText(bests[level.id], level.verse?.words.length ?? 0)}</p>
         </div>
         <div className="space-y-1.5">
-          <p className="font-display text-sm font-bold text-ink">Quantos bots</p>
-          <Segmented value={count} onChange={setCount} options={[{ value: '1', label: '1 bot' }, { value: '2', label: '2 bots' }, { value: '3', label: '3 bots' }]} aria-label="Quantidade de bots" />
-        </div>
-        <div className="space-y-1.5">
-          <p className="font-display text-sm font-bold text-ink">Dificuldade dos bots</p>
+          <p className="font-display text-sm font-bold text-ink">Como jogar</p>
           <Segmented
-            value={difficulty}
-            onChange={setDifficulty}
-            options={(Object.keys(BOT_LEVELS) as BotLevel[]).map((value) => ({ value, label: BOT_LEVELS[value].label }))}
-            aria-label="Dificuldade dos bots"
+            value={mode}
+            onChange={setMode}
+            options={[
+              { value: 'practice', label: 'Treinar' },
+              { value: 'watch', label: 'Ver um bot' },
+              { value: 'race', label: 'Contra bots' },
+            ]}
+            aria-label="Como jogar"
           />
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-muted">
-          <span className="flex items-center gap-1.5 rounded-full bg-surface-3 px-2.5 py-1 text-ink">
-            <SpriteView url={mine?.url} frames={mine?.frames} fps={mine?.fps} color={character.color} size={22} />
-            Você ({character.name})
-          </span>
-          {rivals.map((rival) => (
-            <span key={rival.name} className="flex items-center gap-1.5 rounded-full bg-surface-3 px-2.5 py-1 text-ink">
-              <SpriteView url={portraitOf(rival.sprites ?? {})?.url} frames={portraitOf(rival.sprites ?? {})?.frames} fps={portraitOf(rival.sprites ?? {})?.fps} color={rival.color} size={22} />
-              {rival.name}
-            </span>
-          ))}
-        </div>
-        <Button size="lg" className="w-full" onClick={() => onStart(level, rivals)}>
-          Largar!
+        {mode === 'race' ? (
+          <>
+            <div className="space-y-1.5">
+              <p className="font-display text-sm font-bold text-ink">Quantos bots</p>
+              <Segmented value={count} onChange={setCount} options={[{ value: '1', label: '1 bot' }, { value: '2', label: '2 bots' }, { value: '3', label: '3 bots' }]} aria-label="Quantidade de bots" />
+            </div>
+            <div className="space-y-1.5">
+              <p className="font-display text-sm font-bold text-ink">Dificuldade dos bots</p>
+              <Segmented
+                value={difficulty}
+                onChange={setDifficulty}
+                options={(Object.keys(BOT_LEVELS) as BotLevel[]).map((value) => ({ value, label: BOT_LEVELS[value].label }))}
+                aria-label="Dificuldade dos bots"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-muted">
+              <span className="flex items-center gap-1.5 rounded-full bg-surface-3 px-2.5 py-1 text-ink">
+                <SpriteView url={mine?.url} frames={mine?.frames} fps={mine?.fps} color={character.color} size={22} />
+                Você ({character.name})
+              </span>
+              {rivals.map((rival) => (
+                <span key={rival.name} className="flex items-center gap-1.5 rounded-full bg-surface-3 px-2.5 py-1 text-ink">
+                  <SpriteView url={portraitOf(rival.sprites ?? {})?.url} frames={portraitOf(rival.sprites ?? {})?.frames} fps={portraitOf(rival.sprites ?? {})?.fps} color={rival.color} size={22} />
+                  {rival.name}
+                </span>
+              ))}
+            </div>
+          </>
+        ) : null}
+        <Button size="lg" className="w-full" onClick={() => (mode === 'race' ? onRace(level, rivals) : onPlay(level, mode))}>
+          {mode === 'practice' ? 'Treinar' : mode === 'watch' ? 'Ver o bot jogar' : 'Largar!'}
         </Button>
       </div>
     </div>

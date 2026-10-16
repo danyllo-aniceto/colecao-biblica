@@ -66,7 +66,7 @@ function drawLayer(ctx: CanvasRenderingContext2D, image: HTMLImageElement, offse
 }
 
 /** Altura (px do mundo) com que o sprite é desenhado: um pouco maior que a caixa de colisão (32), com os pés alinhados nela. */
-const SPRITE_SIZE = 48;
+const SPRITE_SIZE = 62;
 
 /** Desenha a pose do personagem (quadro certo da tira). Devolve `false` se não há imagem para a pose (o corredor cai para a forma colorida). */
 function drawSprite(ctx: CanvasRenderingContext2D, p: PlayerState, sprites: Sprites | undefined, alpha: number, deadFor: number, stopped: boolean, clock: number): boolean {
@@ -129,7 +129,7 @@ function drawPower(ctx: CanvasRenderingContext2D, power: PowerKind, cx: number, 
   ctx.restore();
 }
 
-/** Corredor com os efeitos dos poderes: fantasma translúcido com rastro (Turbo/imune), bolha (Escudo), anel (Ímã) e brilho roxo (Pulo triplo). */
+/** Corredor com os efeitos dos poderes: rastro de velocidade (Turbo), translúcido enquanto imune (depois do Escudo), bolha (Escudo), anel (Ímã) e brilho roxo (Pulo triplo). */
 function drawRunnerFx(ctx: CanvasRenderingContext2D, p: PlayerState, color: string, alpha: number, sprites: Sprites | undefined, deadFor: number, stopped: boolean, clock: number) {
   const fx = p.effects;
   const cx = p.x + PLAYER / 2;
@@ -164,7 +164,7 @@ function drawRunnerFx(ctx: CanvasRenderingContext2D, p: PlayerState, color: stri
       ctx.restore();
     }
   }
-  const immune = fx.turbo > 0 || fx.grace > 0;
+  const immune = fx.grace > 0;
   drawRunner(ctx, p, color, immune && p.status !== 'dead' ? alpha * (0.5 + 0.2 * Math.sin(clock / 3)) : alpha, sprites, deadFor, stopped, clock);
   if (p.status === 'dead') return;
   if (fx.triple > 0) {
@@ -349,8 +349,41 @@ export function drawScene(ctx: CanvasRenderingContext2D, level: PreparedLevel, p
   ctx.translate(-camX, 0);
   for (const object of level.level.objects) {
     const objectX = object.x * TILE;
-    if (objectX < left - TILE * 12 || objectX > right) continue;
-    if (object.kind === 'block') {
+    // Fora da tela só se o objeto INTEIRO saiu (blocos largos, como a laje das bifurcações, ainda aparecem pela ponta que está na tela).
+    const objectEnd = objectX + (object.kind === 'block' || object.kind === 'pit' ? object.w * TILE : TILE);
+    if (objectEnd < left || objectX > right) continue;
+    if (object.kind === 'pit') {
+      // Buraco: um vazio escuro com as bordas em vermelho (cuidado: quem cai nele morre).
+      const width = object.w * TILE;
+      const floor = object.side === 'floor';
+      const edge = floor ? FLOOR_Y : CEIL_Y;
+      const depth = 220;
+      const top = floor ? edge - 3 : edge - depth;
+      const void_ = ctx.createLinearGradient(0, floor ? edge : edge - depth, 0, floor ? edge + depth : edge);
+      void_.addColorStop(floor ? 0 : 1, '#1a0b0b');
+      void_.addColorStop(floor ? 1 : 0, '#000000');
+      ctx.fillStyle = void_;
+      ctx.fillRect(objectX, top, width, depth + 3);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(objectX - 2, top, 4, depth + 3);
+      ctx.fillRect(objectX + width - 2, top, 4, depth + 3);
+      // Listras de alerta na borda da pista.
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(objectX, floor ? edge - 6 : edge, width, 6);
+      ctx.clip();
+      ctx.fillStyle = '#fde047';
+      for (let stripe = objectX - 12; stripe < objectX + width; stripe += 16) {
+        ctx.beginPath();
+        ctx.moveTo(stripe, floor ? edge : edge + 6);
+        ctx.lineTo(stripe + 8, floor ? edge : edge + 6);
+        ctx.lineTo(stripe + 14, floor ? edge - 6 : edge);
+        ctx.lineTo(stripe + 6, floor ? edge - 6 : edge);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    } else if (object.kind === 'block') {
       const top = FLOOR_Y - (object.y + object.h) * TILE;
       const blockImage = art?.block ? spriteImage(art.block) : null;
       if (blockImage) {

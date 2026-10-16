@@ -231,23 +231,16 @@ describe("Corrida: poderes no caminho", () => {
     expect(player.effects.magnet).toBeGreaterThan(0);
   });
 
-  it("Turbo: mais rápido e imune a espetos e a paredes; sem ele a fase derruba", () => {
-    const obstacles: LevelObject[] = [{ kind: "spike", x: 12 }, { kind: "block", x: 22, y: 0, w: 2, h: 3 }];
-    expect(simulate(prepareLevel(level(obstacles)), []).status).toBe("dead");
-    const withTurbo = prepareLevel(level([power(3, "TURBO"), ...obstacles]));
-    const result = simulate(withTurbo, []);
-    expect(result.status).toBe("finished");
-    // Chega antes que sem o poder (a mesma fase vazia leva mais passos).
+  it("Turbo: só um impulso de velocidade; continua batendo em espetos e paredes", () => {
     const plain = simulate(prepareLevel(level([])), []);
-    expect(result.ticks).toBeLessThan(plain.ticks);
-    expect(TURBO_TICKS).toBe(240);
-  });
-
-  it("Turbo: se acabar com o personagem dentro de um bloco, a imunidade segue até ele sair (nunca cai por isso)", () => {
-    // Bloco enorme: o Turbo (4 s) termina lá dentro.
-    const prepared = prepareLevel(level([power(3, "TURBO"), { kind: "block", x: 15, y: 0, w: 60, h: 3 }], { length: 100 }));
-    const result = simulate(prepared, []);
-    expect(result.status).toBe("finished");
+    const fast = simulate(prepareLevel(level([power(3, "TURBO")])), []);
+    // Chega antes que sem o poder (a mesma fase vazia leva mais passos).
+    expect(fast.status).toBe("finished");
+    expect(fast.ticks).toBeLessThan(plain.ticks);
+    expect(TURBO_TICKS).toBe(180);
+    // Com o Turbo ligado o espeto e a parede ainda derrubam.
+    expect(simulate(prepareLevel(level([power(3, "TURBO"), { kind: "spike", x: 12 }])), [])).toMatchObject({ status: "dead", cause: "spike" });
+    expect(simulate(prepareLevel(level([power(3, "TURBO"), { kind: "block", x: 12, y: 0, w: 2, h: 3 }])), [])).toMatchObject({ status: "dead", cause: "wall" });
   });
 
   it("Escudo: absorve o primeiro erro e deixa passar; o segundo erro, depois da imunidade curta, derruba", () => {
@@ -310,3 +303,64 @@ describe("Corrida: poderes no caminho", () => {
   });
 });
 
+describe("Corrida: buracos no chão e no teto", () => {
+  const floorPit: LevelObject = { kind: "pit", x: 12, w: 4, side: "floor" };
+  const ceilingPit: LevelObject = { kind: "pit", x: 12, w: 4, side: "ceiling" };
+  /** Toca durante um passo quando o corpo chega em `at` px (e solta em seguida). */
+  const tapAt = (at: number) => (tick: number, player?: PlayerState) => player !== undefined && player.x >= at && player.x < at + 4 && tick >= 0;
+
+  function play(objects: LevelObject[], form: Form, at: number | null, length = 40) {
+    const prepared = prepareLevel(level(objects, { form, length }));
+    let player = newPlayer(prepared);
+    let pressedOnce = false;
+    for (let step = 0; step < 600 && player.status === "running"; step += 1) {
+      const press = at !== null && !pressedOnce && player.x >= at;
+      if (press) pressedOnce = true;
+      player = stepPlayer(prepared, player, press);
+    }
+    return player;
+  }
+
+  it("corrida: andar no chão por cima do buraco derruba; pular antes dele passa", () => {
+    expect(play([floorPit], "RUN", null)).toMatchObject({ status: "dead", cause: "pit" });
+    expect(play([floorPit], "RUN", 440).status).toBe("finished");
+    // A janela é folgada (até a borda do buraco; já dentro dele ainda dá para salvar com o pulo duplo); pular cedo demais só adianta a queda.
+    expect(play([floorPit], "RUN", 470).status).toBe("finished");
+    expect(play([floorPit], "RUN", 485).status).toBe("finished");
+    expect(play([floorPit], "RUN", 300).status).toBe("dead");
+  });
+
+  it("gravidade: no chão sobre o buraco do chão cai; virar para o teto antes passa", () => {
+    expect(play([floorPit], "GRAVITY", null)).toMatchObject({ status: "dead", cause: "pit" });
+    expect(play([floorPit], "GRAVITY", 360).status).toBe("finished");
+  });
+
+  it("gravidade: no teto sob o buraco do teto cai; o buraco do teto não atrapalha quem está no chão", () => {
+    // Começa no chão: o buraco do teto não faz nada.
+    expect(play([ceilingPit], "GRAVITY", null).status).toBe("finished");
+    // Já no teto (virou antes), o buraco derruba, e virar de volta antes dele passa.
+    const upThenDown = prepareLevel(level([ceilingPit], { form: "GRAVITY" }));
+    let player = newPlayer(upThenDown);
+    for (let step = 0; step < 40 && player.status === "running"; step += 1) player = stepPlayer(upThenDown, player, step === 1);
+    expect(player.grav).toBe(-1);
+    let walking = player;
+    for (let step = 0; step < 300 && walking.status === "running"; step += 1) walking = stepPlayer(upThenDown, walking, false);
+    expect(walking).toMatchObject({ status: "dead", cause: "pit" });
+    let flipped = player;
+    for (let step = 0; step < 600 && flipped.status === "running"; step += 1) flipped = stepPlayer(upThenDown, flipped, flipped.x >= 360 && flipped.grav === -1 && flipped.x < 380);
+    expect(flipped.status).toBe("finished");
+  });
+
+  it("o buraco só tira o apoio do corpo inteiro dentro dele: pisar na borda não derruba", () => {
+    const prepared = prepareLevel(level([{ kind: "pit", x: 12, w: 4, side: "floor" }]));
+    // Corpo de 32 px dentro de um buraco de 160 px; na borda (x = 470, corpo em 470–502) ainda há chão sob a parte de fora.
+    const edge = { ...newPlayer(prepared), x: 470 };
+    expect(stepPlayer(prepared, edge, false).y).toBe(FLOOR_Y - PLAYER);
+  });
+
+  it("o buraco entra no mapa da fase preparada e a fase continua determinística", () => {
+    const prepared = prepareLevel(level([floorPit, ceilingPit]));
+    expect(prepared.pits).toEqual([{ side: "floor", l: 480, r: 640 }, { side: "ceiling", l: 480, r: 640 }]);
+    expect(simulate(prepared, [])).toEqual(simulate(prepared, []));
+  });
+});

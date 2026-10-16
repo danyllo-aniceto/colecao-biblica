@@ -97,6 +97,7 @@ export type RunnerLevelDto = {
   verseText: string;
   forks: boolean;
   powers: boolean;
+  difficulty: number;
   active: boolean;
   sortOrder: number;
   system: boolean;
@@ -112,6 +113,7 @@ export type RunnerLevelInput = {
   verseText?: string;
   forks?: boolean;
   powers?: boolean;
+  difficulty?: number;
   active?: boolean;
   sortOrder?: number;
 };

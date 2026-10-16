@@ -33,7 +33,10 @@ describe("Corrida: fases", () => {
         const checkpoints = level.objects.filter((object) => object.kind === "checkpoint").map((object) => object.x).sort((a, b) => a - b);
         expect(checkpoints.length).toBeGreaterThan(2);
         for (const x of checkpoints) {
-          const hazards = level.objects.filter((object) => object.kind === "spike" || object.kind === "block").filter((object) => object.x >= x - 1 && object.x < x + 3);
+          const hazards = level.objects
+            .filter((object) => object.kind === "spike" || object.kind === "block" || object.kind === "pit")
+            // Buraco ocupa várias colunas: conta se alguma delas cai na janela da bandeira.
+            .filter((object) => (object.kind === "pit" ? object.x < x + 3 && object.x + object.w > x - 1 : object.x >= x - 1 && object.x < x + 3));
           expect(hazards, `checkpoint na coluna ${x}`).toEqual([]);
         }
         // Nunca mais de ~25 s sem bandeira.
@@ -110,6 +113,36 @@ describe("Corrida: fases", () => {
       expect(simulate(prepared, botInputs(prepared, { lag: TOUCH_DELAY })).status, `semente ${seed} (com poderes)`).toBe("finished");
     }
   }, 240_000);
+
+  it("a dificuldade sobe: fases fáceis não têm buracos duplos nem escadas, as difíceis têm; poderes são poucos", () => {
+    const count = (difficulty: number, seed: number) => buildJourney({ id: "t", name: "T", seed, seconds: 150, difficulty, order: ["RUN", "GRAVITY"], verse: { ref: "x", words: ["a", "b", "c", "d"] } });
+    const hazardsPerSecond = (level: ReturnType<typeof count>) => level.objects.filter((object) => object.kind === "spike" || object.kind === "pit").length / (level.length / TILES_PER_SECOND);
+    let easy = 0;
+    let hard = 0;
+    for (const seed of [1, 2, 3, 4, 5, 6]) {
+      easy += hazardsPerSecond(count(0, seed));
+      hard += hazardsPerSecond(count(1, seed));
+    }
+    expect(hard).toBeGreaterThan(easy);
+    // Menos de 1 poder a cada ~12 s de fase.
+    for (const seed of [1, 2, 3]) {
+      const level = buildJourney({ id: "t", name: "T", seed, seconds: 150, verse: { ref: "x", words: ["a", "b", "c", "d"] } });
+      const powers = level.objects.filter((object) => object.kind === "power").length;
+      expect(powers, `semente ${seed}`).toBeLessThan(150 / 12);
+    }
+  });
+
+  it("a gravidade e a corrida trazem buracos, lajes e voo dividido (mapas variados)", () => {
+    const kinds = new Set<string>();
+    for (const seed of [3, 4, 5, 6, 7, 8]) {
+      const level = buildJourney({ id: "t", name: "T", seed, seconds: 150, difficulty: 0.8, verse: { ref: "x", words: ["a", "b", "c", "d"] } });
+      for (const object of level.objects) {
+        if (object.kind === "pit") kinds.add(`pit-${object.side}`);
+      }
+    }
+    expect(kinds.has("pit-floor")).toBe(true);
+    expect(kinds.has("pit-ceiling")).toBe(true);
+  });
 
   it("cada poder aparece numa forma em que faz sentido (sem Pulo triplo no voo nem na gravidade)", () => {
     for (const seed of [2, 5, 9, 14]) {

@@ -1,6 +1,9 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "../db/prisma";
 import { api, bearer, login, resetDatabase } from "./helpers";
+
+// As fases do seed são longas (minutos): conferir a partida inteira no servidor passa dos 5 s padrão.
+vi.setConfig({ testTimeout: 60_000 });
 
 const hasDatabase = Boolean(process.env.TEST_DATABASE_URL);
 
@@ -99,7 +102,7 @@ async function restoreSeedCampaign() {
   for (const scenario of SCENARIOS) {
     await prisma.runnerScenario.update({ where: { slug: scenario.id }, data: { name: scenario.name, story: scenario.story, skyTop: scenario.theme.skyTop, skyBottom: scenario.theme.skyBottom, active: true, art: {}, musicUrl: null } });
     for (const def of scenario.levels) {
-      await prisma.runnerLevel.update({ where: { slug: def.id }, data: { name: def.name, seed: def.seed, seconds: def.seconds, formOrder: def.order, verseRef: def.ref, verseText: def.verse, forks: true, powers: true, active: true } });
+      await prisma.runnerLevel.update({ where: { slug: def.id }, data: { name: def.name, seed: def.seed, seconds: def.seconds, formOrder: def.order, verseRef: def.ref, verseText: def.verse, forks: true, powers: true, difficulty: def.difficulty ?? 50, active: true } });
     }
   }
 }
@@ -123,7 +126,7 @@ describe.skipIf(!hasDatabase)("corrida: cenários e fases pelo painel", () => {
     expect(res.body.scenarios.map((scenario: { id: string }) => scenario.id)).toEqual(["cidade-de-davi", "mar-vermelho", "vale-dos-ossos-secos"]);
     const davi = res.body.scenarios[0];
     expect(davi.levels.map((level: { id: string }) => level.id)).toEqual(["cd-1", "cd-2", "cd-3", "cd-4", "cd-5"]);
-    expect(davi.levels[0]).toMatchObject({ name: "O pastor", seed: 101, seconds: 50, order: ["RUN"], ref: "Salmos 23:1", verse: "O Senhor é o meu pastor; nada me faltará." });
+    expect(davi.levels[0]).toMatchObject({ name: "O pastor", seed: 101, seconds: 80, difficulty: 10, order: ["RUN"], ref: "Salmos 23:1", verse: "O Senhor é o meu pastor; nada me faltará." });
     expect(davi.theme).toEqual({ skyTop: "#1c1917", skyBottom: "#78350f" });
     expect(davi.art).toEqual({});
   });
@@ -160,7 +163,7 @@ describe.skipIf(!hasDatabase)("corrida: cenários e fases pelo painel", () => {
     const jerico = after.body.scenarios.find((scenario: { id: string }) => scenario.id === "jerico");
     expect(jerico.art).toEqual({ spike: "https://x/espeto.webp", block: "https://x/bloco.webp" });
     expect(jerico.music).toBe("https://x/trilha.mp3");
-    expect(jerico.levels).toEqual([{ id: "sete-voltas", name: "Sete voltas", seed: 401, seconds: 60, order: ["RUN", "FLY"], ref: "Hebreus 11:30", verse: "Pela fé caíram os muros de Jericó", forks: true, powers: true }]);
+    expect(jerico.levels).toEqual([{ id: "sete-voltas", name: "Sete voltas", seed: 401, seconds: 60, order: ["RUN", "FLY"], ref: "Hebreus 11:30", verse: "Pela fé caíram os muros de Jericó", forks: true, powers: true, difficulty: 50 }]);
     // Cenário novo vai para o fim da campanha (ordem 100).
     expect(after.body.scenarios.at(-1).id).toBe("jerico");
   });

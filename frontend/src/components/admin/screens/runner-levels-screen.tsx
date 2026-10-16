@@ -25,7 +25,7 @@ import {
   updateRunnerLevel,
   type RunnerLevelDto,
 } from '@/lib/runner-api';
-import { MAX_FORM_ORDER, SECONDS_RANGE, SEED_RANGE, validateLevelDef, verseWords, type CampaignLevelDef } from '@runner/campaign';
+import { DEFAULT_DIFFICULTY, DIFFICULTY_RANGE, difficultyLabel, MAX_FORM_ORDER, SECONDS_RANGE, SEED_RANGE, validateLevelDef, verseWords, type CampaignLevelDef } from '@runner/campaign';
 import type { Form } from '@runner/types';
 import { AdminPanel, IconAction, SearchInput, StatusBadge } from '../admin-ui';
 import { useLevelTest, type LevelTestOutcome } from '../runner-level-test';
@@ -44,6 +44,7 @@ type Draft = {
   verseText: string;
   forks: boolean;
   powers: boolean;
+  difficulty: string;
   active: boolean;
   sortOrder: string;
 };
@@ -61,6 +62,7 @@ const emptyDraft = (scenarioId: string): Draft => ({
   verseText: '',
   forks: true,
   powers: true,
+  difficulty: String(DEFAULT_DIFFICULTY),
   active: false,
   sortOrder: '100',
 });
@@ -75,21 +77,23 @@ const draftOf = (level: RunnerLevelDto): Draft => ({
   verseText: level.verseText,
   forks: level.forks,
   powers: level.powers,
+  difficulty: String(level.difficulty),
   active: level.active,
   sortOrder: String(level.sortOrder),
 });
 
 /** Só o que muda a fase gerada: se igual ao que já foi testado, o teste continua valendo. */
-const generationKey = (draft: Draft) => JSON.stringify([draft.seed, draft.seconds, draft.order, draft.verseText.trim().split(/\s+/), draft.forks, draft.powers]);
+const generationKey = (draft: Draft) => JSON.stringify([draft.seed, draft.seconds, draft.order, draft.verseText.trim().split(/\s+/), draft.forks, draft.powers, draft.difficulty]);
 
 function defOf(draft: Draft, slug = 'teste'): CampaignLevelDef {
-  return { id: slug, name: draft.name.trim() || 'Fase', seed: Number(draft.seed), seconds: Number(draft.seconds), order: draft.order, ref: draft.verseRef.trim(), verse: draft.verseText, forks: draft.forks, powers: draft.powers };
+  return { id: slug, name: draft.name.trim() || 'Fase', seed: Number(draft.seed), seconds: Number(draft.seconds), order: draft.order, ref: draft.verseRef.trim(), verse: draft.verseText, forks: draft.forks, powers: draft.powers, difficulty: Number(draft.difficulty) };
 }
 
 function validate(draft: Draft): Errors {
   const errors: Errors = {};
   if (!draft.scenarioId) errors.scenarioId = 'Escolha o cenário.';
   const found = validateLevelDef(defOf(draft));
+  if (found.difficulty) errors.difficulty = found.difficulty;
   if (!draft.name.trim()) errors.name = 'Informe o nome da fase.';
   else if (draft.name.trim().length > 80) errors.name = 'Use no máximo 80 caracteres.';
   for (const key of ['seed', 'seconds', 'order'] as const) if (found[key]) errors[key] = found[key];
@@ -176,6 +180,7 @@ export function RunnerLevelsScreen() {
         verseText: verseWords(draft.verseText).join(' '),
         forks: draft.forks,
         powers: draft.powers,
+        difficulty: Number(draft.difficulty),
         active: draft.active,
         sortOrder: Number(draft.sortOrder),
       };
@@ -239,7 +244,7 @@ export function RunnerLevelsScreen() {
                 {level.system ? <span className="rounded-full bg-surface-3 px-2 py-0.5 text-xs font-bold text-muted">Padrão</span> : null}
               </p>
               <p className="text-sm font-semibold text-muted">
-                {level.scenarioName} · {level.seconds} s · {level.order.map((form) => FORM_LABEL[form]).join(' → ')} · {level.verseRef}
+                {level.scenarioName} · {level.seconds} s · {difficultyLabel(level.difficulty)} · {level.order.map((form) => FORM_LABEL[form]).join(' → ')} · {level.verseRef}
               </p>
               <p className="text-xs font-semibold text-muted">
                 Identificador: <code>{level.slug}</code> (use no personagem que esta fase abre)
@@ -302,6 +307,14 @@ export function RunnerLevelsScreen() {
                 <Input id="level-order-number" type="number" min={0} max={999} value={draft.sortOrder} onChange={(event) => change({ sortOrder: event.target.value })} />
               </Field>
             </div>
+            <Field
+              label="Dificuldade"
+              hint={`${difficultyLabel(Number(draft.difficulty) || 0)}. De ${DIFFICULTY_RANGE.min} a ${DIFFICULTY_RANGE.max}: dentro do cenário a primeira fase é fácil (10) e cada seguinte sobe 20. Muda o tipo e a frequência dos obstáculos.`}
+              error={errors.difficulty}
+              htmlFor="level-difficulty"
+            >
+              <Input id="level-difficulty" type="number" min={DIFFICULTY_RANGE.min} max={DIFFICULTY_RANGE.max} value={draft.difficulty} onChange={(event) => change({ difficulty: event.target.value })} />
+            </Field>
 
             <Field label="Formas, na ordem" hint={`A sequência se repete até completar a duração (até ${MAX_FORM_ORDER} trechos).`} error={errors.order}>
               <div className="space-y-2">

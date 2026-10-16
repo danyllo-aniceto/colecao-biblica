@@ -6,18 +6,18 @@ export const POWER_KINDS = ["TURBO", "SHIELD", "TRIPLE", "MAGNET"] as const;
 export type PowerKind = (typeof POWER_KINDS)[number];
 
 /** Passos (60 por segundo) de cada efeito. O Escudo não tem tempo: vale até absorver um erro. */
-export const TURBO_TICKS = 240;
+export const TURBO_TICKS = 180;
 export const TRIPLE_TICKS = 600;
 export const MAGNET_TICKS = 600;
 /** Imunidade curta depois que o Escudo absorve um erro (atravessa o que causou o erro sem cair). */
 export const GRACE_TICKS = 75;
-/** Multiplicador da velocidade durante o Turbo. */
-export const TURBO_SPEED = 1.5;
+/** Multiplicador da velocidade durante o Turbo (só um impulso: continua batendo em espetos e paredes). */
+export const TURBO_SPEED = 1.4;
 /** Alcance do Ímã (px do mundo) em volta do personagem. */
 export const MAGNET_RANGE = 100;
 
 export const POWER_INFO: Record<PowerKind, { label: string; hint: string; color: string; symbol: string; ticks: number | null }> = {
-  TURBO: { label: "Turbo", hint: "Mais rápido e imune a tudo por 4 segundos: atravessa espetos e blocos.", color: "#f97316", symbol: "T", ticks: TURBO_TICKS },
+  TURBO: { label: "Turbo", hint: "Um impulso de velocidade por 3 segundos. Você continua batendo em espetos e paredes: cuidado, tudo chega mais rápido.", color: "#f97316", symbol: "T", ticks: TURBO_TICKS },
   SHIELD: { label: "Escudo", hint: "Absorve o próximo erro (espeto ou parede) e deixa você passar por ele.", color: "#38bdf8", symbol: "E", ticks: null },
   TRIPLE: { label: "Pulo triplo", hint: "Um pulo extra no ar por 10 segundos.", color: "#a78bfa", symbol: "3", ticks: TRIPLE_TICKS },
   MAGNET: { label: "Ímã", hint: "Puxa as palavras do versículo que estiverem por perto, por 10 segundos.", color: "#f43f5e", symbol: "Í", ticks: MAGNET_TICKS },
@@ -48,8 +48,8 @@ export function applyPower(effects: Effects, power: PowerKind): Effects {
   return next;
 }
 
-/** Imune a espetos e paredes agora (Turbo ou imunidade curta depois do Escudo). */
-export const isImmune = (effects: Effects) => effects.turbo > 0 || effects.grace > 0;
+/** Imune a espetos e paredes agora: só a imunidade curta depois de o Escudo agir (o Turbo é só velocidade). */
+export const isImmune = (effects: Effects) => effects.grace > 0;
 
 /** Passa um passo: os tempos diminuem. */
 export function tickEffects(effects: Effects): Effects {

@@ -195,6 +195,16 @@ Telas (aba Jogar → Corrida), no mesmo molde do Duelo/Tabuleiro, sem servidor (
 - [x] Conferido de ponta a ponta no navegador com dois jogadores reais + 1 bot (criar, entrar por código, bot, largada, corrida, placar). Nada do modo dá XP, moedas, estrelas nem ranking.
 - [ ] Convite direto a um amigo da lista (como no Duelo) e vários bots de uma vez; hoje o convite é por link ou código.
 
+### Etapa 7.5 — Melhorias de jogabilidade (feita)
+- [x] **Aba Livre única:** Treinar sozinho, Ver um bot jogar ou Correr contra 1–3 bots (a antiga aba Bots foi unida a ela). Abas: Campanha, Livre, Multi, Personagens.
+- [x] **Capa do cenário** (`art.cover`, Painel → Corrida → Cenários → Imagens): aparece nos cartões da campanha e no topo do cenário; sem imagem usa o degradê do céu. Não entra dentro da fase.
+- [x] **Dificuldade por fase** (`runner_levels.difficulty`, 0–100, padrão 50): em cada cenário a 1ª fase é fácil (10) e cada seguinte sobe 20. O gerador (`journey.ts`, opção `difficulty`) muda os **pesos** dos trechos (no começo só espetos e blocos; depois degraus, buracos, pares de buracos, escadas, lajes) e encurta de leve o respiro. Rótulos: Fácil, Moderada, Difícil, Desafio.
+- [x] **Mapas mais variados:** novos trechos na corrida (buraco, par de buracos, escada, bifurcação com buraco), no voo (**voo dividido**: divisor com dois corredores) e na gravidade (**buracos** no chão ou no teto, **laje** com dois corredores, pistas). Todo trecho novo tem teste (cada caminho possível sozinho, bot exato e com toque atrasado).
+- [x] **Buracos** (`kind: "pit"`, `overPit` no motor): o chão ou o teto some por algumas colunas; quem fica totalmente sobre o vão cai e morre (`cause: "pit"`). Na gravidade é preciso estar do lado oposto ao passar.
+- [x] **Menos poderes:** respiro 40 %, portão de voo 10 %, bifurcação 70 %, pista 60 % (`POWER_CHANCE`). **Turbo não dá imunidade:** só impulso de velocidade (o Escudo continua sendo a única proteção).
+- [x] **Correção:** a laje de cima da bifurcação sumia da tela antes do corredor sair dela (o corte do desenho usava o início do objeto; agora usa o fim).
+- [x] Fases do seed mais longas (80 a 155 s) e o limite de duração subiu para 600 s. Vibração ao cair e ao pegar checkpoint.
+
 ### Etapa 8 — Polimento e conteúdo (contínua)
 - [ ] Sons e voz por personagem; trilhas por cenário (e fases de ritmo, como Jericó).
 - [ ] Efeitos (poeira, estouro ao cair, brilho da palavra), vibração no toque.
