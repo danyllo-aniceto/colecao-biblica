@@ -66,7 +66,7 @@ function drawLayer(ctx: CanvasRenderingContext2D, image: HTMLImageElement, offse
 }
 
 /** Altura (px do mundo) com que o sprite é desenhado: um pouco maior que a caixa de colisão (32), com os pés alinhados nela. */
-const SPRITE_SIZE = 48;
+const SPRITE_SIZE = 62;
 
 /** Desenha a pose do personagem (quadro certo da tira). Devolve `false` se não há imagem para a pose (o corredor cai para a forma colorida). */
 function drawSprite(ctx: CanvasRenderingContext2D, p: PlayerState, sprites: Sprites | undefined, alpha: number, deadFor: number, stopped: boolean, clock: number): boolean {
