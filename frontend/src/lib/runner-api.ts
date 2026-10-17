@@ -2,7 +2,7 @@ import { apiRequest, apiRequestVoid } from '@/lib/http';
 import type { PaginatedResponse } from '@/lib/admin-api';
 import type { Scenario } from '@runner/campaign';
 import type { Pose, SoundKey, Sounds, SpriteSheet, Sprites } from '@runner/characters';
-import type { ArtKey, Form } from '@runner/types';
+import type { ArtKey, Form, LevelStyle } from '@runner/types';
 import type { RunSegment } from '@runner/verify';
 
 /** Personagem da Corrida como o servidor entrega (sprites e sons enviados pelo painel). */
@@ -101,6 +101,7 @@ export type RunnerLevelDto = {
   forks: boolean;
   powers: boolean;
   difficulty: number;
+  style: LevelStyle;
   active: boolean;
   sortOrder: number;
   system: boolean;
@@ -117,6 +118,7 @@ export type RunnerLevelInput = {
   forks?: boolean;
   powers?: boolean;
   difficulty?: number;
+  style?: LevelStyle;
   active?: boolean;
   sortOrder?: number;
 };

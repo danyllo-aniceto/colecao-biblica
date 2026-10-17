@@ -223,6 +223,11 @@ Referências estudadas (Geometry Dash, G-Switch e afins): obstáculos básicos (
 - Grupos: Cidade de Davi = Davi, Jônatas, Joabe · Mar Vermelho = Moisés, Arão, Miriã · **Vale dos Ossos Secos = Ezequiel (abre em vo-3), Daniel (vo-6) e Jeremias (vo-9)**, todos do exílio na Babilônia (~597–571 a.C.). Migração `corrida_daniel_jeremias`; fichas e vozes em `docs/corrida-prompts-prontos.md`.
 - [ ] Sprites e vozes dos 9 personagens (enviados pelo Painel).
 
+### Etapa 7.9 — Estilos de fase e ainda mais obstáculos (feita)
+- [x] **Estilo da fase** (`runner_levels.style`, `LEVEL_STYLES`, migração `corrida_estilos_das_fases`; Select no Painel): Clássica, Espetos, Serras, Buracos, Plataformas, Ritmo, Céu, Reviravolta, Selvagem e Final. Muda os **pesos** dos obstáculos (`STYLE_MULT` em `journey.ts`); **todas as fases de um cenário têm estilos diferentes** (1ª Clássica, última Final) e o teste confere que a mistura de obstáculos de duas fases nunca é parecida.
+- [x] **Obstáculos novos:** corrida (galeria de 3 serras, degraus com espetos, caverna de teto baixo com espetos pendurados, ritmo espeto-serra-espeto, trem de 3 buracos); voo (slalom de blocos, túnel de dentes, varredores: serras que vão de cima a baixo); gravidade (5 paredes seguidas, serra na superfície, 3 buracos alternados, fileira de espetos na superfície oposta que não deixa virar).
+- [x] Todas as 30 fases continuam conferidas pelo bot (`campaign-levels-*.test.ts`).
+
 ### Etapa 8 — Polimento e conteúdo (contínua)
 - [ ] Sons e voz por personagem; trilhas por cenário (e fases de ritmo, como Jericó).
 - [ ] Efeitos (poeira, estouro ao cair, brilho da palavra), vibração no toque.

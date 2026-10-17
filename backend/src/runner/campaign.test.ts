@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { buildCampaignLevel, CAMPAIGN_LEVELS, CAMPAIGN_ORDER, isCharacterUnlocked, isLevelUnlocked, isScenarioUnlocked, SCENARIOS, validateLevelDef, verseWords } from "./campaign";
 
+/** Distância mínima (soma das diferenças da mistura de espetos, serras, blocos e buracos, do chão e do teto) entre duas fases do mesmo cenário. */
+const MIN_STYLE_DISTANCE = 0.05;
+
 /** Personagens da migração 20261106090000: fase que abre cada um. */
 const UNLOCKS = { jonatas: "cd-3", joabe: "cd-5", moises: "mv-2", arao: "mv-3", miria: "mv-4", ezequiel: "vo-3" };
 
@@ -31,6 +34,37 @@ describe("Corrida: campanha por cenários", () => {
       }
       // Fases bem distintas: pelo menos 6 desenhos de formas diferentes por cenário.
       expect(new Set(scenario.levels.map((def) => JSON.stringify(def.order))).size).toBeGreaterThanOrEqual(6);
+    }
+  });
+
+  it("cada fase de um cenário tem estilo próprio e uma mistura de obstáculos diferente das outras", () => {
+    const histogram = (scenario: (typeof SCENARIOS)[number], def: (typeof SCENARIOS)[number]["levels"][number]) => {
+      const level = buildCampaignLevel(scenario, def);
+      // Categorias: espeto do chão, espeto pendurado, serra parada, serra que sobe e desce, bloco, buraco do chão, buraco do teto.
+      const counts = [
+        level.objects.filter((object) => object.kind === "spike" && !object.down).length,
+        level.objects.filter((object) => object.kind === "spike" && object.down).length,
+        level.objects.filter((object) => object.kind === "saw" && !object.amp).length,
+        level.objects.filter((object) => object.kind === "saw" && object.amp).length,
+        level.objects.filter((object) => object.kind === "block").length,
+        level.objects.filter((object) => object.kind === "pit" && object.side === "floor").length,
+        level.objects.filter((object) => object.kind === "pit" && object.side === "ceiling").length,
+      ];
+      const total = counts.reduce((sum, value) => sum + value, 0) || 1;
+      return counts.map((value) => value / total);
+    };
+    for (const scenario of SCENARIOS) {
+      const styles = scenario.levels.map((def) => def.style ?? "CLASSIC");
+      expect(new Set(styles).size, `${scenario.name}: estilos`).toBe(scenario.levels.length);
+      expect(styles[0]).toBe("CLASSIC");
+      expect(styles[styles.length - 1]).toBe("FINALE");
+      const shapes = scenario.levels.map((def) => histogram(scenario, def));
+      for (let a = 0; a < shapes.length; a += 1) {
+        for (let b = a + 1; b < shapes.length; b += 1) {
+          const distance = shapes[a].reduce((sum, value, index) => sum + Math.abs(value - shapes[b][index]), 0);
+          expect(distance, `${scenario.name}: fases ${a + 1} e ${b + 1} (${styles[a]} × ${styles[b]})`).toBeGreaterThan(MIN_STYLE_DISTANCE);
+        }
+      }
     }
   });
 

@@ -1139,6 +1139,8 @@ model RunnerLevel {
   powers     Boolean        @default(true)
   /// Dificuldade de 0 (bem fácil) a 100 (a mais difícil): dentro de cada cenário ela sobe de fase em fase.
   difficulty Int            @default(50)
+  /// Estilo da fase (`LEVEL_STYLES`): muda os pesos dos obstáculos para cada fase ter a sua cara.
+  style      String         @default("CLASSIC")
   active     Boolean        @default(true)
   sortOrder  Int            @default(0) @map("sort_order")
   system     Boolean        @default(false)

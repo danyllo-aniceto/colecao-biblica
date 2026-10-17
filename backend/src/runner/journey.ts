@@ -2,7 +2,7 @@ import { flySplit, FLY_SPLIT, gravityLane, GRAVITY_LANE, gravitySlab, GRAVITY_SL
 import { POWER_KINDS, POWERS_BY_FORM, type PowerKind } from "./powers";
 import { between, randomFrom, type Random } from "./rng";
 import { gap, portal } from "./segments";
-import { ROWS, SPEED, TICKS_PER_SECOND, TILE, type Form, type Level, type LevelObject, type Verse } from "./types";
+import { ROWS, SPEED, TICKS_PER_SECOND, TILE, type Form, type Level, type LevelObject, type LevelStyle, type Verse } from "./types";
 
 /** Colunas que o personagem percorre por segundo (a fase é medida em tempo, o que o jogador sente). */
 export const TILES_PER_SECOND = (SPEED * TICKS_PER_SECOND) / TILE;
@@ -26,13 +26,15 @@ export type JourneyOptions = {
   powers?: boolean;
   /** Dificuldade de 0 (bem fácil) a 1 (a mais difícil do cenário): muda os pesos dos trechos e o respiro entre obstáculos. Padrão: 0,5. */
   difficulty?: number;
+  /** Estilo da fase (muda os pesos dos obstáculos; padrão: clássica). */
+  style?: LevelStyle;
 };
 
 /**
  * O que os trechos precisam saber: sorteio, dificuldade (0 = bem fácil, 1 = a mais difícil do cenário), se há bifurcações e de onde vem o próximo poder
  * (`null` se a fase não tem poderes).
  */
-type Context = { random: Random; difficulty: number; speed: number; forks: boolean; nextPower: (form: Form) => PowerKind | null };
+type Context = { random: Random; difficulty: number; speed: number; style: LevelStyle; forks: boolean; nextPower: (form: Form) => PowerKind | null };
 
 /** Distância entre checkpoints, em segundos de corrida (a fase tem uma bandeira a cada ~12 s). */
 const CHECKPOINT_SECONDS = 12;
@@ -42,6 +44,27 @@ const SECTION_SECONDS: Record<Form, number> = { RUN: 26, FLY: 18, GRAVITY: 22 };
 
 /** Chance de um respiro/portão trazer poder: poucos poderes, para cada um valer a pena. */
 const POWER_CHANCE = { rest: 0.4, flyGate: 0.1, fork: 0.7, lane: 0.6 } as const;
+
+/**
+ * Multiplicadores de peso de cada estilo (o que não aparece vale 1; 0 tira o obstáculo). Os obstáculos novos só entram nos estilos que os usam,
+ * e a fase clássica fica só com o básico.
+ */
+const NEW_KINDS = ["sawGauntlet", "spikeStairs", "lowRoof", "rhythm3", "pitTrain", "slalom", "teeth", "sweepers", "slalom5", "sawSurface", "pitRush", "teethRow"];
+const STYLE_MULT: Record<LevelStyle, Record<string, number>> = {
+  CLASSIC: { ...Object.fromEntries(NEW_KINDS.map((kind) => [kind, 0])), pitPair: 0.3, sawBridge: 0.3, hopTrain: 0.5, rush: 0.2, sawMid: 0.4, zigzag: 0.3 },
+  SPIKES: { spikes: 2.5, twoSpikes: 3, pitSpike: 3, spikeStairs: 4, rhythm3: 3, teeth: 4, spike: 2, teethRow: 3, saw: 0.3, sawBridge: 0.3, sawGates: 0.4, sawMid: 0.3, pit: 0.6 },
+  SAWS: { saw: 3, sawBridge: 4, sawGauntlet: 5, sawGates: 4, sweepers: 4, sawMid: 4, sawSurface: 4, spikes: 0.4, twoSpikes: 0.4, spike: 0.4, pit: 0.5 },
+  PITS: { pit: 3, pitPair: 4, pitSpike: 3, pitTrain: 5, pitRush: 5, saw: 0.4, spikes: 0.6, sawGates: 0.5 },
+  PLATFORMS: { block: 2.5, stairs: 3, ladder: 4, hopTrain: 4, blockSpike: 3, blockSpikes: 4, spikeStairs: 4, lowRoof: 5, wall: 3, slalom5: 3, pit: 0.4, saw: 0.4, spikes: 0.5 },
+  RUSH: { rhythm3: 5, rush: 4, zigzag: 3, slalom: 4, slalom5: 5, twoSpikes: 3, pitTrain: 3, sawGauntlet: 3, rest: 0.1, block: 0.4 },
+  SKY: { steps: 2.5, sawGates: 3, zigzag: 3, slalom: 4, teeth: 4, sweepers: 4, split: 2, gates: 0.7, spikes: 0.7, block: 0.7 },
+  FLIP: { rush: 3, wall: 3, sawMid: 3, teethRow: 4, slalom5: 4, pitRush: 4, pit: 2, spikePair: 2.5, sawSurface: 2, spike: 0.6, lane: 1.5, slab: 1.5 },
+  WILD: { ...Object.fromEntries(NEW_KINDS.map((kind) => [kind, 2.5])), spikes: 0.5, block: 0.4, rest: 0.1, spike: 0.4 },
+  FINALE: { ...Object.fromEntries(NEW_KINDS.map((kind) => [kind, 1.8])), pitPair: 2, ladder: 2, blockSpikes: 2, sawBridge: 2, rush: 2, zigzag: 2, sawMid: 2, rest: 0.1, fork: 1.3 },
+};
+
+/** Aplica o estilo da fase aos pesos de uma lista de obstáculos. */
+const styled = <T extends string>(ctx: Context, items: Array<[T, number]>): Array<[T, number]> => items.map(([item, weight]) => [item, weight * (STYLE_MULT[ctx.style][item] ?? 1)]);
 
 /** Sorteia um item de uma lista com pesos. */
 function weighted<T>(random: Random, items: Array<[T, number]>): T {
@@ -54,7 +77,7 @@ function weighted<T>(random: Random, items: Array<[T, number]>): T {
   return items[items.length - 1][0];
 }
 
-type RunKind = "spikes" | "block" | "stairs" | "blockSpike" | "twoSpikes" | "pit" | "pitPair" | "ladder" | "fork" | "rest" | "saw" | "sawBridge" | "hopTrain" | "pitSpike" | "blockSpikes";
+type RunKind = "sawGauntlet" | "spikeStairs" | "lowRoof" | "rhythm3" | "pitTrain" | "spikes" | "block" | "stairs" | "blockSpike" | "twoSpikes" | "pit" | "pitPair" | "ladder" | "fork" | "rest" | "saw" | "sawBridge" | "hopTrain" | "pitSpike" | "blockSpikes";
 
 /** Respiro entre obstáculos: encurta de leve com a dificuldade (nunca abaixo de 5 colunas, para o toque atrasado caber). */
 const breath = (ctx: Context, low: number, high: number) => between(ctx.random, Math.round(low - ctx.difficulty), Math.round(high - 2 * ctx.difficulty));
@@ -70,7 +93,7 @@ const breathAt = (ctx: Context, low: number, high: number) => Math.round(breath(
 function runPattern(objects: LevelObject[], carriers: Carrier[], x: number, ctx: Context, remaining: number): number {
   const { random, difficulty: d } = ctx;
   const forkLength = RUN_FORK.stairs + RUN_FORK.gap + RUN_FORK.length + RUN_FORK.tail;
-  const kind = weighted<RunKind>(random, [
+  const kind = weighted<RunKind>(random, styled(ctx, [
     ["spikes", 20 - 8 * d],
     ["saw", 8 + 2 * d],
     ["block", 16 - 6 * d],
@@ -86,14 +109,20 @@ function runPattern(objects: LevelObject[], carriers: Carrier[], x: number, ctx:
     ["blockSpikes", d > 0.5 ? 10 * d : 0],
     ["fork", ctx.forks && remaining >= forkLength ? 11 : 0],
     ["rest", 5 - 3 * d],
-  ]);
+    // Obstáculos novos (só entram nos estilos que os pedem).
+    ["sawGauntlet", d > 0.3 ? 2 + 4 * d : 0],
+    ["spikeStairs", d > 0.3 ? 2 + 5 * d : 0],
+    ["lowRoof", d > 0.25 ? 2 + 4 * d : 0],
+    ["rhythm3", d > 0.35 ? 2 + 5 * d : 0],
+    ["pitTrain", d > 0.5 ? 2 + 6 * d : 0],
+  ]));
   switch (kind) {
     case "spikes": {
       // Até 2 espetos: com 3 o pulo simples sobra só ~5 passos de folga (só o pulo duplo salva), apertado demais para o toque de gente.
       const count = between(random, 1, 2);
       carriers.push({ x: x + Math.floor(count / 2), y: 2 });
       for (let index = 0; index < count; index += 1) objects.push({ kind: "spike", x: x + index });
-      return x + count + breath(ctx, 6, 9);
+      return x + count + breathAt(ctx, 6, 9);
     }
     case "saw":
       // Serra no chão (uma, às vezes duas coladas de 2 em 2 colunas não: uma só, ou duas com 8 colunas): é pular na hora.
@@ -101,14 +130,14 @@ function runPattern(objects: LevelObject[], carriers: Carrier[], x: number, ctx:
       carriers.push({ x, y: 2 });
       if (d > 0.35 && random() < 0.5) {
         objects.push({ kind: "saw", x: x + 8, y: 0 });
-        return x + 9 + breath(ctx, 6, 8);
+        return x + 9 + breathAt(ctx, 6, 8);
       }
-      return x + 1 + breath(ctx, 6, 9);
+      return x + 1 + breathAt(ctx, 6, 9);
     case "block": {
       const width = between(random, 4, 6);
       objects.push({ kind: "block", x, y: 0, w: width, h: 1 });
       carriers.push({ x: x + Math.floor(width / 2), y: 1 });
-      return x + width + breath(ctx, 6, 8);
+      return x + width + breathAt(ctx, 6, 8);
     }
     case "stairs": {
       // Degraus largos: com 3 colunas cada, o tempo entre o pouso e o pulo seguinte era curto demais (e às vezes impossível).
@@ -132,7 +161,7 @@ function runPattern(objects: LevelObject[], carriers: Carrier[], x: number, ctx:
       const width = between(random, d < 0.5 ? 2 : 3, d < 0.5 ? 3 : 4);
       objects.push({ kind: "pit", x, w: width, side: "floor" });
       carriers.push({ x: x + Math.floor(width / 2), y: 3 });
-      return x + width + breath(ctx, 7, 9);
+      return x + width + breathAt(ctx, 7, 9);
     }
     case "pitPair":
       // Dois buracos separados por um pedaço de chão para pousar e pular de novo.
@@ -155,8 +184,30 @@ function runPattern(objects: LevelObject[], carriers: Carrier[], x: number, ctx:
     case "sawBridge":
       // Espeto no chão e, mais adiante, uma serra no ar na altura de um pulo: pula o espeto, pousa e passa por baixo da serra SEM pular.
       objects.push({ kind: "spike", x }, { kind: "saw", x: x + 11, y: 2, ...(d > 0.6 ? { amp: 0.4, period: 10 } : {}) });
-      carriers.push({ x: x + 4, y: 2 });
-      return x + 11 + 1 + breath(ctx, 6, 8);
+      carriers.push({ x, y: 2 });
+      return x + 11 + 1 + breathAt(ctx, 6, 8);
+    case "sawGauntlet":
+      // Três serras no chão, uma a cada 9 colunas: pula, pousa, pula, pousa, pula.
+      for (let index = 0; index < 3; index += 1) objects.push({ kind: "saw", x: x + index * 9, y: 0 });
+      carriers.push({ x, y: 2 });
+      return x + 18 + 1 + breathAt(ctx, 6, 8);
+    case "spikeStairs":
+      // Dois degraus compridos, cada um com um espeto em cima: pousa, pula o espeto, sobe o degrau seguinte e pula o outro.
+      objects.push({ kind: "block", x, y: 0, w: 14, h: 1 }, { kind: "spike", x: x + 3, y: 1 }, { kind: "block", x: x + 14, y: 0, w: 11, h: 2 }, { kind: "spike", x: x + 19, y: 2 });
+      return x + 25 + 6;
+    case "lowRoof":
+      // Caverna: um teto de blocos com espetos pendurados e espetos no chão em outros lugares. Pula só onde há espeto no chão.
+      objects.push({ kind: "block", x, y: 3, w: 20, h: 1 }, { kind: "spike", x: x + 4 }, { kind: "spike", x: x + 8, y: 2, down: true }, { kind: "spike", x: x + 14 }, { kind: "spike", x: x + 18, y: 2, down: true });
+      return x + 20 + 6;
+    case "rhythm3":
+      // Espeto, serra e espeto de 8 em 8 colunas: um ritmo de três pulos.
+      objects.push({ kind: "spike", x }, { kind: "saw", x: x + 8, y: 0 }, { kind: "spike", x: x + 16 });
+      carriers.push({ x, y: 2 });
+      return x + 17 + breathAt(ctx, 6, 8);
+    case "pitTrain":
+      // Três buracos de 3 colunas, com 7 colunas de chão entre eles.
+      for (let index = 0; index < 3; index += 1) objects.push({ kind: "pit", x: x + index * 10, w: 3, side: "floor" });
+      return x + 3 * 10 + 4;
     case "fork": {
       // Bifurcação: degraus levam a uma laje (caminho de cima, com recompensas) ou segue-se por baixo (seguro).
       const power = random() < POWER_CHANCE.fork ? ctx.nextPower("RUN") : null;
@@ -175,7 +226,7 @@ function runPattern(objects: LevelObject[], carriers: Carrier[], x: number, ctx:
   }
 }
 
-type FlyKind = "gates" | "steps" | "sawGates" | "zigzag" | "split";
+type FlyKind = "gates" | "steps" | "sawGates" | "zigzag" | "split" | "slalom" | "teeth" | "sweepers";
 
 /**
  * Trecho de voo. Tocar em qualquer bloco, espeto ou serra derruba (só o chão e o teto do campo são seguros). Cada trecho de ~5 portões sorteia um desenho:
@@ -213,13 +264,16 @@ function flySection(objects: LevelObject[], carriers: Carrier[], x: number, leng
   };
   while (cursor < end) {
     const left = end - cursor;
-    const kind = weighted<FlyKind>(random, [
+    const kind = weighted<FlyKind>(random, styled(ctx, [
       ["gates", 30 - 10 * d],
       ["steps", 14],
       ["sawGates", 10 + 12 * d],
       ["zigzag", d > 0.4 ? 10 * d : 0],
       ["split", ctx.forks && left >= FLY_SPLIT.lead + FLY_SPLIT.length + FLY_SPLIT.tail + 6 ? 12 : 0],
-    ]);
+      ["slalom", d > 0.25 ? 4 + 8 * d : 0],
+      ["teeth", d > 0.15 ? 4 + 4 * d : 0],
+      ["sweepers", d > 0.45 ? 8 * d : 0],
+    ]));
     if (kind === "split") {
       const info = flySplit(objects, cursor, random() < POWER_CHANCE.fork ? ctx.nextPower("FLY") : null);
       // O vão antes do próximo trecho volta a ser o do meio.
@@ -236,6 +290,37 @@ function flySection(objects: LevelObject[], carriers: Carrier[], x: number, leng
       place(cursor, "blocks");
       cursor += 2 + breathAt(ctx, 5, 6);
       mark(cursor);
+    }
+    if (kind === "slalom") {
+      // Slalom: blocos soltos, um do chão e um do teto em alternância (3 colunas de largura): o personagem balança de um lado para o outro.
+      const height = 3;
+      const width = d > 0.7 ? 4 : 3;
+      const count = between(random, 4, 6);
+      for (let index = 0; index < count && cursor < end; index += 1) {
+        const fromFloor = index % 2 === 0;
+        objects.push(fromFloor ? { kind: "block", x: cursor, y: 0, w: width, h: height } : { kind: "block", x: cursor, y: ROWS - height, w: width, h: height });
+        carriers.push({ x: cursor + 1, y: fromFloor ? (height + ROWS - 1) / 2 : (ROWS - height - 1) / 2 });
+        cursor += width + breathAt(ctx, 6, 8);
+        mark(cursor);
+      }
+      cursor += 3;
+      mark(cursor);
+      continue;
+    }
+    if (kind === "teeth") {
+      // Túnel de dentes: espetos no chão e no teto, alternados; voando pelo meio nada acontece, mas quem desce ou sobe demais é pego.
+      for (let index = 0; index < 4; index += 1) objects.push(index % 2 === 0 ? { kind: "spike", x: cursor + 2 + index * 3 } : { kind: "spike", x: cursor + 2 + index * 3, y: ROWS - 1, down: true });
+      carriers.push({ x: cursor + 4, y: 3 }, { x: cursor + 10, y: 3 });
+      cursor += 15 + breathAt(ctx, 5, 6);
+      mark(cursor);
+      continue;
+    }
+    if (kind === "sweepers") {
+      // Três serras que varrem o campo de cima a baixo (a onda depende de onde o jogador está): passa-se onde a serra não está.
+      for (let index = 0; index < 3; index += 1) objects.push({ kind: "saw", x: cursor + index * 8, y: 3, amp: 1.5, period: 12 + index * 2 });
+      cursor += 3 * 8 + breathAt(ctx, 5, 6);
+      mark(cursor);
+      continue;
     }
     const gates = between(random, 4, 6);
     const mode = kind === "sawGates" ? "saws" : "blocks";
@@ -270,7 +355,7 @@ function flySection(objects: LevelObject[], carriers: Carrier[], x: number, leng
   return cursor;
 }
 
-type GravityKind = "spike" | "pit" | "lane" | "slab" | "wall" | "sawMid" | "rush" | "spikePair";
+type GravityKind = "spike" | "pit" | "lane" | "slab" | "wall" | "sawMid" | "rush" | "spikePair" | "slalom5" | "sawSurface" | "pitRush" | "teethRow";
 
 /**
  * Trecho de gravidade: espetos no chão e no teto (quem passa inverte a gravidade quando o espeto está do lado onde está), buracos no chão ou no teto
@@ -288,7 +373,7 @@ function gravitySection(objects: LevelObject[], carriers: Carrier[], x: number, 
   const carry = (at: number) => carriers.push({ x: at, y: side === "floor" ? 0 : ROWS - 1 });
   while (cursor < end) {
     const room = end - cursor;
-    const kind = weighted<GravityKind>(random, [
+    const kind = weighted<GravityKind>(random, styled(ctx, [
       ["spike", 36 - 14 * d],
       ["pit", 8 + 22 * d],
       ["wall", 14 + 8 * d],
@@ -297,7 +382,12 @@ function gravitySection(objects: LevelObject[], carriers: Carrier[], x: number, 
       ["rush", d > 0.5 && room >= 28 ? 14 * d : 0],
       ["lane", ctx.forks && room >= GRAVITY_LANE.length + 6 ? 14 : 0],
       ["slab", ctx.forks && room >= GRAVITY_SLAB.lead + GRAVITY_SLAB.length + GRAVITY_SLAB.tail + 6 ? 10 : 0],
-    ]);
+    
+      ["slalom5", d > 0.3 && room >= 50 ? 3 + 8 * d : 0],
+      ["sawSurface", d > 0.1 ? 4 + 6 * d : 0],
+      ["pitRush", d > 0.5 && room >= 40 ? 10 * d : 0],
+      ["teethRow", d > 0.3 ? 3 + 7 * d : 0],
+    ]));
     if (kind === "lane") {
       const info = gravityLane(objects, cursor, random() < 0.5 ? "ceiling" : "floor", random() < POWER_CHANCE.lane ? ctx.nextPower("GRAVITY") : null);
       cursor = info.end + between(random, 3, 5);
@@ -362,9 +452,44 @@ function gravitySection(objects: LevelObject[], carriers: Carrier[], x: number, 
       mark(cursor);
       continue;
     }
+    if (kind === "slalom5") {
+      // Cinco paredes de bloco seguidas, cada uma do lado em que o jogador está: vira, vira, vira, vira, vira.
+      for (let index = 0; index < 5; index += 1) {
+        objects.push(side === "floor" ? { kind: "block", x: cursor, y: 0, w: 2, h: 2 } : { kind: "block", x: cursor, y: ROWS - 2, w: 2, h: 2 });
+        side = other();
+        if (index === 1) carry(cursor + Math.round(4 * ctx.speed));
+        cursor += Math.round(8 * ctx.speed);
+      }
+      cursor += breathAt(ctx, 3, 4);
+      mark(cursor);
+      continue;
+    }
+    if (kind === "pitRush") {
+      // Três buracos em fila, cada um do lado em que o jogador está: ele vira antes de cada um.
+      for (let index = 0; index < 3; index += 1) {
+        objects.push({ kind: "pit", x: cursor, w: 3, side });
+        side = other();
+        cursor += 3 + Math.round(9 * ctx.speed);
+      }
+      cursor += breathAt(ctx, 2, 3);
+      mark(cursor);
+      continue;
+    }
+    if (kind === "teethRow") {
+      // Fileira de 4 espetos na superfície OPOSTA à do jogador: não pode virar enquanto passa. Depois, um espeto do lado dele obriga a virar.
+      const opposite = other();
+      for (let index = 0; index < 4; index += 1) objects.push(spikeOn(cursor + index * 3, opposite));
+      const at = cursor + 9 + Math.round(10 * ctx.speed);
+      objects.push(spikeOn(at, side));
+      carry(cursor + 5);
+      side = other();
+      cursor = at + 1 + breathAt(ctx, 8, 10);
+      mark(cursor);
+      continue;
+    }
     // Espeto: na maioria das vezes do lado em que o jogador está (ele precisa virar); às vezes do outro (ele só segue).
     const spikeSide = random() < 0.65 ? side : other();
-    objects.push(spikeOn(cursor, spikeSide));
+    objects.push(kind === "sawSurface" ? { kind: "saw", x: cursor, y: spikeSide === "floor" ? 0 : ROWS - 1 } : spikeOn(cursor, spikeSide));
     side = spikeSide === "floor" ? "ceiling" : "floor";
     carry(cursor + 4);
     cursor += breathAt(ctx, 7, 9);
@@ -398,7 +523,7 @@ export function buildJourney(options: JourneyOptions): Level {
   const speed = speedFor(difficulty);
   // Colunas por segundo de jogo: com a velocidade maior, a mesma duração pede uma fase mais comprida.
   const tps = TILES_PER_SECOND * speed;
-  const ctx: Context = { random, difficulty, speed, forks: useForks, nextPower: (form) => {
+  const ctx: Context = { random, difficulty, speed, style: options.style ?? "CLASSIC", forks: useForks, nextPower: (form) => {
       if (!usePowers) return null;
       // O próximo da fila que faz sentido na forma (os que não servem ficam para a vez seguinte).
       for (let tries = 0; tries < queue.length; tries += 1) {
