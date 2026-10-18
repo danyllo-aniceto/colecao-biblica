@@ -4,7 +4,7 @@ import { badRequest, notFound } from "../lib/errors";
 import { pageOf } from "../lib/pagination";
 import { normalizeKey } from "../lib/validation";
 import { DEFAULT_DIFFICULTY, validateLevelDef, type CampaignLevelDef, type Scenario } from "../runner/campaign";
-import { ART_KEYS, type Form, type ScenarioArt } from "../runner/types";
+import { ART_KEYS, LEVEL_STYLES, type Form, type LevelStyle, type ScenarioArt } from "../runner/types";
 
 type ScenarioRow = Prisma.RunnerScenarioGetPayload<Record<string, never>>;
 type LevelRow = Prisma.RunnerLevelGetPayload<Record<string, never>>;
@@ -20,6 +20,11 @@ export function sanitizeArt(raw: unknown): ScenarioArt {
   return art;
 }
 
+/** Estilo conhecido ou o clássico (o que vem do banco pode estar velho). */
+export function sanitizeStyle(raw: unknown): LevelStyle {
+  return (LEVEL_STYLES as readonly string[]).includes(raw as string) ? (raw as LevelStyle) : "CLASSIC";
+}
+
 const FORMS: Form[] = ["RUN", "FLY", "GRAVITY"];
 export function sanitizeOrder(raw: unknown): Form[] {
   const list = Array.isArray(raw) ? raw.filter((item): item is Form => FORMS.includes(item as Form)) : [];
@@ -27,7 +32,7 @@ export function sanitizeOrder(raw: unknown): Form[] {
 }
 
 export function toLevelDef(row: LevelRow): CampaignLevelDef {
-  return { id: row.slug, name: row.name, seed: row.seed, seconds: row.seconds, order: sanitizeOrder(row.formOrder), ref: row.verseRef, verse: row.verseText, forks: row.forks, powers: row.powers, difficulty: row.difficulty };
+  return { id: row.slug, name: row.name, seed: row.seed, seconds: row.seconds, order: sanitizeOrder(row.formOrder), ref: row.verseRef, verse: row.verseText, forks: row.forks, powers: row.powers, difficulty: row.difficulty, style: sanitizeStyle(row.style) };
 }
 
 /** Cenário do painel (com a contagem de fases). */
@@ -63,6 +68,7 @@ export function toAdminLevel(row: LevelRow & { scenario?: { slug: string; name: 
     forks: row.forks,
     powers: row.powers,
     difficulty: row.difficulty,
+    style: sanitizeStyle(row.style),
     active: row.active,
     sortOrder: row.sortOrder,
     system: row.system,
@@ -215,12 +221,13 @@ export type LevelInput = {
   forks?: boolean;
   powers?: boolean;
   difficulty?: number;
+  style?: LevelStyle;
   active?: boolean;
   sortOrder?: number;
 };
 
-function assertLevelValid(input: Required<Pick<LevelInput, "name" | "seed" | "seconds" | "order" | "verseRef" | "verseText">> & { difficulty?: number }) {
-  const errors = validateLevelDef({ difficulty: input.difficulty, name: input.name, seed: input.seed, seconds: input.seconds, order: input.order, ref: input.verseRef, verse: input.verseText });
+function assertLevelValid(input: Required<Pick<LevelInput, "name" | "seed" | "seconds" | "order" | "verseRef" | "verseText">> & { difficulty?: number; style?: string }) {
+  const errors = validateLevelDef({ difficulty: input.difficulty, style: input.style, name: input.name, seed: input.seed, seconds: input.seconds, order: input.order, ref: input.verseRef, verse: input.verseText });
   const first = Object.values(errors)[0];
   if (first) throw badRequest(first);
 }
@@ -241,6 +248,7 @@ export async function createLevel(db: Db, input: LevelInput & Required<Pick<Leve
       forks: input.forks ?? true,
       powers: input.powers ?? true,
       difficulty: input.difficulty ?? DEFAULT_DIFFICULTY,
+      style: input.style ?? "CLASSIC",
       active: input.active ?? true,
       sortOrder: input.sortOrder ?? 100,
     },
@@ -261,6 +269,7 @@ export async function updateLevel(db: Db, id: number, input: LevelInput) {
     verseRef: input.verseRef ?? current.verseRef,
     verseText: input.verseText ?? current.verseText,
     difficulty: input.difficulty ?? current.difficulty,
+    style: input.style ?? sanitizeStyle(current.style),
   });
   const row = await db.runnerLevel.update({
     where: { id },
@@ -275,6 +284,7 @@ export async function updateLevel(db: Db, id: number, input: LevelInput) {
       ...(input.forks !== undefined ? { forks: input.forks } : {}),
       ...(input.powers !== undefined ? { powers: input.powers } : {}),
       ...(input.difficulty !== undefined ? { difficulty: input.difficulty } : {}),
+      ...(input.style !== undefined ? { style: input.style } : {}),
       ...(input.active !== undefined ? { active: input.active } : {}),
       ...(input.sortOrder !== undefined ? { sortOrder: input.sortOrder } : {}),
     },

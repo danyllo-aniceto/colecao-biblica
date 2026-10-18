@@ -19,7 +19,7 @@ import { levelSeconds } from '@runner/journey';
 import { DEFAULT_DIFFICULTY, difficultyLabel, isCharacterUnlocked, isLevelUnlocked, isScenarioUnlocked, type Scenario } from '@runner/campaign';
 import { BASE_LEVELS } from '@runner/levels';
 import { useRunnerCampaign } from '@/components/user/corrida/corrida-campaign';
-import type { Level } from '@runner/types';
+import { STYLE_INFO, type Level } from '@runner/types';
 import type { CorridaResult, CorridaRival } from '@/components/user/corrida/corrida-game';
 import { CampaignMap, type MapStop } from '@/components/user/corrida/corrida-map';
 import { CorridaLocal, PlayerChip, type LocalPlayer } from '@/components/user/corrida/corrida-local';
@@ -245,7 +245,7 @@ function CampaignTab({ scenarios: scenarioList, levels: allLevels, bests, finish
                 id: def.id,
                 number: scenario.levels.indexOf(def) + 1,
                 name: level.name,
-                info: `${levelInfo(level)} · ${difficultyLabel(def.difficulty ?? DEFAULT_DIFFICULTY)}`,
+                info: `${levelInfo(level)} · ${difficultyLabel(def.difficulty ?? DEFAULT_DIFFICULTY)} · ${STYLE_INFO[def.style ?? 'CLASSIC'].label}`,
                 result: bestText(best, total),
                 unlocked: isLevelUnlocked(def.id, finished, scenarioList),
                 finished: best?.finished === true,

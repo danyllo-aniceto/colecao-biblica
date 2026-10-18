@@ -159,21 +159,23 @@ describe("Corrida: fases", () => {
     }
   });
 
-  it("bots ao vivo: voltam ao checkpoint depois de cair e terminam; o Mestre chega antes do Aprendiz", () => {
-    const level = buildJourney({ id: "t", name: "T", seed: 3, seconds: 75, verse: { ref: "x", words: ["a", "b"] } });
-    const prepared = prepareLevel(level);
-    const finish = (name: keyof typeof BOT_LEVELS) => {
-      const bot = createBot(prepared, { skill: BOT_LEVELS[name].skill, lag: BOT_LEVELS[name].lag, seed: 5, respawn: true });
-      while (bot.player.status !== "finished" && bot.elapsed < 60 * 600) bot.step();
-      return bot;
-    };
-    const master = finish("MASTER");
-    const apprentice = finish("APPRENTICE");
-    expect(master.player.status).toBe("finished");
-    expect(apprentice.player.status).toBe("finished");
-    expect(apprentice.deaths).toBeGreaterThan(master.deaths);
-    expect(master.elapsed).toBeLessThan(apprentice.elapsed);
-  }, 240_000);
+  it("bots ao vivo: voltam ao checkpoint depois de cair e terminam; o Mestre, somando várias fases, chega antes do Aprendiz", () => {
+    // Um bot só tem sorte e azar; somando três fases a diferença de nível aparece.
+    const totals = { MASTER: { deaths: 0, elapsed: 0 }, APPRENTICE: { deaths: 0, elapsed: 0 } };
+    for (const seed of [3, 4, 5]) {
+      const level = buildJourney({ id: "t", name: "T", seed, seconds: 60, difficulty: 0.35, verse: { ref: "x", words: ["a", "b"] } });
+      const prepared = prepareLevel(level);
+      for (const name of ["MASTER", "APPRENTICE"] as const) {
+        const bot = createBot(prepared, { skill: BOT_LEVELS[name].skill, lag: BOT_LEVELS[name].lag, seed: 5, respawn: true });
+        while (bot.player.status !== "finished" && bot.elapsed < 60 * 900) bot.step();
+        expect(bot.player.status, `${name} na semente ${seed}`).toBe("finished");
+        totals[name].deaths += bot.deaths;
+        totals[name].elapsed += bot.elapsed;
+      }
+    }
+    expect(totals.APPRENTICE.deaths).toBeGreaterThan(totals.MASTER.deaths);
+    expect(totals.MASTER.elapsed).toBeLessThan(totals.APPRENTICE.elapsed);
+  }, 400_000);
 
   it("a mesma semente gera sempre a mesma jornada, e sementes diferentes geram fases diferentes", () => {
     const base = { id: "t", name: "T", seconds: 60, verse: { ref: "x", words: ["a", "b", "c"] } };

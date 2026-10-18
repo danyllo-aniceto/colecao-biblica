@@ -26,7 +26,7 @@ import {
   type RunnerLevelDto,
 } from '@/lib/runner-api';
 import { DEFAULT_DIFFICULTY, DIFFICULTY_RANGE, difficultyLabel, MAX_FORM_ORDER, SECONDS_RANGE, SEED_RANGE, validateLevelDef, verseWords, type CampaignLevelDef } from '@runner/campaign';
-import type { Form } from '@runner/types';
+import { LEVEL_STYLES, STYLE_INFO, type Form, type LevelStyle } from '@runner/types';
 import { AdminPanel, IconAction, SearchInput, StatusBadge } from '../admin-ui';
 import { useLevelTest, type LevelTestOutcome } from '../runner-level-test';
 import { useDebouncedValue, usePagedList } from '../use-paged-list';
@@ -45,6 +45,7 @@ type Draft = {
   forks: boolean;
   powers: boolean;
   difficulty: string;
+  style: LevelStyle;
   active: boolean;
   sortOrder: string;
 };
@@ -63,6 +64,7 @@ const emptyDraft = (scenarioId: string): Draft => ({
   forks: true,
   powers: true,
   difficulty: String(DEFAULT_DIFFICULTY),
+  style: 'CLASSIC',
   active: false,
   sortOrder: '100',
 });
@@ -78,15 +80,16 @@ const draftOf = (level: RunnerLevelDto): Draft => ({
   forks: level.forks,
   powers: level.powers,
   difficulty: String(level.difficulty),
+  style: level.style,
   active: level.active,
   sortOrder: String(level.sortOrder),
 });
 
 /** Só o que muda a fase gerada: se igual ao que já foi testado, o teste continua valendo. */
-const generationKey = (draft: Draft) => JSON.stringify([draft.seed, draft.seconds, draft.order, draft.verseText.trim().split(/\s+/), draft.forks, draft.powers, draft.difficulty]);
+const generationKey = (draft: Draft) => JSON.stringify([draft.seed, draft.seconds, draft.order, draft.verseText.trim().split(/\s+/), draft.forks, draft.powers, draft.difficulty, draft.style]);
 
 function defOf(draft: Draft, slug = 'teste'): CampaignLevelDef {
-  return { id: slug, name: draft.name.trim() || 'Fase', seed: Number(draft.seed), seconds: Number(draft.seconds), order: draft.order, ref: draft.verseRef.trim(), verse: draft.verseText, forks: draft.forks, powers: draft.powers, difficulty: Number(draft.difficulty) };
+  return { id: slug, name: draft.name.trim() || 'Fase', seed: Number(draft.seed), seconds: Number(draft.seconds), order: draft.order, ref: draft.verseRef.trim(), verse: draft.verseText, forks: draft.forks, powers: draft.powers, difficulty: Number(draft.difficulty), style: draft.style };
 }
 
 function validate(draft: Draft): Errors {
@@ -181,6 +184,7 @@ export function RunnerLevelsScreen() {
         forks: draft.forks,
         powers: draft.powers,
         difficulty: Number(draft.difficulty),
+        style: draft.style,
         active: draft.active,
         sortOrder: Number(draft.sortOrder),
       };
@@ -244,7 +248,7 @@ export function RunnerLevelsScreen() {
                 {level.system ? <span className="rounded-full bg-surface-3 px-2 py-0.5 text-xs font-bold text-muted">Padrão</span> : null}
               </p>
               <p className="text-sm font-semibold text-muted">
-                {level.scenarioName} · {level.seconds} s · {difficultyLabel(level.difficulty)} · {level.order.map((form) => FORM_LABEL[form]).join(' → ')} · {level.verseRef}
+                {level.scenarioName} · {level.seconds} s · {difficultyLabel(level.difficulty)} · {STYLE_INFO[level.style].label} · {level.order.map((form) => FORM_LABEL[form]).join(' → ')} · {level.verseRef}
               </p>
               <p className="text-xs font-semibold text-muted">
                 Identificador: <code>{level.slug}</code> (use no personagem que esta fase abre)
@@ -307,6 +311,9 @@ export function RunnerLevelsScreen() {
                 <Input id="level-order-number" type="number" min={0} max={999} value={draft.sortOrder} onChange={(event) => change({ sortOrder: event.target.value })} />
               </Field>
             </div>
+            <Field label="Estilo da fase" hint={STYLE_INFO[draft.style].hint} htmlFor="level-style">
+              <Select id="level-style" value={draft.style} onChange={(style) => change({ style: style as LevelStyle })} options={LEVEL_STYLES.map((value) => ({ value, label: STYLE_INFO[value].label, description: STYLE_INFO[value].hint }))} aria-label="Estilo da fase" />
+            </Field>
             <Field
               label="Dificuldade"
               hint={`${difficultyLabel(Number(draft.difficulty) || 0)}. De ${DIFFICULTY_RANGE.min} a ${DIFFICULTY_RANGE.max}: dentro do cenário a primeira fase é fácil (5) e cada seguinte sobe 10. Muda o tipo e a frequência dos obstáculos e também a velocidade (de 1,00× a 1,25×).`}

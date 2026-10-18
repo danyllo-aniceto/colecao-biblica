@@ -6,7 +6,7 @@ import { currentUser, requireAdmin } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
 import { DIFFICULTY_RANGE, SECONDS_RANGE, SEED_RANGE, MAX_FORM_ORDER } from "../runner/campaign";
 import { isHexColor, MAX_FRAMES, MAX_VARIANTS, POSES, SOUND_KEYS } from "../runner/characters";
-import { ART_KEYS } from "../runner/types";
+import { ART_KEYS, LEVEL_STYLES } from "../runner/types";
 import { getRunnerProgress, submitRunnerResult } from "../services/runner-progress";
 import { adminLevels, adminScenarios, createLevel, createScenario, deleteLevel, deleteScenario, getCampaign, levelOptions, scenarioOptions, updateLevel, updateScenario } from "../services/runner-campaign";
 import { adminRunnerCharacters, createRunnerCharacter, deleteRunnerCharacter, listRunnerCharacters, updateRunnerCharacter } from "../services/runner-characters";
@@ -109,6 +109,7 @@ const levelBody = z.object({
   forks: z.boolean().optional(),
   powers: z.boolean().optional(),
   difficulty: z.number().int().min(DIFFICULTY_RANGE.min).max(DIFFICULTY_RANGE.max).optional(),
+  style: z.enum(LEVEL_STYLES).optional(),
   active: z.boolean().optional(),
   sortOrder: z.number().int().min(0).max(999).optional(),
 });

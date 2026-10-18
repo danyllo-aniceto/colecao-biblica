@@ -74,6 +74,27 @@ export type Level = {
   speed?: number;
 };
 
+/**
+ * Estilo da fase: muda os pesos dos obstáculos para que cada fase tenha a sua cara (todas as fases de um cenário têm estilos diferentes).
+ * CLASSIC (básico, gentil), SPIKES (espetos e ritmo de pulos), SAWS (serras), PITS (buracos), PLATFORMS (blocos e degraus), RUSH (sequências rápidas),
+ * SKY (voo variado), FLIP (gravidade variada), WILD (de tudo, bem denso) e FINALE (o máximo de cada coisa).
+ */
+export const LEVEL_STYLES = ["CLASSIC", "SPIKES", "SAWS", "PITS", "PLATFORMS", "RUSH", "SKY", "FLIP", "WILD", "FINALE"] as const;
+export type LevelStyle = (typeof LEVEL_STYLES)[number];
+
+export const STYLE_INFO: Record<LevelStyle, { label: string; hint: string }> = {
+  CLASSIC: { label: "Clássica", hint: "Espetos, serras no chão e blocos: o básico, sem pressa." },
+  SPIKES: { label: "Espetos", hint: "Muitos espetos, em sequência e em combinação com buracos e degraus." },
+  SAWS: { label: "Serras", hint: "Serras no chão, no ar e no meio do campo; portões de serras no voo." },
+  PITS: { label: "Buracos", hint: "Buracos em fila, no chão e no teto; o chão some o tempo todo." },
+  PLATFORMS: { label: "Plataformas", hint: "Blocos, degraus, escadas e cavernas com teto baixo." },
+  RUSH: { label: "Ritmo", hint: "Sequências rápidas de obstáculos: pula, pula, pula." },
+  SKY: { label: "Céu", hint: "Voo com slaloms, dentes, varredores de serras e portões em zigue-zague." },
+  FLIP: { label: "Reviravolta", hint: "Gravidade com paredes, buracos alternados e fileiras de espetos que não deixam virar." },
+  WILD: { label: "Selvagem", hint: "De tudo um pouco, denso e imprevisível." },
+  FINALE: { label: "Final", hint: "O máximo de cada obstáculo, quase sem respiro." },
+};
+
 export const SPEED_RANGE = { min: 0.8, max: 1.6 };
 
 export type Rect = { l: number; t: number; r: number; b: number };
