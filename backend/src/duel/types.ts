@@ -152,27 +152,26 @@ export type PlacedCard = {
 // ---------------------------------------------------------------------------
 
 export type ScenarioRule =
-  | { kind: "cheapBonus"; amount: number }
+  | { kind: "costBand"; lowMax: number; lowAmount: number; highMin: number; highAmount: number }
   | { kind: "sharedTag"; amount: number }
   | { kind: "majority"; amount: number }
   | { kind: "decay"; amount: number }
-  | { kind: "slots"; count: number }
+  | { kind: "slots"; count: number; bonus?: number }
   | { kind: "noMove" }
   | { kind: "tagBonus"; tags: string[]; amount: number }
   | { kind: "shiftFirst" }
-  | { kind: "stormAt"; turn: number; amount: number }
+  | { kind: "stormAt"; turn: number; amount: number; heavyMin?: number; heavyAmount?: number }
   | { kind: "winnerBonus"; amount: number }
   | { kind: "decayStrongest"; amount: number }
   | { kind: "growWeakest"; amount: number }
   | { kind: "underdog"; amount: number }
-  | { kind: "lone"; amount: number }
+  | { kind: "lone"; amount: number; crowdMin?: number; crowdAmount?: number }
   | { kind: "firstBonus"; amount: number }
-  | { kind: "costBonus"; min: number; amount: number }
   | { kind: "strongestAt"; turn: number; amount: number }
-  | { kind: "bountyAt"; turn: number; amount: number }
+  | { kind: "harvestAt"; turn: number; amount: number }
   | { kind: "refuge" }
   | { kind: "veteran"; after: number; amount: number }
-  | { kind: "weakBonus"; max: number; amount: number }
+  | { kind: "weakBonus"; max: number; amount: number; highMin?: number; highAmount?: number }
   | { kind: "gather"; min: number; amount: number }
   | { kind: "reversalAt"; turn: number; amount: number }
   | { kind: "forgive" }
@@ -180,9 +179,9 @@ export type ScenarioRule =
   | { kind: "lastBonus"; amount: number }
   | { kind: "weakestBonus"; amount: number }
   | { kind: "levelAt"; turn: number; fall: number; rise: number }
-  | { kind: "plainBonus"; amount: number }
-  | { kind: "growthEvery"; every: number; amount: number }
-  | { kind: "domBonus"; amount: number }
+  | { kind: "domSplit"; withDom: number; plain: number }
+  | { kind: "redistribute"; amount: number }
+  | { kind: "doubleReveal" }
   | { kind: "evenBonus"; amount: number }
   | { kind: "unharmed" }
   | { kind: "roads"; amount: number }
@@ -202,7 +201,6 @@ export type ScenarioDef = {
   /** Mesmo identificador (slug) do cenário da campanha. */
   id: string;
   name: string;
-  emoji: string;
   rule: ScenarioRule;
   /** Texto curto da regra, mostrado na mesa. */
   text: string;

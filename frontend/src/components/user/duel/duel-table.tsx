@@ -370,7 +370,7 @@ export function DuelTable({ view, art, opponentName, laneImage, selectedUid, onS
       <Modal
         open={arenaInfo !== null}
         size="sm"
-        title={arenaInfo !== null && lanes[arenaInfo]?.scenario ? `${lanes[arenaInfo].scenario!.emoji} ${lanes[arenaInfo].scenario!.name}` : 'Arena'}
+        title={arenaInfo !== null && lanes[arenaInfo]?.scenario ? lanes[arenaInfo].scenario!.name : 'Arena'}
         onClose={() => setArenaInfo(null)}
         footer={<Button onClick={() => setArenaInfo(null)}>Fechar</Button>}
       >
@@ -561,7 +561,7 @@ function Arena({ lane, index, image, focus, dropHint, blindHint, onInfo }: { lan
         {lane.scenario ? (
           <>
             <span className="relative font-display text-[13px] font-bold leading-tight text-white drop-shadow">
-              {lane.scenario.emoji} {lane.scenario.name}
+              {lane.scenario.name}
             </span>
             <span className="relative text-[11px] font-semibold leading-tight text-white/95 drop-shadow">{lane.scenario.text}</span>
           </>

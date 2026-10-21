@@ -144,10 +144,7 @@ function ArenasTab() {
       </p>
       <ul className="space-y-2">
         {arenas.pageItems.map((arena) => (
-          <li key={arena.id} className="flex items-start gap-3 rounded-2xl bg-surface-2 p-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-3 text-2xl" aria-hidden="true">
-              {arena.emoji}
-            </span>
+          <li key={arena.id} className="rounded-2xl bg-surface-2 p-3">
             <div className="min-w-0">
               <p className="font-display text-sm font-bold text-ink">{arena.name}</p>
               <p className="text-xs font-semibold text-muted">{arena.text}</p>

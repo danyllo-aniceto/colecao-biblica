@@ -89,23 +89,23 @@ Influência; um Dom fraco, 0 a 1. O painel mostra o "orçamento usado" de cada f
 
 ## 5. Cenários do Duelo
 
-Reaproveitam os 10 cenários da campanha (arte do terreno, cor e música). Nenhum usa sorte. O painel permite criar mais.
+Reaproveitam os cenários da campanha (arte do terreno, cor e música). Nenhum usa sorte. O painel permite criar mais. Nome e texto da arena não levam emoji nem comentário bíblico: o texto só diz o que acontece. Nem toda arena é vantajosa: várias trazem penalidade ou um dilema (Éden, Cidade de Davi, Horebe, Ossos Secos, Éfeso, Galileia, Egito, Babel, Santa Ceia...). Regras novas entram em `ScenarioRule` (`types.ts`), em `cardPower`/`laneBonus`/`endOfTurn` (`engine.ts`) e com teste em `engine.test.ts`.
 
-Éden: figurinhas de Vigor 1 ganham +2 · Arca: duas figurinhas com a mesma etiqueta lado a lado ganham +1 cada · Canaã: quem tem mais figurinhas aqui ganha +3 ·
-Egito: no fim de cada turno a figurinha mais fraca de cada lado perde 1 · Sinai: só 2 espaços por lado · Jericó: figurinhas não podem ser movidas ·
+Éden: Vigor 1 ganha +2 e Vigor 5 ou mais perde 1 · Arca: duas figurinhas com a mesma etiqueta lado a lado ganham +1 cada · Canaã: quem tem mais figurinhas aqui ganha +3 ·
+Egito: no fim de cada turno a figurinha mais fraca de cada lado perde 1 · Sinai: só 2 espaços por lado e cada figurinha daqui ganha +2 · Jericó: figurinhas não podem ser movidas ·
 Templo: +1 para cada Rei ou Sacerdote seu · Babilônia: a 1ª figurinha jogada por turno vai para outro cenário (você escolhe qual na revelação) ·
-Galileia: no turno 4 todas as figurinhas aqui perdem 1 · Jerusalém: o vencedor do cenário ganha +2 de Influência total ·
+Galileia: no fim do turno 4 todas as figurinhas aqui perdem 1 (Vigor 4 ou mais perde 2) · Jerusalém: o vencedor do cenário ganha +2 de Influência total ·
 Torre de Babel: no fim de cada turno a mais forte de cada lado perde 1 · Betel: no fim de cada turno a mais fraca de cada lado ganha +1 ·
-Peniel: quem tem menos figurinhas aqui (ao menos 1) ganha +3 · Sarça ardente em Horebe: figurinha sozinha do lado ganha +3 ·
-Tabernáculo: a primeira figurinha de cada lado aqui ganha +2 · Cidade de Davi: Vigor 4 ou mais ganha +2 ·
-Monte Carmelo: no fim do turno 5 a mais forte de cada lado ganha +3 · Vale dos Ossos Secos: Influência base 2 ou menos ganha +2 ·
+Peniel: quem tem menos figurinhas aqui (ao menos 1) ganha +3 · Sarça ardente em Horebe: figurinha sozinha do lado ganha +3; com 3 ou mais do mesmo lado, cada uma perde 1 ·
+Tabernáculo: a primeira figurinha de cada lado aqui ganha +2 · Cidade de Davi: Vigor 4 ou mais ganha +2 e Vigor 1 ou 2 perde 1 ·
+Monte Carmelo: no fim do turno 5 a mais forte de cada lado ganha +3 · Vale dos Ossos Secos: Influência base 2 ou menos ganha +2 e base 7 ou mais perde 2 ·
 Pentecostes: com 3 ou mais figurinhas suas aqui, cada uma ganha +1 ·
-Campos de Belém: no fim do turno 4 todas as figurinhas aqui ganham +1 · Oásis de Elim: o rival não enfraquece, cala nem destrói, com Dons, as figurinhas daqui ·
+Campos de Belém: no fim do turno 4 cada figurinha ganha +1 por turno em que está aqui · Oásis de Elim: o rival não enfraquece, cala nem destrói, com Dons, as figurinhas daqui ·
 Monte das Oliveiras: figurinhas reveladas aqui há 2 turnos ou mais ganham +2 ·
 Ur dos Caldeus: +2 para cada Patriarca seu aqui · Susã: no fim do turno 5 o lado que perde aqui ganha +1 em cada figurinha · Nínive: no fim de cada turno as figurinhas daqui recuperam a Influência perdida ·
 Monte da Transfiguração: com exatamente 3 figurinhas suas aqui, cada uma ganha +2 · Rio Jordão: a figurinha mais recente de cada lado aqui ganha +2 · Manjedoura de Jesus: a mais fraca de cada lado aqui ganha +3 ·
-Damasco: no fim do turno 3 a mais forte de cada lado (com 2+ figurinhas) perde 2 e a mais fraca ganha 4 · Atenas: figurinhas sem Dom aqui ganham +2 · Corinto: nos turnos 2, 4 e 6 todas as figurinhas daqui ganham +1 ·
-Éfeso: figurinhas com Dom aqui ganham +1 · Filipos: com 2 ou 4 figurinhas suas aqui, cada uma ganha +1 · Malta: as penalidades de Influência não valem nas figurinhas daqui · Roma: +1 por arena vizinha onde você também tem figurinhas · Antioquia: com 4 ou mais etiquetas diferentes aqui, cada figurinha ganha +1 · Samaria: no fim do turno, a mais fraca do lado que está perdendo ganha +1 · Patmos: +2 em cada figurinha sua se você não tem figurinhas nas arenas vizinhas · Cesareia: a mais forte do lado ganha +1 por cada outra figurinha sua aqui · Cafarnaum: figurinhas reveladas no mesmo turno que outra sua aqui ganham +2 · Santa Ceia: no fim do turno 4, se os dois lados jogaram aqui, a mais forte do lado que ganha perde 3 · Getsêmani: os Dons de "Ao revelar" e de "Quando uma aliada é jogada" não agem · Calvário: +1 por figurinha sua já afastada (até +3) · Rio da Vida: +1 por turno depois de revelada, até +3 · Nova Jerusalém: quem reúne 12 ou mais de Influência aqui ganha +3 na arena · Monte Sião: quem investiu mais Vigor aqui ganha +3 na arena.
+Damasco: no fim do turno 3 a mais forte de cada lado (com 2+ figurinhas) perde 2 e a mais fraca ganha 4 · Atenas: os Dons "Ao revelar" agem duas vezes · Corinto: no fim de cada turno a mais forte passa 1 para a mais fraca (lado com 2+ figurinhas) ·
+Éfeso: figurinhas com Dom ganham +2 e sem Dom perdem 1 · Filipos: com 2 ou 4 figurinhas suas aqui, cada uma ganha +1 · Malta: as penalidades de Influência não valem nas figurinhas daqui · Roma: +1 por arena vizinha onde você também tem figurinhas · Antioquia: com 4 ou mais etiquetas diferentes aqui, cada figurinha ganha +1 · Samaria: no fim do turno, a mais fraca do lado que está perdendo ganha +1 · Patmos: +2 em cada figurinha sua se você não tem figurinhas nas arenas vizinhas · Cesareia: a mais forte do lado ganha +1 por cada outra figurinha sua aqui · Cafarnaum: figurinhas reveladas no mesmo turno que outra sua aqui ganham +2 · Santa Ceia: no fim do turno 4, se os dois lados jogaram aqui, a mais forte do lado que ganha perde 3 · Getsêmani: os Dons de "Ao revelar" e de "Quando uma aliada é jogada" não agem · Calvário: +1 por figurinha sua já afastada (até +3) · Rio da Vida: +1 por turno depois de revelada, até +3 · Nova Jerusalém: quem reúne 12 ou mais de Influência aqui ganha +3 na arena · Monte Sião: quem investiu mais Vigor aqui ganha +3 na arena.
 
 **Guia no app:** o botão *Poderes e arenas* (hub do Duelo e dentro do *Como jogar*) abre `duel-guide.tsx`, que explica cada tipo de Dom, as palavras do jogo, o que cada efeito faz e lista as arenas com a regra (lê `SCENARIOS`, então arena nova aparece sozinha; efeito ou tipo de Dom novo entra no texto do guia). (Cenários das 12 Pedras: toda pedra nova traz a regra do cenário aqui.)
 

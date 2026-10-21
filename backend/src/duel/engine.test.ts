@@ -266,9 +266,13 @@ describe("Dons", () => {
 });
 
 describe("cenários", () => {
-  it("Éden: Vigor 1 ganha +2", () => {
+  it("Éden: Vigor 1 ganha +2; Vigor 5 ou mais perde 1", () => {
     const state = playTurn(duel({ mine: ["abel"], scenarios: ["eden", "arca", "canaa"] }), [["abel", 0]]);
     expect(lanePower(state, 0, 0)).toBe(4);
+    const heavy = duel({ turn: 3, scenarios: ["eden", "arca", "canaa"] });
+    heavy.lanes[0].cards[0].push({ uid: 1, def: def("golias"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    // Golias (Vigor 5) perde 1; Saul (Vigor 3) fica como está.
+    expect(lanePower(heavy, 0, 0)).toBe(10 + 6);
   });
 
   it("Arca: etiqueta repetida dá +1 a cada figurinha", () => {
@@ -325,6 +329,9 @@ describe("cenários", () => {
     expect(lanePower(state, 0, 0)).toBe(2 + 3);
     state.lanes[0].cards[0].push({ uid: 2, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 1 });
     expect(lanePower(state, 0, 0)).toBe(2 + 6);
+    // Com 3 ou mais figurinhas do mesmo lado, cada uma perde 1.
+    state.lanes[0].cards[0].push({ uid: 3, def: def("abel"), bonus: 0, silenced: false, order: 3, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(1 + 5 + 1);
   });
 
   it("Tabernáculo: só a primeira figurinha de cada lado ganha +2", () => {
@@ -341,6 +348,9 @@ describe("cenários", () => {
     state.lanes[0].cards[0].push({ uid: 1, def: def("moises"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 1 });
     // Moisés (Vigor 4, Influência 5) ganha +2; Saul (Vigor 3, Influência 6) não.
     expect(lanePower(state, 0, 0)).toBe(5 + 2 + 6);
+    // Vigor 1 ou 2 perde 1: Abel (Vigor 1, Influência 2) vira 1.
+    state.lanes[0].cards[0].push({ uid: 3, def: def("abel"), bonus: 0, silenced: false, order: 3, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(5 + 2 + 6 + 1);
   });
 
   it("Carmelo: no fim do turno 5 a figurinha mais forte de cada lado ganha +3", () => {
@@ -362,6 +372,9 @@ describe("cenários", () => {
     state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 1 });
     // Abel (base 2) ganha +2; Saul (base 6) não.
     expect(lanePower(state, 0, 0)).toBe(2 + 2 + 6);
+    // Influência base 7 ou mais perde 2: Golias (11) vira 9.
+    state.lanes[0].cards[0].push({ uid: 3, def: def("golias"), bonus: 0, silenced: false, order: 3, turn: 1 });
+    expect(lanePower(state, 0, 0)).toBe(2 + 2 + 6 + 9);
   });
 
   it("Pentecostes: com 3 ou mais figurinhas suas aqui, cada uma ganha +1", () => {
@@ -445,26 +458,37 @@ describe("cenários", () => {
     expect(named(playTurn(early, [], []), 0, 0, "Saul").bonus).toBe(0);
   });
 
-  it("Atenas: figurinhas sem Dom ganham +2; com Dom, não", () => {
-    const state = duel({ turn: 3, scenarios: ["atenas", "arca", "canaa"] });
-    state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("moises"), bonus: 0, silenced: false, order: 2, turn: 1 });
-    // Abel não tem Dom (+2); Moisés tem (sem bônus).
-    expect(lanePower(state, 0, 0)).toBe(2 + 2 + 5);
+  it("Atenas: o Dom \"Ao revelar\" age duas vezes", () => {
+    const normal = duel({ mine: ["jose"], turn: 3 });
+    const before = normal.players[0].deck.length;
+    expect(playTurn(normal, [["jose", 0]]).players[0].deck.length).toBe(before - 2);
+    const echo = duel({ mine: ["jose"], turn: 3, scenarios: ["atenas", "arca", "canaa"] });
+    const beforeEcho = echo.players[0].deck.length;
+    const done = playTurn(echo, [["jose", 0]]);
+    // Duas compras do Dom (2) + compra do início do turno (1).
+    expect(done.players[0].deck.length).toBe(beforeEcho - 3);
+    // Em outro cenário o Dom age uma vez só.
+    expect(done.events.filter((event) => event.text.includes("pela segunda vez"))).toHaveLength(1);
   });
 
-  it("Corinto: nos turnos pares (2, 4 e 6) todas as figurinhas daqui ganham +1", () => {
-    for (const [turn, expected] of [[2, 1], [3, 0], [4, 1], [5, 0], [6, 1]] as const) {
-      const state = duel({ turn, scenarios: ["corinto", "arca", "canaa"] });
-      state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 });
-      expect(named(playTurn(state, [], []), 0, 0, "Abel").bonus).toBe(expected);
-    }
+  it("Corinto: no fim do turno a mais forte passa 1 para a mais fraca (com 2 ou mais figurinhas do lado)", () => {
+    const state = duel({ turn: 3, scenarios: ["corinto", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("saul"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 });
+    state.lanes[0].cards[1].push({ uid: 3, def: def("saul"), bonus: 0, silenced: false, order: 3, turn: 1 });
+    const done = playTurn(state, [], []);
+    expect(named(done, 0, 0, "Saul").bonus).toBe(-1);
+    expect(named(done, 0, 0, "Abel").bonus).toBe(1);
+    // Sozinha, a figurinha não passa nada.
+    expect(named(done, 0, 1, "Saul").bonus).toBe(0);
+    // A soma do lado não muda.
+    expect(lanePower(done, 0, 0)).toBe(lanePower(state, 0, 0));
   });
 
-  it("Éfeso: figurinhas com Dom ganham +1; sem Dom, não", () => {
+  it("Éfeso: figurinhas com Dom ganham +2; sem Dom perdem 1", () => {
     const state = duel({ turn: 3, scenarios: ["efeso", "arca", "canaa"] });
     state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("moises"), bonus: 0, silenced: false, order: 2, turn: 1 });
-    // Abel não tem Dom (sem bônus); Moisés tem (+1).
-    expect(lanePower(state, 0, 0)).toBe(2 + 5 + 1);
+    // Abel não tem Dom (2 - 1); Moisés tem (5 + 2).
+    expect(lanePower(state, 0, 0)).toBe(2 - 1 + 5 + 2);
   });
 
   it("Filipos: com número par de figurinhas suas aqui (2 ou 4) cada uma ganha +1; com 1 ou 3, não", () => {
@@ -647,13 +671,14 @@ describe("cenários", () => {
     expect(scenarioOf("cenaculo").id).toBe("pentecostes");
   });
 
-  it("Campos de Belém: no fim do turno 4 todas as figurinhas daqui ganham +1", () => {
+  it("Campos de Belém: no fim do turno 4 cada figurinha ganha +1 por turno em que está aqui", () => {
     const state = duel({ turn: 4, scenarios: ["campos-belem", "arca", "canaa"] });
-    state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 1 });
-    state.lanes[0].cards[1].push({ uid: 3, def: def("abel"), bonus: 0, silenced: false, order: 3, turn: 1 });
+    state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("saul"), bonus: 0, silenced: false, order: 2, turn: 3 });
+    state.lanes[0].cards[1].push({ uid: 3, def: def("abel"), bonus: 0, silenced: false, order: 3, turn: 4 });
     const next = playTurn(state, [], []);
-    expect(named(next, 0, 0, "Abel").bonus).toBe(1);
-    expect(named(next, 0, 0, "Saul").bonus).toBe(1);
+    // Revelada no turno 1: 4 turnos aqui (+4); no turno 3: 2 turnos (+2); no turno 4: 1 turno (+1).
+    expect(named(next, 0, 0, "Abel").bonus).toBe(4);
+    expect(named(next, 0, 0, "Saul").bonus).toBe(2);
     expect(named(next, 0, 1, "Abel").bonus).toBe(1);
     // Fora do turno 4 nada acontece.
     const early = duel({ turn: 3, scenarios: ["campos-belem", "arca", "canaa"] });
@@ -687,6 +712,8 @@ describe("cenários", () => {
     const state = duel({ turn: 4, scenarios: ["sinai", "arca", "canaa"], mine: ["abel", "rute", "miria"] });
     state.lanes[0].cards[0].push({ uid: 1, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 }, { uid: 2, def: def("abel"), bonus: 0, silenced: false, order: 2, turn: 1 });
     expect(whyNotStage(state, 0, uidOf(state, 0, "rute"), 0)).toBe("Esse cenário está cheio.");
+    // Cada figurinha daqui ganha +2.
+    expect(lanePower(state, 0, 0)).toBe((2 + 2) * 2);
   });
 
   it("Templo: +1 por Rei ou Sacerdote seu aqui", () => {
@@ -704,6 +731,15 @@ describe("cenários", () => {
   it("Galileia: no fim do turno 4 todas as figurinhas perdem 1", () => {
     const state = duel({ mine: ["abel"], turn: 4, scenarios: ["galileia", "arca", "canaa"] });
     const done = playTurn(state, [["abel", 0]]);
+    expect(named(done, 0, 0, "Abel").bonus).toBe(-1);
+  });
+
+  it("Galileia: figurinhas de Vigor 4 ou mais perdem 2 na tempestade", () => {
+    const state = duel({ mine: ["moises"], turn: 4, scenarios: ["galileia", "arca", "canaa"] });
+    state.lanes[0].cards[0].push({ uid: 900, def: def("abel"), bonus: 0, silenced: false, order: 1, turn: 1 });
+    state.nextOrder = 2;
+    const done = playTurn(state, [["moises", 0]]);
+    expect(named(done, 0, 0, "Moisés").bonus).toBe(-2);
     expect(named(done, 0, 0, "Abel").bonus).toBe(-1);
   });
 

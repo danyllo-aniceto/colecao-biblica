@@ -105,7 +105,7 @@ export function newDuel(input: NewDuelInput): DuelState {
     priority: null,
     stakes: 1,
     stakesMatter: input.stakesMatter !== false,
-    events: [{ type: "scenario", lane: 0, text: `${scenarioOf(scenarioIds[0]).emoji} ${scenarioOf(scenarioIds[0]).name}: ${scenarioOf(scenarioIds[0]).text}` }],
+    events: [{ type: "scenario", lane: 0, text: `${scenarioOf(scenarioIds[0]).name}: ${scenarioOf(scenarioIds[0]).text}` }],
     result: null,
   };
 }
@@ -201,14 +201,22 @@ export function cardPower(state: DuelState, laneIndex: number, side: Side, card:
   });
   // Regras de cenário que mexem em cada figurinha.
   const rule = laneScenario(state, laneIndex).rule;
-  if (rule.kind === "cheapBonus" && card.def.cost === 1) power += rule.amount;
-  // Sozinha do lado dela aqui.
+  // Faixas de Vigor: as baratas e as caras recebem bônus ou penalidade (a penalidade nunca leva abaixo de zero).
+  if (rule.kind === "costBand") {
+    if (card.def.cost <= rule.lowMax) power = rule.lowAmount >= 0 ? power + rule.lowAmount : Math.max(0, power + rule.lowAmount);
+    if (card.def.cost >= rule.highMin) power = rule.highAmount >= 0 ? power + rule.highAmount : Math.max(0, power + rule.highAmount);
+  }
+  // Poucos espaços, mas cada figurinha ganha o bônus.
+  if (rule.kind === "slots" && rule.bonus) power += rule.bonus;
+  // Sozinha do lado dela aqui ganha o bônus; com companhia demais (crowdMin ou mais), cada uma perde.
   if (rule.kind === "lone" && here.length === 1) power += rule.amount;
+  if (rule.kind === "lone" && rule.crowdMin !== undefined && here.length >= rule.crowdMin) power = Math.max(0, power - (rule.crowdAmount ?? 0));
   // A primeira que o lado colocou aqui (as primícias).
   if (rule.kind === "firstBonus" && here.length > 0 && [...here].sort((a, b) => a.order - b.order)[0].uid === card.uid) power += rule.amount;
-  if (rule.kind === "costBonus" && card.def.cost >= rule.min) power += rule.amount;
   // Figurinhas de Influência base baixa (os ossos secos que se levantam).
   if (rule.kind === "weakBonus" && card.def.power <= rule.max) power += rule.amount;
+  // ... e as de Influência base alta perdem (nunca abaixo de zero).
+  if (rule.kind === "weakBonus" && rule.highMin !== undefined && card.def.power >= rule.highMin) power = Math.max(0, power - (rule.highAmount ?? 0));
   // Unidas num só lugar: com `min` ou mais figurinhas suas aqui, cada uma ganha o bônus.
   if (rule.kind === "gather" && here.length >= rule.min) power += rule.amount;
   // Quem vigia permanece: figurinhas reveladas há `after` turnos ou mais ganham o bônus.
@@ -217,10 +225,11 @@ export function cardPower(state: DuelState, laneIndex: number, side: Side, card:
   if (rule.kind === "exactCount" && here.length === rule.count) power += rule.amount;
   // Quem acabou de entrar nas águas: a última que o lado revelou aqui.
   if (rule.kind === "lastBonus" && here.length > 0 && [...here].sort((a, b) => b.order - a.order)[0].uid === card.uid) power += rule.amount;
-  // O altar ao Deus desconhecido: figurinhas sem Dom ganham o bônus.
-  if (rule.kind === "plainBonus" && !card.def.dom) power += rule.amount;
-  // As maravilhas de Éfeso: figurinhas com Dom ganham o bônus.
-  if (rule.kind === "domBonus" && card.def.dom) power += rule.amount;
+  // Com Dom ou sem Dom: um lado ganha, o outro ganha ou perde (a penalidade nunca leva abaixo de zero).
+  if (rule.kind === "domSplit") {
+    const change = card.def.dom ? rule.withDom : rule.plain;
+    power = change >= 0 ? power + change : Math.max(0, power + change);
+  }
   // Dois a dois (Paulo e Silas): com número par de figurinhas suas aqui, cada uma ganha o bônus.
   if (rule.kind === "evenBonus" && here.length > 0 && here.length % 2 === 0) power += rule.amount;
   // A víbora não fez mal: penalidades (bônus negativo) não valem nas figurinhas daqui; os bônus positivos ficam.
@@ -815,13 +824,21 @@ function resolvePlay(state: DuelState, side: Side, placed: PlacedCard) {
   if (!here) return; // já foi afastada por um Dom que agiu antes
   // Vigiai e orai (Getsêmani): em silêncio, os "Ao revelar" e "Quando uma aliada é jogada" não agem aqui.
   if (isLaneOpen(state, here.lane) && laneScenario(state, here.lane).rule.kind === "hush") {
-    if (placed.def.dom?.trigger === "reveal" || placed.def.dom?.trigger === "allyPlayed") emit(state, { type: "dom", side, lane: here.lane, uid: placed.uid, name: placed.def.name, text: `${placed.def.name}: em ${arenaName(state, here.lane)} reina o silêncio, o Dom não agiu.` });
+    if (placed.def.dom?.trigger === "reveal" || placed.def.dom?.trigger === "allyPlayed") emit(state, { type: "dom", side, lane: here.lane, uid: placed.uid, name: placed.def.name, text: `${placed.def.name}: em ${arenaName(state, here.lane)} o Dom não age.` });
     return;
   }
   if (placed.def.dom?.trigger === "reveal") {
     emit(state, { type: "dom", side, lane: here.lane, uid: placed.uid, name: placed.def.name, text: `${placed.def.name} usa o Dom.`, dom: describeDom(placed.def.dom) });
   }
   runDom(state, { lane: here.lane, side, card: here.card }, "reveal");
+  // Eco (Atenas): o "Ao revelar" age uma segunda vez, se a figurinha ainda estiver aqui.
+  if (placed.def.dom?.trigger === "reveal" && laneScenario(state, here.lane).rule.kind === "doubleReveal") {
+    const again = findCard(state, placed.uid);
+    if (again && laneScenario(state, again.lane).rule.kind === "doubleReveal") {
+      emit(state, { type: "dom", side, lane: again.lane, uid: placed.uid, name: placed.def.name, text: `${placed.def.name}: o Dom age pela segunda vez.` });
+      runDom(state, { lane: again.lane, side, card: again.card }, "reveal");
+    }
+  }
   // "Quando uma figurinha sua é jogada aqui": as figurinhas suas que já estavam neste cenário (jogadas antes) reagem.
   const current = findCard(state, placed.uid);
   if (current) {
@@ -900,12 +917,18 @@ function endOfTurn(state: DuelState) {
         if (cards.length === 0) continue;
         const target = [...cards].sort((a, b) => cardPower(state, index, side, b) - cardPower(state, index, side, a) || a.order - b.order)[0];
         target.bonus += rule.amount;
-        emit(state, { type: "power", side, lane: index, uid: target.uid, name: target.def.name, amount: rule.amount, text: `${scenarioOf(lane.scenario).emoji} ${scenarioOf(lane.scenario).name}: o fogo desceu sobre ${target.def.name}, que ganhou ${rule.amount}.` });
+        emit(state, { type: "power", side, lane: index, uid: target.uid, name: target.def.name, amount: rule.amount, text: `${scenarioOf(lane.scenario).name}: ${target.def.name}, a mais forte, ganhou ${rule.amount}.` });
       }
     }
-    if (rule.kind === "bountyAt" && state.turn === rule.turn) {
-      for (const side of [0, 1] as Side[]) for (const card of lane.cards[side]) card.bonus += rule.amount;
-      emit(state, { type: "power", lane: index, amount: rule.amount, text: `${scenarioOf(lane.scenario).emoji} Colheita em ${scenarioOf(lane.scenario).name}: todas as figurinhas ganharam ${rule.amount}.` });
+    if (rule.kind === "harvestAt" && state.turn === rule.turn) {
+      // Colheita: cada figurinha ganha o bônus por cada turno em que está aqui (do turno em que foi revelada até este).
+      for (const side of [0, 1] as Side[]) {
+        for (const card of lane.cards[side]) {
+          const gain = rule.amount * (state.turn - card.turn + 1);
+          card.bonus += gain;
+          emit(state, { type: "power", side, lane: index, uid: card.uid, name: card.def.name, amount: gain, text: `${scenarioOf(lane.scenario).name}: ${card.def.name} ganhou ${gain}.` });
+        }
+      }
     }
     if (rule.kind === "betrayalAt" && state.turn === rule.turn) {
       // Um de vocês me trairá: a mais forte do lado que está ganhando aqui (empate não conta) perde o bônus (não abaixo de zero).
@@ -916,7 +939,7 @@ function endOfTurn(state: DuelState) {
         const strongest = [...lane.cards[winning]].sort((a, b) => cardPower(state, index, winning, b) - cardPower(state, index, winning, a) || a.order - b.order)[0];
         const fall = Math.min(rule.amount, Math.max(cardPower(state, index, winning, strongest), 0));
         strongest.bonus -= fall;
-        emit(state, { type: "power", side: winning, lane: index, uid: strongest.uid, name: strongest.def.name, amount: -fall, text: `${scenarioOf(lane.scenario).emoji} ${scenarioOf(lane.scenario).name}: um de vocês me trairá! ${strongest.def.name} perdeu ${fall}.` });
+        emit(state, { type: "power", side: winning, lane: index, uid: strongest.uid, name: strongest.def.name, amount: -fall, text: `${scenarioOf(lane.scenario).name}: ${strongest.def.name}, a mais forte de quem estava ganhando, perdeu ${fall}.` });
       }
     }
     if (rule.kind === "reversalAt" && state.turn === rule.turn) {
@@ -925,7 +948,7 @@ function endOfTurn(state: DuelState) {
       const losing: Side | null = power[0] === power[1] ? null : power[0] < power[1] ? 0 : 1;
       if (losing !== null && lane.cards[losing].length > 0) {
         for (const card of lane.cards[losing]) card.bonus += rule.amount;
-        emit(state, { type: "power", side: losing, lane: index, amount: rule.amount, text: `${scenarioOf(lane.scenario).emoji} ${scenarioOf(lane.scenario).name}: a reviravolta! Quem estava perdendo ganhou ${rule.amount} em cada figurinha.` });
+        emit(state, { type: "power", side: losing, lane: index, amount: rule.amount, text: `${scenarioOf(lane.scenario).name}: quem estava perdendo ganhou ${rule.amount} em cada figurinha.` });
       }
     }
     if (rule.kind === "levelAt" && state.turn === rule.turn) {
@@ -940,13 +963,24 @@ function endOfTurn(state: DuelState) {
         const fall = Math.min(rule.fall, Math.max(cardPower(state, index, side, strongest), 0));
         strongest.bonus -= fall;
         weakest.bonus += rule.rise;
-        emit(state, { type: "power", side, lane: index, uid: strongest.uid, name: strongest.def.name, amount: -fall, text: `${scenarioOf(lane.scenario).emoji} ${scenarioOf(lane.scenario).name}: ${strongest.def.name} caiu ${fall} diante da luz.` });
-        emit(state, { type: "power", side, lane: index, uid: weakest.uid, name: weakest.def.name, amount: rule.rise, text: `${scenarioOf(lane.scenario).emoji} ${scenarioOf(lane.scenario).name}: ${weakest.def.name} se levantou e ganhou ${rule.rise}.` });
+        emit(state, { type: "power", side, lane: index, uid: strongest.uid, name: strongest.def.name, amount: -fall, text: `${scenarioOf(lane.scenario).name}: ${strongest.def.name}, a mais forte, perdeu ${fall}.` });
+        emit(state, { type: "power", side, lane: index, uid: weakest.uid, name: weakest.def.name, amount: rule.rise, text: `${scenarioOf(lane.scenario).name}: ${weakest.def.name}, a mais fraca, ganhou ${rule.rise}.` });
       }
     }
-    if (rule.kind === "growthEvery" && state.turn % rule.every === 0) {
-      for (const side of [0, 1] as Side[]) for (const card of lane.cards[side]) card.bonus += rule.amount;
-      emit(state, { type: "power", lane: index, amount: rule.amount, text: `${scenarioOf(lane.scenario).emoji} ${scenarioOf(lane.scenario).name}: plantaram e regaram, e Deus deu o crescimento: todas as figurinhas ganharam ${rule.amount}.` });
+    if (rule.kind === "redistribute") {
+      // Tudo em comum: a mais forte de cada lado (com 2 ou mais figurinhas) passa `amount` de Influência para a mais fraca.
+      for (const side of [0, 1] as Side[]) {
+        const cards = lane.cards[side];
+        if (cards.length < 2) continue;
+        const ranked = [...cards].sort((a, b) => cardPower(state, index, side, b) - cardPower(state, index, side, a) || a.order - b.order);
+        const strongest = ranked[0];
+        const weakest = ranked[ranked.length - 1];
+        const moved = Math.min(rule.amount, Math.max(cardPower(state, index, side, strongest), 0));
+        if (moved <= 0 || cardPower(state, index, side, strongest) <= cardPower(state, index, side, weakest)) continue;
+        strongest.bonus -= moved;
+        weakest.bonus += moved;
+        emit(state, { type: "power", side, lane: index, uid: strongest.uid, name: strongest.def.name, amount: -moved, text: `${scenarioOf(lane.scenario).name}: ${strongest.def.name}, a mais forte, passou ${moved} para ${weakest.def.name}, a mais fraca.` });
+      }
     }
     if (rule.kind === "samaritan") {
       // O samaritano socorre: o lado que está perdendo aqui (Influência menor; empate não conta) levanta a sua figurinha mais fraca.
@@ -955,7 +989,7 @@ function endOfTurn(state: DuelState) {
       if (losing !== null && lane.cards[losing].length > 0) {
         const weakest = [...lane.cards[losing]].sort((a, b) => cardPower(state, index, losing, a) - cardPower(state, index, losing, b) || a.order - b.order)[0];
         weakest.bonus += rule.amount;
-        emit(state, { type: "power", side: losing, lane: index, uid: weakest.uid, name: weakest.def.name, amount: rule.amount, text: `${scenarioOf(lane.scenario).emoji} ${scenarioOf(lane.scenario).name}: o samaritano socorreu ${weakest.def.name}, que ganhou ${rule.amount}.` });
+        emit(state, { type: "power", side: losing, lane: index, uid: weakest.uid, name: weakest.def.name, amount: rule.amount, text: `${scenarioOf(lane.scenario).name}: ${weakest.def.name}, a mais fraca de quem estava perdendo, ganhou ${rule.amount}.` });
       }
     }
     if (rule.kind === "forgive") {
@@ -970,8 +1004,14 @@ function endOfTurn(state: DuelState) {
       }
     }
     if (rule.kind === "stormAt" && state.turn === rule.turn) {
-      for (const side of [0, 1] as Side[]) for (const card of lane.cards[side]) card.bonus -= rule.amount;
-      emit(state, { type: "power", lane: index, amount: -rule.amount, text: `${scenarioOf(lane.scenario).emoji} Tempestade em ${scenarioOf(lane.scenario).name}: todas as figurinhas perderam ${rule.amount}.` });
+      // Tempestade: todas perdem `amount`; as de Vigor `heavyMin` ou mais (os barcos grandes) perdem `heavyAmount`.
+      for (const side of [0, 1] as Side[]) {
+        for (const card of lane.cards[side]) {
+          const loss = rule.heavyMin !== undefined && card.def.cost >= rule.heavyMin ? rule.heavyAmount ?? rule.amount : rule.amount;
+          card.bonus -= loss;
+          emit(state, { type: "power", side, lane: index, uid: card.uid, name: card.def.name, amount: -loss, text: `${scenarioOf(lane.scenario).name}: ${card.def.name} perdeu ${loss}.` });
+        }
+      }
     }
   });
   for (const entry of allCards(state)) {
@@ -1076,7 +1116,7 @@ function nextTurn(state: DuelState, leftover: [number, number] = [0, 0]) {
   }
   if (state.turn <= LANES) {
     const scenario = laneScenario(state, state.turn - 1);
-    emit(state, { type: "scenario", lane: state.turn - 1, text: `${scenario.emoji} ${scenario.name}: ${scenario.text}` });
+    emit(state, { type: "scenario", lane: state.turn - 1, text: `${scenario.name}: ${scenario.text}` });
   }
 }
 
