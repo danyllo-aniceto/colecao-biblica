@@ -1,0 +1,11 @@
+﻿Personagem;Raridade;Papel na história;Período;Testamento;Palavras-chave;Resumo curto;Vigor;Influência;Etiquetas;Gatilho;Efeitos;Texto do Dom;Disponível
+Urias;;;;;;;2;3;Guerreiro;destruida;poder valor=+3 alvo=aliados-aqui;;Sim
+Apolo;;;;;;;3;2;Discípulo, Mestre;continuo;aura valor=+2 em=aliados-aqui;;Sim
+Melquisedeque;;;;;;;5;3;Rei, Sacerdote;continuo;aura valor=+1 em=aliados | proteger;;Sim
+Safira;;;;;;;2;5;Mulher;revelar;poder valor=-3 alvo=si se=ganhando;;Sim
+Ismael;;;;;;;3;2;Guerreiro, Caçador;revelar;poder valor=-1 alvo=inimigos-todos;;Sim
+Barrabás;;;;;;;2;3;Adversário;revelar;poder valor=+6 alvo=si se=inimigo-nomeado:Jesus;;Sim
+Tamar;;;;;;;3;3;Mulher;revelar;criar ficha=Descendente onde=vizinhos;;Sim
+Simeão;;;;;;;3;3;Patriarca, Guerreiro;revelar;destruir alvo=inimigo-mais-fraco se=aliado-etiqueta:Patriarca;;Sim
+Josias;;;;;;;4;5;Rei;revelar;calar | comprar qtd=1;;Sim
+Tito;;;;;;;3;4;Discípulo;continuo;poder-por valor=+1 por=aliados etiqueta=Discípulo;;Sim

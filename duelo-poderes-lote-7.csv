@@ -1,0 +1,11 @@
+﻿Personagem;Raridade;Papel na história;Período;Testamento;Palavras-chave;Resumo curto;Vigor;Influência;Etiquetas;Gatilho;Efeitos;Texto do Dom;Disponível
+Mical;;;;;;;2;2;Rainha, Mulher;revelar;poder valor=+3 alvo=si se=aliado-etiqueta:Rei;;Sim
+Silas;;;;;;;2;2;Discípulo, Profeta;revelar;buscar etiqueta=Apóstolo;;Sim
+Nabucodonosor;;;;;;;4;10;Rei, Adversário;revelar;destruir alvo=todos-aqui;;Sim
+Dorcas;;;;;;;2;2;Discípula, Mulher;destruida;ressuscitar qtd=1;;Sim
+Benjamim;;;;;;;2;1;Patriarca;revelar;poder valor=+4 alvo=si se=perdendo;;Sim
+Herodes Antipas;;;;;;;4;5;Rei, Adversário;revelar;destruir alvo=inimigo-mais-forte se=inimigo-etiqueta:Profeta;;Sim
+Enoque;;;;;;;2;3;Patriarca;revelar;mover-se;;Sim
+Gamaliel;;;;;;;2;2;Mestre;continuo;aura valor=+1 em=vizinhos;;Sim
+Agar;;;;;;;2;2;Mulher;revelar;comprar qtd=1 se=mao-max:2;;Sim
+Oséias;;;;;;;3;5;Profeta;revelar;buscar etiqueta=Mulher criterio=mais-barata;;Sim
