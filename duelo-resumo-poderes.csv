@@ -1,0 +1,115 @@
+﻿Personagem;Gatilho antes;Efeito antes;Vigor/Influência antes;Gatilho agora;Efeito agora;Vigor/Influência agora;Vitórias antes %;Vitórias agora %
+Abigail;revelar;poder valor=+3 alvo=aliados-aqui;3/4;revelar;poder valor=+3 alvo=aliados-aqui;3/4;50.5;50.5
+Abraão;revelar;criar ficha=Descendente onde=cada-cenario;4/4;revelar;criar ficha=Descendente onde=cada-cenario;4/2;50.0;51.1
+Absalão;revelar;converter;5/2;revelar;converter;5/2;50.2;50.6
+Acabe;revelar;poder valor=+4 alvo=si se=inimigo-etiqueta:Profeta;3/5;revelar;converter;4/2;48.9;54.3
+Adão;revelar;comprar qtd=1;1/1;revelar;comprar qtd=1;2/1;52.2;49.0
+Agar;revelar;comprar qtd=1 se=mao-max:2;2/2;revelar;comprar qtd=1 se=mao-max:2;2/4;48.1;51.0
+Ana;revelar;vigor-extra valor=1;2/3;revelar;buscar etiqueta=Profeta criterio=mais-barata;2/4;48.8;51.5
+André;revelar;custo-menos valor=1;2/3;revelar;buscar etiqueta=Líder;2/3;53.4;50.4
+Apolo;continuo;aura valor=+2 em=aliados-aqui;3/2;continuo;aura valor=+2 em=aliados-aqui;3/3;47.8;50.4
+Arão;continuo;aura valor=+1 em=aliados-aqui;3/5;revelar;repetir;3/5;50.3;49.6
+Asafe;fim-do-turno;poder valor=+1 alvo=aliados-aqui;3/4;fim-do-turno;poder valor=+1 alvo=aliados-aqui;3/3;53.8;50.9
+Atalia;revelar;sacrificar ganho=6;3/3;revelar;sacrificar ganho=6;3/5;48.0;47.0
+Barnabé;aliado-jogado;poder valor=+2 alvo=si;2/2;aliado-jogado;poder valor=+2 alvo=si;2/2;48.0;50.0
+Barrabás;revelar;poder valor=+6 alvo=si se=inimigo-nomeado:Jesus;2/3;revelar;destruir alvo=inimigo-mais-fraco se=perdendo;3/3;48.0;47.9
+Bate-Seba;revelar;criar ficha=Descendente onde=aqui;3/3;revelar;criar ficha=Descendente onde=aqui;3/3;47.0;47.8
+Benjamim;revelar;poder valor=+4 alvo=si se=perdendo;2/1;revelar;poder valor=+4 alvo=si se=perdendo;2/1;49.9;51.4
+Bezalel;revelar;custo-menos valor=1;2/3;revelar;custo-menos valor=1;2/2;52.8;48.7
+Caifás;revelar;descartar qtd=1;3/5;revelar;descartar qtd=1;3/5;50.2;50.5
+Calebe;continuo;blindar;3/6;continuo;blindar;3/5;51.2;49.6
+Cornélio;continuo;poder-por valor=+1 por=figurinhas-aqui;3/2;continuo;poder-por valor=+1 por=figurinhas-aqui;3/2;51.0;49.5
+Corá;destruida;destruir alvo=inimigo-mais-fraco;3/4;destruida;destruir alvo=inimigo-mais-fraco;3/5;45.6;50.0
+Dalila;revelar;poder valor=-3 alvo=inimigo-mais-forte;3/4;revelar;converter;4/1;51.6;52.4
+Daniel;continuo;proteger;2/2;continuo;proteger;2/2;47.6;49.5
+Davi;revelar;poder valor=+6 alvo=si se=inimigo-poder:6;2/2;revelar;poder valor=+6 alvo=si se=inimigo-poder:6;2/1;53.5;51.1
+Diná;;;1/2;continuo;poder-por valor=+1 por=aliados etiqueta=Patriarca;1/1;51.9;52.0
+Dorcas;destruida;ressuscitar qtd=1;2/2;destruida;ressuscitar qtd=1;2/3;45.4;48.3
+Débora;continuo;poder-por valor=+1 por=aliados-aqui;4/6;continuo;poder-por valor=+1 por=aliados-aqui;4/6;48.8;50.5
+Elias;revelar;destruir alvo=inimigo-mais-forte;6/11;revelar;destruir alvo=inimigo-mais-forte;6/9;52.5;50.7
+Eliseu;revelar;criar ficha=Pão onde=aqui | ressuscitar qtd=1;4/5;revelar;criar ficha=Pão onde=aqui | ressuscitar qtd=1;4/5;49.1;50.5
+Enoque;revelar;mover-se;2/3;revelar;mover-se;2/3;47.3;47.0
+Esaú;revelar;sacrificar ganho=5;3/3;revelar;sacrificar ganho=5;3/6;46.5;49.8
+Esdras;revelar;vigor-extra valor=1;3/2;revelar;vigor-extra valor=1;3/3;47.0;48.8
+Ester;revelar;poder valor=+2 alvo=outros-aliados | comprar qtd=1;4/6;revelar;poder valor=+2 alvo=outros-aliados | comprar qtd=1;4/1;60.3;51.1
+Estevão;destruida;criar ficha=Descendente onde=cada-cenario;4/6;destruida;criar ficha=Descendente onde=cada-cenario;4/7;48.5;48.0
+Eva;revelar;criar ficha=Descendente onde=aqui;1/1;revelar;criar ficha=Descendente onde=aqui;2/2;51.5;49.6
+Ezequias;revelar;destruir alvo=inimigo-mais-forte se=perdendo | poder valor=+2 alvo=aliados-aqui;6/11;revelar;destruir alvo=inimigo-mais-forte se=perdendo | poder valor=+2 alvo=aliados-aqui;6/11;51.2;49.0
+Ezequiel;revelar;ressuscitar qtd=1;3/4;revelar;ressuscitar qtd=2;4/8;46.4;51.0
+Filipe;revelar;criar ficha=Pão onde=aqui;3/3;revelar;criar ficha=Pão onde=aqui;3/3;50.0;49.9
+Gabriel;revelar;comprar qtd=2 | vigor-extra valor=1;5/7;revelar;comprar qtd=2 | vigor-extra valor=1;5/7;48.4;48.5
+Gamaliel;continuo;aura valor=+1 em=vizinhos;2/2;revelar;esgotar valor=1;2/2;52.0;49.0
+Gideão;continuo;poder-por valor=+1 por=aliados vigor=1;2/2;revelar;destruir alvo=inimigo-mais-forte se=aliados-aqui:2;3/3;49.8;48.9
+Golias;revelar;esgotar valor=1 | poder valor=-6 alvo=si se=inimigo-nomeado:Davi;5/10;revelar;esgotar valor=1 | poder valor=-6 alvo=si se=inimigo-nomeado:Davi;5/8;54.0;48.8
+Hamã;revelar;igualar max=6;4/7;revelar;igualar max=6;4/8;47.9;51.3
+Herodes Agripa I;revelar;devolver alvo=inimigo-mais-fraco;3/5;revelar;destruir alvo=inimigo-mais-forte se=inimigo-etiqueta:Apóstolo;3/5;53.1;50.2
+Herodes Antipas;revelar;destruir alvo=inimigo-mais-forte se=inimigo-etiqueta:Profeta;4/5;revelar;destruir alvo=inimigo-mais-forte se=inimigo-etiqueta:Profeta;4/7;47.2;50.1
+Isabel;revelar;purificar | poder valor=+1 alvo=aliados-aqui;2/3;revelar;purificar | poder valor=+1 alvo=aliados-aqui;2/3;49.7;49.5
+Isaque;destruida;ressuscitar qtd=1;2/3;destruida;ressuscitar qtd=1;2/3;49.5;47.6
+Isaías;continuo;aura valor=+1 em=aliados;6/10;continuo;aura valor=+1 em=aliados;6/8;55.2;50.7
+Ismael;revelar;poder valor=-1 alvo=inimigos-todos;3/2;revelar;poder valor=-1 alvo=inimigos-todos;3/3;48.6;50.2
+Jacó;fim-do-duelo;poder valor=+6 alvo=si se=perdendo;4/4;fim-do-duelo;poder valor=+6 alvo=si se=perdendo;4/4;47.9;50.1
+Jael;revelar;destruir alvo=inimigo-mais-forte se=sozinho;3/4;revelar;destruir alvo=inimigo-mais-forte se=sozinho;3/4;52.2;51.7
+Jefté;revelar;multiplicar fator=2;3/3;revelar;destruir alvo=inimigo-mais-fraco se=aliados-aqui:1;3/3;51.5;51.3
+Jeremias;revelar;mover-inimigos;4/7;revelar;mover-inimigos;4/8;47.5;49.4
+Jezabel;revelar;calar | destruir alvo=inimigo-mais-fraco se=inimigo-etiqueta:Profeta;5/10;revelar;calar | destruir alvo=inimigo-mais-fraco se=inimigo-etiqueta:Profeta;5/9;51.2;50.2
+Jeú;revelar;destruir alvo=inimigo-mais-forte se=inimigo-etiqueta:Rei;4/6;revelar;destruir alvo=inimigo-mais-forte se=inimigo-etiqueta:Rei;4/7;47.8;50.5
+Joabe;fim-do-duelo;destruir alvo=inimigo-mais-forte se=perdendo;4/5;fim-do-duelo;destruir alvo=inimigo-mais-forte se=perdendo;4/4;52.6;49.5
+Jonas;revelar;poder valor=+3 alvo=si | mover-se;2/3;revelar;poder valor=+3 alvo=si | mover-se;2/2;51.8;50.7
+Josafá;continuo;aura valor=+1 em=vizinhos;4/6;continuo;aura valor=+1 em=vizinhos;4/6;53.5;51.1
+Josias;revelar;calar | comprar qtd=1;4/5;revelar;calar | comprar qtd=1;4/6;48.8;49.8
+Josué;revelar;poder valor=+2 alvo=aliados-aqui | criar ficha=Soldado onde=aqui;5/9;revelar;poder valor=+2 alvo=aliados-aqui | destruir alvo=inimigo-mais-fraco;5/5;54.8;50.3
+José;revelar;buscar etiqueta=Patriarca;4/7;revelar;buscar etiqueta=Patriarca;4/9;50.1;52.9
+João;continuo;aura valor=+1 em=aliados etiqueta=Apóstolo;4/5;continuo;aura valor=+1 em=aliados etiqueta=Apóstolo;4/7;45.0;48.4
+João Batista;fim-do-turno;poder valor=+1 alvo=aliados-aqui | poder valor=-1 alvo=si;2/3;fim-do-turno;poder valor=+1 alvo=aliados-aqui | poder valor=-1 alvo=si;2/3;49.6;50.0
+Judas Iscariotes;revelar;devolver alvo=inimigo-mais-forte;3/3;revelar;converter;4/1;51.1;53.7
+Judá;fim-do-turno;poder valor=+1 alvo=si;2/2;fim-do-turno;poder valor=+1 alvo=si;2/2;48.5;50.0
+Jó;destruida;comprar qtd=1;2/3;destruida;comprar qtd=1;2/3;47.3;48.0
+Jônatas;continuo;aura valor=+2 em=aliados etiqueta=Rei;2/3;continuo;aura valor=+2 em=aliados etiqueta=Rei;2/3;49.2;49.0
+Levi;aliado-jogado;poder valor=+2 alvo=si;2/3;revelar;destruir alvo=inimigo-mais-fraco se=aliado-etiqueta:Patriarca;3/4;50.6;48.7
+Lia;continuo;aura valor=+1 em=aliados etiqueta=Patriarca;3/3;continuo;aura valor=+1 em=aliados etiqueta=Patriarca;3/5;47.9;49.3
+Lucas;revelar;ressuscitar qtd=1;4/6;revelar;ressuscitar qtd=1;4/7;45.8;48.8
+Lázaro;revelar;sumir turnos=4 bonus=+7;1/1;revelar;sumir turnos=4 bonus=+7;2/2;50.0;47.0
+Lídia;revelar;comprar qtd=1 | poder valor=+1 alvo=aliados-aqui;2/2;revelar;comprar qtd=1 | poder valor=+1 alvo=aliados-aqui;2/2;51.5;51.7
+Marcos;revelar;sumir turnos=2 bonus=+3;1/2;revelar;sumir turnos=2 bonus=+3;2/3;54.6;48.8
+Maria;revelar;poder valor=-3 alvo=inimigo-mais-forte | poder valor=+3 alvo=aliado-mais-fraco;5/7;revelar;poder valor=-3 alvo=inimigo-mais-forte | poder valor=+3 alvo=aliado-mais-fraco;5/6;52.6;50.6
+Maria Madalena;revelar;poder valor=+1 alvo=outros-aliados;3/5;revelar;purificar | comprar qtd=1;3/5;51.9;49.6
+Marta;revelar;poder valor=+1 alvo=outros-aliados;3/2;fim-do-turno;poder valor=+1 alvo=outros-aliados;4/1;48.5;49.0
+Mateus;revelar;vigor-extra valor=1;2/3;revelar;vigor-extra valor=1;2/2;50.3;51.0
+Melquisedeque;continuo;aura valor=+1 em=aliados | proteger;5/3;continuo;aura valor=+1 em=aliados | proteger;5/4;47.8;49.7
+Mical;revelar;poder valor=+3 alvo=si se=aliado-etiqueta:Rei;2/2;revelar;poder valor=+3 alvo=si se=aliado-etiqueta:Rei;2/4;47.2;48.4
+Miriã;continuo;aura valor=+1 em=aliados-aqui etiqueta=Mulher;1/1;continuo;aura valor=+1 em=aliados-aqui etiqueta=Mulher;1/1;50.8;52.3
+Moisés;revelar;mover-inimigos;5/12;revelar;mover-inimigos;5/11;51.0;50.8
+Mordecai;continuo;proteger;3/4;continuo;proteger;3/4;48.6;50.0
+Naamã;revelar;multiplicar fator=2;2/2;revelar;multiplicar fator=2;2/2;47.6;50.2
+Nabucodonosor;revelar;destruir alvo=todos-aqui;4/10;revelar;destruir alvo=todos-aqui;3/12;43.6;47.9
+Natã;revelar;devolver alvo=inimigo-mais-forte se=inimigo-etiqueta:Rei;3/4;revelar;devolver alvo=inimigo-mais-forte se=inimigo-etiqueta:Rei;4/2;55.5;48.2
+Neemias;revelar;criar ficha=Soldado onde=vizinhos | poder valor=+1 alvo=aliados-aqui;4/4;revelar;criar ficha=Soldado onde=vizinhos | poder valor=+1 alvo=aliados-aqui;4/3;52.8;51.7
+Nicodemos;fim-do-turno;poder valor=+2 alvo=si;3/3;fim-do-turno;poder valor=+2 alvo=si;3/1;52.7;49.3
+Ninrode;revelar;destruir alvo=inimigo-mais-fraco;4/6;revelar;destruir alvo=inimigo-mais-fraco;4/4;56.8;50.6
+Noemi;revelar;poder valor=+1 alvo=mao;1/1;revelar;poder valor=+1 alvo=mao;1/1;49.9;53.2
+Noé;revelar;criar ficha=Ovelha onde=vizinhos;3/4;revelar;criar ficha=Ovelha onde=vizinhos;3/2;51.2;51.0
+Oséias;revelar;buscar etiqueta=Mulher criterio=mais-barata;3/5;revelar;buscar etiqueta=Mulher criterio=mais-barata;3/5;47.9;47.7
+Paulo;revelar;converter | poder-por valor=+1 por=aliados etiqueta=Apóstolo;6/11;revelar;converter | poder-por valor=+1 por=aliados etiqueta=Apóstolo;6/7;54.1;50.7
+Pedro;revelar;poder valor=+3 alvo=si se=perdendo;5/11;revelar;poder valor=+3 alvo=si se=perdendo | destruir alvo=inimigo-mais-fraco;5/7;51.6;53.0
+Priscila;revelar;repetir;2/4;revelar;repetir;2/3;52.0;51.8
+Pôncio Pilatos;revelar;calar;4/5;revelar;calar;4/7;44.2;49.5
+Raabe;revelar;poder valor=-1 alvo=inimigos-todos;1/1;revelar;devolver alvo=inimigo-mais-fraco;3/1;52.5;49.9
+Raquel;destruida;comprar qtd=1;2/4;revelar;converter;5/1;49.5;50.8
+Rebeca;revelar;converter;4/3;revelar;converter;4/1;55.2;51.6
+Rute;revelar;poder valor=+3 alvo=aliado-mais-fraco;1/1;fim-do-turno;poder valor=+1 alvo=aliado-mais-fraco;2/2;51.2;48.8
+Safira;revelar;poder valor=-3 alvo=si se=ganhando;2/5;revelar;poder valor=-3 alvo=si se=ganhando;2/6;49.1;48.5
+Salomão;revelar;comprar qtd=2 | custo-menos valor=1;5/8;revelar;comprar qtd=2 | custo-menos valor=1;5/6;56.4;50.1
+Samuel;aliado-jogado;poder valor=+2 alvo=aliados-aqui se=aliado-etiqueta:Rei;3/5;aliado-jogado;poder valor=+2 alvo=aliados-aqui se=aliado-etiqueta:Rei;3/5;47.3;49.2
+Sansão;destruida;destruir alvo=todos-aqui;5/10;destruida;destruir alvo=todos-aqui;5/10;50.8;50.5
+Sara;continuo;poder-por valor=+1 por=aliados etiqueta=Descendente;2/3;continuo;poder-por valor=+1 por=aliados etiqueta=Descendente;2/3;46.9;49.9
+Saul;revelar;poder valor=-3 alvo=inimigo-mais-forte;3/4;revelar;poder valor=-3 alvo=inimigo-mais-forte;3/3;52.0;48.0
+Silas;revelar;buscar etiqueta=Apóstolo;2/2;revelar;buscar etiqueta=Apóstolo;2/2;47.8;48.4
+Simeão;revelar;destruir alvo=inimigo-mais-fraco se=aliado-etiqueta:Patriarca;3/3;revelar;mover-inimigos;4/8;45.6;48.6
+Tamar;revelar;criar ficha=Descendente onde=vizinhos;3/3;revelar;criar ficha=Descendente onde=vizinhos;3/3;47.4;50.8
+Tiago(Maior);destruida;poder valor=+2 alvo=aliados-aqui;3/5;destruida;poder valor=+2 alvo=aliados-aqui;3/6;49.0;50.4
+Timóteo;revelar;poder valor=+3 alvo=si se=aliado-etiqueta:Apóstolo;1/1;revelar;poder valor=+3 alvo=si se=aliado-etiqueta:Apóstolo;1/1;46.8;50.4
+Tito;continuo;poder-por valor=+1 por=aliados etiqueta=Discípulo;3/4;continuo;poder-por valor=+1 por=aliados etiqueta=Discípulo;3/6;46.2;51.8
+Tomé;revelar;poder valor=+4 alvo=si se=turno:4;1/1;revelar;poder valor=+4 alvo=si se=turno:4;3/3;52.1;48.9
+Urias;destruida;poder valor=+3 alvo=aliados-aqui;2/3;destruida;poder valor=+3 alvo=aliados-aqui;2/3;47.1;49.1
+Zaqueu;continuo;poder-por valor=+1 por=mao;2/2;continuo;poder-por valor=+1 por=mao;2/2;48.0;51.7
